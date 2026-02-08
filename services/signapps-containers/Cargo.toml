@@ -1,0 +1,32 @@
+[package]
+name = "signapps-containers"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Container management service for SignApps Platform"
+
+[[bin]]
+name = "signapps-containers"
+path = "src/main.rs"
+
+[dependencies]
+signapps-common = { path = "../../crates/signapps-common" }
+signapps-db = { path = "../../crates/signapps-db" }
+axum = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+bollard = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+dotenvy = { workspace = true }
+tower-http = { workspace = true }
+anyhow = { workspace = true }
+futures = { workspace = true }
+futures-util = "0.3"

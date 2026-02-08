@@ -1,0 +1,42 @@
+# Generated files
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test coverage
+*.lcov
+lcov.info
+coverage/
+
+# Docker
+.docker/
+
+# Secrets
+*.pem
+*.key
+secrets/
+
+# Temporary
+tmp/
+temp/
+*.tmp

@@ -1,0 +1,286 @@
+//! Authentication handlers.
+
+use axum::{
+    extract::{Extension, State},
+    http::{header, HeaderMap},
+    Json,
+};
+use serde::{Deserialize, Serialize};
+use signapps_common::{Claims, Error, Result};
+use signapps_db::repositories::UserRepository;
+use uuid::Uuid;
+use validator::Validate;
+
+use crate::auth::{create_tokens, verify_password, verify_token};
+use crate::AppState;
+
+/// Login request payload.
+#[derive(Debug, Deserialize, Validate)]
+pub struct LoginRequest {
+    #[validate(length(min = 1, message = "Username is required"))]
+    pub username: String,
+    #[validate(length(min = 1, message = "Password is required"))]
+    pub password: String,
+    pub mfa_code: Option<String>,
+}
+
+/// Login response with tokens.
+#[derive(Debug, Serialize)]
+pub struct LoginResponse {
+    pub access_token: String,
+    pub refresh_token: String,
+    pub token_type: String,
+    pub expires_in: i64,
+}
+
+/// Registration request payload.
+#[derive(Debug, Deserialize, Validate)]
+pub struct RegisterRequest {
+    #[validate(length(min = 3, max = 64, message = "Username must be 3-64 characters"))]
+    pub username: String,
+    #[validate(email(message = "Invalid email format"))]
+    pub email: Option<String>,
+    #[validate(length(min = 8, max = 128, message = "Password must be 8-128 characters"))]
+    pub password: String,
+    #[validate(length(max = 255))]
+    pub display_name: Option<String>,
+}
+
+/// User information response.
+#[derive(Debug, Serialize)]
+pub struct UserResponse {
+    pub id: Uuid,
+    pub username: String,
+    pub email: Option<String>,
+    pub display_name: Option<String>,
+    pub role: i16,
+    pub mfa_enabled: bool,
+    pub auth_provider: String,
+    pub created_at: String,
+    pub last_login: Option<String>,
+}
+
+/// Refresh token request.
+#[derive(Debug, Deserialize)]
+pub struct RefreshRequest {
+    pub refresh_token: String,
+}
+
+/// Login endpoint - supports local and LDAP authentication.
+#[tracing::instrument(skip(state, payload), fields(username = %payload.username))]
+pub async fn login(
+    State(state): State<AppState>,
+    Json(payload): Json<LoginRequest>,
+) -> Result<Json<LoginResponse>> {
+    // Validate input
+    payload.validate().map_err(|e| Error::Validation(e.to_string()))?;
+
+    // Find user by username
+    let user = UserRepository::find_by_username(&state.pool, &payload.username)
+        .await?
+        .ok_or(Error::InvalidCredentials)?;
+
+    // Check auth provider
+    match user.auth_provider.as_str() {
+        "local" => {
+            // Local authentication with Argon2
+            let password_hash = user.password_hash.as_ref().ok_or(Error::InvalidCredentials)?;
+
+            if !verify_password(&payload.password, password_hash)? {
+                tracing::warn!(username = %payload.username, "Invalid password attempt");
+                return Err(Error::InvalidCredentials);
+            }
+        }
+        "ldap" => {
+            // LDAP authentication
+            // TODO: Implement LDAP bind verification
+            tracing::info!(username = %payload.username, "LDAP auth not yet implemented, falling back");
+            return Err(Error::Internal("LDAP authentication not yet implemented".to_string()));
+        }
+        _ => {
+            tracing::error!(auth_provider = %user.auth_provider, "Unknown auth provider");
+            return Err(Error::Internal("Unknown auth provider".to_string()));
+        }
+    }
+
+    // Check MFA if enabled
+    if user.mfa_enabled {
+        let mfa_code = payload.mfa_code.as_ref().ok_or(Error::MfaRequired)?;
+
+        // Verify TOTP code
+        let mfa_secret = user.mfa_secret.as_ref().ok_or(Error::Internal(
+            "MFA enabled but no secret found".to_string(),
+        ))?;
+
+        if !verify_totp(mfa_secret, mfa_code)? {
+            return Err(Error::InvalidMfaCode);
+        }
+    }
+
+    // Update last login
+    UserRepository::update_last_login(&state.pool, user.id).await?;
+
+    // Generate tokens
+    let tokens = create_tokens(user.id, &user.username, user.role, &state.jwt_secret)?;
+
+    tracing::info!(user_id = %user.id, "User logged in successfully");
+
+    Ok(Json(LoginResponse {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        token_type: "Bearer".to_string(),
+        expires_in: tokens.expires_in,
+    }))
+}
+
+/// Logout endpoint.
+#[tracing::instrument(skip(_state, headers))]
+pub async fn logout(
+    State(_state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<()> {
+    // Extract token from Authorization header
+    if let Some(auth_header) = headers.get(header::AUTHORIZATION) {
+        if let Ok(auth_str) = auth_header.to_str() {
+            if let Some(_token) = auth_str.strip_prefix("Bearer ") {
+                // TODO: Add token to blacklist in Redis
+                // For now, client-side logout (remove token) is sufficient
+                tracing::info!("User logged out");
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Register new user (local auth only).
+#[tracing::instrument(skip(state, payload), fields(username = %payload.username))]
+pub async fn register(
+    State(state): State<AppState>,
+    Json(payload): Json<RegisterRequest>,
+) -> Result<Json<UserResponse>> {
+    // Validate input
+    payload.validate().map_err(|e| Error::Validation(e.to_string()))?;
+
+    // Check username uniqueness
+    if UserRepository::find_by_username(&state.pool, &payload.username).await?.is_some() {
+        return Err(Error::AlreadyExists("Username already taken".to_string()));
+    }
+
+    // Check email uniqueness if provided
+    if let Some(ref email) = payload.email {
+        if UserRepository::find_by_email(&state.pool, email).await?.is_some() {
+            return Err(Error::AlreadyExists("Email already registered".to_string()));
+        }
+    }
+
+    // Hash password
+    let password_hash = crate::auth::hash_password(&payload.password)?;
+
+    // Create user
+    let create_user = signapps_db::models::CreateUser {
+        username: payload.username.to_lowercase(),
+        email: payload.email,
+        password: Some(payload.password.clone()),
+        display_name: payload.display_name,
+        role: 1, // Default user role
+        auth_provider: "local".to_string(),
+        ldap_dn: None,
+        ldap_groups: None,
+    };
+
+    let user = UserRepository::create_with_hash(&state.pool, create_user, &password_hash).await?;
+
+    tracing::info!(user_id = %user.id, "User registered successfully");
+
+    Ok(Json(UserResponse {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        display_name: user.display_name,
+        role: user.role,
+        mfa_enabled: user.mfa_enabled,
+        auth_provider: user.auth_provider,
+        created_at: user.created_at.to_rfc3339(),
+        last_login: user.last_login.map(|dt| dt.to_rfc3339()),
+    }))
+}
+
+/// Refresh access token.
+#[tracing::instrument(skip(state, payload))]
+pub async fn refresh(
+    State(state): State<AppState>,
+    Json(payload): Json<RefreshRequest>,
+) -> Result<Json<LoginResponse>> {
+    // Verify refresh token
+    let claims = verify_token(&payload.refresh_token, &state.jwt_secret)?;
+
+    // Ensure it's a refresh token
+    if claims.token_type != "refresh" {
+        return Err(Error::InvalidToken);
+    }
+
+    // Check expiration
+    let now = chrono::Utc::now().timestamp();
+    if claims.exp < now {
+        return Err(Error::TokenExpired);
+    }
+
+    // Get fresh user data
+    let user = UserRepository::find_by_id(&state.pool, claims.sub)
+        .await?
+        .ok_or(Error::NotFound("User not found".to_string()))?;
+
+    // Generate new tokens
+    let tokens = create_tokens(user.id, &user.username, user.role, &state.jwt_secret)?;
+
+    tracing::info!(user_id = %user.id, "Token refreshed");
+
+    Ok(Json(LoginResponse {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        token_type: "Bearer".to_string(),
+        expires_in: tokens.expires_in,
+    }))
+}
+
+/// Get current user info.
+#[tracing::instrument(skip(state))]
+pub async fn me(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Result<Json<UserResponse>> {
+    let user = UserRepository::find_by_id(&state.pool, claims.sub)
+        .await?
+        .ok_or(Error::NotFound("User not found".to_string()))?;
+
+    Ok(Json(UserResponse {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        display_name: user.display_name,
+        role: user.role,
+        mfa_enabled: user.mfa_enabled,
+        auth_provider: user.auth_provider,
+        created_at: user.created_at.to_rfc3339(),
+        last_login: user.last_login.map(|dt| dt.to_rfc3339()),
+    }))
+}
+
+/// Verify TOTP code.
+fn verify_totp(secret: &str, code: &str) -> Result<bool> {
+    use totp_rs::{Algorithm, TOTP};
+
+    let totp = TOTP::new(
+        Algorithm::SHA1,
+        6,
+        1,
+        30,
+        secret.as_bytes().to_vec(),
+        Some("SignApps".to_string()),
+        "user".to_string(),
+    )
+    .map_err(|e| Error::Internal(format!("TOTP error: {}", e)))?;
+
+    Ok(totp.check_current(code).unwrap_or(false))
+}

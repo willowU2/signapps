@@ -1,0 +1,31 @@
+[package]
+name = "signapps-db"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Database access layer for SignApps Platform"
+
+[dependencies]
+# Database
+sqlx = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+async-trait = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+
+# Internal
+signapps-common = { path = "../signapps-common" }
+
+[dev-dependencies]
+tokio-test = { workspace = true }

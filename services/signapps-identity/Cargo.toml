@@ -1,0 +1,63 @@
+[package]
+name = "signapps-identity"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Identity and authentication service for SignApps Platform"
+
+[[bin]]
+name = "signapps-identity"
+path = "src/main.rs"
+
+[dependencies]
+# Internal crates
+signapps-common = { path = "../../crates/signapps-common" }
+signapps-db = { path = "../../crates/signapps-db" }
+
+# Web framework
+axum = { workspace = true }
+axum-extra = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+async-trait = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Database
+sqlx = { workspace = true }
+
+# Redis
+redis = { workspace = true }
+
+# Authentication
+jsonwebtoken = { workspace = true }
+argon2 = { workspace = true }
+totp-rs = { workspace = true }
+oauth2 = { workspace = true }
+ldap3 = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+dotenvy = { workspace = true }
+config = { workspace = true }
+validator = { workspace = true }
+
+# Observability
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+
+# Encoding
+base64 = "0.22"
+rand = "0.8"
+
+[dev-dependencies]
+tokio-test = { workspace = true }

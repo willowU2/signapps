@@ -1,0 +1,31 @@
+# Clippy configuration for SignApps Platform
+# Run: cargo clippy --workspace --all-targets --all-features
+
+# Allow cognitive complexity up to this value
+cognitive-complexity-threshold = 30
+
+# Maximum number of lines in a function body
+too-many-lines-threshold = 150
+
+# Maximum number of arguments a function can have
+too-many-arguments-threshold = 8
+
+# Minimum number of struct fields for the constructor lint
+max-struct-bools = 3
+
+# Minimum number of function parameters for the excessive bools lint
+max-fn-params-bools = 3
+
+# The maximum byte size a `Copy` type can have
+trivial-copy-size-limit = 16
+
+# Allow using result patterns in functions returning Result
+pass-by-value-size-limit = 256
+
+# MSRV for suggesting newer syntax
+msrv = "1.75.0"
+
+# Allowed wildcard imports
+allowed-wildcard-imports = [
+    "crate::prelude::*",
+]
