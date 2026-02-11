@@ -151,10 +151,7 @@ pub async fn list_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>
 
 /// Get disk by ID.
 #[tracing::instrument(skip(state))]
-pub async fn get_disk(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<Json<Disk>> {
+pub async fn get_disk(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Disk>> {
     let repo = RaidRepository::new(&state.pool);
 
     let disk = repo
@@ -185,9 +182,7 @@ pub async fn scan_disks(State(state): State<AppState>) -> Result<Json<Vec<Disk>>
 
         let size = disk.total_space() as i64;
 
-        let db_disk = repo
-            .upsert_disk(&path, None, None, Some(size))
-            .await?;
+        let db_disk = repo.upsert_disk(&path, None, None, Some(size)).await?;
 
         disks.push(db_disk);
     }
@@ -312,7 +307,12 @@ pub async fn add_disk_to_array(
 
     // Get next slot number
     let current_disks = repo.list_array_disks(id).await?;
-    let next_slot = current_disks.iter().filter_map(|d| d.slot_number).max().unwrap_or(-1) + 1;
+    let next_slot = current_disks
+        .iter()
+        .filter_map(|d| d.slot_number)
+        .max()
+        .unwrap_or(-1)
+        + 1;
 
     // Assign disk to array
     repo.assign_to_array(disk.id, id, next_slot).await?;

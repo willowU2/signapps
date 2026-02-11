@@ -117,7 +117,7 @@ impl MinioClient {
                 } else {
                     Err(Error::Storage(format!("Failed to check bucket: {}", e)))
                 }
-            }
+            },
         }
     }
 

@@ -184,10 +184,17 @@ impl CryptoService {
         let subject = format!("/CN={} CA/O=SecureLink", name);
         let output = Command::new("openssl")
             .args([
-                "req", "-new", "-x509", "-key", &ca_key_path,
-                "-out", &ca_cert_path,
-                "-days", "3650",
-                "-subj", &subject,
+                "req",
+                "-new",
+                "-x509",
+                "-key",
+                &ca_key_path,
+                "-out",
+                &ca_cert_path,
+                "-days",
+                "3650",
+                "-subj",
+                &subject,
             ])
             .output()
             .map_err(|e| Error::Internal(format!("Failed to generate CA cert: {}", e)))?;

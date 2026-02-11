@@ -86,7 +86,10 @@ pub async fn add_favorite(
 ) -> Result<Json<Favorite>> {
     // Verify item exists
     if !request.is_folder {
-        let _info = state.minio.get_object_info(&request.bucket, &request.key).await?;
+        let _info = state
+            .minio
+            .get_object_info(&request.bucket, &request.key)
+            .await?;
     }
 
     let favorite = Favorite {

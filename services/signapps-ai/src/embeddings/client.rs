@@ -61,8 +61,8 @@ impl EmbeddingsClient {
         } else {
             EmbeddingsBackend::Tei
         };
-        let model = std::env::var("EMBEDDINGS_MODEL")
-            .unwrap_or_else(|_| "nomic-embed-text".to_string());
+        let model =
+            std::env::var("EMBEDDINGS_MODEL").unwrap_or_else(|_| "nomic-embed-text".to_string());
 
         Self {
             client: Client::new(),
@@ -100,7 +100,8 @@ impl EmbeddingsClient {
             inputs: texts.to_vec(),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/embed", self.base_url))
             .json(&request)
             .send()
@@ -146,7 +147,8 @@ impl EmbeddingsClient {
             prompt: text.to_string(),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/api/embeddings", self.base_url))
             .json(&request)
             .send()
@@ -179,7 +181,7 @@ impl EmbeddingsClient {
                     .into_iter()
                     .next()
                     .ok_or_else(|| Error::Internal("No embedding returned".to_string()))
-            }
+            },
             EmbeddingsBackend::Ollama => self.embed_single_ollama(text).await,
         }
     }
@@ -191,7 +193,8 @@ impl EmbeddingsClient {
             EmbeddingsBackend::Ollama => format!("{}/api/tags", self.base_url),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .get(&url)
             .send()
             .await

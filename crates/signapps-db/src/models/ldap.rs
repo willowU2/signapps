@@ -53,8 +53,12 @@ impl From<LdapConfig> for LdapConfigResponse {
             server_url: config.server_url,
             bind_dn: config.bind_dn,
             base_dn: config.base_dn,
-            user_filter: config.user_filter.unwrap_or_else(|| "(&(objectClass=user)(sAMAccountName={username}))".to_string()),
-            group_filter: config.group_filter.unwrap_or_else(|| "(objectClass=group)".to_string()),
+            user_filter: config
+                .user_filter
+                .unwrap_or_else(|| "(&(objectClass=user)(sAMAccountName={username}))".to_string()),
+            group_filter: config
+                .group_filter
+                .unwrap_or_else(|| "(objectClass=group)".to_string()),
             admin_groups: config.admin_groups,
             user_groups: config.user_groups,
             use_tls: config.use_tls,

@@ -6,7 +6,7 @@ use tokio::time::Instant;
 use tracing::{debug, error, info, warn};
 
 use signapps_common::{Error, Result};
-use signapps_db::models::{LdapConfig, LdapGroup, LdapTestResult, LdapSyncResult};
+use signapps_db::models::{LdapConfig, LdapGroup, LdapSyncResult, LdapTestResult};
 
 /// LDAP service for Active Directory operations.
 pub struct LdapService;
@@ -22,19 +22,20 @@ impl LdapService {
             .set_starttls(config.use_tls && !config.server_url.starts_with("ldaps://"));
 
         // Connect to LDAP server
-        let (conn, mut ldap) = match LdapConnAsync::with_settings(settings, &config.server_url).await {
-            Ok(result) => result,
-            Err(e) => {
-                error!("Failed to connect to LDAP server: {}", e);
-                return Ok(LdapTestResult {
-                    success: false,
-                    message: format!("Connection failed: {}", e),
-                    connection_time_ms: Some(start.elapsed().as_millis() as u64),
-                    users_found: None,
-                    groups_found: None,
-                });
-            }
-        };
+        let (conn, mut ldap) =
+            match LdapConnAsync::with_settings(settings, &config.server_url).await {
+                Ok(result) => result,
+                Err(e) => {
+                    error!("Failed to connect to LDAP server: {}", e);
+                    return Ok(LdapTestResult {
+                        success: false,
+                        message: format!("Connection failed: {}", e),
+                        connection_time_ms: Some(start.elapsed().as_millis() as u64),
+                        users_found: None,
+                        groups_found: None,
+                    });
+                },
+            };
 
         // Spawn connection handler
         ldap3::drive!(conn);
@@ -53,7 +54,9 @@ impl LdapService {
         }
 
         // Search for users
-        let user_filter = config.user_filter.as_deref()
+        let user_filter = config
+            .user_filter
+            .as_deref()
             .unwrap_or("(&(objectClass=user)(objectCategory=person))");
 
         let users_found = match Self::count_entries(&mut ldap, &config.base_dn, user_filter).await {
@@ -61,19 +64,22 @@ impl LdapService {
             Err(e) => {
                 warn!("Failed to count users: {}", e);
                 None
-            }
+            },
         };
 
         // Search for groups
-        let group_filter = config.group_filter.as_deref()
+        let group_filter = config
+            .group_filter
+            .as_deref()
             .unwrap_or("(objectClass=group)");
 
-        let groups_found = match Self::count_entries(&mut ldap, &config.base_dn, group_filter).await {
+        let groups_found = match Self::count_entries(&mut ldap, &config.base_dn, group_filter).await
+        {
             Ok(count) => Some(count),
             Err(e) => {
                 warn!("Failed to count groups: {}", e);
                 None
-            }
+            },
         };
 
         let _ = ldap.unbind().await;
@@ -119,20 +125,23 @@ impl LdapService {
             .map_err(|e| Error::Internal(format!("LDAP service bind failed: {}", e)))?;
 
         // Search for user DN
-        let user_filter = config.user_filter.as_deref()
+        let user_filter = config
+            .user_filter
+            .as_deref()
             .unwrap_or("(&(objectClass=user)(sAMAccountName={username}))")
             .replace("{username}", username);
 
-        let (rs, _) = ldap.search(
-            &config.base_dn,
-            Scope::Subtree,
-            &user_filter,
-            vec!["dn", "sAMAccountName", "displayName", "mail", "memberOf"],
-        )
-        .await
-        .map_err(|e| Error::Internal(format!("LDAP search failed: {}", e)))?
-        .success()
-        .map_err(|e| Error::Internal(format!("LDAP search error: {}", e)))?;
+        let (rs, _) = ldap
+            .search(
+                &config.base_dn,
+                Scope::Subtree,
+                &user_filter,
+                vec!["dn", "sAMAccountName", "displayName", "mail", "memberOf"],
+            )
+            .await
+            .map_err(|e| Error::Internal(format!("LDAP search failed: {}", e)))?
+            .success()
+            .map_err(|e| Error::Internal(format!("LDAP search error: {}", e)))?;
 
         if rs.is_empty() {
             debug!("User {} not found in LDAP", username);
@@ -144,15 +153,13 @@ impl LdapService {
         let user_dn = entry.dn.clone();
 
         // Extract user info
-        let display_name = entry.attrs.get("displayName")
+        let display_name = entry
+            .attrs
+            .get("displayName")
             .and_then(|v| v.first())
             .cloned();
-        let email = entry.attrs.get("mail")
-            .and_then(|v| v.first())
-            .cloned();
-        let member_of: Vec<String> = entry.attrs.get("memberOf")
-            .cloned()
-            .unwrap_or_default();
+        let email = entry.attrs.get("mail").and_then(|v| v.first()).cloned();
+        let member_of: Vec<String> = entry.attrs.get("memberOf").cloned().unwrap_or_default();
 
         // Unbind service account and try user bind
         let _ = ldap.unbind().await;
@@ -176,7 +183,9 @@ impl LdapService {
                     info!("LDAP authentication successful for user: {}", username);
 
                     // Determine role based on group membership
-                    let is_admin = config.admin_groups.iter()
+                    let is_admin = config
+                        .admin_groups
+                        .iter()
                         .any(|g| member_of.iter().any(|m| m.contains(g)));
 
                     Ok(Some(LdapUserInfo {
@@ -191,12 +200,12 @@ impl LdapService {
                     debug!("LDAP bind failed for user {}: rc={}", username, result.rc);
                     Ok(None)
                 }
-            }
+            },
             Err(e) => {
                 let _ = ldap2.unbind().await;
                 debug!("LDAP authentication failed for {}: {}", username, e);
                 Ok(None)
-            }
+            },
         }
     }
 
@@ -216,33 +225,43 @@ impl LdapService {
             .await
             .map_err(|e| Error::Internal(format!("LDAP bind failed: {}", e)))?;
 
-        let group_filter = config.group_filter.as_deref()
+        let group_filter = config
+            .group_filter
+            .as_deref()
             .unwrap_or("(objectClass=group)");
 
-        let (rs, _) = ldap.search(
-            &config.base_dn,
-            Scope::Subtree,
-            group_filter,
-            vec!["dn", "cn", "description", "member"],
-        )
-        .await
-        .map_err(|e| Error::Internal(format!("LDAP search failed: {}", e)))?
-        .success()
-        .map_err(|e| Error::Internal(format!("LDAP search error: {}", e)))?;
+        let (rs, _) = ldap
+            .search(
+                &config.base_dn,
+                Scope::Subtree,
+                group_filter,
+                vec!["dn", "cn", "description", "member"],
+            )
+            .await
+            .map_err(|e| Error::Internal(format!("LDAP search failed: {}", e)))?
+            .success()
+            .map_err(|e| Error::Internal(format!("LDAP search error: {}", e)))?;
 
         let _ = ldap.unbind().await;
 
-        let groups: Vec<LdapGroup> = rs.into_iter()
+        let groups: Vec<LdapGroup> = rs
+            .into_iter()
             .map(|entry| {
                 let entry = SearchEntry::construct(entry);
-                let name = entry.attrs.get("cn")
+                let name = entry
+                    .attrs
+                    .get("cn")
                     .and_then(|v| v.first())
                     .cloned()
                     .unwrap_or_else(|| "Unknown".to_string());
-                let description = entry.attrs.get("description")
+                let description = entry
+                    .attrs
+                    .get("description")
                     .and_then(|v| v.first())
                     .cloned();
-                let member_count = entry.attrs.get("member")
+                let member_count = entry
+                    .attrs
+                    .get("member")
                     .map(|v| v.len() as i32)
                     .unwrap_or(0);
 
@@ -278,19 +297,29 @@ impl LdapService {
             .await
             .map_err(|e| Error::Internal(format!("LDAP bind failed: {}", e)))?;
 
-        let user_filter = config.user_filter.as_deref()
+        let user_filter = config
+            .user_filter
+            .as_deref()
             .unwrap_or("(&(objectClass=user)(objectCategory=person))");
 
-        let (rs, _) = ldap.search(
-            &config.base_dn,
-            Scope::Subtree,
-            user_filter,
-            vec!["dn", "sAMAccountName", "displayName", "mail", "memberOf", "userAccountControl"],
-        )
-        .await
-        .map_err(|e| Error::Internal(format!("LDAP search failed: {}", e)))?
-        .success()
-        .map_err(|e| Error::Internal(format!("LDAP search error: {}", e)))?;
+        let (rs, _) = ldap
+            .search(
+                &config.base_dn,
+                Scope::Subtree,
+                user_filter,
+                vec![
+                    "dn",
+                    "sAMAccountName",
+                    "displayName",
+                    "mail",
+                    "memberOf",
+                    "userAccountControl",
+                ],
+            )
+            .await
+            .map_err(|e| Error::Internal(format!("LDAP search failed: {}", e)))?
+            .success()
+            .map_err(|e| Error::Internal(format!("LDAP search error: {}", e)))?;
 
         let _ = ldap.unbind().await;
 
@@ -305,20 +334,20 @@ impl LdapService {
                 None => {
                     errors.push(format!("Entry {} missing sAMAccountName", entry.dn));
                     continue;
-                }
+                },
             };
 
-            let display_name = entry.attrs.get("displayName")
+            let display_name = entry
+                .attrs
+                .get("displayName")
                 .and_then(|v| v.first())
                 .cloned();
-            let email = entry.attrs.get("mail")
-                .and_then(|v| v.first())
-                .cloned();
-            let member_of: Vec<String> = entry.attrs.get("memberOf")
-                .cloned()
-                .unwrap_or_default();
+            let email = entry.attrs.get("mail").and_then(|v| v.first()).cloned();
+            let member_of: Vec<String> = entry.attrs.get("memberOf").cloned().unwrap_or_default();
 
-            let is_admin = config.admin_groups.iter()
+            let is_admin = config
+                .admin_groups
+                .iter()
                 .any(|g| member_of.iter().any(|m| m.contains(g)));
 
             users.push(LdapUserInfo {
@@ -334,7 +363,7 @@ impl LdapService {
         info!("Synced {} users from LDAP", users.len());
 
         let result = LdapSyncResult {
-            users_created: 0,  // Caller will update these
+            users_created: 0, // Caller will update these
             users_updated: 0,
             users_disabled: 0,
             groups_synced: 0,
@@ -346,7 +375,8 @@ impl LdapService {
 
     /// Count entries matching a filter.
     async fn count_entries(ldap: &mut Ldap, base_dn: &str, filter: &str) -> Result<i32> {
-        let (rs, _) = ldap.search(base_dn, Scope::Subtree, filter, vec!["dn"])
+        let (rs, _) = ldap
+            .search(base_dn, Scope::Subtree, filter, vec!["dn"])
             .await
             .map_err(|e| Error::Internal(format!("LDAP search failed: {}", e)))?
             .success()

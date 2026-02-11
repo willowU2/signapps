@@ -96,10 +96,7 @@ pub async fn list(
                 docker_id: c.docker_id,
                 name: c.name,
                 image: c.image,
-                status: docker_info
-                    .as_ref()
-                    .map(|d| d.status.clone())
-                    .or(c.status),
+                status: docker_info.as_ref().map(|d| d.status.clone()).or(c.status),
                 owner_id: c.owner_id,
                 auto_update: c.auto_update,
                 created_at: c.created_at.to_rfc3339(),
@@ -185,11 +182,18 @@ pub async fn create(
         name: payload.name.clone(),
         image: payload.image.clone(),
         config: serde_json::to_value(&payload).ok(),
-        labels: payload.labels.as_ref().map(|l| serde_json::to_value(l).unwrap()),
+        labels: payload
+            .labels
+            .as_ref()
+            .map(|l| serde_json::to_value(l).unwrap()),
         auto_update: payload.auto_update,
     };
 
-    let owner_id = if claims.role >= 2 { None } else { Some(claims.sub) };
+    let owner_id = if claims.role >= 2 {
+        None
+    } else {
+        Some(claims.sub)
+    };
     let container = repo.create(db_container, owner_id).await?;
 
     // Create Docker container
@@ -331,7 +335,10 @@ pub async fn delete(
     if let Some(docker_id) = &container.docker_id {
         // Try to stop first, ignore errors
         let _ = state.docker.stop_container(docker_id, Some(5)).await;
-        state.docker.remove_container(docker_id, true, false).await?;
+        state
+            .docker
+            .remove_container(docker_id, true, false)
+            .await?;
     }
 
     // Delete from database
@@ -402,11 +409,7 @@ pub async fn my_containers(
 
     let containers = repo.list_by_owner(claims.sub).await?;
 
-    let docker_containers = state
-        .docker
-        .list_containers(true)
-        .await
-        .unwrap_or_default();
+    let docker_containers = state.docker.list_containers(true).await.unwrap_or_default();
 
     let docker_map: std::collections::HashMap<_, _> = docker_containers
         .into_iter()
@@ -426,10 +429,7 @@ pub async fn my_containers(
                 docker_id: c.docker_id,
                 name: c.name,
                 image: c.image,
-                status: docker_info
-                    .as_ref()
-                    .map(|d| d.status.clone())
-                    .or(c.status),
+                status: docker_info.as_ref().map(|d| d.status.clone()).or(c.status),
                 owner_id: c.owner_id,
                 auto_update: c.auto_update,
                 created_at: c.created_at.to_rfc3339(),

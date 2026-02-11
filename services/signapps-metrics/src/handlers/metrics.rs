@@ -8,38 +8,32 @@ use axum::{
 };
 use serde::Serialize;
 
+use crate::metrics::collector::{
+    CpuMetrics, DiskMetrics, MemoryMetrics, NetworkMetrics, SystemMetrics,
+};
 use crate::AppState;
-use crate::metrics::collector::{CpuMetrics, DiskMetrics, MemoryMetrics, NetworkMetrics, SystemMetrics};
 use signapps_common::Result;
 
 /// Get all system metrics.
-pub async fn get_all_metrics(
-    State(state): State<AppState>,
-) -> Result<Json<SystemMetrics>> {
+pub async fn get_all_metrics(State(state): State<AppState>) -> Result<Json<SystemMetrics>> {
     let metrics = state.collector.get_all_metrics().await;
     Ok(Json(metrics))
 }
 
 /// Get CPU metrics.
-pub async fn get_cpu_metrics(
-    State(state): State<AppState>,
-) -> Result<Json<CpuMetrics>> {
+pub async fn get_cpu_metrics(State(state): State<AppState>) -> Result<Json<CpuMetrics>> {
     let metrics = state.collector.get_cpu_metrics().await;
     Ok(Json(metrics))
 }
 
 /// Get memory metrics.
-pub async fn get_memory_metrics(
-    State(state): State<AppState>,
-) -> Result<Json<MemoryMetrics>> {
+pub async fn get_memory_metrics(State(state): State<AppState>) -> Result<Json<MemoryMetrics>> {
     let metrics = state.collector.get_memory_metrics().await;
     Ok(Json(metrics))
 }
 
 /// Get disk metrics.
-pub async fn get_disk_metrics(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<DiskMetrics>>> {
+pub async fn get_disk_metrics(State(state): State<AppState>) -> Result<Json<Vec<DiskMetrics>>> {
     let metrics = state.collector.get_disk_metrics().await;
     Ok(Json(metrics))
 }
@@ -53,9 +47,7 @@ pub async fn get_network_metrics(
 }
 
 /// Prometheus metrics endpoint.
-pub async fn prometheus_metrics(
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+pub async fn prometheus_metrics(State(state): State<AppState>) -> impl IntoResponse {
     // Update metrics before export
     state.exporter.update().await;
 
@@ -63,15 +55,16 @@ pub async fn prometheus_metrics(
 
     (
         StatusCode::OK,
-        [(header::CONTENT_TYPE, "text/plain; version=0.0.4; charset=utf-8")],
+        [(
+            header::CONTENT_TYPE,
+            "text/plain; version=0.0.4; charset=utf-8",
+        )],
         body,
     )
 }
 
 /// Health check.
-pub async fn health_check(
-    State(state): State<AppState>,
-) -> Result<Json<HealthResponse>> {
+pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthResponse>> {
     let metrics = state.collector.get_all_metrics().await;
 
     // Determine health status
@@ -82,14 +75,12 @@ pub async fn health_check(
     };
 
     // Check disk space
-    let critical_disk = metrics.disks.iter()
+    let critical_disk = metrics
+        .disks
+        .iter()
         .any(|d| d.usage_percent > 90.0 && !d.is_removable);
 
-    let final_status = if critical_disk {
-        "degraded"
-    } else {
-        status
-    };
+    let final_status = if critical_disk { "degraded" } else { status };
 
     Ok(Json(HealthResponse {
         status: final_status.to_string(),
@@ -109,28 +100,26 @@ pub struct HealthResponse {
 }
 
 /// Summary metrics for dashboard.
-pub async fn get_summary(
-    State(state): State<AppState>,
-) -> Result<Json<SummaryMetrics>> {
+pub async fn get_summary(State(state): State<AppState>) -> Result<Json<SummaryMetrics>> {
     let metrics = state.collector.get_all_metrics().await;
 
-    let total_disk_bytes: u64 = metrics.disks.iter()
+    let total_disk_bytes: u64 = metrics
+        .disks
+        .iter()
         .filter(|d| !d.is_removable)
         .map(|d| d.total_bytes)
         .sum();
 
-    let used_disk_bytes: u64 = metrics.disks.iter()
+    let used_disk_bytes: u64 = metrics
+        .disks
+        .iter()
         .filter(|d| !d.is_removable)
         .map(|d| d.used_bytes)
         .sum();
 
-    let total_network_rx: u64 = metrics.networks.iter()
-        .map(|n| n.received_bytes)
-        .sum();
+    let total_network_rx: u64 = metrics.networks.iter().map(|n| n.received_bytes).sum();
 
-    let total_network_tx: u64 = metrics.networks.iter()
-        .map(|n| n.transmitted_bytes)
-        .sum();
+    let total_network_tx: u64 = metrics.networks.iter().map(|n| n.transmitted_bytes).sum();
 
     Ok(Json(SummaryMetrics {
         hostname: metrics.hostname,

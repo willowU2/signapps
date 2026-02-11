@@ -4,8 +4,8 @@ use axum::{extract::State, Json};
 use serde::Serialize;
 use signapps_common::Result;
 
-use crate::AppState;
 use crate::llm::LlmProviderType;
+use crate::AppState;
 
 /// Provider info for frontend.
 #[derive(Debug, Serialize)]
@@ -37,7 +37,8 @@ pub async fn list_providers(State(_state): State<AppState>) -> Result<Json<Provi
             name: "Ollama (Local)".to_string(),
             provider_type: LlmProviderType::Ollama,
             enabled: !url.is_empty(),
-            default_model: std::env::var("OLLAMA_MODEL").unwrap_or_else(|_| "llama3.2:3b".to_string()),
+            default_model: std::env::var("OLLAMA_MODEL")
+                .unwrap_or_else(|_| "llama3.2:3b".to_string()),
             is_local: true,
         });
     }
@@ -49,7 +50,8 @@ pub async fn list_providers(State(_state): State<AppState>) -> Result<Json<Provi
             name: "vLLM (Local GPU)".to_string(),
             provider_type: LlmProviderType::Vllm,
             enabled: !url.is_empty(),
-            default_model: std::env::var("VLLM_MODEL").unwrap_or_else(|_| "meta-llama/Llama-3.2-3B-Instruct".to_string()),
+            default_model: std::env::var("VLLM_MODEL")
+                .unwrap_or_else(|_| "meta-llama/Llama-3.2-3B-Instruct".to_string()),
             is_local: true,
         });
     }
@@ -61,7 +63,8 @@ pub async fn list_providers(State(_state): State<AppState>) -> Result<Json<Provi
             name: "OpenAI".to_string(),
             provider_type: LlmProviderType::OpenAI,
             enabled: !key.is_empty(),
-            default_model: std::env::var("OPENAI_MODEL").unwrap_or_else(|_| "gpt-4o-mini".to_string()),
+            default_model: std::env::var("OPENAI_MODEL")
+                .unwrap_or_else(|_| "gpt-4o-mini".to_string()),
             is_local: false,
         });
     }
@@ -73,7 +76,8 @@ pub async fn list_providers(State(_state): State<AppState>) -> Result<Json<Provi
             name: "Anthropic Claude".to_string(),
             provider_type: LlmProviderType::Anthropic,
             enabled: !key.is_empty(),
-            default_model: std::env::var("ANTHROPIC_MODEL").unwrap_or_else(|_| "claude-3-5-sonnet-20241022".to_string()),
+            default_model: std::env::var("ANTHROPIC_MODEL")
+                .unwrap_or_else(|_| "claude-3-5-sonnet-20241022".to_string()),
             is_local: false,
         });
     }

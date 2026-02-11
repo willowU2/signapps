@@ -50,10 +50,7 @@ pub async fn pull(
 
 /// Delete a Docker image.
 #[tracing::instrument(skip(state))]
-pub async fn delete(
-    State(state): State<AppState>,
-    Path(id): Path<String>,
-) -> Result<StatusCode> {
+pub async fn delete(State(state): State<AppState>, Path(id): Path<String>) -> Result<StatusCode> {
     state.docker.remove_image(&id, false).await?;
     Ok(StatusCode::NO_CONTENT)
 }

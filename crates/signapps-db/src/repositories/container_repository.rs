@@ -1,6 +1,6 @@
 //! Container repository for database operations.
 
-use crate::models::{Container, CreateContainer, UserQuota, UpdateQuota};
+use crate::models::{Container, CreateContainer, UpdateQuota, UserQuota};
 use crate::DatabasePool;
 use signapps_common::Result;
 use uuid::Uuid;
@@ -17,24 +17,22 @@ impl<'a> ContainerRepository<'a> {
 
     /// Find container by ID.
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Container>> {
-        let container = sqlx::query_as::<_, Container>(
-            "SELECT * FROM containers.managed WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let container =
+            sqlx::query_as::<_, Container>("SELECT * FROM containers.managed WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.pool.inner())
+                .await?;
 
         Ok(container)
     }
 
     /// Find container by Docker ID.
     pub async fn find_by_docker_id(&self, docker_id: &str) -> Result<Option<Container>> {
-        let container = sqlx::query_as::<_, Container>(
-            "SELECT * FROM containers.managed WHERE docker_id = $1"
-        )
-        .bind(docker_id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let container =
+            sqlx::query_as::<_, Container>("SELECT * FROM containers.managed WHERE docker_id = $1")
+                .bind(docker_id)
+                .fetch_optional(self.pool.inner())
+                .await?;
 
         Ok(container)
     }
@@ -42,7 +40,7 @@ impl<'a> ContainerRepository<'a> {
     /// List all containers.
     pub async fn list(&self, limit: i64, offset: i64) -> Result<Vec<Container>> {
         let containers = sqlx::query_as::<_, Container>(
-            "SELECT * FROM containers.managed ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT * FROM containers.managed ORDER BY created_at DESC LIMIT $1 OFFSET $2",
         )
         .bind(limit)
         .bind(offset)
@@ -55,7 +53,7 @@ impl<'a> ContainerRepository<'a> {
     /// List containers by owner.
     pub async fn list_by_owner(&self, owner_id: Uuid) -> Result<Vec<Container>> {
         let containers = sqlx::query_as::<_, Container>(
-            "SELECT * FROM containers.managed WHERE owner_id = $1 ORDER BY created_at DESC"
+            "SELECT * FROM containers.managed WHERE owner_id = $1 ORDER BY created_at DESC",
         )
         .bind(owner_id)
         .fetch_all(self.pool.inner())
@@ -65,13 +63,17 @@ impl<'a> ContainerRepository<'a> {
     }
 
     /// Create a new container record.
-    pub async fn create(&self, container: CreateContainer, owner_id: Option<Uuid>) -> Result<Container> {
+    pub async fn create(
+        &self,
+        container: CreateContainer,
+        owner_id: Option<Uuid>,
+    ) -> Result<Container> {
         let created = sqlx::query_as::<_, Container>(
             r#"
             INSERT INTO containers.managed (name, image, config, labels, auto_update, owner_id)
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
-            "#
+            "#,
         )
         .bind(&container.name)
         .bind(&container.image)
@@ -92,7 +94,7 @@ impl<'a> ContainerRepository<'a> {
             UPDATE containers.managed
             SET docker_id = $2, status = $3, updated_at = NOW()
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(id)
         .bind(docker_id)
@@ -105,13 +107,11 @@ impl<'a> ContainerRepository<'a> {
 
     /// Update container status.
     pub async fn update_status(&self, id: Uuid, status: &str) -> Result<()> {
-        sqlx::query(
-            "UPDATE containers.managed SET status = $2, updated_at = NOW() WHERE id = $1"
-        )
-        .bind(id)
-        .bind(status)
-        .execute(self.pool.inner())
-        .await?;
+        sqlx::query("UPDATE containers.managed SET status = $2, updated_at = NOW() WHERE id = $1")
+            .bind(id)
+            .bind(status)
+            .execute(self.pool.inner())
+            .await?;
 
         Ok(())
     }
@@ -131,7 +131,7 @@ impl<'a> ContainerRepository<'a> {
     /// Get user quota.
     pub async fn get_quota(&self, user_id: Uuid) -> Result<Option<UserQuota>> {
         let quota = sqlx::query_as::<_, UserQuota>(
-            "SELECT * FROM containers.user_quotas WHERE user_id = $1"
+            "SELECT * FROM containers.user_quotas WHERE user_id = $1",
         )
         .bind(user_id)
         .fetch_optional(self.pool.inner())
@@ -167,7 +167,14 @@ impl<'a> ContainerRepository<'a> {
     }
 
     /// Increment current usage.
-    pub async fn increment_usage(&self, user_id: Uuid, containers: i32, cpu: f64, memory: i32, storage: i32) -> Result<()> {
+    pub async fn increment_usage(
+        &self,
+        user_id: Uuid,
+        containers: i32,
+        cpu: f64,
+        memory: i32,
+        storage: i32,
+    ) -> Result<()> {
         sqlx::query(
             r#"
             UPDATE containers.user_quotas SET
@@ -177,7 +184,7 @@ impl<'a> ContainerRepository<'a> {
                 current_storage_gb = current_storage_gb + $5,
                 updated_at = NOW()
             WHERE user_id = $1
-            "#
+            "#,
         )
         .bind(user_id)
         .bind(containers)

@@ -11,39 +11,33 @@ pub struct UserRepository;
 impl UserRepository {
     /// Find user by ID.
     pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Option<User>> {
-        let user = sqlx::query_as::<_, User>(
-            "SELECT * FROM identity.users WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        let user = sqlx::query_as::<_, User>("SELECT * FROM identity.users WHERE id = $1")
+            .bind(id)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(user)
     }
 
     /// Find user by username.
     pub async fn find_by_username(pool: &PgPool, username: &str) -> Result<Option<User>> {
-        let user = sqlx::query_as::<_, User>(
-            "SELECT * FROM identity.users WHERE username = $1"
-        )
-        .bind(username)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        let user = sqlx::query_as::<_, User>("SELECT * FROM identity.users WHERE username = $1")
+            .bind(username)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(user)
     }
 
     /// Find user by email.
     pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>> {
-        let user = sqlx::query_as::<_, User>(
-            "SELECT * FROM identity.users WHERE email = $1"
-        )
-        .bind(email)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        let user = sqlx::query_as::<_, User>("SELECT * FROM identity.users WHERE email = $1")
+            .bind(email)
+            .fetch_optional(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(user)
     }
@@ -51,7 +45,7 @@ impl UserRepository {
     /// List all users with pagination.
     pub async fn list(pool: &PgPool, limit: i64, offset: i64) -> Result<Vec<User>> {
         let users = sqlx::query_as::<_, User>(
-            "SELECT * FROM identity.users ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT * FROM identity.users ORDER BY created_at DESC LIMIT $1 OFFSET $2",
         )
         .bind(limit)
         .bind(offset)
@@ -82,7 +76,7 @@ impl UserRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
-            "#
+            "#,
         )
         .bind(&user.username)
         .bind(&user.email)
@@ -100,7 +94,11 @@ impl UserRepository {
     }
 
     /// Create a new user with password hash.
-    pub async fn create_with_hash(pool: &PgPool, user: CreateUser, password_hash: &str) -> Result<User> {
+    pub async fn create_with_hash(
+        pool: &PgPool,
+        user: CreateUser,
+        password_hash: &str,
+    ) -> Result<User> {
         let created = sqlx::query_as::<_, User>(
             r#"
             INSERT INTO identity.users (
@@ -109,7 +107,7 @@ impl UserRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
-            "#
+            "#,
         )
         .bind(&user.username)
         .bind(&user.email)
@@ -139,7 +137,7 @@ impl UserRepository {
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(&update.email)
@@ -156,12 +154,14 @@ impl UserRepository {
 
     /// Update password.
     pub async fn update_password(pool: &PgPool, id: Uuid, password_hash: &str) -> Result<()> {
-        sqlx::query("UPDATE identity.users SET password_hash = $2, updated_at = NOW() WHERE id = $1")
-            .bind(id)
-            .bind(password_hash)
-            .execute(pool)
-            .await
-            .map_err(|e| Error::Database(e.to_string()))?;
+        sqlx::query(
+            "UPDATE identity.users SET password_hash = $2, updated_at = NOW() WHERE id = $1",
+        )
+        .bind(id)
+        .bind(password_hash)
+        .execute(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(())
     }
@@ -190,14 +190,12 @@ impl UserRepository {
 
     /// Enable MFA for user.
     pub async fn enable_mfa(pool: &PgPool, id: Uuid, secret: &str) -> Result<()> {
-        sqlx::query(
-            "UPDATE identity.users SET mfa_enabled = TRUE, mfa_secret = $2 WHERE id = $1"
-        )
-        .bind(id)
-        .bind(secret)
-        .execute(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        sqlx::query("UPDATE identity.users SET mfa_enabled = TRUE, mfa_secret = $2 WHERE id = $1")
+            .bind(id)
+            .bind(secret)
+            .execute(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(())
     }
@@ -205,7 +203,7 @@ impl UserRepository {
     /// Disable MFA for user.
     pub async fn disable_mfa(pool: &PgPool, id: Uuid) -> Result<()> {
         sqlx::query(
-            "UPDATE identity.users SET mfa_enabled = FALSE, mfa_secret = NULL WHERE id = $1"
+            "UPDATE identity.users SET mfa_enabled = FALSE, mfa_secret = NULL WHERE id = $1",
         )
         .bind(id)
         .execute(pool)
@@ -218,7 +216,7 @@ impl UserRepository {
     /// List users by auth provider.
     pub async fn list_by_provider(pool: &PgPool, provider: &str) -> Result<Vec<User>> {
         let users = sqlx::query_as::<_, User>(
-            "SELECT * FROM identity.users WHERE auth_provider = $1 ORDER BY username"
+            "SELECT * FROM identity.users WHERE auth_provider = $1 ORDER BY username",
         )
         .bind(provider)
         .fetch_all(pool)

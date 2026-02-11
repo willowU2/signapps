@@ -141,18 +141,28 @@ pub async fn create(
         .map_err(|e| Error::Validation(e.to_string()))?;
 
     // Check username uniqueness
-    if UserRepository::find_by_username(&state.pool, &payload.username).await?.is_some() {
+    if UserRepository::find_by_username(&state.pool, &payload.username)
+        .await?
+        .is_some()
+    {
         return Err(Error::AlreadyExists("Username already taken".to_string()));
     }
 
     // Check email uniqueness
     if let Some(ref email) = payload.email {
-        if UserRepository::find_by_email(&state.pool, email).await?.is_some() {
+        if UserRepository::find_by_email(&state.pool, email)
+            .await?
+            .is_some()
+        {
             return Err(Error::AlreadyExists("Email already registered".to_string()));
         }
     }
 
-    let auth_provider = payload.auth_provider.as_deref().unwrap_or("local").to_string();
+    let auth_provider = payload
+        .auth_provider
+        .as_deref()
+        .unwrap_or("local")
+        .to_string();
 
     let create_user = CreateUser {
         username: payload.username.to_lowercase(),
@@ -225,10 +235,7 @@ pub async fn update(
 
 /// Delete user (admin only).
 #[tracing::instrument(skip(state))]
-pub async fn delete(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<StatusCode> {
+pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     // Verify user exists
     let _existing = UserRepository::find_by_id(&state.pool, id)
         .await?
@@ -280,17 +287,13 @@ pub async fn update_me(
 
     // Handle password change
     if let Some(ref new_password) = payload.new_password {
-        let current_password = payload
-            .current_password
-            .as_ref()
-            .ok_or(Error::BadRequest(
-                "Current password required to change password".to_string(),
-            ))?;
+        let current_password = payload.current_password.as_ref().ok_or(Error::BadRequest(
+            "Current password required to change password".to_string(),
+        ))?;
 
-        let password_hash = user
-            .password_hash
-            .as_ref()
-            .ok_or(Error::BadRequest("Cannot change password for LDAP users".to_string()))?;
+        let password_hash = user.password_hash.as_ref().ok_or(Error::BadRequest(
+            "Cannot change password for LDAP users".to_string(),
+        ))?;
 
         if !crate::auth::verify_password(current_password, password_hash)? {
             return Err(Error::InvalidCredentials);

@@ -135,7 +135,7 @@ impl DnsServer {
             Err(e) => {
                 tracing::debug!("Failed to parse DNS query from {}: {}", src, e);
                 return Ok(());
-            }
+            },
         };
 
         tracing::debug!(
@@ -158,7 +158,7 @@ impl DnsServer {
                 Err(e) => {
                     tracing::warn!("DNS resolution failed for {}: {}", query.name, e);
                     DnsResponse::servfail(&query)
-                }
+                },
             }
         };
 
@@ -261,7 +261,9 @@ impl DnsQuery {
 
         loop {
             if offset >= packet.len() {
-                return Err(Error::Validation("DNS name extends beyond packet".to_string()));
+                return Err(Error::Validation(
+                    "DNS name extends beyond packet".to_string(),
+                ));
             }
 
             let len = packet[offset] as usize;
@@ -286,7 +288,9 @@ impl DnsQuery {
             }
 
             if offset + 1 + len > packet.len() {
-                return Err(Error::Validation("DNS label extends beyond packet".to_string()));
+                return Err(Error::Validation(
+                    "DNS label extends beyond packet".to_string(),
+                ));
             }
 
             let label = String::from_utf8_lossy(&packet[offset + 1..offset + 1 + len]).to_string();
@@ -389,23 +393,23 @@ impl DnsResponse {
                         data.extend_from_slice(&4u16.to_be_bytes()); // RDLENGTH
                         data.extend_from_slice(&ip.octets());
                     }
-                }
+                },
                 record_types::AAAA => {
                     if let Ok(ip) = value.parse::<std::net::Ipv6Addr>() {
                         data.extend_from_slice(&16u16.to_be_bytes()); // RDLENGTH
                         data.extend_from_slice(&ip.octets());
                     }
-                }
+                },
                 record_types::TXT => {
                     let txt_bytes = value.as_bytes();
                     let len = txt_bytes.len().min(255);
                     data.extend_from_slice(&((len + 1) as u16).to_be_bytes()); // RDLENGTH
                     data.push(len as u8);
                     data.extend_from_slice(&txt_bytes[..len]);
-                }
+                },
                 _ => {
                     // For other types, skip
-                }
+                },
             }
         }
 
@@ -493,8 +497,8 @@ mod tests {
             0x00, 0x00, // NSCOUNT
             0x00, 0x00, // ARCOUNT
             // Question: example.com
-            0x07, b'e', b'x', b'a', b'm', b'p', b'l', b'e', 0x03, b'c', b'o', b'm', 0x00,
-            0x00, 0x01, // QTYPE = A
+            0x07, b'e', b'x', b'a', b'm', b'p', b'l', b'e', 0x03, b'c', b'o', b'm', 0x00, 0x00,
+            0x01, // QTYPE = A
             0x00, 0x01, // QCLASS = IN
         ];
 

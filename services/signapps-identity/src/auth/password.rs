@@ -25,7 +25,9 @@ pub fn verify_password(password: &str, hash: &str) -> Result<bool> {
 
     let argon2 = Argon2::default();
 
-    Ok(argon2.verify_password(password.as_bytes(), &parsed_hash).is_ok())
+    Ok(argon2
+        .verify_password(password.as_bytes(), &parsed_hash)
+        .is_ok())
 }
 
 #[cfg(test)]

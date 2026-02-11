@@ -11,14 +11,12 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::AppState;
 use crate::tunnel::{CreateTunnel, Tunnel, TunnelStatus, UpdateTunnel};
+use crate::AppState;
 use signapps_common::Result;
 
 /// List all configured tunnels.
-pub async fn list_tunnels(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<Tunnel>>> {
+pub async fn list_tunnels(State(state): State<AppState>) -> Result<Json<Vec<Tunnel>>> {
     let tunnels = state.tunnel_client.list_tunnels().await;
     Ok(Json(tunnels))
 }
@@ -28,7 +26,10 @@ pub async fn get_tunnel(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Tunnel>> {
-    let tunnel = state.tunnel_client.get_tunnel(id).await
+    let tunnel = state
+        .tunnel_client
+        .get_tunnel(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Tunnel {}", id)))?;
     Ok(Json(tunnel))
 }
@@ -39,7 +40,10 @@ pub async fn create_tunnel(
     Json(request): Json<CreateTunnel>,
 ) -> Result<(StatusCode, Json<Tunnel>)> {
     // Validate that the relay exists
-    let relay = state.tunnel_client.get_relay(request.relay_id).await
+    let relay = state
+        .tunnel_client
+        .get_relay(request.relay_id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Relay {}", request.relay_id)))?;
 
     // Create the tunnel
@@ -80,7 +84,10 @@ pub async fn update_tunnel(
     Path(id): Path<Uuid>,
     Json(request): Json<UpdateTunnel>,
 ) -> Result<Json<Tunnel>> {
-    let mut tunnel = state.tunnel_client.get_tunnel(id).await
+    let mut tunnel = state
+        .tunnel_client
+        .get_tunnel(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Tunnel {}", id)))?;
 
     // Apply updates
@@ -107,7 +114,10 @@ pub async fn delete_tunnel(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
     // Check if tunnel exists
-    let _ = state.tunnel_client.get_tunnel(id).await
+    let _ = state
+        .tunnel_client
+        .get_tunnel(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Tunnel {}", id)))?;
 
     // Remove the tunnel
@@ -123,7 +133,10 @@ pub async fn get_tunnel_status(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<TunnelStatusResponse>> {
-    let tunnel = state.tunnel_client.get_tunnel(id).await
+    let tunnel = state
+        .tunnel_client
+        .get_tunnel(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Tunnel {}", id)))?;
 
     Ok(Json(TunnelStatusResponse {
@@ -141,13 +154,20 @@ pub async fn reconnect_tunnel(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ReconnectResponse>> {
     // Verify tunnel exists
-    let tunnel = state.tunnel_client.get_tunnel(id).await
+    let tunnel = state
+        .tunnel_client
+        .get_tunnel(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Tunnel {}", id)))?;
 
     // Trigger reconnection
     state.tunnel_client.reconnect_tunnel(id).await?;
 
-    tracing::info!("Triggered reconnection for tunnel '{}' ({})", tunnel.name, id);
+    tracing::info!(
+        "Triggered reconnection for tunnel '{}' ({})",
+        tunnel.name,
+        id
+    );
 
     Ok(Json(ReconnectResponse {
         message: format!("Reconnection initiated for tunnel '{}'", tunnel.name),
@@ -197,22 +217,29 @@ pub async fn bulk_tunnel_action(
                     tunnel.updated_at = chrono::Utc::now();
                     state.tunnel_client.add_tunnel(tunnel).await
                 } else {
-                    Err(signapps_common::Error::NotFound(format!("Tunnel {}", tunnel_id)))
+                    Err(signapps_common::Error::NotFound(format!(
+                        "Tunnel {}",
+                        tunnel_id
+                    )))
                 }
-            }
+            },
             "disable" => {
                 if let Some(mut tunnel) = state.tunnel_client.get_tunnel(tunnel_id).await {
                     tunnel.enabled = false;
                     tunnel.updated_at = chrono::Utc::now();
                     state.tunnel_client.add_tunnel(tunnel).await
                 } else {
-                    Err(signapps_common::Error::NotFound(format!("Tunnel {}", tunnel_id)))
+                    Err(signapps_common::Error::NotFound(format!(
+                        "Tunnel {}",
+                        tunnel_id
+                    )))
                 }
-            }
-            "reconnect" => {
-                state.tunnel_client.reconnect_tunnel(tunnel_id).await
-            }
-            _ => Err(signapps_common::Error::Validation(format!("Unknown action: {}", request.action))),
+            },
+            "reconnect" => state.tunnel_client.reconnect_tunnel(tunnel_id).await,
+            _ => Err(signapps_common::Error::Validation(format!(
+                "Unknown action: {}",
+                request.action
+            ))),
         };
 
         match result {

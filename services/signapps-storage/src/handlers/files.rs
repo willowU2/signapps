@@ -69,7 +69,10 @@ pub async fn download(
     let filename = key.split('/').next_back().unwrap_or(&key);
 
     // Collect body bytes from ByteStream
-    let bytes = object.body.collect().await
+    let bytes = object
+        .body
+        .collect()
+        .await
         .map_err(|e| Error::Internal(format!("Failed to read object body: {}", e)))?
         .into_bytes();
     let body = Body::from(bytes);

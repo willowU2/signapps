@@ -1,8 +1,8 @@
 //! System metrics collector using sysinfo.
 
 use serde::Serialize;
-use sysinfo::{CpuRefreshKind, Disks, MemoryRefreshKind, Networks, RefreshKind, System};
 use std::sync::Arc;
+use sysinfo::{CpuRefreshKind, Disks, MemoryRefreshKind, Networks, RefreshKind, System};
 use tokio::sync::RwLock;
 
 /// Metrics collector for system information.
@@ -76,30 +76,38 @@ impl MetricsCollector {
     pub async fn get_disk_metrics(&self) -> Vec<DiskMetrics> {
         let disks = Disks::new_with_refreshed_list();
 
-        disks.iter().map(|disk| {
-            let total = disk.total_space();
-            let available = disk.available_space();
-            let used = total - available;
+        disks
+            .iter()
+            .map(|disk| {
+                let total = disk.total_space();
+                let available = disk.available_space();
+                let used = total - available;
 
-            DiskMetrics {
-                name: disk.name().to_string_lossy().to_string(),
-                mount_point: disk.mount_point().to_string_lossy().to_string(),
-                file_system: disk.file_system().to_string_lossy().to_string(),
-                total_bytes: total,
-                used_bytes: used,
-                available_bytes: available,
-                usage_percent: if total > 0 { (used as f64 / total as f64) * 100.0 } else { 0.0 },
-                is_removable: disk.is_removable(),
-            }
-        }).collect()
+                DiskMetrics {
+                    name: disk.name().to_string_lossy().to_string(),
+                    mount_point: disk.mount_point().to_string_lossy().to_string(),
+                    file_system: disk.file_system().to_string_lossy().to_string(),
+                    total_bytes: total,
+                    used_bytes: used,
+                    available_bytes: available,
+                    usage_percent: if total > 0 {
+                        (used as f64 / total as f64) * 100.0
+                    } else {
+                        0.0
+                    },
+                    is_removable: disk.is_removable(),
+                }
+            })
+            .collect()
     }
 
     /// Get network metrics.
     pub async fn get_network_metrics(&self) -> Vec<NetworkMetrics> {
         let networks = Networks::new_with_refreshed_list();
 
-        networks.iter().map(|(name, data)| {
-            NetworkMetrics {
+        networks
+            .iter()
+            .map(|(name, data)| NetworkMetrics {
                 name: name.clone(),
                 received_bytes: data.total_received(),
                 transmitted_bytes: data.total_transmitted(),
@@ -107,8 +115,8 @@ impl MetricsCollector {
                 transmitted_packets: data.total_packets_transmitted(),
                 errors_in: data.total_errors_on_received(),
                 errors_out: data.total_errors_on_transmitted(),
-            }
-        }).collect()
+            })
+            .collect()
     }
 
     /// Get all system metrics.

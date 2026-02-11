@@ -102,7 +102,9 @@ impl DnsResolver {
             let addr: SocketAddr = server
                 .parse()
                 .or_else(|_| format!("{}:53", server).parse())
-                .map_err(|e| Error::Internal(format!("Invalid upstream server '{}': {}", server, e)))?;
+                .map_err(|e| {
+                    Error::Internal(format!("Invalid upstream server '{}': {}", server, e))
+                })?;
 
             config.add_name_server(NameServerConfig {
                 socket_addr: addr,
@@ -161,7 +163,11 @@ impl DnsResolver {
     pub fn remove_custom_record(&self, name: &str, record_type: &str) {
         let normalized_name = Self::normalize_domain(name);
         let mut records = self.custom_records.write().unwrap();
-        records.remove(&format!("{}:{}", normalized_name, record_type.to_uppercase()));
+        records.remove(&format!(
+            "{}:{}",
+            normalized_name,
+            record_type.to_uppercase()
+        ));
     }
 
     /// Resolve a DNS query.
@@ -202,7 +208,8 @@ impl DnsResolver {
 
         // Resolve from upstream
         let result = if self.doh_enabled && self.doh_url.is_some() {
-            self.resolve_doh(&normalized_name, &record_type_upper).await?
+            self.resolve_doh(&normalized_name, &record_type_upper)
+                .await?
         } else {
             self.resolve_upstream(&normalized_name, &record_type_upper)
                 .await?
@@ -229,11 +236,9 @@ impl DnsResolver {
     async fn resolve_upstream(&self, name: &str, record_type: &str) -> Result<ResolveResult> {
         match record_type {
             "A" => {
-                let lookup = self
-                    .resolver
-                    .ipv4_lookup(name)
-                    .await
-                    .map_err(|e| Error::Internal(format!("DNS lookup failed for {}: {}", name, e)))?;
+                let lookup = self.resolver.ipv4_lookup(name).await.map_err(|e| {
+                    Error::Internal(format!("DNS lookup failed for {}: {}", name, e))
+                })?;
 
                 let values: Vec<String> = lookup.iter().map(|ip| ip.to_string()).collect();
                 let ttl = lookup
@@ -250,13 +255,11 @@ impl DnsResolver {
                     ttl,
                     from_cache: false,
                 })
-            }
+            },
             "AAAA" => {
-                let lookup = self
-                    .resolver
-                    .ipv6_lookup(name)
-                    .await
-                    .map_err(|e| Error::Internal(format!("DNS lookup failed for {}: {}", name, e)))?;
+                let lookup = self.resolver.ipv6_lookup(name).await.map_err(|e| {
+                    Error::Internal(format!("DNS lookup failed for {}: {}", name, e))
+                })?;
 
                 let values: Vec<String> = lookup.iter().map(|ip| ip.to_string()).collect();
                 let ttl = lookup
@@ -273,17 +276,18 @@ impl DnsResolver {
                     ttl,
                     from_cache: false,
                 })
-            }
+            },
             "TXT" => {
-                let lookup = self
-                    .resolver
-                    .txt_lookup(name)
-                    .await
-                    .map_err(|e| Error::Internal(format!("TXT lookup failed for {}: {}", name, e)))?;
+                let lookup = self.resolver.txt_lookup(name).await.map_err(|e| {
+                    Error::Internal(format!("TXT lookup failed for {}: {}", name, e))
+                })?;
 
                 let values: Vec<String> = lookup
                     .iter()
-                    .flat_map(|txt| txt.iter().map(|data| String::from_utf8_lossy(data).to_string()))
+                    .flat_map(|txt| {
+                        txt.iter()
+                            .map(|data| String::from_utf8_lossy(data).to_string())
+                    })
                     .collect();
                 let ttl = lookup
                     .as_lookup()
@@ -299,13 +303,11 @@ impl DnsResolver {
                     ttl,
                     from_cache: false,
                 })
-            }
+            },
             "MX" => {
-                let lookup = self
-                    .resolver
-                    .mx_lookup(name)
-                    .await
-                    .map_err(|e| Error::Internal(format!("MX lookup failed for {}: {}", name, e)))?;
+                let lookup = self.resolver.mx_lookup(name).await.map_err(|e| {
+                    Error::Internal(format!("MX lookup failed for {}: {}", name, e))
+                })?;
 
                 let values: Vec<String> = lookup
                     .iter()
@@ -325,7 +327,7 @@ impl DnsResolver {
                     ttl,
                     from_cache: false,
                 })
-            }
+            },
             _ => {
                 // For other record types, try generic lookup
                 let lookup = self
@@ -333,7 +335,10 @@ impl DnsResolver {
                     .lookup(name, hickory_resolver::proto::rr::RecordType::A)
                     .await
                     .map_err(|e| {
-                        Error::Internal(format!("DNS lookup failed for {} ({}): {}", name, record_type, e))
+                        Error::Internal(format!(
+                            "DNS lookup failed for {} ({}): {}",
+                            name, record_type, e
+                        ))
                     })?;
 
                 let values: Vec<String> = lookup
@@ -353,7 +358,7 @@ impl DnsResolver {
                     ttl,
                     from_cache: false,
                 })
-            }
+            },
         }
     }
 

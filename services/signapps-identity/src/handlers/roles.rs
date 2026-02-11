@@ -1,5 +1,6 @@
 //! Role management handlers (RBAC).
 
+use crate::AppState;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -9,7 +10,6 @@ use serde::Serialize;
 use signapps_common::{Error, Result};
 use signapps_db::repositories::GroupRepository;
 use uuid::Uuid;
-use crate::AppState;
 
 #[derive(Serialize)]
 pub struct RoleResponse {
@@ -21,19 +21,20 @@ pub struct RoleResponse {
 }
 
 /// List all roles.
-pub async fn list(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<RoleResponse>>> {
+pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<RoleResponse>>> {
     let repo = GroupRepository::new(&state.pool);
     let roles = repo.list_roles().await?;
 
-    let response: Vec<RoleResponse> = roles.into_iter().map(|r| RoleResponse {
-        id: r.id,
-        name: r.name,
-        description: r.description,
-        permissions: r.permissions,
-        is_system: r.is_system,
-    }).collect();
+    let response: Vec<RoleResponse> = roles
+        .into_iter()
+        .map(|r| RoleResponse {
+            id: r.id,
+            name: r.name,
+            description: r.description,
+            permissions: r.permissions,
+            is_system: r.is_system,
+        })
+        .collect();
 
     Ok(Json(response))
 }
@@ -66,10 +67,7 @@ pub async fn update(
 }
 
 /// Delete role.
-pub async fn delete(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<StatusCode> {
+pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);
     repo.delete_role(id).await?;
     Ok(StatusCode::NO_CONTENT)

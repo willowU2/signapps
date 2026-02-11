@@ -3,7 +3,7 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::ldap::{LdapConfig, CreateLdapConfig, UpdateLdapConfig};
+use crate::models::ldap::{CreateLdapConfig, LdapConfig, UpdateLdapConfig};
 use signapps_common::{Error, Result};
 
 /// Repository for LDAP configuration.
@@ -21,7 +21,7 @@ impl LdapRepository {
             FROM identity.ldap_config
             ORDER BY created_at DESC
             LIMIT 1
-            "#
+            "#,
         )
         .fetch_optional(pool)
         .await
@@ -31,7 +31,11 @@ impl LdapRepository {
     }
 
     /// Create or replace LDAP configuration.
-    pub async fn create_config(pool: &PgPool, config: CreateLdapConfig, encrypted_password: &str) -> Result<LdapConfig> {
+    pub async fn create_config(
+        pool: &PgPool,
+        config: CreateLdapConfig,
+        encrypted_password: &str,
+    ) -> Result<LdapConfig> {
         // Delete existing config first (only one config allowed)
         sqlx::query("DELETE FROM identity.ldap_config")
             .execute(pool)
@@ -50,7 +54,7 @@ impl LdapRepository {
                       user_filter, group_filter, admin_groups, user_groups, use_tls,
                       skip_tls_verify, sync_interval_minutes, fallback_local_auth,
                       created_at, updated_at
-            "#
+            "#,
         )
         .bind(&config.server_url)
         .bind(&config.bind_dn)
@@ -199,12 +203,14 @@ impl LdapRepository {
 
     /// Enable or disable LDAP.
     pub async fn set_enabled(pool: &PgPool, id: Uuid, enabled: bool) -> Result<()> {
-        sqlx::query("UPDATE identity.ldap_config SET enabled = $1, updated_at = NOW() WHERE id = $2")
-            .bind(enabled)
-            .bind(id)
-            .execute(pool)
-            .await
-            .map_err(|e| Error::Database(e.to_string()))?;
+        sqlx::query(
+            "UPDATE identity.ldap_config SET enabled = $1, updated_at = NOW() WHERE id = $2",
+        )
+        .bind(enabled)
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(())
     }

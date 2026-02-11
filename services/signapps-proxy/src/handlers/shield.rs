@@ -52,7 +52,8 @@ pub async fn block_ip(
 ) -> Result<Json<BlockResponse>> {
     let duration = payload.duration_seconds.unwrap_or(300);
 
-    state.shield
+    state
+        .shield
         .block_ip(&route_id.to_string(), &payload.ip, duration)
         .await?;
 
@@ -70,9 +71,7 @@ pub async fn unblock_ip(
     State(state): State<AppState>,
     Path((route_id, ip)): Path<(Uuid, String)>,
 ) -> Result<StatusCode> {
-    state.shield
-        .unblock_ip(&route_id.to_string(), &ip)
-        .await?;
+    state.shield.unblock_ip(&route_id.to_string(), &ip).await?;
 
     tracing::info!(route_id = %route_id, ip = %ip, "IP unblocked");
 
@@ -85,9 +84,7 @@ pub async fn check_blocked(
     State(state): State<AppState>,
     Path((route_id, ip)): Path<(Uuid, String)>,
 ) -> Result<Json<serde_json::Value>> {
-    let is_blocked = state.shield
-        .is_blocked(&route_id.to_string(), &ip)
-        .await?;
+    let is_blocked = state.shield.is_blocked(&route_id.to_string(), &ip).await?;
 
     Ok(Json(serde_json::json!({
         "route_id": route_id,

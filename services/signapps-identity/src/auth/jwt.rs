@@ -9,11 +9,11 @@ use uuid::Uuid;
 /// JWT claims.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: Uuid,        // User ID
+    pub sub: Uuid, // User ID
     pub username: String,
     pub role: i16,
-    pub exp: i64,         // Expiration timestamp
-    pub iat: i64,         // Issued at timestamp
+    pub exp: i64,           // Expiration timestamp
+    pub iat: i64,           // Issued at timestamp
     pub token_type: String, // "access" or "refresh"
 }
 
@@ -26,12 +26,7 @@ pub struct TokenPair {
 }
 
 /// Create access and refresh tokens for a user.
-pub fn create_tokens(
-    user_id: Uuid,
-    username: &str,
-    role: i16,
-    secret: &str,
-) -> Result<TokenPair> {
+pub fn create_tokens(user_id: Uuid, username: &str, role: i16, secret: &str) -> Result<TokenPair> {
     let now = Utc::now();
 
     // Access token: 15 minutes
@@ -49,7 +44,8 @@ pub fn create_tokens(
         &Header::default(),
         &access_claims,
         &EncodingKey::from_secret(secret.as_bytes()),
-    ).map_err(|e| Error::Internal(e.to_string()))?;
+    )
+    .map_err(|e| Error::Internal(e.to_string()))?;
 
     // Refresh token: 7 days
     let refresh_exp = now + Duration::days(7);
@@ -66,7 +62,8 @@ pub fn create_tokens(
         &Header::default(),
         &refresh_claims,
         &EncodingKey::from_secret(secret.as_bytes()),
-    ).map_err(|e| Error::Internal(e.to_string()))?;
+    )
+    .map_err(|e| Error::Internal(e.to_string()))?;
 
     Ok(TokenPair {
         access_token,

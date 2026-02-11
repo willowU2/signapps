@@ -1,5 +1,6 @@
 //! Group management handlers (RBAC).
 
+use crate::AppState;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -9,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 use signapps_db::repositories::GroupRepository;
 use uuid::Uuid;
-use crate::AppState;
 
 #[derive(Serialize)]
 pub struct GroupResponse {
@@ -27,19 +27,20 @@ pub struct AddMemberRequest {
 }
 
 /// List all groups.
-pub async fn list(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<GroupResponse>>> {
+pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<GroupResponse>>> {
     let repo = GroupRepository::new(&state.pool);
     let groups = repo.list_groups().await?;
 
-    let response: Vec<GroupResponse> = groups.into_iter().map(|g| GroupResponse {
-        id: g.id,
-        name: g.name,
-        description: g.description,
-        parent_id: g.parent_id,
-        member_count: 0, // TODO: Count members
-    }).collect();
+    let response: Vec<GroupResponse> = groups
+        .into_iter()
+        .map(|g| GroupResponse {
+            id: g.id,
+            name: g.name,
+            description: g.description,
+            parent_id: g.parent_id,
+            member_count: 0, // TODO: Count members
+        })
+        .collect();
 
     Ok(Json(response))
 }
@@ -50,7 +51,9 @@ pub async fn get(
     Path(id): Path<Uuid>,
 ) -> Result<Json<GroupResponse>> {
     let repo = GroupRepository::new(&state.pool);
-    let group = repo.find_group(id).await?
+    let group = repo
+        .find_group(id)
+        .await?
         .ok_or_else(|| Error::NotFound(format!("Group {}", id)))?;
 
     Ok(Json(GroupResponse {
@@ -90,10 +93,7 @@ pub async fn update(
 }
 
 /// Delete group.
-pub async fn delete(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<StatusCode> {
+pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);
     repo.delete_group(id).await?;
     Ok(StatusCode::NO_CONTENT)
@@ -110,7 +110,8 @@ pub async fn add_member(
         id,
         payload.user_id,
         &payload.role.unwrap_or_else(|| "member".to_string()),
-    ).await?;
+    )
+    .await?;
     Ok(StatusCode::CREATED)
 }
 

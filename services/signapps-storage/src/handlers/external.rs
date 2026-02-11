@@ -118,16 +118,15 @@ pub struct ConnectResponse {
 }
 
 // In-memory storage for connected external storage (in production, use database)
-use std::sync::RwLock;
 use once_cell::sync::Lazy;
+use std::sync::RwLock;
 
-static EXTERNAL_STORAGES: Lazy<RwLock<Vec<ExternalStorage>>> = Lazy::new(|| RwLock::new(Vec::new()));
+static EXTERNAL_STORAGES: Lazy<RwLock<Vec<ExternalStorage>>> =
+    Lazy::new(|| RwLock::new(Vec::new()));
 
 /// List all external storage (USB, NAS, etc.).
 #[tracing::instrument(skip(_state))]
-pub async fn list_external(
-    State(_state): State<AppState>,
-) -> Result<Json<Vec<ExternalStorage>>> {
+pub async fn list_external(State(_state): State<AppState>) -> Result<Json<Vec<ExternalStorage>>> {
     let mut storages = Vec::new();
 
     // Get USB drives from sysinfo
@@ -180,8 +179,12 @@ pub async fn connect_external(
     }
 
     // Create mount point directory
-    if !tokio::fs::try_exists(&payload.mount_path).await.unwrap_or(false) {
-        tokio::fs::create_dir_all(&payload.mount_path).await
+    if !tokio::fs::try_exists(&payload.mount_path)
+        .await
+        .unwrap_or(false)
+    {
+        tokio::fs::create_dir_all(&payload.mount_path)
+            .await
             .map_err(|e| Error::Storage(format!("Failed to create mount point: {}", e)))?;
     }
 
@@ -189,21 +192,15 @@ pub async fn connect_external(
     let now = chrono::Utc::now();
 
     let result = match payload.storage_type {
-        ExternalStorageType::Nfs => {
-            connect_nfs(&payload).await
-        }
-        ExternalStorageType::Smb => {
-            connect_smb(&payload).await
-        }
-        ExternalStorageType::S3 => {
-            connect_s3(&payload).await
-        }
-        ExternalStorageType::Webdav => {
-            connect_webdav(&payload).await
-        }
+        ExternalStorageType::Nfs => connect_nfs(&payload).await,
+        ExternalStorageType::Smb => connect_smb(&payload).await,
+        ExternalStorageType::S3 => connect_s3(&payload).await,
+        ExternalStorageType::Webdav => connect_webdav(&payload).await,
         ExternalStorageType::Usb => {
-            return Err(Error::Validation("USB devices are auto-detected, cannot manually connect".to_string()));
-        }
+            return Err(Error::Validation(
+                "USB devices are auto-detected, cannot manually connect".to_string(),
+            ));
+        },
     };
 
     match result {
@@ -219,7 +216,11 @@ pub async fn connect_external(
                 total_bytes: None, // Will be populated after mount
                 used_bytes: None,
                 available_bytes: None,
-                is_readonly: payload.options.as_ref().and_then(|o| o.readonly).unwrap_or(false),
+                is_readonly: payload
+                    .options
+                    .as_ref()
+                    .and_then(|o| o.readonly)
+                    .unwrap_or(false),
                 last_connected: Some(now),
                 error_message: None,
                 created_at: now,
@@ -240,9 +241,12 @@ pub async fn connect_external(
             Ok(Json(ConnectResponse {
                 success: true,
                 storage: Some(storage),
-                message: format!("{} storage '{}' connected successfully", payload.storage_type, payload.name),
+                message: format!(
+                    "{} storage '{}' connected successfully",
+                    payload.storage_type, payload.name
+                ),
             }))
-        }
+        },
         Err(e) => {
             let storage = ExternalStorage {
                 id,
@@ -266,7 +270,7 @@ pub async fn connect_external(
                 storage: Some(storage),
                 message: format!("Failed to connect: {}", e),
             }))
-        }
+        },
     }
 }
 
@@ -278,7 +282,8 @@ pub async fn disconnect_external(
 ) -> Result<StatusCode> {
     // Find the storage
     let storage = {
-        let guard = EXTERNAL_STORAGES.read()
+        let guard = EXTERNAL_STORAGES
+            .read()
             .map_err(|_| Error::Internal("Failed to read storage list".to_string()))?;
         guard.iter().find(|s| s.id == id).cloned()
     };
@@ -287,7 +292,9 @@ pub async fn disconnect_external(
 
     // Check if it's a USB device (cannot disconnect)
     if storage.storage_type == ExternalStorageType::Usb {
-        return Err(Error::Validation("USB devices must be safely ejected through the OS".to_string()));
+        return Err(Error::Validation(
+            "USB devices must be safely ejected through the OS".to_string(),
+        ));
     }
 
     // Unmount if mounted
@@ -325,7 +332,9 @@ pub async fn disconnect_external(
 
 /// Connect NFS share.
 async fn connect_nfs(payload: &ConnectRequest) -> Result<()> {
-    let remote = payload.remote_path.as_ref()
+    let remote = payload
+        .remote_path
+        .as_ref()
         .ok_or_else(|| Error::Validation("remote_path is required for NFS".to_string()))?;
 
     let mut cmd = tokio::process::Command::new("mount");
@@ -340,7 +349,9 @@ async fn connect_nfs(payload: &ConnectRequest) -> Result<()> {
 
     cmd.arg(remote).arg(&payload.mount_path);
 
-    let output = cmd.output().await
+    let output = cmd
+        .output()
+        .await
         .map_err(|e| Error::Storage(format!("Failed to execute mount: {}", e)))?;
 
     if !output.status.success() {
@@ -353,7 +364,9 @@ async fn connect_nfs(payload: &ConnectRequest) -> Result<()> {
 
 /// Connect SMB/CIFS share.
 async fn connect_smb(payload: &ConnectRequest) -> Result<()> {
-    let remote = payload.remote_path.as_ref()
+    let remote = payload
+        .remote_path
+        .as_ref()
         .ok_or_else(|| Error::Validation("remote_path is required for SMB".to_string()))?;
 
     let mut cmd = tokio::process::Command::new("mount");
@@ -382,7 +395,9 @@ async fn connect_smb(payload: &ConnectRequest) -> Result<()> {
 
     cmd.arg(remote).arg(&payload.mount_path);
 
-    let output = cmd.output().await
+    let output = cmd
+        .output()
+        .await
         .map_err(|e| Error::Storage(format!("Failed to execute mount: {}", e)))?;
 
     if !output.status.success() {
@@ -395,22 +410,31 @@ async fn connect_smb(payload: &ConnectRequest) -> Result<()> {
 
 /// Connect S3-compatible storage (via s3fs-fuse).
 async fn connect_s3(payload: &ConnectRequest) -> Result<()> {
-    let opts = payload.options.as_ref()
+    let opts = payload
+        .options
+        .as_ref()
         .ok_or_else(|| Error::Validation("options with S3 configuration required".to_string()))?;
 
-    let bucket = opts.s3_bucket.as_ref()
+    let bucket = opts
+        .s3_bucket
+        .as_ref()
         .ok_or_else(|| Error::Validation("s3_bucket is required".to_string()))?;
 
-    let access_key = opts.s3_access_key.as_ref()
+    let access_key = opts
+        .s3_access_key
+        .as_ref()
         .ok_or_else(|| Error::Validation("s3_access_key is required".to_string()))?;
 
-    let secret_key = opts.s3_secret_key.as_ref()
+    let secret_key = opts
+        .s3_secret_key
+        .as_ref()
         .ok_or_else(|| Error::Validation("s3_secret_key is required".to_string()))?;
 
     // Write credentials to temp file
     let creds_file = format!("/tmp/.s3fs-creds-{}", Uuid::new_v4());
     let creds_content = format!("{}:{}", access_key, secret_key);
-    tokio::fs::write(&creds_file, &creds_content).await
+    tokio::fs::write(&creds_file, &creds_content)
+        .await
         .map_err(|e| Error::Storage(format!("Failed to write S3 credentials: {}", e)))?;
 
     // Set permissions to 600
@@ -424,9 +448,7 @@ async fn connect_s3(payload: &ConnectRequest) -> Result<()> {
     let mut cmd = tokio::process::Command::new("s3fs");
     cmd.arg(bucket).arg(&payload.mount_path);
 
-    let mut s3fs_opts = vec![
-        format!("passwd_file={}", creds_file),
-    ];
+    let mut s3fs_opts = vec![format!("passwd_file={}", creds_file)];
 
     if let Some(ref endpoint) = opts.s3_endpoint {
         s3fs_opts.push(format!("url={}", endpoint));
@@ -439,7 +461,9 @@ async fn connect_s3(payload: &ConnectRequest) -> Result<()> {
 
     cmd.arg("-o").arg(s3fs_opts.join(","));
 
-    let output = cmd.output().await
+    let output = cmd
+        .output()
+        .await
         .map_err(|e| Error::Storage(format!("Failed to execute s3fs: {}", e)))?;
 
     // Clean up credentials file
@@ -455,7 +479,9 @@ async fn connect_s3(payload: &ConnectRequest) -> Result<()> {
 
 /// Connect WebDAV storage (via davfs2).
 async fn connect_webdav(payload: &ConnectRequest) -> Result<()> {
-    let remote = payload.remote_path.as_ref()
+    let remote = payload
+        .remote_path
+        .as_ref()
         .ok_or_else(|| Error::Validation("remote_path (WebDAV URL) is required".to_string()))?;
 
     let mut cmd = tokio::process::Command::new("mount");
@@ -478,7 +504,9 @@ async fn connect_webdav(payload: &ConnectRequest) -> Result<()> {
 
     cmd.arg(remote).arg(&payload.mount_path);
 
-    let output = cmd.output().await
+    let output = cmd
+        .output()
+        .await
         .map_err(|e| Error::Storage(format!("Failed to execute mount: {}", e)))?;
 
     if !output.status.success() {

@@ -43,9 +43,15 @@ pub struct ShieldConfig {
     pub blacklist: Vec<String>,
 }
 
-fn default_rps() -> i32 { 100 }
-fn default_burst() -> i32 { 200 }
-fn default_block_duration() -> i32 { 300 }
+fn default_rps() -> i32 {
+    100
+}
+fn default_burst() -> i32 {
+    200
+}
+fn default_block_duration() -> i32 {
+    300
+}
 
 /// Custom headers configuration.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -122,7 +128,9 @@ pub struct CreateRoute {
     pub enabled: bool,
 }
 
-fn default_true() -> bool { true }
+fn default_true() -> bool {
+    true
+}
 
 /// Update route request.
 #[derive(Debug, Clone, Deserialize)]

@@ -1,6 +1,9 @@
 //! MFA (Multi-Factor Authentication) handlers.
 
-use axum::{extract::{Extension, State}, Json};
+use axum::{
+    extract::{Extension, State},
+    Json,
+};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use signapps_common::{Claims, Error, Result};
@@ -67,7 +70,9 @@ pub async fn setup(
     let secret_base32 = secret.to_encoded().to_string();
 
     // Create TOTP instance
-    let secret_bytes = secret.to_bytes().map_err(|e: totp_rs::SecretParseError| Error::Internal(e.to_string()))?;
+    let secret_bytes = secret
+        .to_bytes()
+        .map_err(|e: totp_rs::SecretParseError| Error::Internal(e.to_string()))?;
     let totp = TOTP::new(
         Algorithm::SHA1,
         6,
@@ -169,10 +174,9 @@ pub async fn disable(
         .ok_or(Error::NotFound("User not found".to_string()))?;
 
     // Verify password
-    let password_hash = user
-        .password_hash
-        .as_ref()
-        .ok_or(Error::BadRequest("Cannot disable MFA for LDAP users".to_string()))?;
+    let password_hash = user.password_hash.as_ref().ok_or(Error::BadRequest(
+        "Cannot disable MFA for LDAP users".to_string(),
+    ))?;
 
     if !crate::auth::verify_password(&payload.password, password_hash)? {
         return Err(Error::InvalidCredentials);

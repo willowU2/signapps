@@ -1,12 +1,12 @@
 //! HTTP handlers for SecureLink service (Standalone Mode).
 
-pub mod tunnels;
-pub mod relays;
 pub mod dns;
+pub mod relays;
+pub mod tunnels;
 
-pub use tunnels::*;
-pub use relays::*;
 pub use dns::*;
+pub use relays::*;
+pub use tunnels::*;
 
 use axum::Json;
 use serde::Serialize;
@@ -37,7 +37,10 @@ pub async fn health_check_standalone(
     axum::extract::State(state): axum::extract::State<crate::AppState>,
 ) -> Json<HealthResponse> {
     let tunnels = state.tunnel_client.list_tunnels().await;
-    let connected = tunnels.iter().filter(|t| t.status == crate::tunnel::TunnelStatus::Connected).count();
+    let connected = tunnels
+        .iter()
+        .filter(|t| t.status == crate::tunnel::TunnelStatus::Connected)
+        .count();
 
     let dns_config = state.dns_config.read().await;
     let blocklists = state.blocklists.read().await;

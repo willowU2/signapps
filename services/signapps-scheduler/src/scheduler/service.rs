@@ -99,11 +99,14 @@ impl SchedulerService {
         // Track running job
         {
             let mut running = self.running_jobs.write().await;
-            running.insert(job.id, RunningJob {
-                job_id: job.id,
-                run_id: run.id,
-                started_at: chrono::Utc::now(),
-            });
+            running.insert(
+                job.id,
+                RunningJob {
+                    job_id: job.id,
+                    run_id: run.id,
+                    started_at: chrono::Utc::now(),
+                },
+            );
         }
 
         tracing::info!("Starting job '{}' (run {})", job.name, run.id);
@@ -117,10 +120,12 @@ impl SchedulerService {
             result.status,
             result.output.as_deref(),
             result.error.as_deref(),
-        ).await?;
+        )
+        .await?;
 
         // Update job last run
-        repo.update_last_run(job.id, &result.status.to_string()).await?;
+        repo.update_last_run(job.id, &result.status.to_string())
+            .await?;
 
         // Remove from running jobs
         {
@@ -141,7 +146,9 @@ impl SchedulerService {
     /// Run a job by ID.
     pub async fn run_job_by_id(&self, job_id: Uuid) -> Result<ExecutionResult> {
         let repo = JobRepository::new(&self.pool);
-        let job = repo.find(job_id).await?
+        let job = repo
+            .find(job_id)
+            .await?
             .ok_or_else(|| Error::NotFound(format!("Job {}", job_id)))?;
 
         self.run_job(&job).await

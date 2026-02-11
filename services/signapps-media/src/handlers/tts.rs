@@ -8,7 +8,10 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-use crate::{tts::{AudioFormat, TtsRequest, Voice}, AppState};
+use crate::{
+    tts::{AudioFormat, TtsRequest, Voice},
+    AppState,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct SynthesizeRequest {
@@ -39,7 +42,10 @@ pub async fn synthesize(
     }
 
     if request.text.len() > 10000 {
-        return Err((StatusCode::BAD_REQUEST, "Text too long (max 10000 chars)".to_string()));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Text too long (max 10000 chars)".to_string(),
+        ));
     }
 
     let format = match request.format.as_deref() {
@@ -57,9 +63,16 @@ pub async fn synthesize(
         output_format: Some(format.clone()),
     };
 
-    let result = state.tts_client.synthesize(tts_request)
+    let result = state
+        .tts_client
+        .synthesize(tts_request)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("TTS failed: {}", e)))?;
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("TTS failed: {}", e),
+            )
+        })?;
 
     // Return audio as binary with correct content type
     let content_type = match format {
@@ -95,9 +108,16 @@ pub async fn synthesize_stream(
         output_format: Some(AudioFormat::Wav),
     };
 
-    let stream = state.tts_client.synthesize_stream(tts_request)
+    let stream = state
+        .tts_client
+        .synthesize_stream(tts_request)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("TTS stream failed: {}", e)))?;
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("TTS stream failed: {}", e),
+            )
+        })?;
 
     Ok(Response::builder()
         .status(StatusCode::OK)
@@ -111,9 +131,12 @@ pub async fn synthesize_stream(
 pub async fn list_voices(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<Voice>>, (StatusCode, String)> {
-    let voices = state.tts_client.list_voices()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to list voices: {}", e)))?;
+    let voices = state.tts_client.list_voices().await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to list voices: {}", e),
+        )
+    })?;
 
     Ok(Json(voices))
 }

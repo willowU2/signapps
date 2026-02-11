@@ -107,11 +107,7 @@ impl TunnelClient {
         let start = std::time::Instant::now();
 
         // Try to establish a WebSocket connection
-        let result = timeout(
-            self.config.connect_timeout,
-            connect_async(&relay.url),
-        )
-        .await;
+        let result = timeout(self.config.connect_timeout, connect_async(&relay.url)).await;
 
         match result {
             Ok(Ok((mut ws_stream, _))) => {
@@ -128,7 +124,7 @@ impl TunnelClient {
                     error: None,
                     version: None,
                 }
-            }
+            },
             Ok(Err(e)) => RelayTestResult {
                 success: false,
                 latency_ms: None,
@@ -147,11 +143,14 @@ impl TunnelClient {
     /// Add a tunnel.
     pub async fn add_tunnel(&self, tunnel: Tunnel) -> Result<()> {
         let mut tunnels = self.tunnels.write().await;
-        tunnels.insert(tunnel.id, TunnelConnection {
-            tunnel,
-            status: TunnelStatus::Disconnected,
-            last_error: None,
-        });
+        tunnels.insert(
+            tunnel.id,
+            TunnelConnection {
+                tunnel,
+                status: TunnelStatus::Disconnected,
+                last_error: None,
+            },
+        );
         Ok(())
     }
 
@@ -182,23 +181,29 @@ impl TunnelClient {
     /// List all tunnels.
     pub async fn list_tunnels(&self) -> Vec<Tunnel> {
         let tunnels = self.tunnels.read().await;
-        tunnels.values().map(|t| {
-            let mut tunnel = t.tunnel.clone();
-            tunnel.status = t.status;
-            tunnel.last_error = t.last_error.clone();
-            tunnel
-        }).collect()
+        tunnels
+            .values()
+            .map(|t| {
+                let mut tunnel = t.tunnel.clone();
+                tunnel.status = t.status;
+                tunnel.last_error = t.last_error.clone();
+                tunnel
+            })
+            .collect()
     }
 
     /// Start tunnel connection for a specific relay.
     pub async fn connect_relay(&self, relay_id: uuid::Uuid) -> Result<()> {
-        let relay = self.get_relay(relay_id).await
+        let relay = self
+            .get_relay(relay_id)
+            .await
             .ok_or_else(|| Error::NotFound(format!("Relay {}", relay_id)))?;
 
         // Get all tunnels for this relay
         let tunnel_registrations: Vec<TunnelRegistration> = {
             let tunnels = self.tunnels.read().await;
-            tunnels.values()
+            tunnels
+                .values()
                 .filter(|t| t.tunnel.relay_id == relay_id && t.tunnel.enabled)
                 .map(|t| TunnelRegistration {
                     id: t.tunnel.id.to_string(),
@@ -209,7 +214,9 @@ impl TunnelClient {
         };
 
         if tunnel_registrations.is_empty() {
-            return Err(Error::Validation("No tunnels configured for this relay".to_string()));
+            return Err(Error::Validation(
+                "No tunnels configured for this relay".to_string(),
+            ));
         }
 
         // Spawn connection task
@@ -233,13 +240,15 @@ impl TunnelClient {
                     Ok(()) => {
                         info!("Relay connection closed normally");
                         reconnect_delay = config.reconnect_delay;
-                    }
+                    },
                     Err(e) => {
                         error!("Relay connection error: {}", e);
 
                         // Update tunnel statuses
-                        client.set_tunnels_status(relay_id, TunnelStatus::Error, Some(e.to_string())).await;
-                    }
+                        client
+                            .set_tunnels_status(relay_id, TunnelStatus::Error, Some(e.to_string()))
+                            .await;
+                    },
                 }
 
                 // Wait before reconnecting
@@ -253,10 +262,7 @@ impl TunnelClient {
                 }
 
                 // Exponential backoff
-                reconnect_delay = std::cmp::min(
-                    reconnect_delay * 2,
-                    config.max_reconnect_delay,
-                );
+                reconnect_delay = std::cmp::min(reconnect_delay * 2, config.max_reconnect_delay);
             }
         });
 
@@ -264,19 +270,12 @@ impl TunnelClient {
     }
 
     /// Run the actual WebSocket connection.
-    async fn run_connection(
-        &self,
-        relay: &Relay,
-        tunnels: &[TunnelRegistration],
-    ) -> Result<()> {
+    async fn run_connection(&self, relay: &Relay, tunnels: &[TunnelRegistration]) -> Result<()> {
         // Connect to relay
-        let (ws_stream, _) = timeout(
-            self.config.connect_timeout,
-            connect_async(&relay.url),
-        )
-        .await
-        .map_err(|_| Error::Internal("Connection timeout".to_string()))?
-        .map_err(|e| Error::Internal(format!("WebSocket connection failed: {}", e)))?;
+        let (ws_stream, _) = timeout(self.config.connect_timeout, connect_async(&relay.url))
+            .await
+            .map_err(|_| Error::Internal("Connection timeout".to_string()))?
+            .map_err(|e| Error::Internal(format!("WebSocket connection failed: {}", e)))?;
 
         info!("Connected to relay: {}", relay.url);
 
@@ -291,7 +290,9 @@ impl TunnelClient {
         let auth_json = serde_json::to_string(&auth_msg)
             .map_err(|e| Error::Internal(format!("Failed to serialize auth: {}", e)))?;
 
-        write.send(Message::Text(auth_json)).await
+        write
+            .send(Message::Text(auth_json))
+            .await
             .map_err(|e| Error::Internal(format!("Failed to send auth: {}", e)))?;
 
         // Wait for auth response
@@ -316,7 +317,8 @@ impl TunnelClient {
         info!("Authenticated with relay");
 
         // Update tunnel statuses to connected
-        self.set_tunnels_status(relay.id, TunnelStatus::Connected, None).await;
+        self.set_tunnels_status(relay.id, TunnelStatus::Connected, None)
+            .await;
 
         // Create channels for communication
         let (response_tx, mut response_rx) = mpsc::channel::<TunnelMessage>(100);
@@ -334,7 +336,11 @@ impl TunnelClient {
                     .unwrap()
                     .as_millis() as u64;
 
-                if response_tx_ping.send(TunnelMessage::Ping { timestamp }).await.is_err() {
+                if response_tx_ping
+                    .send(TunnelMessage::Ping { timestamp })
+                    .await
+                    .is_err()
+                {
                     break;
                 }
             }
@@ -398,7 +404,8 @@ impl TunnelClient {
         }
 
         // Update tunnel statuses to disconnected
-        self.set_tunnels_status(relay.id, TunnelStatus::Disconnected, None).await;
+        self.set_tunnels_status(relay.id, TunnelStatus::Disconnected, None)
+            .await;
 
         Ok(())
     }
@@ -427,7 +434,8 @@ impl TunnelClient {
 
                 let response = if let Some(addr) = local_addr {
                     // Proxy the request to the local service
-                    self.proxy_request(&addr, &method, &path, headers, body).await
+                    self.proxy_request(&addr, &method, &path, headers, body)
+                        .await
                 } else {
                     TunnelMessage::Response {
                         request_id: request_id.clone(),
@@ -440,19 +448,22 @@ impl TunnelClient {
                 if let Err(e) = response_tx.send(response).await {
                     error!("Failed to send response: {}", e);
                 }
-            }
+            },
             TunnelMessage::Ping { timestamp } => {
-                response_tx.send(TunnelMessage::Pong { timestamp }).await.ok();
-            }
+                response_tx
+                    .send(TunnelMessage::Pong { timestamp })
+                    .await
+                    .ok();
+            },
             TunnelMessage::Pong { timestamp: _ } => {
                 // Pong received, connection is alive
-            }
+            },
             TunnelMessage::Error { message } => {
                 error!("Error from relay: {}", message);
-            }
+            },
             _ => {
                 debug!("Unhandled message type");
-            }
+            },
         }
     }
 
@@ -483,7 +494,7 @@ impl TunnelClient {
                     headers: vec![],
                     body: Some(b"Method not allowed".to_vec()),
                 };
-            }
+            },
         };
 
         // Add headers
@@ -513,10 +524,7 @@ impl TunnelClient {
                     .iter()
                     .filter(|(name, _)| !is_hop_by_hop_header(name.as_str()))
                     .map(|(name, value)| {
-                        (
-                            name.to_string(),
-                            value.to_str().unwrap_or("").to_string(),
-                        )
+                        (name.to_string(), value.to_str().unwrap_or("").to_string())
                     })
                     .collect();
 
@@ -528,7 +536,7 @@ impl TunnelClient {
                     headers,
                     body,
                 }
-            }
+            },
             Ok(Err(e)) => {
                 error!("Proxy request failed: {}", e);
                 TunnelMessage::Response {
@@ -537,15 +545,13 @@ impl TunnelClient {
                     headers: vec![("Content-Type".to_string(), "text/plain".to_string())],
                     body: Some(format!("Bad Gateway: {}", e).into_bytes()),
                 }
-            }
-            Err(_) => {
-                TunnelMessage::Response {
-                    request_id,
-                    status: 504,
-                    headers: vec![("Content-Type".to_string(), "text/plain".to_string())],
-                    body: Some(b"Gateway Timeout".to_vec()),
-                }
-            }
+            },
+            Err(_) => TunnelMessage::Response {
+                request_id,
+                status: 504,
+                headers: vec![("Content-Type".to_string(), "text/plain".to_string())],
+                body: Some(b"Gateway Timeout".to_vec()),
+            },
         }
     }
 
@@ -569,7 +575,8 @@ impl TunnelClient {
     pub async fn reconnect_tunnel(&self, tunnel_id: uuid::Uuid) -> Result<()> {
         let relay_id = {
             let tunnels = self.tunnels.read().await;
-            tunnels.get(&tunnel_id)
+            tunnels
+                .get(&tunnel_id)
                 .map(|t| t.tunnel.relay_id)
                 .ok_or_else(|| Error::NotFound(format!("Tunnel {}", tunnel_id)))?
         };

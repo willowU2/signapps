@@ -47,7 +47,9 @@ impl LdapClient {
         // 5. If successful, fetch user attributes and groups
 
         let _ = (username, password); // Suppress unused warnings
-        Err(Error::Internal("LDAP authentication not implemented".to_string()))
+        Err(Error::Internal(
+            "LDAP authentication not implemented".to_string(),
+        ))
     }
 
     /// Test connection to LDAP server.
@@ -59,12 +61,16 @@ impl LdapClient {
     /// Search for groups in Active Directory.
     pub async fn search_groups(&self) -> Result<Vec<String>> {
         // TODO: Implement group search
-        Err(Error::Internal("LDAP group search not implemented".to_string()))
+        Err(Error::Internal(
+            "LDAP group search not implemented".to_string(),
+        ))
     }
 
     /// Sync users from Active Directory.
     pub async fn sync_users(&self) -> Result<Vec<LdapUser>> {
         // TODO: Implement user sync
-        Err(Error::Internal("LDAP user sync not implemented".to_string()))
+        Err(Error::Internal(
+            "LDAP user sync not implemented".to_string(),
+        ))
     }
 }

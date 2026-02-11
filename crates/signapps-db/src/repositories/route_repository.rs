@@ -17,47 +17,39 @@ impl<'a> RouteRepository<'a> {
 
     /// Find route by ID.
     pub async fn find(&self, id: Uuid) -> Result<Option<Route>> {
-        let route = sqlx::query_as::<_, Route>(
-            "SELECT * FROM proxy.routes WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let route = sqlx::query_as::<_, Route>("SELECT * FROM proxy.routes WHERE id = $1")
+            .bind(id)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(route)
     }
 
     /// Find route by name.
     pub async fn find_by_name(&self, name: &str) -> Result<Option<Route>> {
-        let route = sqlx::query_as::<_, Route>(
-            "SELECT * FROM proxy.routes WHERE name = $1"
-        )
-        .bind(name)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let route = sqlx::query_as::<_, Route>("SELECT * FROM proxy.routes WHERE name = $1")
+            .bind(name)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(route)
     }
 
     /// Find route by host.
     pub async fn find_by_host(&self, host: &str) -> Result<Option<Route>> {
-        let route = sqlx::query_as::<_, Route>(
-            "SELECT * FROM proxy.routes WHERE host = $1"
-        )
-        .bind(host)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let route = sqlx::query_as::<_, Route>("SELECT * FROM proxy.routes WHERE host = $1")
+            .bind(host)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(route)
     }
 
     /// List all routes.
     pub async fn list(&self) -> Result<Vec<Route>> {
-        let routes = sqlx::query_as::<_, Route>(
-            "SELECT * FROM proxy.routes ORDER BY name"
-        )
-        .fetch_all(self.pool.inner())
-        .await?;
+        let routes = sqlx::query_as::<_, Route>("SELECT * FROM proxy.routes ORDER BY name")
+            .fetch_all(self.pool.inner())
+            .await?;
 
         Ok(routes)
     }
@@ -65,7 +57,7 @@ impl<'a> RouteRepository<'a> {
     /// List enabled routes only.
     pub async fn list_enabled(&self) -> Result<Vec<Route>> {
         let routes = sqlx::query_as::<_, Route>(
-            "SELECT * FROM proxy.routes WHERE enabled = true ORDER BY name"
+            "SELECT * FROM proxy.routes WHERE enabled = true ORDER BY name",
         )
         .fetch_all(self.pool.inner())
         .await?;
@@ -80,11 +72,13 @@ impl<'a> RouteRepository<'a> {
             .trim_matches('"')
             .to_string();
 
-        let shield_json = route.shield_config
+        let shield_json = route
+            .shield_config
             .as_ref()
             .and_then(|c| serde_json::to_value(c).ok());
 
-        let headers_json = route.headers
+        let headers_json = route
+            .headers
             .as_ref()
             .and_then(|h| serde_json::to_value(h).ok());
 
@@ -214,7 +208,7 @@ impl<'a> RouteRepository<'a> {
     /// Toggle route enabled status.
     pub async fn toggle_enabled(&self, id: Uuid, enabled: bool) -> Result<Route> {
         let route = sqlx::query_as::<_, Route>(
-            "UPDATE proxy.routes SET enabled = $2, updated_at = NOW() WHERE id = $1 RETURNING *"
+            "UPDATE proxy.routes SET enabled = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
         )
         .bind(id)
         .bind(enabled)

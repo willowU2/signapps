@@ -7,11 +7,11 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 use std::collections::HashMap;
 use std::sync::RwLock;
-use once_cell::sync::Lazy;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -191,7 +191,8 @@ pub struct ListEventsQuery {
 }
 
 // In-memory storage (in production, use database)
-static ALERT_CONFIGS: Lazy<RwLock<HashMap<Uuid, AlertConfig>>> = Lazy::new(|| RwLock::new(HashMap::new()));
+static ALERT_CONFIGS: Lazy<RwLock<HashMap<Uuid, AlertConfig>>> =
+    Lazy::new(|| RwLock::new(HashMap::new()));
 static ALERT_EVENTS: Lazy<RwLock<Vec<AlertEvent>>> = Lazy::new(|| RwLock::new(Vec::new()));
 
 /// List all alert configurations.
@@ -200,7 +201,8 @@ pub async fn list_alerts(
     State(_state): State<AppState>,
     Query(query): Query<ListAlertsQuery>,
 ) -> Result<Json<Vec<AlertConfig>>> {
-    let guard = ALERT_CONFIGS.read()
+    let guard = ALERT_CONFIGS
+        .read()
         .map_err(|_| Error::Internal("Failed to read alerts".to_string()))?;
 
     let mut alerts: Vec<AlertConfig> = guard.values().cloned().collect();
@@ -232,10 +234,12 @@ pub async fn get_alert(
     State(_state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<AlertConfig>> {
-    let guard = ALERT_CONFIGS.read()
+    let guard = ALERT_CONFIGS
+        .read()
         .map_err(|_| Error::Internal("Failed to read alerts".to_string()))?;
 
-    let alert = guard.get(&id)
+    let alert = guard
+        .get(&id)
         .cloned()
         .ok_or_else(|| Error::NotFound(format!("Alert configuration {}", id)))?;
 
@@ -276,7 +280,8 @@ pub async fn create_alert(
         updated_at: now,
     };
 
-    let mut guard = ALERT_CONFIGS.write()
+    let mut guard = ALERT_CONFIGS
+        .write()
         .map_err(|_| Error::Internal("Failed to write alerts".to_string()))?;
 
     guard.insert(alert.id, alert.clone());
@@ -293,10 +298,12 @@ pub async fn update_alert(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateAlertRequest>,
 ) -> Result<Json<AlertConfig>> {
-    let mut guard = ALERT_CONFIGS.write()
+    let mut guard = ALERT_CONFIGS
+        .write()
         .map_err(|_| Error::Internal("Failed to write alerts".to_string()))?;
 
-    let alert = guard.get_mut(&id)
+    let alert = guard
+        .get_mut(&id)
         .ok_or_else(|| Error::NotFound(format!("Alert configuration {}", id)))?;
 
     // Validate name if provided
@@ -359,7 +366,8 @@ pub async fn delete_alert(
     State(_state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    let mut guard = ALERT_CONFIGS.write()
+    let mut guard = ALERT_CONFIGS
+        .write()
         .map_err(|_| Error::Internal("Failed to write alerts".to_string()))?;
 
     if guard.remove(&id).is_none() {
@@ -380,10 +388,12 @@ pub async fn get_active_alerts(
     // Check current metrics against alert configs and return active ones
     let metrics = state.collector.get_all_metrics().await;
 
-    let configs_guard = ALERT_CONFIGS.read()
+    let configs_guard = ALERT_CONFIGS
+        .read()
         .map_err(|_| Error::Internal("Failed to read alerts".to_string()))?;
 
-    let mut events_guard = ALERT_EVENTS.write()
+    let mut events_guard = ALERT_EVENTS
+        .write()
         .map_err(|_| Error::Internal("Failed to write alert events".to_string()))?;
 
     let now = chrono::Utc::now();
@@ -395,7 +405,9 @@ pub async fn get_active_alerts(
             MetricType::MemoryUsage => Some(metrics.memory.usage_percent),
             MetricType::DiskUsage => {
                 if let Some(ref target) = config.metric_target {
-                    metrics.disks.iter()
+                    metrics
+                        .disks
+                        .iter()
                         .find(|d| d.name == *target || d.mount_point == *target)
                         .map(|d| d.usage_percent)
                 } else {
@@ -408,25 +420,41 @@ pub async fn get_active_alerts(
                         None
                     }
                 }
-            }
+            },
             MetricType::NetworkIn => {
                 if let Some(ref target) = config.metric_target {
-                    metrics.networks.iter()
+                    metrics
+                        .networks
+                        .iter()
                         .find(|n| n.name == *target)
                         .map(|n| n.received_bytes as f64)
                 } else {
-                    Some(metrics.networks.iter().map(|n| n.received_bytes).sum::<u64>() as f64)
+                    Some(
+                        metrics
+                            .networks
+                            .iter()
+                            .map(|n| n.received_bytes)
+                            .sum::<u64>() as f64,
+                    )
                 }
-            }
+            },
             MetricType::NetworkOut => {
                 if let Some(ref target) = config.metric_target {
-                    metrics.networks.iter()
+                    metrics
+                        .networks
+                        .iter()
                         .find(|n| n.name == *target)
                         .map(|n| n.transmitted_bytes as f64)
                 } else {
-                    Some(metrics.networks.iter().map(|n| n.transmitted_bytes).sum::<u64>() as f64)
+                    Some(
+                        metrics
+                            .networks
+                            .iter()
+                            .map(|n| n.transmitted_bytes)
+                            .sum::<u64>() as f64,
+                    )
                 }
-            }
+            },
             _ => None,
         };
 
@@ -435,7 +463,8 @@ pub async fn get_active_alerts(
 
             if condition_met {
                 // Check if we already have an active event for this config
-                let existing = events_guard.iter_mut()
+                let existing = events_guard
+                    .iter_mut()
                     .find(|e| e.config_id == config.id && e.status == AlertStatus::Active);
 
                 if existing.is_none() {
@@ -520,7 +549,8 @@ pub async fn list_alert_events(
     State(_state): State<AppState>,
     Query(query): Query<ListEventsQuery>,
 ) -> Result<Json<Vec<AlertEvent>>> {
-    let guard = ALERT_EVENTS.read()
+    let guard = ALERT_EVENTS
+        .read()
         .map_err(|_| Error::Internal("Failed to read alert events".to_string()))?;
 
     let mut events: Vec<AlertEvent> = guard.iter().cloned().collect();
@@ -553,10 +583,12 @@ pub async fn acknowledge_alert(
     Path(id): Path<Uuid>,
     Json(payload): Json<AcknowledgeRequest>,
 ) -> Result<Json<AlertEvent>> {
-    let mut guard = ALERT_EVENTS.write()
+    let mut guard = ALERT_EVENTS
+        .write()
         .map_err(|_| Error::Internal("Failed to write alert events".to_string()))?;
 
-    let event = guard.iter_mut()
+    let event = guard
+        .iter_mut()
         .find(|e| e.id == id)
         .ok_or_else(|| Error::NotFound(format!("Alert event {}", id)))?;
 

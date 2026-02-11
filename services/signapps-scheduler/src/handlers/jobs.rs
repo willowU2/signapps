@@ -8,25 +8,23 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::scheduler::service::RunningJob;
 use crate::AppState;
 use signapps_common::Result;
 use signapps_db::models::{CreateJob, Job, JobRun, JobStats, UpdateJob};
-use crate::scheduler::service::RunningJob;
 
 /// List all jobs.
-pub async fn list_jobs(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<Job>>> {
+pub async fn list_jobs(State(state): State<AppState>) -> Result<Json<Vec<Job>>> {
     let jobs = state.scheduler.list_jobs().await?;
     Ok(Json(jobs))
 }
 
 /// Get a job by ID.
-pub async fn get_job(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<Json<Job>> {
-    let job = state.scheduler.get_job(id).await?
+pub async fn get_job(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Job>> {
+    let job = state
+        .scheduler
+        .get_job(id)
+        .await?
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Job {}", id)))?;
     Ok(Json(job))
 }
@@ -51,28 +49,19 @@ pub async fn update_job(
 }
 
 /// Delete a job.
-pub async fn delete_job(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<StatusCode> {
+pub async fn delete_job(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     state.scheduler.delete_job(id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
 /// Enable a job.
-pub async fn enable_job(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<Json<Job>> {
+pub async fn enable_job(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Job>> {
     let job = state.scheduler.enable_job(id).await?;
     Ok(Json(job))
 }
 
 /// Disable a job.
-pub async fn disable_job(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<Json<Job>> {
+pub async fn disable_job(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Job>> {
     let job = state.scheduler.disable_job(id).await?;
     Ok(Json(job))
 }
@@ -126,23 +115,22 @@ pub async fn get_run(
     State(state): State<AppState>,
     Path(run_id): Path<Uuid>,
 ) -> Result<Json<JobRun>> {
-    let run = state.scheduler.get_run(run_id).await?
+    let run = state
+        .scheduler
+        .get_run(run_id)
+        .await?
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Run {}", run_id)))?;
     Ok(Json(run))
 }
 
 /// Get scheduler statistics.
-pub async fn get_stats(
-    State(state): State<AppState>,
-) -> Result<Json<JobStats>> {
+pub async fn get_stats(State(state): State<AppState>) -> Result<Json<JobStats>> {
     let stats = state.scheduler.get_stats().await?;
     Ok(Json(stats))
 }
 
 /// Get currently running jobs.
-pub async fn get_running(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<RunningJob>>> {
+pub async fn get_running(State(state): State<AppState>) -> Result<Json<Vec<RunningJob>>> {
     let running = state.scheduler.get_running_jobs().await;
     Ok(Json(running))
 }
@@ -163,7 +151,9 @@ pub async fn cleanup_runs(
     Json(request): Json<CleanupRequest>,
 ) -> Result<Json<CleanupResponse>> {
     let deleted = state.scheduler.cleanup_old_runs(request.days).await?;
-    Ok(Json(CleanupResponse { deleted_runs: deleted }))
+    Ok(Json(CleanupResponse {
+        deleted_runs: deleted,
+    }))
 }
 
 /// Cleanup response.
@@ -173,9 +163,7 @@ pub struct CleanupResponse {
 }
 
 /// Health check.
-pub async fn health_check(
-    State(state): State<AppState>,
-) -> Result<Json<HealthResponse>> {
+pub async fn health_check(State(state): State<AppState>) -> Result<Json<HealthResponse>> {
     let stats = state.scheduler.get_stats().await?;
     let running = state.scheduler.get_running_jobs().await;
 

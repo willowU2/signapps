@@ -176,11 +176,7 @@ pub async fn get_quota_alerts(
 }
 
 /// Check if an upload would exceed quota.
-pub async fn check_quota(
-    _state: &AppState,
-    _user_id: Uuid,
-    _file_size: i64,
-) -> Result<()> {
+pub async fn check_quota(_state: &AppState, _user_id: Uuid, _file_size: i64) -> Result<()> {
     // TODO: Fetch user quota from database
     // TODO: Check if current usage + file_size exceeds limit
     // TODO: Check if file_count + 1 exceeds limit
@@ -226,9 +222,7 @@ pub async fn recalculate_usage(
 
 /// Get all users over quota (admin only).
 #[tracing::instrument(skip(_state))]
-pub async fn get_users_over_quota(
-    State(_state): State<AppState>,
-) -> Result<Json<Vec<QuotaUsage>>> {
+pub async fn get_users_over_quota(State(_state): State<AppState>) -> Result<Json<Vec<QuotaUsage>>> {
     // TODO: Query database for users exceeding their quota
 
     Ok(Json(vec![]))

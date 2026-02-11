@@ -17,47 +17,41 @@ impl<'a> DeviceRepository<'a> {
 
     /// Find device by ID.
     pub async fn find(&self, id: Uuid) -> Result<Option<Device>> {
-        let device = sqlx::query_as::<_, Device>(
-            "SELECT * FROM securelink.devices WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let device = sqlx::query_as::<_, Device>("SELECT * FROM securelink.devices WHERE id = $1")
+            .bind(id)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(device)
     }
 
     /// Find device by name.
     pub async fn find_by_name(&self, name: &str) -> Result<Option<Device>> {
-        let device = sqlx::query_as::<_, Device>(
-            "SELECT * FROM securelink.devices WHERE name = $1"
-        )
-        .bind(name)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let device =
+            sqlx::query_as::<_, Device>("SELECT * FROM securelink.devices WHERE name = $1")
+                .bind(name)
+                .fetch_optional(self.pool.inner())
+                .await?;
 
         Ok(device)
     }
 
     /// Find device by public key.
     pub async fn find_by_public_key(&self, public_key: &str) -> Result<Option<Device>> {
-        let device = sqlx::query_as::<_, Device>(
-            "SELECT * FROM securelink.devices WHERE public_key = $1"
-        )
-        .bind(public_key)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let device =
+            sqlx::query_as::<_, Device>("SELECT * FROM securelink.devices WHERE public_key = $1")
+                .bind(public_key)
+                .fetch_optional(self.pool.inner())
+                .await?;
 
         Ok(device)
     }
 
     /// List all devices.
     pub async fn list(&self) -> Result<Vec<Device>> {
-        let devices = sqlx::query_as::<_, Device>(
-            "SELECT * FROM securelink.devices ORDER BY name"
-        )
-        .fetch_all(self.pool.inner())
-        .await?;
+        let devices = sqlx::query_as::<_, Device>("SELECT * FROM securelink.devices ORDER BY name")
+            .fetch_all(self.pool.inner())
+            .await?;
 
         Ok(devices)
     }
@@ -65,7 +59,7 @@ impl<'a> DeviceRepository<'a> {
     /// List active (non-blocked) devices.
     pub async fn list_active(&self) -> Result<Vec<Device>> {
         let devices = sqlx::query_as::<_, Device>(
-            "SELECT * FROM securelink.devices WHERE blocked = false ORDER BY name"
+            "SELECT * FROM securelink.devices WHERE blocked = false ORDER BY name",
         )
         .fetch_all(self.pool.inner())
         .await?;
@@ -76,7 +70,7 @@ impl<'a> DeviceRepository<'a> {
     /// List lighthouses.
     pub async fn list_lighthouses(&self) -> Result<Vec<Device>> {
         let devices = sqlx::query_as::<_, Device>(
-            "SELECT * FROM securelink.devices WHERE is_lighthouse = true AND blocked = false"
+            "SELECT * FROM securelink.devices WHERE is_lighthouse = true AND blocked = false",
         )
         .fetch_all(self.pool.inner())
         .await?;
@@ -134,9 +128,10 @@ impl<'a> DeviceRepository<'a> {
 
         if sets.is_empty() {
             // No updates, return existing device
-            return self.find(id).await?.ok_or_else(|| {
-                signapps_common::Error::NotFound(format!("Device {}", id))
-            });
+            return self
+                .find(id)
+                .await?
+                .ok_or_else(|| signapps_common::Error::NotFound(format!("Device {}", id)));
         }
 
         let query = format!(
@@ -187,7 +182,7 @@ impl<'a> DeviceRepository<'a> {
     /// Block a device.
     pub async fn block(&self, id: Uuid) -> Result<Device> {
         let device = sqlx::query_as::<_, Device>(
-            "UPDATE securelink.devices SET blocked = true WHERE id = $1 RETURNING *"
+            "UPDATE securelink.devices SET blocked = true WHERE id = $1 RETURNING *",
         )
         .bind(id)
         .fetch_one(self.pool.inner())
@@ -199,7 +194,7 @@ impl<'a> DeviceRepository<'a> {
     /// Unblock a device.
     pub async fn unblock(&self, id: Uuid) -> Result<Device> {
         let device = sqlx::query_as::<_, Device>(
-            "UPDATE securelink.devices SET blocked = false WHERE id = $1 RETURNING *"
+            "UPDATE securelink.devices SET blocked = false WHERE id = $1 RETURNING *",
         )
         .bind(id)
         .fetch_one(self.pool.inner())
@@ -211,17 +206,15 @@ impl<'a> DeviceRepository<'a> {
     /// Get next available IP in the VPN network.
     pub async fn get_next_ip(&self, network_prefix: &str) -> Result<String> {
         // Get all used IPs
-        let used_ips: Vec<String> = sqlx::query_scalar(
-            "SELECT ip_address FROM securelink.devices"
-        )
-        .fetch_all(self.pool.inner())
-        .await?;
+        let used_ips: Vec<String> = sqlx::query_scalar("SELECT ip_address FROM securelink.devices")
+            .fetch_all(self.pool.inner())
+            .await?;
 
         // Parse network prefix (e.g., "10.42.0")
         let parts: Vec<&str> = network_prefix.split('.').collect();
         if parts.len() != 3 {
             return Err(signapps_common::Error::Validation(
-                "Invalid network prefix".to_string()
+                "Invalid network prefix".to_string(),
             ));
         }
 
@@ -234,28 +227,25 @@ impl<'a> DeviceRepository<'a> {
         }
 
         Err(signapps_common::Error::Internal(
-            "No available IP addresses in network".to_string()
+            "No available IP addresses in network".to_string(),
         ))
     }
 
     /// Count devices.
     pub async fn count(&self) -> Result<i64> {
-        let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM securelink.devices"
-        )
-        .fetch_one(self.pool.inner())
-        .await?;
+        let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM securelink.devices")
+            .fetch_one(self.pool.inner())
+            .await?;
 
         Ok(count.0)
     }
 
     /// Count active devices.
     pub async fn count_active(&self) -> Result<i64> {
-        let count: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM securelink.devices WHERE blocked = false"
-        )
-        .fetch_one(self.pool.inner())
-        .await?;
+        let count: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM securelink.devices WHERE blocked = false")
+                .fetch_one(self.pool.inner())
+                .await?;
 
         Ok(count.0)
     }

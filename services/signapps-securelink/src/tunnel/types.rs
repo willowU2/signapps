@@ -210,10 +210,7 @@ impl Default for DnsServiceConfig {
     fn default() -> Self {
         Self {
             enabled: false,
-            upstream: vec![
-                "1.1.1.1".to_string(),
-                "8.8.8.8".to_string(),
-            ],
+            upstream: vec!["1.1.1.1".to_string(), "8.8.8.8".to_string()],
             adblock_enabled: false,
             custom_records: Vec::new(),
             listen_addr: default_dns_listen(),
@@ -336,21 +333,13 @@ pub enum TunnelMessage {
         data: Vec<u8>,
     },
     /// TCP connection closed.
-    TcpClose {
-        connection_id: String,
-    },
+    TcpClose { connection_id: String },
     /// Ping/keepalive.
-    Ping {
-        timestamp: u64,
-    },
+    Ping { timestamp: u64 },
     /// Pong response.
-    Pong {
-        timestamp: u64,
-    },
+    Pong { timestamp: u64 },
     /// Error message.
-    Error {
-        message: String,
-    },
+    Error { message: String },
 }
 
 /// Tunnel registration info sent to relay.

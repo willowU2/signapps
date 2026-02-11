@@ -43,7 +43,8 @@ impl ShieldService {
         let mut conn = (*self.redis).clone();
 
         // Check if IP is blocked
-        let blocked: Option<String> = conn.get(&block_key)
+        let blocked: Option<String> = conn
+            .get(&block_key)
             .await
             .map_err(|e| Error::Internal(format!("Redis error: {}", e)))?;
 
@@ -78,10 +79,10 @@ impl ShieldService {
         // Check against burst limit
         if total > burst_size {
             // Increment blocked counter
-            let _: () = conn.incr(
-                format!("{}:stats:blocked", self.key_prefix),
-                1
-            ).await.unwrap_or(());
+            let _: () = conn
+                .incr(format!("{}:stats:blocked", self.key_prefix), 1)
+                .await
+                .unwrap_or(());
 
             return Ok(RateLimitResult::RateLimited {
                 current: total,
@@ -90,10 +91,10 @@ impl ShieldService {
         }
 
         // Increment total requests counter
-        let _: () = conn.incr(
-            format!("{}:stats:total", self.key_prefix),
-            1
-        ).await.unwrap_or(());
+        let _: () = conn
+            .incr(format!("{}:stats:total", self.key_prefix), 1)
+            .await
+            .unwrap_or(());
 
         Ok(RateLimitResult::Allowed {
             remaining: burst_size - total,
@@ -136,7 +137,8 @@ impl ShieldService {
 
         let mut conn = (*self.redis).clone();
 
-        let deleted: i32 = conn.del(&block_key)
+        let deleted: i32 = conn
+            .del(&block_key)
             .await
             .map_err(|e| Error::Internal(format!("Redis error: {}", e)))?;
 
@@ -155,7 +157,8 @@ impl ShieldService {
 
         let mut conn = (*self.redis).clone();
 
-        let exists: bool = conn.exists(&block_key)
+        let exists: bool = conn
+            .exists(&block_key)
             .await
             .map_err(|e| Error::Internal(format!("Redis error: {}", e)))?;
 
@@ -166,19 +169,23 @@ impl ShieldService {
     pub async fn get_stats(&self) -> Result<ShieldStats> {
         let mut conn = (*self.redis).clone();
 
-        let total: u64 = conn.get(format!("{}:stats:total", self.key_prefix))
+        let total: u64 = conn
+            .get(format!("{}:stats:total", self.key_prefix))
             .await
             .unwrap_or(0);
 
-        let blocked: u64 = conn.get(format!("{}:stats:blocked", self.key_prefix))
+        let blocked: u64 = conn
+            .get(format!("{}:stats:blocked", self.key_prefix))
             .await
             .unwrap_or(0);
 
-        let rate_limited: u64 = conn.get(format!("{}:stats:rate_limited", self.key_prefix))
+        let rate_limited: u64 = conn
+            .get(format!("{}:stats:rate_limited", self.key_prefix))
             .await
             .unwrap_or(0);
 
-        let active_blocks: u32 = conn.get(format!("{}:stats:active_blocks", self.key_prefix))
+        let active_blocks: u32 = conn
+            .get(format!("{}:stats:active_blocks", self.key_prefix))
             .await
             .unwrap_or(0);
 
@@ -201,7 +208,8 @@ impl ShieldService {
         ];
 
         for key in keys {
-            let _: () = conn.del(&key)
+            let _: () = conn
+                .del(&key)
                 .await
                 .map_err(|e| Error::Internal(format!("Redis error: {}", e)))?;
         }

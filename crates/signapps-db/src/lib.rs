@@ -27,9 +27,7 @@ pub async fn create_pool(database_url: &str) -> Result<DatabasePool, sqlx::Error
 
 /// Run database migrations.
 pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::MigrateError> {
-    sqlx::migrate!("../../migrations")
-        .run(pool.inner())
-        .await?;
+    sqlx::migrate!("../../migrations").run(pool.inner()).await?;
 
     tracing::info!("Database migrations completed");
     Ok(())

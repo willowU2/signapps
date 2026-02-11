@@ -1,9 +1,7 @@
 //! Prometheus metrics exporter.
 
-use prometheus::{
-    Encoder, GaugeVec, IntGaugeVec, Opts, Registry, TextEncoder,
-};
 use crate::metrics::collector::MetricsCollector;
+use prometheus::{Encoder, GaugeVec, IntGaugeVec, Opts, Registry, TextEncoder};
 
 /// Prometheus metrics exporter.
 pub struct PrometheusExporter {
@@ -44,88 +42,92 @@ impl PrometheusExporter {
 
         // CPU metrics
         let cpu_usage = GaugeVec::new(
-            Opts::new("signapps_cpu_usage_percent", "CPU usage percentage per core"),
+            Opts::new(
+                "signapps_cpu_usage_percent",
+                "CPU usage percentage per core",
+            ),
             &["cpu"],
-        ).unwrap();
+        )
+        .unwrap();
 
-        let cpu_count = prometheus::IntGauge::new(
-            "signapps_cpu_count",
-            "Number of CPU cores",
-        ).unwrap();
+        let cpu_count =
+            prometheus::IntGauge::new("signapps_cpu_count", "Number of CPU cores").unwrap();
 
-        let load_avg_1 = prometheus::Gauge::new(
-            "signapps_load_average_1m",
-            "1 minute load average",
-        ).unwrap();
+        let load_avg_1 =
+            prometheus::Gauge::new("signapps_load_average_1m", "1 minute load average").unwrap();
 
-        let load_avg_5 = prometheus::Gauge::new(
-            "signapps_load_average_5m",
-            "5 minute load average",
-        ).unwrap();
+        let load_avg_5 =
+            prometheus::Gauge::new("signapps_load_average_5m", "5 minute load average").unwrap();
 
-        let load_avg_15 = prometheus::Gauge::new(
-            "signapps_load_average_15m",
-            "15 minute load average",
-        ).unwrap();
+        let load_avg_15 =
+            prometheus::Gauge::new("signapps_load_average_15m", "15 minute load average").unwrap();
 
         // Memory metrics
-        let memory_total = prometheus::IntGauge::new(
-            "signapps_memory_total_bytes",
-            "Total memory in bytes",
-        ).unwrap();
+        let memory_total =
+            prometheus::IntGauge::new("signapps_memory_total_bytes", "Total memory in bytes")
+                .unwrap();
 
-        let memory_used = prometheus::IntGauge::new(
-            "signapps_memory_used_bytes",
-            "Used memory in bytes",
-        ).unwrap();
+        let memory_used =
+            prometheus::IntGauge::new("signapps_memory_used_bytes", "Used memory in bytes")
+                .unwrap();
 
         let memory_available = prometheus::IntGauge::new(
             "signapps_memory_available_bytes",
             "Available memory in bytes",
-        ).unwrap();
+        )
+        .unwrap();
 
-        let swap_total = prometheus::IntGauge::new(
-            "signapps_swap_total_bytes",
-            "Total swap in bytes",
-        ).unwrap();
+        let swap_total =
+            prometheus::IntGauge::new("signapps_swap_total_bytes", "Total swap in bytes").unwrap();
 
-        let swap_used = prometheus::IntGauge::new(
-            "signapps_swap_used_bytes",
-            "Used swap in bytes",
-        ).unwrap();
+        let swap_used =
+            prometheus::IntGauge::new("signapps_swap_used_bytes", "Used swap in bytes").unwrap();
 
         // Disk metrics
         let disk_total = IntGaugeVec::new(
             Opts::new("signapps_disk_total_bytes", "Total disk space in bytes"),
             &["device", "mount"],
-        ).unwrap();
+        )
+        .unwrap();
 
         let disk_used = IntGaugeVec::new(
             Opts::new("signapps_disk_used_bytes", "Used disk space in bytes"),
             &["device", "mount"],
-        ).unwrap();
+        )
+        .unwrap();
 
         let disk_available = IntGaugeVec::new(
-            Opts::new("signapps_disk_available_bytes", "Available disk space in bytes"),
+            Opts::new(
+                "signapps_disk_available_bytes",
+                "Available disk space in bytes",
+            ),
             &["device", "mount"],
-        ).unwrap();
+        )
+        .unwrap();
 
         // Network metrics
         let network_rx_bytes = IntGaugeVec::new(
-            Opts::new("signapps_network_receive_bytes_total", "Total bytes received"),
+            Opts::new(
+                "signapps_network_receive_bytes_total",
+                "Total bytes received",
+            ),
             &["interface"],
-        ).unwrap();
+        )
+        .unwrap();
 
         let network_tx_bytes = IntGaugeVec::new(
-            Opts::new("signapps_network_transmit_bytes_total", "Total bytes transmitted"),
+            Opts::new(
+                "signapps_network_transmit_bytes_total",
+                "Total bytes transmitted",
+            ),
             &["interface"],
-        ).unwrap();
+        )
+        .unwrap();
 
         // System metrics
-        let uptime_seconds = prometheus::IntGauge::new(
-            "signapps_uptime_seconds",
-            "System uptime in seconds",
-        ).unwrap();
+        let uptime_seconds =
+            prometheus::IntGauge::new("signapps_uptime_seconds", "System uptime in seconds")
+                .unwrap();
 
         // Register all metrics
         registry.register(Box::new(cpu_usage.clone())).unwrap();
@@ -135,14 +137,20 @@ impl PrometheusExporter {
         registry.register(Box::new(load_avg_15.clone())).unwrap();
         registry.register(Box::new(memory_total.clone())).unwrap();
         registry.register(Box::new(memory_used.clone())).unwrap();
-        registry.register(Box::new(memory_available.clone())).unwrap();
+        registry
+            .register(Box::new(memory_available.clone()))
+            .unwrap();
         registry.register(Box::new(swap_total.clone())).unwrap();
         registry.register(Box::new(swap_used.clone())).unwrap();
         registry.register(Box::new(disk_total.clone())).unwrap();
         registry.register(Box::new(disk_used.clone())).unwrap();
         registry.register(Box::new(disk_available.clone())).unwrap();
-        registry.register(Box::new(network_rx_bytes.clone())).unwrap();
-        registry.register(Box::new(network_tx_bytes.clone())).unwrap();
+        registry
+            .register(Box::new(network_rx_bytes.clone()))
+            .unwrap();
+        registry
+            .register(Box::new(network_tx_bytes.clone()))
+            .unwrap();
         registry.register(Box::new(uptime_seconds.clone())).unwrap();
 
         Self {
@@ -186,7 +194,8 @@ impl PrometheusExporter {
         // Update memory metrics
         self.memory_total.set(metrics.memory.total_bytes as i64);
         self.memory_used.set(metrics.memory.used_bytes as i64);
-        self.memory_available.set(metrics.memory.available_bytes as i64);
+        self.memory_available
+            .set(metrics.memory.available_bytes as i64);
         self.swap_total.set(metrics.memory.swap_total_bytes as i64);
         self.swap_used.set(metrics.memory.swap_used_bytes as i64);
 

@@ -49,7 +49,8 @@ pub async fn index_document(
 ) -> Result<Json<IndexResponse>> {
     let document_id = Uuid::new_v4();
 
-    let chunks_indexed = state.rag
+    let chunks_indexed = state
+        .rag
         .index_document(
             document_id,
             &payload.content,

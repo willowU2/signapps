@@ -35,7 +35,10 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    tracing::info!("Starting SignApps Identity Service v{}", env!("CARGO_PKG_VERSION"));
+    tracing::info!(
+        "Starting SignApps Identity Service v{}",
+        env!("CARGO_PKG_VERSION")
+    );
 
     // Load configuration
     dotenvy::dotenv().ok();

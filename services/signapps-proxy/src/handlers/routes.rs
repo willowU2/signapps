@@ -7,7 +7,7 @@ use axum::{
 };
 use serde::Serialize;
 use signapps_common::{Error, Result};
-use signapps_db::models::{CreateRoute, Route, UpdateRoute, ShieldConfig, HeadersConfig};
+use signapps_db::models::{CreateRoute, HeadersConfig, Route, ShieldConfig, UpdateRoute};
 use signapps_db::repositories::RouteRepository;
 use uuid::Uuid;
 

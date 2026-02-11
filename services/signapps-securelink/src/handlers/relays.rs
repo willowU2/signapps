@@ -11,24 +11,22 @@ use axum::{
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::AppState;
 use crate::tunnel::{CreateRelay, Relay, RelayStatus, RelayTestResult, UpdateRelay};
+use crate::AppState;
 use signapps_common::Result;
 
 /// List all configured relays.
-pub async fn list_relays(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<Relay>>> {
+pub async fn list_relays(State(state): State<AppState>) -> Result<Json<Vec<Relay>>> {
     let relays = state.tunnel_client.list_relays().await;
     Ok(Json(relays))
 }
 
 /// Get a specific relay by ID.
-pub async fn get_relay(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<Json<Relay>> {
-    let relay = state.tunnel_client.get_relay(id).await
+pub async fn get_relay(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<Json<Relay>> {
+    let relay = state
+        .tunnel_client
+        .get_relay(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Relay {}", id)))?;
     Ok(Json(relay))
 }
@@ -41,7 +39,7 @@ pub async fn create_relay(
     // Validate URL format
     if !request.url.starts_with("ws://") && !request.url.starts_with("wss://") {
         return Err(signapps_common::Error::Validation(
-            "Relay URL must start with ws:// or wss://".to_string()
+            "Relay URL must start with ws:// or wss://".to_string(),
         ));
     }
 
@@ -90,7 +88,10 @@ pub async fn update_relay(
     Path(id): Path<Uuid>,
     Json(request): Json<UpdateRelay>,
 ) -> Result<Json<Relay>> {
-    let mut relay = state.tunnel_client.get_relay(id).await
+    let mut relay = state
+        .tunnel_client
+        .get_relay(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Relay {}", id)))?;
 
     // Apply updates
@@ -100,7 +101,7 @@ pub async fn update_relay(
     if let Some(url) = request.url {
         if !url.starts_with("ws://") && !url.starts_with("wss://") {
             return Err(signapps_common::Error::Validation(
-                "Relay URL must start with ws:// or wss://".to_string()
+                "Relay URL must start with ws:// or wss://".to_string(),
             ));
         }
         relay.url = url;
@@ -134,14 +135,15 @@ pub async fn delete_relay(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
     // Check if relay exists
-    let relay = state.tunnel_client.get_relay(id).await
+    let relay = state
+        .tunnel_client
+        .get_relay(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Relay {}", id)))?;
 
     // Check if any tunnels are using this relay
     let tunnels = state.tunnel_client.list_tunnels().await;
-    let dependent_tunnels: Vec<_> = tunnels.iter()
-        .filter(|t| t.relay_id == id)
-        .collect();
+    let dependent_tunnels: Vec<_> = tunnels.iter().filter(|t| t.relay_id == id).collect();
 
     if !dependent_tunnels.is_empty() {
         return Err(signapps_common::Error::Validation(format!(
@@ -164,7 +166,10 @@ pub async fn test_relay(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RelayTestResponse>> {
-    let mut relay = state.tunnel_client.get_relay(id).await
+    let mut relay = state
+        .tunnel_client
+        .get_relay(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Relay {}", id)))?;
 
     tracing::info!("Testing relay '{}' at {}", relay.name, relay.url);
@@ -196,7 +201,10 @@ pub async fn connect_relay(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ConnectResponse>> {
-    let relay = state.tunnel_client.get_relay(id).await
+    let relay = state
+        .tunnel_client
+        .get_relay(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Relay {}", id)))?;
 
     // Start connection
@@ -253,16 +261,18 @@ pub async fn get_relay_stats(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<RelayStats>> {
-    let relay = state.tunnel_client.get_relay(id).await
+    let relay = state
+        .tunnel_client
+        .get_relay(id)
+        .await
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Relay {}", id)))?;
 
     // Get tunnels for this relay
     let tunnels = state.tunnel_client.list_tunnels().await;
-    let relay_tunnels: Vec<_> = tunnels.iter()
-        .filter(|t| t.relay_id == id)
-        .collect();
+    let relay_tunnels: Vec<_> = tunnels.iter().filter(|t| t.relay_id == id).collect();
 
-    let connected_count = relay_tunnels.iter()
+    let connected_count = relay_tunnels
+        .iter()
         .filter(|t| t.status == crate::tunnel::TunnelStatus::Connected)
         .count();
 

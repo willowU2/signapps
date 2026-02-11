@@ -135,12 +135,9 @@ impl AdBlocker {
     pub async fn load_from_url(&self, url: &str) -> Result<usize> {
         tracing::info!("Fetching blocklist from: {}", url);
 
-        let response = self
-            .http_client
-            .get(url)
-            .send()
-            .await
-            .map_err(|e| Error::Internal(format!("Failed to fetch blocklist from {}: {}", url, e)))?;
+        let response = self.http_client.get(url).send().await.map_err(|e| {
+            Error::Internal(format!("Failed to fetch blocklist from {}: {}", url, e))
+        })?;
 
         if !response.status().is_success() {
             return Err(Error::Internal(format!(

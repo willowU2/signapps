@@ -84,20 +84,21 @@ impl TtsClient {
     pub async fn synthesize(&self, request: TtsRequest) -> Result<TtsResult, TtsError> {
         // Coqui TTS API uses GET /api/tts?text=...
         // Don't send speaker_id for single-speaker models
-        let url = format!("{}/api/tts?text={}",
+        let url = format!(
+            "{}/api/tts?text={}",
             self.base_url,
             urlencoding::encode(&request.text)
         );
 
-        let response = self.client
-            .get(&url)
-            .send()
-            .await?;
+        let response = self.client.get(&url).send().await?;
 
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
-            return Err(TtsError::ServiceError(format!("TTS service error {}: {}", status, error_text)));
+            return Err(TtsError::ServiceError(format!(
+                "TTS service error {}: {}",
+                status, error_text
+            )));
         }
 
         // Get audio data as bytes (WAV format)
@@ -113,7 +114,10 @@ impl TtsClient {
     }
 
     /// Synthesize with streaming (for long texts)
-    pub async fn synthesize_stream(&self, request: TtsRequest) -> Result<impl futures::Stream<Item = Result<Bytes, TtsError>>, TtsError> {
+    pub async fn synthesize_stream(
+        &self,
+        request: TtsRequest,
+    ) -> Result<impl futures::Stream<Item = Result<Bytes, TtsError>>, TtsError> {
         let voice = request.voice.as_ref().unwrap_or(&self.default_voice);
 
         let payload = serde_json::json!({
@@ -124,7 +128,8 @@ impl TtsClient {
             "stream": true
         });
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/synthesize/stream", self.base_url))
             .json(&payload)
             .send()
@@ -133,7 +138,10 @@ impl TtsClient {
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
-            return Err(TtsError::ServiceError(format!("TTS service error {}: {}", status, error_text)));
+            return Err(TtsError::ServiceError(format!(
+                "TTS service error {}: {}",
+                status, error_text
+            )));
         }
 
         Ok(futures::stream::unfold(response, |mut resp| async move {
@@ -147,7 +155,8 @@ impl TtsClient {
 
     /// List available voices
     pub async fn list_voices(&self) -> Result<Vec<Voice>, TtsError> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/voices", self.base_url))
             .send()
             .await?;
@@ -163,7 +172,8 @@ impl TtsClient {
 
     /// Get voice info
     pub async fn get_voice(&self, voice_id: &str) -> Result<Voice, TtsError> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/voices/{}", self.base_url, voice_id))
             .send()
             .await?;

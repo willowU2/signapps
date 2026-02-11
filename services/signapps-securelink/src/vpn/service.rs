@@ -3,7 +3,10 @@
 
 use crate::vpn::crypto::CryptoService;
 use signapps_common::{Error, Result};
-use signapps_db::models::{Device, MeshConfig, PkiConfig, LighthouseConfig, ListenConfig, PunchyConfig, FirewallConfig, FirewallRule};
+use signapps_db::models::{
+    Device, FirewallConfig, FirewallRule, LighthouseConfig, ListenConfig, MeshConfig, PkiConfig,
+    PunchyConfig,
+};
 use signapps_db::repositories::DeviceRepository;
 use signapps_db::DatabasePool;
 use std::collections::HashMap;
@@ -67,7 +70,8 @@ impl VpnService {
         let ip_address = repo.get_next_ip(&self.network_prefix).await?;
 
         // Generate certificate
-        let certificate = self.crypto
+        let certificate = self
+            .crypto
             .sign_certificate(name, &ip_address, is_lighthouse)
             .await?;
 
@@ -79,7 +83,9 @@ impl VpnService {
             is_relay,
         };
 
-        let device = repo.create(&create_device, &certificate.public_key, &ip_address).await?;
+        let device = repo
+            .create(&create_device, &certificate.public_key, &ip_address)
+            .await?;
 
         // Generate mesh config for the device
         let config = self.generate_device_config(&device).await?;
@@ -157,14 +163,12 @@ impl VpnService {
                 udp_timeout: "3m".to_string(),
                 default_timeout: "10m".to_string(),
             },
-            outbound: vec![
-                FirewallRule {
-                    port: "any".to_string(),
-                    proto: "any".to_string(),
-                    host: "any".to_string(),
-                    groups: None,
-                },
-            ],
+            outbound: vec![FirewallRule {
+                port: "any".to_string(),
+                proto: "any".to_string(),
+                host: "any".to_string(),
+                groups: None,
+            }],
             inbound: vec![
                 FirewallRule {
                     port: "any".to_string(),

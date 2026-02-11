@@ -55,7 +55,8 @@ impl MediaConfig {
                 _ => OcrProvider::Surya,
             },
             tts_url: std::env::var("TTS_URL").unwrap_or_else(|_| "http://piper:5000".to_string()),
-            tts_default_voice: std::env::var("TTS_VOICE").unwrap_or_else(|_| "en_US-lessac-medium".to_string()),
+            tts_default_voice: std::env::var("TTS_VOICE")
+                .unwrap_or_else(|_| "en_US-lessac-medium".to_string()),
             stt_url: std::env::var("STT_URL").unwrap_or_else(|_| "http://whisper:8000".to_string()),
             stt_model: std::env::var("STT_MODEL").unwrap_or_else(|_| "large-v3".to_string()),
             stt_language: std::env::var("STT_LANGUAGE").ok(),
@@ -67,14 +68,13 @@ impl AuthState for AppState {
     fn jwt_config(&self) -> &JwtConfig {
         // For simplicity, we use a static config. In production, load from DB/env
         static JWT_CONFIG: std::sync::OnceLock<JwtConfig> = std::sync::OnceLock::new();
-        JWT_CONFIG.get_or_init(|| {
-            JwtConfig {
-                secret: std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-in-production".to_string()),
-                issuer: "signapps".to_string(),
-                audience: "signapps".to_string(),
-                access_expiration: 3600,
-                refresh_expiration: 86400 * 7,
-            }
+        JWT_CONFIG.get_or_init(|| JwtConfig {
+            secret: std::env::var("JWT_SECRET")
+                .unwrap_or_else(|_| "dev-secret-change-in-production".to_string()),
+            issuer: "signapps".to_string(),
+            audience: "signapps".to_string(),
+            access_expiration: 3600,
+            refresh_expiration: 86400 * 7,
         })
     }
 }
@@ -82,9 +82,7 @@ impl AuthState for AppState {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_max_level(Level::INFO)
-        .init();
+    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
 
     // Load environment variables
     dotenvy::dotenv().ok();
@@ -106,7 +104,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize clients
     let ocr_client = ocr::OcrClient::new(&config.ocr_url, config.ocr_provider.clone());
     let tts_client = tts::TtsClient::new(&config.tts_url, &config.tts_default_voice);
-    let stt_client = stt::SttClient::new(&config.stt_url, &config.stt_model, config.stt_language.clone());
+    let stt_client = stt::SttClient::new(
+        &config.stt_url,
+        &config.stt_model,
+        config.stt_language.clone(),
+    );
 
     let state = Arc::new(AppState {
         pool,

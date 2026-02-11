@@ -92,10 +92,7 @@ impl<'r> sqlx::Decode<'r, sqlx::Postgres> for UserId {
 }
 
 impl sqlx::Encode<'_, sqlx::Postgres> for UserId {
-    fn encode_by_ref(
-        &self,
-        buf: &mut sqlx::postgres::PgArgumentBuffer,
-    ) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut sqlx::postgres::PgArgumentBuffer) -> sqlx::encode::IsNull {
         self.0.encode_by_ref(buf)
     }
 }
@@ -121,7 +118,10 @@ impl Email {
         }
 
         if !validate_email(&email) {
-            return Err(Error::Validation(format!("Invalid email format: {}", email)));
+            return Err(Error::Validation(format!(
+                "Invalid email format: {}",
+                email
+            )));
         }
 
         Ok(Self(email))
@@ -198,10 +198,7 @@ impl<'r> sqlx::Decode<'r, sqlx::Postgres> for Email {
 }
 
 impl sqlx::Encode<'_, sqlx::Postgres> for Email {
-    fn encode_by_ref(
-        &self,
-        buf: &mut sqlx::postgres::PgArgumentBuffer,
-    ) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut sqlx::postgres::PgArgumentBuffer) -> sqlx::encode::IsNull {
         <String as sqlx::Encode<sqlx::Postgres>>::encode_by_ref(&self.0, buf)
     }
 }
@@ -393,10 +390,7 @@ impl<'r> sqlx::Decode<'r, sqlx::Postgres> for PasswordHash {
 }
 
 impl sqlx::Encode<'_, sqlx::Postgres> for PasswordHash {
-    fn encode_by_ref(
-        &self,
-        buf: &mut sqlx::postgres::PgArgumentBuffer,
-    ) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut sqlx::postgres::PgArgumentBuffer) -> sqlx::encode::IsNull {
         <String as sqlx::Encode<sqlx::Postgres>>::encode_by_ref(&self.0, buf)
     }
 }
@@ -446,8 +440,15 @@ impl Username {
             ));
         }
 
-        if !username.chars().next().map(|c| c.is_alphabetic()).unwrap_or(false) {
-            return Err(Error::Validation("Username must start with a letter".into()));
+        if !username
+            .chars()
+            .next()
+            .map(|c| c.is_alphabetic())
+            .unwrap_or(false)
+        {
+            return Err(Error::Validation(
+                "Username must start with a letter".into(),
+            ));
         }
 
         Ok(Self(username))
@@ -511,10 +512,7 @@ impl<'r> sqlx::Decode<'r, sqlx::Postgres> for Username {
 }
 
 impl sqlx::Encode<'_, sqlx::Postgres> for Username {
-    fn encode_by_ref(
-        &self,
-        buf: &mut sqlx::postgres::PgArgumentBuffer,
-    ) -> sqlx::encode::IsNull {
+    fn encode_by_ref(&self, buf: &mut sqlx::postgres::PgArgumentBuffer) -> sqlx::encode::IsNull {
         <String as sqlx::Encode<sqlx::Postgres>>::encode_by_ref(&self.0, buf)
     }
 }
@@ -577,7 +575,9 @@ mod tests {
         let hash = PasswordHash::from_password(&password).unwrap();
 
         assert!(hash.verify(&password).unwrap());
-        assert!(!hash.verify(&Password::new("wrongpassword1").unwrap()).unwrap());
+        assert!(!hash
+            .verify(&Password::new("wrongpassword1").unwrap())
+            .unwrap());
     }
 
     #[test]

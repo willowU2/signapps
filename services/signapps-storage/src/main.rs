@@ -5,9 +5,7 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
-use signapps_common::middleware::{
-    auth_middleware, logging_middleware, request_id_middleware,
-};
+use signapps_common::middleware::{auth_middleware, logging_middleware, request_id_middleware};
 use signapps_common::{AuthState, JwtConfig};
 use signapps_db::DatabasePool;
 use std::net::SocketAddr;
@@ -17,7 +15,10 @@ use tower_http::cors::{Any, CorsLayer};
 mod handlers;
 mod minio;
 
-use handlers::{buckets, external, favorites, files, health, mounts, preview, quotas, raid, search, shares, trash};
+use handlers::{
+    buckets, external, favorites, files, health, mounts, preview, quotas, raid, search, shares,
+    trash,
+};
 use minio::MinioClient;
 
 /// Application state shared across handlers.
@@ -44,7 +45,10 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    tracing::info!("Starting SignApps Storage Service v{}", env!("CARGO_PKG_VERSION"));
+    tracing::info!(
+        "Starting SignApps Storage Service v{}",
+        env!("CARGO_PKG_VERSION")
+    );
 
     // Load configuration
     let database_url =
@@ -67,7 +71,13 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Database migrations completed");
 
     // Initialize MinIO client
-    let minio = MinioClient::new(&minio_endpoint, &minio_access_key, &minio_secret_key, &minio_region).await?;
+    let minio = MinioClient::new(
+        &minio_endpoint,
+        &minio_access_key,
+        &minio_secret_key,
+        &minio_region,
+    )
+    .await?;
     tracing::info!("MinIO client initialized");
 
     // JWT configuration
@@ -187,8 +197,14 @@ fn create_router(state: AppState) -> Router {
         .route("/favorites/:id", get(favorites::get_favorite))
         .route("/favorites/:id", put(favorites::update_favorite))
         .route("/favorites/:id", delete(favorites::remove_favorite))
-        .route("/favorites/check/:bucket/*key", get(favorites::check_favorite))
-        .route("/favorites/path/:bucket/*key", delete(favorites::remove_favorite_by_path));
+        .route(
+            "/favorites/check/:bucket/*key",
+            get(favorites::check_favorite),
+        )
+        .route(
+            "/favorites/path/:bucket/*key",
+            delete(favorites::remove_favorite_by_path),
+        );
 
     // Search routes
     let search_routes = Router::new()
@@ -204,14 +220,20 @@ fn create_router(state: AppState) -> Router {
         .route("/quotas/users/:user_id", get(quotas::get_user_quota))
         .route("/quotas/users/:user_id", put(quotas::set_user_quota))
         .route("/quotas/users/:user_id", delete(quotas::delete_user_quota))
-        .route("/quotas/users/:user_id/recalculate", post(quotas::recalculate_usage))
+        .route(
+            "/quotas/users/:user_id/recalculate",
+            post(quotas::recalculate_usage),
+        )
         .route("/quotas/over-limit", get(quotas::get_users_over_quota));
 
     // Preview routes (action before bucket to avoid wildcard conflicts)
     let preview_routes = Router::new()
         .route("/preview/view/:bucket/*key", get(preview::get_preview))
         .route("/preview/info/:bucket/*key", get(preview::get_preview_info))
-        .route("/preview/thumbnail/:bucket/*key", get(preview::get_thumbnail));
+        .route(
+            "/preview/thumbnail/:bucket/*key",
+            get(preview::get_thumbnail),
+        );
 
     // Mount management routes
     let mount_routes = Router::new()

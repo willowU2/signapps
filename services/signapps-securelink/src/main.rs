@@ -114,7 +114,14 @@ async fn main() -> std::io::Result<()> {
 
     tracing::info!("🚀 Starting SignApps SecureLink (Standalone Mode)");
     tracing::info!("   Port: {}", config.port);
-    tracing::info!("   Ad-blocking: {}", if config.adblock_enabled { "enabled" } else { "disabled" });
+    tracing::info!(
+        "   Ad-blocking: {}",
+        if config.adblock_enabled {
+            "enabled"
+        } else {
+            "disabled"
+        }
+    );
 
     // Create tunnel client
     let tunnel_config = TunnelClientConfig {
@@ -210,7 +217,10 @@ fn create_router(state: AppState) -> Router {
         .route("/blocklists", post(handlers::add_blocklist))
         .route("/blocklists/{id}", get(handlers::get_blocklist))
         .route("/blocklists/{id}", delete(handlers::delete_blocklist))
-        .route("/blocklists/{id}/refresh", post(handlers::refresh_blocklist))
+        .route(
+            "/blocklists/{id}/refresh",
+            post(handlers::refresh_blocklist),
+        )
         .route("/records", get(handlers::list_dns_records))
         .route("/records", post(handlers::add_dns_record))
         .route("/records", delete(handlers::delete_dns_record))
@@ -220,8 +230,7 @@ fn create_router(state: AppState) -> Router {
         .route("/cache/flush", post(handlers::flush_dns_cache));
 
     // Health check
-    let health_routes = Router::new()
-        .route("/", get(handlers::health_check_standalone));
+    let health_routes = Router::new().route("/", get(handlers::health_check_standalone));
 
     // Combine all routes
     Router::new()

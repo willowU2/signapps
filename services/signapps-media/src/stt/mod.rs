@@ -110,7 +110,12 @@ impl SttClient {
     }
 
     /// Transcribe audio file
-    pub async fn transcribe(&self, audio_data: Bytes, filename: &str, options: Option<TranscribeRequest>) -> Result<TranscribeResult, SttError> {
+    pub async fn transcribe(
+        &self,
+        audio_data: Bytes,
+        filename: &str,
+        options: Option<TranscribeRequest>,
+    ) -> Result<TranscribeResult, SttError> {
         let start = std::time::Instant::now();
 
         let mime_type = mime_guess::from_path(filename)
@@ -118,10 +123,12 @@ impl SttClient {
             .to_string();
 
         // Whisper ASR API uses /asr endpoint with audio_file part
-        let form = reqwest::multipart::Form::new()
-            .part("audio_file", reqwest::multipart::Part::bytes(audio_data.to_vec())
+        let form = reqwest::multipart::Form::new().part(
+            "audio_file",
+            reqwest::multipart::Part::bytes(audio_data.to_vec())
                 .file_name(filename.to_string())
-                .mime_str(&mime_type)?);
+                .mime_str(&mime_type)?,
+        );
 
         let opts = options.unwrap_or_default();
         let task = match opts.task.unwrap_or_default() {
@@ -139,16 +146,15 @@ impl SttClient {
             url.push_str("&word_timestamps=true");
         }
 
-        let response = self.client
-            .post(&url)
-            .multipart(form)
-            .send()
-            .await?;
+        let response = self.client.post(&url).multipart(form).send().await?;
 
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
-            return Err(SttError::ServiceError(format!("STT service error {}: {}", status, error_text)));
+            return Err(SttError::ServiceError(format!(
+                "STT service error {}: {}",
+                status, error_text
+            )));
         }
 
         let processing_time = start.elapsed().as_millis() as u64;
@@ -159,7 +165,10 @@ impl SttClient {
 
         Ok(TranscribeResult {
             text: text.clone(),
-            language: self.default_language.clone().unwrap_or_else(|| "en".to_string()),
+            language: self
+                .default_language
+                .clone()
+                .unwrap_or_else(|| "en".to_string()),
             language_probability: 0.95,
             duration_seconds: 0.0,
             segments: vec![Segment {
@@ -179,15 +188,22 @@ impl SttClient {
     }
 
     /// Transcribe with streaming results
-    pub async fn transcribe_stream(&self, audio_data: Bytes, filename: &str, options: Option<TranscribeRequest>) -> Result<impl futures::Stream<Item = Result<TranscribeChunk, SttError>>, SttError> {
+    pub async fn transcribe_stream(
+        &self,
+        audio_data: Bytes,
+        filename: &str,
+        options: Option<TranscribeRequest>,
+    ) -> Result<impl futures::Stream<Item = Result<TranscribeChunk, SttError>>, SttError> {
         let mime_type = mime_guess::from_path(filename)
             .first_or_octet_stream()
             .to_string();
 
-        let mut form = reqwest::multipart::Form::new()
-            .part("file", reqwest::multipart::Part::bytes(audio_data.to_vec())
+        let mut form = reqwest::multipart::Form::new().part(
+            "file",
+            reqwest::multipart::Part::bytes(audio_data.to_vec())
                 .file_name(filename.to_string())
-                .mime_str(&mime_type)?);
+                .mime_str(&mime_type)?,
+        );
 
         let opts = options.unwrap_or_default();
         let model = opts.model.as_ref().unwrap_or(&self.default_model);
@@ -198,7 +214,8 @@ impl SttClient {
             form = form.text("language", lang.clone());
         }
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/transcribe/stream", self.base_url))
             .multipart(form)
             .send()
@@ -207,7 +224,10 @@ impl SttClient {
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
-            return Err(SttError::ServiceError(format!("STT service error {}: {}", status, error_text)));
+            return Err(SttError::ServiceError(format!(
+                "STT service error {}: {}",
+                status, error_text
+            )));
         }
 
         Ok(futures::stream::unfold(response, |mut resp| async move {
@@ -225,9 +245,12 @@ impl SttClient {
                             Err(e) => Some((Err(SttError::InvalidResponse(e.to_string())), resp)),
                         }
                     } else {
-                        Some((Err(SttError::InvalidResponse("Invalid SSE format".to_string())), resp))
+                        Some((
+                            Err(SttError::InvalidResponse("Invalid SSE format".to_string())),
+                            resp,
+                        ))
                     }
-                }
+                },
                 Ok(None) => None,
                 Err(e) => Some((Err(SttError::HttpError(e)), resp)),
             }
@@ -236,7 +259,8 @@ impl SttClient {
 
     /// List available models
     pub async fn list_models(&self) -> Result<Vec<SttModel>, SttError> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/models", self.base_url))
             .send()
             .await?;
@@ -251,17 +275,24 @@ impl SttClient {
     }
 
     /// Detect language from audio
-    pub async fn detect_language(&self, audio_data: Bytes, filename: &str) -> Result<LanguageDetection, SttError> {
+    pub async fn detect_language(
+        &self,
+        audio_data: Bytes,
+        filename: &str,
+    ) -> Result<LanguageDetection, SttError> {
         let mime_type = mime_guess::from_path(filename)
             .first_or_octet_stream()
             .to_string();
 
-        let form = reqwest::multipart::Form::new()
-            .part("file", reqwest::multipart::Part::bytes(audio_data.to_vec())
+        let form = reqwest::multipart::Form::new().part(
+            "file",
+            reqwest::multipart::Part::bytes(audio_data.to_vec())
                 .file_name(filename.to_string())
-                .mime_str(&mime_type)?);
+                .mime_str(&mime_type)?,
+        );
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/detect-language", self.base_url))
             .multipart(form)
             .send()
@@ -270,7 +301,10 @@ impl SttClient {
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
-            return Err(SttError::ServiceError(format!("Language detection error {}: {}", status, error_text)));
+            return Err(SttError::ServiceError(format!(
+                "Language detection error {}: {}",
+                status, error_text
+            )));
         }
 
         let result: LanguageDetection = response.json().await?;

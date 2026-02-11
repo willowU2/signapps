@@ -2,8 +2,8 @@
 
 use bollard::container::{
     Config, CreateContainerOptions, ListContainersOptions, LogOutput, LogsOptions,
-    RemoveContainerOptions, RestartContainerOptions, StartContainerOptions,
-    StatsOptions, StopContainerOptions,
+    RemoveContainerOptions, RestartContainerOptions, StartContainerOptions, StatsOptions,
+    StopContainerOptions,
 };
 use bollard::image::{CreateImageOptions, ListImagesOptions, RemoveImageOptions};
 use bollard::network::ListNetworksOptions;
@@ -136,7 +136,8 @@ impl DockerClient {
                     .iter()
                     .flat_map(|(key, bindings)| {
                         let parts: Vec<&str> = key.split('/').collect();
-                        let container_port = parts.first().and_then(|p| p.parse().ok()).unwrap_or(0);
+                        let container_port =
+                            parts.first().and_then(|p| p.parse().ok()).unwrap_or(0);
                         let protocol = parts.get(1).map(|s| s.to_string()).unwrap_or_default();
 
                         bindings
@@ -145,7 +146,10 @@ impl DockerClient {
                                 bs.iter()
                                     .map(|b| PortInfo {
                                         container_port,
-                                        host_port: b.host_port.as_ref().and_then(|p| p.parse().ok()),
+                                        host_port: b
+                                            .host_port
+                                            .as_ref()
+                                            .and_then(|p| p.parse().ok()),
                                         host_ip: b.host_ip.clone(),
                                         protocol: protocol.clone(),
                                     })
@@ -189,10 +193,7 @@ impl DockerClient {
                 .unwrap_or_default(),
             created: inspect.created.unwrap_or_default(),
             ports,
-            labels: inspect
-                .config
-                .and_then(|c| c.labels)
-                .unwrap_or_default(),
+            labels: inspect.config.and_then(|c| c.labels).unwrap_or_default(),
             networks,
         })
     }
@@ -254,7 +255,7 @@ impl DockerClient {
                 RestartPolicy::OnFailure => bollard::service::RestartPolicyNameEnum::ON_FAILURE,
                 RestartPolicy::UnlessStopped => {
                     bollard::service::RestartPolicyNameEnum::UNLESS_STOPPED
-                }
+                },
             };
             bollard::service::RestartPolicy {
                 name: Some(name),
@@ -366,7 +367,9 @@ impl DockerClient {
         let options = LogsOptions::<String> {
             stdout: true,
             stderr: true,
-            tail: tail.map(|t| t.to_string()).unwrap_or_else(|| "100".to_string()),
+            tail: tail
+                .map(|t| t.to_string())
+                .unwrap_or_else(|| "100".to_string()),
             ..Default::default()
         };
 
@@ -379,18 +382,18 @@ impl DockerClient {
                     let line = match log {
                         LogOutput::StdOut { message } => {
                             String::from_utf8_lossy(&message).to_string()
-                        }
+                        },
                         LogOutput::StdErr { message } => {
                             String::from_utf8_lossy(&message).to_string()
-                        }
+                        },
                         _ => continue,
                     };
                     logs.push(line);
-                }
+                },
                 Err(e) => {
                     tracing::warn!(error = %e, "Error reading log");
                     break;
-                }
+                },
             }
         }
 
@@ -443,13 +446,12 @@ impl DockerClient {
                 .io_service_bytes_recursive
                 .as_ref()
                 .map(|ios| {
-                    ios.iter().fold((0u64, 0u64), |(r, w), io| {
-                        match io.op.as_str() {
+                    ios.iter()
+                        .fold((0u64, 0u64), |(r, w), io| match io.op.as_str() {
                             "read" | "Read" => (r + io.value, w),
                             "write" | "Write" => (r, w + io.value),
                             _ => (r, w),
-                        }
-                    })
+                        })
                 })
                 .unwrap_or((0, 0));
 
@@ -516,10 +518,10 @@ impl DockerClient {
                     if let Some(status) = info.status {
                         tracing::debug!(image = %image, status = %status, "Pull progress");
                     }
-                }
+                },
                 Err(e) => {
                     return Err(Error::Docker(format!("Failed to pull image: {}", e)));
-                }
+                },
             }
         }
 

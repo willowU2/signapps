@@ -11,14 +11,15 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::dns::{
+    Blocklist as DnsBlocklist, CustomDnsRecord as DnsRecord, DnsConfig as DnsServiceConfig,
+    DnsStats,
+};
 use crate::AppState;
-use crate::dns::{Blocklist as DnsBlocklist, CustomDnsRecord as DnsRecord, DnsConfig as DnsServiceConfig, DnsStats};
 use signapps_common::Result;
 
 /// Get current DNS configuration.
-pub async fn get_dns_config(
-    State(state): State<AppState>,
-) -> Result<Json<DnsServiceConfig>> {
+pub async fn get_dns_config(State(state): State<AppState>) -> Result<Json<DnsServiceConfig>> {
     let config = state.dns_config.read().await;
     Ok(Json(config.clone()))
 }
@@ -38,9 +39,10 @@ pub async fn update_dns_config(
         // Validate upstream DNS servers
         for server in &upstream {
             if !is_valid_dns_server(server) {
-                return Err(signapps_common::Error::Validation(
-                    format!("Invalid DNS server: {}", server)
-                ));
+                return Err(signapps_common::Error::Validation(format!(
+                    "Invalid DNS server: {}",
+                    server
+                )));
             }
         }
         config.upstream = upstream;
@@ -76,9 +78,7 @@ pub struct UpdateDnsConfigRequest {
 }
 
 /// Get all DNS blocklists.
-pub async fn list_blocklists(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<DnsBlocklist>>> {
+pub async fn list_blocklists(State(state): State<AppState>) -> Result<Json<Vec<DnsBlocklist>>> {
     let blocklists = state.blocklists.read().await;
     Ok(Json(blocklists.clone()))
 }
@@ -89,7 +89,8 @@ pub async fn get_blocklist(
     Path(id): Path<Uuid>,
 ) -> Result<Json<DnsBlocklist>> {
     let blocklists = state.blocklists.read().await;
-    let blocklist = blocklists.iter()
+    let blocklist = blocklists
+        .iter()
         .find(|b| b.id == id)
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Blocklist {}", id)))?;
     Ok(Json(blocklist.clone()))
@@ -116,7 +117,7 @@ pub async fn add_blocklist(
     // Validate URL
     if !request.url.starts_with("http://") && !request.url.starts_with("https://") {
         return Err(signapps_common::Error::Validation(
-            "Blocklist URL must start with http:// or https://".to_string()
+            "Blocklist URL must start with http:// or https://".to_string(),
         ));
     }
 
@@ -132,7 +133,11 @@ pub async fn add_blocklist(
     let mut blocklists = state.blocklists.write().await;
     blocklists.push(blocklist.clone());
 
-    tracing::info!("Added blocklist '{}' from {}", blocklist.name, blocklist.url);
+    tracing::info!(
+        "Added blocklist '{}' from {}",
+        blocklist.name,
+        blocklist.url
+    );
 
     Ok((StatusCode::CREATED, Json(blocklist)))
 }
@@ -145,7 +150,8 @@ pub async fn update_blocklist(
     Json(request): Json<UpdateBlocklistRequest>,
 ) -> Result<Json<DnsBlocklist>> {
     let mut blocklists = state.blocklists.write().await;
-    let blocklist = blocklists.iter_mut()
+    let blocklist = blocklists
+        .iter_mut()
         .find(|b| b.id == id)
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Blocklist {}", id)))?;
 
@@ -173,7 +179,8 @@ pub async fn delete_blocklist(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
     let mut blocklists = state.blocklists.write().await;
-    let index = blocklists.iter()
+    let index = blocklists
+        .iter()
         .position(|b| b.id == id)
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Blocklist {}", id)))?;
 
@@ -189,7 +196,8 @@ pub async fn refresh_blocklist(
     Path(id): Path<Uuid>,
 ) -> Result<Json<RefreshBlocklistResponse>> {
     let mut blocklists = state.blocklists.write().await;
-    let blocklist = blocklists.iter_mut()
+    let blocklist = blocklists
+        .iter_mut()
         .find(|b| b.id == id)
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Blocklist {}", id)))?;
 
@@ -197,7 +205,11 @@ pub async fn refresh_blocklist(
     // For now, we just update the timestamp
     blocklist.last_updated = Some(chrono::Utc::now());
 
-    tracing::info!("Refreshed blocklist '{}' from {}", blocklist.name, blocklist.url);
+    tracing::info!(
+        "Refreshed blocklist '{}' from {}",
+        blocklist.name,
+        blocklist.url
+    );
 
     Ok(Json(RefreshBlocklistResponse {
         message: format!("Blocklist '{}' refreshed", blocklist.name),
@@ -213,17 +225,13 @@ pub struct RefreshBlocklistResponse {
 }
 
 /// Get DNS statistics.
-pub async fn get_dns_stats(
-    State(state): State<AppState>,
-) -> Result<Json<DnsStats>> {
+pub async fn get_dns_stats(State(state): State<AppState>) -> Result<Json<DnsStats>> {
     let stats = state.dns_stats.read().await;
     Ok(Json(stats.clone()))
 }
 
 /// Reset DNS statistics.
-pub async fn reset_dns_stats(
-    State(state): State<AppState>,
-) -> Result<Json<ResetStatsResponse>> {
+pub async fn reset_dns_stats(State(state): State<AppState>) -> Result<Json<ResetStatsResponse>> {
     let mut stats = state.dns_stats.write().await;
     *stats = DnsStats::default();
 
@@ -241,9 +249,7 @@ pub struct ResetStatsResponse {
 }
 
 /// Get custom DNS records.
-pub async fn list_dns_records(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<DnsRecord>>> {
+pub async fn list_dns_records(State(state): State<AppState>) -> Result<Json<Vec<DnsRecord>>> {
     let config = state.dns_config.read().await;
     Ok(Json(config.custom_records.clone()))
 }
@@ -270,18 +276,24 @@ pub async fn add_dns_record(
     // Validate record type
     let valid_types = ["A", "AAAA", "CNAME", "TXT", "MX"];
     if !valid_types.contains(&request.record_type.to_uppercase().as_str()) {
-        return Err(signapps_common::Error::Validation(
-            format!("Invalid record type: {}. Valid types are: {:?}", request.record_type, valid_types)
-        ));
+        return Err(signapps_common::Error::Validation(format!(
+            "Invalid record type: {}. Valid types are: {:?}",
+            request.record_type, valid_types
+        )));
     }
 
     let mut config = state.dns_config.write().await;
 
     // Check for duplicate
-    if config.custom_records.iter().any(|r| r.name == request.name && r.record_type == request.record_type) {
-        return Err(signapps_common::Error::Validation(
-            format!("Record {} {} already exists", request.record_type, request.name)
-        ));
+    if config
+        .custom_records
+        .iter()
+        .any(|r| r.name == request.name && r.record_type == request.record_type)
+    {
+        return Err(signapps_common::Error::Validation(format!(
+            "Record {} {} already exists",
+            request.record_type, request.name
+        )));
     }
 
     let record = DnsRecord {
@@ -293,7 +305,12 @@ pub async fn add_dns_record(
 
     config.custom_records.push(record.clone());
 
-    tracing::info!("Added DNS record: {} {} -> {}", record.record_type, record.name, record.value);
+    tracing::info!(
+        "Added DNS record: {} {} -> {}",
+        record.record_type,
+        record.name,
+        record.value
+    );
 
     Ok((StatusCode::CREATED, Json(record)))
 }
@@ -305,14 +322,24 @@ pub async fn delete_dns_record(
 ) -> Result<StatusCode> {
     let mut config = state.dns_config.write().await;
 
-    let index = config.custom_records.iter()
+    let index = config
+        .custom_records
+        .iter()
         .position(|r| r.name == request.name && r.record_type == request.record_type)
-        .ok_or_else(|| signapps_common::Error::NotFound(
-            format!("DNS record {} {}", request.record_type, request.name)
-        ))?;
+        .ok_or_else(|| {
+            signapps_common::Error::NotFound(format!(
+                "DNS record {} {}",
+                request.record_type, request.name
+            ))
+        })?;
 
     let removed = config.custom_records.remove(index);
-    tracing::info!("Deleted DNS record: {} {} -> {}", removed.record_type, removed.name, removed.value);
+    tracing::info!(
+        "Deleted DNS record: {} {} -> {}",
+        removed.record_type,
+        removed.name,
+        removed.value
+    );
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -328,12 +355,13 @@ pub struct DeleteDnsRecordRequest {
 fn is_valid_dns_server(server: &str) -> bool {
     // Simple validation - check if it's an IP address or hostname
     // Could be enhanced with more thorough validation
-    !server.is_empty() && (
-        // IP address (v4 or v6)
-        server.parse::<std::net::IpAddr>().is_ok() ||
+    !server.is_empty()
+        && (
+            // IP address (v4 or v6)
+            server.parse::<std::net::IpAddr>().is_ok() ||
         // Hostname (simple check)
         server.chars().all(|c| c.is_alphanumeric() || c == '.' || c == '-')
-    )
+        )
 }
 
 /// Query DNS for a specific domain (for testing).
@@ -344,7 +372,11 @@ pub async fn query_dns(
     // In a real implementation, this would use the DNS resolver
     // For now, return a placeholder response
 
-    tracing::debug!("DNS query for {} (type: {})", request.domain, request.record_type);
+    tracing::debug!(
+        "DNS query for {} (type: {})",
+        request.domain,
+        request.record_type
+    );
 
     Ok(Json(DnsQueryResponse {
         domain: request.domain,
@@ -378,9 +410,7 @@ pub struct DnsQueryResponse {
 }
 
 /// Flush DNS cache.
-pub async fn flush_dns_cache(
-    State(_state): State<AppState>,
-) -> Result<Json<FlushCacheResponse>> {
+pub async fn flush_dns_cache(State(_state): State<AppState>) -> Result<Json<FlushCacheResponse>> {
     // In a real implementation, this would clear the DNS cache
     tracing::info!("DNS cache flushed");
 

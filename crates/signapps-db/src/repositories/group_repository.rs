@@ -1,6 +1,6 @@
 //! Group repository for RBAC operations.
 
-use crate::models::{CreateGroup, Group, GroupMember, Role, CreateRole, Webhook, CreateWebhook};
+use crate::models::{CreateGroup, CreateRole, CreateWebhook, Group, GroupMember, Role, Webhook};
 use crate::DatabasePool;
 use signapps_common::Result;
 use uuid::Uuid;
@@ -19,23 +19,19 @@ impl<'a> GroupRepository<'a> {
 
     /// Find group by ID.
     pub async fn find_group(&self, id: Uuid) -> Result<Option<Group>> {
-        let group = sqlx::query_as::<_, Group>(
-            "SELECT * FROM identity.groups WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let group = sqlx::query_as::<_, Group>("SELECT * FROM identity.groups WHERE id = $1")
+            .bind(id)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(group)
     }
 
     /// List all groups.
     pub async fn list_groups(&self) -> Result<Vec<Group>> {
-        let groups = sqlx::query_as::<_, Group>(
-            "SELECT * FROM identity.groups ORDER BY name"
-        )
-        .fetch_all(self.pool.inner())
-        .await?;
+        let groups = sqlx::query_as::<_, Group>("SELECT * FROM identity.groups ORDER BY name")
+            .fetch_all(self.pool.inner())
+            .await?;
 
         Ok(groups)
     }
@@ -47,7 +43,7 @@ impl<'a> GroupRepository<'a> {
             INSERT INTO identity.groups (name, description, parent_id)
             VALUES ($1, $2, $3)
             RETURNING *
-            "#
+            "#,
         )
         .bind(&group.name)
         .bind(&group.description)
@@ -75,7 +71,7 @@ impl<'a> GroupRepository<'a> {
             INSERT INTO identity.group_members (group_id, user_id, role)
             VALUES ($1, $2, $3)
             ON CONFLICT (group_id, user_id) DO UPDATE SET role = $3
-            "#
+            "#,
         )
         .bind(group_id)
         .bind(user_id)
@@ -88,13 +84,11 @@ impl<'a> GroupRepository<'a> {
 
     /// Remove member from group.
     pub async fn remove_member(&self, group_id: Uuid, user_id: Uuid) -> Result<()> {
-        sqlx::query(
-            "DELETE FROM identity.group_members WHERE group_id = $1 AND user_id = $2"
-        )
-        .bind(group_id)
-        .bind(user_id)
-        .execute(self.pool.inner())
-        .await?;
+        sqlx::query("DELETE FROM identity.group_members WHERE group_id = $1 AND user_id = $2")
+            .bind(group_id)
+            .bind(user_id)
+            .execute(self.pool.inner())
+            .await?;
 
         Ok(())
     }
@@ -102,7 +96,7 @@ impl<'a> GroupRepository<'a> {
     /// List group members.
     pub async fn list_members(&self, group_id: Uuid) -> Result<Vec<GroupMember>> {
         let members = sqlx::query_as::<_, GroupMember>(
-            "SELECT * FROM identity.group_members WHERE group_id = $1"
+            "SELECT * FROM identity.group_members WHERE group_id = $1",
         )
         .bind(group_id)
         .fetch_all(self.pool.inner())
@@ -118,7 +112,7 @@ impl<'a> GroupRepository<'a> {
             SELECT g.* FROM identity.groups g
             INNER JOIN identity.group_members gm ON g.id = gm.group_id
             WHERE gm.user_id = $1
-            "#
+            "#,
         )
         .bind(user_id)
         .fetch_all(self.pool.inner())
@@ -131,23 +125,19 @@ impl<'a> GroupRepository<'a> {
 
     /// Find role by ID.
     pub async fn find_role(&self, id: Uuid) -> Result<Option<Role>> {
-        let role = sqlx::query_as::<_, Role>(
-            "SELECT * FROM identity.roles WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let role = sqlx::query_as::<_, Role>("SELECT * FROM identity.roles WHERE id = $1")
+            .bind(id)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(role)
     }
 
     /// List all roles.
     pub async fn list_roles(&self) -> Result<Vec<Role>> {
-        let roles = sqlx::query_as::<_, Role>(
-            "SELECT * FROM identity.roles ORDER BY name"
-        )
-        .fetch_all(self.pool.inner())
-        .await?;
+        let roles = sqlx::query_as::<_, Role>("SELECT * FROM identity.roles ORDER BY name")
+            .fetch_all(self.pool.inner())
+            .await?;
 
         Ok(roles)
     }
@@ -159,7 +149,7 @@ impl<'a> GroupRepository<'a> {
             INSERT INTO identity.roles (name, description, permissions)
             VALUES ($1, $2, $3)
             RETURNING *
-            "#
+            "#,
         )
         .bind(&role.name)
         .bind(&role.description)
@@ -184,23 +174,20 @@ impl<'a> GroupRepository<'a> {
 
     /// Find webhook by ID.
     pub async fn find_webhook(&self, id: Uuid) -> Result<Option<Webhook>> {
-        let webhook = sqlx::query_as::<_, Webhook>(
-            "SELECT * FROM identity.webhooks WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let webhook = sqlx::query_as::<_, Webhook>("SELECT * FROM identity.webhooks WHERE id = $1")
+            .bind(id)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(webhook)
     }
 
     /// List all webhooks.
     pub async fn list_webhooks(&self) -> Result<Vec<Webhook>> {
-        let webhooks = sqlx::query_as::<_, Webhook>(
-            "SELECT * FROM identity.webhooks ORDER BY name"
-        )
-        .fetch_all(self.pool.inner())
-        .await?;
+        let webhooks =
+            sqlx::query_as::<_, Webhook>("SELECT * FROM identity.webhooks ORDER BY name")
+                .fetch_all(self.pool.inner())
+                .await?;
 
         Ok(webhooks)
     }
@@ -212,7 +199,7 @@ impl<'a> GroupRepository<'a> {
             INSERT INTO identity.webhooks (name, url, secret, events, headers, enabled)
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
-            "#
+            "#,
         )
         .bind(&webhook.name)
         .bind(&webhook.url)
@@ -265,7 +252,7 @@ impl<'a> GroupRepository<'a> {
             UPDATE identity.webhooks
             SET last_triggered = NOW(), last_status = $2, updated_at = NOW()
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(id)
         .bind(status_code)

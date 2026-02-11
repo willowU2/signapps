@@ -76,7 +76,9 @@ impl LocalProxy {
         headers: Vec<(String, String)>,
         body: Option<Vec<u8>>,
     ) -> Result<HttpResponse> {
-        let endpoint = self.get_endpoint(subdomain).await
+        let endpoint = self
+            .get_endpoint(subdomain)
+            .await
             .ok_or_else(|| Error::NotFound(format!("Endpoint for subdomain: {}", subdomain)))?;
 
         let url = format!("http://{}{}", endpoint.local_addr, path);
@@ -111,7 +113,9 @@ impl LocalProxy {
         }
 
         // Send request
-        let response = request.send().await
+        let response = request
+            .send()
+            .await
             .map_err(|e| Error::Internal(format!("Proxy request failed: {}", e)))?;
 
         let status = response.status().as_u16();
@@ -119,15 +123,12 @@ impl LocalProxy {
             .headers()
             .iter()
             .filter(|(name, _)| !is_hop_by_hop_header(name.as_str()))
-            .map(|(name, value)| {
-                (
-                    name.to_string(),
-                    value.to_str().unwrap_or("").to_string(),
-                )
-            })
+            .map(|(name, value)| (name.to_string(), value.to_str().unwrap_or("").to_string()))
             .collect();
 
-        let body = response.bytes().await
+        let body = response
+            .bytes()
+            .await
             .map_err(|e| Error::Internal(format!("Failed to read response body: {}", e)))?
             .to_vec();
 
@@ -145,7 +146,7 @@ impl LocalProxy {
             Err(e) => {
                 debug!("Endpoint {} not reachable: {}", addr, e);
                 false
-            }
+            },
         }
     }
 }
@@ -184,10 +185,14 @@ impl TcpProxy {
 
     /// Start the TCP proxy.
     pub async fn run(&self) -> Result<()> {
-        let listener = TcpListener::bind(self.listen_addr).await
+        let listener = TcpListener::bind(self.listen_addr)
+            .await
             .map_err(|e| Error::Internal(format!("Failed to bind TCP proxy: {}", e)))?;
 
-        info!("TCP proxy listening on {} -> {}", self.listen_addr, self.target_addr);
+        info!(
+            "TCP proxy listening on {} -> {}",
+            self.listen_addr, self.target_addr
+        );
 
         loop {
             match listener.accept().await {
@@ -199,10 +204,10 @@ impl TcpProxy {
                             warn!("TCP proxy error: {}", e);
                         }
                     });
-                }
+                },
                 Err(e) => {
                     error!("Failed to accept TCP connection: {}", e);
-                }
+                },
             }
         }
     }
@@ -210,7 +215,8 @@ impl TcpProxy {
 
 /// Proxy a single TCP connection.
 async fn proxy_tcp_connection(mut inbound: TcpStream, target_addr: &str) -> Result<()> {
-    let mut outbound = TcpStream::connect(target_addr).await
+    let mut outbound = TcpStream::connect(target_addr)
+        .await
         .map_err(|e| Error::Internal(format!("Failed to connect to target: {}", e)))?;
 
     let (mut ri, mut wi) = inbound.split();
@@ -280,11 +286,16 @@ mod tests {
         let proxy = LocalProxy::new();
 
         // Register endpoint
-        proxy.register_endpoint("app", ProxyEndpoint {
-            name: "My App".to_string(),
-            local_addr: "localhost:8080".to_string(),
-            protocol: "http".to_string(),
-        }).await;
+        proxy
+            .register_endpoint(
+                "app",
+                ProxyEndpoint {
+                    name: "My App".to_string(),
+                    local_addr: "localhost:8080".to_string(),
+                    protocol: "http".to_string(),
+                },
+            )
+            .await;
 
         // Get endpoint
         let endpoint = proxy.get_endpoint("app").await;

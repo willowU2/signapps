@@ -53,7 +53,10 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    tracing::info!("Starting SignApps AI Service v{}", env!("CARGO_PKG_VERSION"));
+    tracing::info!(
+        "Starting SignApps AI Service v{}",
+        env!("CARGO_PKG_VERSION")
+    );
 
     // Load configuration
     let database_url =

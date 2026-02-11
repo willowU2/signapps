@@ -49,11 +49,7 @@ pub struct RagPipeline {
 
 impl RagPipeline {
     /// Create a new RAG pipeline.
-    pub fn new(
-        embeddings: EmbeddingsClient,
-        qdrant: QdrantService,
-        llm: LlmClient,
-    ) -> Self {
+    pub fn new(embeddings: EmbeddingsClient, qdrant: QdrantService, llm: LlmClient) -> Self {
         Self {
             embeddings,
             qdrant,
@@ -136,7 +132,8 @@ impl RagPipeline {
     pub async fn search(&self, query: &str, limit: Option<u64>) -> Result<Vec<SearchResult>> {
         let query_embedding = self.embeddings.embed(query).await?;
 
-        let results = self.qdrant
+        let results = self
+            .qdrant
             .search(
                 query_embedding,
                 limit.unwrap_or(self.config.top_k),
@@ -153,7 +150,11 @@ impl RagPipeline {
     }
 
     /// Query with RAG using a specific model.
-    pub async fn query_with_model(&self, question: &str, model: Option<&str>) -> Result<RagResponse> {
+    pub async fn query_with_model(
+        &self,
+        question: &str,
+        model: Option<&str>,
+    ) -> Result<RagResponse> {
         // 1. Retrieve relevant context
         let search_results = self.search(question, None).await?;
 
@@ -163,7 +164,8 @@ impl RagPipeline {
         // 3. Generate response with LLM
         let messages = self.build_messages(&context, question);
 
-        let response = self.llm
+        let response = self
+            .llm
             .chat_with_model(
                 messages,
                 model,
@@ -212,7 +214,8 @@ impl RagPipeline {
         // 3. Stream response from LLM
         let messages = self.build_messages(&context, question);
 
-        let stream = self.llm
+        let stream = self
+            .llm
             .chat_stream_with_model(
                 messages,
                 model,
@@ -233,23 +236,14 @@ impl RagPipeline {
         results
             .iter()
             .enumerate()
-            .map(|(i, r)| {
-                format!(
-                    "[Source {} - {}]\n{}",
-                    i + 1,
-                    r.filename,
-                    r.content
-                )
-            })
+            .map(|(i, r)| format!("[Source {} - {}]\n{}", i + 1, r.filename, r.content))
             .collect::<Vec<_>>()
             .join("\n\n---\n\n")
     }
 
     /// Build chat messages for RAG query.
     fn build_messages(&self, context: &str, question: &str) -> Vec<ChatMessage> {
-        let mut messages = vec![
-            ChatMessage::system(&self.config.system_prompt),
-        ];
+        let mut messages = vec![ChatMessage::system(&self.config.system_prompt)];
 
         if !context.is_empty() {
             messages.push(ChatMessage::user(format!(

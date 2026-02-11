@@ -17,10 +17,10 @@ use crate::AppState;
 #[derive(Debug, Clone, Copy, Default, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ThumbnailSize {
-    Small,  // 64x64
+    Small, // 64x64
     #[default]
     Medium, // 256x256
-    Large,  // 512x512
+    Large, // 512x512
 }
 
 impl ThumbnailSize {
@@ -84,17 +84,27 @@ pub async fn get_thumbnail(
     let info = state.minio.get_object_info(&bucket, &key).await?;
 
     // Check if we can generate thumbnail
-    let content_type = info.content_type.as_deref().unwrap_or("application/octet-stream");
+    let content_type = info
+        .content_type
+        .as_deref()
+        .unwrap_or("application/octet-stream");
     let preview_type = get_preview_type(content_type);
-    if !matches!(preview_type, PreviewType::Image | PreviewType::Pdf | PreviewType::Video) {
-        return Err(Error::BadRequest("Thumbnails not supported for this file type".to_string()));
+    if !matches!(
+        preview_type,
+        PreviewType::Image | PreviewType::Pdf | PreviewType::Video
+    ) {
+        return Err(Error::BadRequest(
+            "Thumbnails not supported for this file type".to_string(),
+        ));
     }
 
     // TODO: Check cache for existing thumbnail
     // TODO: Generate thumbnail using image processing
     // For now, return error - would need image processing library
 
-    Err(Error::Internal("Thumbnail generation not implemented".to_string()))
+    Err(Error::Internal(
+        "Thumbnail generation not implemented".to_string(),
+    ))
 }
 
 /// Get preview for a file.
@@ -105,14 +115,20 @@ pub async fn get_preview(
     Query(query): Query<PreviewQuery>,
 ) -> Result<Response> {
     let info = state.minio.get_object_info(&bucket, &key).await?;
-    let content_type = info.content_type.as_deref().unwrap_or("application/octet-stream");
+    let content_type = info
+        .content_type
+        .as_deref()
+        .unwrap_or("application/octet-stream");
     let preview_type = get_preview_type(content_type);
 
     match preview_type {
         PreviewType::Text | PreviewType::Code => {
             // Return raw text content (limited)
             let object = state.minio.get_object(&bucket, &key).await?;
-            let bytes = object.body.collect().await
+            let bytes = object
+                .body
+                .collect()
+                .await
                 .map_err(|e| Error::Internal(format!("Failed to read: {}", e)))?
                 .into_bytes();
 
@@ -128,35 +144,37 @@ pub async fn get_preview(
                 .header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
                 .body(Body::from(preview_bytes))
                 .map_err(|e| Error::Internal(e.to_string()))?)
-        }
+        },
         PreviewType::Image => {
             // Return resized image
             // TODO: Implement image resizing
             Err(Error::Internal("Image preview not implemented".to_string()))
-        }
+        },
         PreviewType::Pdf => {
             // Return PDF page as image
             // TODO: Implement PDF rendering
             Err(Error::Internal("PDF preview not implemented".to_string()))
-        }
+        },
         PreviewType::Video => {
             // Return video frame
             // TODO: Implement video frame extraction
             Err(Error::Internal("Video preview not implemented".to_string()))
-        }
+        },
         PreviewType::Audio => {
             // Return audio waveform
             // TODO: Implement waveform generation
             Err(Error::Internal("Audio preview not implemented".to_string()))
-        }
+        },
         PreviewType::Document => {
             // Return document as HTML or images
             // TODO: Implement document conversion
-            Err(Error::Internal("Document preview not implemented".to_string()))
-        }
-        PreviewType::None => {
-            Err(Error::BadRequest("Preview not available for this file type".to_string()))
-        }
+            Err(Error::Internal(
+                "Document preview not implemented".to_string(),
+            ))
+        },
+        PreviewType::None => Err(Error::BadRequest(
+            "Preview not available for this file type".to_string(),
+        )),
     }
 }
 
@@ -167,15 +185,24 @@ pub async fn get_preview_info(
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<Json<PreviewInfo>> {
     let info = state.minio.get_object_info(&bucket, &key).await?;
-    let content_type = info.content_type.as_deref().unwrap_or("application/octet-stream");
+    let content_type = info
+        .content_type
+        .as_deref()
+        .unwrap_or("application/octet-stream");
     let preview_type = get_preview_type(content_type);
 
     let previewable = !matches!(preview_type, PreviewType::None);
 
     let base_url = std::env::var("PUBLIC_URL").unwrap_or_else(|_| "http://localhost:3004".into());
 
-    let thumbnail_url = if matches!(preview_type, PreviewType::Image | PreviewType::Pdf | PreviewType::Video) {
-        Some(format!("{}/api/v1/preview/{}/{}/thumbnail", base_url, bucket, key))
+    let thumbnail_url = if matches!(
+        preview_type,
+        PreviewType::Image | PreviewType::Pdf | PreviewType::Video
+    ) {
+        Some(format!(
+            "{}/api/v1/preview/{}/{}/thumbnail",
+            base_url, bucket, key
+        ))
     } else {
         None
     };
@@ -208,7 +235,7 @@ fn get_preview_type(content_type: &str) -> PreviewType {
             } else {
                 PreviewType::Text
             }
-        }
+        },
         "application/json" | "application/xml" | "application/javascript" => PreviewType::Code,
         t if t.contains("word") || t.contains("document") => PreviewType::Document,
         t if t.contains("presentation") || t.contains("powerpoint") => PreviewType::Document,
@@ -236,11 +263,20 @@ mod tests {
     #[test]
     fn test_preview_type_detection() {
         assert!(matches!(get_preview_type("image/png"), PreviewType::Image));
-        assert!(matches!(get_preview_type("application/pdf"), PreviewType::Pdf));
+        assert!(matches!(
+            get_preview_type("application/pdf"),
+            PreviewType::Pdf
+        ));
         assert!(matches!(get_preview_type("video/mp4"), PreviewType::Video));
         assert!(matches!(get_preview_type("text/plain"), PreviewType::Text));
-        assert!(matches!(get_preview_type("application/json"), PreviewType::Code));
-        assert!(matches!(get_preview_type("application/octet-stream"), PreviewType::None));
+        assert!(matches!(
+            get_preview_type("application/json"),
+            PreviewType::Code
+        ));
+        assert!(matches!(
+            get_preview_type("application/octet-stream"),
+            PreviewType::None
+        ));
     }
 
     #[test]

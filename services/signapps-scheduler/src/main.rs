@@ -20,8 +20,8 @@ mod handlers;
 mod scheduler;
 
 use scheduler::SchedulerService;
-use signapps_common::{JwtConfig, Result};
 use signapps_common::middleware::AuthState;
+use signapps_common::{JwtConfig, Result};
 use signapps_db::DatabasePool;
 
 /// Application state.
@@ -58,8 +58,7 @@ impl Config {
                 .unwrap_or_else(|_| "dev-secret-change-in-production".to_string()),
             jwt_issuer: std::env::var("JWT_ISSUER")
                 .unwrap_or_else(|_| "signapps-identity".to_string()),
-            jwt_audience: std::env::var("JWT_AUDIENCE")
-                .unwrap_or_else(|_| "signapps".to_string()),
+            jwt_audience: std::env::var("JWT_AUDIENCE").unwrap_or_else(|_| "signapps".to_string()),
             job_timeout_seconds: std::env::var("JOB_TIMEOUT_SECONDS")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -86,7 +85,10 @@ async fn main() -> Result<()> {
     // Load configuration
     let config = Config::from_env();
 
-    tracing::info!("Starting SignApps Scheduler Service on port {}", config.port);
+    tracing::info!(
+        "Starting SignApps Scheduler Service on port {}",
+        config.port
+    );
 
     // Create database pool
     let pool = signapps_db::create_pool(&config.database_url).await?;
@@ -152,12 +154,10 @@ fn create_router(state: AppState) -> Router {
         .route("/{id}/runs", get(handlers::get_job_runs));
 
     // Run routes
-    let run_routes = Router::new()
-        .route("/{id}", get(handlers::get_run));
+    let run_routes = Router::new().route("/{id}", get(handlers::get_run));
 
     // Health check
-    let health_routes = Router::new()
-        .route("/", get(handlers::health_check));
+    let health_routes = Router::new().route("/", get(handlers::health_check));
 
     // Combine all routes
     Router::new()

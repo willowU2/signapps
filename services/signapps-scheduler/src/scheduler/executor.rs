@@ -28,9 +28,11 @@ impl JobExecutor {
                 if let Some(ref container_id) = job.target_id {
                     self.execute_in_container(container_id, &job.command).await
                 } else {
-                    Err(Error::Validation("Container target_id required".to_string()))
+                    Err(Error::Validation(
+                        "Container target_id required".to_string(),
+                    ))
                 }
-            }
+            },
             _ => Err(Error::Validation(format!(
                 "Unknown target type: {}",
                 job.target_type

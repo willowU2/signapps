@@ -263,7 +263,9 @@ fn get_file_type(content_type: &str) -> String {
         t if t.contains("spreadsheet") || t.contains("excel") => "spreadsheet".to_string(),
         t if t.contains("presentation") || t.contains("powerpoint") => "presentation".to_string(),
         t if t.contains("document") || t.contains("word") => "document".to_string(),
-        "application/zip" | "application/x-rar-compressed" | "application/x-7z-compressed" => "archive".to_string(),
+        "application/zip" | "application/x-rar-compressed" | "application/x-7z-compressed" => {
+            "archive".to_string()
+        },
         _ => "other".to_string(),
     }
 }
@@ -283,7 +285,10 @@ mod tests {
 
     #[test]
     fn test_search_sort_field_default() {
-        assert!(matches!(SearchSortField::default(), SearchSortField::Relevance));
+        assert!(matches!(
+            SearchSortField::default(),
+            SearchSortField::Relevance
+        ));
     }
 
     #[test]

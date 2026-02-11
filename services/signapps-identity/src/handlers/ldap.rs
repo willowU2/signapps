@@ -5,11 +5,11 @@ use base64::Engine;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
+use crate::ldap::LdapService;
+use crate::AppState;
 use signapps_common::{Error, Result};
 use signapps_db::models::{LdapConfigResponse, LdapGroup, LdapTestResult};
 use signapps_db::repositories::LdapRepository;
-use crate::AppState;
-use crate::ldap::LdapService;
 
 /// Request to create LDAP configuration.
 #[derive(Debug, Deserialize)]
@@ -57,9 +57,7 @@ pub struct SyncResultResponse {
 }
 
 /// Get current LDAP configuration.
-pub async fn get_config(
-    State(state): State<AppState>,
-) -> Result<Json<LdapConfigResponse>> {
+pub async fn get_config(State(state): State<AppState>) -> Result<Json<LdapConfigResponse>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
         .ok_or_else(|| Error::NotFound("LDAP configuration not found".to_string()))?;
@@ -74,8 +72,8 @@ pub async fn create_config(
 ) -> Result<(StatusCode, Json<LdapConfigResponse>)> {
     // Encrypt the bind password (in production, use proper encryption)
     // For now, we'll use base64 as a placeholder - should use AES-256-GCM
-    let encrypted_password = base64::engine::general_purpose::STANDARD
-        .encode(payload.bind_password.as_bytes());
+    let encrypted_password =
+        base64::engine::general_purpose::STANDARD.encode(payload.bind_password.as_bytes());
 
     let create_config = signapps_db::models::CreateLdapConfig {
         server_url: payload.server_url,
@@ -92,7 +90,8 @@ pub async fn create_config(
         fallback_local_auth: payload.fallback_local_auth,
     };
 
-    let config = LdapRepository::create_config(&state.pool, create_config, &encrypted_password).await?;
+    let config =
+        LdapRepository::create_config(&state.pool, create_config, &encrypted_password).await?;
 
     info!("LDAP configuration created/updated");
     Ok((StatusCode::CREATED, Json(config.into())))
@@ -108,9 +107,10 @@ pub async fn update_config(
         .ok_or_else(|| Error::NotFound("LDAP configuration not found".to_string()))?;
 
     // Encrypt password if provided
-    let encrypted_password = payload.bind_password.as_ref().map(|p| {
-        base64::engine::general_purpose::STANDARD.encode(p.as_bytes())
-    });
+    let encrypted_password = payload
+        .bind_password
+        .as_ref()
+        .map(|p| base64::engine::general_purpose::STANDARD.encode(p.as_bytes()));
 
     let update = signapps_db::models::UpdateLdapConfig {
         enabled: payload.enabled,
@@ -133,16 +133,15 @@ pub async fn update_config(
         existing.id,
         update,
         encrypted_password.as_deref(),
-    ).await?;
+    )
+    .await?;
 
     info!("LDAP configuration updated");
     Ok(Json(config.into()))
 }
 
 /// Test LDAP connection.
-pub async fn test_connection(
-    State(state): State<AppState>,
-) -> Result<Json<LdapTestResult>> {
+pub async fn test_connection(State(state): State<AppState>) -> Result<Json<LdapTestResult>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
         .ok_or_else(|| Error::NotFound("LDAP configuration not found".to_string()))?;
@@ -162,9 +161,7 @@ pub async fn test_connection(
 }
 
 /// List AD groups.
-pub async fn list_groups(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<LdapGroup>>> {
+pub async fn list_groups(State(state): State<AppState>) -> Result<Json<Vec<LdapGroup>>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
         .ok_or_else(|| Error::NotFound("LDAP configuration not found".to_string()))?;
@@ -180,9 +177,7 @@ pub async fn list_groups(
 }
 
 /// Sync users from AD.
-pub async fn sync_users(
-    State(state): State<AppState>,
-) -> Result<Json<SyncResultResponse>> {
+pub async fn sync_users(State(state): State<AppState>) -> Result<Json<SyncResultResponse>> {
     let config = LdapRepository::get_config(&state.pool)
         .await?
         .ok_or_else(|| Error::NotFound("LDAP configuration not found".to_string()))?;
@@ -210,17 +205,19 @@ pub async fn sync_users(
                     ldap_groups: Some(ldap_user.groups.clone()),
                 };
                 if let Err(e) = UserRepository::update(&state.pool, existing.id, update).await {
-                    sync_result.errors.push(format!("Failed to update {}: {}", ldap_user.username, e));
+                    sync_result
+                        .errors
+                        .push(format!("Failed to update {}: {}", ldap_user.username, e));
                 } else {
                     sync_result.users_updated += 1;
                 }
-            }
+            },
             Ok(None) => {
                 // Create new user
                 let create = signapps_db::models::CreateUser {
                     username: ldap_user.username.clone(),
                     email: ldap_user.email,
-                    password: None,  // LDAP users don't have local passwords
+                    password: None, // LDAP users don't have local passwords
                     display_name: ldap_user.display_name,
                     role: if ldap_user.is_admin { 2 } else { 1 },
                     auth_provider: "ldap".to_string(),
@@ -228,20 +225,26 @@ pub async fn sync_users(
                     ldap_groups: Some(ldap_user.groups),
                 };
                 if let Err(e) = UserRepository::create(&state.pool, create).await {
-                    sync_result.errors.push(format!("Failed to create {}: {}", ldap_user.username, e));
+                    sync_result
+                        .errors
+                        .push(format!("Failed to create {}: {}", ldap_user.username, e));
                 } else {
                     sync_result.users_created += 1;
                 }
-            }
+            },
             Err(e) => {
-                sync_result.errors.push(format!("Failed to check {}: {}", ldap_user.username, e));
-            }
+                sync_result
+                    .errors
+                    .push(format!("Failed to check {}: {}", ldap_user.username, e));
+            },
         }
     }
 
     info!(
         "LDAP sync complete: {} created, {} updated, {} errors",
-        sync_result.users_created, sync_result.users_updated, sync_result.errors.len()
+        sync_result.users_created,
+        sync_result.users_updated,
+        sync_result.errors.len()
     );
 
     Ok(Json(SyncResultResponse {

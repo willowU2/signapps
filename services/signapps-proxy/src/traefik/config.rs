@@ -101,19 +101,37 @@ pub struct HeadersMiddleware {
 /// Headers options.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct HeadersOptions {
-    #[serde(rename = "customRequestHeaders", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "customRequestHeaders",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub custom_request_headers: Option<HashMap<String, String>>,
-    #[serde(rename = "customResponseHeaders", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "customResponseHeaders",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub custom_response_headers: Option<HashMap<String, String>>,
-    #[serde(rename = "accessControlAllowOriginList", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "accessControlAllowOriginList",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub access_control_allow_origin_list: Option<Vec<String>>,
-    #[serde(rename = "accessControlAllowMethods", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "accessControlAllowMethods",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub access_control_allow_methods: Option<Vec<String>>,
-    #[serde(rename = "accessControlAllowHeaders", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "accessControlAllowHeaders",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub access_control_allow_headers: Option<Vec<String>>,
     #[serde(rename = "stsSeconds", skip_serializing_if = "Option::is_none")]
     pub sts_seconds: Option<i64>,
-    #[serde(rename = "stsIncludeSubdomains", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "stsIncludeSubdomains",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub sts_include_subdomains: Option<bool>,
     #[serde(rename = "frameDeny", skip_serializing_if = "Option::is_none")]
     pub frame_deny: Option<bool>,

@@ -17,35 +17,29 @@ impl<'a> JobRepository<'a> {
 
     /// Find job by ID.
     pub async fn find(&self, id: Uuid) -> Result<Option<Job>> {
-        let job = sqlx::query_as::<_, Job>(
-            "SELECT * FROM scheduler.jobs WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let job = sqlx::query_as::<_, Job>("SELECT * FROM scheduler.jobs WHERE id = $1")
+            .bind(id)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(job)
     }
 
     /// Find job by name.
     pub async fn find_by_name(&self, name: &str) -> Result<Option<Job>> {
-        let job = sqlx::query_as::<_, Job>(
-            "SELECT * FROM scheduler.jobs WHERE name = $1"
-        )
-        .bind(name)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let job = sqlx::query_as::<_, Job>("SELECT * FROM scheduler.jobs WHERE name = $1")
+            .bind(name)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(job)
     }
 
     /// List all jobs.
     pub async fn list(&self) -> Result<Vec<Job>> {
-        let jobs = sqlx::query_as::<_, Job>(
-            "SELECT * FROM scheduler.jobs ORDER BY name"
-        )
-        .fetch_all(self.pool.inner())
-        .await?;
+        let jobs = sqlx::query_as::<_, Job>("SELECT * FROM scheduler.jobs ORDER BY name")
+            .fetch_all(self.pool.inner())
+            .await?;
 
         Ok(jobs)
     }
@@ -53,7 +47,7 @@ impl<'a> JobRepository<'a> {
     /// List enabled jobs.
     pub async fn list_enabled(&self) -> Result<Vec<Job>> {
         let jobs = sqlx::query_as::<_, Job>(
-            "SELECT * FROM scheduler.jobs WHERE enabled = true ORDER BY name"
+            "SELECT * FROM scheduler.jobs WHERE enabled = true ORDER BY name",
         )
         .fetch_all(self.pool.inner())
         .await?;
@@ -120,9 +114,10 @@ impl<'a> JobRepository<'a> {
         sets.push("updated_at = NOW()".to_string());
 
         if sets.len() == 1 {
-            return self.find(id).await?.ok_or_else(|| {
-                signapps_common::Error::NotFound(format!("Job {}", id))
-            });
+            return self
+                .find(id)
+                .await?
+                .ok_or_else(|| signapps_common::Error::NotFound(format!("Job {}", id)));
         }
 
         let query = format!(
@@ -213,7 +208,7 @@ impl<'a> JobRepository<'a> {
             INSERT INTO scheduler.job_runs (job_id, status)
             VALUES ($1, $2)
             RETURNING *
-            "#
+            "#,
         )
         .bind(job_id)
         .bind(JobRunStatus::Running.to_string())
@@ -237,7 +232,7 @@ impl<'a> JobRepository<'a> {
             SET finished_at = NOW(), status = $2, output = $3, error = $4
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(run_id)
         .bind(status.to_string())
@@ -252,7 +247,7 @@ impl<'a> JobRepository<'a> {
     /// Get job runs for a job.
     pub async fn list_runs(&self, job_id: Uuid, limit: i64) -> Result<Vec<JobRun>> {
         let runs = sqlx::query_as::<_, JobRun>(
-            "SELECT * FROM scheduler.job_runs WHERE job_id = $1 ORDER BY started_at DESC LIMIT $2"
+            "SELECT * FROM scheduler.job_runs WHERE job_id = $1 ORDER BY started_at DESC LIMIT $2",
         )
         .bind(job_id)
         .bind(limit)
@@ -264,12 +259,10 @@ impl<'a> JobRepository<'a> {
 
     /// Get job run by ID.
     pub async fn get_run(&self, run_id: Uuid) -> Result<Option<JobRun>> {
-        let run = sqlx::query_as::<_, JobRun>(
-            "SELECT * FROM scheduler.job_runs WHERE id = $1"
-        )
-        .bind(run_id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let run = sqlx::query_as::<_, JobRun>("SELECT * FROM scheduler.job_runs WHERE id = $1")
+            .bind(run_id)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(run)
     }
@@ -280,21 +273,24 @@ impl<'a> JobRepository<'a> {
             .fetch_one(self.pool.inner())
             .await?;
 
-        let enabled_jobs: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM scheduler.jobs WHERE enabled = true")
-            .fetch_one(self.pool.inner())
-            .await?;
+        let enabled_jobs: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM scheduler.jobs WHERE enabled = true")
+                .fetch_one(self.pool.inner())
+                .await?;
 
         let total_runs: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM scheduler.job_runs")
             .fetch_one(self.pool.inner())
             .await?;
 
-        let successful_runs: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM scheduler.job_runs WHERE status = 'success'")
-            .fetch_one(self.pool.inner())
-            .await?;
+        let successful_runs: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM scheduler.job_runs WHERE status = 'success'")
+                .fetch_one(self.pool.inner())
+                .await?;
 
-        let failed_runs: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM scheduler.job_runs WHERE status = 'failed'")
-            .fetch_one(self.pool.inner())
-            .await?;
+        let failed_runs: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM scheduler.job_runs WHERE status = 'failed'")
+                .fetch_one(self.pool.inner())
+                .await?;
 
         Ok(JobStats {
             total_jobs: total_jobs.0,
@@ -309,7 +305,7 @@ impl<'a> JobRepository<'a> {
     /// Clean up old job runs.
     pub async fn cleanup_old_runs(&self, days: i32) -> Result<i64> {
         let result = sqlx::query(
-            "DELETE FROM scheduler.job_runs WHERE started_at < NOW() - INTERVAL '1 day' * $1"
+            "DELETE FROM scheduler.job_runs WHERE started_at < NOW() - INTERVAL '1 day' * $1",
         )
         .bind(days)
         .execute(self.pool.inner())

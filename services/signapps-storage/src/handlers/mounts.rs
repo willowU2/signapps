@@ -54,9 +54,7 @@ pub struct MountResponse {
 
 /// List all mount points.
 #[tracing::instrument(skip(_state))]
-pub async fn list_mounts(
-    State(_state): State<AppState>,
-) -> Result<Json<Vec<MountPoint>>> {
+pub async fn list_mounts(State(_state): State<AppState>) -> Result<Json<Vec<MountPoint>>> {
     let mounts = get_system_mounts().await?;
     Ok(Json(mounts))
 }
@@ -69,7 +67,9 @@ pub async fn mount(
 ) -> Result<Json<MountResponse>> {
     // Validate device path
     if !payload.device.starts_with("/dev/") {
-        return Err(Error::Validation("Device path must start with /dev/".to_string()));
+        return Err(Error::Validation(
+            "Device path must start with /dev/".to_string(),
+        ));
     }
 
     // Validate mount path
@@ -78,13 +78,23 @@ pub async fn mount(
     }
 
     // Check if device exists
-    if !tokio::fs::try_exists(&payload.device).await.unwrap_or(false) {
-        return Err(Error::NotFound(format!("Device {} not found", payload.device)));
+    if !tokio::fs::try_exists(&payload.device)
+        .await
+        .unwrap_or(false)
+    {
+        return Err(Error::NotFound(format!(
+            "Device {} not found",
+            payload.device
+        )));
     }
 
     // Create mount point directory if it doesn't exist
-    if !tokio::fs::try_exists(&payload.mount_path).await.unwrap_or(false) {
-        tokio::fs::create_dir_all(&payload.mount_path).await
+    if !tokio::fs::try_exists(&payload.mount_path)
+        .await
+        .unwrap_or(false)
+    {
+        tokio::fs::create_dir_all(&payload.mount_path)
+            .await
             .map_err(|e| Error::Storage(format!("Failed to create mount point: {}", e)))?;
     }
 
@@ -106,7 +116,9 @@ pub async fn mount(
     cmd.arg(&payload.device).arg(&payload.mount_path);
 
     // Execute mount command
-    let output = cmd.output().await
+    let output = cmd
+        .output()
+        .await
         .map_err(|e| Error::Storage(format!("Failed to execute mount: {}", e)))?;
 
     if !output.status.success() {
@@ -119,13 +131,17 @@ pub async fn mount(
 
     // Get info about the new mount
     let mounts = get_system_mounts().await?;
-    let mount_point = mounts.into_iter()
+    let mount_point = mounts
+        .into_iter()
         .find(|m| m.mount_path == payload.mount_path);
 
     Ok(Json(MountResponse {
         success: true,
         mount_point,
-        message: format!("Device {} mounted at {}", payload.device, payload.mount_path),
+        message: format!(
+            "Device {} mounted at {}",
+            payload.device, payload.mount_path
+        ),
     }))
 }
 
@@ -148,14 +164,20 @@ pub async fn unmount(
     // Don't allow unmounting critical system paths
     let protected_paths = ["/", "/boot", "/home", "/var", "/usr", "/etc", "/tmp"];
     if protected_paths.contains(&mount_path.as_str()) {
-        return Err(Error::Forbidden(format!("Cannot unmount system path: {}", mount_path)));
+        return Err(Error::Forbidden(format!(
+            "Cannot unmount system path: {}",
+            mount_path
+        )));
     }
 
     // Check if path is actually mounted
     let mounts = get_system_mounts().await?;
     let is_mounted = mounts.iter().any(|m| m.mount_path == mount_path);
     if !is_mounted {
-        return Err(Error::NotFound(format!("Path {} is not mounted", mount_path)));
+        return Err(Error::NotFound(format!(
+            "Path {} is not mounted",
+            mount_path
+        )));
     }
 
     // Execute unmount command
@@ -211,12 +233,23 @@ async fn get_system_mounts() -> Result<Vec<MountPoint>> {
                     let options: Vec<String> = parts[3].split(',').map(|s| s.to_string()).collect();
 
                     // Skip pseudo filesystems
-                    if device == "none" || device.starts_with("proc") || device.starts_with("sys")
-                        || device.starts_with("devpts") || device.starts_with("tmpfs") && mount_path.starts_with("/sys")
-                        || fs_type == "cgroup" || fs_type == "cgroup2" || fs_type == "autofs"
-                        || fs_type == "debugfs" || fs_type == "tracefs" || fs_type == "securityfs"
-                        || fs_type == "pstore" || fs_type == "configfs" || fs_type == "fusectl"
-                        || fs_type == "mqueue" || fs_type == "hugetlbfs" || fs_type == "binfmt_misc"
+                    if device == "none"
+                        || device.starts_with("proc")
+                        || device.starts_with("sys")
+                        || device.starts_with("devpts")
+                        || device.starts_with("tmpfs") && mount_path.starts_with("/sys")
+                        || fs_type == "cgroup"
+                        || fs_type == "cgroup2"
+                        || fs_type == "autofs"
+                        || fs_type == "debugfs"
+                        || fs_type == "tracefs"
+                        || fs_type == "securityfs"
+                        || fs_type == "pstore"
+                        || fs_type == "configfs"
+                        || fs_type == "fusectl"
+                        || fs_type == "mqueue"
+                        || fs_type == "hugetlbfs"
+                        || fs_type == "binfmt_misc"
                     {
                         continue;
                     }
@@ -277,7 +310,11 @@ async fn get_system_mounts() -> Result<Vec<MountPoint>> {
                     total_bytes: Some(total),
                     used_bytes: Some(used),
                     available_bytes: Some(available),
-                    usage_percent: if total > 0 { Some((used as f64 / total as f64) * 100.0) } else { None },
+                    usage_percent: if total > 0 {
+                        Some((used as f64 / total as f64) * 100.0)
+                    } else {
+                        None
+                    },
                     is_removable: disk.is_removable(),
                     is_readonly: false,
                 });

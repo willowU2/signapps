@@ -77,13 +77,14 @@ pub async fn chat(
     State(state): State<AppState>,
     Json(payload): Json<ChatRequest>,
 ) -> Result<Json<ChatResponse>> {
-    let response = state.rag.query_with_model(
-        &payload.question,
-        payload.model.as_deref(),
-    ).await?;
+    let response = state
+        .rag
+        .query_with_model(&payload.question, payload.model.as_deref())
+        .await?;
 
     let sources: Vec<SourceReference> = if payload.include_sources {
-        response.sources
+        response
+            .sources
             .iter()
             .map(|s| SourceReference {
                 document_id: s.document_id,

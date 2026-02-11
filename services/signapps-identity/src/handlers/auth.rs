@@ -73,7 +73,9 @@ pub async fn login(
     Json(payload): Json<LoginRequest>,
 ) -> Result<Json<LoginResponse>> {
     // Validate input
-    payload.validate().map_err(|e| Error::Validation(e.to_string()))?;
+    payload
+        .validate()
+        .map_err(|e| Error::Validation(e.to_string()))?;
 
     // Find user by username
     let user = UserRepository::find_by_username(&state.pool, &payload.username)
@@ -84,23 +86,28 @@ pub async fn login(
     match user.auth_provider.as_str() {
         "local" => {
             // Local authentication with Argon2
-            let password_hash = user.password_hash.as_ref().ok_or(Error::InvalidCredentials)?;
+            let password_hash = user
+                .password_hash
+                .as_ref()
+                .ok_or(Error::InvalidCredentials)?;
 
             if !verify_password(&payload.password, password_hash)? {
                 tracing::warn!(username = %payload.username, "Invalid password attempt");
                 return Err(Error::InvalidCredentials);
             }
-        }
+        },
         "ldap" => {
             // LDAP authentication
             // TODO: Implement LDAP bind verification
             tracing::info!(username = %payload.username, "LDAP auth not yet implemented, falling back");
-            return Err(Error::Internal("LDAP authentication not yet implemented".to_string()));
-        }
+            return Err(Error::Internal(
+                "LDAP authentication not yet implemented".to_string(),
+            ));
+        },
         _ => {
             tracing::error!(auth_provider = %user.auth_provider, "Unknown auth provider");
             return Err(Error::Internal("Unknown auth provider".to_string()));
-        }
+        },
     }
 
     // Check MFA if enabled
@@ -135,10 +142,7 @@ pub async fn login(
 
 /// Logout endpoint.
 #[tracing::instrument(skip(_state, headers))]
-pub async fn logout(
-    State(_state): State<AppState>,
-    headers: HeaderMap,
-) -> Result<()> {
+pub async fn logout(State(_state): State<AppState>, headers: HeaderMap) -> Result<()> {
     // Extract token from Authorization header
     if let Some(auth_header) = headers.get(header::AUTHORIZATION) {
         if let Ok(auth_str) = auth_header.to_str() {
@@ -160,16 +164,24 @@ pub async fn register(
     Json(payload): Json<RegisterRequest>,
 ) -> Result<Json<UserResponse>> {
     // Validate input
-    payload.validate().map_err(|e| Error::Validation(e.to_string()))?;
+    payload
+        .validate()
+        .map_err(|e| Error::Validation(e.to_string()))?;
 
     // Check username uniqueness
-    if UserRepository::find_by_username(&state.pool, &payload.username).await?.is_some() {
+    if UserRepository::find_by_username(&state.pool, &payload.username)
+        .await?
+        .is_some()
+    {
         return Err(Error::AlreadyExists("Username already taken".to_string()));
     }
 
     // Check email uniqueness if provided
     if let Some(ref email) = payload.email {
-        if UserRepository::find_by_email(&state.pool, email).await?.is_some() {
+        if UserRepository::find_by_email(&state.pool, email)
+            .await?
+            .is_some()
+        {
             return Err(Error::AlreadyExists("Email already registered".to_string()));
         }
     }

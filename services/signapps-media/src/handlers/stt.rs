@@ -8,7 +8,10 @@ use futures::stream::Stream;
 use serde::{Deserialize, Serialize};
 use std::{convert::Infallible, sync::Arc, time::Duration};
 
-use crate::{stt::{SttModel, TranscribeRequest, TranscribeTask}, AppState};
+use crate::{
+    stt::{SttModel, TranscribeRequest, TranscribeTask},
+    AppState,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct TranscribeParams {
@@ -67,16 +70,28 @@ pub async fn transcribe(
     let field = multipart
         .next_field()
         .await
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Failed to read multipart: {}", e)))?
+        .map_err(|e| {
+            (
+                StatusCode::BAD_REQUEST,
+                format!("Failed to read multipart: {}", e),
+            )
+        })?
         .ok_or((StatusCode::BAD_REQUEST, "No file provided".to_string()))?;
 
     let filename = field.file_name().unwrap_or("audio").to_string();
-    let data = field.bytes().await
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Failed to read file: {}", e)))?;
+    let data = field.bytes().await.map_err(|e| {
+        (
+            StatusCode::BAD_REQUEST,
+            format!("Failed to read file: {}", e),
+        )
+    })?;
 
     // Check file size (max 100MB)
     if data.len() > 100 * 1024 * 1024 {
-        return Err((StatusCode::BAD_REQUEST, "File too large (max 100MB)".to_string()));
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "File too large (max 100MB)".to_string(),
+        ));
     }
 
     let task = match params.task.as_deref() {
@@ -93,9 +108,16 @@ pub async fn transcribe(
         initial_prompt: None,
     };
 
-    let result = state.stt_client.transcribe(data, &filename, Some(options))
+    let result = state
+        .stt_client
+        .transcribe(data, &filename, Some(options))
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Transcription failed: {}", e)))?;
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Transcription failed: {}", e),
+            )
+        })?;
 
     Ok(Json(TranscribeResponse {
         success: true,
@@ -103,25 +125,39 @@ pub async fn transcribe(
         language: result.language,
         language_probability: result.language_probability,
         duration_seconds: result.duration_seconds,
-        segments: result.segments.into_iter().map(|s| SegmentResponse {
-            id: s.id,
-            start: s.start,
-            end: s.end,
-            text: s.text,
-            speaker: s.speaker,
-        }).collect(),
-        words: result.words.map(|words| words.into_iter().map(|w| WordResponse {
-            word: w.word,
-            start: w.start,
-            end: w.end,
-            probability: w.probability,
-            speaker: w.speaker,
-        }).collect()),
-        speakers: result.speakers.map(|speakers| speakers.into_iter().map(|s| SpeakerResponse {
-            id: s.id,
-            label: s.label,
-            speaking_time: s.speaking_time,
-        }).collect()),
+        segments: result
+            .segments
+            .into_iter()
+            .map(|s| SegmentResponse {
+                id: s.id,
+                start: s.start,
+                end: s.end,
+                text: s.text,
+                speaker: s.speaker,
+            })
+            .collect(),
+        words: result.words.map(|words| {
+            words
+                .into_iter()
+                .map(|w| WordResponse {
+                    word: w.word,
+                    start: w.start,
+                    end: w.end,
+                    probability: w.probability,
+                    speaker: w.speaker,
+                })
+                .collect()
+        }),
+        speakers: result.speakers.map(|speakers| {
+            speakers
+                .into_iter()
+                .map(|s| SpeakerResponse {
+                    id: s.id,
+                    label: s.label,
+                    speaking_time: s.speaking_time,
+                })
+                .collect()
+        }),
         model_used: result.model_used,
         processing_time_ms: result.processing_time_ms,
     }))
@@ -136,12 +172,21 @@ pub async fn transcribe_stream(
     let field = multipart
         .next_field()
         .await
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Failed to read multipart: {}", e)))?
+        .map_err(|e| {
+            (
+                StatusCode::BAD_REQUEST,
+                format!("Failed to read multipart: {}", e),
+            )
+        })?
         .ok_or((StatusCode::BAD_REQUEST, "No file provided".to_string()))?;
 
     let filename = field.file_name().unwrap_or("audio").to_string();
-    let data = field.bytes().await
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Failed to read file: {}", e)))?;
+    let data = field.bytes().await.map_err(|e| {
+        (
+            StatusCode::BAD_REQUEST,
+            format!("Failed to read file: {}", e),
+        )
+    })?;
 
     let options = TranscribeRequest {
         language: params.language,
@@ -152,9 +197,16 @@ pub async fn transcribe_stream(
         initial_prompt: None,
     };
 
-    let stream = state.stt_client.transcribe_stream(data, &filename, Some(options))
+    let stream = state
+        .stt_client
+        .transcribe_stream(data, &filename, Some(options))
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Stream failed: {}", e)))?;
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Stream failed: {}", e),
+            )
+        })?;
 
     // Pin the stream for use with unfold
     let pinned_stream = Box::pin(stream);
@@ -173,7 +225,7 @@ pub async fn transcribe_stream(
                     }))
                     .unwrap();
                 Some((Ok(event), s))
-            }
+            },
             Some(Err(e)) => {
                 let event = Event::default()
                     .json_data(serde_json::json!({
@@ -181,7 +233,7 @@ pub async fn transcribe_stream(
                     }))
                     .unwrap();
                 Some((Ok(event), s))
-            }
+            },
             None => None,
         }
     });
@@ -189,7 +241,7 @@ pub async fn transcribe_stream(
     Ok(Sse::new(sse_stream).keep_alive(
         axum::response::sse::KeepAlive::new()
             .interval(Duration::from_secs(10))
-            .text("keep-alive")
+            .text("keep-alive"),
     ))
 }
 
@@ -197,9 +249,12 @@ pub async fn transcribe_stream(
 pub async fn list_models(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<SttModel>>, (StatusCode, String)> {
-    let models = state.stt_client.list_models()
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to list models: {}", e)))?;
+    let models = state.stt_client.list_models().await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to list models: {}", e),
+        )
+    })?;
 
     Ok(Json(models))
 }

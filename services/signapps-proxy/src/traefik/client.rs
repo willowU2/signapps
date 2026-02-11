@@ -2,7 +2,7 @@
 
 use reqwest::Client;
 use signapps_common::{Error, Result};
-use signapps_db::models::{Route, HeadersConfig};
+use signapps_db::models::{HeadersConfig, Route};
 use std::collections::HashMap;
 
 use super::config::*;
@@ -55,7 +55,10 @@ impl TraefikClient {
                     health_check: None,
                 },
             };
-            config.http.services.insert(format!("{}-service", safe_name), service);
+            config
+                .http
+                .services
+                .insert(format!("{}-service", safe_name), service);
 
             // Build middlewares list
             let mut middlewares = Vec::new();
@@ -107,7 +110,10 @@ impl TraefikClient {
                     browser_xss_filter: Some(true),
                 },
             });
-            config.http.middlewares.insert(security_mw_name.clone(), security_headers);
+            config
+                .http
+                .middlewares
+                .insert(security_mw_name.clone(), security_headers);
             middlewares.push(security_mw_name);
 
             // Create router
@@ -139,7 +145,10 @@ impl TraefikClient {
                 entry_points,
             };
 
-            config.http.routers.insert(format!("{}-router", safe_name), router);
+            config
+                .http
+                .routers
+                .insert(format!("{}-router", safe_name), router);
 
             // Add HTTP to HTTPS redirect if TLS enabled
             if route.tls_enabled {
@@ -159,8 +168,14 @@ impl TraefikClient {
                     },
                 });
 
-                config.http.routers.insert(format!("{}-http-router", safe_name), redirect_router);
-                config.http.middlewares.insert(format!("{}-redirect", safe_name), redirect_mw);
+                config
+                    .http
+                    .routers
+                    .insert(format!("{}-http-router", safe_name), redirect_router);
+                config
+                    .http
+                    .middlewares
+                    .insert(format!("{}-redirect", safe_name), redirect_mw);
             }
         }
 
@@ -208,7 +223,8 @@ impl TraefikClient {
 
     /// Get current Traefik configuration via API.
     pub async fn get_current_config(&self) -> Result<serde_json::Value> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/api/http/routers", self.api_url))
             .send()
             .await
@@ -231,7 +247,8 @@ impl TraefikClient {
 
     /// Check if Traefik API is healthy.
     pub async fn health_check(&self) -> Result<bool> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/api/overview", self.api_url))
             .send()
             .await
@@ -242,7 +259,8 @@ impl TraefikClient {
 
     /// Get Traefik overview stats.
     pub async fn get_overview(&self) -> Result<serde_json::Value> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/api/overview", self.api_url))
             .send()
             .await

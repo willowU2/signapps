@@ -1,6 +1,6 @@
 //! Database connection pool wrapper.
 
-use sqlx::{Pool, Postgres, PgPool};
+use sqlx::{PgPool, Pool, Postgres};
 use std::ops::Deref;
 
 /// Wrapper around the SQLx connection pool.
@@ -22,9 +22,7 @@ impl DatabasePool {
 
     /// Check if the database is reachable.
     pub async fn health_check(&self) -> Result<(), sqlx::Error> {
-        sqlx::query("SELECT 1")
-            .execute(&self.pool)
-            .await?;
+        sqlx::query("SELECT 1").execute(&self.pool).await?;
         Ok(())
     }
 }

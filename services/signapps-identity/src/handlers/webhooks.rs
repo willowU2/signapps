@@ -1,5 +1,6 @@
 //! Webhook management handlers.
 
+use crate::AppState;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -8,9 +9,8 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 use signapps_db::repositories::GroupRepository;
-use uuid::Uuid;
 use std::time::Instant;
-use crate::AppState;
+use uuid::Uuid;
 
 /// Webhook configuration response.
 #[derive(Debug, Clone, Serialize)]
@@ -75,25 +75,26 @@ struct WebhookTestPayload {
 
 /// List all webhooks.
 #[tracing::instrument(skip(state))]
-pub async fn list(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<WebhookResponse>>> {
+pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<WebhookResponse>>> {
     let repo = GroupRepository::new(&state.pool);
     let webhooks = repo.list_webhooks().await?;
 
-    let response: Vec<WebhookResponse> = webhooks.into_iter().map(|w| WebhookResponse {
-        id: w.id,
-        name: w.name,
-        url: w.url,
-        events: w.events,
-        enabled: w.enabled,
-        secret: w.secret,
-        headers: w.headers,
-        last_triggered: w.last_triggered,
-        last_status: w.last_status,
-        created_at: w.created_at,
-        updated_at: w.updated_at,
-    }).collect();
+    let response: Vec<WebhookResponse> = webhooks
+        .into_iter()
+        .map(|w| WebhookResponse {
+            id: w.id,
+            name: w.name,
+            url: w.url,
+            events: w.events,
+            enabled: w.enabled,
+            secret: w.secret,
+            headers: w.headers,
+            last_triggered: w.last_triggered,
+            last_status: w.last_status,
+            created_at: w.created_at,
+            updated_at: w.updated_at,
+        })
+        .collect();
 
     Ok(Json(response))
 }
@@ -105,7 +106,9 @@ pub async fn get(
     Path(id): Path<Uuid>,
 ) -> Result<Json<WebhookResponse>> {
     let repo = GroupRepository::new(&state.pool);
-    let webhook = repo.find_webhook(id).await?
+    let webhook = repo
+        .find_webhook(id)
+        .await?
         .ok_or_else(|| Error::NotFound(format!("Webhook {}", id)))?;
 
     Ok(Json(WebhookResponse {
@@ -131,12 +134,16 @@ pub async fn create(
 ) -> Result<Json<WebhookResponse>> {
     // Validate URL
     if !payload.url.starts_with("http://") && !payload.url.starts_with("https://") {
-        return Err(Error::Validation("Webhook URL must start with http:// or https://".to_string()));
+        return Err(Error::Validation(
+            "Webhook URL must start with http:// or https://".to_string(),
+        ));
     }
 
     // Validate events are not empty
     if payload.events.is_empty() {
-        return Err(Error::Validation("At least one event must be specified".to_string()));
+        return Err(Error::Validation(
+            "At least one event must be specified".to_string(),
+        ));
     }
 
     let repo = GroupRepository::new(&state.pool);
@@ -177,34 +184,42 @@ pub async fn update(
     let repo = GroupRepository::new(&state.pool);
 
     // Find existing webhook
-    let existing = repo.find_webhook(id).await?
+    let existing = repo
+        .find_webhook(id)
+        .await?
         .ok_or_else(|| Error::NotFound(format!("Webhook {}", id)))?;
 
     // Validate URL if provided
     if let Some(ref url) = payload.url {
         if !url.starts_with("http://") && !url.starts_with("https://") {
-            return Err(Error::Validation("Webhook URL must start with http:// or https://".to_string()));
+            return Err(Error::Validation(
+                "Webhook URL must start with http:// or https://".to_string(),
+            ));
         }
     }
 
     // Validate events if provided
     if let Some(ref events) = payload.events {
         if events.is_empty() {
-            return Err(Error::Validation("At least one event must be specified".to_string()));
+            return Err(Error::Validation(
+                "At least one event must be specified".to_string(),
+            ));
         }
     }
 
     // Update webhook
     let headers_to_use = payload.headers.as_ref().unwrap_or(&existing.headers);
-    let webhook = repo.update_webhook(
-        id,
-        payload.name.as_deref().unwrap_or(&existing.name),
-        payload.url.as_deref().unwrap_or(&existing.url),
-        payload.events.as_ref().unwrap_or(&existing.events),
-        payload.enabled.unwrap_or(existing.enabled),
-        payload.secret.as_ref().or(existing.secret.as_ref()),
-        Some(headers_to_use),
-    ).await?;
+    let webhook = repo
+        .update_webhook(
+            id,
+            payload.name.as_deref().unwrap_or(&existing.name),
+            payload.url.as_deref().unwrap_or(&existing.url),
+            payload.events.as_ref().unwrap_or(&existing.events),
+            payload.enabled.unwrap_or(existing.enabled),
+            payload.secret.as_ref().or(existing.secret.as_ref()),
+            Some(headers_to_use),
+        )
+        .await?;
 
     tracing::info!(webhook_id = %id, "Webhook updated");
 
@@ -225,14 +240,13 @@ pub async fn update(
 
 /// Delete webhook.
 #[tracing::instrument(skip(state))]
-pub async fn delete(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Result<StatusCode> {
+pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);
 
     // Verify webhook exists
-    let _ = repo.find_webhook(id).await?
+    let _ = repo
+        .find_webhook(id)
+        .await?
         .ok_or_else(|| Error::NotFound(format!("Webhook {}", id)))?;
 
     repo.delete_webhook(id).await?;
@@ -251,7 +265,9 @@ pub async fn test(
     let repo = GroupRepository::new(&state.pool);
 
     // Get webhook
-    let webhook = repo.find_webhook(id).await?
+    let webhook = repo
+        .find_webhook(id)
+        .await?
         .ok_or_else(|| Error::NotFound(format!("Webhook {}", id)))?;
 
     // Build test payload
@@ -271,7 +287,8 @@ pub async fn test(
         .map_err(|e| Error::Internal(format!("Failed to create HTTP client: {}", e)))?;
 
     // Build request
-    let mut request = client.post(&webhook.url)
+    let mut request = client
+        .post(&webhook.url)
         .header("Content-Type", "application/json")
         .header("User-Agent", "SignApps-Webhook/1.0");
 
@@ -329,7 +346,7 @@ pub async fn test(
                 response_body: body,
                 error: None,
             }))
-        }
+        },
         Err(e) => {
             tracing::warn!(
                 webhook_id = %id,
@@ -344,6 +361,6 @@ pub async fn test(
                 response_body: None,
                 error: Some(e.to_string()),
             }))
-        }
+        },
     }
 }

@@ -307,18 +307,15 @@ impl IntoResponse for Error {
         match &self {
             Error::Database(_) | Error::Internal(_) | Error::Anyhow(_) => {
                 tracing::error!(error = ?self, "Internal error occurred");
-            }
+            },
             _ => {
                 tracing::debug!(error = ?self, "Client error occurred");
-            }
+            },
         }
 
         (
             status,
-            [(
-                axum::http::header::CONTENT_TYPE,
-                "application/problem+json",
-            )],
+            [(axum::http::header::CONTENT_TYPE, "application/problem+json")],
             Json(body),
         )
             .into_response()
@@ -335,13 +332,15 @@ impl From<sqlx::Error> for Error {
                 if let Some(code) = db_err.code() {
                     match code.as_ref() {
                         "23505" => Error::AlreadyExists("Record already exists".to_string()),
-                        "23503" => Error::BadRequest("Foreign key constraint violation".to_string()),
+                        "23503" => {
+                            Error::BadRequest("Foreign key constraint violation".to_string())
+                        },
                         _ => Error::Database(err.to_string()),
                     }
                 } else {
                     Error::Database(err.to_string())
                 }
-            }
+            },
             _ => Error::Database(err.to_string()),
         }
     }
@@ -374,13 +373,9 @@ mod tests {
 
     #[test]
     fn test_problem_details_serialization() {
-        let problem = ProblemDetails::new(
-            StatusCode::NOT_FOUND,
-            "NOT_FOUND",
-            "Resource Not Found",
-        )
-        .with_detail("User with ID 123 not found")
-        .with_request_id("req-abc-123");
+        let problem = ProblemDetails::new(StatusCode::NOT_FOUND, "NOT_FOUND", "Resource Not Found")
+            .with_detail("User with ID 123 not found")
+            .with_request_id("req-abc-123");
 
         let json = serde_json::to_string_pretty(&problem).unwrap();
         assert!(json.contains("urn:signapps:error:not_found"));
@@ -390,9 +385,21 @@ mod tests {
 
     #[test]
     fn test_error_status_codes() {
-        assert_eq!(Error::InvalidCredentials.status_code(), StatusCode::UNAUTHORIZED);
-        assert_eq!(Error::NotFound("test".into()).status_code(), StatusCode::NOT_FOUND);
-        assert_eq!(Error::AlreadyExists("test".into()).status_code(), StatusCode::CONFLICT);
-        assert_eq!(Error::Database("test".into()).status_code(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(
+            Error::InvalidCredentials.status_code(),
+            StatusCode::UNAUTHORIZED
+        );
+        assert_eq!(
+            Error::NotFound("test".into()).status_code(),
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            Error::AlreadyExists("test".into()).status_code(),
+            StatusCode::CONFLICT
+        );
+        assert_eq!(
+            Error::Database("test".into()).status_code(),
+            StatusCode::INTERNAL_SERVER_ERROR
+        );
     }
 }

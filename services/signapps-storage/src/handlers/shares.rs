@@ -34,10 +34,10 @@ pub struct ShareLink {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ShareAccessType {
-    View,      // Can only view/preview
+    View, // Can only view/preview
     #[default]
-    Download,  // Can download
-    Edit,      // Can edit (for collaborative editing)
+    Download, // Can download
+    Edit, // Can edit (for collaborative editing)
 }
 
 /// Create share request.
@@ -120,14 +120,17 @@ pub async fn create_share(
     Json(request): Json<CreateShareRequest>,
 ) -> Result<Json<CreateShareResponse>> {
     // Verify file exists
-    let _info = state.minio.get_object_info(&request.bucket, &request.key).await?;
+    let _info = state
+        .minio
+        .get_object_info(&request.bucket, &request.key)
+        .await?;
 
     let id = Uuid::new_v4();
     let token = generate_share_token();
 
-    let expires_at = request.expires_in_hours.map(|hours| {
-        Utc::now() + Duration::hours(hours)
-    });
+    let expires_at = request
+        .expires_in_hours
+        .map(|hours| Utc::now() + Duration::hours(hours));
 
     // TODO: Store share in database
     // For now, return mock response

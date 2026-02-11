@@ -41,8 +41,8 @@ impl Default for JwtConfig {
             secret: "change-me-in-production".to_string(),
             issuer: "signapps".to_string(),
             audience: "signapps".to_string(),
-            access_expiration: 900,       // 15 minutes
-            refresh_expiration: 604800,   // 7 days
+            access_expiration: 900,     // 15 minutes
+            refresh_expiration: 604800, // 7 days
         }
     }
 }

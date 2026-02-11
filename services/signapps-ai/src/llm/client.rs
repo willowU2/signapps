@@ -42,11 +42,9 @@ impl LlmClient {
         } else {
             LlmBackend::Vllm
         };
-        let default_model = std::env::var("DEFAULT_MODEL").unwrap_or_else(|_| {
-            match backend {
-                LlmBackend::Vllm => DEFAULT_VLLM_MODEL.to_string(),
-                LlmBackend::Ollama => DEFAULT_OLLAMA_MODEL.to_string(),
-            }
+        let default_model = std::env::var("DEFAULT_MODEL").unwrap_or_else(|_| match backend {
+            LlmBackend::Vllm => DEFAULT_VLLM_MODEL.to_string(),
+            LlmBackend::Ollama => DEFAULT_OLLAMA_MODEL.to_string(),
         });
 
         Self {
@@ -112,7 +110,8 @@ impl LlmClient {
         max_tokens: Option<u32>,
         temperature: Option<f32>,
     ) -> Result<ChatResponse> {
-        self.chat_with_model(messages, None, max_tokens, temperature).await
+        self.chat_with_model(messages, None, max_tokens, temperature)
+            .await
     }
 
     /// Complete a chat with a specific model.
@@ -124,14 +123,17 @@ impl LlmClient {
         temperature: Option<f32>,
     ) -> Result<ChatResponse> {
         let request = ChatRequest {
-            model: model.map(|m| m.to_string()).unwrap_or_else(|| self.default_model.clone()),
+            model: model
+                .map(|m| m.to_string())
+                .unwrap_or_else(|| self.default_model.clone()),
             messages,
             max_tokens: max_tokens.or(Some(1024)),
             temperature,
             stream: Some(false),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/v1/chat/completions", self.base_url))
             .json(&request)
             .send()
@@ -162,7 +164,8 @@ impl LlmClient {
         max_tokens: Option<u32>,
         temperature: Option<f32>,
     ) -> Result<mpsc::Receiver<Result<String>>> {
-        self.chat_stream_with_model(messages, None, max_tokens, temperature).await
+        self.chat_stream_with_model(messages, None, max_tokens, temperature)
+            .await
     }
 
     /// Stream a chat conversation with a specific model.
@@ -174,14 +177,17 @@ impl LlmClient {
         temperature: Option<f32>,
     ) -> Result<mpsc::Receiver<Result<String>>> {
         let request = ChatRequest {
-            model: model.map(|m| m.to_string()).unwrap_or_else(|| self.default_model.clone()),
+            model: model
+                .map(|m| m.to_string())
+                .unwrap_or_else(|| self.default_model.clone()),
             messages,
             max_tokens: max_tokens.or(Some(1024)),
             temperature,
             stream: Some(true),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/v1/chat/completions", self.base_url))
             .json(&request)
             .send()
@@ -226,11 +232,13 @@ impl LlmClient {
                                 }
                             }
                         }
-                    }
+                    },
                     Err(e) => {
-                        let _ = tx.send(Err(Error::Internal(format!("Stream error: {}", e)))).await;
+                        let _ = tx
+                            .send(Err(Error::Internal(format!("Stream error: {}", e))))
+                            .await;
                         return;
-                    }
+                    },
                 }
             }
         });
@@ -240,7 +248,8 @@ impl LlmClient {
 
     /// List available models.
     pub async fn list_models(&self) -> Result<Vec<ModelInfo>> {
-        let response = self.client
+        let response = self
+            .client
             .get(self.models_url())
             .send()
             .await
@@ -262,24 +271,28 @@ impl LlmClient {
                     .await
                     .map_err(|e| Error::Internal(format!("Failed to parse vLLM models: {}", e)))?;
                 Ok(models.data)
-            }
+            },
             LlmBackend::Ollama => {
-                let ollama_response: OllamaModelsResponse = response
-                    .json()
-                    .await
-                    .map_err(|e| Error::Internal(format!("Failed to parse Ollama models: {}", e)))?;
-                Ok(ollama_response.models.into_iter().map(|m| ModelInfo {
-                    id: m.name,
-                    object: "model".to_string(),
-                    owned_by: "ollama".to_string(),
-                }).collect())
-            }
+                let ollama_response: OllamaModelsResponse = response.json().await.map_err(|e| {
+                    Error::Internal(format!("Failed to parse Ollama models: {}", e))
+                })?;
+                Ok(ollama_response
+                    .models
+                    .into_iter()
+                    .map(|m| ModelInfo {
+                        id: m.name,
+                        object: "model".to_string(),
+                        owned_by: "ollama".to_string(),
+                    })
+                    .collect())
+            },
         }
     }
 
     /// Check if the LLM service is healthy.
     pub async fn health_check(&self) -> Result<bool> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/health", self.base_url))
             .send()
             .await

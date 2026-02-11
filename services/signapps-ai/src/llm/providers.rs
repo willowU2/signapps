@@ -102,7 +102,8 @@ impl LlmProvider for OllamaProvider {
     }
 
     async fn list_models(&self) -> Result<Vec<ModelInfo>> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/api/tags", self.base_url))
             .send()
             .await
@@ -117,11 +118,15 @@ impl LlmProvider for OllamaProvider {
             .await
             .map_err(|e| Error::Internal(format!("Failed to parse Ollama models: {}", e)))?;
 
-        Ok(ollama_response.models.into_iter().map(|m| ModelInfo {
-            id: m.name.clone(),
-            object: "model".to_string(),
-            owned_by: "ollama".to_string(),
-        }).collect())
+        Ok(ollama_response
+            .models
+            .into_iter()
+            .map(|m| ModelInfo {
+                id: m.name.clone(),
+                object: "model".to_string(),
+                owned_by: "ollama".to_string(),
+            })
+            .collect())
     }
 
     async fn chat(
@@ -140,7 +145,8 @@ impl LlmProvider for OllamaProvider {
             stream: Some(false),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/v1/chat/completions", self.base_url))
             .json(&request)
             .send()
@@ -152,7 +158,9 @@ impl LlmProvider for OllamaProvider {
             return Err(Error::Internal(format!("Ollama error: {}", body)));
         }
 
-        response.json().await
+        response
+            .json()
+            .await
             .map_err(|e| Error::Internal(format!("Failed to parse response: {}", e)))
     }
 
@@ -171,7 +179,8 @@ impl LlmProvider for OllamaProvider {
             stream: Some(true),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/v1/chat/completions", self.base_url))
             .json(&request)
             .send()
@@ -209,11 +218,13 @@ impl LlmProvider for OllamaProvider {
                                 }
                             }
                         }
-                    }
+                    },
                     Err(e) => {
-                        let _ = tx.send(Err(Error::Internal(format!("Stream error: {}", e)))).await;
+                        let _ = tx
+                            .send(Err(Error::Internal(format!("Stream error: {}", e))))
+                            .await;
                         return;
-                    }
+                    },
                 }
             }
         });
@@ -222,7 +233,8 @@ impl LlmProvider for OllamaProvider {
     }
 
     async fn health_check(&self) -> Result<bool> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/api/tags", self.base_url))
             .send()
             .await
@@ -256,7 +268,8 @@ impl LlmProvider for VllmProvider {
     }
 
     async fn list_models(&self) -> Result<Vec<ModelInfo>> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/v1/models", self.base_url))
             .send()
             .await
@@ -289,7 +302,8 @@ impl LlmProvider for VllmProvider {
             stream: Some(false),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/v1/chat/completions", self.base_url))
             .json(&request)
             .send()
@@ -301,7 +315,9 @@ impl LlmProvider for VllmProvider {
             return Err(Error::Internal(format!("vLLM error: {}", body)));
         }
 
-        response.json().await
+        response
+            .json()
+            .await
             .map_err(|e| Error::Internal(format!("Failed to parse response: {}", e)))
     }
 
@@ -320,7 +336,8 @@ impl LlmProvider for VllmProvider {
             stream: Some(true),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/v1/chat/completions", self.base_url))
             .json(&request)
             .send()
@@ -358,11 +375,13 @@ impl LlmProvider for VllmProvider {
                                 }
                             }
                         }
-                    }
+                    },
                     Err(e) => {
-                        let _ = tx.send(Err(Error::Internal(format!("Stream error: {}", e)))).await;
+                        let _ = tx
+                            .send(Err(Error::Internal(format!("Stream error: {}", e))))
+                            .await;
                         return;
-                    }
+                    },
                 }
             }
         });
@@ -371,7 +390,8 @@ impl LlmProvider for VllmProvider {
     }
 
     async fn health_check(&self) -> Result<bool> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/health", self.base_url))
             .send()
             .await
@@ -405,7 +425,8 @@ impl LlmProvider for OpenAIProvider {
     }
 
     async fn list_models(&self) -> Result<Vec<ModelInfo>> {
-        let response = self.client
+        let response = self
+            .client
             .get("https://api.openai.com/v1/models")
             .header("Authorization", format!("Bearer {}", self.api_key))
             .send()
@@ -422,7 +443,9 @@ impl LlmProvider for OpenAIProvider {
             .map_err(|e| Error::Internal(format!("Failed to parse OpenAI models: {}", e)))?;
 
         // Filter to only chat models
-        Ok(models_response.data.into_iter()
+        Ok(models_response
+            .data
+            .into_iter()
             .filter(|m| m.id.starts_with("gpt-"))
             .collect())
     }
@@ -442,7 +465,8 @@ impl LlmProvider for OpenAIProvider {
             stream: Some(false),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post("https://api.openai.com/v1/chat/completions")
             .header("Authorization", format!("Bearer {}", self.api_key))
             .json(&request)
@@ -455,7 +479,9 @@ impl LlmProvider for OpenAIProvider {
             return Err(Error::Internal(format!("OpenAI error: {}", body)));
         }
 
-        response.json().await
+        response
+            .json()
+            .await
             .map_err(|e| Error::Internal(format!("Failed to parse response: {}", e)))
     }
 
@@ -474,7 +500,8 @@ impl LlmProvider for OpenAIProvider {
             stream: Some(true),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post("https://api.openai.com/v1/chat/completions")
             .header("Authorization", format!("Bearer {}", self.api_key))
             .json(&request)
@@ -513,11 +540,13 @@ impl LlmProvider for OpenAIProvider {
                                 }
                             }
                         }
-                    }
+                    },
                     Err(e) => {
-                        let _ = tx.send(Err(Error::Internal(format!("Stream error: {}", e)))).await;
+                        let _ = tx
+                            .send(Err(Error::Internal(format!("Stream error: {}", e))))
+                            .await;
                         return;
-                    }
+                    },
                 }
             }
         });
@@ -526,7 +555,8 @@ impl LlmProvider for OpenAIProvider {
     }
 
     async fn health_check(&self) -> Result<bool> {
-        let response = self.client
+        let response = self
+            .client
             .get("https://api.openai.com/v1/models")
             .header("Authorization", format!("Bearer {}", self.api_key))
             .send()
@@ -633,21 +663,19 @@ impl LlmProvider for AnthropicProvider {
         let mut system_message = None;
         let anthropic_messages: Vec<AnthropicMessage> = messages
             .iter()
-            .filter_map(|m| {
-                match m.role {
-                    Role::System => {
-                        system_message = Some(m.content.clone());
-                        None
-                    }
-                    Role::User => Some(AnthropicMessage {
-                        role: "user".to_string(),
-                        content: m.content.clone(),
-                    }),
-                    Role::Assistant => Some(AnthropicMessage {
-                        role: "assistant".to_string(),
-                        content: m.content.clone(),
-                    }),
-                }
+            .filter_map(|m| match m.role {
+                Role::System => {
+                    system_message = Some(m.content.clone());
+                    None
+                },
+                Role::User => Some(AnthropicMessage {
+                    role: "user".to_string(),
+                    content: m.content.clone(),
+                }),
+                Role::Assistant => Some(AnthropicMessage {
+                    role: "assistant".to_string(),
+                    content: m.content.clone(),
+                }),
             })
             .collect();
 
@@ -660,7 +688,8 @@ impl LlmProvider for AnthropicProvider {
             stream: Some(false),
         };
 
-        let response = self.client
+        let response = self
+            .client
             .post("https://api.anthropic.com/v1/messages")
             .header("x-api-key", &self.api_key)
             .header("anthropic-version", "2023-06-01")
@@ -681,7 +710,8 @@ impl LlmProvider for AnthropicProvider {
             .map_err(|e| Error::Internal(format!("Failed to parse response: {}", e)))?;
 
         // Convert to standard format
-        let content = anthropic_response.content
+        let content = anthropic_response
+            .content
             .iter()
             .filter(|c| c.content_type == "text")
             .map(|c| c.text.clone())
@@ -701,7 +731,8 @@ impl LlmProvider for AnthropicProvider {
             usage: Some(Usage {
                 prompt_tokens: anthropic_response.usage.input_tokens,
                 completion_tokens: anthropic_response.usage.output_tokens,
-                total_tokens: anthropic_response.usage.input_tokens + anthropic_response.usage.output_tokens,
+                total_tokens: anthropic_response.usage.input_tokens
+                    + anthropic_response.usage.output_tokens,
             }),
         })
     }
@@ -718,7 +749,9 @@ impl LlmProvider for AnthropicProvider {
         let response = self.chat(messages, model, max_tokens, temperature).await?;
 
         let (tx, rx) = mpsc::channel(1);
-        let content = response.choices.first()
+        let content = response
+            .choices
+            .first()
             .map(|c| c.message.content.clone())
             .unwrap_or_default();
 
@@ -731,7 +764,8 @@ impl LlmProvider for AnthropicProvider {
 
     async fn health_check(&self) -> Result<bool> {
         // Simple check - try to access the API
-        let response = self.client
+        let response = self
+            .client
             .get("https://api.anthropic.com/v1/messages")
             .header("x-api-key", &self.api_key)
             .header("anthropic-version", "2023-06-01")
@@ -746,21 +780,32 @@ impl LlmProvider for AnthropicProvider {
 /// Create a provider from configuration.
 pub fn create_provider(config: &ProviderConfig) -> Result<Box<dyn LlmProvider>> {
     match config.provider_type {
-        LlmProviderType::Ollama => {
-            Ok(Box::new(OllamaProvider::new(&config.base_url, &config.default_model)))
-        }
-        LlmProviderType::Vllm | LlmProviderType::OpenAICompatible => {
-            Ok(Box::new(VllmProvider::new(&config.base_url, &config.default_model)))
-        }
+        LlmProviderType::Ollama => Ok(Box::new(OllamaProvider::new(
+            &config.base_url,
+            &config.default_model,
+        ))),
+        LlmProviderType::Vllm | LlmProviderType::OpenAICompatible => Ok(Box::new(
+            VllmProvider::new(&config.base_url, &config.default_model),
+        )),
         LlmProviderType::OpenAI => {
-            let api_key = config.api_key.as_ref()
+            let api_key = config
+                .api_key
+                .as_ref()
                 .ok_or_else(|| Error::Validation("OpenAI API key required".to_string()))?;
-            Ok(Box::new(OpenAIProvider::new(api_key, &config.default_model)))
-        }
+            Ok(Box::new(OpenAIProvider::new(
+                api_key,
+                &config.default_model,
+            )))
+        },
         LlmProviderType::Anthropic => {
-            let api_key = config.api_key.as_ref()
+            let api_key = config
+                .api_key
+                .as_ref()
                 .ok_or_else(|| Error::Validation("Anthropic API key required".to_string()))?;
-            Ok(Box::new(AnthropicProvider::new(api_key, &config.default_model)))
-        }
+            Ok(Box::new(AnthropicProvider::new(
+                api_key,
+                &config.default_model,
+            )))
+        },
     }
 }

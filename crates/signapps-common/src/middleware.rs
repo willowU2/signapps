@@ -184,17 +184,15 @@ pub async fn request_id_middleware(mut request: Request, next: Next) -> Response
         .map(|s| s.to_string())
         .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
-    request.headers_mut().insert(
-        "x-request-id",
-        request_id.parse().unwrap(),
-    );
+    request
+        .headers_mut()
+        .insert("x-request-id", request_id.parse().unwrap());
 
     let mut response = next.run(request).await;
 
-    response.headers_mut().insert(
-        "x-request-id",
-        request_id.parse().unwrap(),
-    );
+    response
+        .headers_mut()
+        .insert("x-request-id", request_id.parse().unwrap());
 
     response
 }

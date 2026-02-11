@@ -3,8 +3,8 @@
 
 use qdrant_client::prelude::*;
 use qdrant_client::qdrant::{
-    CreateCollection, Distance, PointStruct, SearchPoints, VectorParams, VectorsConfig,
-    with_payload_selector::SelectorOptions, WithPayloadSelector,
+    with_payload_selector::SelectorOptions, CreateCollection, Distance, PointStruct, SearchPoints,
+    VectorParams, VectorsConfig, WithPayloadSelector,
 };
 use signapps_common::{Error, Result};
 use std::sync::Arc;
@@ -48,12 +48,14 @@ impl QdrantService {
 
     /// Ensure the documents collection exists.
     async fn ensure_collection(&self) -> Result<()> {
-        let collections = self.client
+        let collections = self
+            .client
             .list_collections()
             .await
             .map_err(|e| Error::Internal(format!("Failed to list collections: {}", e)))?;
 
-        let exists = collections.collections
+        let exists = collections
+            .collections
             .iter()
             .any(|c| c.name == DOCUMENTS_COLLECTION);
 
@@ -88,32 +90,60 @@ impl QdrantService {
         embeddings: Vec<Vec<f32>>,
     ) -> Result<()> {
         if chunks.len() != embeddings.len() {
-            return Err(Error::Internal("Chunks and embeddings count mismatch".to_string()));
+            return Err(Error::Internal(
+                "Chunks and embeddings count mismatch".to_string(),
+            ));
         }
 
         use qdrant_client::qdrant::value::Kind;
-        use qdrant_client::Payload;
         use qdrant_client::qdrant::Value;
+        use qdrant_client::Payload;
 
         let points: Vec<PointStruct> = chunks
             .iter()
             .zip(embeddings)
             .map(|(chunk, vector)| {
                 let mut payload = Payload::new();
-                payload.insert("document_id", Value { kind: Some(Kind::StringValue(chunk.document_id.to_string())) });
-                payload.insert("chunk_index", Value { kind: Some(Kind::IntegerValue(chunk.chunk_index as i64)) });
-                payload.insert("content", Value { kind: Some(Kind::StringValue(chunk.content.clone())) });
-                payload.insert("filename", Value { kind: Some(Kind::StringValue(chunk.filename.clone())) });
-                payload.insert("path", Value { kind: Some(Kind::StringValue(chunk.path.clone())) });
+                payload.insert(
+                    "document_id",
+                    Value {
+                        kind: Some(Kind::StringValue(chunk.document_id.to_string())),
+                    },
+                );
+                payload.insert(
+                    "chunk_index",
+                    Value {
+                        kind: Some(Kind::IntegerValue(chunk.chunk_index as i64)),
+                    },
+                );
+                payload.insert(
+                    "content",
+                    Value {
+                        kind: Some(Kind::StringValue(chunk.content.clone())),
+                    },
+                );
+                payload.insert(
+                    "filename",
+                    Value {
+                        kind: Some(Kind::StringValue(chunk.filename.clone())),
+                    },
+                );
+                payload.insert(
+                    "path",
+                    Value {
+                        kind: Some(Kind::StringValue(chunk.path.clone())),
+                    },
+                );
                 if let Some(ref mime) = chunk.mime_type {
-                    payload.insert("mime_type", Value { kind: Some(Kind::StringValue(mime.clone())) });
+                    payload.insert(
+                        "mime_type",
+                        Value {
+                            kind: Some(Kind::StringValue(mime.clone())),
+                        },
+                    );
                 }
 
-                PointStruct::new(
-                    chunk.id.to_string(),
-                    vector,
-                    payload,
-                )
+                PointStruct::new(chunk.id.to_string(), vector, payload)
             })
             .collect();
 
@@ -148,12 +178,14 @@ impl QdrantService {
             search_request.score_threshold = Some(threshold);
         }
 
-        let response = self.client
+        let response = self
+            .client
             .search_points(&search_request)
             .await
             .map_err(|e| Error::Internal(format!("Failed to search: {}", e)))?;
 
-        let results = response.result
+        let results = response
+            .result
             .into_iter()
             .filter_map(|point| {
                 let payload = point.payload;
@@ -165,13 +197,16 @@ impl QdrantService {
                     qdrant_client::qdrant::point_id::PointIdOptions::Uuid(s) => s,
                 };
                 let id = Uuid::parse_str(&point_id_str).ok()?;
-                let document_id = payload.get("document_id")
+                let document_id = payload
+                    .get("document_id")
                     .and_then(|v| v.as_str())
                     .and_then(|s| Uuid::parse_str(s).ok())?;
-                let content = payload.get("content")
+                let content = payload
+                    .get("content")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string())?;
-                let filename = payload.get("filename")
+                let filename = payload
+                    .get("filename")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string())?;
 
@@ -190,9 +225,9 @@ impl QdrantService {
 
     /// Delete all chunks for a document.
     pub async fn delete_document(&self, document_id: Uuid) -> Result<()> {
-        use qdrant_client::qdrant::{Filter, FieldCondition, Match, Condition};
         use qdrant_client::qdrant::points_selector::PointsSelectorOneOf;
         use qdrant_client::qdrant::PointsSelector;
+        use qdrant_client::qdrant::{Condition, FieldCondition, Filter, Match};
 
         let filter = Filter {
             must: vec![Condition {
@@ -230,12 +265,15 @@ impl QdrantService {
 
     /// Get collection statistics.
     pub async fn get_stats(&self) -> Result<CollectionStats> {
-        let info = self.client
+        let info = self
+            .client
             .collection_info(DOCUMENTS_COLLECTION)
             .await
             .map_err(|e| Error::Internal(format!("Failed to get collection info: {}", e)))?;
 
-        let result = info.result.ok_or_else(|| Error::Internal("No collection info".to_string()))?;
+        let result = info
+            .result
+            .ok_or_else(|| Error::Internal("No collection info".to_string()))?;
 
         // Get points count from segments_count as approximation
         let segments_count = result.segments_count;

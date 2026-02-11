@@ -22,11 +22,8 @@ use std::sync::Arc;
 // Re-export types from tunnel module for backward compatibility
 // The existing handlers use these types
 pub use crate::tunnel::types::{
-    DnsServiceConfig as DnsConfig,
-    DnsBlocklist as Blocklist,
-    DnsRecord as CustomDnsRecord,
-    DnsStats,
-    BlockedDomainStat,
+    BlockedDomainStat, DnsBlocklist as Blocklist, DnsRecord as CustomDnsRecord,
+    DnsServiceConfig as DnsConfig, DnsStats,
 };
 
 /// Extended DNS configuration for the service with additional fields.

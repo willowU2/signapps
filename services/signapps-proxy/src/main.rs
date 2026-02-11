@@ -47,7 +47,10 @@ async fn main() -> anyhow::Result<()> {
         )
         .init();
 
-    tracing::info!("Starting SignApps Proxy Service v{}", env!("CARGO_PKG_VERSION"));
+    tracing::info!(
+        "Starting SignApps Proxy Service v{}",
+        env!("CARGO_PKG_VERSION")
+    );
 
     // Load configuration
     let database_url =
@@ -147,7 +150,10 @@ fn create_router(state: AppState) -> Router {
     // Protected config routes
     let config_routes = Router::new()
         .route("/config/traefik", get(config::get_traefik_config))
-        .route("/config/traefik/overview", get(config::get_traefik_overview))
+        .route(
+            "/config/traefik/overview",
+            get(config::get_traefik_overview),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

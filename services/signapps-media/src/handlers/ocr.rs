@@ -54,7 +54,10 @@ pub async fn extract_text(
         .await
         .map_err(|e| {
             tracing::error!("Failed to read multipart: {}", e);
-            (StatusCode::BAD_REQUEST, format!("Failed to read multipart: {}", e))
+            (
+                StatusCode::BAD_REQUEST,
+                format!("Failed to read multipart: {}", e),
+            )
         })?
         .ok_or_else(|| {
             tracing::error!("No file provided in request");
@@ -64,25 +67,34 @@ pub async fn extract_text(
     let filename = field.file_name().unwrap_or("image").to_string();
     tracing::info!("Processing file: {}", filename);
 
-    let data = field.bytes().await
-        .map_err(|e| {
-            tracing::error!("Failed to read file bytes: {}", e);
-            (StatusCode::BAD_REQUEST, format!("Failed to read file: {}", e))
-        })?;
+    let data = field.bytes().await.map_err(|e| {
+        tracing::error!("Failed to read file bytes: {}", e);
+        (
+            StatusCode::BAD_REQUEST,
+            format!("Failed to read file: {}", e),
+        )
+    })?;
 
     tracing::info!("File size: {} bytes", data.len());
 
     let options = OcrRequest {
-        languages: params.languages.map(|s| s.split(',').map(|s| s.trim().to_string()).collect()),
+        languages: params
+            .languages
+            .map(|s| s.split(',').map(|s| s.trim().to_string()).collect()),
         detect_layout: params.detect_layout,
         detect_tables: params.detect_tables,
     };
 
-    let result = state.ocr_client.extract_text(data, Some(options))
+    let result = state
+        .ocr_client
+        .extract_text(data, Some(options))
         .await
         .map_err(|e| {
             tracing::error!("OCR processing failed: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, format!("OCR failed: {}", e))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("OCR failed: {}", e),
+            )
         })?;
 
     tracing::info!("OCR completed: {} characters extracted", result.text.len());
@@ -91,12 +103,16 @@ pub async fn extract_text(
         success: true,
         text: result.text.clone(),
         confidence: result.confidence,
-        pages: result.pages.iter().map(|p| PageResponse {
-            page_number: p.page_number,
-            text: p.text.clone(),
-            blocks_count: p.blocks.len(),
-            tables_count: p.tables.as_ref().map(|t| t.len()).unwrap_or(0),
-        }).collect(),
+        pages: result
+            .pages
+            .iter()
+            .map(|p| PageResponse {
+                page_number: p.page_number,
+                text: p.text.clone(),
+                blocks_count: p.blocks.len(),
+                tables_count: p.tables.as_ref().map(|t| t.len()).unwrap_or(0),
+            })
+            .collect(),
         metadata: MetadataResponse {
             provider: result.metadata.provider,
             processing_time_ms: result.metadata.processing_time_ms,
@@ -115,33 +131,55 @@ pub async fn process_document(
     let field = multipart
         .next_field()
         .await
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Failed to read multipart: {}", e)))?
+        .map_err(|e| {
+            (
+                StatusCode::BAD_REQUEST,
+                format!("Failed to read multipart: {}", e),
+            )
+        })?
         .ok_or((StatusCode::BAD_REQUEST, "No file provided".to_string()))?;
 
     let filename = field.file_name().unwrap_or("document").to_string();
-    let data = field.bytes().await
-        .map_err(|e| (StatusCode::BAD_REQUEST, format!("Failed to read file: {}", e)))?;
+    let data = field.bytes().await.map_err(|e| {
+        (
+            StatusCode::BAD_REQUEST,
+            format!("Failed to read file: {}", e),
+        )
+    })?;
 
     let options = OcrRequest {
-        languages: params.languages.map(|s| s.split(',').map(|s| s.trim().to_string()).collect()),
+        languages: params
+            .languages
+            .map(|s| s.split(',').map(|s| s.trim().to_string()).collect()),
         detect_layout: params.detect_layout,
         detect_tables: params.detect_tables,
     };
 
-    let result = state.ocr_client.process_document(data, &filename, Some(options))
+    let result = state
+        .ocr_client
+        .process_document(data, &filename, Some(options))
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Document OCR failed: {}", e)))?;
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Document OCR failed: {}", e),
+            )
+        })?;
 
     Ok(Json(OcrResponse {
         success: true,
         text: result.text.clone(),
         confidence: result.confidence,
-        pages: result.pages.iter().map(|p| PageResponse {
-            page_number: p.page_number,
-            text: p.text.clone(),
-            blocks_count: p.blocks.len(),
-            tables_count: p.tables.as_ref().map(|t| t.len()).unwrap_or(0),
-        }).collect(),
+        pages: result
+            .pages
+            .iter()
+            .map(|p| PageResponse {
+                page_number: p.page_number,
+                text: p.text.clone(),
+                blocks_count: p.blocks.len(),
+                tables_count: p.tables.as_ref().map(|t| t.len()).unwrap_or(0),
+            })
+            .collect(),
         metadata: MetadataResponse {
             provider: result.metadata.provider,
             processing_time_ms: result.metadata.processing_time_ms,

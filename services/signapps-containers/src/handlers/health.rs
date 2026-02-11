@@ -20,7 +20,12 @@ pub async fn health_check(
     let docker_connected = state.docker.ping().await.is_ok();
 
     Json(HealthResponse {
-        status: if docker_connected { "healthy" } else { "degraded" }.to_string(),
+        status: if docker_connected {
+            "healthy"
+        } else {
+            "degraded"
+        }
+        .to_string(),
         service: "signapps-containers".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         docker_connected,

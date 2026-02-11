@@ -3,7 +3,7 @@
 //! Uses RapidOCR which is based on PaddleOCR with high accuracy
 //! and table detection support.
 
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use bytes::Bytes;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -107,7 +107,11 @@ impl OcrClient {
     }
 
     /// Extract text from an image using RapidOCR (PaddleOCR-based) API
-    pub async fn extract_text(&self, image_data: Bytes, _options: Option<OcrRequest>) -> Result<OcrResult, OcrError> {
+    pub async fn extract_text(
+        &self,
+        image_data: Bytes,
+        _options: Option<OcrRequest>,
+    ) -> Result<OcrResult, OcrError> {
         let start = std::time::Instant::now();
 
         // RapidOCR API expects image as base64 in JSON body
@@ -117,7 +121,8 @@ impl OcrClient {
             "image_base64": image_base64
         });
 
-        let response = self.client
+        let response = self
+            .client
             .post(format!("{}/api/ocr", self.base_url))
             .json(&payload)
             .send()
@@ -126,7 +131,10 @@ impl OcrClient {
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
-            return Err(OcrError::ServiceError(format!("OCR service error {}: {}", status, error_text)));
+            return Err(OcrError::ServiceError(format!(
+                "OCR service error {}: {}",
+                status, error_text
+            )));
         }
 
         // RapidOCR returns JSON with ocr_result array
@@ -146,7 +154,11 @@ impl OcrClient {
                 width: 0,
                 height: 0,
                 blocks,
-                tables: if tables.is_empty() { None } else { Some(tables) },
+                tables: if tables.is_empty() {
+                    None
+                } else {
+                    Some(tables)
+                },
             }],
             metadata: OcrMetadata {
                 provider: "rapidocr".to_string(),
@@ -159,17 +171,25 @@ impl OcrClient {
     }
 
     /// Process a multi-page document (PDF)
-    pub async fn process_document(&self, document_data: Bytes, filename: &str, options: Option<OcrRequest>) -> Result<OcrResult, OcrError> {
+    pub async fn process_document(
+        &self,
+        document_data: Bytes,
+        filename: &str,
+        options: Option<OcrRequest>,
+    ) -> Result<OcrResult, OcrError> {
         let mime_type = mime_guess::from_path(filename)
             .first_or_octet_stream()
             .to_string();
 
-        let form = reqwest::multipart::Form::new()
-            .part("file", reqwest::multipart::Part::bytes(document_data.to_vec())
+        let form = reqwest::multipart::Form::new().part(
+            "file",
+            reqwest::multipart::Part::bytes(document_data.to_vec())
                 .file_name(filename.to_string())
-                .mime_str(&mime_type)?);
+                .mime_str(&mime_type)?,
+        );
 
-        let mut request = self.client
+        let mut request = self
+            .client
             .post(format!("{}/ocr/document", self.base_url))
             .multipart(form);
 
@@ -190,7 +210,10 @@ impl OcrClient {
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
-            return Err(OcrError::ServiceError(format!("OCR service error {}: {}", status, error_text)));
+            return Err(OcrError::ServiceError(format!(
+                "OCR service error {}: {}",
+                status, error_text
+            )));
         }
 
         let result: OcrResult = response.json().await?;
@@ -199,13 +222,19 @@ impl OcrClient {
 
     /// Get supported languages
     pub async fn get_supported_languages(&self) -> Result<Vec<String>, OcrError> {
-        let response = self.client
+        let response = self
+            .client
             .get(format!("{}/languages", self.base_url))
             .send()
             .await?;
 
         if !response.status().is_success() {
-            return Ok(vec!["en".to_string(), "fr".to_string(), "de".to_string(), "es".to_string()]);
+            return Ok(vec![
+                "en".to_string(),
+                "fr".to_string(),
+                "de".to_string(),
+                "es".to_string(),
+            ]);
         }
 
         let languages: Vec<String> = response.json().await?;
@@ -243,11 +272,20 @@ fn parse_rapidocr_response(response: &serde_json::Value) -> (String, Vec<TextBlo
                         let bbox = if let Some(points) = arr.first().and_then(|p| p.as_array()) {
                             if points.len() >= 4 {
                                 let get_point = |idx: usize| -> (f32, f32) {
-                                    points.get(idx)
+                                    points
+                                        .get(idx)
                                         .and_then(|p| p.as_array())
                                         .map(|coords| {
-                                            let x = coords.first().and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
-                                            let y = coords.get(1).and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+                                            let x = coords
+                                                .first()
+                                                .and_then(|v| v.as_f64())
+                                                .unwrap_or(0.0)
+                                                as f32;
+                                            let y = coords
+                                                .get(1)
+                                                .and_then(|v| v.as_f64())
+                                                .unwrap_or(0.0)
+                                                as f32;
                                             (x, y)
                                         })
                                         .unwrap_or((0.0, 0.0))
@@ -256,10 +294,20 @@ fn parse_rapidocr_response(response: &serde_json::Value) -> (String, Vec<TextBlo
                                 let (x2, y2) = get_point(2);
                                 BoundingBox { x1, y1, x2, y2 }
                             } else {
-                                BoundingBox { x1: 0.0, y1: 0.0, x2: 0.0, y2: 0.0 }
+                                BoundingBox {
+                                    x1: 0.0,
+                                    y1: 0.0,
+                                    x2: 0.0,
+                                    y2: 0.0,
+                                }
                             }
                         } else {
-                            BoundingBox { x1: 0.0, y1: 0.0, x2: 0.0, y2: 0.0 }
+                            BoundingBox {
+                                x1: 0.0,
+                                y1: 0.0,
+                                x2: 0.0,
+                                y2: 0.0,
+                            }
                         };
 
                         blocks.push(TextBlock {
@@ -295,4 +343,3 @@ pub enum OcrError {
     #[error("Invalid response: {0}")]
     InvalidResponse(String),
 }
-
