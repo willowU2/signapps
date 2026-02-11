@@ -25,12 +25,13 @@ import {
   Trash2,
   RefreshCw,
   Terminal,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LogsDialog } from '@/components/containers/logs-dialog';
 import { ContainerDialog } from '@/components/containers/container-dialog';
 import { ContainerTerminal } from '@/components/containers/container-terminal';
-import { useContainers, useContainerAction } from '@/hooks/use-containers';
+import { useContainers, useContainerAction, Container } from '@/hooks/use-containers';
 
 export default function ContainersPage() {
   const queryClient = useQueryClient();
@@ -38,7 +39,7 @@ export default function ContainersPage() {
   const containerAction = useContainerAction();
 
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'running' | 'stopped'>('all');
+  const [filter, setFilter] = useState<'all' | 'running' | 'stopped' | 'system'>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [logsDialog, setLogsDialog] = useState<{ open: boolean; id: string; name: string }>({
     open: false,
@@ -55,12 +56,14 @@ export default function ContainersPage() {
     containerAction.mutate({ id, action });
   };
 
-  const filteredContainers = containers.filter((c) => {
+  const filteredContainers = containers.filter((c: Container) => {
     const matchesSearch =
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.image.toLowerCase().includes(search.toLowerCase());
-    const matchesFilter =
-      filter === 'all' || c.state === filter || (filter === 'stopped' && (c.state === 'stopped' || c.state === 'exited'));
+    let matchesFilter = true;
+    if (filter === 'running') matchesFilter = c.state === 'running';
+    else if (filter === 'stopped') matchesFilter = c.state === 'stopped' || c.state === 'exited';
+    else if (filter === 'system') matchesFilter = c.is_system;
     return matchesSearch && matchesFilter;
   });
 
@@ -126,7 +129,7 @@ export default function ContainersPage() {
             />
           </div>
           <div className="flex gap-2">
-            {(['all', 'running', 'stopped'] as const).map((f) => (
+            {(['all', 'running', 'stopped', 'system'] as const).map((f) => (
               <Button
                 key={f}
                 variant={filter === f ? 'default' : 'outline'}
@@ -159,6 +162,15 @@ export default function ContainersPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{container.name}</span>
                       {getStatusBadge(container.state)}
+                      {container.is_system && (
+                        <Badge className="bg-red-500/10 text-red-600 border-red-500/20">
+                          <Shield className="mr-1 h-3 w-3" />
+                          System
+                        </Badge>
+                      )}
+                      {!container.is_managed && !container.is_system && (
+                        <Badge variant="outline">Unmanaged</Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span>{container.image}</span>
@@ -192,24 +204,28 @@ export default function ContainersPage() {
                     </Button>
                   )}
 
-                  {container.state === 'running' ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAction(container.id, 'stop')}
-                    >
-                      <Square className="mr-1 h-4 w-4" />
-                      Stop
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAction(container.id, 'start')}
-                    >
-                      <Play className="mr-1 h-4 w-4" />
-                      Start
-                    </Button>
+                  {!container.is_system && (
+                    <>
+                      {container.state === 'running' ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAction(container.id, 'stop')}
+                        >
+                          <Square className="mr-1 h-4 w-4" />
+                          Stop
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAction(container.id, 'start')}
+                        >
+                          <Play className="mr-1 h-4 w-4" />
+                          Start
+                        </Button>
+                      )}
+                    </>
                   )}
 
                   <DropdownMenu>
@@ -225,13 +241,15 @@ export default function ContainersPage() {
                         <RotateCcw className="mr-2 h-4 w-4" />
                         Restart
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => handleAction(container.id, 'remove')}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Remove
-                      </DropdownMenuItem>
+                      {!container.is_system && (
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => handleAction(container.id, 'remove')}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Remove
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

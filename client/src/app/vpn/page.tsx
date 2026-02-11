@@ -68,13 +68,9 @@ import {
   Pencil,
   PlugZap,
   ShieldCheck,
-  ShieldOff,
-  Server,
   Ban,
   CircleDot,
-  ListFilter,
   X,
-  Settings2,
   Gauge,
 } from 'lucide-react';
 import {
@@ -151,6 +147,9 @@ export default function VpnPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [quickConnecting, setQuickConnecting] = useState(false);
+  const [quickConnectAddr, setQuickConnectAddr] = useState('localhost:3000');
+  const [quickTunnel, setQuickTunnel] = useState<Tunnel | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     type: 'tunnel' | 'relay' | 'blocklist' | 'dns-record';
@@ -184,10 +183,12 @@ export default function VpnPage() {
         setTrafficData(trafficRes.value.data || []);
       }
       if (tunnelsRes.status === 'fulfilled') {
-        setTunnels(tunnelsRes.value.data?.tunnels || []);
+        const tunnelData = tunnelsRes.value.data;
+        setTunnels(Array.isArray(tunnelData) ? tunnelData : tunnelData?.tunnels || []);
       }
       if (relaysRes.status === 'fulfilled') {
-        setRelays(relaysRes.value.data?.relays || []);
+        const relayData = relaysRes.value.data;
+        setRelays(Array.isArray(relayData) ? relayData : relayData?.relays || []);
       }
       if (dnsConfigRes.status === 'fulfilled') {
         setDnsConfig(dnsConfigRes.value.data);
@@ -536,6 +537,35 @@ export default function VpnPage() {
     }
   };
 
+  const handleQuickConnect = async () => {
+    setQuickConnecting(true);
+    try {
+      const result = await tunnelApi.quickConnect({ local_addr: quickConnectAddr });
+      setQuickTunnel(result.data);
+      toast.success('Quick tunnel created!');
+      fetchData();
+    } catch (error) {
+      console.error('Quick connect failed:', error);
+      toast.error('Quick connect failed. Make sure a relay is configured.');
+    } finally {
+      setQuickConnecting(false);
+    }
+  };
+
+  const handleDisconnectQuick = async () => {
+    if (quickTunnel) {
+      try {
+        await tunnelApi.deleteTunnel(quickTunnel.id);
+        setQuickTunnel(null);
+        toast.success('Tunnel disconnected');
+        fetchData();
+      } catch (error) {
+        console.error('Failed to disconnect:', error);
+        toast.error('Failed to disconnect tunnel');
+      }
+    }
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -592,6 +622,73 @@ export default function VpnPage() {
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-4">
+            {/* Quick Connect */}
+            <Card className="border-green-200 dark:border-green-900">
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className={`flex h-16 w-16 items-center justify-center rounded-full ${
+                  quickTunnel ? 'bg-green-500/20' : 'bg-muted'
+                }`}>
+                  {quickTunnel ? (
+                    <Wifi className="h-8 w-8 text-green-500" />
+                  ) : (
+                    <WifiOff className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 space-y-2">
+                  <h3 className="font-semibold text-lg">Quick Connect</h3>
+                  {quickTunnel ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-green-500/10 text-green-600">Connected</Badge>
+                        <code className="text-xs bg-muted px-2 py-1 rounded">
+                          {quickTunnel.subdomain}.relay
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => copyPublicUrl(quickTunnel.public_url || quickTunnel.subdomain)}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {quickTunnel.local_addr} exposed via relay
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="localhost:3000"
+                        value={quickConnectAddr}
+                        onChange={(e) => setQuickConnectAddr(e.target.value)}
+                        className="w-48 h-8"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  {quickTunnel ? (
+                    <Button
+                      variant="destructive"
+                      onClick={handleDisconnectQuick}
+                    >
+                      Disconnect
+                    </Button>
+                  ) : (
+                    <Button
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={handleQuickConnect}
+                      disabled={quickConnecting}
+                    >
+                      {quickConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Quick Connect
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Stat Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
@@ -857,7 +954,7 @@ export default function VpnPage() {
                     {tunnels.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          No tunnels configured. Click "New Tunnel" to create one.
+                          No tunnels configured. Click &quot;New Tunnel&quot; to create one.
                         </TableCell>
                       </TableRow>
                     )}
@@ -1482,16 +1579,16 @@ export default function VpnPage() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {deleteDialog.type === 'tunnel' && (
-                <>Are you sure you want to delete the tunnel "{(deleteDialog.item as Tunnel)?.name}"? This will disconnect all active connections.</>
+                <>Are you sure you want to delete the tunnel &quot;{(deleteDialog.item as Tunnel)?.name}&quot;? This will disconnect all active connections.</>
               )}
               {deleteDialog.type === 'relay' && (
-                <>Are you sure you want to delete the relay "{(deleteDialog.item as Relay)?.name}"? All tunnels using this relay will be disconnected.</>
+                <>Are you sure you want to delete the relay &quot;{(deleteDialog.item as Relay)?.name}&quot;? All tunnels using this relay will be disconnected.</>
               )}
               {deleteDialog.type === 'blocklist' && (
-                <>Are you sure you want to remove the blocklist "{(deleteDialog.item as Blocklist)?.name}"?</>
+                <>Are you sure you want to remove the blocklist &quot;{(deleteDialog.item as Blocklist)?.name}&quot;?</>
               )}
               {deleteDialog.type === 'dns-record' && (
-                <>Are you sure you want to delete the DNS record for "{(deleteDialog.item as CustomDnsRecord)?.name}"?</>
+                <>Are you sure you want to delete the DNS record for &quot;{(deleteDialog.item as CustomDnsRecord)?.name}&quot;?</>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

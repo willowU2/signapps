@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { metricsApi, alertsApi, SystemMetrics, DiskMetrics, AlertConfig, AlertEvent } from '@/lib/api';
 import { toast } from 'sonner';
@@ -110,4 +111,46 @@ export function useDeleteAlertConfig() {
       toast.error('Failed to delete alert config');
     },
   });
+}
+
+export function useMetricsStream(enabled: boolean) {
+  const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
+  const [sseConnected, setSseConnected] = useState(false);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    let active = true;
+    const METRICS_URL = process.env.NEXT_PUBLIC_METRICS_URL || 'http://localhost:3008/api/v1';
+    const eventSource = new EventSource(`${METRICS_URL}/metrics/stream`);
+
+    eventSource.onopen = () => {
+      if (active) setSseConnected(true);
+    };
+
+    eventSource.onmessage = (event) => {
+      if (!active) return;
+      try {
+        const data = JSON.parse(event.data);
+        setMetrics(data);
+      } catch (e) {
+        console.error('Failed to parse SSE data:', e);
+      }
+    };
+
+    eventSource.onerror = () => {
+      if (active) setSseConnected(false);
+    };
+
+    return () => {
+      active = false;
+      eventSource.close();
+    };
+  }, [enabled]);
+
+  const connected = enabled && sseConnected;
+
+  return { metrics, connected };
 }

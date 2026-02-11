@@ -176,6 +176,12 @@ export const containersApi = {
   logs: (id: string, tail?: number) =>
     containersApiClient.get<string>(`/containers/${id}/logs`, { params: { tail } }),
   stats: (id: string) => containersApiClient.get(`/containers/${id}/stats`),
+  // Docker-direct operations (for containers without DB records)
+  startDocker: (dockerId: string) => containersApiClient.post(`/containers/docker/${dockerId}/start`),
+  restartDocker: (dockerId: string) => containersApiClient.post(`/containers/docker/${dockerId}/restart`),
+  logsDocker: (dockerId: string, tail?: number) =>
+    containersApiClient.get<string>(`/containers/docker/${dockerId}/logs`, { params: { tail } }),
+  statsDocker: (dockerId: string) => containersApiClient.get(`/containers/docker/${dockerId}/stats`),
   // Images
   listImages: () => containersApiClient.get<ImageInfo[]>('/images'),
   pullImage: (image: string) => containersApiClient.post('/images/pull', { image }),
@@ -213,8 +219,8 @@ export const storageApi = {
   listBuckets: () => storageApiClient.get<Bucket[]>('/buckets'),
   createBucket: (name: string) => storageApiClient.post('/buckets', { name }),
   deleteBucket: (name: string) => storageApiClient.delete(`/buckets/${name}`),
-  listFiles: (bucket: string, prefix?: string) =>
-    storageApiClient.get<FileInfo[]>(`/files/${bucket}`, { params: { prefix } }),
+  listFiles: (bucket: string, prefix?: string, delimiter?: string) =>
+    storageApiClient.get<FileInfo[]>(`/files/${bucket}`, { params: { prefix, delimiter } }),
   upload: (bucket: string, file: File, path?: string) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -830,6 +836,8 @@ export const tunnelApi = {
   getDashboardStats: () => securelinkApiClient.get<TunnelDashboardStats>('/dashboard/stats'),
   getTrafficHistory: (period: '1h' | '24h' | '7d' | '30d') =>
     securelinkApiClient.get<TrafficDataPoint[]>('/dashboard/traffic', { params: { period } }),
+  quickConnect: (data?: { local_addr?: string }) =>
+    securelinkApiClient.post<Tunnel>('/tunnels/quick', data || {}),
 };
 
 // Tunnel types
@@ -989,6 +997,7 @@ export interface ScheduledJob {
   name: string;
   cron_expression: string;
   command: string;
+  description?: string;
   target_type: 'container' | 'host';
   target_id?: string;
   enabled: boolean;
@@ -1011,6 +1020,7 @@ export interface CreateJobRequest {
   name: string;
   cron_expression: string;
   command: string;
+  description?: string;
   target_type: 'container' | 'host';
   target_id?: string;
   enabled?: boolean;

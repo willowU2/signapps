@@ -195,9 +195,6 @@ export default function RoutesPage() {
   const activeRoutes = routes.filter((r) => r.enabled).length;
   const securedRoutes = routes.filter((r) => r.tls_enabled).length;
   const protectedRoutes = routes.filter((r) => r.shield_config?.enabled).length;
-  const wildcardRoutes = routes.filter((r) => r.host.startsWith('*.')).length;
-  const routesWithDns = routes.filter((r) => r.dns_records && r.dns_records.length > 0).length;
-
   // Group routes by domain
   const domains = [...new Set(routes.map((r) => {
     const parts = r.host.split('.');
@@ -302,6 +299,10 @@ export default function RoutesPage() {
             <TabsTrigger value="certificates" className="gap-2">
               <Lock className="h-4 w-4" />
               Certificats ({certificates.length})
+            </TabsTrigger>
+            <TabsTrigger value="domains" className="gap-2">
+              <Globe className="h-4 w-4" />
+              Domains
             </TabsTrigger>
             <TabsTrigger value="shield" className="gap-2">
               <Shield className="h-4 w-4" />
@@ -501,7 +502,8 @@ export default function RoutesPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 {certificates.map((cert) => {
                   const expiresAt = new Date(cert.expires_at);
-                  const daysUntilExpiry = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                  const now = new Date();
+                  const daysUntilExpiry = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                   const isExpiringSoon = daysUntilExpiry < 30;
 
                   return (
@@ -557,6 +559,103 @@ export default function RoutesPage() {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          {/* Domains Tab */}
+          <TabsContent value="domains" className="space-y-4">
+            {(() => {
+              // Group routes by domain
+              const domainMap = new Map<string, typeof routes>();
+              (routes || []).forEach(route => {
+                const parts = route.host.split('.');
+                const domain = parts.length >= 2
+                  ? parts.slice(-2).join('.')
+                  : route.host;
+                if (!domainMap.has(domain)) {
+                  domainMap.set(domain, []);
+                }
+                domainMap.get(domain)!.push(route);
+              });
+
+              if (domainMap.size === 0) {
+                return (
+                  <div className="py-12 text-center text-muted-foreground">
+                    No routes configured
+                  </div>
+                );
+              }
+
+              return Array.from(domainMap.entries()).map(([domain, domainRoutes]) => (
+                <Card key={domain}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Globe className="h-5 w-5 text-primary" />
+                        <div>
+                          <CardTitle className="text-lg">{domain}</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            {domainRoutes.length} route{domainRoutes.length > 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {domainRoutes.some(r => r.tls_enabled) && (
+                          <Badge className="bg-green-500/10 text-green-600">
+                            SSL Active
+                          </Badge>
+                        )}
+                        {domainRoutes.some(r => r.dns_records && r.dns_records.length > 0) && (
+                          <Badge variant="outline">DNS</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {domainRoutes.map(route => (
+                        <div
+                          key={route.id}
+                          className="flex items-center justify-between p-3 rounded-lg border"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`h-2 w-2 rounded-full ${route.enabled ? 'bg-green-500' : 'bg-gray-400'}`} />
+                            <div>
+                              <p className="text-sm font-medium">{route.host}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {route.mode} → {route.target}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={route.enabled ? 'default' : 'secondary'} className="text-xs">
+                              {route.enabled ? 'Active' : 'Disabled'}
+                            </Badge>
+                            {route.tls_enabled && (
+                              <Badge variant="outline" className="text-xs">TLS</Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {domainRoutes.some(r => r.dns_records && r.dns_records.length > 0) && (
+                      <div className="mt-4 pt-4 border-t">
+                        <h4 className="text-sm font-medium mb-2">DNS Records</h4>
+                        <div className="space-y-1">
+                          {domainRoutes.flatMap(r => (r.dns_records || []).map((record, i) => (
+                            <div key={`${r.id}-dns-${i}`} className="flex items-center gap-3 text-sm">
+                              <Badge variant="outline" className="text-xs w-16 justify-center">{record.type}</Badge>
+                              <span className="font-mono text-xs">{record.name}</span>
+                              <span className="text-muted-foreground">&rarr;</span>
+                              <span className="font-mono text-xs">{record.value}</span>
+                            </div>
+                          )))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ));
+            })()}
           </TabsContent>
 
           {/* Shield Tab */}

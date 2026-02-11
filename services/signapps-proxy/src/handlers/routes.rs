@@ -20,16 +20,22 @@ pub struct RouteResponse {
     pub route: Route,
     pub shield: Option<ShieldConfig>,
     pub headers: Option<HeadersConfig>,
+    pub dns_records: Option<serde_json::Value>,
+    pub tls_config: Option<serde_json::Value>,
 }
 
 impl From<Route> for RouteResponse {
     fn from(route: Route) -> Self {
         let shield = route.get_shield_config();
         let headers = route.get_headers_config();
+        let dns_records = route.dns_records.clone();
+        let tls_config = route.tls_config.clone();
         Self {
             route,
             shield,
             headers,
+            dns_records,
+            tls_config,
         }
     }
 }

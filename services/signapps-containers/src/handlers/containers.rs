@@ -35,6 +35,8 @@ pub struct ContainerResponse {
     pub created_at: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub docker_info: Option<ContainerInfo>,
+    pub is_system: bool,
+    pub is_managed: bool,
 }
 
 /// Container action response.
@@ -84,18 +86,22 @@ pub async fn list(
 
     // Create lookup map by docker_id
     let docker_map: std::collections::HashMap<_, _> = docker_containers
-        .into_iter()
-        .map(|c| (c.id.clone(), c))
+        .iter()
+        .map(|c| (c.id.clone(), c.clone()))
         .collect();
 
-    // Merge data
-    let response: Vec<ContainerResponse> = db_containers
+    // Track which docker IDs have been matched to DB records
+    let mut matched_docker_ids: std::collections::HashSet<String> =
+        std::collections::HashSet::new();
+
+    // Merge DB containers with Docker info
+    let mut response: Vec<ContainerResponse> = db_containers
         .into_iter()
         .map(|c| {
-            let docker_info = c
-                .docker_id
-                .as_ref()
-                .and_then(|did| docker_map.get(did).cloned());
+            let docker_info = c.docker_id.as_ref().and_then(|did| {
+                matched_docker_ids.insert(did.clone());
+                docker_map.get(did).cloned()
+            });
 
             ContainerResponse {
                 id: c.id,
@@ -107,9 +113,48 @@ pub async fn list(
                 auto_update: c.auto_update,
                 created_at: c.created_at.to_rfc3339(),
                 docker_info,
+                is_system: false,
+                is_managed: true,
             }
         })
         .collect();
+
+    // For admin users, also include Docker-only containers (not in DB)
+    if claims.role == 0 {
+        for docker_container in docker_containers.iter() {
+            if matched_docker_ids.contains(&docker_container.id) {
+                continue;
+            }
+
+            let is_system = docker_container.name.starts_with("signapps-")
+                || docker_container.name.starts_with("signapps_")
+                || docker_container
+                    .labels
+                    .get("com.docker.compose.project")
+                    .map(|p| p.contains("signapps"))
+                    .unwrap_or(false);
+
+            // Generate deterministic UUID from docker ID
+            let id = Uuid::new_v5(&Uuid::NAMESPACE_DNS, docker_container.id.as_bytes());
+
+            response.push(ContainerResponse {
+                id,
+                docker_id: Some(docker_container.id.clone()),
+                name: docker_container.name.clone(),
+                image: docker_container.image.clone(),
+                status: Some(docker_container.status.clone()),
+                owner_id: None,
+                auto_update: false,
+                created_at: docker_container.created.clone(),
+                docker_info: Some(docker_container.clone()),
+                is_system,
+                is_managed: false,
+            });
+        }
+    }
+
+    // Sort: user/managed containers first, system containers last
+    response.sort_by(|a, b| a.is_system.cmp(&b.is_system).then(a.name.cmp(&b.name)));
 
     Ok(Json(response))
 }
@@ -162,6 +207,8 @@ pub async fn get(
         auto_update: container.auto_update,
         created_at: container.created_at.to_rfc3339(),
         docker_info,
+        is_system: false,
+        is_managed: true,
     }))
 }
 
@@ -235,6 +282,8 @@ pub async fn create(
         auto_update: container.auto_update,
         created_at: container.created_at.to_rfc3339(),
         docker_info,
+        is_system: false,
+        is_managed: true,
     }))
 }
 
@@ -402,5 +451,70 @@ pub async fn stats(
 
     let stats = state.docker.get_stats(&docker_id).await?;
 
+    Ok(Json(stats))
+}
+
+/// Start a Docker container directly by docker_id.
+#[tracing::instrument(skip(state))]
+pub async fn start_docker(
+    State(state): State<AppState>,
+    Path(docker_id): Path<String>,
+) -> Result<Json<ActionResponse>> {
+    // Check if this is a system container - block if so
+    let info = state.docker.get_container(&docker_id).await?;
+    let is_system = info.name.starts_with("signapps-")
+        || info.name.starts_with("signapps_")
+        || info
+            .labels
+            .get("com.docker.compose.project")
+            .map(|p| p.contains("signapps"))
+            .unwrap_or(false);
+
+    if is_system {
+        return Err(Error::Forbidden(
+            "Cannot modify system containers".to_string(),
+        ));
+    }
+
+    state.docker.start_container(&docker_id).await?;
+
+    Ok(Json(ActionResponse {
+        success: true,
+        message: "Docker container started".to_string(),
+    }))
+}
+
+/// Restart a Docker container directly by docker_id.
+#[tracing::instrument(skip(state))]
+pub async fn restart_docker(
+    State(state): State<AppState>,
+    Path(docker_id): Path<String>,
+) -> Result<Json<ActionResponse>> {
+    state.docker.restart_container(&docker_id, None).await?;
+
+    Ok(Json(ActionResponse {
+        success: true,
+        message: "Docker container restarted".to_string(),
+    }))
+}
+
+/// Get logs from a Docker container directly by docker_id.
+#[tracing::instrument(skip(state))]
+pub async fn logs_docker(
+    State(state): State<AppState>,
+    Path(docker_id): Path<String>,
+    Query(query): Query<LogsQuery>,
+) -> Result<Json<Vec<String>>> {
+    let logs = state.docker.get_logs(&docker_id, query.tail).await?;
+    Ok(Json(logs))
+}
+
+/// Get stats from a Docker container directly by docker_id.
+#[tracing::instrument(skip(state))]
+pub async fn stats_docker(
+    State(state): State<AppState>,
+    Path(docker_id): Path<String>,
+) -> Result<Json<ContainerStats>> {
+    let stats = state.docker.get_stats(&docker_id).await?;
     Ok(Json(stats))
 }

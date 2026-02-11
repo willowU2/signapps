@@ -52,6 +52,7 @@ import { AlertConfigDialog } from '@/components/monitoring/alert-config-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import {
   useMetricsSummary,
+  useMetricsStream,
   useDiskMetrics,
   useAlertConfigs,
   useActiveAlerts,
@@ -91,6 +92,8 @@ export default function MonitoringPage() {
   const [refreshInterval, setRefreshInterval] = useState(5000);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('5m');
+  const [realtimeEnabled, setRealtimeEnabled] = useState(false);
+  const { metrics: streamMetrics, connected: streamConnected } = useMetricsStream(realtimeEnabled);
 
   // Alerts local state
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
@@ -101,8 +104,11 @@ export default function MonitoringPage() {
   const [history, setHistory] = useState<MetricPoint[]>([]);
 
   // React Query hooks
-  const { data: metrics, isLoading: loading } = useMetricsSummary(autoRefresh ? refreshInterval : undefined);
+  const { data: queryMetrics, isLoading: loading } = useMetricsSummary(autoRefresh ? refreshInterval : undefined);
   const { data: disks = [] } = useDiskMetrics(autoRefresh ? refreshInterval : undefined);
+
+  // Use SSE metrics when real-time is enabled, otherwise use polling data
+  const metrics = realtimeEnabled && streamMetrics ? streamMetrics : queryMetrics;
   const { data: alertConfigs = [] } = useAlertConfigs();
   const { data: activeAlerts = [] } = useActiveAlerts();
   const { data: alertHistory = [] } = useAlertHistory(10);
@@ -293,6 +299,16 @@ export default function MonitoringPage() {
             <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['metrics'] })}>
               <RefreshCw className="h-4 w-4" />
             </Button>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Real-time</span>
+              <Switch
+                checked={realtimeEnabled}
+                onCheckedChange={setRealtimeEnabled}
+              />
+              {realtimeEnabled && streamConnected && (
+                <Badge className="bg-green-500/10 text-green-600">Live</Badge>
+              )}
+            </div>
           </div>
         </div>
 

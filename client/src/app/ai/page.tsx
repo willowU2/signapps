@@ -516,40 +516,138 @@ export default function AIPage() {
       timestamp: new Date(),
     };
 
+    const currentInput = input;
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
+    // Create a placeholder assistant message for streaming
+    const assistantMessageId = crypto.randomUUID();
+
     try {
-      const response = await aiApi.chat(input, {
-        model: selectedModel || undefined,
-        provider: selectedProvider || undefined,
-        collection: selectedKnowledgeBase || undefined,
+      // Try streaming first with native fetch
+      const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:3005/api/v1';
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+      const streamResponse = await fetch(`${AI_URL}/ai/chat/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          question: currentInput,
+          model: selectedModel || undefined,
+          provider: selectedProvider || undefined,
+          collection: selectedKnowledgeBase || undefined,
+        }),
       });
 
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: response.data.answer || 'Je n\'ai pas pu generer de reponse.',
-        sources: response.data.sources?.map(s => ({
-          filename: s.filename,
-          score: s.score,
-        })),
-        timestamp: new Date(),
-      };
+      if (streamResponse.ok && streamResponse.body) {
+        // Add empty assistant message that we'll stream into
+        setMessages(prev => [...prev, {
+          id: assistantMessageId,
+          role: 'assistant' as const,
+          content: '',
+          timestamp: new Date(),
+        }]);
 
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Chat error:', error);
+        const reader = streamResponse.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = '';
 
-      const errorMessage: Message = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: 'Desole, je n\'ai pas pu traiter votre demande. Le service IA est peut-etre indisponible. Verifiez que vLLM et le service d\'embeddings sont en cours d\'execution.',
-        timestamp: new Date(),
-      };
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      setMessages(prev => [...prev, errorMessage]);
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') continue;
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.token || parsed.content || parsed.text) {
+                  accumulated += parsed.token || parsed.content || parsed.text || '';
+                  setMessages(prev => prev.map(m =>
+                    m.id === assistantMessageId
+                      ? { ...m, content: accumulated }
+                      : m
+                  ));
+                }
+                if (parsed.sources) {
+                  setMessages(prev => prev.map(m =>
+                    m.id === assistantMessageId
+                      ? {
+                          ...m,
+                          sources: parsed.sources.map((s: { filename: string; score?: number }) => ({
+                            filename: s.filename,
+                            score: s.score,
+                          })),
+                        }
+                      : m
+                  ));
+                }
+              } catch {
+                // If not JSON, treat as plain text token
+                accumulated += data;
+                setMessages(prev => prev.map(m =>
+                  m.id === assistantMessageId
+                    ? { ...m, content: accumulated }
+                    : m
+                ));
+              }
+            }
+          }
+        }
+
+        // If we got no content from streaming, remove the empty message
+        if (!accumulated) {
+          setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
+          throw new Error('Empty streaming response');
+        }
+      } else {
+        // Streaming not available, fallback to non-streaming
+        throw new Error('Streaming not available');
+      }
+    } catch {
+      // Remove any empty streaming message
+      setMessages(prev => prev.filter(m => m.id === assistantMessageId ? m.content !== '' : true));
+
+      // Fallback: use non-streaming chat API
+      try {
+        const response = await aiApi.chat(currentInput, {
+          model: selectedModel || undefined,
+          provider: selectedProvider || undefined,
+          collection: selectedKnowledgeBase || undefined,
+        });
+
+        const assistantMessage: Message = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: response.data.answer || 'Je n\'ai pas pu generer de reponse.',
+          sources: response.data.sources?.map(s => ({
+            filename: s.filename,
+            score: s.score,
+          })),
+          timestamp: new Date(),
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+      } catch (error) {
+        console.error('Chat error:', error);
+
+        const errorMessage: Message = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: 'Desole, je n\'ai pas pu traiter votre demande. Le service IA est peut-etre indisponible. Verifiez que Ollama/vLLM est en cours d\'execution.',
+          timestamp: new Date(),
+        };
+
+        setMessages(prev => [...prev, errorMessage]);
+      }
     } finally {
       setIsLoading(false);
     }

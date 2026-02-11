@@ -131,6 +131,23 @@ fn create_router(state: AppState) -> Router {
     let protected_routes = Router::new()
         .route("/api/v1/containers", get(handlers::containers::list))
         .route("/api/v1/containers", post(handlers::containers::create))
+        // Docker-direct routes (for containers without DB records)
+        .route(
+            "/api/v1/containers/docker/:docker_id/start",
+            post(handlers::containers::start_docker),
+        )
+        .route(
+            "/api/v1/containers/docker/:docker_id/restart",
+            post(handlers::containers::restart_docker),
+        )
+        .route(
+            "/api/v1/containers/docker/:docker_id/logs",
+            get(handlers::containers::logs_docker),
+        )
+        .route(
+            "/api/v1/containers/docker/:docker_id/stats",
+            get(handlers::containers::stats_docker),
+        )
         .route("/api/v1/containers/:id", get(handlers::containers::get))
         .route(
             "/api/v1/containers/:id/start",

@@ -139,7 +139,8 @@ fn create_router(state: AppState) -> Router {
         .route("/cpu", get(handlers::get_cpu_metrics))
         .route("/memory", get(handlers::get_memory_metrics))
         .route("/disk", get(handlers::get_disk_metrics))
-        .route("/network", get(handlers::get_network_metrics));
+        .route("/network", get(handlers::get_network_metrics))
+        .route("/stream", get(handlers::metrics_stream));
 
     // Alert routes
     let alert_routes = Router::new()

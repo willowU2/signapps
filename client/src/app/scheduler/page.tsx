@@ -52,7 +52,6 @@ import {
   Plus,
   Clock,
   Play,
-  Pause,
   MoreVertical,
   Pencil,
   Trash2,
@@ -92,6 +91,7 @@ export default function SchedulerPage() {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
+    description: '',
     cron_expression: '',
     command: '',
     target_type: 'host' as 'container' | 'host',
@@ -121,6 +121,7 @@ export default function SchedulerPage() {
       setEditingJob(job);
       setFormData({
         name: job.name,
+        description: job.description || '',
         cron_expression: job.cron_expression,
         command: job.command,
         target_type: job.target_type,
@@ -131,6 +132,7 @@ export default function SchedulerPage() {
       setEditingJob(null);
       setFormData({
         name: '',
+        description: '',
         cron_expression: '',
         command: '',
         target_type: 'host',
@@ -418,7 +420,7 @@ export default function SchedulerPage() {
                 {jobs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No scheduled jobs. Click "New Job" to create one.
+                      No scheduled jobs. Click &quot;New Job&quot; to create one.
                     </TableCell>
                   </TableRow>
                 )}
@@ -442,6 +444,16 @@ export default function SchedulerPage() {
                 placeholder="Backup database"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                placeholder="Optional description of this job"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
 
@@ -599,7 +611,7 @@ export default function SchedulerPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Job</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteDialog.job?.name}"?
+              Are you sure you want to delete &quot;{deleteDialog.job?.name}&quot;?
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

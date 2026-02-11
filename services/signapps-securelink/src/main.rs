@@ -199,7 +199,8 @@ fn create_router(state: AppState) -> Router {
         .route("/{id}", get(handlers::get_tunnel))
         .route("/{id}", delete(handlers::delete_tunnel))
         .route("/{id}/status", get(handlers::get_tunnel_status))
-        .route("/{id}/reconnect", post(handlers::reconnect_tunnel));
+        .route("/{id}/reconnect", post(handlers::reconnect_tunnel))
+        .route("/quick", post(handlers::quick_connect));
 
     // Relay routes (web VPN)
     let relay_routes = Router::new()
@@ -232,6 +233,11 @@ fn create_router(state: AppState) -> Router {
         .route("/query", post(handlers::query_dns))
         .route("/cache/flush", post(handlers::flush_dns_cache));
 
+    // Dashboard routes
+    let dashboard_routes = Router::new()
+        .route("/stats", get(handlers::dashboard_stats))
+        .route("/traffic", get(handlers::dashboard_traffic));
+
     // Health check
     let health_routes = Router::new().route("/", get(handlers::health_check_standalone));
 
@@ -240,6 +246,7 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/tunnels", tunnel_routes)
         .nest("/api/v1/relays", relay_routes)
         .nest("/api/v1/dns", dns_routes)
+        .nest("/api/v1/dashboard", dashboard_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

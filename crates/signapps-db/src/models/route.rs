@@ -90,6 +90,8 @@ pub struct Route {
     pub shield_config: Option<serde_json::Value>,
     pub headers: Option<serde_json::Value>,
     pub enabled: bool,
+    pub dns_records: Option<serde_json::Value>,
+    pub tls_config: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -124,6 +126,8 @@ pub struct CreateRoute {
     pub auth_required: bool,
     pub shield_config: Option<ShieldConfig>,
     pub headers: Option<HeadersConfig>,
+    pub dns_records: Option<serde_json::Value>,
+    pub tls_config: Option<serde_json::Value>,
     #[serde(default = "default_true")]
     pub enabled: bool,
 }
@@ -143,6 +147,8 @@ pub struct UpdateRoute {
     pub auth_required: Option<bool>,
     pub shield_config: Option<ShieldConfig>,
     pub headers: Option<HeadersConfig>,
+    pub dns_records: Option<serde_json::Value>,
+    pub tls_config: Option<serde_json::Value>,
     pub enabled: Option<bool>,
 }
 

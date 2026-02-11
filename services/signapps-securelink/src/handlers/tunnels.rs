@@ -260,3 +260,122 @@ pub struct BulkActionResponse {
     pub success_count: usize,
     pub failed_ids: Vec<Uuid>,
 }
+
+/// Quick connect request.
+#[derive(Debug, Deserialize)]
+pub struct QuickConnectRequest {
+    pub local_addr: Option<String>,
+}
+
+/// Quick connect: create a tunnel with minimal config using the first available relay.
+pub async fn quick_connect(
+    State(state): State<AppState>,
+    Json(request): Json<QuickConnectRequest>,
+) -> Result<(StatusCode, Json<Tunnel>)> {
+    // Get first available relay
+    let relays = state.tunnel_client.list_relays().await;
+    let relay = relays.first().ok_or_else(|| {
+        signapps_common::Error::BadRequest("No relays configured. Add a relay first.".to_string())
+    })?;
+
+    let local_addr = request
+        .local_addr
+        .unwrap_or_else(|| "localhost:3000".to_string());
+    let subdomain = format!("quick-{}", &Uuid::new_v4().to_string()[..8]);
+    let name = format!("Quick Connect ({})", local_addr);
+
+    let now = chrono::Utc::now();
+    let tunnel = Tunnel {
+        id: Uuid::new_v4(),
+        name,
+        local_addr,
+        subdomain,
+        status: TunnelStatus::Connecting,
+        relay_id: relay.id,
+        protocol: "http".to_string(),
+        enabled: true,
+        last_error: None,
+        last_connected: None,
+        created_at: now,
+        updated_at: now,
+    };
+
+    state.tunnel_client.add_tunnel(tunnel.clone()).await?;
+
+    tracing::info!(
+        "Quick connect tunnel '{}' -> {} via relay '{}'",
+        tunnel.name,
+        tunnel.local_addr,
+        relay.name
+    );
+
+    Ok((StatusCode::CREATED, Json(tunnel)))
+}
+
+/// Dashboard stats response.
+#[derive(Debug, Serialize)]
+pub struct DashboardStatsResponse {
+    pub tunnels_active: usize,
+    pub tunnels_total: usize,
+    pub relay_status: String,
+    pub relay_connected_count: usize,
+    pub relay_total_count: usize,
+    pub dns_queries_today: u64,
+    pub ads_blocked_today: u64,
+    pub bytes_in_today: u64,
+    pub bytes_out_today: u64,
+}
+
+/// Get dashboard stats.
+pub async fn dashboard_stats(
+    State(state): State<AppState>,
+) -> Result<Json<DashboardStatsResponse>> {
+    let tunnels = state.tunnel_client.list_tunnels().await;
+    let relays = state.tunnel_client.list_relays().await;
+    let dns_stats = state.dns_stats.read().await;
+
+    let tunnels_active = tunnels
+        .iter()
+        .filter(|t| matches!(t.status, TunnelStatus::Connected))
+        .count();
+
+    let relay_connected = relays
+        .iter()
+        .filter(|r| r.status == crate::tunnel::RelayStatus::Online)
+        .count();
+
+    let relay_status = if relay_connected == relays.len() && !relays.is_empty() {
+        "connected"
+    } else if relay_connected > 0 {
+        "partial"
+    } else {
+        "disconnected"
+    };
+
+    Ok(Json(DashboardStatsResponse {
+        tunnels_active,
+        tunnels_total: tunnels.len(),
+        relay_status: relay_status.to_string(),
+        relay_connected_count: relay_connected,
+        relay_total_count: relays.len(),
+        dns_queries_today: dns_stats.total_queries,
+        ads_blocked_today: dns_stats.blocked_queries,
+        bytes_in_today: 0u64,
+        bytes_out_today: 0u64,
+    }))
+}
+
+/// Traffic data point.
+#[derive(Debug, Serialize)]
+pub struct TrafficPoint {
+    pub timestamp: String,
+    pub bytes_in: u64,
+    pub bytes_out: u64,
+}
+
+/// Get traffic history (placeholder - returns empty for now).
+pub async fn dashboard_traffic(State(_state): State<AppState>) -> Result<Json<Vec<TrafficPoint>>> {
+    // Traffic history would be stored in a time-series manner
+    // For now, return empty array
+    Ok(Json(vec![]))
+}

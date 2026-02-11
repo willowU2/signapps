@@ -18,7 +18,7 @@ import {
   Upload,
   Folder,
   FileText,
-  Image,
+  Image as ImageIcon,
   Search,
   ChevronRight,
   MoreVertical,
@@ -50,6 +50,7 @@ import { Label } from '@/components/ui/label';
 import { storageApi } from '@/lib/api';
 import { UploadDialog } from '@/components/storage/upload-dialog';
 import { FilePreviewDialog } from '@/components/storage/file-preview-dialog';
+import { FolderTree } from '@/components/storage/folder-tree';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
 
@@ -333,7 +334,7 @@ export default function StoragePage() {
     const name = item.name.toLowerCase();
 
     if (contentType.startsWith('image/') || /\.(png|jpg|jpeg|gif|webp|svg)$/.test(name)) {
-      return <Image className="h-5 w-5 text-green-500" />;
+      return <ImageIcon className="h-5 w-5 text-green-500" />;
     }
     if (contentType.includes('zip') || /\.(zip|tar|gz|rar|7z)$/.test(name)) {
       return <FileArchive className="h-5 w-5 text-yellow-500" />;
@@ -483,98 +484,123 @@ export default function StoragePage() {
               </div>
             </div>
 
-            {/* Search */}
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search files..."
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+            {/* Folder Tree + File List */}
+            <div className="flex gap-4">
+              {/* Folder Tree Sidebar */}
+              {currentBucket && (
+                <Card className="w-56 shrink-0">
+                  <CardHeader className="py-3 px-3">
+                    <CardTitle className="text-xs font-medium text-muted-foreground">Folders</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-2 pt-0 max-h-[600px] overflow-y-auto">
+                    <FolderTree
+                      bucket={currentBucket}
+                      currentPath={currentPath.length > 0 ? currentPath.join('/') + '/' : ''}
+                      onSelectFolder={(path) => {
+                        const parts = path.replace(/\/$/, '').split('/').filter(Boolean);
+                        setCurrentPath(parts);
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* File List */}
-            <Card>
-              <CardHeader className="py-3">
-                <div className="grid grid-cols-12 text-xs font-medium text-muted-foreground">
-                  <div className="col-span-6">Name</div>
-                  <div className="col-span-2">Size</div>
-                  <div className="col-span-3">Modified</div>
-                  <div className="col-span-1"></div>
+              {/* Main file area */}
+              <div className="flex-1 min-w-0 space-y-4">
+                {/* Search */}
+                <div className="relative max-w-sm">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search files..."
+                    className="pl-9"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
                 </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="space-y-2 p-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Skeleton key={i} className="h-12" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {filteredFiles.map((file) => (
-                      <div
-                        key={file.key}
-                        className="group grid grid-cols-12 items-center py-3 px-6 hover:bg-muted/50 cursor-pointer"
-                        onClick={() => file.type === 'folder' && handleNavigate(file)}
-                        onDoubleClick={() => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
-                      >
-                        <div className="col-span-6 flex items-center gap-3">
-                          {getFileIcon(file)}
-                          <span className="font-medium truncate">{file.name}</span>
-                          {file.type === 'file' && isPreviewable(file) && (
-                            <Eye className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                        <div className="col-span-2 text-sm text-muted-foreground">
-                          {file.type === 'folder' ? '-' : formatSize(file.size)}
-                        </div>
-                        <div className="col-span-3 text-sm text-muted-foreground">
-                          {file.lastModified || '-'}
-                        </div>
-                        <div className="col-span-1 flex justify-end">
-                          {file.type === 'file' && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {isPreviewable(file) && (
-                                  <DropdownMenuItem onClick={() => handlePreview(file)}>
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    Preview
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem onClick={() => handleDownload(file)}>
-                                  <Download className="mr-2 h-4 w-4" />
-                                  Download
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => setDeleteItem(file)}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
-                        </div>
-                      </div>
-                    ))}
 
-                    {filteredFiles.length === 0 && (
-                      <div className="py-12 text-center text-muted-foreground">
-                        No files found
+                {/* File List */}
+                <Card>
+                  <CardHeader className="py-3">
+                    <div className="grid grid-cols-12 text-xs font-medium text-muted-foreground">
+                      <div className="col-span-6">Name</div>
+                      <div className="col-span-2">Size</div>
+                      <div className="col-span-3">Modified</div>
+                      <div className="col-span-1"></div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    {loading ? (
+                      <div className="space-y-2 p-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Skeleton key={i} className="h-12" />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {filteredFiles.map((file) => (
+                          <div
+                            key={file.key}
+                            className="group grid grid-cols-12 items-center py-3 px-6 hover:bg-muted/50 cursor-pointer"
+                            onClick={() => file.type === 'folder' && handleNavigate(file)}
+                            onDoubleClick={() => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
+                          >
+                            <div className="col-span-6 flex items-center gap-3">
+                              {getFileIcon(file)}
+                              <span className="font-medium truncate">{file.name}</span>
+                              {file.type === 'file' && isPreviewable(file) && (
+                                <Eye className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                              )}
+                            </div>
+                            <div className="col-span-2 text-sm text-muted-foreground">
+                              {file.type === 'folder' ? '-' : formatSize(file.size)}
+                            </div>
+                            <div className="col-span-3 text-sm text-muted-foreground">
+                              {file.lastModified || '-'}
+                            </div>
+                            <div className="col-span-1 flex justify-end">
+                              {file.type === 'file' && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    {isPreviewable(file) && (
+                                      <DropdownMenuItem onClick={() => handlePreview(file)}>
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        Preview
+                                      </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuItem onClick={() => handleDownload(file)}>
+                                      <Download className="mr-2 h-4 w-4" />
+                                      Download
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      onClick={() => setDeleteItem(file)}
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {filteredFiles.length === 0 && (
+                          <div className="py-12 text-center text-muted-foreground">
+                            No files found
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Disks Tab */}

@@ -3,10 +3,14 @@
 use axum::{
     extract::State,
     http::{header, StatusCode},
+    response::sse::{Event, Sse},
     response::IntoResponse,
     Json,
 };
+use futures_util::stream::Stream;
 use serde::Serialize;
+use std::convert::Infallible;
+use std::time::Duration;
 
 use crate::metrics::collector::{
     CpuMetrics, DiskMetrics, MemoryMetrics, NetworkMetrics, SystemMetrics,
@@ -158,4 +162,62 @@ pub struct SummaryMetrics {
     pub disk_usage_percent: f64,
     pub network_rx_bytes: u64,
     pub network_tx_bytes: u64,
+}
+
+/// SSE stream of system metrics, updated every 2 seconds.
+pub async fn metrics_stream(
+    State(state): State<AppState>,
+) -> Sse<impl Stream<Item = std::result::Result<Event, Infallible>>> {
+    let stream = async_stream::stream! {
+        let mut interval = tokio::time::interval(Duration::from_secs(2));
+        loop {
+            interval.tick().await;
+            let metrics = state.collector.get_all_metrics().await;
+
+            let total_disk_bytes: u64 = metrics.disks.iter()
+                .filter(|d| !d.is_removable)
+                .map(|d| d.total_bytes)
+                .sum();
+            let used_disk_bytes: u64 = metrics.disks.iter()
+                .filter(|d| !d.is_removable)
+                .map(|d| d.used_bytes)
+                .sum();
+            let total_network_rx: u64 = metrics.networks.iter()
+                .map(|n| n.received_bytes)
+                .sum();
+            let total_network_tx: u64 = metrics.networks.iter()
+                .map(|n| n.transmitted_bytes)
+                .sum();
+
+            let summary = SummaryMetrics {
+                hostname: metrics.hostname,
+                os_name: metrics.os_name,
+                uptime_seconds: metrics.uptime_seconds,
+                cpu_cores: metrics.cpu.count,
+                cpu_usage_percent: metrics.cpu.total_usage_percent,
+                memory_total_bytes: metrics.memory.total_bytes,
+                memory_used_bytes: metrics.memory.used_bytes,
+                memory_usage_percent: metrics.memory.usage_percent,
+                disk_total_bytes: total_disk_bytes,
+                disk_used_bytes: used_disk_bytes,
+                disk_usage_percent: if total_disk_bytes > 0 {
+                    (used_disk_bytes as f64 / total_disk_bytes as f64) * 100.0
+                } else {
+                    0.0
+                },
+                network_rx_bytes: total_network_rx,
+                network_tx_bytes: total_network_tx,
+            };
+
+            if let Ok(json) = serde_json::to_string(&summary) {
+                yield Ok(Event::default().data(json));
+            }
+        }
+    };
+
+    Sse::new(stream).keep_alive(
+        axum::response::sse::KeepAlive::new()
+            .interval(Duration::from_secs(15))
+            .text("keep-alive"),
+    )
 }

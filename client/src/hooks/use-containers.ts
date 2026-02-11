@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { containersApi } from '@/lib/api';
 import { toast } from 'sonner';
 
-interface Container {
+export interface Container {
   id: string;
   name: string;
   image: string;
@@ -12,6 +12,9 @@ interface Container {
   memory: string;
   ports: string[];
   created: string;
+  is_system: boolean;
+  is_managed: boolean;
+  docker_id?: string;
 }
 
 interface PortMapping {
@@ -34,7 +37,10 @@ interface ContainerApiResponse {
   status?: string;
   created_at?: string;
   created?: string;
+  docker_id?: string;
   docker_info?: DockerInfo;
+  is_system?: boolean;
+  is_managed?: boolean;
 }
 
 function formatBytes(bytes: number) {
@@ -62,6 +68,9 @@ export function useContainers() {
           memory: dockerInfo?.memory_usage ? formatBytes(dockerInfo.memory_usage) : '-',
           ports: dockerInfo?.ports?.map((p: PortMapping) => `${p.host_port || p.container_port}`) || [],
           created: c.created_at || c.created || '',
+          is_system: c.is_system || false,
+          is_managed: c.is_managed !== false,
+          docker_id: c.docker_id,
         };
       });
     },
@@ -82,6 +91,26 @@ export function useContainerAction() {
     },
     onSuccess: (_, { action }) => {
       toast.success(`Container ${action === 'remove' ? 'removed' : action + 'ed'}`);
+      queryClient.invalidateQueries({ queryKey: ['containers'] });
+    },
+    onError: (_, { action }) => {
+      toast.error(`Failed to ${action} container`);
+    },
+  });
+}
+
+export function useDockerAction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ dockerId, action }: { dockerId: string; action: 'start' | 'restart' }) => {
+      switch (action) {
+        case 'start': return containersApi.startDocker(dockerId);
+        case 'restart': return containersApi.restartDocker(dockerId);
+      }
+    },
+    onSuccess: (_, { action }) => {
+      toast.success(`Container ${action + 'ed'}`);
       queryClient.invalidateQueries({ queryKey: ['containers'] });
     },
     onError: (_, { action }) => {
