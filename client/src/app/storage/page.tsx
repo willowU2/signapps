@@ -50,6 +50,7 @@ import { Label } from '@/components/ui/label';
 import { storageApi } from '@/lib/api';
 import { UploadDialog } from '@/components/storage/upload-dialog';
 import { FilePreviewDialog } from '@/components/storage/file-preview-dialog';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
 
 // Import storage components
@@ -112,6 +113,8 @@ export default function StoragePage() {
   const [creatingBucket, setCreatingBucket] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<FileItem | null>(null);
+  const [deleteBucket, setDeleteBucket] = useState<string | null>(null);
 
   // Use hooks for other tabs
   const storageStats = useStorageStats();
@@ -217,8 +220,6 @@ export default function StoragePage() {
   };
 
   const handleDelete = async (item: FileItem) => {
-    if (!confirm(`Delete "${item.name}"?`)) return;
-
     try {
       const key = currentPath.length > 0
         ? `${currentPath.join('/')}/${item.name}`
@@ -309,10 +310,6 @@ export default function StoragePage() {
   };
 
   const handleDeleteBucket = async (bucketName: string) => {
-    if (!confirm(`Delete bucket "${bucketName}"? All files in this bucket will be deleted.`)) {
-      return;
-    }
-
     try {
       await storageApi.deleteBucket(bucketName);
       toast.success('Bucket deleted');
@@ -444,7 +441,7 @@ export default function StoragePage() {
                           className="h-6 w-6"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteBucket(bucket.name);
+                            setDeleteBucket(bucket.name);
                           }}
                         >
                           <Trash2 className="h-3 w-3 text-destructive" />
@@ -557,7 +554,7 @@ export default function StoragePage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className="text-destructive"
-                                  onClick={() => handleDelete(file)}
+                                  onClick={() => setDeleteItem(file)}
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Delete
@@ -684,6 +681,30 @@ export default function StoragePage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Delete File Confirmation */}
+        <ConfirmDialog
+          open={deleteItem !== null}
+          onOpenChange={(open) => { if (!open) setDeleteItem(null); }}
+          title="Delete File"
+          description={`Are you sure you want to delete "${deleteItem?.name}"?`}
+          onConfirm={() => {
+            if (deleteItem) handleDelete(deleteItem);
+            setDeleteItem(null);
+          }}
+        />
+
+        {/* Delete Bucket Confirmation */}
+        <ConfirmDialog
+          open={deleteBucket !== null}
+          onOpenChange={(open) => { if (!open) setDeleteBucket(null); }}
+          title="Delete Bucket"
+          description={`Delete bucket "${deleteBucket}"? All files in this bucket will be deleted.`}
+          onConfirm={() => {
+            if (deleteBucket) handleDeleteBucket(deleteBucket);
+            setDeleteBucket(null);
+          }}
+        />
 
         {/* New Bucket Dialog */}
         <Dialog open={bucketDialogOpen} onOpenChange={setBucketDialogOpen}>

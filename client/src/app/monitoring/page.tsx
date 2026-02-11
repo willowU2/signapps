@@ -55,6 +55,7 @@ import {
   AlertEvent,
 } from '@/lib/api';
 import { AlertConfigDialog } from '@/components/monitoring/alert-config-dialog';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 
 interface MetricPoint {
   time: string;
@@ -97,6 +98,7 @@ export default function MonitoringPage() {
   const [alertHistory, setAlertHistory] = useState<AlertEvent[]>([]);
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<AlertConfig | null>(null);
+  const [deleteConfigId, setDeleteConfigId] = useState<string | null>(null);
 
   const fetchMetrics = useCallback(async () => {
     try {
@@ -212,7 +214,6 @@ export default function MonitoringPage() {
   };
 
   const handleDeleteConfig = async (configId: string) => {
-    if (!confirm('Are you sure you want to delete this alert configuration?')) return;
     try {
       await alertsApi.deleteConfig(configId);
       fetchAlerts();
@@ -738,7 +739,7 @@ export default function MonitoringPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleDeleteConfig(config.id)}
+                                onClick={() => setDeleteConfigId(config.id)}
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
@@ -869,6 +870,18 @@ export default function MonitoringPage() {
         onOpenChange={setAlertDialogOpen}
         config={editingConfig}
         onSuccess={fetchAlerts}
+      />
+
+      {/* Delete Alert Config Confirmation */}
+      <ConfirmDialog
+        open={deleteConfigId !== null}
+        onOpenChange={(open) => { if (!open) setDeleteConfigId(null); }}
+        title="Delete Alert Configuration"
+        description="Are you sure you want to delete this alert configuration? This action cannot be undone."
+        onConfirm={() => {
+          if (deleteConfigId) handleDeleteConfig(deleteConfigId);
+          setDeleteConfigId(null);
+        }}
       />
     </AppLayout>
   );

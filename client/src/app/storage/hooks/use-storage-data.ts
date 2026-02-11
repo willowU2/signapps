@@ -99,7 +99,6 @@ export function useRaidData() {
   };
 
   const deleteArray = async (id: string) => {
-    if (!confirm('Supprimer cet array RAID ? Cette action est irréversible.')) return;
     try {
       await raidApi.deleteArray(id);
       toast.success('Array supprimé');
@@ -194,7 +193,6 @@ export function useShares() {
   };
 
   const deleteShare = async (id: string) => {
-    if (!confirm('Supprimer ce lien de partage ?')) return;
     try {
       await sharesApi.delete(id);
       toast.success('Partage supprimé');

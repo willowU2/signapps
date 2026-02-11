@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { RaidArray, RaidHealth } from '@/lib/api';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { ArrayDetailDialog } from './array-detail-dialog';
 import { CreateArrayDialog } from './create-array-dialog';
 
@@ -56,6 +57,7 @@ export function RaidOverview({
 }: RaidOverviewProps) {
   const [selectedArray, setSelectedArray] = useState<RaidArray | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteArrayId, setDeleteArrayId] = useState<string | null>(null);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -229,7 +231,7 @@ export function RaidOverview({
                         {onDeleteArray && (
                           <DropdownMenuItem
                             className="text-destructive"
-                            onClick={() => onDeleteArray(array.id)}
+                            onClick={() => setDeleteArrayId(array.id)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Supprimer
@@ -291,6 +293,18 @@ export function RaidOverview({
             await onCreateArray(data);
           }
           setCreateDialogOpen(false);
+        }}
+      />
+
+      {/* Delete Array Confirmation */}
+      <ConfirmDialog
+        open={deleteArrayId !== null}
+        onOpenChange={(open) => { if (!open) setDeleteArrayId(null); }}
+        title="Supprimer l'array RAID"
+        description="Cette action est irréversible. Toutes les données de cet array seront perdues."
+        onConfirm={() => {
+          if (deleteArrayId && onDeleteArray) onDeleteArray(deleteArrayId);
+          setDeleteArrayId(null);
         }}
       />
     </div>

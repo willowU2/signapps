@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,28 +26,17 @@ import {
   RefreshCw,
   Terminal,
 } from 'lucide-react';
-import { containersApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { LogsDialog } from '@/components/containers/logs-dialog';
 import { ContainerDialog } from '@/components/containers/container-dialog';
 import { ContainerTerminal } from '@/components/containers/container-terminal';
-import { toast } from 'sonner';
-
-interface Container {
-  id: string;
-  name: string;
-  image: string;
-  status: string;
-  state: 'running' | 'stopped' | 'restarting' | 'paused' | 'exited';
-  cpu: string;
-  memory: string;
-  ports: string[];
-  created: string;
-}
+import { useContainers, useContainerAction } from '@/hooks/use-containers';
 
 export default function ContainersPage() {
-  const [containers, setContainers] = useState<Container[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: containers = [], isLoading } = useContainers();
+  const containerAction = useContainerAction();
+
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'running' | 'stopped'>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -61,72 +51,8 @@ export default function ContainersPage() {
     name: '',
   });
 
-  useEffect(() => {
-    fetchContainers();
-  }, []);
-
-  const fetchContainers = async () => {
-    try {
-      const response = await containersApi.list();
-      // Map API response to Container interface
-      // API returns ContainerResponse with optional docker_info
-      const mapped = (response.data || []).map((c: any) => {
-        const dockerInfo = c.docker_info;
-        return {
-          id: c.id,
-          name: c.name,
-          image: c.image,
-          status: c.status || dockerInfo?.status || 'unknown',
-          state: dockerInfo?.state || 'stopped',
-          cpu: dockerInfo?.cpu_percent ? `${dockerInfo.cpu_percent}%` : '-',
-          memory: dockerInfo?.memory_usage ? formatBytes(dockerInfo.memory_usage) : '-',
-          ports: dockerInfo?.ports?.map((p: any) => `${p.host_port || p.container_port}`) || [],
-          created: c.created_at || c.created || '',
-        };
-      });
-      setContainers(mapped);
-    } catch (error) {
-      console.error('Failed to fetch containers:', error);
-      // Show empty list on error - no mock data
-      setContainers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
-
-  const handleAction = async (id: string, action: 'start' | 'stop' | 'restart' | 'remove') => {
-    try {
-      switch (action) {
-        case 'start':
-          await containersApi.start(id);
-          toast.success('Container started');
-          break;
-        case 'stop':
-          await containersApi.stop(id);
-          toast.success('Container stopped');
-          break;
-        case 'restart':
-          await containersApi.restart(id);
-          toast.success('Container restarting');
-          break;
-        case 'remove':
-          await containersApi.remove(id);
-          toast.success('Container removed');
-          break;
-      }
-      fetchContainers();
-    } catch (error) {
-      console.error(`Failed to ${action} container:`, error);
-      toast.error(`Failed to ${action} container`);
-    }
+  const handleAction = (id: string, action: 'start' | 'stop' | 'restart' | 'remove') => {
+    containerAction.mutate({ id, action });
   };
 
   const filteredContainers = containers.filter((c) => {
@@ -154,7 +80,7 @@ export default function ContainersPage() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="space-y-6">
@@ -177,7 +103,7 @@ export default function ContainersPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Containers</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={fetchContainers}>
+            <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['containers'] })}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh
             </Button>
@@ -332,7 +258,7 @@ export default function ContainersPage() {
         <ContainerDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
-          onSuccess={fetchContainers}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['containers'] })}
         />
 
         {/* Terminal Dialog */}

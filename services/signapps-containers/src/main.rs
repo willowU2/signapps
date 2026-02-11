@@ -129,11 +129,7 @@ fn create_router(state: AppState) -> Router {
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        // User's own containers
-        .route(
-            "/api/v1/containers/me",
-            get(handlers::containers::my_containers),
-        )
+        .route("/api/v1/containers", get(handlers::containers::list))
         .route("/api/v1/containers", post(handlers::containers::create))
         .route("/api/v1/containers/:id", get(handlers::containers::get))
         .route(
@@ -169,8 +165,6 @@ fn create_router(state: AppState) -> Router {
 
     // Admin routes
     let admin_routes = Router::new()
-        // All containers
-        .route("/api/v1/containers", get(handlers::containers::list))
         // Images
         .route("/api/v1/images", get(handlers::images::list))
         .route("/api/v1/images/pull", post(handlers::images::pull))

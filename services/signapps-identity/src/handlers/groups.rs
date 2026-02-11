@@ -31,14 +31,20 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<GroupRespons
     let repo = GroupRepository::new(&state.pool);
     let groups = repo.list_groups().await?;
 
+    let group_ids: Vec<Uuid> = groups.iter().map(|g| g.id).collect();
+    let counts = repo.count_members_batch(&group_ids).await?;
+
     let response: Vec<GroupResponse> = groups
         .into_iter()
-        .map(|g| GroupResponse {
-            id: g.id,
-            name: g.name,
-            description: g.description,
-            parent_id: g.parent_id,
-            member_count: 0, // TODO: Count members
+        .map(|g| {
+            let count = counts.get(&g.id).copied().unwrap_or(0);
+            GroupResponse {
+                id: g.id,
+                name: g.name,
+                description: g.description,
+                parent_id: g.parent_id,
+                member_count: count,
+            }
         })
         .collect();
 
@@ -56,12 +62,14 @@ pub async fn get(
         .await?
         .ok_or_else(|| Error::NotFound(format!("Group {}", id)))?;
 
+    let member_count = repo.count_members(id).await?;
+
     Ok(Json(GroupResponse {
         id: group.id,
         name: group.name,
         description: group.description,
         parent_id: group.parent_id,
-        member_count: 0,
+        member_count,
     }))
 }
 
@@ -78,18 +86,33 @@ pub async fn create(
         name: group.name,
         description: group.description,
         parent_id: group.parent_id,
-        member_count: 0,
+        member_count: 0, // Newly created group has no members
     }))
 }
 
 /// Update group.
 pub async fn update(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-    Json(_payload): Json<signapps_db::models::CreateGroup>,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<signapps_db::models::CreateGroup>,
 ) -> Result<Json<GroupResponse>> {
-    // TODO: Implement group update
-    Err(Error::Internal("Not implemented".to_string()))
+    let repo = GroupRepository::new(&state.pool);
+
+    // Verify group exists
+    repo.find_group(id)
+        .await?
+        .ok_or_else(|| Error::NotFound(format!("Group {}", id)))?;
+
+    let group = repo.update_group(id, payload).await?;
+    let member_count = repo.count_members(id).await?;
+
+    Ok(Json(GroupResponse {
+        id: group.id,
+        name: group.name,
+        description: group.description,
+        parent_id: group.parent_id,
+        member_count,
+    }))
 }
 
 /// Delete group.

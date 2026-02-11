@@ -32,6 +32,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import type { ShareLink } from '@/lib/api';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
 import { ShareDialog } from './share-dialog';
 
@@ -70,6 +71,7 @@ export function ShareList({
   onRefresh,
 }: ShareListProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteShareId, setDeleteShareId] = useState<string | null>(null);
 
   const copyLink = async (share: ShareLink) => {
     const url = `${window.location.origin}/share/${share.token}`;
@@ -214,7 +216,7 @@ export function ShareList({
                               {onDeleteShare && (
                                 <DropdownMenuItem
                                   className="text-destructive"
-                                  onClick={() => onDeleteShare(share.id)}
+                                  onClick={() => setDeleteShareId(share.id)}
                                 >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Supprimer
@@ -241,6 +243,18 @@ export function ShareList({
             await onCreateShare(data);
           }
           setCreateDialogOpen(false);
+        }}
+      />
+
+      {/* Delete Share Confirmation */}
+      <ConfirmDialog
+        open={deleteShareId !== null}
+        onOpenChange={(open) => { if (!open) setDeleteShareId(null); }}
+        title="Supprimer le partage"
+        description="Supprimer ce lien de partage ? Les personnes ayant le lien ne pourront plus accéder au fichier."
+        onConfirm={() => {
+          if (deleteShareId && onDeleteShare) onDeleteShare(deleteShareId);
+          setDeleteShareId(null);
         }}
       />
     </>

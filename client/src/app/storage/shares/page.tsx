@@ -47,6 +47,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { sharesApi, ShareLink, UpdateShareRequest } from '@/lib/api';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
 
 export default function SharesPage() {
@@ -55,6 +56,7 @@ export default function SharesPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedShare, setSelectedShare] = useState<ShareLink | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteShareId, setDeleteShareId] = useState<string | null>(null);
 
   // Edit form state
   const [editExpiresHours, setEditExpiresHours] = useState<string>('');
@@ -123,8 +125,6 @@ export default function SharesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Revoke this share link?')) return;
-
     try {
       await sharesApi.delete(id);
       toast.success('Share link revoked');
@@ -280,7 +280,7 @@ export default function SharesPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive"
-                              onClick={() => handleDelete(share.id)}
+                              onClick={() => setDeleteShareId(share.id)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Revoke Link
@@ -305,6 +305,18 @@ export default function SharesPage() {
             </Card>
           )}
         </div>
+
+        {/* Revoke Share Confirmation */}
+        <ConfirmDialog
+          open={deleteShareId !== null}
+          onOpenChange={(open) => { if (!open) setDeleteShareId(null); }}
+          title="Revoke Share Link"
+          description="Are you sure you want to revoke this share link? Anyone with the link will no longer be able to access the file."
+          onConfirm={() => {
+            if (deleteShareId) handleDelete(deleteShareId);
+            setDeleteShareId(null);
+          }}
+        />
 
         {/* Edit Dialog */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>

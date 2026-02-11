@@ -56,18 +56,24 @@ pub struct LogsQuery {
     pub tail: Option<usize>,
 }
 
-/// List all containers from database with Docker info enrichment.
+/// List containers from database with Docker info enrichment.
+/// Admin (role 0) sees all containers, regular users see only their own.
 #[tracing::instrument(skip(state))]
 pub async fn list(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<ListQuery>,
 ) -> Result<Json<Vec<ContainerResponse>>> {
     let repo = ContainerRepository::new(&state.pool);
     let limit = query.limit.unwrap_or(50).min(100);
     let offset = query.offset.unwrap_or(0);
 
-    // Get containers from database
-    let db_containers = repo.list(limit, offset).await?;
+    // Admin (role 0) sees all, otherwise filter by owner_id
+    let db_containers = if claims.role == 0 {
+        repo.list(limit, offset).await?
+    } else {
+        repo.list_by_owner(claims.sub).await?
+    };
 
     // Get Docker containers
     let docker_containers = state
@@ -397,46 +403,4 @@ pub async fn stats(
     let stats = state.docker.get_stats(&docker_id).await?;
 
     Ok(Json(stats))
-}
-
-/// List containers for current user.
-#[tracing::instrument(skip(state))]
-pub async fn my_containers(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-) -> Result<Json<Vec<ContainerResponse>>> {
-    let repo = ContainerRepository::new(&state.pool);
-
-    let containers = repo.list_by_owner(claims.sub).await?;
-
-    let docker_containers = state.docker.list_containers(true).await.unwrap_or_default();
-
-    let docker_map: std::collections::HashMap<_, _> = docker_containers
-        .into_iter()
-        .map(|c| (c.id.clone(), c))
-        .collect();
-
-    let response: Vec<ContainerResponse> = containers
-        .into_iter()
-        .map(|c| {
-            let docker_info = c
-                .docker_id
-                .as_ref()
-                .and_then(|did| docker_map.get(did).cloned());
-
-            ContainerResponse {
-                id: c.id,
-                docker_id: c.docker_id,
-                name: c.name,
-                image: c.image,
-                status: docker_info.as_ref().map(|d| d.status.clone()).or(c.status),
-                owner_id: c.owner_id,
-                auto_update: c.auto_update,
-                created_at: c.created_at.to_rfc3339(),
-                docker_info,
-            }
-        })
-        .collect();
-
-    Ok(Json(response))
 }

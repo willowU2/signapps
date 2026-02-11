@@ -1,0 +1,91 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { containersApi } from '@/lib/api';
+import { toast } from 'sonner';
+
+interface Container {
+  id: string;
+  name: string;
+  image: string;
+  status: string;
+  state: 'running' | 'stopped' | 'restarting' | 'paused' | 'exited';
+  cpu: string;
+  memory: string;
+  ports: string[];
+  created: string;
+}
+
+interface PortMapping {
+  host_port?: number;
+  container_port: number;
+}
+
+interface DockerInfo {
+  status?: string;
+  state?: string;
+  cpu_percent?: number;
+  memory_usage?: number;
+  ports?: PortMapping[];
+}
+
+interface ContainerApiResponse {
+  id: string;
+  name: string;
+  image: string;
+  status?: string;
+  created_at?: string;
+  created?: string;
+  docker_info?: DockerInfo;
+}
+
+function formatBytes(bytes: number) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+export function useContainers() {
+  return useQuery<Container[]>({
+    queryKey: ['containers'],
+    queryFn: async () => {
+      const response = await containersApi.list();
+      return (response.data || []).map((c: ContainerApiResponse) => {
+        const dockerInfo = c.docker_info;
+        return {
+          id: c.id,
+          name: c.name,
+          image: c.image,
+          status: c.status || dockerInfo?.status || 'unknown',
+          state: (dockerInfo?.state || 'stopped') as Container['state'],
+          cpu: dockerInfo?.cpu_percent ? `${dockerInfo.cpu_percent}%` : '-',
+          memory: dockerInfo?.memory_usage ? formatBytes(dockerInfo.memory_usage) : '-',
+          ports: dockerInfo?.ports?.map((p: PortMapping) => `${p.host_port || p.container_port}`) || [],
+          created: c.created_at || c.created || '',
+        };
+      });
+    },
+  });
+}
+
+export function useContainerAction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, action }: { id: string; action: 'start' | 'stop' | 'restart' | 'remove' }) => {
+      switch (action) {
+        case 'start': return containersApi.start(id);
+        case 'stop': return containersApi.stop(id);
+        case 'restart': return containersApi.restart(id);
+        case 'remove': return containersApi.remove(id);
+      }
+    },
+    onSuccess: (_, { action }) => {
+      toast.success(`Container ${action === 'remove' ? 'removed' : action + 'ed'}`);
+      queryClient.invalidateQueries({ queryKey: ['containers'] });
+    },
+    onError: (_, { action }) => {
+      toast.error(`Failed to ${action} container`);
+    },
+  });
+}

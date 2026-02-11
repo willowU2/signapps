@@ -54,6 +54,26 @@ impl<'a> GroupRepository<'a> {
         Ok(created)
     }
 
+    /// Update an existing group.
+    pub async fn update_group(&self, id: Uuid, group: CreateGroup) -> Result<Group> {
+        let updated = sqlx::query_as::<_, Group>(
+            r#"
+            UPDATE identity.groups
+            SET name = $2, description = $3, parent_id = $4, updated_at = NOW()
+            WHERE id = $1
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(&group.name)
+        .bind(&group.description)
+        .bind(group.parent_id)
+        .fetch_one(self.pool.inner())
+        .await?;
+
+        Ok(updated)
+    }
+
     /// Delete a group.
     pub async fn delete_group(&self, id: Uuid) -> Result<()> {
         sqlx::query("DELETE FROM identity.groups WHERE id = $1")
@@ -103,6 +123,36 @@ impl<'a> GroupRepository<'a> {
         .await?;
 
         Ok(members)
+    }
+
+    /// Count members in a group.
+    pub async fn count_members(&self, group_id: Uuid) -> Result<i32> {
+        let count: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM identity.group_members WHERE group_id = $1")
+                .bind(group_id)
+                .fetch_one(self.pool.inner())
+                .await?;
+
+        Ok(count.0 as i32)
+    }
+
+    /// Count members for multiple groups in a single query.
+    pub async fn count_members_batch(
+        &self,
+        group_ids: &[Uuid],
+    ) -> Result<std::collections::HashMap<Uuid, i32>> {
+        let rows: Vec<(Uuid, i64)> = sqlx::query_as(
+            "SELECT group_id, COUNT(*) FROM identity.group_members \
+             WHERE group_id = ANY($1) GROUP BY group_id",
+        )
+        .bind(group_ids)
+        .fetch_all(self.pool.inner())
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|(id, count)| (id, count as i32))
+            .collect())
     }
 
     /// Get user's groups.

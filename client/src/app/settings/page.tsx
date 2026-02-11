@@ -35,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, User, Link as LinkIcon, Check, MoreVertical, Loader2, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2 } from 'lucide-react';
+import { Plus, Link as LinkIcon, MoreVertical, Loader2, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2, ExternalLink } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +43,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { usersApi, authApi, groupsApi, User as UserType, LdapConfig, Group } from '@/lib/api';
+import { authApi, groupsApi, LdapConfig, Group } from '@/lib/api';
 import { api } from '@/lib/api';
 
 interface WebhookConfig {
@@ -77,16 +77,8 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 
-const roleLabels: Record<number, string> = {
-  0: 'Admin',
-  1: 'User',
-  2: 'Viewer',
-};
-
 export default function SettingsPage() {
-  const [users, setUsers] = useState<UserType[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
   const [groupsLoading, setGroupsLoading] = useState(true);
 
   // LDAP config state
@@ -124,18 +116,6 @@ export default function SettingsPage() {
     open: false,
     webhook: null,
   });
-
-  const fetchUsers = useCallback(async () => {
-    try {
-      const response = await usersApi.list();
-      setUsers(response.data?.users || response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   const fetchLdapConfig = useCallback(async () => {
     try {
@@ -176,11 +156,10 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
     fetchLdapConfig();
     fetchGroups();
     fetchWebhooks();
-  }, [fetchUsers, fetchLdapConfig, fetchGroups, fetchWebhooks]);
+  }, [fetchLdapConfig, fetchGroups, fetchWebhooks]);
 
   const handleLdapSave = async () => {
     setLdapSaving(true);
@@ -400,117 +379,21 @@ export default function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">Users</h2>
-                <p className="text-sm text-muted-foreground">
-                  Manage user accounts and permissions
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold">User Management</h3>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">
+                  Manage user accounts, roles, and permissions from the dedicated Users page.
                 </p>
-              </div>
-              <div className="flex gap-2">
-                <Link href="/users">
-                  <Button variant="outline">
-                    Manage Users
-                  </Button>
-                </Link>
                 <Link href="/users">
                   <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add User
+                    Go to Users
+                    <ExternalLink className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-              </div>
-            </div>
-
-            <Card>
-              <CardContent className="pt-6">
-                {loading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>2FA</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {user.auth_provider === 'ldap' ? (
-                                <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                              ) : (
-                                <User className="h-4 w-4 text-muted-foreground" />
-                              )}
-                              <span className="font-medium">{user.username}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {user.email}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={user.role === 0 ? 'default' : 'secondary'}>
-                              {roleLabels[user.role] || 'Unknown'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {user.mfa_enabled ? (
-                              <Check className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <Link href="/users">
-                                  <DropdownMenuItem>Edit</DropdownMenuItem>
-                                </Link>
-                                <DropdownMenuItem onClick={() => toast.info('Go to Users page for password reset')}>
-                                  Reset Password
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => toast.info('Go to Users page for user deletion')}
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {users.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                            No users found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                )}
               </CardContent>
             </Card>
-
-            <p className="text-sm text-muted-foreground">
-              <LinkIcon className="mr-1 inline h-3 w-3" />
-              = LDAP/AD user
-            </p>
           </TabsContent>
 
           <TabsContent value="groups" className="space-y-6">

@@ -54,6 +54,11 @@ async fn main() -> anyhow::Result<()> {
     // Run migrations
     run_migrations(&pool).await?;
 
+    // Create Redis client
+    let redis_url =
+        std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+    let redis = redis::Client::open(redis_url)?;
+
     // Create JWT config
     let jwt_config = JwtConfig {
         secret: jwt_secret.clone(),
@@ -68,6 +73,7 @@ async fn main() -> anyhow::Result<()> {
         pool,
         jwt_secret,
         jwt_config,
+        redis,
     };
 
     // Build router
@@ -95,6 +101,7 @@ pub struct AppState {
     pub pool: DatabasePool,
     pub jwt_secret: String,
     pub jwt_config: JwtConfig,
+    pub redis: redis::Client,
 }
 
 impl AuthState for AppState {
