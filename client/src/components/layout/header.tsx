@@ -11,9 +11,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bell, Moon, Sun, Menu, LogOut, User, Settings } from 'lucide-react';
+import { Moon, Sun, Menu, LogOut, User, Settings, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { NotificationPopover } from '@/components/notifications/notification-popover';
 
 export function Header() {
   const { user, logout } = useAuthStore();
@@ -72,10 +73,30 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Notifications */}
-        <Button variant="ghost" size="icon">
-          <Bell className="h-5 w-5" />
+        {/* Search / Command Palette */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="hidden md:flex items-center gap-2 text-muted-foreground w-48 justify-start"
+          onClick={() => {
+            // Trigger Ctrl+K event to open command palette
+            const event = new KeyboardEvent('keydown', {
+              key: 'k',
+              ctrlKey: true,
+              bubbles: true,
+            });
+            document.dispatchEvent(event);
+          }}
+        >
+          <Search className="h-4 w-4" />
+          <span className="flex-1 text-left">Search...</span>
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+            Ctrl+K
+          </kbd>
         </Button>
+
+        {/* Notifications */}
+        <NotificationPopover />
 
         {/* Theme Toggle */}
         <Button

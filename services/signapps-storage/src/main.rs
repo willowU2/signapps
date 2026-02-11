@@ -6,7 +6,7 @@ use axum::{
     Router,
 };
 use signapps_common::middleware::{
-    auth_middleware, logging_middleware, request_id_middleware, require_admin,
+    auth_middleware, logging_middleware, request_id_middleware,
 };
 use signapps_common::{AuthState, JwtConfig};
 use signapps_db::DatabasePool;
@@ -17,7 +17,7 @@ use tower_http::cors::{Any, CorsLayer};
 mod handlers;
 mod minio;
 
-use handlers::{buckets, files, health, raid};
+use handlers::{buckets, external, favorites, files, health, mounts, preview, quotas, raid, search, shares, trash};
 use minio::MinioClient;
 
 /// Application state shared across handlers.
@@ -91,9 +91,9 @@ async fn main() -> anyhow::Result<()> {
 
     // Start server
     let port: u16 = std::env::var("PORT")
-        .unwrap_or_else(|_| "3003".into())
+        .unwrap_or_else(|_| "3000".into())
         .parse()
-        .unwrap_or(3003);
+        .unwrap_or(3000);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
     tracing::info!("Listening on {}", addr);
@@ -110,16 +110,17 @@ fn create_router(state: AppState) -> Router {
     let public_routes = Router::new().route("/health", get(health::health_check));
 
     // Protected file routes (require authentication)
+    // Note: Route order matters - specific routes before wildcards
     let file_routes = Router::new()
+        .route("/files/copy", post(files::copy))
+        .route("/files/move", post(files::move_file))
+        .route("/files/:bucket/batch", delete(files::delete_many))
+        .route("/files/:bucket/info/*key", get(files::get_info))
         .route("/files/:bucket", get(files::list))
         .route("/files/:bucket", post(files::upload))
         .route("/files/:bucket/*key", get(files::download))
         .route("/files/:bucket/*key", put(files::upload_with_key))
-        .route("/files/:bucket/*key", delete(files::delete))
-        .route("/files/:bucket/*key/info", get(files::get_info))
-        .route("/files/:bucket/batch", delete(files::delete_many))
-        .route("/files/copy", post(files::copy))
-        .route("/files/move", post(files::move_file));
+        .route("/files/:bucket/*key", delete(files::delete));
 
     // Protected bucket routes
     let bucket_routes = Router::new()
@@ -153,6 +154,77 @@ fn create_router(state: AppState) -> Router {
         .route("/raid/events", get(raid::list_events))
         .route("/raid/health", get(raid::get_health));
 
+    // === NAS Features ===
+
+    // Sharing routes
+    let share_routes = Router::new()
+        .route("/shares", get(shares::list_shares))
+        .route("/shares", post(shares::create_share))
+        .route("/shares/:id", get(shares::get_share))
+        .route("/shares/:id", put(shares::update_share))
+        .route("/shares/:id", delete(shares::delete_share));
+
+    // Public share access (no auth required)
+    let public_share_routes = Router::new()
+        .route("/shares/:token/access", post(shares::access_share))
+        .route("/shares/:token/download", get(shares::download_shared));
+
+    // Trash/Recycle bin routes
+    let trash_routes = Router::new()
+        .route("/trash", get(trash::list_trash))
+        .route("/trash", post(trash::move_to_trash))
+        .route("/trash", delete(trash::empty_trash))
+        .route("/trash/stats", get(trash::get_trash_stats))
+        .route("/trash/:id", get(trash::get_trash_item))
+        .route("/trash/:id", delete(trash::delete_trash_item_handler))
+        .route("/trash/restore", post(trash::restore_from_trash));
+
+    // Favorites routes
+    let favorites_routes = Router::new()
+        .route("/favorites", get(favorites::list_favorites))
+        .route("/favorites", post(favorites::add_favorite))
+        .route("/favorites/reorder", post(favorites::reorder_favorites))
+        .route("/favorites/:id", get(favorites::get_favorite))
+        .route("/favorites/:id", put(favorites::update_favorite))
+        .route("/favorites/:id", delete(favorites::remove_favorite))
+        .route("/favorites/check/:bucket/*key", get(favorites::check_favorite))
+        .route("/favorites/path/:bucket/*key", delete(favorites::remove_favorite_by_path));
+
+    // Search routes
+    let search_routes = Router::new()
+        .route("/search", get(search::search))
+        .route("/search/quick", get(search::quick_search))
+        .route("/search/recent", get(search::recent_files))
+        .route("/search/suggest", get(search::suggest));
+
+    // Quota routes
+    let quota_routes = Router::new()
+        .route("/quotas/me", get(quotas::get_my_quota))
+        .route("/quotas/me/alerts", get(quotas::get_quota_alerts))
+        .route("/quotas/users/:user_id", get(quotas::get_user_quota))
+        .route("/quotas/users/:user_id", put(quotas::set_user_quota))
+        .route("/quotas/users/:user_id", delete(quotas::delete_user_quota))
+        .route("/quotas/users/:user_id/recalculate", post(quotas::recalculate_usage))
+        .route("/quotas/over-limit", get(quotas::get_users_over_quota));
+
+    // Preview routes (action before bucket to avoid wildcard conflicts)
+    let preview_routes = Router::new()
+        .route("/preview/view/:bucket/*key", get(preview::get_preview))
+        .route("/preview/info/:bucket/*key", get(preview::get_preview_info))
+        .route("/preview/thumbnail/:bucket/*key", get(preview::get_thumbnail));
+
+    // Mount management routes
+    let mount_routes = Router::new()
+        .route("/mounts", get(mounts::list_mounts))
+        .route("/mounts", post(mounts::mount))
+        .route("/mounts/*path", delete(mounts::unmount));
+
+    // External storage routes
+    let external_routes = Router::new()
+        .route("/external", get(external::list_external))
+        .route("/external", post(external::connect_external))
+        .route("/external/:id", delete(external::disconnect_external));
+
     // Combine protected routes
     let protected_routes = Router::new()
         .merge(file_routes)
@@ -160,15 +232,14 @@ fn create_router(state: AppState) -> Router {
         .merge(raid_array_routes)
         .merge(raid_disk_routes)
         .merge(raid_other_routes)
-        .route_layer(middleware::from_fn_with_state(
-            state.clone(),
-            auth_middleware::<AppState>,
-        ));
-
-    // Admin routes (require admin role)
-    let admin_routes = Router::new()
-        // Admin-only RAID operations could go here
-        .route_layer(middleware::from_fn(require_admin))
+        .merge(share_routes)
+        .merge(trash_routes)
+        .merge(favorites_routes)
+        .merge(search_routes)
+        .merge(quota_routes)
+        .merge(preview_routes)
+        .merge(mount_routes)
+        .merge(external_routes)
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -183,8 +254,8 @@ fn create_router(state: AppState) -> Router {
     // Combine all routes
     Router::new()
         .nest("/api/v1", public_routes)
+        .nest("/api/v1", public_share_routes)
         .nest("/api/v1", protected_routes)
-        .nest("/api/v1/admin", admin_routes)
         .layer(
             ServiceBuilder::new()
                 .layer(middleware::from_fn(request_id_middleware))

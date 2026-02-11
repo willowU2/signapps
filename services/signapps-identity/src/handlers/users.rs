@@ -19,6 +19,7 @@ use crate::AppState;
 pub struct ListQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
+    #[allow(dead_code)]
     pub search: Option<String>,
 }
 
@@ -37,6 +38,7 @@ pub struct UserResponse {
 }
 
 /// User list response with pagination info.
+#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct UserListResponse {
     pub users: Vec<UserResponse>,

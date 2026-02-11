@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Cryptographic utilities for VPN certificates.
 
 use signapps_common::{Error, Result};

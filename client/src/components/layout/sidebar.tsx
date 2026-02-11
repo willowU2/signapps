@@ -13,6 +13,12 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Users,
+  Shield,
+  Clock,
+  Activity,
+  Mic,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,8 +32,13 @@ const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/containers', icon: Container, label: 'Containers' },
   { href: '/storage', icon: HardDrive, label: 'Storage' },
+  { href: '/media', icon: Mic, label: 'Media' },
   { href: '/routes', icon: Network, label: 'Routes' },
+  { href: '/vpn', icon: Shield, label: 'VPN' },
+  { href: '/scheduler', icon: Clock, label: 'Scheduler' },
+  { href: '/monitoring', icon: Activity, label: 'Monitoring' },
   { href: '/ai', icon: MessageSquare, label: 'AI Chat' },
+  { href: '/users', icon: Users, label: 'Users' },
   { href: '/settings', icon: Settings, label: 'Settings' },
 ];
 

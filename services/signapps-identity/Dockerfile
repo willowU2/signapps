@@ -2,7 +2,7 @@
 # Multi-stage build for minimal image size
 
 # Build stage
-FROM rust:1.75-slim-bookworm AS builder
+FROM rust:latest AS builder
 
 WORKDIR /app
 
@@ -15,13 +15,14 @@ RUN apt-get update && apt-get install -y \
 # Copy workspace files
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
-COPY services/signapps-identity ./services/signapps-identity
+COPY services ./services
+COPY migrations ./migrations
 
 # Build the service
 RUN cargo build --release --package signapps-identity
 
 # Runtime stage
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 WORKDIR /app
 

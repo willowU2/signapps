@@ -1,6 +1,6 @@
 //! RAG pipeline orchestrating embeddings, Qdrant, and LLM.
 
-use signapps_common::{Error, Result};
+use signapps_common::Result;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
@@ -149,6 +149,11 @@ impl RagPipeline {
 
     /// Query with RAG (retrieve + generate).
     pub async fn query(&self, question: &str) -> Result<RagResponse> {
+        self.query_with_model(question, None).await
+    }
+
+    /// Query with RAG using a specific model.
+    pub async fn query_with_model(&self, question: &str, model: Option<&str>) -> Result<RagResponse> {
         // 1. Retrieve relevant context
         let search_results = self.search(question, None).await?;
 
@@ -159,8 +164,9 @@ impl RagPipeline {
         let messages = self.build_messages(&context, question);
 
         let response = self.llm
-            .chat_with_options(
+            .chat_with_model(
                 messages,
+                model,
                 Some(self.config.max_tokens),
                 Some(self.config.temperature),
             )
@@ -188,6 +194,15 @@ impl RagPipeline {
         &self,
         question: &str,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
+        self.query_stream_with_model(question, None).await
+    }
+
+    /// Query with streaming response using a specific model.
+    pub async fn query_stream_with_model(
+        &self,
+        question: &str,
+        model: Option<&str>,
+    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
         // 1. Retrieve relevant context
         let search_results = self.search(question, None).await?;
 
@@ -198,8 +213,9 @@ impl RagPipeline {
         let messages = self.build_messages(&context, question);
 
         let stream = self.llm
-            .chat_stream(
+            .chat_stream_with_model(
                 messages,
+                model,
                 Some(self.config.max_tokens),
                 Some(self.config.temperature),
             )

@@ -5,9 +5,9 @@ use axum::{
     response::sse::{Event, Sse},
     Json,
 };
-use futures_util::stream::{self, Stream};
+use futures_util::stream::Stream;
 use serde::{Deserialize, Serialize};
-use signapps_common::{Error, Result};
+use signapps_common::Result;
 use std::convert::Infallible;
 use std::time::Duration;
 use uuid::Uuid;
@@ -19,7 +19,13 @@ use crate::AppState;
 pub struct ChatRequest {
     /// User question.
     pub question: String,
+    /// Optional model to use (overrides default).
+    pub model: Option<String>,
+    /// Optional provider to use (ollama, vllm, openai, anthropic).
+    #[allow(dead_code)]
+    pub provider: Option<String>,
     /// Optional conversation ID for context.
+    #[allow(dead_code)]
     pub conversation_id: Option<Uuid>,
     /// Whether to include sources in response.
     #[serde(default = "default_include_sources")]
@@ -71,7 +77,10 @@ pub async fn chat(
     State(state): State<AppState>,
     Json(payload): Json<ChatRequest>,
 ) -> Result<Json<ChatResponse>> {
-    let response = state.rag.query(&payload.question).await?;
+    let response = state.rag.query_with_model(
+        &payload.question,
+        payload.model.as_deref(),
+    ).await?;
 
     let sources: Vec<SourceReference> = if payload.include_sources {
         response.sources
@@ -100,9 +109,10 @@ pub async fn chat_stream(
     State(state): State<AppState>,
     Json(payload): Json<ChatRequest>,
 ) -> Sse<impl Stream<Item = std::result::Result<Event, Infallible>>> {
+    let model = payload.model.clone();
     let stream = async_stream::stream! {
         // First, retrieve sources
-        match state.rag.query_stream(&payload.question).await {
+        match state.rag.query_stream_with_model(&payload.question, model.as_deref()).await {
             Ok((sources, mut token_rx)) => {
                 // Send sources first
                 if payload.include_sources {

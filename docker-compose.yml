@@ -70,6 +70,48 @@ services:
     networks:
       - signapps-network
 
+  # === MEDIA PROCESSING (GPU) ===
+
+  # Faster-Whisper STT (Speech-to-Text) - Using medium model for better accuracy
+  faster-whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: signapps-whisper
+    environment:
+      ASR_MODEL: medium
+      ASR_ENGINE: faster_whisper
+    ports:
+      - "8100:9000"
+    volumes:
+      - whisper_cache:/root/.cache
+    networks:
+      - signapps-network
+    restart: unless-stopped
+
+  # Coqui TTS (Text-to-Speech) - Using French VITS model for natural voice
+  piper:
+    image: ghcr.io/coqui-ai/tts:latest
+    container_name: signapps-piper
+    entrypoint: ["python3", "-m", "TTS.server.server", "--model_name", "tts_models/fr/mai/tacotron2-DDC", "--use_cuda", "false"]
+    ports:
+      - "10200:5002"
+    volumes:
+      - piper_data:/root/.local/share/tts
+    networks:
+      - signapps-network
+    restart: unless-stopped
+
+  # OCR Service - PaddleOCR (high accuracy, multilingual, table detection)
+  surya-ocr:
+    build:
+      context: ./services/paddleocr-server
+      dockerfile: Dockerfile
+    container_name: signapps-surya
+    ports:
+      - "8101:9003"
+    networks:
+      - signapps-network
+    restart: unless-stopped
+
   # === LLM LOCAL (vLLM) - Optionnel, décommenter si GPU disponible ===
   # vllm:
   #   image: vllm/vllm-openai:latest
@@ -143,6 +185,7 @@ services:
     container_name: signapps-containers
     environment:
       DATABASE_URL: postgres://signapps:${DB_PASSWORD:-signapps_dev}@postgres/signapps
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
       RUST_LOG: info,signapps=debug
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -162,6 +205,7 @@ services:
     environment:
       DATABASE_URL: postgres://signapps:${DB_PASSWORD:-signapps_dev}@postgres/signapps
       REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
       RUST_LOG: info,signapps=debug
     depends_on:
       postgres:
@@ -180,9 +224,10 @@ services:
     container_name: signapps-storage
     environment:
       DATABASE_URL: postgres://signapps:${DB_PASSWORD:-signapps_dev}@postgres/signapps
-      MINIO_ENDPOINT: minio:9000
+      MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_USER:-signapps}
       MINIO_SECRET_KEY: ${MINIO_PASSWORD:-signapps_dev}
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
       RUST_LOG: info,signapps=debug
     depends_on:
       postgres:
@@ -201,10 +246,11 @@ services:
     container_name: signapps-ai
     environment:
       DATABASE_URL: postgres://signapps:${DB_PASSWORD:-signapps_dev}@postgres/signapps
-      QDRANT_URL: http://qdrant:6333
+      QDRANT_URL: http://qdrant:6334
       VLLM_URL: http://vllm:8000
       EMBEDDINGS_URL: http://embeddings:8080
-      MINIO_ENDPOINT: minio:9000
+      MINIO_ENDPOINT: http://minio:9000
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
       RUST_LOG: info,signapps=debug
     depends_on:
       postgres:
@@ -223,6 +269,7 @@ services:
     container_name: signapps-securelink
     environment:
       DATABASE_URL: postgres://signapps:${DB_PASSWORD:-signapps_dev}@postgres/signapps
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
       RUST_LOG: info,signapps=debug
     cap_add:
       - NET_ADMIN
@@ -241,6 +288,7 @@ services:
     container_name: signapps-scheduler
     environment:
       DATABASE_URL: postgres://signapps:${DB_PASSWORD:-signapps_dev}@postgres/signapps
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
       RUST_LOG: info,signapps=debug
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -259,12 +307,39 @@ services:
     container_name: signapps-metrics
     environment:
       DATABASE_URL: postgres://signapps:${DB_PASSWORD:-signapps_dev}@postgres/signapps
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
       RUST_LOG: info,signapps=debug
     depends_on:
       postgres:
         condition: service_healthy
     ports:
       - "3008:3000"
+    networks:
+      - signapps-network
+
+  signapps-media:
+    build:
+      context: .
+      dockerfile: services/signapps-media/Dockerfile
+    container_name: signapps-media
+    environment:
+      DATABASE_URL: postgres://signapps:${DB_PASSWORD:-signapps_dev}@postgres/signapps
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
+      STT_URL: http://faster-whisper:9000
+      TTS_URL: http://piper:5002
+      OCR_URL: http://surya-ocr:9003
+      RUST_LOG: info,signapps=debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      faster-whisper:
+        condition: service_started
+      piper:
+        condition: service_started
+      surya-ocr:
+        condition: service_started
+    ports:
+      - "3009:3009"
     networks:
       - signapps-network
 
@@ -303,3 +378,6 @@ volumes:
   minio_data:
   vllm_cache:
   traefik_certs:
+  whisper_cache:
+  piper_data:
+  surya_cache:

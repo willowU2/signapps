@@ -8,6 +8,7 @@ interface ResourceGaugeProps {
   max?: number;
   unit?: string;
   className?: string;
+  showLabel?: boolean;
 }
 
 export function ResourceGauge({
@@ -16,6 +17,7 @@ export function ResourceGauge({
   max = 100,
   unit = '%',
   className,
+  showLabel = true,
 }: ResourceGaugeProps) {
   const percentage = Math.min((value / max) * 100, 100);
 
@@ -27,13 +29,15 @@ export function ResourceGauge({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <div className="flex items-center justify-between text-sm">
-        <span className="font-medium">{label}</span>
-        <span className="text-muted-foreground">
-          {value}
-          {unit}
-        </span>
-      </div>
+      {showLabel && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-medium">{label}</span>
+          <span className="text-muted-foreground">
+            {value}
+            {unit}
+          </span>
+        </div>
+      )}
       <div className="h-2 overflow-hidden rounded-full bg-secondary">
         <div
           className={cn('h-full transition-all duration-500', getColor())}

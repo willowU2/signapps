@@ -85,4 +85,10 @@ pub struct CreateWebhook {
     pub secret: Option<String>,
     pub events: Vec<String>,
     pub headers: Option<serde_json::Value>,
+    #[serde(default = "default_webhook_enabled")]
+    pub enabled: bool,
+}
+
+fn default_webhook_enabled() -> bool {
+    true
 }

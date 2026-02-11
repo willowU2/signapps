@@ -90,29 +90,33 @@ pub async fn optional_auth_middleware<S: AuthState>(
     next.run(request).await
 }
 
-/// Require admin role (role >= 2).
+/// Require admin role (role == 0).
+/// Role hierarchy: 0 = Admin, 1 = User, 2 = Viewer
 pub async fn require_admin(request: Request, next: Next) -> Result<Response, Error> {
     let claims = request
         .extensions()
         .get::<Claims>()
         .ok_or(Error::Unauthorized)?;
 
-    if claims.role < 2 {
+    // Role 0 is Admin - lower number = higher privilege
+    if claims.role != 0 {
         return Err(Error::Forbidden("Admin access required".to_string()));
     }
 
     Ok(next.run(request).await)
 }
 
-/// Require superadmin role (role >= 3).
-pub async fn require_superadmin(request: Request, next: Next) -> Result<Response, Error> {
+/// Require at least user role (role <= 1, excludes viewers).
+/// Role hierarchy: 0 = Admin, 1 = User, 2 = Viewer
+pub async fn require_user(request: Request, next: Next) -> Result<Response, Error> {
     let claims = request
         .extensions()
         .get::<Claims>()
         .ok_or(Error::Unauthorized)?;
 
-    if claims.role < 3 {
-        return Err(Error::Forbidden("Superadmin access required".to_string()));
+    // Roles 0 (Admin) and 1 (User) can access, role 2 (Viewer) cannot
+    if claims.role > 1 {
+        return Err(Error::Forbidden("User access required".to_string()));
     }
 
     Ok(next.run(request).await)

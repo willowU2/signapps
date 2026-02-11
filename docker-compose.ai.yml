@@ -1,0 +1,251 @@
+version: '3.8'
+
+# Docker Compose for AI services
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.ai.yml up -d
+#
+# Options:
+# - Ollama (CPU/GPU, simple setup): docker-compose -f ... up -d ollama
+# - vLLM (GPU only, high performance): docker-compose -f ... up -d vllm embeddings
+
+services:
+  # ============================================================================
+  # OPTION 1: OLLAMA (Recommandé pour démarrer, CPU/GPU)
+  # ============================================================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: signapps-ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    environment:
+      OLLAMA_ORIGINS: "*"
+      # Décommenter pour GPU NVIDIA:
+      NVIDIA_VISIBLE_DEVICES: all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - signapps-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Setup Ollama models au premier démarrage
+  ollama-setup:
+    image: curlimages/curl:latest
+    container_name: signapps-ollama-setup
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "=== Pulling Ollama models ==="
+        echo "Pulling llama3.2:3b (chat, ~2GB)..."
+        curl -s -X POST http://ollama:11434/api/pull -d '{"name": "llama3.2:3b"}'
+        echo ""
+        echo "Pulling nomic-embed-text (embeddings, ~275MB)..."
+        curl -s -X POST http://ollama:11434/api/pull -d '{"name": "nomic-embed-text"}'
+        echo ""
+        echo "=== Models ready! ==="
+    networks:
+      - signapps-network
+    profiles:
+      - setup
+
+  # ============================================================================
+  # OPTION 2: vLLM (GPU requis, haute performance)
+  # Pour RTX 4070 8GB: utiliser des modèles 3B-7B quantifiés
+  # ============================================================================
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: signapps-vllm
+    command:
+      # Modèle par défaut - Llama 3.2 3B (fonctionne bien sur 8GB VRAM)
+      - "--model=meta-llama/Llama-3.2-3B-Instruct"
+      - "--host=0.0.0.0"
+      - "--port=8000"
+      - "--max-model-len=4096"
+      - "--gpu-memory-utilization=0.85"
+      # Options pour 8GB VRAM:
+      - "--dtype=half"
+      - "--enforce-eager"
+      # Pour charger plusieurs modèles, décommenter:
+      # - "--served-model-name=llama3.2-3b"
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN}
+      CUDA_VISIBLE_DEVICES: "0"
+    volumes:
+      - vllm_cache:/root/.cache/huggingface
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - signapps-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    profiles:
+      - vllm
+
+  # Alternative: Phi-3 Mini (3.8B, optimisé Microsoft)
+  vllm-phi3:
+    image: vllm/vllm-openai:latest
+    container_name: signapps-vllm-phi3
+    command:
+      - "--model=microsoft/Phi-3-mini-4k-instruct"
+      - "--host=0.0.0.0"
+      - "--port=8000"
+      - "--max-model-len=4096"
+      - "--gpu-memory-utilization=0.85"
+      - "--dtype=half"
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN}
+    volumes:
+      - vllm_cache:/root/.cache/huggingface
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - signapps-network
+    profiles:
+      - phi3
+
+  # Alternative: Mistral 7B Q4 (via vLLM avec AWQ quantization)
+  vllm-mistral:
+    image: vllm/vllm-openai:latest
+    container_name: signapps-vllm-mistral
+    command:
+      - "--model=TheBloke/Mistral-7B-Instruct-v0.2-AWQ"
+      - "--host=0.0.0.0"
+      - "--port=8000"
+      - "--max-model-len=4096"
+      - "--gpu-memory-utilization=0.90"
+      - "--quantization=awq"
+    environment:
+      HUGGING_FACE_HUB_TOKEN: ${HF_TOKEN}
+    volumes:
+      - vllm_cache:/root/.cache/huggingface
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - signapps-network
+    profiles:
+      - mistral
+
+  # ============================================================================
+  # TEXT EMBEDDINGS INFERENCE (pour vLLM, GPU/CPU)
+  # ============================================================================
+  embeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference:1.5
+    container_name: signapps-embeddings
+    command:
+      - "--model-id=sentence-transformers/all-MiniLM-L6-v2"
+      - "--port=8080"
+    ports:
+      - "8001:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - signapps-network
+    restart: unless-stopped
+    profiles:
+      - vllm
+      - phi3
+      - mistral
+
+  # Version CPU des embeddings (si pas de GPU dispo pour embeddings)
+  embeddings-cpu:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.5
+    container_name: signapps-embeddings-cpu
+    command:
+      - "--model-id=sentence-transformers/all-MiniLM-L6-v2"
+      - "--port=8080"
+    ports:
+      - "8001:8080"
+    networks:
+      - signapps-network
+    restart: unless-stopped
+    profiles:
+      - cpu
+
+  # ============================================================================
+  # SIGNAPPS AI SERVICE - Configuration multi-provider
+  # ============================================================================
+  signapps-ai:
+    environment:
+      # Provider principal (ollama, vllm, openai, anthropic)
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+
+      # Ollama config
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+
+      # vLLM config
+      VLLM_URL: http://vllm:8000
+      VLLM_MODEL: ${VLLM_MODEL:-meta-llama/Llama-3.2-3B-Instruct}
+
+      # Embeddings
+      EMBEDDINGS_URL: ${EMBEDDINGS_URL:-http://ollama:11434}
+      EMBEDDINGS_MODEL: ${EMBEDDINGS_MODEL:-nomic-embed-text}
+
+      # OpenAI (optionnel)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+
+      # Anthropic (optionnel)
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-3-5-sonnet-20241022}
+
+volumes:
+  ollama_data:
+  vllm_cache:
+
+# Profiles disponibles:
+# - (default): Ollama uniquement
+# - vllm: vLLM + TEI (GPU requis)
+# - phi3: Phi-3 Mini + TEI
+# - mistral: Mistral 7B AWQ + TEI
+# - cpu: Embeddings CPU uniquement
+# - setup: Télécharge les modèles Ollama
+#
+# Exemples:
+# docker-compose -f docker-compose.yml -f docker-compose.ai.yml up -d
+# docker-compose -f docker-compose.yml -f docker-compose.ai.yml --profile vllm up -d
+# docker-compose -f docker-compose.yml -f docker-compose.ai.yml --profile setup up ollama-setup

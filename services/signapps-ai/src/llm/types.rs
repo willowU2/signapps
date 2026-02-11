@@ -1,4 +1,5 @@
 //! LLM types for chat completion.
+#![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
 
@@ -108,7 +109,7 @@ pub struct Delta {
     pub content: Option<String>,
 }
 
-/// Available models response.
+/// Available models response (vLLM/OpenAI format).
 #[derive(Debug, Clone, Deserialize)]
 pub struct ModelsResponse {
     pub object: String,
@@ -119,7 +120,26 @@ pub struct ModelsResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelInfo {
     pub id: String,
+    #[serde(default)]
     pub object: String,
-    pub created: i64,
+    #[serde(default)]
     pub owned_by: String,
+}
+
+/// Ollama models response.
+#[derive(Debug, Clone, Deserialize)]
+pub struct OllamaModelsResponse {
+    pub models: Vec<OllamaModel>,
+}
+
+/// Ollama model information.
+#[derive(Debug, Clone, Deserialize)]
+pub struct OllamaModel {
+    pub name: String,
+    #[serde(default)]
+    pub size: Option<i64>,
+    #[serde(default)]
+    pub digest: Option<String>,
+    #[serde(default)]
+    pub modified_at: Option<String>,
 }

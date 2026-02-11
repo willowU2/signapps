@@ -56,7 +56,7 @@ pub struct LogsQuery {
     pub tail: Option<usize>,
 }
 
-/// List all containers.
+/// List all containers from database with Docker info enrichment.
 #[tracing::instrument(skip(state))]
 pub async fn list(
     State(state): State<AppState>,
@@ -109,6 +109,21 @@ pub async fn list(
         .collect();
 
     Ok(Json(response))
+}
+
+/// List all Docker containers directly (including system containers).
+#[allow(dead_code)]
+#[tracing::instrument(skip(state))]
+pub async fn list_docker(
+    State(state): State<AppState>,
+    Query(query): Query<ListQuery>,
+) -> Result<Json<Vec<ContainerInfo>>> {
+    let containers = state
+        .docker
+        .list_containers(query.all.unwrap_or(true))
+        .await?;
+
+    Ok(Json(containers))
 }
 
 /// Get container by ID.

@@ -89,7 +89,7 @@ async fn main() -> anyhow::Result<()> {
     // Start server
     let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3001".to_string())
+        .unwrap_or_else(|_| "3000".to_string())
         .parse()
         .expect("Invalid SERVER_PORT");
 

@@ -21,7 +21,7 @@ mod qdrant;
 mod rag;
 
 use embeddings::EmbeddingsClient;
-use handlers::{chat, health, index, models, search};
+use handlers::{chat, health, index, models, providers, search};
 use llm::LlmClient;
 use qdrant::QdrantService;
 use rag::RagPipeline;
@@ -110,9 +110,9 @@ async fn main() -> anyhow::Result<()> {
 
     // Start server
     let port: u16 = std::env::var("PORT")
-        .unwrap_or_else(|_| "3004".into())
+        .unwrap_or_else(|_| "3000".into())
         .parse()
-        .unwrap_or(3004);
+        .unwrap_or(3000);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
     tracing::info!("Listening on {}", addr);
@@ -139,8 +139,9 @@ fn create_router(state: AppState) -> Router {
         .route("/index", post(index::index_document))
         .route("/index/:document_id", delete(index::remove_document))
         .route("/stats", get(index::get_stats))
-        // Models
+        // Models & Providers
         .route("/models", get(models::list_models))
+        .route("/providers", get(providers::list_providers))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

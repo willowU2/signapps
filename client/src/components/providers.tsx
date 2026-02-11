@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/components/auth/auth-provider';
+import { CommandPalette } from '@/components/command-palette';
 
 function LoadingFallback() {
   return (
@@ -34,6 +35,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <Suspense fallback={<LoadingFallback />}>
         <AuthProvider>{children}</AuthProvider>
       </Suspense>
+      <CommandPalette />
       <Toaster />
     </QueryClientProvider>
   );

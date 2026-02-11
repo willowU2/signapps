@@ -7,7 +7,7 @@
 //! - Summary dashboard data
 
 use axum::{
-    routing::get,
+    routing::{delete, get, post, put},
     Router,
 };
 use std::net::SocketAddr;
@@ -63,7 +63,7 @@ impl Config {
             port: std::env::var("PORT")
                 .ok()
                 .and_then(|p| p.parse().ok())
-                .unwrap_or(3007),
+                .unwrap_or(3000),
         }
     }
 }
@@ -139,6 +139,17 @@ fn create_router(state: AppState) -> Router {
         .route("/disk", get(handlers::get_disk_metrics))
         .route("/network", get(handlers::get_network_metrics));
 
+    // Alert routes
+    let alert_routes = Router::new()
+        .route("/", get(handlers::alerts::list_alerts))
+        .route("/", post(handlers::alerts::create_alert))
+        .route("/active", get(handlers::alerts::get_active_alerts))
+        .route("/events", get(handlers::alerts::list_alert_events))
+        .route("/:id", get(handlers::alerts::get_alert))
+        .route("/:id", put(handlers::alerts::update_alert))
+        .route("/:id", delete(handlers::alerts::delete_alert))
+        .route("/:id/acknowledge", post(handlers::alerts::acknowledge_alert));
+
     // Prometheus endpoint
     let prometheus_routes = Router::new()
         .route("/", get(handlers::prometheus_metrics));
@@ -150,6 +161,7 @@ fn create_router(state: AppState) -> Router {
     // Combine all routes
     Router::new()
         .nest("/api/v1/metrics", metrics_routes)
+        .nest("/api/v1/alerts", alert_routes)
         .nest("/metrics", prometheus_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())

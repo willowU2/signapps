@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! VPN mesh service management.
 
 use crate::vpn::crypto::CryptoService;

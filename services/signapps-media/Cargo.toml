@@ -1,0 +1,58 @@
+[package]
+name = "signapps-media"
+version = "0.1.0"
+edition = "2021"
+description = "Media processing service for SignApps - OCR, TTS, STT"
+
+[dependencies]
+# Web framework
+axum = { version = "0.7", features = ["multipart", "ws"] }
+tokio = { version = "1", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# HTTP client for calling external services
+reqwest = { version = "0.12", features = ["json", "multipart", "stream"] }
+
+# Database
+sqlx = { version = "0.7", features = ["postgres", "runtime-tokio", "uuid", "chrono"] }
+
+# Auth & common
+signapps-common = { path = "../../crates/signapps-common" }
+
+# File handling
+tokio-util = { version = "0.7", features = ["io"] }
+bytes = "1"
+mime_guess = "2"
+tempfile = "3"
+
+# Async utilities
+futures = "0.3"
+async-stream = "0.3"
+
+# UUID
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Config
+dotenvy = "0.15"
+
+# Base64 for audio encoding
+base64 = "0.22"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# URL encoding
+urlencoding = "2.1"

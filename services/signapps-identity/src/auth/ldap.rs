@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! LDAP/Active Directory authentication.
 
 use signapps_common::{Error, Result};

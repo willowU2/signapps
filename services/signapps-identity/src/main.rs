@@ -177,6 +177,7 @@ fn create_router(state: AppState) -> Router {
         // Webhooks
         .route("/api/v1/webhooks", get(handlers::webhooks::list))
         .route("/api/v1/webhooks", post(handlers::webhooks::create))
+        .route("/api/v1/webhooks/:id", get(handlers::webhooks::get))
         .route("/api/v1/webhooks/:id", put(handlers::webhooks::update))
         .route("/api/v1/webhooks/:id", delete(handlers::webhooks::delete))
         .route("/api/v1/webhooks/:id/test", post(handlers::webhooks::test))

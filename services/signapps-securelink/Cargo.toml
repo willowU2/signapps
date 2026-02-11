@@ -5,25 +5,43 @@ edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "VPN mesh and Zero Trust service for SignApps Platform"
+description = "Web Tunnel VPN service - access home services without opening ports"
 
 [[bin]]
 name = "signapps-securelink"
 path = "src/main.rs"
 
+[features]
+default = []
+# Enable mesh VPN features (requires database)
+mesh-vpn = ["signapps-db", "sqlx"]
+
 [dependencies]
+# Common (error types, result)
 signapps-common = { path = "../../crates/signapps-common" }
-signapps-db = { path = "../../crates/signapps-db" }
+
+# Core
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-sqlx = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-dotenvy = { workspace = true }
 tower-http = { workspace = true }
-anyhow = { workspace = true }
+
+# Web tunnel dependencies
+tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+futures-util = "0.3"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# DNS dependencies (optional, for ad-blocking)
+hickory-resolver = "0.24"
+
+# Config serialization
 serde_yaml = "0.9"
+
+# Optional: Database support for mesh VPN
+signapps-db = { path = "../../crates/signapps-db", optional = true }
+sqlx = { workspace = true, optional = true }

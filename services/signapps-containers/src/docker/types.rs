@@ -144,6 +144,7 @@ pub struct ImageInfo {
 }
 
 /// Image pull progress.
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize)]
 pub struct PullProgress {
     pub status: String,

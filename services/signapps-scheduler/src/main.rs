@@ -67,7 +67,7 @@ impl Config {
             port: std::env::var("PORT")
                 .ok()
                 .and_then(|p| p.parse().ok())
-                .unwrap_or(3006),
+                .unwrap_or(3000),
         }
     }
 }

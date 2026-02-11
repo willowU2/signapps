@@ -33,3 +33,4 @@ tower-http = { workspace = true }
 anyhow = { workspace = true }
 futures-util = { workspace = true }
 async-stream = { workspace = true }
+async-trait = { workspace = true }

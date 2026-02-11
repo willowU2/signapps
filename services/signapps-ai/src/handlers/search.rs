@@ -18,6 +18,7 @@ pub struct SearchQuery {
     /// Maximum number of results.
     pub limit: Option<u64>,
     /// Minimum similarity score.
+    #[allow(dead_code)]
     pub threshold: Option<f32>,
 }
 

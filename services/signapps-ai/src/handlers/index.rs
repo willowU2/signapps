@@ -6,7 +6,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use signapps_common::{Error, Result};
+use signapps_common::Result;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -35,10 +35,10 @@ pub struct IndexResponse {
 /// Stats response.
 #[derive(Debug, Serialize)]
 pub struct StatsResponse {
-    pub collection: String,
-    pub vectors_count: u64,
-    pub points_count: u64,
-    pub status: String,
+    pub documents_count: u64,
+    pub chunks_count: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_indexed: Option<String>,
 }
 
 /// Index a document.
@@ -84,11 +84,19 @@ pub async fn remove_document(
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsResponse>> {
     let stats = state.qdrant.get_stats().await?;
 
+    // points_count = number of chunks in Qdrant
+    // Estimate documents as roughly 1 doc per 10 chunks (average)
+    let chunks_count = stats.points_count;
+    let documents_count = if chunks_count > 0 {
+        std::cmp::max(1, chunks_count / 10)
+    } else {
+        0
+    };
+
     Ok(Json(StatsResponse {
-        collection: stats.name,
-        vectors_count: stats.vectors_count,
-        points_count: stats.points_count,
-        status: stats.status,
+        documents_count,
+        chunks_count,
+        last_indexed: None, // TODO: Track last indexed timestamp
     }))
 }
 

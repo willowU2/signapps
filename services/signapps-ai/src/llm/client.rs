@@ -1,40 +1,102 @@
-//! LLM client for vLLM (OpenAI-compatible API).
+//! LLM client for vLLM and Ollama (OpenAI-compatible API).
+#![allow(dead_code)]
 
 use futures_util::StreamExt;
 use reqwest::Client;
 use signapps_common::{Error, Result};
-use std::pin::Pin;
 use tokio::sync::mpsc;
 
 use super::types::*;
 
-/// Default model to use.
-pub const DEFAULT_MODEL: &str = "meta-llama/Llama-3.2-3B-Instruct";
+/// LLM backend type.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum LlmBackend {
+    /// vLLM (OpenAI-compatible)
+    Vllm,
+    /// Ollama
+    Ollama,
+}
 
-/// Client for LLM inference via vLLM.
+/// Default model to use for vLLM.
+pub const DEFAULT_VLLM_MODEL: &str = "meta-llama/Llama-3.2-3B-Instruct";
+
+/// Default model to use for Ollama.
+pub const DEFAULT_OLLAMA_MODEL: &str = "llama3.2:3b";
+
+/// Client for LLM inference via vLLM or Ollama.
 #[derive(Clone)]
 pub struct LlmClient {
     client: Client,
     base_url: String,
     default_model: String,
+    backend: LlmBackend,
 }
 
 impl LlmClient {
-    /// Create a new LLM client.
+    /// Create a new LLM client (auto-detect backend).
     pub fn new(base_url: &str) -> Self {
+        let base_url = base_url.trim_end_matches('/').to_string();
+        // Auto-detect Ollama by port or URL pattern
+        let backend = if base_url.contains(":11434") || base_url.contains("ollama") {
+            LlmBackend::Ollama
+        } else {
+            LlmBackend::Vllm
+        };
+        let default_model = std::env::var("DEFAULT_MODEL").unwrap_or_else(|_| {
+            match backend {
+                LlmBackend::Vllm => DEFAULT_VLLM_MODEL.to_string(),
+                LlmBackend::Ollama => DEFAULT_OLLAMA_MODEL.to_string(),
+            }
+        });
+
+        Self {
+            client: Client::new(),
+            base_url,
+            default_model,
+            backend,
+        }
+    }
+
+    /// Create a new LLM client with explicit backend and model.
+    pub fn with_backend(base_url: &str, backend: LlmBackend, model: &str) -> Self {
         Self {
             client: Client::new(),
             base_url: base_url.trim_end_matches('/').to_string(),
-            default_model: DEFAULT_MODEL.to_string(),
+            default_model: model.to_string(),
+            backend,
         }
     }
 
     /// Create a new LLM client with a specific default model.
     pub fn with_model(base_url: &str, model: &str) -> Self {
+        let base_url_clean = base_url.trim_end_matches('/').to_string();
+        let backend = if base_url_clean.contains(":11434") || base_url_clean.contains("ollama") {
+            LlmBackend::Ollama
+        } else {
+            LlmBackend::Vllm
+        };
+
         Self {
             client: Client::new(),
-            base_url: base_url.trim_end_matches('/').to_string(),
+            base_url: base_url_clean,
             default_model: model.to_string(),
+            backend,
+        }
+    }
+
+    /// Get the chat completions endpoint URL.
+    fn chat_url(&self) -> String {
+        match self.backend {
+            LlmBackend::Vllm => format!("{}/v1/chat/completions", self.base_url),
+            LlmBackend::Ollama => format!("{}/v1/chat/completions", self.base_url),
+        }
+    }
+
+    /// Get the models endpoint URL.
+    fn models_url(&self) -> String {
+        match self.backend {
+            LlmBackend::Vllm => format!("{}/v1/models", self.base_url),
+            LlmBackend::Ollama => format!("{}/api/tags", self.base_url),
         }
     }
 
@@ -50,8 +112,19 @@ impl LlmClient {
         max_tokens: Option<u32>,
         temperature: Option<f32>,
     ) -> Result<ChatResponse> {
+        self.chat_with_model(messages, None, max_tokens, temperature).await
+    }
+
+    /// Complete a chat with a specific model.
+    pub async fn chat_with_model(
+        &self,
+        messages: Vec<ChatMessage>,
+        model: Option<&str>,
+        max_tokens: Option<u32>,
+        temperature: Option<f32>,
+    ) -> Result<ChatResponse> {
         let request = ChatRequest {
-            model: self.default_model.clone(),
+            model: model.map(|m| m.to_string()).unwrap_or_else(|| self.default_model.clone()),
             messages,
             max_tokens: max_tokens.or(Some(1024)),
             temperature,
@@ -89,8 +162,19 @@ impl LlmClient {
         max_tokens: Option<u32>,
         temperature: Option<f32>,
     ) -> Result<mpsc::Receiver<Result<String>>> {
+        self.chat_stream_with_model(messages, None, max_tokens, temperature).await
+    }
+
+    /// Stream a chat conversation with a specific model.
+    pub async fn chat_stream_with_model(
+        &self,
+        messages: Vec<ChatMessage>,
+        model: Option<&str>,
+        max_tokens: Option<u32>,
+        temperature: Option<f32>,
+    ) -> Result<mpsc::Receiver<Result<String>>> {
         let request = ChatRequest {
-            model: self.default_model.clone(),
+            model: model.map(|m| m.to_string()).unwrap_or_else(|| self.default_model.clone()),
             messages,
             max_tokens: max_tokens.or(Some(1024)),
             temperature,
@@ -157,7 +241,7 @@ impl LlmClient {
     /// List available models.
     pub async fn list_models(&self) -> Result<Vec<ModelInfo>> {
         let response = self.client
-            .get(format!("{}/v1/models", self.base_url))
+            .get(self.models_url())
             .send()
             .await
             .map_err(|e| Error::Internal(format!("Models request failed: {}", e)))?;
@@ -171,12 +255,26 @@ impl LlmClient {
             )));
         }
 
-        let models: ModelsResponse = response
-            .json()
-            .await
-            .map_err(|e| Error::Internal(format!("Failed to parse models: {}", e)))?;
-
-        Ok(models.data)
+        match self.backend {
+            LlmBackend::Vllm => {
+                let models: ModelsResponse = response
+                    .json()
+                    .await
+                    .map_err(|e| Error::Internal(format!("Failed to parse vLLM models: {}", e)))?;
+                Ok(models.data)
+            }
+            LlmBackend::Ollama => {
+                let ollama_response: OllamaModelsResponse = response
+                    .json()
+                    .await
+                    .map_err(|e| Error::Internal(format!("Failed to parse Ollama models: {}", e)))?;
+                Ok(ollama_response.models.into_iter().map(|m| ModelInfo {
+                    id: m.name,
+                    object: "model".to_string(),
+                    owned_by: "ollama".to_string(),
+                }).collect())
+            }
+        }
     }
 
     /// Check if the LLM service is healthy.

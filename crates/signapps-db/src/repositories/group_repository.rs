@@ -209,8 +209,8 @@ impl<'a> GroupRepository<'a> {
     pub async fn create_webhook(&self, webhook: CreateWebhook) -> Result<Webhook> {
         let created = sqlx::query_as::<_, Webhook>(
             r#"
-            INSERT INTO identity.webhooks (name, url, secret, events, headers)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO identity.webhooks (name, url, secret, events, headers, enabled)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
             "#
         )
@@ -219,10 +219,60 @@ impl<'a> GroupRepository<'a> {
         .bind(&webhook.secret)
         .bind(&webhook.events)
         .bind(&webhook.headers.unwrap_or_default())
+        .bind(webhook.enabled)
         .fetch_one(self.pool.inner())
         .await?;
 
         Ok(created)
+    }
+
+    /// Update an existing webhook.
+    pub async fn update_webhook(
+        &self,
+        id: Uuid,
+        name: &str,
+        url: &str,
+        events: &[String],
+        enabled: bool,
+        secret: Option<&String>,
+        headers: Option<&serde_json::Value>,
+    ) -> Result<Webhook> {
+        let updated = sqlx::query_as::<_, Webhook>(
+            r#"
+            UPDATE identity.webhooks
+            SET name = $2, url = $3, events = $4, enabled = $5, secret = $6, headers = COALESCE($7, headers), updated_at = NOW()
+            WHERE id = $1
+            RETURNING *
+            "#
+        )
+        .bind(id)
+        .bind(name)
+        .bind(url)
+        .bind(events)
+        .bind(enabled)
+        .bind(secret)
+        .bind(headers)
+        .fetch_one(self.pool.inner())
+        .await?;
+
+        Ok(updated)
+    }
+
+    /// Update webhook status after test/trigger.
+    pub async fn update_webhook_status(&self, id: Uuid, status_code: i32) -> Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE identity.webhooks
+            SET last_triggered = NOW(), last_status = $2, updated_at = NOW()
+            WHERE id = $1
+            "#
+        )
+        .bind(id)
+        .bind(status_code)
+        .execute(self.pool.inner())
+        .await?;
+
+        Ok(())
     }
 
     /// Delete a webhook.

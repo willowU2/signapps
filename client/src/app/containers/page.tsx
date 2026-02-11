@@ -14,14 +14,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import {
   Plus,
   Search,
   Play,
@@ -30,15 +22,22 @@ import {
   MoreVertical,
   FileText,
   Trash2,
+  RefreshCw,
+  Terminal,
 } from 'lucide-react';
 import { containersApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { LogsDialog } from '@/components/containers/logs-dialog';
+import { ContainerDialog } from '@/components/containers/container-dialog';
+import { ContainerTerminal } from '@/components/containers/container-terminal';
+import { toast } from 'sonner';
 
 interface Container {
   id: string;
   name: string;
   image: string;
-  status: 'running' | 'stopped' | 'restarting';
+  status: string;
+  state: 'running' | 'stopped' | 'restarting' | 'paused' | 'exited';
   cpu: string;
   memory: string;
   ports: string[];
@@ -51,7 +50,16 @@ export default function ContainersPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'running' | 'stopped'>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [newContainer, setNewContainer] = useState({ name: '', image: '' });
+  const [logsDialog, setLogsDialog] = useState<{ open: boolean; id: string; name: string }>({
+    open: false,
+    id: '',
+    name: '',
+  });
+  const [terminalDialog, setTerminalDialog] = useState<{ open: boolean; id: string; name: string }>({
+    open: false,
+    id: '',
+    name: '',
+  });
 
   useEffect(() => {
     fetchContainers();
@@ -60,45 +68,38 @@ export default function ContainersPage() {
   const fetchContainers = async () => {
     try {
       const response = await containersApi.list();
-      setContainers(response.data || []);
+      // Map API response to Container interface
+      // API returns ContainerResponse with optional docker_info
+      const mapped = (response.data || []).map((c: any) => {
+        const dockerInfo = c.docker_info;
+        return {
+          id: c.id,
+          name: c.name,
+          image: c.image,
+          status: c.status || dockerInfo?.status || 'unknown',
+          state: dockerInfo?.state || 'stopped',
+          cpu: dockerInfo?.cpu_percent ? `${dockerInfo.cpu_percent}%` : '-',
+          memory: dockerInfo?.memory_usage ? formatBytes(dockerInfo.memory_usage) : '-',
+          ports: dockerInfo?.ports?.map((p: any) => `${p.host_port || p.container_port}`) || [],
+          created: c.created_at || c.created || '',
+        };
+      });
+      setContainers(mapped);
     } catch (error) {
       console.error('Failed to fetch containers:', error);
-      // Mock data for development
-      setContainers([
-        {
-          id: '1',
-          name: 'nginx',
-          image: 'nginx:alpine',
-          status: 'running',
-          cpu: '2%',
-          memory: '128MB',
-          ports: ['80', '443'],
-          created: '3 days ago',
-        },
-        {
-          id: '2',
-          name: 'postgres',
-          image: 'postgres:16',
-          status: 'running',
-          cpu: '5%',
-          memory: '512MB',
-          ports: ['5432'],
-          created: '7 days ago',
-        },
-        {
-          id: '3',
-          name: 'redis',
-          image: 'redis:7',
-          status: 'stopped',
-          cpu: '-',
-          memory: '64MB',
-          ports: ['6379'],
-          created: '2 hours ago',
-        },
-      ]);
+      // Show empty list on error - no mock data
+      setContainers([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
   const handleAction = async (id: string, action: 'start' | 'stop' | 'restart' | 'remove') => {
@@ -106,34 +107,25 @@ export default function ContainersPage() {
       switch (action) {
         case 'start':
           await containersApi.start(id);
+          toast.success('Container started');
           break;
         case 'stop':
           await containersApi.stop(id);
+          toast.success('Container stopped');
           break;
         case 'restart':
           await containersApi.restart(id);
+          toast.success('Container restarting');
           break;
         case 'remove':
           await containersApi.remove(id);
+          toast.success('Container removed');
           break;
       }
       fetchContainers();
     } catch (error) {
       console.error(`Failed to ${action} container:`, error);
-    }
-  };
-
-  const handleCreate = async () => {
-    try {
-      await containersApi.create({
-        name: newContainer.name,
-        image: newContainer.image,
-      });
-      setCreateDialogOpen(false);
-      setNewContainer({ name: '', image: '' });
-      fetchContainers();
-    } catch (error) {
-      console.error('Failed to create container:', error);
+      toast.error(`Failed to ${action} container`);
     }
   };
 
@@ -142,20 +134,23 @@ export default function ContainersPage() {
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.image.toLowerCase().includes(search.toLowerCase());
     const matchesFilter =
-      filter === 'all' || c.status === filter;
+      filter === 'all' || c.state === filter || (filter === 'stopped' && (c.state === 'stopped' || c.state === 'exited'));
     return matchesSearch && matchesFilter;
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (state: string) => {
+    switch (state) {
       case 'running':
         return <Badge className="bg-green-500/10 text-green-600">Running</Badge>;
       case 'stopped':
+      case 'exited':
         return <Badge variant="secondary">Stopped</Badge>;
       case 'restarting':
         return <Badge className="bg-yellow-500/10 text-yellow-600">Restarting</Badge>;
+      case 'paused':
+        return <Badge className="bg-orange-500/10 text-orange-600">Paused</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">{state}</Badge>;
     }
   };
 
@@ -181,46 +176,16 @@ export default function ContainersPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Containers</h1>
-          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                New Container
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Container</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Container Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="my-container"
-                    value={newContainer.name}
-                    onChange={(e) =>
-                      setNewContainer({ ...newContainer, name: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="image">Image</Label>
-                  <Input
-                    id="image"
-                    placeholder="nginx:latest"
-                    value={newContainer.image}
-                    onChange={(e) =>
-                      setNewContainer({ ...newContainer, image: e.target.value })
-                    }
-                  />
-                </div>
-                <Button onClick={handleCreate} className="w-full">
-                  Create
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={fetchContainers}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Container
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -257,9 +222,9 @@ export default function ContainersPage() {
                   <div
                     className={cn(
                       'h-3 w-3 rounded-full',
-                      container.status === 'running'
+                      container.state === 'running'
                         ? 'bg-green-500'
-                        : container.status === 'restarting'
+                        : container.state === 'restarting'
                         ? 'bg-yellow-500'
                         : 'bg-gray-400'
                     )}
@@ -267,7 +232,7 @@ export default function ContainersPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{container.name}</span>
-                      {getStatusBadge(container.status)}
+                      {getStatusBadge(container.state)}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span>{container.image}</span>
@@ -281,12 +246,27 @@ export default function ContainersPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLogsDialog({ open: true, id: container.id, name: container.name })}
+                  >
                     <FileText className="mr-1 h-4 w-4" />
                     Logs
                   </Button>
 
-                  {container.status === 'running' ? (
+                  {container.state === 'running' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTerminalDialog({ open: true, id: container.id, name: container.name })}
+                    >
+                      <Terminal className="mr-1 h-4 w-4" />
+                      Terminal
+                    </Button>
+                  )}
+
+                  {container.state === 'running' ? (
                     <Button
                       variant="outline"
                       size="sm"
@@ -339,6 +319,29 @@ export default function ContainersPage() {
             </div>
           )}
         </div>
+
+        {/* Logs Dialog */}
+        <LogsDialog
+          open={logsDialog.open}
+          onOpenChange={(open) => setLogsDialog({ ...logsDialog, open })}
+          containerId={logsDialog.id}
+          containerName={logsDialog.name}
+        />
+
+        {/* Create Container Dialog */}
+        <ContainerDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onSuccess={fetchContainers}
+        />
+
+        {/* Terminal Dialog */}
+        <ContainerTerminal
+          open={terminalDialog.open}
+          onOpenChange={(open) => setTerminalDialog({ ...terminalDialog, open })}
+          containerId={terminalDialog.id}
+          containerName={terminalDialog.name}
+        />
       </div>
     </AppLayout>
   );

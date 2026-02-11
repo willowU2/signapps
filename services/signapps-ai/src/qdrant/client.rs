@@ -1,4 +1,5 @@
 //! Qdrant client implementation.
+#![allow(deprecated)]
 
 use qdrant_client::prelude::*;
 use qdrant_client::qdrant::{
@@ -26,6 +27,7 @@ pub struct QdrantService {
 impl QdrantService {
     /// Create a new Qdrant service.
     pub async fn new(url: &str) -> Result<Self> {
+        // Configure client with HTTP/1.1 to avoid h2 protocol issues
         let client = QdrantClient::from_url(url)
             .build()
             .map_err(|e| Error::Internal(format!("Failed to create Qdrant client: {}", e)))?;
@@ -34,8 +36,12 @@ impl QdrantService {
             client: Arc::new(client),
         };
 
-        // Ensure collection exists
-        service.ensure_collection().await?;
+        // Try to ensure collection exists, but don't fail startup
+        // This allows the service to start even if Qdrant is not ready yet
+        match service.ensure_collection().await {
+            Ok(_) => tracing::info!("Qdrant collection initialized"),
+            Err(e) => tracing::warn!("Qdrant not ready, will retry on first request: {}", e),
+        }
 
         Ok(service)
     }

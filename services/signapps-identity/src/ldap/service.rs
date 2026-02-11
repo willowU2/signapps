@@ -96,6 +96,7 @@ impl LdapService {
     }
 
     /// Authenticate a user against LDAP.
+    #[allow(dead_code)]
     pub async fn authenticate(
         config: &LdapConfig,
         service_password: &str,

@@ -1,4 +1,5 @@
 //! Text chunking for document processing.
+#![allow(dead_code)]
 
 /// Configuration for text chunking.
 #[derive(Debug, Clone)]

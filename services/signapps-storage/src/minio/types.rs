@@ -1,4 +1,5 @@
 //! MinIO/S3 types.
+#![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
 

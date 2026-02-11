@@ -1,0 +1,6 @@
+# Playwright auth state files (contain session tokens)
+.auth/
+
+# Test results
+test-results/
+playwright-report/
