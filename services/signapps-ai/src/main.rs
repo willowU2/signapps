@@ -65,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
     let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
-    let qdrant_url = std::env::var("QDRANT_URL").unwrap_or_else(|_| "http://localhost:6333".into());
+    let qdrant_url = std::env::var("QDRANT_URL").unwrap_or_else(|_| "http://localhost:6334".into());
     let embeddings_url =
         std::env::var("EMBEDDINGS_URL").unwrap_or_else(|_| "http://localhost:8080".into());
     let llm_url = std::env::var("VLLM_URL").unwrap_or_else(|_| "http://localhost:8000".into());
@@ -85,7 +85,29 @@ async fn main() -> anyhow::Result<()> {
     let embeddings = EmbeddingsClient::new(&embeddings_url);
     tracing::info!("Embeddings client initialized");
 
-    let llm = LlmClient::new(&llm_url);
+    let llm = {
+        let initial = LlmClient::new(&llm_url);
+        if std::env::var("DEFAULT_MODEL").is_err() {
+            // Auto-discover model from vLLM /v1/models
+            match initial.list_models().await {
+                Ok(models) if !models.is_empty() => {
+                    let model_id = &models[0].id;
+                    tracing::info!("Auto-detected LLM model: {}", model_id);
+                    LlmClient::with_model(&llm_url, model_id)
+                }
+                Ok(_) => {
+                    tracing::warn!("No models found via auto-detection, using default");
+                    initial
+                }
+                Err(e) => {
+                    tracing::warn!("Could not auto-detect model ({}), using default", e);
+                    initial
+                }
+            }
+        } else {
+            initial
+        }
+    };
     tracing::info!("LLM client initialized");
 
     // Initialize RAG pipeline
