@@ -69,19 +69,14 @@ pub struct VolumeMount {
 }
 
 /// Restart policy.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum RestartPolicy {
+    #[default]
     No,
     Always,
     OnFailure,
     UnlessStopped,
-}
-
-impl Default for RestartPolicy {
-    fn default() -> Self {
-        Self::No
-    }
 }
 
 /// Resource limits for a container.

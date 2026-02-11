@@ -14,18 +14,13 @@ use signapps_common::{Error, Result};
 use crate::AppState;
 
 /// Thumbnail size options.
-#[derive(Debug, Clone, Copy, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ThumbnailSize {
     Small,  // 64x64
+    #[default]
     Medium, // 256x256
     Large,  // 512x512
-}
-
-impl Default for ThumbnailSize {
-    fn default() -> Self {
-        Self::Medium
-    }
 }
 
 impl ThumbnailSize {

@@ -6,12 +6,13 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Status of a tunnel connection.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TunnelStatus {
     /// Tunnel is connected and working
     Connected,
     /// Tunnel is disconnected
+    #[default]
     Disconnected,
     /// Tunnel is attempting to connect
     Connecting,
@@ -19,28 +20,17 @@ pub enum TunnelStatus {
     Error,
 }
 
-impl Default for TunnelStatus {
-    fn default() -> Self {
-        Self::Disconnected
-    }
-}
-
 /// Status of a relay connection.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RelayStatus {
     /// Relay is online and reachable
     Online,
     /// Relay is offline or unreachable
+    #[default]
     Offline,
     /// Relay connection is being tested
     Testing,
-}
-
-impl Default for RelayStatus {
-    fn default() -> Self {
-        Self::Offline
-    }
 }
 
 /// A tunnel configuration for exposing a local service.

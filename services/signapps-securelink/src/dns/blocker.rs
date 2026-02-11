@@ -161,7 +161,7 @@ impl AdBlocker {
             let mut lists = self.loaded_lists.write().unwrap();
             lists.push(LoadedBlocklist {
                 id: Uuid::new_v4(),
-                name: url.split('/').last().unwrap_or("unknown").to_string(),
+                name: url.split('/').next_back().unwrap_or("unknown").to_string(),
                 url: url.to_string(),
                 domain_count: count,
                 loaded_at: Utc::now(),
@@ -203,10 +203,9 @@ impl AdBlocker {
                         && domain != "local"
                         && !domain.ends_with(".local")
                         && !domain.ends_with(".localhost")
+                        && domains.insert(domain)
                     {
-                        if domains.insert(domain) {
-                            count += 1;
-                        }
+                        count += 1;
                     }
                 }
             }

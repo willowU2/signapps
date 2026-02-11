@@ -31,18 +31,13 @@ pub struct ShareLink {
 }
 
 /// Share access type.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum ShareAccessType {
     View,      // Can only view/preview
+    #[default]
     Download,  // Can download
     Edit,      // Can edit (for collaborative editing)
-}
-
-impl Default for ShareAccessType {
-    fn default() -> Self {
-        Self::Download
-    }
 }
 
 /// Create share request.

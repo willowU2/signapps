@@ -56,7 +56,7 @@ impl VpnService {
         let repo = DeviceRepository::new(&self.pool);
 
         // Check if device already exists
-        if let Some(_) = repo.find_by_name(name).await? {
+        if repo.find_by_name(name).await?.is_some() {
             return Err(Error::Validation(format!(
                 "Device '{}' already exists",
                 name

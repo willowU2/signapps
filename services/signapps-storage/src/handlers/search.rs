@@ -45,33 +45,23 @@ pub struct SearchQuery {
 }
 
 /// Sort field options.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SearchSortField {
     Name,
     Size,
     Modified,
+    #[default]
     Relevance,
 }
 
-impl Default for SearchSortField {
-    fn default() -> Self {
-        Self::Relevance
-    }
-}
-
 /// Sort order.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum SortOrder {
     Asc,
+    #[default]
     Desc,
-}
-
-impl Default for SortOrder {
-    fn default() -> Self {
-        Self::Desc
-    }
 }
 
 /// Search result.

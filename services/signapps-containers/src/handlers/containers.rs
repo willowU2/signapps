@@ -323,10 +323,8 @@ pub async fn delete(
         .ok_or_else(|| Error::NotFound(format!("Container {}", id)))?;
 
     // Check ownership if not admin
-    if claims.role < 2 {
-        if container.owner_id != Some(claims.sub) {
-            return Err(Error::ContainerNotOwned(id.to_string()));
-        }
+    if claims.role < 2 && container.owner_id != Some(claims.sub) {
+        return Err(Error::ContainerNotOwned(id.to_string()));
     }
 
     // Remove Docker container if exists

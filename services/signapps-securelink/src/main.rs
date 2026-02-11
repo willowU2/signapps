@@ -126,8 +126,10 @@ async fn main() -> std::io::Result<()> {
     let tunnel_client = TunnelClient::new(tunnel_config);
 
     // Create DNS config with defaults
-    let mut dns_config = DnsServiceConfig::default();
-    dns_config.adblock_enabled = config.adblock_enabled;
+    let dns_config = DnsServiceConfig {
+        adblock_enabled: config.adblock_enabled,
+        ..Default::default()
+    };
 
     // Default blocklists
     let default_blocklists = vec![

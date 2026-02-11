@@ -238,7 +238,7 @@ impl QdrantService {
         let result = info.result.ok_or_else(|| Error::Internal("No collection info".to_string()))?;
 
         // Get points count from segments_count as approximation
-        let segments_count = result.segments_count as u64;
+        let segments_count = result.segments_count;
         let status = match result.status() {
             qdrant_client::qdrant::CollectionStatus::Green => "green",
             qdrant_client::qdrant::CollectionStatus::Yellow => "yellow",

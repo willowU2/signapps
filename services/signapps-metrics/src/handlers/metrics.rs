@@ -75,9 +75,7 @@ pub async fn health_check(
     let metrics = state.collector.get_all_metrics().await;
 
     // Determine health status
-    let status = if metrics.memory.usage_percent > 95.0 {
-        "degraded"
-    } else if metrics.cpu.total_usage_percent > 90.0 {
+    let status = if metrics.memory.usage_percent > 95.0 || metrics.cpu.total_usage_percent > 90.0 {
         "degraded"
     } else {
         "healthy"

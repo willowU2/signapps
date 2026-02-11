@@ -66,7 +66,7 @@ pub async fn download(
     let content_length = object.content_length().unwrap_or(0);
 
     // Get filename from key
-    let filename = key.split('/').last().unwrap_or(&key);
+    let filename = key.split('/').next_back().unwrap_or(&key);
 
     // Collect body bytes from ByteStream
     let bytes = object.body.collect().await

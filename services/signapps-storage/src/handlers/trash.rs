@@ -168,7 +168,7 @@ async fn move_single_to_trash(
     let expires_at = now + chrono::Duration::days(TRASH_RETENTION_DAYS);
 
     // Create unique trash key
-    let trash_key = format!("{}/{}/{}", user_id, id, key.split('/').last().unwrap_or(key));
+    let trash_key = format!("{}/{}/{}", user_id, id, key.split('/').next_back().unwrap_or(key));
 
     // Move file to trash bucket
     state.minio.move_object(bucket, key, TRASH_BUCKET, &trash_key).await?;
@@ -180,7 +180,7 @@ async fn move_single_to_trash(
         original_bucket: bucket.to_string(),
         original_key: key.to_string(),
         trash_key,
-        filename: key.split('/').last().unwrap_or(key).to_string(),
+        filename: key.split('/').next_back().unwrap_or(key).to_string(),
         size: info.size,
         content_type: info.content_type.clone().unwrap_or_default(),
         deleted_by: user_id,

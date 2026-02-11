@@ -165,7 +165,7 @@ impl DnsServer {
         // Send response
         if let Some(_addr) = local_addr {
             let socket = UdpSocket::bind("0.0.0.0:0").await?;
-            socket.send_to(&response.to_bytes(), src).await?;
+            socket.send_to(response.to_bytes(), src).await?;
         }
 
         let elapsed = start.elapsed();

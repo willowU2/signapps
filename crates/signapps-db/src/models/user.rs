@@ -6,32 +6,22 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 /// User authentication provider.
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "VARCHAR", rename_all = "lowercase")]
 pub enum AuthProvider {
+    #[default]
     Local,
     Ldap,
 }
 
-impl Default for AuthProvider {
-    fn default() -> Self {
-        Self::Local
-    }
-}
-
 /// User role level.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, sqlx::Type)]
 #[repr(i16)]
 pub enum UserRole {
+    #[default]
     User = 1,
     Admin = 2,
     SuperAdmin = 3,
-}
-
-impl Default for UserRole {
-    fn default() -> Self {
-        Self::User
-    }
 }
 
 /// User entity from the database.

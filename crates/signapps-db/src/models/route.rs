@@ -6,10 +6,11 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 /// Proxy route mode.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum RouteMode {
     /// Standard reverse proxy.
+    #[default]
     Proxy,
     /// Redirect to another URL.
     Redirect,
@@ -17,12 +18,6 @@ pub enum RouteMode {
     Static,
     /// Load balancer.
     LoadBalancer,
-}
-
-impl Default for RouteMode {
-    fn default() -> Self {
-        Self::Proxy
-    }
 }
 
 /// SmartShield configuration for rate limiting.

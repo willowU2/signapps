@@ -144,7 +144,7 @@ impl UserRepository {
         .bind(id)
         .bind(&update.email)
         .bind(&update.display_name)
-        .bind(&update.role)
+        .bind(update.role)
         .bind(&update.ldap_dn)
         .bind(&update.ldap_groups)
         .fetch_one(pool)

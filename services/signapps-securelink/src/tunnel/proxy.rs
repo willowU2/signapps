@@ -94,6 +94,7 @@ impl LocalProxy {
         };
 
         // Add headers (skip hop-by-hop)
+        #[allow(clippy::collapsible_if)]
         for (name, value) in &headers {
             if !is_hop_by_hop_header(name) {
                 if let Ok(header_name) = reqwest::header::HeaderName::from_bytes(name.as_bytes()) {

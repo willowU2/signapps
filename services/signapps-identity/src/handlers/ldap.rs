@@ -208,7 +208,6 @@ pub async fn sync_users(
                     role: if ldap_user.is_admin { Some(2) } else { Some(1) },
                     ldap_dn: Some(ldap_user.dn.clone()),
                     ldap_groups: Some(ldap_user.groups.clone()),
-                    ..Default::default()
                 };
                 if let Err(e) = UserRepository::update(&state.pool, existing.id, update).await {
                     sync_result.errors.push(format!("Failed to update {}: {}", ldap_user.username, e));

@@ -291,7 +291,7 @@ impl TunnelClient {
         let auth_json = serde_json::to_string(&auth_msg)
             .map_err(|e| Error::Internal(format!("Failed to serialize auth: {}", e)))?;
 
-        write.send(Message::Text(auth_json.into())).await
+        write.send(Message::Text(auth_json)).await
             .map_err(|e| Error::Internal(format!("Failed to send auth: {}", e)))?;
 
         // Wait for auth response
@@ -381,7 +381,7 @@ impl TunnelClient {
                     if let Some(msg) = msg {
                         let json = serde_json::to_string(&msg)
                             .expect("Failed to serialize message");
-                        if let Err(e) = write.send(Message::Text(json.into())).await {
+                        if let Err(e) = write.send(Message::Text(json)).await {
                             error!("Failed to send message: {}", e);
                             break;
                         }
@@ -489,6 +489,7 @@ impl TunnelClient {
         // Add headers
         for (name, value) in headers {
             // Skip hop-by-hop headers
+            #[allow(clippy::collapsible_if)]
             if !is_hop_by_hop_header(&name) {
                 if let Ok(header_name) = reqwest::header::HeaderName::from_bytes(name.as_bytes()) {
                     if let Ok(header_value) = reqwest::header::HeaderValue::from_str(&value) {

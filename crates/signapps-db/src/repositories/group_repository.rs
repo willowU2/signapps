@@ -51,7 +51,7 @@ impl<'a> GroupRepository<'a> {
         )
         .bind(&group.name)
         .bind(&group.description)
-        .bind(&group.parent_id)
+        .bind(group.parent_id)
         .fetch_one(self.pool.inner())
         .await?;
 
@@ -218,7 +218,7 @@ impl<'a> GroupRepository<'a> {
         .bind(&webhook.url)
         .bind(&webhook.secret)
         .bind(&webhook.events)
-        .bind(&webhook.headers.unwrap_or_default())
+        .bind(webhook.headers.unwrap_or_default())
         .bind(webhook.enabled)
         .fetch_one(self.pool.inner())
         .await?;

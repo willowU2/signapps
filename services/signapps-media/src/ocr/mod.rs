@@ -240,13 +240,13 @@ fn parse_rapidocr_response(response: &serde_json::Value) -> (String, Vec<TextBlo
                         text_parts.push(text.to_string());
 
                         // Extract bounding box from first element [[x1,y1],[x2,y2],[x3,y3],[x4,y4]]
-                        let bbox = if let Some(points) = arr.get(0).and_then(|p| p.as_array()) {
+                        let bbox = if let Some(points) = arr.first().and_then(|p| p.as_array()) {
                             if points.len() >= 4 {
                                 let get_point = |idx: usize| -> (f32, f32) {
                                     points.get(idx)
                                         .and_then(|p| p.as_array())
                                         .map(|coords| {
-                                            let x = coords.get(0).and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+                                            let x = coords.first().and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
                                             let y = coords.get(1).and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
                                             (x, y)
                                         })
