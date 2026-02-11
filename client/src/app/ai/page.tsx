@@ -68,6 +68,8 @@ import {
 import { aiApi, AIStats, Model, ProviderInfo, KnowledgeBase } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { DocumentUpload } from '@/components/ai/document-upload';
+import { VoiceChatButton } from '@/components/ai/voice-chat-button';
+import { useVoiceChat } from '@/hooks/use-voice-chat';
 import { toast } from 'sonner';
 
 // Types for conversations
@@ -208,6 +210,8 @@ export default function AIPage() {
   const [activeTab, setActiveTab] = useState<'chat' | 'knowledge'>('chat');
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const accumulatedRef = useRef('');
 
   // Load conversations from localStorage on mount
   useEffect(() => {
@@ -501,8 +505,9 @@ export default function AIPage() {
     toast.success('Conversation exportee');
   }, [messages, conversations, activeConversationId, selectedKnowledgeBase]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleSend = async (textOverride?: string) => {
+    const text = textOverride || input.trim();
+    if (!text || isLoading) return;
 
     // Create new conversation if none active
     if (!activeConversationId) {
@@ -512,17 +517,21 @@ export default function AIPage() {
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: input,
+      content: text,
       timestamp: new Date(),
     };
 
-    const currentInput = input;
     setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    if (!textOverride) setInput('');
     setIsLoading(true);
+    accumulatedRef.current = '';
 
     // Create a placeholder assistant message for streaming
     const assistantMessageId = crypto.randomUUID();
+
+    // Create AbortController for this request
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
       // Try streaming first with native fetch
@@ -536,11 +545,12 @@ export default function AIPage() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          question: currentInput,
+          question: text,
           model: selectedModel || undefined,
           provider: selectedProvider || undefined,
           collection: selectedKnowledgeBase || undefined,
         }),
+        signal: controller.signal,
       });
 
       if (streamResponse.ok && streamResponse.body) {
@@ -554,57 +564,68 @@ export default function AIPage() {
 
         const reader = streamResponse.body.getReader();
         const decoder = new TextDecoder();
-        let accumulated = '';
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6).trim();
-              if (data === '[DONE]') continue;
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.token || parsed.content || parsed.text) {
-                  accumulated += parsed.token || parsed.content || parsed.text || '';
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6).trim();
+                if (data === '[DONE]') continue;
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.token || parsed.content || parsed.text) {
+                    accumulatedRef.current +=
+                      parsed.token || parsed.content || parsed.text || '';
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
+                        ? { ...m, content: accumulatedRef.current }
+                        : m
+                    ));
+                  }
+                  if (parsed.sources) {
+                    setMessages(prev => prev.map(m =>
+                      m.id === assistantMessageId
+                        ? {
+                            ...m,
+                            sources: parsed.sources.map(
+                              (s: { filename: string; score?: number }) => ({
+                                filename: s.filename,
+                                score: s.score,
+                              })
+                            ),
+                          }
+                        : m
+                    ));
+                  }
+                } catch {
+                  // If not JSON, treat as plain text token
+                  accumulatedRef.current += data;
                   setMessages(prev => prev.map(m =>
                     m.id === assistantMessageId
-                      ? { ...m, content: accumulated }
+                      ? { ...m, content: accumulatedRef.current }
                       : m
                   ));
                 }
-                if (parsed.sources) {
-                  setMessages(prev => prev.map(m =>
-                    m.id === assistantMessageId
-                      ? {
-                          ...m,
-                          sources: parsed.sources.map((s: { filename: string; score?: number }) => ({
-                            filename: s.filename,
-                            score: s.score,
-                          })),
-                        }
-                      : m
-                  ));
-                }
-              } catch {
-                // If not JSON, treat as plain text token
-                accumulated += data;
-                setMessages(prev => prev.map(m =>
-                  m.id === assistantMessageId
-                    ? { ...m, content: accumulated }
-                    : m
-                ));
               }
             }
+          }
+        } catch (err) {
+          // AbortError means the user interrupted — keep partial text
+          if (err instanceof DOMException && err.name === 'AbortError') {
+            // Partial text is already in the message via accumulatedRef
+          } else {
+            throw err;
           }
         }
 
         // If we got no content from streaming, remove the empty message
-        if (!accumulated) {
+        if (!accumulatedRef.current) {
           setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
           throw new Error('Empty streaming response');
         }
@@ -612,43 +633,58 @@ export default function AIPage() {
         // Streaming not available, fallback to non-streaming
         throw new Error('Streaming not available');
       }
-    } catch {
-      // Remove any empty streaming message
-      setMessages(prev => prev.filter(m => m.id === assistantMessageId ? m.content !== '' : true));
+    } catch (err) {
+      // If aborted with partial content, keep it
+      if (
+        err instanceof DOMException && err.name === 'AbortError' &&
+        accumulatedRef.current
+      ) {
+        // Partial response preserved
+      } else {
+        // Remove any empty streaming message
+        setMessages(prev =>
+          prev.filter(m =>
+            m.id === assistantMessageId ? m.content !== '' : true
+          )
+        );
 
-      // Fallback: use non-streaming chat API
-      try {
-        const response = await aiApi.chat(currentInput, {
-          model: selectedModel || undefined,
-          provider: selectedProvider || undefined,
-          collection: selectedKnowledgeBase || undefined,
-        });
+        // Fallback: use non-streaming chat API
+        try {
+          const response = await aiApi.chat(text, {
+            model: selectedModel || undefined,
+            provider: selectedProvider || undefined,
+            collection: selectedKnowledgeBase || undefined,
+          });
 
-        const assistantMessage: Message = {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: response.data.answer || 'Je n\'ai pas pu generer de reponse.',
-          sources: response.data.sources?.map(s => ({
-            filename: s.filename,
-            score: s.score,
-          })),
-          timestamp: new Date(),
-        };
+          const assistantMessage: Message = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content:
+              response.data.answer || "Je n'ai pas pu generer de reponse.",
+            sources: response.data.sources?.map(s => ({
+              filename: s.filename,
+              score: s.score,
+            })),
+            timestamp: new Date(),
+          };
 
-        setMessages(prev => [...prev, assistantMessage]);
-      } catch (error) {
-        console.error('Chat error:', error);
+          setMessages(prev => [...prev, assistantMessage]);
+        } catch (error) {
+          console.error('Chat error:', error);
 
-        const errorMessage: Message = {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: 'Desole, je n\'ai pas pu traiter votre demande. Le service IA est peut-etre indisponible. Verifiez que Ollama/vLLM est en cours d\'execution.',
-          timestamp: new Date(),
-        };
+          const errorMessage: Message = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content:
+              "Desole, je n'ai pas pu traiter votre demande. Le service IA est peut-etre indisponible. Verifiez que Ollama/vLLM est en cours d'execution.",
+            timestamp: new Date(),
+          };
 
-        setMessages(prev => [...prev, errorMessage]);
+          setMessages(prev => [...prev, errorMessage]);
+        }
       }
     } finally {
+      abortControllerRef.current = null;
       setIsLoading(false);
     }
   };
@@ -707,6 +743,14 @@ export default function AIPage() {
       setIsLoading(false);
     }
   };
+
+  // Voice chat hook
+  const { voiceEnabled, voiceState, toggleVoice } = useVoiceChat({
+    onTranscript: (text) => handleSend(text),
+    abortControllerRef,
+    getStreamingText: () => accumulatedRef.current,
+    isLoading,
+  });
 
   return (
     <AppLayout>
@@ -1030,6 +1074,11 @@ export default function AIPage() {
                       disabled={isLoading}
                       className="flex-1"
                     />
+                    <VoiceChatButton
+                      voiceEnabled={voiceEnabled}
+                      voiceState={voiceState}
+                      onToggle={toggleVoice}
+                    />
                     <Button
                       variant="outline"
                       onClick={handleSearch}
@@ -1038,12 +1087,14 @@ export default function AIPage() {
                     >
                       <Search className="h-4 w-4" />
                     </Button>
-                    <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
+                    <Button onClick={() => handleSend()} disabled={isLoading || !input.trim()}>
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Appuyez sur Entree pour discuter avec l&apos;IA, ou cliquez sur Recherche pour une recherche semantique
+                    {voiceEnabled
+                      ? 'Mode vocal actif — parlez, le micro detecte automatiquement votre voix'
+                      : 'Appuyez sur Entree pour discuter avec l\u0027IA, ou cliquez sur Recherche pour une recherche semantique'}
                   </p>
                 </div>
               </div>
