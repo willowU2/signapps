@@ -278,7 +278,10 @@ export const aiApi = {
   removeDocument: (documentId: string) =>
     aiApiClient.delete(`/ai/index/${documentId}`),
   stats: () => aiApiClient.get<AIStats>('/ai/stats'),
-  models: () => aiApiClient.get<ModelsResponse>('/ai/models'),
+  models: (provider?: string) =>
+    aiApiClient.get<ModelsResponse>('/ai/models', {
+      params: provider ? { provider } : undefined,
+    }),
   providers: () => aiApiClient.get<ProvidersResponse>('/ai/providers'),
   // Knowledge Bases / Collections
   listCollections: () => aiApiClient.get<CollectionsResponse>('/ai/collections'),

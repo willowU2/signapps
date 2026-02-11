@@ -22,9 +22,8 @@ pub struct ChatRequest {
     /// Optional model to use (overrides default).
     pub model: Option<String>,
     /// Optional provider to use (ollama, vllm, openai, anthropic).
-    #[allow(dead_code)]
     pub provider: Option<String>,
-    /// Optional conversation ID for context.
+    /// Optional conversation ID for context (reserved for future use).
     #[allow(dead_code)]
     pub conversation_id: Option<Uuid>,
     /// Whether to include sources in response.
@@ -79,7 +78,11 @@ pub async fn chat(
 ) -> Result<Json<ChatResponse>> {
     let response = state
         .rag
-        .query_with_model(&payload.question, payload.model.as_deref())
+        .query_with_provider(
+            &payload.question,
+            payload.provider.as_deref(),
+            payload.model.as_deref(),
+        )
         .await?;
 
     let sources: Vec<SourceReference> = if payload.include_sources {
@@ -111,9 +114,10 @@ pub async fn chat_stream(
     Json(payload): Json<ChatRequest>,
 ) -> Sse<impl Stream<Item = std::result::Result<Event, Infallible>>> {
     let model = payload.model.clone();
+    let provider = payload.provider.clone();
     let stream = async_stream::stream! {
         // First, retrieve sources
-        match state.rag.query_stream_with_model(&payload.question, model.as_deref()).await {
+        match state.rag.query_stream_with_provider(&payload.question, provider.as_deref(), model.as_deref()).await {
             Ok((sources, mut token_rx)) => {
                 // Send sources first
                 if payload.include_sources {

@@ -11,6 +11,7 @@ use signapps_common::middleware::{
 use signapps_common::{AuthState, JwtConfig};
 use signapps_db::DatabasePool;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -22,7 +23,9 @@ mod rag;
 
 use embeddings::EmbeddingsClient;
 use handlers::{chat, health, index, models, providers, search};
-use llm::LlmClient;
+use llm::{
+    create_provider, LlmProviderType, ProviderConfig, ProviderRegistry,
+};
 use qdrant::QdrantService;
 use rag::RagPipeline;
 
@@ -32,7 +35,7 @@ pub struct AppState {
     pub pool: DatabasePool,
     pub qdrant: QdrantService,
     pub embeddings: EmbeddingsClient,
-    pub llm: LlmClient,
+    pub providers: Arc<ProviderRegistry>,
     pub rag: RagPipeline,
     pub jwt_config: JwtConfig,
 }
@@ -64,11 +67,12 @@ async fn main() -> anyhow::Result<()> {
     // Load configuration
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
-    let qdrant_url = std::env::var("QDRANT_URL").unwrap_or_else(|_| "http://localhost:6334".into());
+    let jwt_secret =
+        std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
+    let qdrant_url =
+        std::env::var("QDRANT_URL").unwrap_or_else(|_| "http://localhost:6334".into());
     let embeddings_url =
         std::env::var("EMBEDDINGS_URL").unwrap_or_else(|_| "http://localhost:8080".into());
-    let llm_url = std::env::var("VLLM_URL").unwrap_or_else(|_| "http://localhost:8000".into());
 
     // Initialize database pool
     let pool = signapps_db::create_pool(&database_url).await?;
@@ -85,33 +89,174 @@ async fn main() -> anyhow::Result<()> {
     let embeddings = EmbeddingsClient::new(&embeddings_url);
     tracing::info!("Embeddings client initialized");
 
-    let llm = {
-        let initial = LlmClient::new(&llm_url);
-        if std::env::var("DEFAULT_MODEL").is_err() {
-            // Auto-discover model from vLLM /v1/models
-            match initial.list_models().await {
-                Ok(models) if !models.is_empty() => {
-                    let model_id = &models[0].id;
-                    tracing::info!("Auto-detected LLM model: {}", model_id);
-                    LlmClient::with_model(&llm_url, model_id)
-                }
-                Ok(_) => {
-                    tracing::warn!("No models found via auto-detection, using default");
-                    initial
+    // Build provider registry from environment variables
+    let requested_default =
+        std::env::var("LLM_PROVIDER").unwrap_or_default();
+    let mut registry =
+        ProviderRegistry::new(requested_default.clone());
+    let mut first_provider_id: Option<String> = None;
+
+    // Helper macro would be nice, but let's keep it explicit.
+
+    // vLLM
+    if let Ok(url) = std::env::var("VLLM_URL") {
+        if !url.is_empty() {
+            let default_model = std::env::var("VLLM_MODEL")
+                .or_else(|_| std::env::var("DEFAULT_MODEL"))
+                .unwrap_or_else(|_| {
+                    "meta-llama/Llama-3.2-3B-Instruct".to_string()
+                });
+            let config = ProviderConfig {
+                provider_type: LlmProviderType::Vllm,
+                base_url: url,
+                api_key: None,
+                default_model,
+                enabled: true,
+            };
+            match create_provider(&config) {
+                Ok(provider) => {
+                    tracing::info!("Registered vLLM provider");
+                    if first_provider_id.is_none() {
+                        first_provider_id = Some("vllm".to_string());
+                    }
+                    registry.register("vllm", config, provider);
                 }
                 Err(e) => {
-                    tracing::warn!("Could not auto-detect model ({}), using default", e);
-                    initial
+                    tracing::warn!("Failed to create vLLM provider: {}", e)
                 }
             }
-        } else {
-            initial
         }
-    };
-    tracing::info!("LLM client initialized");
+    }
+
+    // Ollama
+    if let Ok(url) = std::env::var("OLLAMA_URL") {
+        if !url.is_empty() {
+            let default_model = std::env::var("OLLAMA_MODEL")
+                .unwrap_or_else(|_| "llama3.2:3b".to_string());
+            let config = ProviderConfig {
+                provider_type: LlmProviderType::Ollama,
+                base_url: url,
+                api_key: None,
+                default_model,
+                enabled: true,
+            };
+            match create_provider(&config) {
+                Ok(provider) => {
+                    tracing::info!("Registered Ollama provider");
+                    if first_provider_id.is_none() {
+                        first_provider_id =
+                            Some("ollama".to_string());
+                    }
+                    registry.register("ollama", config, provider);
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "Failed to create Ollama provider: {}",
+                        e
+                    )
+                }
+            }
+        }
+    }
+
+    // OpenAI
+    if let Ok(key) = std::env::var("OPENAI_API_KEY") {
+        if !key.is_empty() {
+            let default_model = std::env::var("OPENAI_MODEL")
+                .unwrap_or_else(|_| "gpt-4o-mini".to_string());
+            let config = ProviderConfig {
+                provider_type: LlmProviderType::OpenAI,
+                base_url: "https://api.openai.com".to_string(),
+                api_key: Some(key),
+                default_model,
+                enabled: true,
+            };
+            match create_provider(&config) {
+                Ok(provider) => {
+                    tracing::info!("Registered OpenAI provider");
+                    if first_provider_id.is_none() {
+                        first_provider_id =
+                            Some("openai".to_string());
+                    }
+                    registry.register("openai", config, provider);
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "Failed to create OpenAI provider: {}",
+                        e
+                    )
+                }
+            }
+        }
+    }
+
+    // Anthropic
+    if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
+        if !key.is_empty() {
+            let default_model = std::env::var("ANTHROPIC_MODEL")
+                .unwrap_or_else(|_| {
+                    "claude-3-5-sonnet-20241022".to_string()
+                });
+            let config = ProviderConfig {
+                provider_type: LlmProviderType::Anthropic,
+                base_url: "https://api.anthropic.com".to_string(),
+                api_key: Some(key),
+                default_model,
+                enabled: true,
+            };
+            match create_provider(&config) {
+                Ok(provider) => {
+                    tracing::info!("Registered Anthropic provider");
+                    if first_provider_id.is_none() {
+                        first_provider_id =
+                            Some("anthropic".to_string());
+                    }
+                    registry
+                        .register("anthropic", config, provider);
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "Failed to create Anthropic provider: {}",
+                        e
+                    )
+                }
+            }
+        }
+    }
+
+    // Resolve default: if the requested default is invalid, use the first registered one
+    if registry.get_default().is_err() {
+        if let Some(fallback) = first_provider_id {
+            tracing::info!(
+                "Default provider '{}' not available, falling back to '{}'",
+                requested_default,
+                fallback
+            );
+            registry.set_default(fallback);
+        }
+    }
+
+    if registry.is_empty() {
+        tracing::warn!(
+            "No LLM providers configured! Set VLLM_URL, OLLAMA_URL, \
+             OPENAI_API_KEY, or ANTHROPIC_API_KEY."
+        );
+    } else {
+        tracing::info!(
+            "Provider registry ready: {} provider(s), default='{}'",
+            registry.list_providers().len(),
+            registry.default_provider_id()
+        );
+    }
+
+    let providers = Arc::new(registry);
 
     // Initialize RAG pipeline
-    let rag = RagPipeline::new(embeddings.clone(), qdrant.clone(), llm.clone());
+    let rag = RagPipeline::new(
+        embeddings.clone(),
+        qdrant.clone(),
+        Arc::clone(&providers),
+    );
     tracing::info!("RAG pipeline initialized");
 
     // JWT configuration
@@ -128,7 +273,7 @@ async fn main() -> anyhow::Result<()> {
         pool,
         qdrant,
         embeddings,
-        llm,
+        providers,
         rag,
         jwt_config,
     };
@@ -154,7 +299,8 @@ async fn main() -> anyhow::Result<()> {
 /// Create the application router with all routes.
 fn create_router(state: AppState) -> Router {
     // Public routes (health check)
-    let public_routes = Router::new().route("/health", get(health::health_check));
+    let public_routes =
+        Router::new().route("/health", get(health::health_check));
 
     // Protected AI routes
     let ai_routes = Router::new()

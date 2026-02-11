@@ -1,11 +1,13 @@
 //! RAG pipeline orchestrating embeddings, Qdrant, and LLM.
 
+use std::sync::Arc;
+
 use signapps_common::Result;
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
 use crate::embeddings::EmbeddingsClient;
-use crate::llm::{ChatMessage, LlmClient};
+use crate::llm::{ChatMessage, ProviderRegistry};
 use crate::qdrant::{DocumentChunk, QdrantService, SearchResult};
 
 use super::chunker::TextChunker;
@@ -42,36 +44,24 @@ impl Default for RagConfig {
 pub struct RagPipeline {
     embeddings: EmbeddingsClient,
     qdrant: QdrantService,
-    llm: LlmClient,
+    providers: Arc<ProviderRegistry>,
     chunker: TextChunker,
     config: RagConfig,
 }
 
 impl RagPipeline {
     /// Create a new RAG pipeline.
-    pub fn new(embeddings: EmbeddingsClient, qdrant: QdrantService, llm: LlmClient) -> Self {
-        Self {
-            embeddings,
-            qdrant,
-            llm,
-            chunker: TextChunker::new(),
-            config: RagConfig::default(),
-        }
-    }
-
-    /// Create a RAG pipeline with custom config.
-    pub fn with_config(
+    pub fn new(
         embeddings: EmbeddingsClient,
         qdrant: QdrantService,
-        llm: LlmClient,
-        config: RagConfig,
+        providers: Arc<ProviderRegistry>,
     ) -> Self {
         Self {
             embeddings,
             qdrant,
-            llm,
+            providers,
             chunker: TextChunker::new(),
-            config,
+            config: RagConfig::default(),
         }
     }
 
@@ -107,7 +97,8 @@ impl RagPipeline {
             .collect();
 
         // Generate embeddings for all chunks
-        let texts: Vec<String> = chunks.iter().map(|c| c.content.clone()).collect();
+        let texts: Vec<String> =
+            chunks.iter().map(|c| c.content.clone()).collect();
         let embeddings = self.embeddings.embed_batch(&texts).await?;
 
         // Store in Qdrant
@@ -124,12 +115,19 @@ impl RagPipeline {
     }
 
     /// Remove a document from the index.
-    pub async fn remove_document(&self, document_id: Uuid) -> Result<()> {
+    pub async fn remove_document(
+        &self,
+        document_id: Uuid,
+    ) -> Result<()> {
         self.qdrant.delete_document(document_id).await
     }
 
     /// Search for relevant documents.
-    pub async fn search(&self, query: &str, limit: Option<u64>) -> Result<Vec<SearchResult>> {
+    pub async fn search(
+        &self,
+        query: &str,
+        limit: Option<u64>,
+    ) -> Result<Vec<SearchResult>> {
         let query_embedding = self.embeddings.embed(query).await?;
 
         let results = self
@@ -144,17 +142,29 @@ impl RagPipeline {
         Ok(results)
     }
 
-    /// Query with RAG (retrieve + generate).
+    /// Query with RAG (retrieve + generate), using default provider.
     pub async fn query(&self, question: &str) -> Result<RagResponse> {
-        self.query_with_model(question, None).await
+        self.query_with_provider(question, None, None).await
     }
 
-    /// Query with RAG using a specific model.
+    /// Query with RAG using a specific model (backward compat).
     pub async fn query_with_model(
         &self,
         question: &str,
         model: Option<&str>,
     ) -> Result<RagResponse> {
+        self.query_with_provider(question, None, model).await
+    }
+
+    /// Query with RAG using a specific provider and model.
+    pub async fn query_with_provider(
+        &self,
+        question: &str,
+        provider_id: Option<&str>,
+        model: Option<&str>,
+    ) -> Result<RagResponse> {
+        let provider = self.providers.resolve(provider_id)?;
+
         // 1. Retrieve relevant context
         let search_results = self.search(question, None).await?;
 
@@ -164,9 +174,8 @@ impl RagPipeline {
         // 3. Generate response with LLM
         let messages = self.build_messages(&context, question);
 
-        let response = self
-            .llm
-            .chat_with_model(
+        let response = provider
+            .chat(
                 messages,
                 model,
                 Some(self.config.max_tokens),
@@ -191,20 +200,36 @@ impl RagPipeline {
         })
     }
 
-    /// Query with streaming response.
+    /// Query with streaming response, using default provider.
     pub async fn query_stream(
         &self,
         question: &str,
-    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
-        self.query_stream_with_model(question, None).await
+    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)>
+    {
+        self.query_stream_with_provider(question, None, None).await
     }
 
-    /// Query with streaming response using a specific model.
+    /// Query with streaming response using a specific model (backward compat).
     pub async fn query_stream_with_model(
         &self,
         question: &str,
         model: Option<&str>,
-    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
+    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)>
+    {
+        self.query_stream_with_provider(question, None, model)
+            .await
+    }
+
+    /// Query with streaming response using a specific provider and model.
+    pub async fn query_stream_with_provider(
+        &self,
+        question: &str,
+        provider_id: Option<&str>,
+        model: Option<&str>,
+    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)>
+    {
+        let provider = self.providers.resolve(provider_id)?;
+
         // 1. Retrieve relevant context
         let search_results = self.search(question, None).await?;
 
@@ -214,9 +239,8 @@ impl RagPipeline {
         // 3. Stream response from LLM
         let messages = self.build_messages(&context, question);
 
-        let stream = self
-            .llm
-            .chat_stream_with_model(
+        let stream = provider
+            .chat_stream(
                 messages,
                 model,
                 Some(self.config.max_tokens),
@@ -236,7 +260,14 @@ impl RagPipeline {
         results
             .iter()
             .enumerate()
-            .map(|(i, r)| format!("[Source {} - {}]\n{}", i + 1, r.filename, r.content))
+            .map(|(i, r)| {
+                format!(
+                    "[Source {} - {}]\n{}",
+                    i + 1,
+                    r.filename,
+                    r.content
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n\n---\n\n")
     }
@@ -244,7 +275,11 @@ impl RagPipeline {
     /// Build chat messages for RAG query.
     /// Merges system prompt into user message for Mistral compatibility
     /// (Mistral requires strictly alternating user/assistant roles).
-    fn build_messages(&self, context: &str, question: &str) -> Vec<ChatMessage> {
+    fn build_messages(
+        &self,
+        context: &str,
+        question: &str,
+    ) -> Vec<ChatMessage> {
         let user_content = if !context.is_empty() {
             format!(
                 "{}\n\nVoici le contexte pertinent:\n\n{}\n\n---\n\nQuestion: {}",

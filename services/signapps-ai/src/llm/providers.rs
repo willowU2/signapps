@@ -1,5 +1,4 @@
 //! LLM Provider abstraction supporting multiple backends.
-#![allow(dead_code)]
 
 use async_trait::async_trait;
 use reqwest::Client;

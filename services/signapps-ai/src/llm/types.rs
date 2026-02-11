@@ -1,5 +1,4 @@
 //! LLM types for chat completion.
-#![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};
 
@@ -84,6 +83,7 @@ pub struct Usage {
 
 /// Streaming chat chunk.
 #[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
 pub struct ChatChunk {
     pub id: String,
     pub object: String,
@@ -94,6 +94,7 @@ pub struct ChatChunk {
 
 /// A streaming choice delta.
 #[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
 pub struct ChunkChoice {
     pub index: i32,
     pub delta: Delta,
@@ -102,6 +103,7 @@ pub struct ChunkChoice {
 
 /// Delta content in streaming.
 #[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
 pub struct Delta {
     #[serde(default)]
     pub role: Option<Role>,
@@ -111,6 +113,7 @@ pub struct Delta {
 
 /// Available models response (vLLM/OpenAI format).
 #[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
 pub struct ModelsResponse {
     pub object: String,
     pub data: Vec<ModelInfo>,
@@ -134,6 +137,7 @@ pub struct OllamaModelsResponse {
 
 /// Ollama model information.
 #[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
 pub struct OllamaModel {
     pub name: String,
     #[serde(default)]

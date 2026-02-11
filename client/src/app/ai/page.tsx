@@ -305,24 +305,34 @@ export default function AIPage() {
   }, [selectedProvider, selectedModel]);
 
   const fetchModels = useCallback(async () => {
+    if (!selectedProvider) return;
     setLoadingModels(true);
     try {
-      const response = await aiApi.models();
+      const response = await aiApi.models(selectedProvider);
       const modelList = response.data.models || [];
       setModels(modelList);
-      if (modelList.length > 0 && !selectedModel) {
+      // Auto-select the provider's default model, or first available
+      const provider = providers.find(p => p.id === selectedProvider);
+      if (provider && modelList.some(m => m.id === provider.default_model)) {
+        setSelectedModel(provider.default_model);
+      } else if (modelList.length > 0) {
         setSelectedModel(modelList[0].id);
       }
     } catch (error) {
       console.error('Failed to fetch models:', error);
-      setModels([{ id: 'default', name: 'Default Model' }]);
-      if (!selectedModel) {
+      // Fallback: use the provider's default model
+      const provider = providers.find(p => p.id === selectedProvider);
+      if (provider) {
+        setModels([{ id: provider.default_model, name: provider.default_model }]);
+        setSelectedModel(provider.default_model);
+      } else {
+        setModels([{ id: 'default', name: 'Default Model' }]);
         setSelectedModel('default');
       }
     } finally {
       setLoadingModels(false);
     }
-  }, [selectedModel]);
+  }, [selectedProvider, providers]);
 
   const fetchKnowledgeBases = useCallback(async () => {
     setLoadingKnowledgeBases(true);
@@ -351,9 +361,15 @@ export default function AIPage() {
   useEffect(() => {
     fetchStats();
     fetchProviders();
-    fetchModels();
     fetchKnowledgeBases();
-  }, [fetchStats, fetchProviders, fetchModels, fetchKnowledgeBases]);
+  }, [fetchStats, fetchProviders, fetchKnowledgeBases]);
+
+  // Re-fetch models when provider changes
+  useEffect(() => {
+    if (selectedProvider) {
+      fetchModels();
+    }
+  }, [selectedProvider, fetchModels]);
 
   useEffect(() => {
     if (scrollRef.current) {

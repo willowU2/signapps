@@ -1,7 +1,10 @@
 //! Model management handlers.
 
-use axum::{extract::State, Json};
-use serde::Serialize;
+use axum::{
+    extract::{Query, State},
+    Json,
+};
+use serde::{Deserialize, Serialize};
 use signapps_common::Result;
 
 use crate::AppState;
@@ -20,10 +23,21 @@ pub struct ModelsResponse {
     pub models: Vec<ModelInfo>,
 }
 
-/// List available models.
+/// Query parameters for list_models.
+#[derive(Debug, Deserialize)]
+pub struct ModelsQuery {
+    pub provider: Option<String>,
+}
+
+/// List available models (optionally for a specific provider).
 #[tracing::instrument(skip(state))]
-pub async fn list_models(State(state): State<AppState>) -> Result<Json<ModelsResponse>> {
-    let models = state.llm.list_models().await?;
+pub async fn list_models(
+    State(state): State<AppState>,
+    Query(query): Query<ModelsQuery>,
+) -> Result<Json<ModelsResponse>> {
+    let provider =
+        state.providers.resolve(query.provider.as_deref())?;
+    let models = provider.list_models().await?;
 
     let model_infos: Vec<ModelInfo> = models
         .into_iter()
