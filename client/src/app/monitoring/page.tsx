@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -46,16 +46,20 @@ import {
   Area,
   Legend,
 } from 'recharts';
-import {
-  metricsApi,
-  alertsApi,
-  SystemMetrics,
-  DiskMetrics,
-  AlertConfig,
-  AlertEvent,
-} from '@/lib/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { AlertConfig } from '@/lib/api';
 import { AlertConfigDialog } from '@/components/monitoring/alert-config-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+import {
+  useMetricsSummary,
+  useDiskMetrics,
+  useAlertConfigs,
+  useActiveAlerts,
+  useAlertHistory,
+  useAcknowledgeAlert,
+  useToggleAlertConfig,
+  useDeleteAlertConfig,
+} from '@/hooks/use-monitoring';
 
 interface MetricPoint {
   time: string;
@@ -84,142 +88,69 @@ const maxPointsByPeriod: Record<TimePeriod, number> = {
 };
 
 export default function MonitoringPage() {
-  const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
-  const [disks, setDisks] = useState<DiskMetrics[]>([]);
-  const [history, setHistory] = useState<MetricPoint[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(5000);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('5m');
 
-  // Alerts state
-  const [alertConfigs, setAlertConfigs] = useState<AlertConfig[]>([]);
-  const [activeAlerts, setActiveAlerts] = useState<AlertEvent[]>([]);
-  const [alertHistory, setAlertHistory] = useState<AlertEvent[]>([]);
+  // Alerts local state
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<AlertConfig | null>(null);
   const [deleteConfigId, setDeleteConfigId] = useState<string | null>(null);
 
-  const fetchMetrics = useCallback(async () => {
-    try {
-      const [summaryRes, diskRes] = await Promise.allSettled([
-        metricsApi.summary(),
-        metricsApi.disk(),
-      ]);
+  const queryClient = useQueryClient();
+  const [history, setHistory] = useState<MetricPoint[]>([]);
 
-      if (summaryRes.status === 'fulfilled' && summaryRes.value.data) {
-        const m = summaryRes.value.data;
-        setMetrics(m);
+  // React Query hooks
+  const { data: metrics, isLoading: loading } = useMetricsSummary(autoRefresh ? refreshInterval : undefined);
+  const { data: disks = [] } = useDiskMetrics(autoRefresh ? refreshInterval : undefined);
+  const { data: alertConfigs = [] } = useAlertConfigs();
+  const { data: activeAlerts = [] } = useActiveAlerts();
+  const { data: alertHistory = [] } = useAlertHistory(10);
 
-        // Add to history
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('fr-FR', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        });
+  // Mutations
+  const acknowledgeAlert = useAcknowledgeAlert();
+  const toggleAlertConfig = useToggleAlertConfig();
+  const deleteAlertConfig = useDeleteAlertConfig();
 
-        setHistory((prev) => {
-          const newPoint: MetricPoint = {
-            time: timeStr,
-            timestamp: now.getTime(),
-            cpu: m.cpu_usage_percent || m.cpu || 0,
-            memory: m.memory_usage_percent || m.memory || 0,
-            disk: m.disk_usage_percent || m.disk || 0,
-            networkRx: (m.network_rx_bytes || 0) / 1024 / 1024,
-            networkTx: (m.network_tx_bytes || 0) / 1024 / 1024,
-          };
-          const updated = [...prev, newPoint];
-          // Keep points based on selected period
-          return updated.slice(-maxPointsByPeriod[timePeriod]);
-        });
-      }
-
-      if (diskRes.status === 'fulfilled' && diskRes.value.data) {
-        // Map API field names to expected field names
-        const mappedDisks = diskRes.value.data.map((d: DiskMetrics) => ({
-          ...d,
-          total: d.total_bytes ?? d.total ?? 0,
-          used: d.used_bytes ?? d.used ?? 0,
-          available: d.available_bytes ?? d.available ?? 0,
-          percent: d.usage_percent ?? d.percent ?? 0,
-        }));
-        setDisks(mappedDisks);
-      }
-    } catch (error) {
-      console.error('Failed to fetch metrics:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [timePeriod]);
-
-  const fetchAlerts = useCallback(async () => {
-    try {
-      const [configsRes, activeRes, historyRes] = await Promise.allSettled([
-        alertsApi.listConfigs(),
-        alertsApi.listActive(),
-        alertsApi.listHistory(10),
-      ]);
-
-      if (configsRes.status === 'fulfilled' && configsRes.value.data) {
-        setAlertConfigs(configsRes.value.data);
-      }
-      if (activeRes.status === 'fulfilled' && activeRes.value.data) {
-        setActiveAlerts(activeRes.value.data);
-      }
-      if (historyRes.status === 'fulfilled' && historyRes.value.data) {
-        setAlertHistory(historyRes.value.data.alerts || []);
-      }
-    } catch (error) {
-      // Silently fail - alerts API may not be implemented yet
-      console.debug('Alerts API not available:', error);
-    }
-  }, []);
-
+  // Build history from metrics updates
   useEffect(() => {
-    fetchMetrics();
-    fetchAlerts();
-
-    if (autoRefresh) {
-      const interval = setInterval(fetchMetrics, refreshInterval);
-      const alertInterval = setInterval(fetchAlerts, 30000); // Refresh alerts every 30s
-      return () => {
-        clearInterval(interval);
-        clearInterval(alertInterval);
+    if (!metrics) return;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHistory((prev) => {
+      const newPoint: MetricPoint = {
+        time: timeStr,
+        timestamp: now.getTime(),
+        cpu: metrics.cpu_usage_percent || metrics.cpu || 0,
+        memory: metrics.memory_usage_percent || metrics.memory || 0,
+        disk: metrics.disk_usage_percent || metrics.disk || 0,
+        networkRx: (metrics.network_rx_bytes || 0) / 1024 / 1024,
+        networkTx: (metrics.network_tx_bytes || 0) / 1024 / 1024,
       };
-    }
-  }, [fetchMetrics, fetchAlerts, refreshInterval, autoRefresh]);
+      return [...prev, newPoint].slice(-maxPointsByPeriod[timePeriod]);
+    });
+  }, [metrics, timePeriod]);
 
   // Reset history when period changes
   useEffect(() => {
-    setHistory([]);
+    setHistory([]); // eslint-disable-line react-hooks/set-state-in-effect
   }, [timePeriod]);
 
-  const handleAcknowledgeAlert = async (alertId: string) => {
-    try {
-      await alertsApi.acknowledge(alertId);
-      fetchAlerts();
-    } catch (error) {
-      console.error('Failed to acknowledge alert:', error);
-    }
+  const handleAcknowledgeAlert = (alertId: string) => {
+    acknowledgeAlert.mutate(alertId);
   };
 
-  const handleToggleConfig = async (configId: string, enabled: boolean) => {
-    try {
-      await alertsApi.toggleConfig(configId, enabled);
-      fetchAlerts();
-    } catch (error) {
-      console.error('Failed to toggle alert config:', error);
-    }
+  const handleToggleConfig = (configId: string, enabled: boolean) => {
+    toggleAlertConfig.mutate({ id: configId, enabled });
   };
 
-  const handleDeleteConfig = async (configId: string) => {
-    try {
-      await alertsApi.deleteConfig(configId);
-      fetchAlerts();
-    } catch (error) {
-      console.error('Failed to delete alert config:', error);
-    }
+  const handleDeleteConfig = (configId: string) => {
+    deleteAlertConfig.mutate(configId);
   };
 
   const formatBytes = (bytes: number) => {
@@ -359,7 +290,7 @@ export default function MonitoringPage() {
               <Activity className={`mr-2 h-4 w-4 ${autoRefresh ? 'animate-pulse' : ''}`} />
               {autoRefresh ? 'Live' : 'Paused'}
             </Button>
-            <Button variant="outline" size="sm" onClick={fetchMetrics}>
+            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['metrics'] })}>
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
@@ -869,7 +800,7 @@ export default function MonitoringPage() {
         open={alertDialogOpen}
         onOpenChange={setAlertDialogOpen}
         config={editingConfig}
-        onSuccess={fetchAlerts}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['alerts'] })}
       />
 
       {/* Delete Alert Config Confirmation */}

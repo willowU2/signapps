@@ -140,7 +140,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(state);
 
     // Start server
-    let addr = std::env::var("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:3009".to_string());
+    let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+    let port = std::env::var("SERVER_PORT").unwrap_or_else(|_| "3009".to_string());
+    let addr = format!("{}:{}", host, port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     info!("signapps-media listening on {}", addr);
 

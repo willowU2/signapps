@@ -306,13 +306,21 @@ pub async fn test(
         let payload_str = serde_json::to_string(&test_payload)
             .map_err(|e| Error::Internal(format!("Failed to serialize payload: {}", e)))?;
 
-        // Simple HMAC-like signature (in production, use proper HMAC-SHA256)
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-        let mut hasher = DefaultHasher::new();
-        secret.hash(&mut hasher);
-        payload_str.hash(&mut hasher);
-        let signature = format!("sha256={:x}", hasher.finish());
+        use hmac::{Hmac, Mac};
+        use sha2::Sha256;
+        type HmacSha256 = Hmac<Sha256>;
+        let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+            .map_err(|e| Error::Internal(format!("HMAC key error: {}", e)))?;
+        mac.update(payload_str.as_bytes());
+        let result = mac.finalize();
+        let signature = format!(
+            "sha256={}",
+            result
+                .into_bytes()
+                .iter()
+                .map(|b| format!("{:02x}", b))
+                .collect::<String>()
+        );
 
         request = request.header("X-Webhook-Signature", signature);
     }

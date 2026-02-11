@@ -56,14 +56,30 @@ pub async fn create(
     }))
 }
 
-/// Update role.
+/// Update role (non-system roles only).
 pub async fn update(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-    Json(_payload): Json<signapps_db::models::CreateRole>,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<signapps_db::models::CreateRole>,
 ) -> Result<Json<RoleResponse>> {
-    // TODO: Implement role update (non-system roles only)
-    Err(Error::Internal("Not implemented".to_string()))
+    let repo = GroupRepository::new(&state.pool);
+    let existing = repo
+        .find_role(id)
+        .await?
+        .ok_or_else(|| Error::NotFound(format!("Role {}", id)))?;
+    if existing.is_system {
+        return Err(Error::Validation(
+            "System roles cannot be modified".to_string(),
+        ));
+    }
+    let role = repo.update_role(id, payload).await?;
+    Ok(Json(RoleResponse {
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        permissions: role.permissions,
+        is_system: role.is_system,
+    }))
 }
 
 /// Delete role.

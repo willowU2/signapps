@@ -42,6 +42,9 @@ hickory-resolver = "0.24"
 # Config serialization
 serde_yaml = "0.9"
 
+# Environment
+dotenvy = "0.15"
+
 # Optional: Database support for mesh VPN
 signapps-db = { path = "../../crates/signapps-db", optional = true }
 sqlx = { workspace = true, optional = true }

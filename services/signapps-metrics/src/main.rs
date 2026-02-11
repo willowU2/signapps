@@ -59,10 +59,10 @@ impl Config {
             jwt_issuer: std::env::var("JWT_ISSUER")
                 .unwrap_or_else(|_| "signapps-identity".to_string()),
             jwt_audience: std::env::var("JWT_AUDIENCE").unwrap_or_else(|_| "signapps".to_string()),
-            port: std::env::var("PORT")
+            port: std::env::var("SERVER_PORT")
                 .ok()
                 .and_then(|p| p.parse().ok())
-                .unwrap_or(3000),
+                .unwrap_or(3008),
         }
     }
 }
@@ -77,6 +77,9 @@ async fn main() -> Result<()> {
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+    // Load .env file
+    dotenvy::dotenv().ok();
 
     // Load configuration
     let config = Config::from_env();

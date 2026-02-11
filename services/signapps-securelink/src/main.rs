@@ -74,7 +74,7 @@ impl Default for Config {
 impl Config {
     pub fn from_env() -> Self {
         Self {
-            port: std::env::var("PORT")
+            port: std::env::var("SERVER_PORT")
                 .ok()
                 .and_then(|p| p.parse().ok())
                 .unwrap_or(3006),
@@ -108,6 +108,9 @@ async fn main() -> std::io::Result<()> {
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+    // Load .env file
+    dotenvy::dotenv().ok();
 
     // Load configuration
     let config = Config::from_env();

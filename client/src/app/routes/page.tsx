@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -66,15 +67,25 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { routesApi, Route, Certificate, ShieldStats } from '@/lib/api';
+import type { Route } from '@/lib/api';
 import { RouteDialog } from '@/components/routes/route-dialog';
 import { toast } from 'sonner';
+import {
+  useRoutes,
+  useCertificates,
+  useShieldStats,
+  useDeleteRoute,
+  useToggleRoute,
+  useRequestCertificate,
+  useRenewCertificate,
+} from '@/hooks/use-routes';
 
 export default function RoutesPage() {
-  const [routes, setRoutes] = useState<Route[]>([]);
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [shieldStats, setShieldStats] = useState<ShieldStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: routes = [], isLoading: loading } = useRoutes();
+  const { data: certificates = [] } = useCertificates();
+  const { data: shieldStats = null } = useShieldStats();
+
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('routes');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -87,51 +98,21 @@ export default function RoutesPage() {
   const [certDomain, setCertDomain] = useState('');
   const [certLoading, setCertLoading] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const deleteRouteMutation = useDeleteRoute();
+  const toggleRouteMutation = useToggleRoute();
+  const requestCertMutation = useRequestCertificate();
+  const renewCertMutation = useRenewCertificate();
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [routesRes, certsRes, statsRes] = await Promise.allSettled([
-        routesApi.list(),
-        routesApi.listCertificates(),
-        routesApi.shieldStats(),
-      ]);
-
-      if (routesRes.status === 'fulfilled') {
-        setRoutes(routesRes.value.data || []);
-      }
-      if (certsRes.status === 'fulfilled') {
-        setCertificates(certsRes.value.data || []);
-      }
-      if (statsRes.status === 'fulfilled') {
-        setShieldStats(statsRes.value.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch routes:', error);
-      setRoutes([]);
-      setCertificates([]);
-      setShieldStats(null);
-    } finally {
-      setLoading(false);
-    }
+  const refreshData = () => {
+    queryClient.invalidateQueries({ queryKey: ['routes'] });
+    queryClient.invalidateQueries({ queryKey: ['certificates'] });
+    queryClient.invalidateQueries({ queryKey: ['shield'] });
   };
 
   const handleDelete = async () => {
     if (!deleteDialog.route) return;
-
-    try {
-      await routesApi.delete(deleteDialog.route.id);
-      toast.success('Route supprimée avec succès');
-      fetchData();
-    } catch (error) {
-      console.error('Failed to delete route:', error);
-      toast.error('Erreur lors de la suppression');
-    } finally {
-      setDeleteDialog({ open: false, route: null });
-    }
+    deleteRouteMutation.mutate(deleteDialog.route.id);
+    setDeleteDialog({ open: false, route: null });
   };
 
   const handleEdit = (route: Route) => {
@@ -144,44 +125,24 @@ export default function RoutesPage() {
     setDialogOpen(true);
   };
 
-  const handleToggle = async (route: Route) => {
-    try {
-      await routesApi.update(route.id, { enabled: !route.enabled } as any);
-      toast.success(`Route ${route.enabled ? 'désactivée' : 'activée'} avec succès`);
-      fetchData();
-    } catch (error) {
-      console.error('Failed to toggle route:', error);
-      toast.error('Erreur lors de la mise à jour');
-    }
+  const handleToggle = (route: Route) => {
+    toggleRouteMutation.mutate({ id: route.id, enabled: !route.enabled });
   };
 
   const handleRequestCertificate = async () => {
     if (!certDomain.trim()) return;
-
     setCertLoading(true);
-    try {
-      await routesApi.requestCertificate(certDomain);
-      toast.success('Certificat demandé avec succès');
-      setCertDialogOpen(false);
-      setCertDomain('');
-      fetchData();
-    } catch (error) {
-      console.error('Failed to request certificate:', error);
-      toast.error('Erreur lors de la demande de certificat');
-    } finally {
-      setCertLoading(false);
-    }
+    requestCertMutation.mutate(certDomain, {
+      onSettled: () => {
+        setCertLoading(false);
+        setCertDialogOpen(false);
+        setCertDomain('');
+      },
+    });
   };
 
-  const handleRenewCertificate = async (certId: string) => {
-    try {
-      await routesApi.renewCertificate(certId);
-      toast.success('Renouvellement du certificat lancé');
-      fetchData();
-    } catch (error) {
-      console.error('Failed to renew certificate:', error);
-      toast.error('Erreur lors du renouvellement');
-    }
+  const handleRenewCertificate = (certId: string) => {
+    renewCertMutation.mutate(certId);
   };
 
   const copyToClipboard = (text: string) => {
@@ -272,7 +233,7 @@ export default function RoutesPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={fetchData}>
+            <Button variant="outline" onClick={refreshData}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Actualiser
             </Button>
@@ -706,7 +667,7 @@ export default function RoutesPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         route={editingRoute}
-        onSuccess={fetchData}
+        onSuccess={refreshData}
       />
 
       {/* Delete Confirmation */}

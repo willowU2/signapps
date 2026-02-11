@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,6 +90,7 @@ import {
   UserImportResult,
 } from '@/lib/api';
 import { toast } from 'sonner';
+import { useUsers } from '@/hooks/use-users';
 
 interface UserDialogData {
   username: string;
@@ -896,8 +898,8 @@ function AuditLogTable({ users }: AuditLogTableProps) {
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { data: users = [], isLoading: loading } = useUsers();
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -919,23 +921,7 @@ export default function UsersPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const response = await usersApi.list();
-      setUsers(response.data?.users || response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-      // Show empty list on error - no mock data
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const refreshUsers = () => queryClient.invalidateQueries({ queryKey: ['users'] });
 
   const handleCreate = () => {
     setEditingUser(null);
@@ -974,7 +960,7 @@ export default function UsersPage() {
         toast.success('User created successfully');
       }
       setDialogOpen(false);
-      fetchUsers();
+      refreshUsers();
     } catch (error) {
       console.error('Failed to save user:', error);
       toast.error(editingUser ? 'Failed to update user' : 'Failed to create user');
@@ -989,7 +975,7 @@ export default function UsersPage() {
     try {
       await usersApi.delete(deleteDialog.user.id);
       toast.success('User deleted successfully');
-      fetchUsers();
+      refreshUsers();
     } catch (error) {
       console.error('Failed to delete user:', error);
       toast.error('Failed to delete user');
@@ -1066,7 +1052,7 @@ export default function UsersPage() {
               <Upload className="mr-2 h-4 w-4" />
               Import CSV
             </Button>
-            <Button variant="outline" onClick={fetchUsers}>
+            <Button variant="outline" onClick={refreshUsers}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh
             </Button>
@@ -1263,7 +1249,7 @@ export default function UsersPage() {
       <ImportUsersDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
-        onImportComplete={fetchUsers}
+        onImportComplete={refreshUsers}
         existingUsers={users}
       />
 

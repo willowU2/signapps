@@ -58,6 +58,9 @@ async fn main() -> anyhow::Result<()> {
         env!("CARGO_PKG_VERSION")
     );
 
+    // Load .env file
+    dotenvy::dotenv().ok();
+
     // Load configuration
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
@@ -112,10 +115,10 @@ async fn main() -> anyhow::Result<()> {
     let app = create_router(state);
 
     // Start server
-    let port: u16 = std::env::var("PORT")
-        .unwrap_or_else(|_| "3000".into())
+    let port: u16 = std::env::var("SERVER_PORT")
+        .unwrap_or_else(|_| "3005".into())
         .parse()
-        .unwrap_or(3000);
+        .unwrap_or(3005);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
     tracing::info!("Listening on {}", addr);

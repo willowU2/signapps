@@ -78,6 +78,10 @@ import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 
 export default function SettingsPage() {
+  // General tab state
+  const [siteName, setSiteName] = useState('SignApps');
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
 
@@ -362,7 +366,11 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="siteName">Site Name</Label>
-                  <Input id="siteName" defaultValue="SignApps" />
+                  <Input
+                    id="siteName"
+                    value={siteName}
+                    onChange={(e) => setSiteName(e.target.value)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -371,9 +379,14 @@ export default function SettingsPage() {
                       Disable access for non-admin users
                     </p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={maintenanceMode}
+                    onCheckedChange={setMaintenanceMode}
+                  />
                 </div>
-                <Button>Save Changes</Button>
+                <Button onClick={() => toast.info('General settings API not yet implemented')}>
+                  Save Changes
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>

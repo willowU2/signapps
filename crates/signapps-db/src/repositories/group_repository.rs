@@ -210,6 +210,26 @@ impl<'a> GroupRepository<'a> {
         Ok(created)
     }
 
+    /// Update an existing role (non-system only).
+    pub async fn update_role(&self, id: Uuid, role: CreateRole) -> Result<Role> {
+        let updated = sqlx::query_as::<_, Role>(
+            r#"
+            UPDATE identity.roles
+            SET name = $2, description = $3, permissions = $4
+            WHERE id = $1 AND is_system = FALSE
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(&role.name)
+        .bind(&role.description)
+        .bind(&role.permissions)
+        .fetch_one(self.pool.inner())
+        .await?;
+
+        Ok(updated)
+    }
+
     /// Delete a role (non-system only).
     pub async fn delete_role(&self, id: Uuid) -> Result<()> {
         sqlx::query("DELETE FROM identity.roles WHERE id = $1 AND is_system = FALSE")

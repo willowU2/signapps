@@ -63,10 +63,10 @@ impl Config {
                 .ok()
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(300),
-            port: std::env::var("PORT")
+            port: std::env::var("SERVER_PORT")
                 .ok()
                 .and_then(|p| p.parse().ok())
-                .unwrap_or(3000),
+                .unwrap_or(3007),
         }
     }
 }
@@ -81,6 +81,9 @@ async fn main() -> Result<()> {
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+    // Load .env file
+    dotenvy::dotenv().ok();
 
     // Load configuration
     let config = Config::from_env();
