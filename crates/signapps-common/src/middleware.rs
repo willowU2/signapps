@@ -124,6 +124,8 @@ pub async fn require_user(request: Request, next: Next) -> Result<Response, Erro
 
 /// Log request details with tracing.
 pub async fn logging_middleware(request: Request, next: Next) -> Response {
+    use tracing::Instrument;
+
     let method = request.method().clone();
     let uri = request.uri().clone();
     let version = request.version();
@@ -145,9 +147,7 @@ pub async fn logging_middleware(request: Request, next: Next) -> Response {
         request_id = %request_id,
     );
 
-    let _guard = span.enter();
-
-    let response = next.run(request).await;
+    let response = next.run(request).instrument(span).await;
 
     let duration = start.elapsed();
     let status = response.status();
@@ -202,8 +202,9 @@ fn verify_token(token: &str, config: &JwtConfig) -> Result<Claims, Error> {
     use jsonwebtoken::{decode, DecodingKey, Validation};
 
     let mut validation = Validation::default();
-    validation.set_issuer(&[&config.issuer]);
-    validation.set_audience(&[&config.audience]);
+    // Tokens don't include iss/aud claims, so disable validation for these
+    validation.validate_aud = false;
+    validation.set_required_spec_claims(&["exp", "sub"]);
 
     let key = DecodingKey::from_secret(config.secret.as_bytes());
 
