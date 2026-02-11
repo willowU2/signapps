@@ -39,7 +39,7 @@ export default function ContainersPage() {
   const containerAction = useContainerAction();
 
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'running' | 'stopped' | 'system'>('all');
+  const [filter, setFilter] = useState<'all' | 'user' | 'running' | 'stopped' | 'system'>('user');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [logsDialog, setLogsDialog] = useState<{ open: boolean; id: string; name: string }>({
     open: false,
@@ -64,6 +64,7 @@ export default function ContainersPage() {
     if (filter === 'running') matchesFilter = c.state === 'running';
     else if (filter === 'stopped') matchesFilter = c.state === 'stopped' || c.state === 'exited';
     else if (filter === 'system') matchesFilter = c.is_system;
+    else if (filter === 'user') matchesFilter = !c.is_system;
     return matchesSearch && matchesFilter;
   });
 
@@ -129,7 +130,7 @@ export default function ContainersPage() {
             />
           </div>
           <div className="flex gap-2">
-            {(['all', 'running', 'stopped', 'system'] as const).map((f) => (
+            {(['all', 'user', 'running', 'stopped', 'system'] as const).map((f) => (
               <Button
                 key={f}
                 variant={filter === f ? 'default' : 'outline'}
