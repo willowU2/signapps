@@ -242,22 +242,22 @@ impl RagPipeline {
     }
 
     /// Build chat messages for RAG query.
+    /// Merges system prompt into user message for Mistral compatibility
+    /// (Mistral requires strictly alternating user/assistant roles).
     fn build_messages(&self, context: &str, question: &str) -> Vec<ChatMessage> {
-        let mut messages = vec![ChatMessage::system(&self.config.system_prompt)];
-
-        if !context.is_empty() {
-            messages.push(ChatMessage::user(format!(
-                "Voici le contexte pertinent:\n\n{}\n\n---\n\nQuestion: {}",
-                context, question
-            )));
+        let user_content = if !context.is_empty() {
+            format!(
+                "{}\n\nVoici le contexte pertinent:\n\n{}\n\n---\n\nQuestion: {}",
+                self.config.system_prompt, context, question
+            )
         } else {
-            messages.push(ChatMessage::user(format!(
-                "Je n'ai pas trouvé de contexte pertinent dans les documents. Question: {}",
-                question
-            )));
-        }
+            format!(
+                "{}\n\nJe n'ai pas trouvé de contexte pertinent dans les documents. Question: {}",
+                self.config.system_prompt, question
+            )
+        };
 
-        messages
+        vec![ChatMessage::user(user_content)]
     }
 }
 
