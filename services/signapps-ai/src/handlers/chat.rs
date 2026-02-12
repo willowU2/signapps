@@ -29,6 +29,10 @@ pub struct ChatRequest {
     /// Whether to include sources in response.
     #[serde(default = "default_include_sources")]
     pub include_sources: bool,
+    /// Optional language for AI responses (e.g. "fr", "en", "es").
+    pub language: Option<String>,
+    /// Optional custom system prompt (overrides default).
+    pub system_prompt: Option<String>,
 }
 
 fn default_include_sources() -> bool {
@@ -82,6 +86,8 @@ pub async fn chat(
             &payload.question,
             payload.provider.as_deref(),
             payload.model.as_deref(),
+            payload.language.as_deref(),
+            payload.system_prompt.as_deref(),
         )
         .await?;
 
@@ -115,9 +121,11 @@ pub async fn chat_stream(
 ) -> Sse<impl Stream<Item = std::result::Result<Event, Infallible>>> {
     let model = payload.model.clone();
     let provider = payload.provider.clone();
+    let language = payload.language.clone();
+    let system_prompt = payload.system_prompt.clone();
     let stream = async_stream::stream! {
         // First, retrieve sources
-        match state.rag.query_stream_with_provider(&payload.question, provider.as_deref(), model.as_deref()).await {
+        match state.rag.query_stream_with_provider(&payload.question, provider.as_deref(), model.as_deref(), language.as_deref(), system_prompt.as_deref()).await {
             Ok((sources, mut token_rx)) => {
                 // Send sources first
                 if payload.include_sources {

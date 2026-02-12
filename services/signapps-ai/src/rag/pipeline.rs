@@ -144,7 +144,8 @@ impl RagPipeline {
 
     /// Query with RAG (retrieve + generate), using default provider.
     pub async fn query(&self, question: &str) -> Result<RagResponse> {
-        self.query_with_provider(question, None, None).await
+        self.query_with_provider(question, None, None, None, None)
+            .await
     }
 
     /// Query with RAG using a specific model (backward compat).
@@ -153,7 +154,8 @@ impl RagPipeline {
         question: &str,
         model: Option<&str>,
     ) -> Result<RagResponse> {
-        self.query_with_provider(question, None, model).await
+        self.query_with_provider(question, None, model, None, None)
+            .await
     }
 
     /// Query with RAG using a specific provider and model.
@@ -162,6 +164,8 @@ impl RagPipeline {
         question: &str,
         provider_id: Option<&str>,
         model: Option<&str>,
+        language: Option<&str>,
+        custom_system_prompt: Option<&str>,
     ) -> Result<RagResponse> {
         let provider = self.providers.resolve(provider_id)?;
 
@@ -172,7 +176,8 @@ impl RagPipeline {
         let context = self.build_context(&search_results);
 
         // 3. Generate response with LLM
-        let messages = self.build_messages(&context, question);
+        let messages =
+            self.build_messages(&context, question, language, custom_system_prompt);
 
         let response = provider
             .chat(
@@ -206,7 +211,8 @@ impl RagPipeline {
         question: &str,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)>
     {
-        self.query_stream_with_provider(question, None, None).await
+        self.query_stream_with_provider(question, None, None, None, None)
+            .await
     }
 
     /// Query with streaming response using a specific model (backward compat).
@@ -216,7 +222,7 @@ impl RagPipeline {
         model: Option<&str>,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)>
     {
-        self.query_stream_with_provider(question, None, model)
+        self.query_stream_with_provider(question, None, model, None, None)
             .await
     }
 
@@ -226,6 +232,8 @@ impl RagPipeline {
         question: &str,
         provider_id: Option<&str>,
         model: Option<&str>,
+        language: Option<&str>,
+        custom_system_prompt: Option<&str>,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)>
     {
         let provider = self.providers.resolve(provider_id)?;
@@ -237,7 +245,8 @@ impl RagPipeline {
         let context = self.build_context(&search_results);
 
         // 3. Stream response from LLM
-        let messages = self.build_messages(&context, question);
+        let messages =
+            self.build_messages(&context, question, language, custom_system_prompt);
 
         let stream = provider
             .chat_stream(
@@ -279,16 +288,30 @@ impl RagPipeline {
         &self,
         context: &str,
         question: &str,
+        language: Option<&str>,
+        custom_system_prompt: Option<&str>,
     ) -> Vec<ChatMessage> {
+        let base_prompt = custom_system_prompt
+            .unwrap_or(&self.config.system_prompt);
+
+        let system = if let Some(lang) = language {
+            format!(
+                "IMPORTANT: You must reply in {}.\n\n{}",
+                lang, base_prompt
+            )
+        } else {
+            base_prompt.to_string()
+        };
+
         let user_content = if !context.is_empty() {
             format!(
                 "{}\n\nVoici le contexte pertinent:\n\n{}\n\n---\n\nQuestion: {}",
-                self.config.system_prompt, context, question
+                system, context, question
             )
         } else {
             format!(
                 "{}\n\nJe n'ai pas trouvé de contexte pertinent dans les documents. Question: {}",
-                self.config.system_prompt, question
+                system, question
             )
         };
 

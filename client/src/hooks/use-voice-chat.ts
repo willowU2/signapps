@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export type VoiceState =
   | 'idle'
@@ -413,8 +414,10 @@ export function useVoiceChat({
 
     async function initVAD() {
       try {
+        console.log('[VoiceChat] Loading VAD module...');
         // Dynamic import to avoid SSR issues
         const { MicVAD } = await import('@ricky0123/vad-web');
+        console.log('[VoiceChat] VAD module loaded');
 
         if (cancelled) return;
 
@@ -428,6 +431,7 @@ export function useVoiceChat({
           }
         );
 
+        console.log('[VoiceChat] Initializing MicVAD...');
         const vad = await MicVAD.new({
           baseAssetPath: '/vad/',
           onnxWASMBasePath: '/vad/',
@@ -435,6 +439,7 @@ export function useVoiceChat({
           startOnLoad: true,
 
           onSpeechStart: () => {
+            console.log('[VoiceChat] Speech start detected');
             if (!enabledRef.current) return;
 
             // If the AI is speaking or thinking, interrupt
@@ -446,13 +451,16 @@ export function useVoiceChat({
           },
 
           onSpeechEnd: async (audio: Float32Array) => {
+            console.log('[VoiceChat] Speech end detected, audio length:', audio.length);
             if (!enabledRef.current) return;
 
             setVoiceState('transcribing');
 
             try {
               const wavBlob = float32ToWavBlob(audio, 16000);
+              console.log('[VoiceChat] Sending to STT, blob size:', wavBlob.size);
               const text = await transcribeAudio(wavBlob);
+              console.log('[VoiceChat] STT result:', text);
 
               if (text.trim() && enabledRef.current) {
                 setTranscript(text.trim());
@@ -461,12 +469,14 @@ export function useVoiceChat({
                 setVoiceState('listening');
               }
             } catch (err) {
-              console.error('STT error:', err);
+              console.error('[VoiceChat] STT error:', err);
+              toast.error('Erreur de transcription vocale');
               setVoiceState('listening');
             }
           },
 
           onVADMisfire: () => {
+            console.log('[VoiceChat] VAD misfire (speech too short)');
             if (enabledRef.current) {
               setVoiceState('listening');
             }
@@ -480,8 +490,11 @@ export function useVoiceChat({
 
         vadRef.current = vad;
         setVoiceState('listening');
+        console.log('[VoiceChat] VAD ready, listening...');
+        toast.success('Mode vocal active');
       } catch (err) {
-        console.error('VAD initialization failed:', err);
+        console.error('[VoiceChat] VAD initialization failed:', err);
+        toast.error('Impossible d\'activer le micro : ' + (err instanceof Error ? err.message : String(err)));
         setVoiceEnabled(false);
         setVoiceState('idle');
       }

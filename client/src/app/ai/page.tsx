@@ -64,8 +64,11 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  Languages,
+  Settings,
 } from 'lucide-react';
 import { aiApi, AIStats, Model, ProviderInfo, KnowledgeBase } from '@/lib/api';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { DocumentUpload } from '@/components/ai/document-upload';
 import { VoiceChatButton } from '@/components/ai/voice-chat-button';
@@ -93,6 +96,17 @@ interface Conversation {
 // LocalStorage keys
 const CONVERSATIONS_KEY = 'signapps_ai_conversations';
 const ACTIVE_CONVERSATION_KEY = 'signapps_ai_active_conversation';
+const LANGUAGE_KEY = 'signapps_ai_language';
+const SYSTEM_PROMPT_KEY = 'signapps_ai_system_prompt';
+
+const LANGUAGES = [
+  { code: 'fr', label: 'Francais' },
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Espanol' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'it', label: 'Italiano' },
+  { code: 'pt', label: 'Portugues' },
+] as const;
 
 // Helper functions for localStorage
 function loadConversations(): Conversation[] {
@@ -206,6 +220,18 @@ export default function AIPage() {
   const [newKbName, setNewKbName] = useState('');
   const [newKbDescription, setNewKbDescription] = useState('');
 
+  // Language & system prompt
+  const [selectedLanguage, setSelectedLanguage] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'fr';
+    return localStorage.getItem(LANGUAGE_KEY) || 'fr';
+  });
+  const [customSystemPrompt, setCustomSystemPrompt] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(SYSTEM_PROMPT_KEY) || '';
+  });
+  const [systemPromptDialogOpen, setSystemPromptDialogOpen] = useState(false);
+  const [tempSystemPrompt, setTempSystemPrompt] = useState('');
+
   // Tab state
   const [activeTab, setActiveTab] = useState<'chat' | 'knowledge'>('chat');
 
@@ -240,6 +266,20 @@ export default function AIPage() {
   useEffect(() => {
     saveActiveConversationId(activeConversationId);
   }, [activeConversationId]);
+
+  // Persist language preference
+  useEffect(() => {
+    localStorage.setItem(LANGUAGE_KEY, selectedLanguage);
+  }, [selectedLanguage]);
+
+  // Persist custom system prompt
+  useEffect(() => {
+    if (customSystemPrompt) {
+      localStorage.setItem(SYSTEM_PROMPT_KEY, customSystemPrompt);
+    } else {
+      localStorage.removeItem(SYSTEM_PROMPT_KEY);
+    }
+  }, [customSystemPrompt]);
 
   // Update conversation messages when they change
   useEffect(() => {
@@ -565,6 +605,8 @@ export default function AIPage() {
           model: selectedModel || undefined,
           provider: selectedProvider || undefined,
           collection: selectedKnowledgeBase || undefined,
+          language: selectedLanguage || undefined,
+          system_prompt: customSystemPrompt || undefined,
         }),
         signal: controller.signal,
       });
@@ -670,6 +712,8 @@ export default function AIPage() {
             model: selectedModel || undefined,
             provider: selectedProvider || undefined,
             collection: selectedKnowledgeBase || undefined,
+            language: selectedLanguage || undefined,
+            systemPrompt: customSystemPrompt || undefined,
           });
 
           const assistantMessage: Message = {
@@ -930,6 +974,40 @@ export default function AIPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Language Selector */}
+              <div className="flex items-center gap-2">
+                <Languages className="h-4 w-4 text-muted-foreground" />
+                <Select
+                  value={selectedLanguage}
+                  onValueChange={setSelectedLanguage}
+                >
+                  <SelectTrigger className="w-[120px] h-8">
+                    <SelectValue placeholder="Langue" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code}>
+                        {lang.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* System Prompt Settings */}
+              <Button
+                variant="outline"
+                size="icon"
+                className={cn("h-8 w-8", customSystemPrompt && "border-primary text-primary")}
+                onClick={() => {
+                  setTempSystemPrompt(customSystemPrompt);
+                  setSystemPromptDialogOpen(true);
+                }}
+                title="Prompt systeme personnalise"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
 
               <Badge variant="outline" className="gap-1">
                 <FileText className="h-3 w-3" />
@@ -1324,6 +1402,43 @@ export default function AIPage() {
             </Button>
             <Button onClick={handleCreateKnowledgeBase} disabled={!newKbName.trim()}>
               Creer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* System Prompt Dialog */}
+      <Dialog open={systemPromptDialogOpen} onOpenChange={setSystemPromptDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Prompt systeme personnalise</DialogTitle>
+            <DialogDescription>
+              Definissez un prompt systeme personnalise pour adapter le comportement de l&apos;IA.
+              Laissez vide pour utiliser le prompt par defaut.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={tempSystemPrompt}
+            onChange={(e) => setTempSystemPrompt(e.target.value)}
+            placeholder="Ex: Tu es un expert Linux. Reponds de maniere concise et technique."
+            rows={5}
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setTempSystemPrompt('');
+                setCustomSystemPrompt('');
+                setSystemPromptDialogOpen(false);
+              }}
+            >
+              Reinitialiser
+            </Button>
+            <Button onClick={() => {
+              setCustomSystemPrompt(tempSystemPrompt);
+              setSystemPromptDialogOpen(false);
+            }}>
+              Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>
