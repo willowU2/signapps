@@ -32,6 +32,10 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
   const [newUrl, setNewUrl] = useState('');
   const [adding, setAdding] = useState(false);
 
+  // Validation
+  const [validating, setValidating] = useState(false);
+  const [validation, setValidation] = useState<{ valid: boolean; app_count?: number; error?: string } | null>(null);
+
   const fetchSources = async () => {
     setLoading(true);
     try {
@@ -48,13 +52,40 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
     if (open) fetchSources();
   }, [open]);
 
+  const isValidUrl = (url: string) => {
+    try {
+      const u = new URL(url);
+      return u.protocol === 'http:' || u.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const handleValidate = async () => {
+    if (!newUrl.trim() || !isValidUrl(newUrl.trim())) {
+      setValidation({ valid: false, error: 'Invalid URL format' });
+      return;
+    }
+    setValidating(true);
+    setValidation(null);
+    try {
+      const res = await storeApi.validateSource({ name: newName.trim() || 'test', url: newUrl.trim() });
+      setValidation(res.data);
+    } catch {
+      setValidation({ valid: false, error: 'Failed to reach source' });
+    } finally {
+      setValidating(false);
+    }
+  };
+
   const handleAdd = async () => {
-    if (!newName.trim() || !newUrl.trim()) return;
+    if (!newName.trim() || !newUrl.trim() || !validation?.valid) return;
     setAdding(true);
     try {
       await storeApi.addSource({ name: newName.trim(), url: newUrl.trim() });
       setNewName('');
       setNewUrl('');
+      setValidation(null);
       toast.success('Source added');
       fetchSources();
       onSourcesChanged?.();
@@ -110,16 +141,42 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
           </div>
           <div className="space-y-2">
             <Label className="text-xs">URL</Label>
-            <Input
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              placeholder="https://example.com/cosmos-store"
-            />
+            <div className="flex gap-2">
+              <Input
+                className="flex-1"
+                value={newUrl}
+                onChange={(e) => {
+                  setNewUrl(e.target.value);
+                  setValidation(null);
+                }}
+                placeholder="https://example.com/cosmos-store"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleValidate}
+                disabled={validating || !newUrl.trim()}
+              >
+                {validating ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                )}
+                Test
+              </Button>
+            </div>
+            {validation && (
+              <p className={`text-xs ${validation.valid ? 'text-green-600' : 'text-destructive'}`}>
+                {validation.valid
+                  ? `✓ ${validation.app_count} apps found`
+                  : `✗ ${validation.error || 'Invalid source'}`}
+              </p>
+            )}
           </div>
           <Button
             size="sm"
             onClick={handleAdd}
-            disabled={adding || !newName.trim() || !newUrl.trim()}
+            disabled={adding || !newName.trim() || !newUrl.trim() || !validation?.valid}
           >
             {adding ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

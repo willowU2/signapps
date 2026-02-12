@@ -197,6 +197,8 @@ impl StoreManager {
                 source_name: source.name.clone(),
                 image: meta.image.clone().unwrap_or_default(),
                 repository: meta.repository.clone().unwrap_or_default(),
+                other_sources: vec![],
+                duplicate_count: 0,
             });
         }
 
@@ -238,8 +240,37 @@ impl StoreManager {
         category: Option<&str>,
     ) -> Vec<StoreApp> {
         let cache = self.cache.read().await;
-        let mut result: Vec<StoreApp> = cache.values().flatten().cloned().collect();
+        let all: Vec<StoreApp> = cache.values().flatten().cloned().collect();
 
+        // Deduplicate: group by (name_lower, image_base_lower)
+        let mut dedup_map: HashMap<(String, String), Vec<StoreApp>> = HashMap::new();
+        for app in all {
+            let key = (
+                app.name.to_lowercase(),
+                app.image.split(':').next().unwrap_or("").to_lowercase(),
+            );
+            dedup_map.entry(key).or_default().push(app);
+        }
+
+        let mut result: Vec<StoreApp> = Vec::new();
+        for (_key, mut group) in dedup_map {
+            let dup_count = group.len();
+            // Pick the first one as the "primary"
+            let mut primary = group.remove(0);
+            if dup_count > 1 {
+                primary.duplicate_count = dup_count;
+                primary.other_sources = group
+                    .iter()
+                    .map(|a| SourceInfo {
+                        source_id: a.source_id,
+                        source_name: a.source_name.clone(),
+                    })
+                    .collect();
+            }
+            result.push(primary);
+        }
+
+        // Apply search filter
         if let Some(q) = search {
             let q = q.to_lowercase();
             result.retain(|app| {
@@ -249,6 +280,7 @@ impl StoreManager {
             });
         }
 
+        // Apply category filter
         if let Some(cat) = category {
             if cat != "all" {
                 let cat_lower = cat.to_lowercase();
@@ -288,6 +320,57 @@ impl StoreManager {
 
         let is_yaml = parser::is_yaml_url(compose_url);
         parser::parse_compose(&text, is_yaml)
+    }
+
+    /// Validate a source URL by fetching and parsing its index.json.
+    pub async fn validate_source(&self, url: &str) -> SourceValidation {
+        let index_url = format!("{}/index.json", url.trim_end_matches('/'));
+
+        let resp = match self.http.get(&index_url).send().await {
+            Ok(r) => r,
+            Err(e) => {
+                return SourceValidation {
+                    valid: false,
+                    app_count: None,
+                    error: Some(format!("HTTP error: {e}")),
+                };
+            }
+        };
+
+        if !resp.status().is_success() {
+            return SourceValidation {
+                valid: false,
+                app_count: None,
+                error: Some(format!("HTTP {}", resp.status())),
+            };
+        }
+
+        let text = match resp.text().await {
+            Ok(t) => t,
+            Err(e) => {
+                return SourceValidation {
+                    valid: false,
+                    app_count: None,
+                    error: Some(format!("Read error: {e}")),
+                };
+            }
+        };
+
+        match serde_json::from_str::<CosmosIndex>(&text) {
+            Ok(index) => {
+                let count = index.all.map(|a| a.len()).unwrap_or(0);
+                SourceValidation {
+                    valid: true,
+                    app_count: Some(count),
+                    error: None,
+                }
+            }
+            Err(e) => SourceValidation {
+                valid: false,
+                app_count: None,
+                error: Some(format!("JSON parse error: {e}")),
+            },
+        }
     }
 
     /// Get all unique categories from all cached apps.

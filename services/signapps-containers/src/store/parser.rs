@@ -72,6 +72,21 @@ fn parse_service(name: &str, svc: &CosmosService) -> ParsedService {
         command: parse_command(&svc.command),
         labels: parse_labels(&svc.labels),
         hostname: svc.hostname.clone(),
+        depends_on: parse_depends_on(&svc.depends_on),
+    }
+}
+
+/// Parse depends_on which can be an array of strings or an object with
+/// service names as keys (docker-compose long form).
+fn parse_depends_on(val: &Option<serde_json::Value>) -> Vec<String> {
+    match val {
+        None => vec![],
+        Some(serde_json::Value::Array(arr)) => arr
+            .iter()
+            .filter_map(|v| v.as_str().map(String::from))
+            .collect(),
+        Some(serde_json::Value::Object(obj)) => obj.keys().cloned().collect(),
+        _ => vec![],
     }
 }
 

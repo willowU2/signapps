@@ -88,6 +88,7 @@ async-trait = "0.1"
 futures = "0.3"
 futures-util = "0.3"
 async-stream = "0.3"
+dashmap = "6"
 bytes = "1.5"
 mime_guess = "2"
 

@@ -12,12 +12,14 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use dashmap::DashMap;
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin, AuthState,
 };
 use signapps_common::JwtConfig;
 use signapps_db::{create_pool, run_migrations, DatabasePool};
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tower_http::{
     cors::{Any, CorsLayer},
     trace::TraceLayer,
@@ -25,6 +27,7 @@ use tower_http::{
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use docker::DockerClient;
+use store::types::InstallEvent;
 use store::StoreManager;
 
 #[tokio::main]
@@ -87,6 +90,7 @@ async fn main() -> anyhow::Result<()> {
         jwt_secret,
         jwt_config,
         store,
+        install_channels: Arc::new(DashMap::new()),
     };
 
     // Refresh app store catalog in background
@@ -122,6 +126,9 @@ pub struct AppState {
     pub jwt_secret: String,
     pub jwt_config: JwtConfig,
     pub store: StoreManager,
+    pub install_channels: Arc<
+        DashMap<uuid::Uuid, tokio::sync::broadcast::Sender<InstallEvent>>,
+    >,
 }
 
 impl AuthState for AppState {
@@ -197,6 +204,18 @@ fn create_router(state: AppState) -> Router {
             get(handlers::store::get_app_details),
         )
         .route("/api/v1/store/install", post(handlers::store::install_app))
+        .route(
+            "/api/v1/store/install/multi",
+            post(handlers::store::install_multi),
+        )
+        .route(
+            "/api/v1/store/install/:id/progress",
+            get(handlers::store::install_progress),
+        )
+        .route(
+            "/api/v1/store/check-ports",
+            get(handlers::store::check_ports),
+        )
         .route("/api/v1/store/sources", get(handlers::store::list_sources))
         // User's quota
         .route("/api/v1/quotas/me", get(handlers::quotas::get_my_quota))
@@ -219,6 +238,10 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/store/sources",
             post(handlers::store::add_source),
+        )
+        .route(
+            "/api/v1/store/sources/validate",
+            post(handlers::store::validate_source),
         )
         .route(
             "/api/v1/store/sources/refresh",

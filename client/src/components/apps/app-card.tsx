@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download, Package, ArrowUpCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Download, Package, ArrowUpCircle, CheckCircle2, Loader2, Layers } from 'lucide-react';
 import type { StoreApp } from '@/lib/api';
 import { containersApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -13,11 +13,12 @@ import { toast } from 'sonner';
 interface AppCardProps {
   app: StoreApp;
   onInstall: (app: StoreApp) => void;
+  onDetail: (app: StoreApp) => void;
   installedContainerId?: string;
   onUpdated?: () => void;
 }
 
-export function AppCard({ app, onInstall, installedContainerId, onUpdated }: AppCardProps) {
+export function AppCard({ app, onInstall, onDetail, installedContainerId, onUpdated }: AppCardProps) {
   const [imgError, setImgError] = useState(false);
   const [updating, setUpdating] = useState(false);
 
@@ -37,7 +38,10 @@ export function AppCard({ app, onInstall, installedContainerId, onUpdated }: App
 
   return (
     <Card className="group flex flex-col overflow-hidden transition-shadow hover:shadow-md">
-      <CardContent className="flex flex-1 flex-col gap-3 p-4">
+      <CardContent
+        className="flex flex-1 cursor-pointer flex-col gap-3 p-4"
+        onClick={() => onDetail(app)}
+      >
         <div className="flex items-start gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
             {app.icon && !imgError ? (
@@ -84,10 +88,18 @@ export function AppCard({ app, onInstall, installedContainerId, onUpdated }: App
         </div>
 
         <div className="mt-auto flex items-center justify-between pt-2">
-          <span className="truncate text-xs text-muted-foreground">
-            {app.source_name}
-          </span>
-          <div className="flex gap-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="truncate text-xs text-muted-foreground">
+              {app.source_name}
+            </span>
+            {(app.duplicate_count ?? 0) > 1 && (
+              <Badge variant="outline" className="shrink-0 text-xs">
+                <Layers className="mr-1 h-3 w-3" />
+                {app.duplicate_count} sources
+              </Badge>
+            )}
+          </div>
+          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
             {installedContainerId && (
               <Button
                 size="sm"

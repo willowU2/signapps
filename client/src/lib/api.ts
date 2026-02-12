@@ -172,6 +172,14 @@ export const storeApi = {
     containersApiClient.get<AppDetails>(`/store/apps/${sourceId}/${encodeURIComponent(appId)}`),
   install: (data: StoreInstallRequest) =>
     containersApiClient.post('/store/install', data),
+  installMulti: (data: MultiServiceInstallRequest) =>
+    containersApiClient.post<InstallStartedResponse>('/store/install/multi', data),
+  checkPorts: (ports: number[]) =>
+    containersApiClient.get<PortConflict[]>('/store/check-ports', {
+      params: { ports: ports.join(',') },
+    }),
+  validateSource: (data: { name: string; url: string }) =>
+    containersApiClient.post<SourceValidation>('/store/sources/validate', data),
   listSources: () =>
     containersApiClient.get<AppSource[]>('/store/sources'),
   addSource: (data: { name: string; url: string }) =>
@@ -183,6 +191,13 @@ export const storeApi = {
   refreshAll: () =>
     containersApiClient.post('/store/sources/refresh'),
 };
+
+/** Get the SSE URL for install progress. */
+export function getInstallProgressUrl(installId: string): string {
+  const base = CONTAINERS_URL.replace('/api/v1', '');
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') || '' : '';
+  return `${base}/api/v1/store/install/${installId}/progress?token=${encodeURIComponent(token)}`;
+}
 
 export interface StoreApp {
   id: string;
@@ -197,6 +212,8 @@ export interface StoreApp {
   source_name: string;
   image: string;
   repository: string;
+  other_sources?: { source_id: string; source_name: string }[];
+  duplicate_count?: number;
 }
 
 export interface AppSource {
@@ -222,6 +239,7 @@ export interface ParsedService {
   command?: string[];
   labels: Record<string, string>;
   hostname?: string;
+  depends_on?: string[];
 }
 
 export interface AppDetails extends StoreApp {
@@ -238,6 +256,48 @@ export interface StoreInstallRequest {
   ports?: { host: number; container: number; protocol?: string }[];
   volumes?: { source: string; target: string }[];
   auto_start?: boolean;
+}
+
+export interface MultiServiceInstallRequest {
+  app_id: string;
+  source_id: string;
+  group_name: string;
+  services: ServiceOverride[];
+  auto_start?: boolean;
+}
+
+export interface ServiceOverride {
+  service_name: string;
+  container_name: string;
+  environment?: Record<string, string>;
+  ports?: { host: number; container: number; protocol?: string }[];
+  volumes?: { source: string; target: string }[];
+}
+
+export interface InstallStartedResponse {
+  install_id: string;
+}
+
+export interface InstallEvent {
+  type: string;
+  install_id?: string;
+  service_count?: number;
+  service_name?: string;
+  image?: string;
+  container_name?: string;
+  message?: string;
+}
+
+export interface PortConflict {
+  port: number;
+  in_use: boolean;
+  used_by?: string;
+}
+
+export interface SourceValidation {
+  valid: boolean;
+  app_count?: number;
+  error?: string;
 }
 
 // Containers API

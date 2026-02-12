@@ -6,7 +6,9 @@ use bollard::container::{
     StopContainerOptions,
 };
 use bollard::image::{CreateImageOptions, ListImagesOptions, RemoveImageOptions};
-use bollard::network::ListNetworksOptions;
+use bollard::network::{
+    ConnectNetworkOptions, CreateNetworkOptions, ListNetworksOptions,
+};
 use bollard::volume::ListVolumesOptions;
 use bollard::Docker;
 use futures_util::StreamExt;
@@ -575,6 +577,60 @@ impl DockerClient {
             .collect();
 
         Ok(result)
+    }
+
+    /// Create a Docker network with bridge driver.
+    pub async fn create_network(&self, name: &str) -> Result<String> {
+        let config = CreateNetworkOptions {
+            name: name.to_string(),
+            driver: "bridge".to_string(),
+            ..Default::default()
+        };
+
+        let response = self
+            .docker
+            .create_network(config)
+            .await
+            .map_err(|e| Error::Docker(format!("Failed to create network: {}", e)))?;
+
+        let id = response.id.unwrap_or_default();
+        tracing::info!(network = %name, network_id = %id, "Network created");
+        Ok(id)
+    }
+
+    /// Connect a container to a network.
+    pub async fn connect_network(&self, container_id: &str, network: &str) -> Result<()> {
+        let config = ConnectNetworkOptions {
+            container: container_id.to_string(),
+            ..Default::default()
+        };
+
+        self.docker
+            .connect_network(network, config)
+            .await
+            .map_err(|e| {
+                Error::Docker(format!(
+                    "Failed to connect container {} to network {}: {}",
+                    container_id, network, e
+                ))
+            })?;
+
+        tracing::info!(
+            container_id = %container_id, network = %network,
+            "Container connected to network"
+        );
+        Ok(())
+    }
+
+    /// Remove a Docker network.
+    pub async fn remove_network(&self, name: &str) -> Result<()> {
+        self.docker
+            .remove_network(name)
+            .await
+            .map_err(|e| Error::Docker(format!("Failed to remove network: {}", e)))?;
+
+        tracing::info!(network = %name, "Network removed");
+        Ok(())
     }
 
     // =========================================================================

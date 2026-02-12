@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, RefreshCw, Settings2 } from 'lucide-react';
+import { Search, RefreshCw, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { storeApi, containersApi } from '@/lib/api';
 import type { StoreApp } from '@/lib/api';
 import { AppCard } from '@/components/apps/app-card';
 import { InstallDialog } from '@/components/apps/install-dialog';
+import { AppDetailDialog } from '@/components/apps/app-detail-dialog';
 import { SourceManager } from '@/components/apps/source-manager';
+
+const PAGE_SIZE = 24;
 
 // Map image name to container DB id for installed detection
 interface InstalledContainer {
@@ -26,9 +29,11 @@ export default function AppsPage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [installedMap, setInstalledMap] = useState<Map<string, string>>(new Map());
+  const [page, setPage] = useState(1);
 
   // Dialogs
   const [installApp, setInstallApp] = useState<StoreApp | null>(null);
+  const [detailApp, setDetailApp] = useState<StoreApp | null>(null);
   const [sourcesOpen, setSourcesOpen] = useState(false);
 
   const fetchApps = async (params?: { search?: string; category?: string }) => {
@@ -69,6 +74,11 @@ export default function AppsPage() {
     );
   }, [fetchInstalledContainers]);
 
+  // Reset page when search/category changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, activeCategory]);
+
   // Extract unique categories from tags
   const categories = useMemo(() => {
     const tagCounts = new Map<string, number>();
@@ -107,6 +117,13 @@ export default function AppsPage() {
     return result;
   }, [apps, search, activeCategory]);
 
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredApps.length / PAGE_SIZE));
+  const paginatedApps = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredApps.slice(start, start + PAGE_SIZE);
+  }, [filteredApps, page]);
+
   const handleRefreshAll = async () => {
     setRefreshing(true);
     try {
@@ -144,7 +161,8 @@ export default function AppsPage() {
           <div>
             <h1 className="text-3xl font-bold">App Store</h1>
             <p className="text-sm text-muted-foreground">
-              {apps.length} apps available
+              {filteredApps.length} apps
+              {totalPages > 1 && ` (page ${page}/${totalPages})`}
             </p>
           </div>
           <div className="flex gap-2">
@@ -193,11 +211,12 @@ export default function AppsPage() {
 
         {/* App Grid */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredApps.map((app) => (
+          {paginatedApps.map((app) => (
             <AppCard
               key={`${app.source_id}-${app.id}`}
               app={app}
               onInstall={setInstallApp}
+              onDetail={setDetailApp}
               installedContainerId={getInstalledId(app)}
               onUpdated={fetchInstalledContainers}
             />
@@ -211,6 +230,46 @@ export default function AppsPage() {
               : 'No apps available. Try refreshing sources.'}
           </div>
         )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Detail Dialog */}
+        <AppDetailDialog
+          app={detailApp}
+          open={!!detailApp}
+          onOpenChange={(open) => {
+            if (!open) setDetailApp(null);
+          }}
+          onInstall={(app) => {
+            setDetailApp(null);
+            setInstallApp(app);
+          }}
+        />
 
         {/* Install Dialog */}
         <InstallDialog
