@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use rand::Rng;
 use super::types::*;
 
 /// Strip Cosmos template directives (`{if ...}`, `{/if}`, `{else}`) and fix
@@ -25,6 +26,49 @@ fn strip_cosmos_templates(text: &str) -> String {
     // Also fix double commas
     let re_double = regex::Regex::new(r",\s*,").unwrap();
     re_double.replace_all(&cleaned, ",").to_string()
+}
+
+/// Resolve Cosmos template variables in a string value.
+///
+/// Supported patterns:
+/// - `{Passwords.CosmosString.SEED}` → random 16-char alphanumeric password
+/// - `{Passwords.CosmosString.LENGTH.SEED}` → random password of LENGTH chars
+/// - `{ServiceName}` → replaced with the given service name
+/// - `{Context.*}` → removed (not applicable outside Cosmos)
+pub fn resolve_cosmos_templates(value: &str, service_name: &str) -> String {
+    if !value.contains('{') {
+        return value.to_string();
+    }
+
+    let mut result = value.to_string();
+
+    // Replace {Passwords.CosmosString.*} with random passwords
+    let password_re =
+        regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
+    result = password_re
+        .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
+        .to_string();
+
+    // Replace {ServiceName}
+    result = result.replace("{ServiceName}", service_name);
+
+    // Remove any remaining {Context.*} references
+    let context_re = regex::Regex::new(r"\{Context\.[^}]+\}").unwrap();
+    result = context_re.replace_all(&result, "").to_string();
+
+    result
+}
+
+/// Generate a random alphanumeric password of the given length.
+fn generate_password(len: usize) -> String {
+    const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let mut rng = rand::thread_rng();
+    (0..len)
+        .map(|_| {
+            let idx = rng.gen_range(0..CHARSET.len());
+            CHARSET[idx] as char
+        })
+        .collect()
 }
 
 /// Parse a compose file (JSON or YAML) into a `ParsedAppConfig`.
@@ -61,12 +105,23 @@ pub fn parse_compose(text: &str, is_yaml: bool) -> Result<ParsedAppConfig, Strin
 }
 
 fn parse_service(name: &str, svc: &CosmosService) -> ParsedService {
+    let mut env = parse_env(&svc.environment);
+    // Resolve Cosmos template variables in env defaults
+    for ev in &mut env {
+        if let Some(ref default) = ev.default {
+            let resolved = resolve_cosmos_templates(default, name);
+            if resolved != *default {
+                ev.default = Some(resolved);
+            }
+        }
+    }
+
     ParsedService {
         service_name: name.to_string(),
         image: svc.image.clone().unwrap_or_default(),
         container_name: svc.container_name.clone(),
         restart: svc.restart.clone().unwrap_or_else(|| "unless-stopped".into()),
-        environment: parse_env(&svc.environment),
+        environment: env,
         ports: parse_ports(&svc.ports),
         volumes: parse_volumes(&svc.volumes),
         command: parse_command(&svc.command),

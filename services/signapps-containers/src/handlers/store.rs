@@ -87,13 +87,15 @@ pub async fn install_app(
     // Build environment variables
     let mut env_vars: Vec<String> = Vec::new();
     for ev in &svc.environment {
-        let val = req
+        let mut val = req
             .environment
             .as_ref()
             .and_then(|m| m.get(&ev.key))
             .or(ev.default.as_ref())
             .cloned()
             .unwrap_or_default();
+        // Resolve any remaining Cosmos template variables
+        val = crate::store::parser::resolve_cosmos_templates(&val, &req.container_name);
         env_vars.push(format!("{}={}", ev.key, val));
     }
 
@@ -434,6 +436,8 @@ async fn run_multi_install(
             .or_else(|| ev.default.clone())
             .unwrap_or_default();
 
+            // Resolve Cosmos template variables
+            val = crate::store::parser::resolve_cosmos_templates(&val, container_name);
             // Replace service name references in env values
             for (sname, cname) in &name_map {
                 val = val.replace(sname, cname);

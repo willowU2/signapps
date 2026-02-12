@@ -36,3 +36,4 @@ regex = "1"
 async-stream = { workspace = true }
 dashmap = { workspace = true }
 jsonwebtoken = { workspace = true }
+rand = { workspace = true }
