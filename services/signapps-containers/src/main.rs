@@ -175,6 +175,10 @@ fn create_router(state: AppState) -> Router {
             post(handlers::containers::restart),
         )
         .route(
+            "/api/v1/containers/:id/update",
+            post(handlers::containers::update),
+        )
+        .route(
             "/api/v1/containers/:id/logs",
             get(handlers::containers::logs),
         )

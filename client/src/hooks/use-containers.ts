@@ -81,16 +81,24 @@ export function useContainerAction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, action }: { id: string; action: 'start' | 'stop' | 'restart' | 'remove' }) => {
+    mutationFn: async ({ id, action }: { id: string; action: 'start' | 'stop' | 'restart' | 'remove' | 'update' }) => {
       switch (action) {
         case 'start': return containersApi.start(id);
         case 'stop': return containersApi.stop(id);
         case 'restart': return containersApi.restart(id);
+        case 'update': return containersApi.update(id);
         case 'remove': return containersApi.remove(id);
       }
     },
     onSuccess: (_, { action }) => {
-      toast.success(`Container ${action === 'remove' ? 'removed' : action + 'ed'}`);
+      const messages: Record<string, string> = {
+        start: 'Container started',
+        stop: 'Container stopped',
+        restart: 'Container restarted',
+        update: 'Container updated to latest image',
+        remove: 'Container removed',
+      };
+      toast.success(messages[action]);
       queryClient.invalidateQueries({ queryKey: ['containers'] });
     },
     onError: (_, { action }) => {

@@ -26,6 +26,7 @@ import {
   RefreshCw,
   Terminal,
   Shield,
+  ArrowUpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LogsDialog } from '@/components/containers/logs-dialog';
@@ -52,7 +53,7 @@ export default function ContainersPage() {
     name: '',
   });
 
-  const handleAction = (id: string, action: 'start' | 'stop' | 'restart' | 'remove') => {
+  const handleAction = (id: string, action: 'start' | 'stop' | 'restart' | 'remove' | 'update') => {
     containerAction.mutate({ id, action });
   };
 
@@ -242,6 +243,14 @@ export default function ContainersPage() {
                         <RotateCcw className="mr-2 h-4 w-4" />
                         Restart
                       </DropdownMenuItem>
+                      {container.is_managed && !container.is_system && (
+                        <DropdownMenuItem
+                          onClick={() => handleAction(container.id, 'update')}
+                        >
+                          <ArrowUpCircle className="mr-2 h-4 w-4" />
+                          Update
+                        </DropdownMenuItem>
+                      )}
                       {!container.is_system && (
                         <DropdownMenuItem
                           className="text-destructive"

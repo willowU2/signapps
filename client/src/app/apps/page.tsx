@@ -1,17 +1,23 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, RefreshCw, Settings2 } from 'lucide-react';
-import { storeApi } from '@/lib/api';
+import { storeApi, containersApi } from '@/lib/api';
 import type { StoreApp } from '@/lib/api';
 import { AppCard } from '@/components/apps/app-card';
 import { InstallDialog } from '@/components/apps/install-dialog';
 import { SourceManager } from '@/components/apps/source-manager';
+
+// Map image name to container DB id for installed detection
+interface InstalledContainer {
+  id: string;
+  image: string;
+}
 
 export default function AppsPage() {
   const [apps, setApps] = useState<StoreApp[]>([]);
@@ -19,6 +25,7 @@ export default function AppsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [installedMap, setInstalledMap] = useState<Map<string, string>>(new Map());
 
   // Dialogs
   const [installApp, setInstallApp] = useState<StoreApp | null>(null);
@@ -33,10 +40,34 @@ export default function AppsPage() {
     }
   };
 
+  const fetchInstalledContainers = useCallback(async () => {
+    try {
+      const res = await containersApi.list();
+      const map = new Map<string, string>();
+      for (const c of res.data || []) {
+        // Normalize image name (strip tag for matching)
+        const imgBase = c.image.split(':')[0].toLowerCase();
+        map.set(imgBase, c.id);
+      }
+      setInstalledMap(map);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Find installed container id for a store app by matching image
+  const getInstalledId = useCallback((app: StoreApp): string | undefined => {
+    if (!app.image) return undefined;
+    const imgBase = app.image.split(':')[0].toLowerCase();
+    return installedMap.get(imgBase);
+  }, [installedMap]);
+
   useEffect(() => {
     setLoading(true);
-    fetchApps().finally(() => setLoading(false));
-  }, []);
+    Promise.all([fetchApps(), fetchInstalledContainers()]).finally(() =>
+      setLoading(false)
+    );
+  }, [fetchInstalledContainers]);
 
   // Extract unique categories from tags
   const categories = useMemo(() => {
@@ -80,7 +111,7 @@ export default function AppsPage() {
     setRefreshing(true);
     try {
       await storeApi.refreshAll();
-      await fetchApps();
+      await Promise.all([fetchApps(), fetchInstalledContainers()]);
     } catch {
       // ignore
     } finally {
@@ -167,6 +198,8 @@ export default function AppsPage() {
               key={`${app.source_id}-${app.id}`}
               app={app}
               onInstall={setInstallApp}
+              installedContainerId={getInstalledId(app)}
+              onUpdated={fetchInstalledContainers}
             />
           ))}
         </div>
@@ -188,6 +221,7 @@ export default function AppsPage() {
           }}
           onInstalled={() => {
             setInstallApp(null);
+            fetchInstalledContainers();
           }}
         />
 
@@ -195,7 +229,10 @@ export default function AppsPage() {
         <SourceManager
           open={sourcesOpen}
           onOpenChange={setSourcesOpen}
-          onSourcesChanged={() => fetchApps()}
+          onSourcesChanged={() => {
+            fetchApps();
+            fetchInstalledContainers();
+          }}
         />
       </div>
     </AppLayout>

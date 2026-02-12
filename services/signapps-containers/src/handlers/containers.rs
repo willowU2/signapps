@@ -409,6 +409,84 @@ pub async fn delete(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Update a container (pull latest image and recreate).
+#[tracing::instrument(skip(state))]
+pub async fn update(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ContainerResponse>> {
+    let repo = ContainerRepository::new(&state.pool);
+
+    let container = repo
+        .find_by_id(id)
+        .await?
+        .ok_or_else(|| Error::NotFound(format!("Container {}", id)))?;
+
+    // Check ownership if not admin
+    if claims.role < 2 && container.owner_id != Some(claims.sub) {
+        return Err(Error::ContainerNotOwned(id.to_string()));
+    }
+
+    let docker_id = container
+        .docker_id
+        .as_ref()
+        .ok_or_else(|| Error::BadRequest("Container not linked to Docker".to_string()))?;
+
+    // Get the saved container config from DB
+    let config: crate::docker::ContainerConfig = container
+        .config
+        .as_ref()
+        .and_then(|c| serde_json::from_value(c.clone()).ok())
+        .ok_or_else(|| Error::BadRequest("No saved config for this container".to_string()))?;
+
+    // Pull latest image
+    tracing::info!(image = %config.image, "Pulling latest image for update");
+    state.docker.pull_image(&config.image).await?;
+
+    // Stop the old container
+    let _ = state.docker.stop_container(docker_id, Some(10)).await;
+
+    // Remove the old container
+    state
+        .docker
+        .remove_container(docker_id, true, false)
+        .await?;
+
+    // Create new container with same config
+    let new_docker_id = state.docker.create_container(config).await?;
+
+    // Update DB with new docker ID
+    repo.update_docker_info(id, &new_docker_id, "created")
+        .await?;
+
+    // Start the new container
+    state.docker.start_container(&new_docker_id).await?;
+    repo.update_status(id, "running").await?;
+
+    tracing::info!(
+        container_id = %id,
+        new_docker_id = %new_docker_id,
+        "Container updated with latest image"
+    );
+
+    let docker_info = state.docker.get_container(&new_docker_id).await.ok();
+
+    Ok(Json(ContainerResponse {
+        id: container.id,
+        docker_id: Some(new_docker_id),
+        name: container.name,
+        image: container.image,
+        status: Some("running".to_string()),
+        owner_id: container.owner_id,
+        auto_update: container.auto_update,
+        created_at: container.created_at.to_rfc3339(),
+        docker_info,
+        is_system: false,
+        is_managed: true,
+    }))
+}
+
 /// Get container logs.
 #[tracing::instrument(skip(state))]
 pub async fn logs(

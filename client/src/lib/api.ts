@@ -248,6 +248,7 @@ export const containersApi = {
   start: (id: string) => containersApiClient.post(`/containers/${id}/start`),
   stop: (id: string) => containersApiClient.post(`/containers/${id}/stop`),
   restart: (id: string) => containersApiClient.post(`/containers/${id}/restart`),
+  update: (id: string) => containersApiClient.post(`/containers/${id}/update`),
   remove: (id: string) => containersApiClient.delete(`/containers/${id}`),
   logs: (id: string, tail?: number) =>
     containersApiClient.get<string>(`/containers/${id}/logs`, { params: { tail } }),

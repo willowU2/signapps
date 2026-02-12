@@ -5,16 +5,35 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download, Package } from 'lucide-react';
+import { Download, Package, ArrowUpCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import type { StoreApp } from '@/lib/api';
+import { containersApi } from '@/lib/api';
+import { toast } from 'sonner';
 
 interface AppCardProps {
   app: StoreApp;
   onInstall: (app: StoreApp) => void;
+  installedContainerId?: string;
+  onUpdated?: () => void;
 }
 
-export function AppCard({ app, onInstall }: AppCardProps) {
+export function AppCard({ app, onInstall, installedContainerId, onUpdated }: AppCardProps) {
   const [imgError, setImgError] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
+  const handleUpdate = async () => {
+    if (!installedContainerId) return;
+    setUpdating(true);
+    try {
+      await containersApi.update(installedContainerId);
+      toast.success(`${app.name} updated`);
+      onUpdated?.();
+    } catch {
+      toast.error(`Failed to update ${app.name}`);
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   return (
     <Card className="group flex flex-col overflow-hidden transition-shadow hover:shadow-md">
@@ -36,7 +55,15 @@ export function AppCard({ app, onInstall }: AppCardProps) {
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold leading-tight">{app.name}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="truncate font-semibold leading-tight">{app.name}</h3>
+              {installedContainerId && (
+                <Badge variant="outline" className="shrink-0 text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                  Installed
+                </Badge>
+              )}
+            </div>
             <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
               {app.description}
             </p>
@@ -60,10 +87,27 @@ export function AppCard({ app, onInstall }: AppCardProps) {
           <span className="truncate text-xs text-muted-foreground">
             {app.source_name}
           </span>
-          <Button size="sm" onClick={() => onInstall(app)}>
-            <Download className="mr-1 h-3.5 w-3.5" />
-            Install
-          </Button>
+          <div className="flex gap-1">
+            {installedContainerId && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleUpdate}
+                disabled={updating}
+              >
+                {updating ? (
+                  <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ArrowUpCircle className="mr-1 h-3.5 w-3.5" />
+                )}
+                Update
+              </Button>
+            )}
+            <Button size="sm" onClick={() => onInstall(app)}>
+              <Download className="mr-1 h-3.5 w-3.5" />
+              Install
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
