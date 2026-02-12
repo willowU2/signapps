@@ -2,6 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { containersApi } from '@/lib/api';
 import { toast } from 'sonner';
 
+export interface ContainerPortMapping {
+  host: number;
+  container: number;
+  protocol: string;
+}
+
 export interface Container {
   id: string;
   name: string;
@@ -11,6 +17,7 @@ export interface Container {
   cpu: string;
   memory: string;
   ports: string[];
+  portMappings: ContainerPortMapping[];
   created: string;
   is_system: boolean;
   is_managed: boolean;
@@ -20,6 +27,7 @@ export interface Container {
 interface PortMapping {
   host_port?: number;
   container_port: number;
+  protocol?: string;
 }
 
 interface DockerInfo {
@@ -67,6 +75,13 @@ export function useContainers() {
           cpu: dockerInfo?.cpu_percent ? `${dockerInfo.cpu_percent}%` : '-',
           memory: dockerInfo?.memory_usage ? formatBytes(dockerInfo.memory_usage) : '-',
           ports: dockerInfo?.ports?.map((p: PortMapping) => `${p.host_port || p.container_port}`) || [],
+          portMappings: dockerInfo?.ports
+            ?.filter((p: PortMapping) => p.host_port)
+            .map((p: PortMapping) => ({
+              host: p.host_port!,
+              container: p.container_port,
+              protocol: p.protocol || 'tcp',
+            })) || [],
           created: c.created_at || c.created || '',
           is_system: c.is_system || false,
           is_managed: c.is_managed !== false,

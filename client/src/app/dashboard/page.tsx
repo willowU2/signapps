@@ -22,16 +22,29 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Server,
+  ExternalLink,
+  Package,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { useServiceHealth, ServiceHealth } from '@/hooks/use-service-health';
 import { useDashboardData } from '@/hooks/use-dashboard';
+import { useContainers } from '@/hooks/use-containers';
+import { getContainerUrl } from '@/lib/utils';
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
   const { data: dashboardData, isLoading: loading, isFetching: refreshing } = useDashboardData();
   const { data: services = [] } = useServiceHealth();
+  const { data: containers = [] } = useContainers();
+
+  const installedApps = containers.filter(
+    (c) =>
+      c.is_managed &&
+      !c.is_system &&
+      c.state === 'running' &&
+      getContainerUrl(c.portMappings) !== null,
+  );
 
   const onlineCount = services.filter((s) => s.status === 'online').length;
   const totalCount = services.length;
@@ -119,6 +132,58 @@ export default function DashboardPage() {
             description="System uptime"
           />
         </div>
+
+        {/* Installed Apps */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Installed Apps
+            </CardTitle>
+            <Link href="/containers">
+              <Button variant="ghost" size="sm">
+                View all containers
+                <ArrowUpRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {installedApps.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {installedApps.map((app) => {
+                  const url = getContainerUrl(app.portMappings)!;
+                  return (
+                    <a
+                      key={app.id}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                        <Package className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-sm">{app.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{app.image.split(':')[0].split('/').pop()}</p>
+                      </div>
+                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </a>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-6 text-center">
+                <p className="text-sm text-muted-foreground">No running apps with web access</p>
+                <Link href="/apps">
+                  <Button variant="link" size="sm" className="mt-2">
+                    Browse App Store
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* System Health */}

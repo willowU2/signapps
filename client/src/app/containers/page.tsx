@@ -27,8 +27,9 @@ import {
   Terminal,
   Shield,
   ArrowUpCircle,
+  ExternalLink,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getContainerUrl } from '@/lib/utils';
 import { LogsDialog } from '@/components/containers/logs-dialog';
 import { ContainerDialog } from '@/components/containers/container-dialog';
 import { ContainerTerminal } from '@/components/containers/container-terminal';
@@ -194,6 +195,23 @@ export default function ContainersPage() {
                     <FileText className="mr-1 h-4 w-4" />
                     Logs
                   </Button>
+
+                  {container.state === 'running' && getContainerUrl(container.portMappings) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                    >
+                      <a
+                        href={getContainerUrl(container.portMappings)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="mr-1 h-4 w-4" />
+                        Open
+                      </a>
+                    </Button>
+                  )}
 
                   {container.state === 'running' && (
                     <Button
