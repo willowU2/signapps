@@ -41,6 +41,20 @@ pub struct ShieldConfig {
     /// Blacklist IPs.
     #[serde(default)]
     pub blacklist: Vec<String>,
+    /// Geo-blocking configuration.
+    #[serde(default)]
+    pub geo_block: Option<GeoBlockConfig>,
+}
+
+/// Geo-blocking configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct GeoBlockConfig {
+    /// Enable geo-blocking.
+    #[serde(default)]
+    pub enabled: bool,
+    /// ISO 3166-1 alpha-2 country codes to block.
+    #[serde(default)]
+    pub blocked_countries: Vec<String>,
 }
 
 fn default_rps() -> i32 {

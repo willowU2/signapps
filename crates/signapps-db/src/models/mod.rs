@@ -8,6 +8,7 @@ pub mod ldap;
 pub mod raid;
 pub mod route;
 pub mod user;
+pub mod backup;
 
 pub use container::*;
 pub use device::*;
@@ -17,3 +18,4 @@ pub use ldap::*;
 pub use raid::*;
 pub use route::*;
 pub use user::*;
+pub use backup::*;

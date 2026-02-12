@@ -63,10 +63,32 @@ impl TraefikClient {
             // Build middlewares list
             let mut middlewares = Vec::new();
 
-            // Add rate limit middleware if shield enabled
+            // Add shield middlewares if enabled
             if let Some(shield) = route.get_shield_config() {
                 if shield.enabled {
+                    // IP allow list (whitelist) - Traefik native middleware
+                    if !shield.whitelist.is_empty() {
+                        let mw_name = format!("{}-ipallowlist", safe_name);
+                        let allow_list =
+                            Middleware::IpAllowList(IpAllowListMiddleware {
+                                ip_allow_list: IpAllowListOptions {
+                                    source_range: shield.whitelist.clone(),
+                                },
+                            });
+                        config
+                            .http
+                            .middlewares
+                            .insert(mw_name.clone(), allow_list);
+                        middlewares.push(mw_name);
+                    }
+
+                    // Rate limiting with blacklist IPs excluded from detection
                     let mw_name = format!("{}-ratelimit", safe_name);
+                    let excluded_ips = if !shield.blacklist.is_empty() {
+                        Some(shield.blacklist.clone())
+                    } else {
+                        None
+                    };
                     let rate_limit = Middleware::RateLimit(RateLimitMiddleware {
                         rate_limit: RateLimitOptions {
                             average: shield.requests_per_second as i64,
@@ -76,7 +98,7 @@ impl TraefikClient {
                                 request_host: None,
                                 ip_strategy: Some(IpStrategy {
                                     depth: Some(1),
-                                    excluded_ips: None,
+                                    excluded_ips,
                                 }),
                             }),
                         },

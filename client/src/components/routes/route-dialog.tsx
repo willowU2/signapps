@@ -40,7 +40,7 @@ import {
   Server,
   Info,
 } from 'lucide-react';
-import { routesApi, Route, CreateRouteRequest, ShieldConfig, HeadersConfig, HeaderEntry, TlsConfig, DnsRecord } from '@/lib/api';
+import { routesApi, Route, CreateRouteRequest, ShieldConfig, HeadersConfig, HeaderEntry, TlsConfig, DnsRecord, GeoBlockConfig } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface RouteDialogProps {
@@ -103,6 +103,7 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
   const [shieldConfig, setShieldConfig] = useState<ShieldConfig>(defaultShieldConfig);
   const [newWhitelistIp, setNewWhitelistIp] = useState('');
   const [newBlacklistIp, setNewBlacklistIp] = useState('');
+  const [newCountryCode, setNewCountryCode] = useState('');
 
   // Headers config
   const [headersConfig, setHeadersConfig] = useState<HeadersConfig>(defaultHeadersConfig);
@@ -229,6 +230,30 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
     setShieldConfig({
       ...shieldConfig,
       blacklist: shieldConfig.blacklist.filter(i => i !== ip),
+    });
+  };
+
+  // Geo-blocking helpers
+  const geoBlock = shieldConfig.geo_block || { enabled: false, blocked_countries: [] };
+
+  const setGeoBlock = (update: Partial<GeoBlockConfig>) => {
+    setShieldConfig({
+      ...shieldConfig,
+      geo_block: { ...geoBlock, ...update },
+    });
+  };
+
+  const addBlockedCountry = () => {
+    const code = newCountryCode.toUpperCase().trim();
+    if (code.length === 2 && !geoBlock.blocked_countries.includes(code)) {
+      setGeoBlock({ blocked_countries: [...geoBlock.blocked_countries, code] });
+      setNewCountryCode('');
+    }
+  };
+
+  const removeBlockedCountry = (code: string) => {
+    setGeoBlock({
+      blocked_countries: geoBlock.blocked_countries.filter(c => c !== code),
     });
   };
 
@@ -879,6 +904,58 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
                         </Badge>
                       ))}
                     </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Geo-blocking */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-blue-500" />
+                        Geo-blocking
+                      </Label>
+                      <Switch
+                        checked={geoBlock.enabled}
+                        onCheckedChange={(checked) => setGeoBlock({ enabled: checked })}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Bloquer le trafic provenant de pays specifiques (codes ISO 3166-1 alpha-2)
+                    </p>
+
+                    {geoBlock.enabled && (
+                      <>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Code pays (ex: CN, RU, KR)"
+                            value={newCountryCode}
+                            onChange={(e) => setNewCountryCode(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addBlockedCountry())}
+                            maxLength={2}
+                            className="uppercase"
+                          />
+                          <Button type="button" variant="outline" size="icon" onClick={addBlockedCountry}>
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {geoBlock.blocked_countries.map((code) => (
+                            <Badge key={code} variant="outline" className="gap-1 border-blue-500/50">
+                              {code}
+                              <button type="button" onClick={() => removeBlockedCountry(code)}>
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                        {geoBlock.blocked_countries.length === 0 && (
+                          <p className="text-xs text-muted-foreground italic">
+                            Codes courants : CN (Chine), RU (Russie), KR (Coree du Sud), BR (Bresil), IN (Inde)
+                          </p>
+                        )}
+                      </>
+                    )}
                   </div>
                 </>
               )}

@@ -1,0 +1,113 @@
+'use client';
+
+import { useMemo, useCallback } from 'react';
+import { ResponsiveGridLayout, useContainerWidth, Layout } from 'react-grid-layout';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { useDashboardStore, WidgetConfig } from '@/stores/dashboard-store';
+
+import { WidgetStatCards } from './widget-stat-cards';
+import { WidgetInstalledApps } from './widget-installed-apps';
+import { WidgetSystemHealth } from './widget-system-health';
+import { WidgetQuickActions } from './widget-quick-actions';
+import { WidgetNetworkTraffic } from './widget-network-traffic';
+import { WidgetBookmarks } from './widget-bookmarks';
+
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+
+function WidgetRenderer({ type }: { type: WidgetConfig['type'] }) {
+  switch (type) {
+    case 'stat-cards':
+      return <WidgetStatCards />;
+    case 'installed-apps':
+      return <WidgetInstalledApps />;
+    case 'system-health':
+      return <WidgetSystemHealth />;
+    case 'quick-actions':
+      return <WidgetQuickActions />;
+    case 'network-traffic':
+      return <WidgetNetworkTraffic />;
+    case 'bookmarks':
+      return <WidgetBookmarks />;
+    default:
+      return <div>Unknown widget</div>;
+  }
+}
+
+export function WidgetGrid() {
+  const { widgets, editMode, updateLayout, removeWidget } = useDashboardStore();
+  const { width, containerRef, mounted } = useContainerWidth();
+
+  const lgLayout = useMemo<Layout>(
+    () =>
+      widgets.map((w) => ({
+        i: w.id,
+        x: w.x,
+        y: w.y,
+        w: w.w,
+        h: w.h,
+        minW: 3,
+        minH: 2,
+      })),
+    [widgets],
+  );
+
+  const onLayoutChange = useCallback(
+    (currentLayout: Layout) => {
+      if (!editMode) return;
+      updateLayout(currentLayout as unknown as { i: string; x: number; y: number; w: number; h: number }[]);
+    },
+    [editMode, updateLayout],
+  );
+
+  return (
+    <div ref={containerRef}>
+      {mounted && (
+        <ResponsiveGridLayout
+          className="layout"
+          width={width}
+          layouts={{ lg: lgLayout }}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+          cols={{ lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 }}
+          rowHeight={60}
+          dragConfig={{
+            enabled: editMode,
+            handle: '.widget-drag-handle',
+          }}
+          resizeConfig={{
+            enabled: editMode,
+          }}
+          onLayoutChange={onLayoutChange}
+          margin={[16, 16] as const}
+        >
+          {widgets.map((widget) => (
+            <div
+              key={widget.id}
+              className={`relative ${editMode ? 'ring-2 ring-dashed ring-primary/30 rounded-lg' : ''}`}
+            >
+              {editMode && (
+                <>
+                  <div className="widget-drag-handle absolute inset-x-0 top-0 z-10 flex h-6 cursor-move items-center justify-center rounded-t-lg bg-primary/10">
+                    <div className="h-1 w-8 rounded bg-primary/40" />
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -right-2 -top-2 z-20 h-6 w-6 rounded-full"
+                    onClick={() => removeWidget(widget.id)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </>
+              )}
+              <div className={editMode ? 'pt-6 h-full' : 'h-full'}>
+                <WidgetRenderer type={widget.type} />
+              </div>
+            </div>
+          ))}
+        </ResponsiveGridLayout>
+      )}
+    </div>
+  );
+}

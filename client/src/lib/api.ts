@@ -300,6 +300,29 @@ export interface SourceValidation {
   error?: string;
 }
 
+// Compose Import API
+export const composeApi = {
+  preview: (yaml: string) =>
+    containersApiClient.post<ComposePreview>('/compose/preview', { yaml }),
+  import: (yaml: string, autoStart?: boolean) =>
+    containersApiClient.post<ContainerInfo[]>('/compose/import', {
+      yaml,
+      auto_start: autoStart,
+    }),
+};
+
+export interface ComposePreview {
+  services: ComposeServicePreview[];
+}
+
+export interface ComposeServicePreview {
+  service_name: string;
+  image: string;
+  ports: { host: number; container: number; protocol: string }[];
+  environment: { key: string; default?: string }[];
+  volumes: { source: string; target: string }[];
+}
+
 // Containers API
 export const containersApi = {
   list: () => containersApiClient.get<ContainerInfo[]>('/containers'),
@@ -319,6 +342,15 @@ export const containersApi = {
   logsDocker: (dockerId: string, tail?: number) =>
     containersApiClient.get<string>(`/containers/docker/${dockerId}/logs`, { params: { tail } }),
   statsDocker: (dockerId: string) => containersApiClient.get(`/containers/docker/${dockerId}/stats`),
+  // Updates
+  checkUpdate: (id: string) =>
+    containersApiClient.post<CheckUpdateResponse>(`/containers/${id}/check-update`),
+  setAutoUpdate: (id: string, autoUpdate: boolean) =>
+    containersApiClient.put<{ auto_update: boolean }>(`/containers/${id}/auto-update`, {
+      auto_update: autoUpdate,
+    }),
+  updatesStatus: () =>
+    containersApiClient.get<UpdatesStatusResponse>('/updates/status'),
   // Images
   listImages: () => containersApiClient.get<ImageInfo[]>('/images'),
   pullImage: (image: string) => containersApiClient.post('/images/pull', { image }),
@@ -344,12 +376,109 @@ export interface PortMapping {
   protocol: string;
 }
 
+export interface CheckUpdateResponse {
+  update_available: boolean;
+  current_digest?: string;
+  latest_digest?: string;
+}
+
+export interface UpdatesStatusResponse {
+  containers: {
+    id: string;
+    name: string;
+    image: string;
+    auto_update: boolean;
+    update_available?: boolean;
+    last_checked?: string;
+  }[];
+}
+
 export interface ImageInfo {
   id: string;
   repo_tags: string[];
   size: number;
   created: string;
 }
+
+// Backup types
+export interface BackupProfile {
+  id: string;
+  name: string;
+  container_ids: string[];
+  schedule?: string;
+  destination_type: string;
+  destination_config: Record<string, unknown>;
+  retention_policy?: RetentionPolicy;
+  enabled: boolean;
+  last_run_at?: string;
+  owner_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RetentionPolicy {
+  keep_last?: number;
+  keep_daily?: number;
+  keep_weekly?: number;
+  keep_monthly?: number;
+}
+
+export interface BackupRun {
+  id: string;
+  profile_id: string;
+  status: string;
+  snapshot_id?: string;
+  size_bytes?: number;
+  files_new?: number;
+  files_changed?: number;
+  duration_seconds?: number;
+  error_message?: string;
+  started_at: string;
+  completed_at?: string;
+}
+
+export interface BackupSnapshot {
+  id: string;
+  short_id: string;
+  time: string;
+  hostname: string;
+  paths: string[];
+  tags?: string[];
+}
+
+export interface CreateBackupProfileRequest {
+  name: string;
+  container_ids: string[];
+  schedule?: string;
+  destination_type: string;
+  destination_config: Record<string, unknown>;
+  retention_policy?: RetentionPolicy;
+  password: string;
+}
+
+export const backupsApi = {
+  list: () =>
+    containersApiClient.get<{ profiles: BackupProfile[] }>('/backups'),
+  get: (id: string) =>
+    containersApiClient.get<BackupProfile>(`/backups/${id}`),
+  create: (data: CreateBackupProfileRequest) =>
+    containersApiClient.post<BackupProfile>('/backups', data),
+  update: (id: string, data: Partial<BackupProfile>) =>
+    containersApiClient.put<BackupProfile>(`/backups/${id}`, data),
+  remove: (id: string) =>
+    containersApiClient.delete(`/backups/${id}`),
+  run: (id: string) =>
+    containersApiClient.post<BackupRun>(`/backups/${id}/run`),
+  snapshots: (id: string) =>
+    containersApiClient.get<{ snapshots: BackupSnapshot[] }>(`/backups/${id}/snapshots`),
+  restore: (id: string, snapshotId: string, targetPath?: string) =>
+    containersApiClient.post(`/backups/${id}/restore`, {
+      snapshot_id: snapshotId,
+      target_path: targetPath,
+    }),
+  runs: (id: string) =>
+    containersApiClient.get<{ runs: BackupRun[] }>(`/backups/${id}/runs`),
+};
 
 // Storage API
 export const storageApi = {
@@ -566,6 +695,12 @@ export interface ShieldConfig {
   block_duration_seconds: number;
   whitelist: string[];
   blacklist: string[];
+  geo_block?: GeoBlockConfig;
+}
+
+export interface GeoBlockConfig {
+  enabled: boolean;
+  blocked_countries: string[];
 }
 
 export interface HeadersConfig {

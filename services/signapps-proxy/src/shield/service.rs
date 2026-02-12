@@ -3,7 +3,8 @@
 use redis::aio::ConnectionManager;
 use redis::AsyncCommands;
 use signapps_common::{Error, Result};
-use signapps_db::models::ShieldStats;
+use signapps_db::models::{ShieldConfig, ShieldStats};
+use std::net::IpAddr;
 use std::sync::Arc;
 
 /// SmartShield service for rate limiting.
@@ -217,6 +218,45 @@ impl ShieldService {
         Ok(())
     }
 
+    /// Check if a request should be allowed, considering whitelist,
+    /// blacklist, and rate limits from the full shield configuration.
+    pub async fn check_request(
+        &self,
+        route_id: &str,
+        client_ip: &str,
+        config: &ShieldConfig,
+    ) -> Result<RateLimitResult> {
+        // Whitelist: always allow
+        if !config.whitelist.is_empty()
+            && ip_matches_list(client_ip, &config.whitelist)
+        {
+            return Ok(RateLimitResult::Allowed {
+                remaining: config.burst_size,
+            });
+        }
+
+        // Blacklist: always block
+        if !config.blacklist.is_empty()
+            && ip_matches_list(client_ip, &config.blacklist)
+        {
+            tracing::info!(
+                route_id = %route_id,
+                ip = %client_ip,
+                "Request blocked by IP blacklist"
+            );
+            return Ok(RateLimitResult::Blocked);
+        }
+
+        // Delegate to rate limiting
+        self.check_rate_limit(
+            route_id,
+            client_ip,
+            config.requests_per_second,
+            config.burst_size,
+        )
+        .await
+    }
+
     /// Check if the service is healthy.
     pub async fn health_check(&self) -> Result<bool> {
         let mut conn = (*self.redis).clone();
@@ -253,5 +293,117 @@ impl RateLimitResult {
     /// Check if the request is allowed.
     pub fn is_allowed(&self) -> bool {
         matches!(self, Self::Allowed { .. })
+    }
+}
+
+/// Check if an IP address matches any entry in a list (exact or CIDR).
+fn ip_matches_list(client_ip: &str, list: &[String]) -> bool {
+    let ip: IpAddr = match client_ip.parse() {
+        Ok(ip) => ip,
+        Err(_) => return false,
+    };
+
+    for entry in list {
+        if entry.contains('/') {
+            if cidr_contains(entry, &ip) {
+                return true;
+            }
+        } else if let Ok(list_ip) = entry.parse::<IpAddr>() {
+            if ip == list_ip {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Check if an IP address falls within a CIDR range.
+fn cidr_contains(cidr: &str, ip: &IpAddr) -> bool {
+    let parts: Vec<&str> = cidr.splitn(2, '/').collect();
+    if parts.len() != 2 {
+        return false;
+    }
+    let network_ip: IpAddr = match parts[0].parse() {
+        Ok(ip) => ip,
+        Err(_) => return false,
+    };
+    let prefix_len: u32 = match parts[1].parse() {
+        Ok(len) => len,
+        Err(_) => return false,
+    };
+
+    match (network_ip, ip) {
+        (IpAddr::V4(net), IpAddr::V4(addr)) => {
+            if prefix_len > 32 {
+                return false;
+            }
+            if prefix_len == 0 {
+                return true;
+            }
+            let mask = !0u32 << (32 - prefix_len);
+            (u32::from(*addr) & mask) == (u32::from(net) & mask)
+        }
+        (IpAddr::V6(net), IpAddr::V6(addr)) => {
+            if prefix_len > 128 {
+                return false;
+            }
+            if prefix_len == 0 {
+                return true;
+            }
+            let net_bytes = net.octets();
+            let addr_bytes = addr.octets();
+            let full_bytes = (prefix_len / 8) as usize;
+            let remaining_bits = prefix_len % 8;
+
+            for i in 0..full_bytes {
+                if net_bytes[i] != addr_bytes[i] {
+                    return false;
+                }
+            }
+            if remaining_bits > 0 && full_bytes < 16 {
+                let mask = !0u8 << (8 - remaining_bits);
+                if (net_bytes[full_bytes] & mask) != (addr_bytes[full_bytes] & mask)
+                {
+                    return false;
+                }
+            }
+            true
+        }
+        _ => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ip_exact_match() {
+        let list = vec!["192.168.1.1".to_string(), "10.0.0.1".to_string()];
+        assert!(ip_matches_list("192.168.1.1", &list));
+        assert!(ip_matches_list("10.0.0.1", &list));
+        assert!(!ip_matches_list("192.168.1.2", &list));
+    }
+
+    #[test]
+    fn test_ip_cidr_match() {
+        let list = vec!["192.168.1.0/24".to_string()];
+        assert!(ip_matches_list("192.168.1.1", &list));
+        assert!(ip_matches_list("192.168.1.254", &list));
+        assert!(!ip_matches_list("192.168.2.1", &list));
+    }
+
+    #[test]
+    fn test_ip_cidr_16() {
+        let list = vec!["10.0.0.0/16".to_string()];
+        assert!(ip_matches_list("10.0.0.1", &list));
+        assert!(ip_matches_list("10.0.255.255", &list));
+        assert!(!ip_matches_list("10.1.0.1", &list));
+    }
+
+    #[test]
+    fn test_invalid_ip() {
+        let list = vec!["192.168.1.0/24".to_string()];
+        assert!(!ip_matches_list("not-an-ip", &list));
     }
 }

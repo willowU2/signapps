@@ -20,6 +20,7 @@ import {
   Mic,
   FileText,
   Store,
+  Archive,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +40,7 @@ const navItems = [
   { href: '/vpn', icon: Shield, label: 'VPN' },
   { href: '/scheduler', icon: Clock, label: 'Scheduler' },
   { href: '/monitoring', icon: Activity, label: 'Monitoring' },
+  { href: '/backups', icon: Archive, label: 'Backups' },
   { href: '/ai', icon: MessageSquare, label: 'AI Chat' },
   { href: '/users', icon: Users, label: 'Users' },
   { href: '/settings', icon: Settings, label: 'Settings' },

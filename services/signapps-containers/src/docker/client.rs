@@ -572,6 +572,54 @@ impl DockerClient {
         Ok(used)
     }
 
+    /// Get the digest of a locally-stored image.
+    pub async fn get_image_digest(&self, image: &str) -> Result<Option<String>> {
+        let inspect = self
+            .docker
+            .inspect_image(image)
+            .await
+            .map_err(|e| Error::Docker(format!("Failed to inspect image: {}", e)))?;
+
+        // Try repo digests first (e.g. "nginx@sha256:abc...")
+        if let Some(digests) = inspect.repo_digests {
+            if let Some(first) = digests.first() {
+                if let Some(digest) = first.split('@').nth(1) {
+                    return Ok(Some(digest.to_string()));
+                }
+            }
+        }
+
+        Ok(inspect.id)
+    }
+
+    /// Check if a newer version of an image is available on the registry.
+    /// Returns `(update_available, local_digest, remote_digest)`.
+    pub async fn check_image_update(
+        &self,
+        image: &str,
+    ) -> Result<(bool, Option<String>, Option<String>)> {
+        let local_digest = self.get_image_digest(image).await?;
+
+        // Pull the latest manifest to compare
+        // We use a lightweight approach: pull image metadata only
+        let client = reqwest::Client::new();
+        let (registry, repository, tag) = parse_image_ref(image);
+
+        let token = fetch_registry_token(&client, &registry, &repository).await;
+        let remote_digest = fetch_remote_digest(
+            &client, &registry, &repository, &tag, token.as_deref(),
+        )
+        .await;
+
+        match (&local_digest, &remote_digest) {
+            (Some(local), Some(remote)) => {
+                let update_available = local != remote;
+                Ok((update_available, Some(local.clone()), Some(remote.clone())))
+            }
+            _ => Ok((false, local_digest, remote_digest)),
+        }
+    }
+
     /// Remove an image.
     pub async fn remove_image(&self, id: &str, force: bool) -> Result<()> {
         let options = RemoveImageOptions {
@@ -709,4 +757,90 @@ impl Default for DockerClient {
     fn default() -> Self {
         Self::new().expect("Failed to create Docker client")
     }
+}
+
+/// Parse an image reference into (registry, repository, tag).
+fn parse_image_ref(image: &str) -> (String, String, String) {
+    let (image_part, tag) = if let Some((img, t)) = image.rsplit_once(':') {
+        // Make sure the ':' is not in the registry part (e.g. localhost:5000/image)
+        if t.contains('/') {
+            (image.to_string(), "latest".to_string())
+        } else {
+            (img.to_string(), t.to_string())
+        }
+    } else {
+        (image.to_string(), "latest".to_string())
+    };
+
+    // Determine registry and repository
+    let parts: Vec<&str> = image_part.splitn(2, '/').collect();
+    if parts.len() == 1 {
+        // Official Docker Hub image (e.g. "nginx")
+        (
+            "registry-1.docker.io".to_string(),
+            format!("library/{}", parts[0]),
+            tag,
+        )
+    } else if parts[0].contains('.') || parts[0].contains(':') {
+        // Custom registry (e.g. "ghcr.io/owner/repo")
+        (parts[0].to_string(), parts[1].to_string(), tag)
+    } else {
+        // Docker Hub user image (e.g. "user/repo")
+        (
+            "registry-1.docker.io".to_string(),
+            image_part.clone(),
+            tag,
+        )
+    }
+}
+
+/// Fetch a Bearer token for the Docker registry (Docker Hub auth).
+async fn fetch_registry_token(
+    client: &reqwest::Client,
+    registry: &str,
+    repository: &str,
+) -> Option<String> {
+    if registry != "registry-1.docker.io" {
+        return None;
+    }
+    let url = format!(
+        "https://auth.docker.io/token?service=registry.docker.io&scope=repository:{}:pull",
+        repository
+    );
+    let resp = client.get(&url).send().await.ok()?;
+    let json: serde_json::Value = resp.json().await.ok()?;
+    json.get("token")?.as_str().map(String::from)
+}
+
+/// Fetch the digest of the remote image manifest via the Registry v2 API.
+async fn fetch_remote_digest(
+    client: &reqwest::Client,
+    registry: &str,
+    repository: &str,
+    tag: &str,
+    token: Option<&str>,
+) -> Option<String> {
+    let scheme = if registry.starts_with("localhost") {
+        "http"
+    } else {
+        "https"
+    };
+    let url = format!(
+        "{}://{}/v2/{}/manifests/{}",
+        scheme, registry, repository, tag
+    );
+
+    let mut req = client.head(&url).header(
+        "Accept",
+        "application/vnd.docker.distribution.manifest.v2+json",
+    );
+    if let Some(t) = token {
+        req = req.header("Authorization", format!("Bearer {}", t));
+    }
+
+    let resp = req.send().await.ok()?;
+    resp.headers()
+        .get("docker-content-digest")
+        .and_then(|v| v.to_str().ok())
+        .map(String::from)
 }

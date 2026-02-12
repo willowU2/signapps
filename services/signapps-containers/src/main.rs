@@ -3,6 +3,7 @@
 //! Docker container lifecycle management service.
 //! Provides APIs for creating, managing, and monitoring containers.
 
+mod backup;
 mod docker;
 mod handlers;
 mod store;
@@ -97,6 +98,19 @@ async fn main() -> anyhow::Result<()> {
     let store_clone = state.store.clone();
     tokio::spawn(async move {
         store_clone.refresh_sources().await;
+    });
+
+    // Spawn auto-update background task
+    let docker_clone = state.docker.clone();
+    let pool_clone = state.pool.clone();
+    tokio::spawn(async move {
+        handlers::updates::run_auto_update_task(docker_clone, pool_clone).await;
+    });
+
+    // Spawn backup scheduler background task
+    let backup_pool = state.pool.clone();
+    tokio::spawn(async move {
+        backup::service::run_backup_scheduler(backup_pool).await;
     });
 
     // Build router
@@ -217,6 +231,65 @@ fn create_router(state: AppState) -> Router {
             get(handlers::store::check_ports),
         )
         .route("/api/v1/store/sources", get(handlers::store::list_sources))
+        // Compose import
+        .route(
+            "/api/v1/compose/preview",
+            post(handlers::compose::preview_compose),
+        )
+        .route(
+            "/api/v1/compose/import",
+            post(handlers::compose::import_compose),
+        )
+        // Updates
+        .route(
+            "/api/v1/containers/:id/check-update",
+            post(handlers::updates::check_update),
+        )
+        .route(
+            "/api/v1/containers/:id/auto-update",
+            put(handlers::updates::set_auto_update),
+        )
+        .route(
+            "/api/v1/updates/status",
+            get(handlers::updates::updates_status),
+        )
+        // Backups
+        .route(
+            "/api/v1/backups",
+            get(handlers::backups::list_profiles),
+        )
+        .route(
+            "/api/v1/backups",
+            post(handlers::backups::create_profile),
+        )
+        .route(
+            "/api/v1/backups/:id",
+            get(handlers::backups::get_profile),
+        )
+        .route(
+            "/api/v1/backups/:id",
+            put(handlers::backups::update_profile),
+        )
+        .route(
+            "/api/v1/backups/:id",
+            delete(handlers::backups::delete_profile),
+        )
+        .route(
+            "/api/v1/backups/:id/run",
+            post(handlers::backups::run_backup),
+        )
+        .route(
+            "/api/v1/backups/:id/snapshots",
+            get(handlers::backups::list_snapshots),
+        )
+        .route(
+            "/api/v1/backups/:id/restore",
+            post(handlers::backups::restore_snapshot),
+        )
+        .route(
+            "/api/v1/backups/:id/runs",
+            get(handlers::backups::list_runs),
+        )
         // User's quota
         .route("/api/v1/quotas/me", get(handlers::quotas::get_my_quota))
         .layer(middleware::from_fn_with_state(

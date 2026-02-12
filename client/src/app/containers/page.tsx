@@ -28,11 +28,13 @@ import {
   Shield,
   ArrowUpCircle,
   ExternalLink,
+  FileCode,
 } from 'lucide-react';
 import { cn, getContainerUrl } from '@/lib/utils';
 import { LogsDialog } from '@/components/containers/logs-dialog';
 import { ContainerDialog } from '@/components/containers/container-dialog';
 import { ContainerTerminal } from '@/components/containers/container-terminal';
+import { ComposeImportDialog } from '@/components/containers/compose-import-dialog';
 import { useContainers, useContainerAction, Container } from '@/hooks/use-containers';
 
 export default function ContainersPage() {
@@ -43,6 +45,7 @@ export default function ContainersPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'user' | 'running' | 'stopped' | 'system'>('user');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [composeDialogOpen, setComposeDialogOpen] = useState(false);
   const [logsDialog, setLogsDialog] = useState<{ open: boolean; id: string; name: string }>({
     open: false,
     id: '',
@@ -112,6 +115,10 @@ export default function ContainersPage() {
             <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['containers'] })}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh
+            </Button>
+            <Button variant="outline" onClick={() => setComposeDialogOpen(true)}>
+              <FileCode className="mr-2 h-4 w-4" />
+              Import Compose
             </Button>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -304,6 +311,13 @@ export default function ContainersPage() {
         <ContainerDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['containers'] })}
+        />
+
+        {/* Compose Import Dialog */}
+        <ComposeImportDialog
+          open={composeDialogOpen}
+          onOpenChange={setComposeDialogOpen}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ['containers'] })}
         />
 

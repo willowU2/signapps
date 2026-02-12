@@ -90,6 +90,7 @@ pub enum Middleware {
     StripPrefix(StripPrefixMiddleware),
     RedirectScheme(RedirectSchemeMiddleware),
     Chain(ChainMiddleware),
+    IpAllowList(IpAllowListMiddleware),
 }
 
 /// Headers middleware.
@@ -232,4 +233,18 @@ pub struct ChainMiddleware {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChainOptions {
     pub middlewares: Vec<String>,
+}
+
+/// IP allow list middleware.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IpAllowListMiddleware {
+    #[serde(rename = "ipAllowList")]
+    pub ip_allow_list: IpAllowListOptions,
+}
+
+/// IP allow list options.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IpAllowListOptions {
+    #[serde(rename = "sourceRange")]
+    pub source_range: Vec<String>,
 }
