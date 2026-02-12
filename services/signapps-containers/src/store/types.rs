@@ -73,13 +73,22 @@ pub struct CosmosService {
     pub container_name: Option<String>,
     pub restart: Option<String>,
     pub environment: Option<CosmosEnv>,
-    pub ports: Option<Vec<String>>,
+    pub ports: Option<Vec<serde_json::Value>>,
     pub volumes: Option<Vec<CosmosVolume>>,
-    pub labels: Option<HashMap<String, String>>,
+    pub labels: Option<CosmosLabels>,
     pub command: Option<CosmosCommand>,
     pub hostname: Option<String>,
     #[allow(dead_code)]
-    pub networks: Option<serde_json::Value>,
+    #[serde(flatten)]
+    pub extra: serde_json::Value,
+}
+
+/// Labels can be a map {"key": "value"} or an array ["key=value"].
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum CosmosLabels {
+    Map(HashMap<String, serde_json::Value>),
+    List(Vec<String>),
 }
 
 #[derive(Debug, Clone, Deserialize)]
