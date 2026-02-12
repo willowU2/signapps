@@ -164,6 +164,82 @@ export interface LdapConfig {
   fallback_local_auth?: boolean;
 }
 
+// App Store API
+export const storeApi = {
+  listApps: (params?: { search?: string; category?: string }) =>
+    containersApiClient.get<StoreApp[]>('/store/apps', { params }),
+  getAppDetails: (sourceId: string, appId: string) =>
+    containersApiClient.get<AppDetails>(`/store/apps/${sourceId}/${encodeURIComponent(appId)}`),
+  install: (data: StoreInstallRequest) =>
+    containersApiClient.post('/store/install', data),
+  listSources: () =>
+    containersApiClient.get<AppSource[]>('/store/sources'),
+  addSource: (data: { name: string; url: string }) =>
+    containersApiClient.post<AppSource>('/store/sources', data),
+  deleteSource: (id: string) =>
+    containersApiClient.delete(`/store/sources/${id}`),
+  refreshSource: (id: string) =>
+    containersApiClient.post(`/store/sources/${id}/refresh`),
+  refreshAll: () =>
+    containersApiClient.post('/store/sources/refresh'),
+};
+
+export interface StoreApp {
+  id: string;
+  name: string;
+  description: string;
+  long_description: string;
+  icon: string;
+  tags: string[];
+  supported_architectures: string[];
+  compose_url: string;
+  source_id: string;
+  source_name: string;
+  image: string;
+  repository: string;
+}
+
+export interface AppSource {
+  id: string;
+  name: string;
+  url: string;
+  enabled: boolean;
+  last_fetched?: string;
+  app_count: number;
+  last_error?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ParsedService {
+  service_name: string;
+  image: string;
+  container_name?: string;
+  restart: string;
+  environment: { key: string; default?: string }[];
+  ports: { host: number; container: number; protocol: string }[];
+  volumes: { source: string; target: string; read_only: boolean }[];
+  command?: string[];
+  labels: Record<string, string>;
+  hostname?: string;
+}
+
+export interface AppDetails extends StoreApp {
+  config: {
+    services: ParsedService[];
+  };
+}
+
+export interface StoreInstallRequest {
+  app_id: string;
+  source_id: string;
+  container_name: string;
+  environment?: Record<string, string>;
+  ports?: { host: number; container: number; protocol?: string }[];
+  volumes?: { source: string; target: string }[];
+  auto_start?: boolean;
+}
+
 // Containers API
 export const containersApi = {
   list: () => containersApiClient.get<ContainerInfo[]>('/containers'),
@@ -252,7 +328,7 @@ export interface FileInfo {
 
 // AI API
 export const aiApi = {
-  chat: (question: string, options?: { model?: string; provider?: string; conversationId?: string; includesSources?: boolean; collection?: string }) =>
+  chat: (question: string, options?: { model?: string; provider?: string; conversationId?: string; includesSources?: boolean; collection?: string; language?: string; systemPrompt?: string }) =>
     aiApiClient.post<ChatResponse>('/ai/chat', {
       question,
       model: options?.model,
@@ -260,14 +336,18 @@ export const aiApi = {
       conversation_id: options?.conversationId,
       include_sources: options?.includesSources ?? true,
       collection: options?.collection,
+      language: options?.language,
+      system_prompt: options?.systemPrompt,
     }),
-  chatStream: (question: string, options?: { model?: string; provider?: string; conversationId?: string; collection?: string }) =>
+  chatStream: (question: string, options?: { model?: string; provider?: string; conversationId?: string; collection?: string; language?: string; systemPrompt?: string }) =>
     aiApiClient.post('/ai/chat/stream', {
       question,
       model: options?.model,
       provider: options?.provider,
       conversation_id: options?.conversationId,
       collection: options?.collection,
+      language: options?.language,
+      system_prompt: options?.systemPrompt,
     }, {
       responseType: 'stream',
     }),

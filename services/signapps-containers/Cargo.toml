@@ -30,3 +30,5 @@ tower-http = { workspace = true }
 anyhow = { workspace = true }
 futures = { workspace = true }
 futures-util = "0.3"
+reqwest = { workspace = true }
+serde_yaml = "0.9"

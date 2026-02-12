@@ -19,6 +19,7 @@ import {
   Activity,
   Mic,
   FileText,
+  Store,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,6 +32,7 @@ import {
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/containers', icon: Container, label: 'Containers' },
+  { href: '/apps', icon: Store, label: 'App Store' },
   { href: '/storage', icon: HardDrive, label: 'Storage' },
   { href: '/media', icon: Mic, label: 'Media' },
   { href: '/routes', icon: Network, label: 'Routes' },

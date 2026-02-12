@@ -5,6 +5,7 @@
 
 mod docker;
 mod handlers;
+mod store;
 
 use axum::{
     middleware,
@@ -24,6 +25,7 @@ use tower_http::{
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use docker::DockerClient;
+use store::StoreManager;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -75,13 +77,23 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
+    // Create store manager
+    let store = StoreManager::new(pool.clone());
+
     // Create application state
     let state = AppState {
         pool,
         docker,
         jwt_secret,
         jwt_config,
+        store,
     };
+
+    // Refresh app store catalog in background
+    let store_clone = state.store.clone();
+    tokio::spawn(async move {
+        store_clone.refresh_sources().await;
+    });
 
     // Build router
     let app = create_router(state);
@@ -109,6 +121,7 @@ pub struct AppState {
     pub docker: DockerClient,
     pub jwt_secret: String,
     pub jwt_config: JwtConfig,
+    pub store: StoreManager,
 }
 
 impl AuthState for AppState {
@@ -173,6 +186,14 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/containers/:id",
             delete(handlers::containers::delete),
         )
+        // App Store
+        .route("/api/v1/store/apps", get(handlers::store::list_apps))
+        .route(
+            "/api/v1/store/apps/:source_id/:app_id",
+            get(handlers::store::get_app_details),
+        )
+        .route("/api/v1/store/install", post(handlers::store::install_app))
+        .route("/api/v1/store/sources", get(handlers::store::list_sources))
         // User's quota
         .route("/api/v1/quotas/me", get(handlers::quotas::get_my_quota))
         .layer(middleware::from_fn_with_state(
@@ -189,6 +210,23 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/images/:id/force",
             delete(handlers::images::force_delete),
+        )
+        // Store sources (admin)
+        .route(
+            "/api/v1/store/sources",
+            post(handlers::store::add_source),
+        )
+        .route(
+            "/api/v1/store/sources/refresh",
+            post(handlers::store::refresh_all),
+        )
+        .route(
+            "/api/v1/store/sources/:id",
+            delete(handlers::store::delete_source),
+        )
+        .route(
+            "/api/v1/store/sources/:id/refresh",
+            post(handlers::store::refresh_source),
         )
         // Networks
         .route("/api/v1/networks", get(handlers::networks::list_networks))
