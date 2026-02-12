@@ -2,9 +2,38 @@ use std::collections::HashMap;
 
 use super::types::*;
 
+/// Strip Cosmos template directives (`{if ...}`, `{/if}`, `{else}`) and fix
+/// resulting JSON/YAML syntax (trailing/leading commas).
+fn strip_cosmos_templates(text: &str) -> String {
+    let mut lines: Vec<&str> = Vec::new();
+    for line in text.lines() {
+        let trimmed = line.trim();
+        // Skip template conditionals
+        if trimmed.starts_with("{if ") || trimmed.starts_with("{/if") || trimmed.starts_with("{else") {
+            continue;
+        }
+        lines.push(line);
+    }
+    let joined = lines.join("\n");
+
+    // Fix commas: remove leading commas after [ or { and trailing commas before ] or }
+    // e.g. "[\n," → "[\n" and ",\n]" → "\n]"
+    let re_leading = regex::Regex::new(r"([\[\{])\s*,").unwrap();
+    let cleaned = re_leading.replace_all(&joined, "$1");
+    let re_trailing = regex::Regex::new(r",(\s*[\]\}])").unwrap();
+    let cleaned = re_trailing.replace_all(&cleaned, "$1");
+    // Also fix double commas
+    let re_double = regex::Regex::new(r",\s*,").unwrap();
+    re_double.replace_all(&cleaned, ",").to_string()
+}
+
 /// Parse a compose file (JSON or YAML) into a `ParsedAppConfig`.
-/// Tries the format indicated by the URL extension first, then falls back.
+/// Strips Cosmos template directives first, then tries the format
+/// indicated by the URL extension, with fallback to the other format.
 pub fn parse_compose(text: &str, is_yaml: bool) -> Result<ParsedAppConfig, String> {
+    let clean = strip_cosmos_templates(text);
+    let text = &clean;
+
     let compose: CosmosCompose = if is_yaml {
         serde_yaml::from_str(text).or_else(|yaml_err| {
             serde_json::from_str(text)
