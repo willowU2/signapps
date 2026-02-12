@@ -531,6 +531,47 @@ impl DockerClient {
         Ok(())
     }
 
+    /// Get exposed ports from a Docker image.
+    pub async fn get_image_exposed_ports(&self, image: &str) -> Result<Vec<(u16, String)>> {
+        let inspect = self
+            .docker
+            .inspect_image(image)
+            .await
+            .map_err(|e| Error::Docker(format!("Failed to inspect image: {}", e)))?;
+
+        let ports = inspect
+            .config
+            .and_then(|c| c.exposed_ports)
+            .map(|exposed| {
+                exposed
+                    .keys()
+                    .filter_map(|key| {
+                        let parts: Vec<&str> = key.split('/').collect();
+                        let port = parts.first()?.parse::<u16>().ok()?;
+                        let proto = parts.get(1).unwrap_or(&"tcp").to_string();
+                        Some((port, proto))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        Ok(ports)
+    }
+
+    /// Get all host ports currently in use by running containers.
+    pub async fn get_used_host_ports(&self) -> Result<std::collections::HashSet<u16>> {
+        let containers = self.list_containers(true).await?;
+        let mut used = std::collections::HashSet::new();
+        for c in &containers {
+            for p in &c.ports {
+                if let Some(hp) = p.host_port {
+                    used.insert(hp);
+                }
+            }
+        }
+        Ok(used)
+    }
+
     /// Remove an image.
     pub async fn remove_image(&self, id: &str, force: bool) -> Result<()> {
         let options = RemoveImageOptions {

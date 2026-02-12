@@ -39,11 +39,7 @@ export default function DashboardPage() {
   const { data: containers = [] } = useContainers();
 
   const installedApps = containers.filter(
-    (c) =>
-      c.is_managed &&
-      !c.is_system &&
-      c.state === 'running' &&
-      getContainerUrl(c.portMappings) !== null,
+    (c) => c.is_managed && !c.is_system && c.state === 'running',
   );
 
   const onlineCount = services.filter((s) => s.status === 'online').length;
@@ -151,13 +147,15 @@ export default function DashboardPage() {
             {installedApps.length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {installedApps.map((app) => {
-                  const url = getContainerUrl(app.portMappings)!;
+                  const url = getContainerUrl(app.portMappings);
+                  const Wrapper = url ? 'a' : 'div';
+                  const linkProps = url
+                    ? { href: url, target: '_blank' as const, rel: 'noopener noreferrer' }
+                    : {};
                   return (
-                    <a
+                    <Wrapper
                       key={app.id}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      {...linkProps}
                       className="group flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
                     >
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -167,14 +165,18 @@ export default function DashboardPage() {
                         <p className="truncate font-medium text-sm">{app.name}</p>
                         <p className="truncate text-xs text-muted-foreground">{app.image.split(':')[0].split('/').pop()}</p>
                       </div>
-                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
+                      {url ? (
+                        <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      ) : (
+                        <Badge variant="outline" className="shrink-0 text-xs">No port</Badge>
+                      )}
+                    </Wrapper>
                   );
                 })}
               </div>
             ) : (
               <div className="py-6 text-center">
-                <p className="text-sm text-muted-foreground">No running apps with web access</p>
+                <p className="text-sm text-muted-foreground">No running apps</p>
                 <Link href="/apps">
                   <Button variant="link" size="sm" className="mt-2">
                     Browse App Store

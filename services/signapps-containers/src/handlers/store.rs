@@ -100,7 +100,7 @@ pub async fn install_app(
     }
 
     // Build port mappings
-    let ports: Vec<PortMapping> = if let Some(overrides) = &req.ports {
+    let mut ports: Vec<PortMapping> = if let Some(overrides) = &req.ports {
         overrides
             .iter()
             .map(|p| PortMapping {
@@ -120,6 +120,43 @@ pub async fn install_app(
                 host_ip: None,
             })
             .collect()
+    };
+
+    // If no ports defined, pull image early and detect exposed ports to auto-assign
+    // host ports in a safe range (10300+), avoiding 3000-4000 reserved for system services
+    let image_pulled = if ports.is_empty() {
+        tracing::info!(image = %svc.image, "Pulling image for store install (early for port detection)");
+        if let Err(e) = state.docker.pull_image(&svc.image).await {
+            tracing::warn!(image = %svc.image, "Image pull failed (may already exist): {e}");
+        }
+
+        if let Ok(exposed) = state.docker.get_image_exposed_ports(&svc.image).await {
+            if !exposed.is_empty() {
+                let used_ports = state.docker.get_used_host_ports().await.unwrap_or_default();
+                const APP_PORT_BASE: u16 = 10300;
+                let mut next_port = APP_PORT_BASE;
+                for (container_port, protocol) in &exposed {
+                    while used_ports.contains(&next_port) || (3000..=4000).contains(&next_port) {
+                        next_port += 1;
+                    }
+                    ports.push(PortMapping {
+                        host: next_port,
+                        container: *container_port,
+                        protocol: protocol.clone(),
+                        host_ip: None,
+                    });
+                    tracing::info!(
+                        host_port = next_port,
+                        container_port = container_port,
+                        "Auto-assigned port for store app"
+                    );
+                    next_port += 1;
+                }
+            }
+        }
+        true
+    } else {
+        false
     };
 
     // Build volume mounts
@@ -179,10 +216,12 @@ pub async fn install_app(
         auto_update: None,
     };
 
-    // Pull image first
-    tracing::info!(image = %config.image, "Pulling image for store install");
-    if let Err(e) = state.docker.pull_image(&config.image).await {
-        tracing::warn!(image = %config.image, "Image pull failed (may already exist): {e}");
+    // Pull image (skip if already pulled during port detection)
+    if !image_pulled {
+        tracing::info!(image = %config.image, "Pulling image for store install");
+        if let Err(e) = state.docker.pull_image(&config.image).await {
+            tracing::warn!(image = %config.image, "Image pull failed (may already exist): {e}");
+        }
     }
 
     // Create DB record
@@ -446,7 +485,7 @@ async fn run_multi_install(
         }
 
         // Build port mappings
-        let ports: Vec<PortMapping> = if let Some(ovr) = overrides {
+        let mut ports: Vec<PortMapping> = if let Some(ovr) = overrides {
             if let Some(port_ovr) = &ovr.ports {
                 port_ovr
                     .iter()
@@ -479,6 +518,36 @@ async fn run_multi_install(
                 })
                 .collect()
         };
+
+        // If no ports defined, detect exposed ports from the image
+        if ports.is_empty() {
+            if let Ok(exposed) = docker.get_image_exposed_ports(&svc.image).await {
+                if !exposed.is_empty() {
+                    let used_ports = docker.get_used_host_ports().await.unwrap_or_default();
+                    const APP_PORT_BASE: u16 = 10300;
+                    let mut next_port = APP_PORT_BASE;
+                    for (container_port, protocol) in &exposed {
+                        while used_ports.contains(&next_port)
+                            || (3000..=4000).contains(&next_port)
+                        {
+                            next_port += 1;
+                        }
+                        ports.push(PortMapping {
+                            host: next_port,
+                            container: *container_port,
+                            protocol: protocol.clone(),
+                            host_ip: None,
+                        });
+                        tracing::info!(
+                            host_port = next_port,
+                            container_port = container_port,
+                            "Auto-assigned port for multi-install service"
+                        );
+                        next_port += 1;
+                    }
+                }
+            }
+        }
 
         // Build volumes
         let volumes: Vec<VolumeMount> = if let Some(ovr) = overrides {

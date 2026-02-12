@@ -26,6 +26,8 @@ import {
   AlertCircle,
   ChevronDown,
   AlertTriangle,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { storeApi } from '@/lib/api';
 import type {
@@ -186,11 +188,18 @@ export function InstallDialog({
             service_name: svc.service_name,
             container_name: form?.containerName || svc.service_name,
             environment: form?.envValues,
-            ports: form?.portValues.map((p) => ({
-              host: p.host,
-              container: p.container,
-              protocol: p.protocol,
-            })),
+            ports: (() => {
+              const valid = (form?.portValues || []).filter(
+                (p) => p.host > 0 && p.container > 0
+              );
+              return valid.length > 0
+                ? valid.map((p) => ({
+                    host: p.host,
+                    container: p.container,
+                    protocol: p.protocol,
+                  }))
+                : undefined;
+            })(),
             volumes: form?.volumeValues,
           };
         });
@@ -210,12 +219,15 @@ export function InstallDialog({
         const form = serviceForms.values().next().value;
         if (!form) return;
 
+        const validPorts = form.portValues.filter(
+          (p) => p.host > 0 && p.container > 0
+        );
         await storeApi.install({
           app_id: app.id,
           source_id: app.source_id,
           container_name: form.containerName,
           environment: form.envValues,
-          ports: form.portValues,
+          ports: validPorts.length > 0 ? validPorts : undefined,
           volumes: form.volumeValues,
           auto_start: autoStart,
         });
@@ -258,15 +270,39 @@ export function InstallDialog({
         </div>
 
         {/* Ports */}
-        {form.portValues.length > 0 && (
-          <div className="space-y-2">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
             <Label className="text-xs font-medium">Ports</Label>
-            {form.portValues.map((port, i) => (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs"
+              onClick={() => {
+                updateServiceForm(svc.service_name, {
+                  portValues: [
+                    ...form.portValues,
+                    { host: 0, container: 0, protocol: 'tcp' },
+                  ],
+                });
+              }}
+            >
+              <Plus className="mr-1 h-3 w-3" />
+              Add port
+            </Button>
+          </div>
+          {form.portValues.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No ports configured. Exposed ports will be auto-assigned on install.
+            </p>
+          ) : (
+            form.portValues.map((port, i) => (
               <div key={i} className="flex items-center gap-2">
                 <div className="flex-1 space-y-1">
                   <Input
                     type="number"
-                    value={port.host}
+                    value={port.host || ''}
+                    placeholder="Host"
                     onChange={(e) => {
                       const next = [...form.portValues];
                       next[i] = {
@@ -288,7 +324,21 @@ export function InstallDialog({
                 </div>
                 <span className="text-muted-foreground">:</span>
                 <div className="flex-1">
-                  <Input type="number" value={port.container} disabled />
+                  <Input
+                    type="number"
+                    value={port.container || ''}
+                    placeholder="Container"
+                    onChange={(e) => {
+                      const next = [...form.portValues];
+                      next[i] = {
+                        ...next[i],
+                        container: parseInt(e.target.value) || 0,
+                      };
+                      updateServiceForm(svc.service_name, {
+                        portValues: next,
+                      });
+                    }}
+                  />
                 </div>
                 <div className="w-14">
                   <Input
@@ -297,10 +347,24 @@ export function InstallDialog({
                     className="text-center text-xs"
                   />
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                  onClick={() => {
+                    const next = form.portValues.filter((_, j) => j !== i);
+                    updateServiceForm(svc.service_name, {
+                      portValues: next,
+                    });
+                  }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
 
         {/* Environment */}
         {svc.environment.length > 0 && (
@@ -455,61 +519,113 @@ export function InstallDialog({
                         const form = serviceForms.get(
                           services[0].service_name
                         );
-                        if (!form || form.portValues.length === 0)
-                          return (
-                            <p className="text-sm text-muted-foreground">
-                              No ports configured
-                            </p>
-                          );
-                        return form.portValues.map((port, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <div className="flex-1 space-y-1">
-                              <Label className="text-xs">Host Port</Label>
-                              <Input
-                                type="number"
-                                value={port.host}
-                                onChange={(e) => {
-                                  const next = [...form.portValues];
-                                  next[i] = {
-                                    ...next[i],
-                                    host: parseInt(e.target.value) || 0,
-                                  };
-                                  updateServiceForm(
-                                    services[0].service_name,
-                                    { portValues: next }
-                                  );
-                                }}
-                              />
-                              {portConflicts.has(port.host) && (
-                                <p className="flex items-center gap-1 text-xs text-destructive">
-                                  <AlertTriangle className="h-3 w-3" />
-                                  In use by{' '}
-                                  {portConflicts.get(port.host)?.used_by ||
-                                    'another container'}
-                                </p>
-                              )}
-                            </div>
-                            <span className="mt-6 text-muted-foreground">
-                              :
-                            </span>
-                            <div className="flex-1 space-y-1">
-                              <Label className="text-xs">Container Port</Label>
-                              <Input
-                                type="number"
-                                value={port.container}
-                                disabled
-                              />
-                            </div>
-                            <div className="w-16 space-y-1">
-                              <Label className="text-xs">Proto</Label>
-                              <Input
-                                value={port.protocol}
-                                disabled
-                                className="text-center"
-                              />
-                            </div>
-                          </div>
-                        ));
+                        if (!form) return null;
+                        return (
+                          <>
+                            {form.portValues.length === 0 && (
+                              <p className="text-sm text-muted-foreground">
+                                No ports configured. Exposed ports will be auto-assigned on install.
+                              </p>
+                            )}
+                            {form.portValues.map((port, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <div className="flex-1 space-y-1">
+                                  <Label className="text-xs">Host Port</Label>
+                                  <Input
+                                    type="number"
+                                    value={port.host || ''}
+                                    placeholder="Host"
+                                    onChange={(e) => {
+                                      const next = [...form.portValues];
+                                      next[i] = {
+                                        ...next[i],
+                                        host: parseInt(e.target.value) || 0,
+                                      };
+                                      updateServiceForm(
+                                        services[0].service_name,
+                                        { portValues: next }
+                                      );
+                                    }}
+                                  />
+                                  {portConflicts.has(port.host) && (
+                                    <p className="flex items-center gap-1 text-xs text-destructive">
+                                      <AlertTriangle className="h-3 w-3" />
+                                      In use by{' '}
+                                      {portConflicts.get(port.host)?.used_by ||
+                                        'another container'}
+                                    </p>
+                                  )}
+                                </div>
+                                <span className="mt-6 text-muted-foreground">
+                                  :
+                                </span>
+                                <div className="flex-1 space-y-1">
+                                  <Label className="text-xs">Container Port</Label>
+                                  <Input
+                                    type="number"
+                                    value={port.container || ''}
+                                    placeholder="Container"
+                                    onChange={(e) => {
+                                      const next = [...form.portValues];
+                                      next[i] = {
+                                        ...next[i],
+                                        container: parseInt(e.target.value) || 0,
+                                      };
+                                      updateServiceForm(
+                                        services[0].service_name,
+                                        { portValues: next }
+                                      );
+                                    }}
+                                  />
+                                </div>
+                                <div className="w-16 space-y-1">
+                                  <Label className="text-xs">Proto</Label>
+                                  <Input
+                                    value={port.protocol}
+                                    disabled
+                                    className="text-center"
+                                  />
+                                </div>
+                                <div className="mt-6">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                    onClick={() => {
+                                      const next = form.portValues.filter((_, j) => j !== i);
+                                      updateServiceForm(
+                                        services[0].service_name,
+                                        { portValues: next }
+                                      );
+                                    }}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                updateServiceForm(
+                                  services[0].service_name,
+                                  {
+                                    portValues: [
+                                      ...form.portValues,
+                                      { host: 0, container: 0, protocol: 'tcp' },
+                                    ],
+                                  }
+                                );
+                              }}
+                            >
+                              <Plus className="mr-1 h-3 w-3" />
+                              Add port
+                            </Button>
+                          </>
+                        );
                       })()}
                     </TabsContent>
 
