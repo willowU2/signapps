@@ -111,47 +111,51 @@ pub async fn install_app(
             })
             .collect()
     } else {
-        svc.ports
-            .iter()
-            .map(|p| PortMapping {
-                host: p.host,
-                container: p.container,
-                protocol: p.protocol.clone(),
-                host_ip: None,
-            })
-            .collect()
+        // No user ports: will auto-assign host ports below
+        Vec::new()
     };
 
-    // If no ports defined, pull image early and detect exposed ports to auto-assign
-    // host ports in a safe range (10300+), avoiding 3000-4000 reserved for system services
-    let image_pulled = if ports.is_empty() {
-        tracing::info!(image = %svc.image, "Pulling image for store install (early for port detection)");
+    // Auto-assign host ports when user didn't provide explicit port mappings.
+    // Uses compose container ports if available, otherwise falls back to image EXPOSE.
+    let image_pulled = if req.ports.is_none() {
+        tracing::info!(image = %svc.image, "Pulling image for store install");
         if let Err(e) = state.docker.pull_image(&svc.image).await {
             tracing::warn!(image = %svc.image, "Image pull failed (may already exist): {e}");
         }
 
-        if let Ok(exposed) = state.docker.get_image_exposed_ports(&svc.image).await {
-            if !exposed.is_empty() {
-                let used_ports = state.docker.get_used_host_ports().await.unwrap_or_default();
-                const APP_PORT_BASE: u16 = 10300;
-                let mut next_port = APP_PORT_BASE;
-                for (container_port, protocol) in &exposed {
-                    while used_ports.contains(&next_port) || (3000..=4000).contains(&next_port) {
-                        next_port += 1;
-                    }
-                    ports.push(PortMapping {
-                        host: next_port,
-                        container: *container_port,
-                        protocol: protocol.clone(),
-                        host_ip: None,
-                    });
-                    tracing::info!(
-                        host_port = next_port,
-                        container_port = container_port,
-                        "Auto-assigned port for store app"
-                    );
+        let target_ports: Vec<(u16, String)> = if !svc.ports.is_empty() {
+            svc.ports
+                .iter()
+                .map(|p| (p.container, p.protocol.clone()))
+                .collect()
+        } else {
+            state
+                .docker
+                .get_image_exposed_ports(&svc.image)
+                .await
+                .unwrap_or_default()
+        };
+
+        if !target_ports.is_empty() {
+            let used_ports = state.docker.get_used_host_ports().await.unwrap_or_default();
+            const APP_PORT_BASE: u16 = 10300;
+            let mut next_port = APP_PORT_BASE;
+            for (container_port, protocol) in &target_ports {
+                while used_ports.contains(&next_port) || (3000..=4000).contains(&next_port) {
                     next_port += 1;
                 }
+                ports.push(PortMapping {
+                    host: next_port,
+                    container: *container_port,
+                    protocol: protocol.clone(),
+                    host_ip: None,
+                });
+                tracing::info!(
+                    host_port = next_port,
+                    container_port = container_port,
+                    "Auto-assigned port for store app"
+                );
+                next_port += 1;
             }
         }
         true
@@ -431,6 +435,10 @@ async fn run_multi_install(
     // Track created containers for rollback
     let mut created_docker_ids: Vec<String> = Vec::new();
 
+    // Track ports assigned within this batch to avoid collisions between services
+    let mut batch_assigned_ports: std::collections::HashSet<u16> =
+        std::collections::HashSet::new();
+
     for svc_name in &ordered {
         // Find the parsed service definition
         let svc = match parsed.services.iter().find(|s| &s.service_name == svc_name) {
@@ -485,6 +493,7 @@ async fn run_multi_install(
         }
 
         // Build port mappings
+        let has_user_ports = overrides.is_some_and(|o| o.ports.is_some());
         let mut ports: Vec<PortMapping> = if let Some(ovr) = overrides {
             if let Some(port_ovr) = &ovr.ports {
                 port_ovr
@@ -497,54 +506,51 @@ async fn run_multi_install(
                     })
                     .collect()
             } else {
-                svc.ports
-                    .iter()
-                    .map(|p| PortMapping {
-                        host: p.host,
-                        container: p.container,
-                        protocol: p.protocol.clone(),
-                        host_ip: None,
-                    })
-                    .collect()
+                // No user ports for this service: will auto-assign below
+                Vec::new()
             }
         } else {
-            svc.ports
-                .iter()
-                .map(|p| PortMapping {
-                    host: p.host,
-                    container: p.container,
-                    protocol: p.protocol.clone(),
-                    host_ip: None,
-                })
-                .collect()
+            Vec::new()
         };
 
-        // If no ports defined, detect exposed ports from the image
-        if ports.is_empty() {
-            if let Ok(exposed) = docker.get_image_exposed_ports(&svc.image).await {
-                if !exposed.is_empty() {
-                    let used_ports = docker.get_used_host_ports().await.unwrap_or_default();
-                    const APP_PORT_BASE: u16 = 10300;
-                    let mut next_port = APP_PORT_BASE;
-                    for (container_port, protocol) in &exposed {
-                        while used_ports.contains(&next_port)
-                            || (3000..=4000).contains(&next_port)
-                        {
-                            next_port += 1;
-                        }
-                        ports.push(PortMapping {
-                            host: next_port,
-                            container: *container_port,
-                            protocol: protocol.clone(),
-                            host_ip: None,
-                        });
-                        tracing::info!(
-                            host_port = next_port,
-                            container_port = container_port,
-                            "Auto-assigned port for multi-install service"
-                        );
+        // Auto-assign host ports when user didn't provide explicit port mappings
+        if !has_user_ports {
+            let target_ports: Vec<(u16, String)> = if !svc.ports.is_empty() {
+                svc.ports
+                    .iter()
+                    .map(|p| (p.container, p.protocol.clone()))
+                    .collect()
+            } else {
+                docker
+                    .get_image_exposed_ports(&svc.image)
+                    .await
+                    .unwrap_or_default()
+            };
+
+            if !target_ports.is_empty() {
+                let used_ports = docker.get_used_host_ports().await.unwrap_or_default();
+                const APP_PORT_BASE: u16 = 10300;
+                let mut next_port = APP_PORT_BASE;
+                for (container_port, protocol) in &target_ports {
+                    while used_ports.contains(&next_port)
+                        || batch_assigned_ports.contains(&next_port)
+                        || (3000..=4000).contains(&next_port)
+                    {
                         next_port += 1;
                     }
+                    ports.push(PortMapping {
+                        host: next_port,
+                        container: *container_port,
+                        protocol: protocol.clone(),
+                        host_ip: None,
+                    });
+                    batch_assigned_ports.insert(next_port);
+                    tracing::info!(
+                        host_port = next_port,
+                        container_port = container_port,
+                        "Auto-assigned port for multi-install service"
+                    );
+                    next_port += 1;
                 }
             }
         }

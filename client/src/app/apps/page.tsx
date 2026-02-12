@@ -9,6 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search, RefreshCw, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { storeApi, containersApi } from '@/lib/api';
 import type { StoreApp } from '@/lib/api';
+import type { ContainerPortMapping } from '@/hooks/use-containers';
+import { getContainerUrl } from '@/lib/utils';
 import { AppCard } from '@/components/apps/app-card';
 import { InstallDialog } from '@/components/apps/install-dialog';
 import { AppDetailDialog } from '@/components/apps/app-detail-dialog';
@@ -16,10 +18,12 @@ import { SourceManager } from '@/components/apps/source-manager';
 
 const PAGE_SIZE = 24;
 
-// Map image name to container DB id for installed detection
+// Map image name to container info for installed detection + URL
 interface InstalledContainer {
   id: string;
   image: string;
+  portMappings: ContainerPortMapping[];
+  state: string;
 }
 
 export default function AppsPage() {
@@ -28,7 +32,7 @@ export default function AppsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
-  const [installedMap, setInstalledMap] = useState<Map<string, string>>(new Map());
+  const [installedMap, setInstalledMap] = useState<Map<string, InstalledContainer>>(new Map());
   const [page, setPage] = useState(1);
 
   // Dialogs
@@ -48,11 +52,19 @@ export default function AppsPage() {
   const fetchInstalledContainers = useCallback(async () => {
     try {
       const res = await containersApi.list();
-      const map = new Map<string, string>();
-      for (const c of res.data || []) {
-        // Normalize image name (strip tag for matching)
-        const imgBase = c.image.split(':')[0].toLowerCase();
-        map.set(imgBase, c.id);
+      const map = new Map<string, InstalledContainer>();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const c of (res.data || []) as any[]) {
+        const imgBase = (c.image as string).split(':')[0].toLowerCase();
+        const portMappings: ContainerPortMapping[] = (c.docker_info?.ports || [])
+          .filter((p: { host_port?: number }) => p.host_port)
+          .map((p: { host_port: number; container_port: number; protocol?: string }) => ({
+            host: p.host_port,
+            container: p.container_port,
+            protocol: p.protocol || 'tcp',
+          }));
+        const state: string = c.docker_info?.state || 'unknown';
+        map.set(imgBase, { id: c.id, image: c.image, portMappings, state });
       }
       setInstalledMap(map);
     } catch {
@@ -64,7 +76,16 @@ export default function AppsPage() {
   const getInstalledId = useCallback((app: StoreApp): string | undefined => {
     if (!app.image) return undefined;
     const imgBase = app.image.split(':')[0].toLowerCase();
-    return installedMap.get(imgBase);
+    return installedMap.get(imgBase)?.id;
+  }, [installedMap]);
+
+  // Get URL for an installed app
+  const getInstalledUrl = useCallback((app: StoreApp): string | null => {
+    if (!app.image) return null;
+    const imgBase = app.image.split(':')[0].toLowerCase();
+    const container = installedMap.get(imgBase);
+    if (!container || container.state !== 'running') return null;
+    return getContainerUrl(container.portMappings);
   }, [installedMap]);
 
   useEffect(() => {
@@ -218,6 +239,7 @@ export default function AppsPage() {
               onInstall={setInstallApp}
               onDetail={setDetailApp}
               installedContainerId={getInstalledId(app)}
+              containerUrl={getInstalledUrl(app)}
               onUpdated={fetchInstalledContainers}
             />
           ))}

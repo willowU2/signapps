@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download, Package, ArrowUpCircle, CheckCircle2, Loader2, Layers } from 'lucide-react';
+import { Download, Package, ArrowUpCircle, CheckCircle2, Loader2, Layers, ExternalLink } from 'lucide-react';
 import type { StoreApp } from '@/lib/api';
 import { containersApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -15,10 +15,11 @@ interface AppCardProps {
   onInstall: (app: StoreApp) => void;
   onDetail: (app: StoreApp) => void;
   installedContainerId?: string;
+  containerUrl?: string | null;
   onUpdated?: () => void;
 }
 
-export function AppCard({ app, onInstall, onDetail, installedContainerId, onUpdated }: AppCardProps) {
+export function AppCard({ app, onInstall, onDetail, installedContainerId, containerUrl, onUpdated }: AppCardProps) {
   const [imgError, setImgError] = useState(false);
   const [updating, setUpdating] = useState(false);
 
@@ -100,6 +101,18 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, onUpda
             )}
           </div>
           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            {installedContainerId && containerUrl && (
+              <Button
+                size="sm"
+                variant="default"
+                asChild
+              >
+                <a href={containerUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                  Open
+                </a>
+              </Button>
+            )}
             {installedContainerId && (
               <Button
                 size="sm"
@@ -115,10 +128,12 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, onUpda
                 Update
               </Button>
             )}
-            <Button size="sm" onClick={() => onInstall(app)}>
-              <Download className="mr-1 h-3.5 w-3.5" />
-              Install
-            </Button>
+            {!installedContainerId && (
+              <Button size="sm" onClick={() => onInstall(app)}>
+                <Download className="mr-1 h-3.5 w-3.5" />
+                Install
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>

@@ -38,6 +38,7 @@ import type {
   PortConflict,
 } from '@/lib/api';
 import { toast } from 'sonner';
+import { getContainerUrl } from '@/lib/utils';
 import { InstallProgress } from './install-progress';
 
 interface InstallDialogProps {
@@ -229,7 +230,7 @@ export function InstallDialog({
         const validPorts = form.portValues.filter(
           (p) => p.host > 0 && p.container > 0
         );
-        await storeApi.install({
+        const res = await storeApi.install({
           app_id: app.id,
           source_id: app.source_id,
           container_name: form.containerName,
@@ -242,7 +243,29 @@ export function InstallDialog({
           volumes: showAdvanced ? form.volumeValues : undefined,
           auto_start: autoStart,
         });
-        toast.success(`${app.name} installed successfully`);
+
+        // Extract URL from install response
+        const portMappings = (res.data?.docker_info?.ports || [])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((p: any) => p.host_port)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((p: any) => ({
+            host: p.host_port as number,
+            container: p.container_port as number,
+            protocol: (p.protocol as string) || 'tcp',
+          }));
+        const appUrl = getContainerUrl(portMappings);
+
+        if (appUrl) {
+          toast.success(`${app.name} installed`, {
+            action: {
+              label: 'Open',
+              onClick: () => window.open(appUrl, '_blank'),
+            },
+          });
+        } else {
+          toast.success(`${app.name} installed successfully`);
+        }
         onOpenChange(false);
         onInstalled?.();
       }
