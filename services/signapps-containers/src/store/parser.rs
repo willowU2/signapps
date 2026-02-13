@@ -59,6 +59,72 @@ pub fn resolve_cosmos_templates(value: &str, service_name: &str) -> String {
     result
 }
 
+/// Resolve Cosmos templates for display (used by the parser).
+///
+/// Resolves `{Passwords.*}` and removes `{Context.*}`, but keeps
+/// `{ServiceName}` as a placeholder so the frontend can replace it with
+/// the user-chosen container name.
+fn resolve_for_display(value: &str) -> String {
+    if !value.contains('{') {
+        return value.to_string();
+    }
+
+    let mut result = value.to_string();
+
+    // Replace {Passwords.CosmosString.*} with random passwords
+    let password_re =
+        regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
+    result = password_re
+        .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
+        .to_string();
+
+    // Remove any {Context.*} references (not applicable outside Cosmos)
+    let context_re = regex::Regex::new(r"\{Context\.[^}]+\}").unwrap();
+    result = context_re.replace_all(&result, "").to_string();
+
+    result
+}
+
+/// Resolve volume source templates for display.
+///
+/// Like `resolve_for_display` but maps `{Context.*}` to named volume
+/// placeholders (`{ServiceName}-data`, etc.) instead of removing them,
+/// since an empty volume source would be invalid.
+fn resolve_volume_for_display(source: &str) -> String {
+    if !source.contains('{') {
+        return source.to_string();
+    }
+
+    let mut result = source.to_string();
+
+    // Replace {Passwords.CosmosString.*} with random passwords
+    let password_re =
+        regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
+    result = password_re
+        .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
+        .to_string();
+
+    // Replace {Context.*} with {ServiceName}-based named volumes
+    let context_re = regex::Regex::new(r"\{Context\.([^}]+)\}").unwrap();
+    result = context_re
+        .replace_all(&result, |caps: &regex::Captures| {
+            let key = caps.get(1).map(|m| m.as_str()).unwrap_or("data");
+            let suffix = match key {
+                "downloadsPath" => "downloads",
+                "dataPath" | "storePath" => "data",
+                "configPath" => "config",
+                "mediaPath" => "media",
+                "logsPath" => "logs",
+                "cachePath" => "cache",
+                _ => "data",
+            };
+            format!("{{ServiceName}}-{suffix}")
+        })
+        .to_string();
+
+    result
+}
+
 /// Generate a random alphanumeric password of the given length.
 fn generate_password(len: usize) -> String {
     const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -106,27 +172,40 @@ pub fn parse_compose(text: &str, is_yaml: bool) -> Result<ParsedAppConfig, Strin
 
 fn parse_service(name: &str, svc: &CosmosService) -> ParsedService {
     let mut env = parse_env(&svc.environment);
-    // Resolve Cosmos template variables in env defaults
+    // Resolve passwords and remove {Context.*} in env defaults.
+    // Keep {ServiceName} as template for the frontend to resolve with the
+    // user-chosen container name.
     for ev in &mut env {
         if let Some(ref default) = ev.default {
-            let resolved = resolve_cosmos_templates(default, name);
+            let resolved = resolve_for_display(default);
             if resolved != *default {
                 ev.default = Some(resolved);
             }
         }
     }
 
+    // Resolve volume sources for display: passwords and {Context.*} → named
+    // volume placeholders, but keep {ServiceName} as template.
+    let mut volumes = parse_volumes(&svc.volumes);
+    for vol in &mut volumes {
+        vol.source = resolve_volume_for_display(&vol.source);
+    }
+
+    // Keep {ServiceName} in container_name and hostname as templates
+    let container_name = svc.container_name.clone();
+    let hostname = svc.hostname.clone();
+
     ParsedService {
         service_name: name.to_string(),
         image: svc.image.clone().unwrap_or_default(),
-        container_name: svc.container_name.clone(),
+        container_name,
         restart: svc.restart.clone().unwrap_or_else(|| "unless-stopped".into()),
         environment: env,
         ports: parse_ports(&svc.ports),
-        volumes: parse_volumes(&svc.volumes),
+        volumes,
         command: parse_command(&svc.command),
         labels: parse_labels(&svc.labels),
-        hostname: svc.hostname.clone(),
+        hostname,
         depends_on: parse_depends_on(&svc.depends_on),
     }
 }

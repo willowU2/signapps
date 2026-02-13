@@ -65,6 +65,10 @@ export default function LoginPage() {
           setUser(userResponse.data);
         }
 
+        // Sync cookie immediately so middleware sees authenticated state
+        const cookieValue = JSON.stringify({ state: { isAuthenticated: true } });
+        document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/; max-age=31536000; SameSite=Lax`;
+
         // Redirect to saved path or dashboard
         const redirectPath = redirectAfterLogin || '/dashboard';
         setRedirectAfterLogin(null);

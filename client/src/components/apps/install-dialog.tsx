@@ -87,6 +87,10 @@ export function InstallDialog({
 
   const isMultiService = (details?.config.services.length ?? 0) > 1;
 
+  // Helper: resolve {ServiceName} template with actual container name
+  const resolveServiceName = (val: string, name: string) =>
+    val.replace(/\{ServiceName\}/g, name);
+
   // Fetch compose details when dialog opens
   useEffect(() => {
     if (!app || !open) return;
@@ -109,23 +113,30 @@ export function InstallDialog({
         const baseName = app.id.toLowerCase().replace(/[^a-z0-9-]/g, '-');
         setGroupName(baseName);
 
-        data.config.services.forEach((svc, idx) => {
+        data.config.services.forEach((svc) => {
+          // Resolve {ServiceName} in container_name if present
+          const resolvedContainerName = svc.container_name
+            ? resolveServiceName(svc.container_name, baseName)
+            : null;
+
           const name =
             data.config.services.length === 1
-              ? svc.container_name || baseName
+              ? resolvedContainerName || baseName
               : `${baseName}-${svc.service_name}`;
 
+          // Resolve {ServiceName} in env defaults
           const envMap: Record<string, string> = {};
           svc.environment.forEach((e) => {
-            envMap[e.key] = e.default || '';
+            envMap[e.key] = resolveServiceName(e.default || '', name);
           });
 
           forms.set(svc.service_name, {
             containerName: name,
             envValues: envMap,
             portValues: svc.ports.map((p) => ({ ...p })),
+            // Resolve {ServiceName} in volume sources
             volumeValues: svc.volumes.map((v) => ({
-              source: v.source,
+              source: resolveServiceName(v.source, name),
               target: v.target,
             })),
           });

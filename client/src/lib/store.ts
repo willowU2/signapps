@@ -37,6 +37,10 @@ export const useAuthStore = create<AuthState>()(
         });
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        // Clear cookie immediately so middleware sees unauthenticated state
+        if (typeof document !== 'undefined') {
+          document.cookie = 'auth-storage=; path=/; max-age=0';
+        }
         set({ user: null, isAuthenticated: false, mfaSessionToken: null });
       },
     }),

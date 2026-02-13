@@ -288,6 +288,7 @@ pub async fn create(
 }
 
 /// Start a container.
+/// If the container has no docker_id but has a saved config, create it first.
 #[tracing::instrument(skip(state))]
 pub async fn start(
     State(state): State<AppState>,
@@ -300,9 +301,34 @@ pub async fn start(
         .await?
         .ok_or_else(|| Error::NotFound(format!("Container {}", id)))?;
 
-    let docker_id = container
-        .docker_id
-        .ok_or_else(|| Error::BadRequest("Container not linked to Docker".to_string()))?;
+    let docker_id = match container.docker_id {
+        Some(did) => did,
+        None => {
+            // No Docker container yet — try to create from saved config
+            let config: crate::docker::ContainerConfig = container
+                .config
+                .as_ref()
+                .and_then(|c| serde_json::from_value(c.clone()).ok())
+                .ok_or_else(|| {
+                    Error::BadRequest(
+                        "Container not linked to Docker and no saved config".to_string(),
+                    )
+                })?;
+
+            tracing::info!(
+                container_id = %id,
+                image = %config.image,
+                "Creating Docker container from saved config"
+            );
+
+            // Pull image first
+            let _ = state.docker.pull_image(&config.image).await;
+
+            let new_id = state.docker.create_container(config).await?;
+            repo.update_docker_info(id, &new_id, "created").await?;
+            new_id
+        }
+    };
 
     state.docker.start_container(&docker_id).await?;
     repo.update_status(id, "running").await?;
