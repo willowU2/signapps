@@ -193,6 +193,18 @@ pub async fn install_app(
         _ => Some(RestartPolicy::UnlessStopped),
     };
 
+    // Build labels: start with compose labels, then inject store metadata
+    let mut labels = svc.labels.clone();
+    labels.insert("signapps.app.id".to_string(), req.app_id.clone());
+    labels.insert("signapps.app.name".to_string(), app.name.clone());
+    if !app.tags.is_empty() {
+        labels.insert("signapps.app.tags".to_string(), app.tags.join(","));
+        labels.insert(
+            "signapps.app.category".to_string(),
+            app.tags[0].clone(),
+        );
+    }
+
     // Build container config
     let config = ContainerConfig {
         name: req.container_name.clone(),
@@ -205,11 +217,7 @@ pub async fn install_app(
         } else {
             Some(volumes)
         },
-        labels: if svc.labels.is_empty() {
-            None
-        } else {
-            Some(svc.labels.clone())
-        },
+        labels: Some(labels),
         restart_policy,
         resources: None,
         network_mode: None,
@@ -278,6 +286,10 @@ pub async fn install_app(
 
     let docker_info = state.docker.get_container(&docker_id).await.ok();
 
+    let category = app.tags.first().cloned();
+    let tags = app.tags.clone();
+    let store_app_name = Some(app.name.clone());
+
     Ok(Json(ContainerResponse {
         id: container.id,
         docker_id: Some(docker_id),
@@ -290,6 +302,9 @@ pub async fn install_app(
         docker_info,
         is_system: false,
         is_managed: true,
+        category,
+        tags,
+        app_name: store_app_name,
     }))
 }
 
@@ -364,6 +379,12 @@ pub async fn install_multi(
     let pool = state.pool.clone();
     let channels = state.install_channels.clone();
 
+    let store_meta = StoreAppMeta {
+        app_id: req.app_id.clone(),
+        app_name: app.name.clone(),
+        app_tags: app.tags.clone(),
+    };
+
     tokio::spawn(async move {
         let result = run_multi_install(
             &docker,
@@ -374,6 +395,7 @@ pub async fn install_multi(
             owner_id,
             &req,
             &parsed,
+            &store_meta,
         )
         .await;
 
@@ -396,7 +418,15 @@ pub async fn install_multi(
     Ok(Json(InstallStarted { install_id }))
 }
 
+/// Store app metadata passed to multi-install for label injection.
+struct StoreAppMeta {
+    app_id: String,
+    app_name: String,
+    app_tags: Vec<String>,
+}
+
 /// Background multi-service install logic.
+#[allow(clippy::too_many_arguments)]
 async fn run_multi_install(
     docker: &crate::docker::DockerClient,
     pool: &signapps_db::DatabasePool,
@@ -406,6 +436,7 @@ async fn run_multi_install(
     owner_id: Option<Uuid>,
     req: &MultiServiceInstallRequest,
     parsed: &ParsedAppConfig,
+    store_meta: &StoreAppMeta,
 ) -> std::result::Result<(), String> {
     let service_count = req.services.len();
     let _ = tx.send(InstallEvent::Started {
@@ -601,6 +632,27 @@ async fn run_multi_install(
             _ => Some(RestartPolicy::UnlessStopped),
         };
 
+        // Build labels: start with compose labels, then inject store metadata
+        let mut labels = svc.labels.clone();
+        labels.insert(
+            "signapps.app.id".to_string(),
+            store_meta.app_id.clone(),
+        );
+        labels.insert(
+            "signapps.app.name".to_string(),
+            store_meta.app_name.clone(),
+        );
+        if !store_meta.app_tags.is_empty() {
+            labels.insert(
+                "signapps.app.tags".to_string(),
+                store_meta.app_tags.join(","),
+            );
+            labels.insert(
+                "signapps.app.category".to_string(),
+                store_meta.app_tags[0].clone(),
+            );
+        }
+
         let config = ContainerConfig {
             name: container_name.to_string(),
             image: svc.image.clone(),
@@ -612,11 +664,7 @@ async fn run_multi_install(
             } else {
                 Some(volumes)
             },
-            labels: if svc.labels.is_empty() {
-                None
-            } else {
-                Some(svc.labels.clone())
-            },
+            labels: Some(labels),
             restart_policy,
             resources: None,
             network_mode: None,

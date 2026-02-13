@@ -12,4 +12,5 @@ pub mod quotas;
 pub mod raid;
 pub mod search;
 pub mod shares;
+pub mod stats;
 pub mod trash;

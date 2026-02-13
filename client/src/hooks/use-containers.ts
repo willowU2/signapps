@@ -22,6 +22,9 @@ export interface Container {
   is_system: boolean;
   is_managed: boolean;
   docker_id?: string;
+  category?: string;
+  tags: string[];
+  app_name?: string;
 }
 
 interface PortMapping {
@@ -49,6 +52,9 @@ interface ContainerApiResponse {
   docker_info?: DockerInfo;
   is_system?: boolean;
   is_managed?: boolean;
+  category?: string;
+  tags?: string[];
+  app_name?: string;
 }
 
 function formatBytes(bytes: number) {
@@ -86,6 +92,9 @@ export function useContainers() {
           is_system: c.is_system || false,
           is_managed: c.is_managed !== false,
           docker_id: c.docker_id,
+          category: c.category,
+          tags: c.tags || [],
+          app_name: c.app_name,
         };
       });
     },

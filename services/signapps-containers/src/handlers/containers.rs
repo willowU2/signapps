@@ -37,6 +37,39 @@ pub struct ContainerResponse {
     pub docker_info: Option<ContainerInfo>,
     pub is_system: bool,
     pub is_managed: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+    pub tags: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub app_name: Option<String>,
+}
+
+/// Extract store metadata from container labels JSONB.
+fn extract_store_meta(
+    labels: &Option<serde_json::Value>,
+) -> (Option<String>, Vec<String>, Option<String>) {
+    let Some(val) = labels else {
+        return (None, vec![], None);
+    };
+    let category = val
+        .get("signapps.app.category")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let tags = val
+        .get("signapps.app.tags")
+        .and_then(|v| v.as_str())
+        .map(|s| {
+            s.split(',')
+                .map(|t| t.trim().to_string())
+                .filter(|t| !t.is_empty())
+                .collect()
+        })
+        .unwrap_or_default();
+    let app_name = val
+        .get("signapps.app.name")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    (category, tags, app_name)
 }
 
 /// Container action response.
@@ -102,6 +135,7 @@ pub async fn list(
                 matched_docker_ids.insert(did.clone());
                 docker_map.get(did).cloned()
             });
+            let (category, tags, app_name) = extract_store_meta(&c.labels);
 
             ContainerResponse {
                 id: c.id,
@@ -115,6 +149,9 @@ pub async fn list(
                 docker_info,
                 is_system: false,
                 is_managed: true,
+                category,
+                tags,
+                app_name,
             }
         })
         .collect();
@@ -149,6 +186,9 @@ pub async fn list(
                 docker_info: Some(docker_container.clone()),
                 is_system,
                 is_managed: false,
+                category: None,
+                tags: vec![],
+                app_name: None,
             });
         }
     }
@@ -194,6 +234,8 @@ pub async fn get(
         None
     };
 
+    let (category, tags, app_name) = extract_store_meta(&container.labels);
+
     Ok(Json(ContainerResponse {
         id: container.id,
         docker_id: container.docker_id,
@@ -209,6 +251,9 @@ pub async fn get(
         docker_info,
         is_system: false,
         is_managed: true,
+        category,
+        tags,
+        app_name,
     }))
 }
 
@@ -272,6 +317,8 @@ pub async fn create(
     // Get final info
     let docker_info = state.docker.get_container(&docker_id).await.ok();
 
+    let (category, tags, app_name) = extract_store_meta(&container.labels);
+
     Ok(Json(ContainerResponse {
         id: container.id,
         docker_id: Some(docker_id),
@@ -284,6 +331,9 @@ pub async fn create(
         docker_info,
         is_system: false,
         is_managed: true,
+        category,
+        tags,
+        app_name,
     }))
 }
 
@@ -498,6 +548,8 @@ pub async fn update(
 
     let docker_info = state.docker.get_container(&new_docker_id).await.ok();
 
+    let (category, tags, app_name) = extract_store_meta(&container.labels);
+
     Ok(Json(ContainerResponse {
         id: container.id,
         docker_id: Some(new_docker_id),
@@ -510,6 +562,9 @@ pub async fn update(
         docker_info,
         is_system: false,
         is_managed: true,
+        category,
+        tags,
+        app_name,
     }))
 }
 

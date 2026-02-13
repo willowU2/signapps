@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ export default function ContainersPage() {
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'user' | 'running' | 'stopped' | 'system'>('user');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [composeDialogOpen, setComposeDialogOpen] = useState(false);
   const [logsDialog, setLogsDialog] = useState<{ open: boolean; id: string; name: string }>({
@@ -61,17 +62,41 @@ export default function ContainersPage() {
     containerAction.mutate({ id, action });
   };
 
-  const filteredContainers = containers.filter((c: Container) => {
-    const matchesSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.image.toLowerCase().includes(search.toLowerCase());
-    let matchesFilter = true;
-    if (filter === 'running') matchesFilter = c.state === 'running';
-    else if (filter === 'stopped') matchesFilter = c.state === 'stopped' || c.state === 'exited';
-    else if (filter === 'system') matchesFilter = c.is_system;
-    else if (filter === 'user') matchesFilter = !c.is_system;
-    return matchesSearch && matchesFilter;
-  });
+  // Extract unique categories from containers
+  const categories = useMemo(() => {
+    const catSet = new Set<string>();
+    containers.forEach((c) => {
+      if (c.category) catSet.add(c.category);
+    });
+    return Array.from(catSet).sort();
+  }, [containers]);
+
+  const filteredContainers = useMemo(() => {
+    return containers.filter((c: Container) => {
+      const matchesSearch =
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.image.toLowerCase().includes(search.toLowerCase());
+      let matchesFilter = true;
+      if (filter === 'running') matchesFilter = c.state === 'running';
+      else if (filter === 'stopped') matchesFilter = c.state === 'stopped' || c.state === 'exited';
+      else if (filter === 'system') matchesFilter = c.is_system;
+      else if (filter === 'user') matchesFilter = !c.is_system;
+      const matchesCategory =
+        activeCategory === 'all' || c.category === activeCategory;
+      return matchesSearch && matchesFilter && matchesCategory;
+    });
+  }, [containers, search, filter, activeCategory]);
+
+  // Group containers by category for display
+  const groupedContainers = useMemo(() => {
+    const groups = new Map<string, Container[]>();
+    for (const c of filteredContainers) {
+      const cat = c.category || 'Other';
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(c);
+    }
+    return groups;
+  }, [filteredContainers]);
 
   const getStatusBadge = (state: string) => {
     switch (state) {
@@ -152,144 +177,184 @@ export default function ContainersPage() {
           </div>
         </div>
 
-        {/* Container List */}
-        <div className="space-y-4">
-          {filteredContainers.map((container) => (
-            <Card key={container.id}>
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
-                  <div
-                    className={cn(
-                      'h-3 w-3 rounded-full',
-                      container.state === 'running'
-                        ? 'bg-green-500'
-                        : container.state === 'restarting'
-                        ? 'bg-yellow-500'
-                        : 'bg-gray-400'
-                    )}
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{container.name}</span>
-                      {getStatusBadge(container.state)}
-                      {container.is_system && (
-                        <Badge className="bg-red-500/10 text-red-600 border-red-500/20">
-                          <Shield className="mr-1 h-3 w-3" />
-                          System
-                        </Badge>
-                      )}
-                      {!container.is_managed && !container.is_system && (
-                        <Badge variant="outline">Unmanaged</Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{container.image}</span>
-                      <span>CPU {container.cpu}</span>
-                      <span>RAM {container.memory}</span>
-                      {container.ports.length > 0 && (
-                        <span>Ports: {container.ports.join(', ')}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+        {/* Category filters */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={activeCategory === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveCategory('all')}
+            >
+              All Categories
+            </Button>
+            {categories.map((cat) => (
+              <Button
+                key={cat}
+                variant={activeCategory === cat ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveCategory(cat)}
+              >
+                {cat}
+              </Button>
+            ))}
+          </div>
+        )}
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setLogsDialog({ open: true, id: container.id, name: container.name })}
-                  >
-                    <FileText className="mr-1 h-4 w-4" />
-                    Logs
-                  </Button>
+        {/* Container List — grouped by category */}
+        <div className="space-y-6">
+          {Array.from(groupedContainers.entries()).map(([category, items]) => (
+            <div key={category} className="space-y-3">
+              {groupedContainers.size > 1 && (
+                <h2 className="text-lg font-semibold text-muted-foreground border-b pb-1">
+                  {category}
+                  <span className="ml-2 text-sm font-normal">({items.length})</span>
+                </h2>
+              )}
+              <div className="space-y-4">
+                {items.map((container) => (
+                  <Card key={container.id}>
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={cn(
+                            'h-3 w-3 rounded-full',
+                            container.state === 'running'
+                              ? 'bg-green-500'
+                              : container.state === 'restarting'
+                              ? 'bg-yellow-500'
+                              : 'bg-gray-400'
+                          )}
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{container.name}</span>
+                            {getStatusBadge(container.state)}
+                            {container.category && (
+                              <Badge variant="outline" className="text-xs">
+                                {container.category}
+                              </Badge>
+                            )}
+                            {container.is_system && (
+                              <Badge className="bg-red-500/10 text-red-600 border-red-500/20">
+                                <Shield className="mr-1 h-3 w-3" />
+                                System
+                              </Badge>
+                            )}
+                            {!container.is_managed && !container.is_system && (
+                              <Badge variant="outline">Unmanaged</Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span>{container.image}</span>
+                            <span>CPU {container.cpu}</span>
+                            <span>RAM {container.memory}</span>
+                            {container.ports.length > 0 && (
+                              <span>Ports: {container.ports.join(', ')}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
-                  {container.state === 'running' && getContainerUrl(container.portMappings) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
-                    >
-                      <a
-                        href={getContainerUrl(container.portMappings)!}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <ExternalLink className="mr-1 h-4 w-4" />
-                        Open
-                      </a>
-                    </Button>
-                  )}
-
-                  {container.state === 'running' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setTerminalDialog({ open: true, id: container.id, name: container.name })}
-                    >
-                      <Terminal className="mr-1 h-4 w-4" />
-                      Terminal
-                    </Button>
-                  )}
-
-                  {!container.is_system && (
-                    <>
-                      {container.state === 'running' ? (
+                      <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleAction(container.id, 'stop')}
+                          onClick={() => setLogsDialog({ open: true, id: container.id, name: container.name })}
                         >
-                          <Square className="mr-1 h-4 w-4" />
-                          Stop
+                          <FileText className="mr-1 h-4 w-4" />
+                          Logs
                         </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAction(container.id, 'start')}
-                        >
-                          <Play className="mr-1 h-4 w-4" />
-                          Start
-                        </Button>
-                      )}
-                    </>
-                  )}
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => handleAction(container.id, 'restart')}
-                      >
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        Restart
-                      </DropdownMenuItem>
-                      {container.is_managed && !container.is_system && (
-                        <DropdownMenuItem
-                          onClick={() => handleAction(container.id, 'update')}
-                        >
-                          <ArrowUpCircle className="mr-2 h-4 w-4" />
-                          Update
-                        </DropdownMenuItem>
-                      )}
-                      {!container.is_system && (
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleAction(container.id, 'remove')}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Remove
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardContent>
-            </Card>
+                        {container.state === 'running' && getContainerUrl(container.portMappings) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                          >
+                            <a
+                              href={getContainerUrl(container.portMappings)!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="mr-1 h-4 w-4" />
+                              Open
+                            </a>
+                          </Button>
+                        )}
+
+                        {container.state === 'running' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTerminalDialog({ open: true, id: container.id, name: container.name })}
+                          >
+                            <Terminal className="mr-1 h-4 w-4" />
+                            Terminal
+                          </Button>
+                        )}
+
+                        {!container.is_system && (
+                          <>
+                            {container.state === 'running' ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAction(container.id, 'stop')}
+                              >
+                                <Square className="mr-1 h-4 w-4" />
+                                Stop
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleAction(container.id, 'start')}
+                              >
+                                <Play className="mr-1 h-4 w-4" />
+                                Start
+                              </Button>
+                            )}
+                          </>
+                        )}
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleAction(container.id, 'restart')}
+                            >
+                              <RotateCcw className="mr-2 h-4 w-4" />
+                              Restart
+                            </DropdownMenuItem>
+                            {container.is_managed && !container.is_system && (
+                              <DropdownMenuItem
+                                onClick={() => handleAction(container.id, 'update')}
+                              >
+                                <ArrowUpCircle className="mr-2 h-4 w-4" />
+                                Update
+                              </DropdownMenuItem>
+                            )}
+                            {!container.is_system && (
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => handleAction(container.id, 'remove')}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Remove
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           ))}
 
           {filteredContainers.length === 0 && (

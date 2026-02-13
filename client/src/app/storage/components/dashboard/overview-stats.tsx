@@ -103,15 +103,15 @@ export function OverviewStats({ stats, raidHealth, loading }: OverviewStatsProps
               </div>
               <div className="grid grid-cols-3 gap-8 text-center">
                 <div>
-                  <p className="text-2xl font-bold">{raidHealth.arrays_total}</p>
+                  <p className="text-2xl font-bold">{raidHealth.arrays_total || 0}</p>
                   <p className="text-sm text-muted-foreground">Arrays</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-green-600">{raidHealth.arrays_healthy}</p>
+                  <p className="text-2xl font-bold text-green-600">{raidHealth.arrays_healthy || 0}</p>
                   <p className="text-sm text-muted-foreground">OK</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-orange-600">{raidHealth.arrays_degraded + (raidHealth.arrays_failed || 0)}</p>
+                  <p className="text-2xl font-bold text-orange-600">{(raidHealth.arrays_degraded || 0) + (raidHealth.arrays_failed || 0)}</p>
                   <p className="text-sm text-muted-foreground">Alertes</p>
                 </div>
               </div>

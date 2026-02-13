@@ -265,6 +265,9 @@ pub async fn import_compose(
             docker_info,
             is_system: false,
             is_managed: true,
+            category: None,
+            tags: vec![],
+            app_name: None,
         });
 
         tracing::info!(

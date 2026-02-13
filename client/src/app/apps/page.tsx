@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, RefreshCw, Settings2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, RefreshCw, Settings2, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { storeApi, containersApi } from '@/lib/api';
 import type { StoreApp } from '@/lib/api';
 import type { ContainerPortMapping } from '@/hooks/use-containers';
@@ -138,6 +138,26 @@ export default function AppsPage() {
     return result;
   }, [apps, search, activeCategory]);
 
+  // Determine if we should show grouped view (no search, no category filter)
+  const isGroupedView = !search && activeCategory === 'all';
+
+  // Group apps by their first tag (category) for the grouped view
+  const groupedByCategory = useMemo(() => {
+    if (!isGroupedView) return new Map<string, StoreApp[]>();
+    const groups = new Map<string, StoreApp[]>();
+    for (const app of apps) {
+      const cat = app.tags[0] || 'Other';
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(app);
+    }
+    // Sort categories by count (descending) to show most populated first
+    return new Map(
+      Array.from(groups.entries()).sort((a, b) => b[1].length - a[1].length)
+    );
+  }, [apps, isGroupedView]);
+
+  const GROUPED_PREVIEW_SIZE = 4;
+
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredApps.length / PAGE_SIZE));
   const paginatedApps = useMemo(() => {
@@ -230,54 +250,101 @@ export default function AppsPage() {
           ))}
         </div>
 
-        {/* App Grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {paginatedApps.map((app) => (
-            <AppCard
-              key={`${app.source_id}-${app.id}`}
-              app={app}
-              onInstall={setInstallApp}
-              onDetail={setDetailApp}
-              installedContainerId={getInstalledId(app)}
-              containerUrl={getInstalledUrl(app)}
-              onUpdated={fetchInstalledContainers}
-            />
-          ))}
-        </div>
+        {/* Grouped view: show apps by category with preview rows */}
+        {isGroupedView ? (
+          <div className="space-y-8">
+            {Array.from(groupedByCategory.entries()).map(([category, categoryApps]) => (
+              <div key={category} className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold">
+                    {category}
+                    <span className="ml-2 text-sm font-normal text-muted-foreground">
+                      ({categoryApps.length})
+                    </span>
+                  </h2>
+                  {categoryApps.length > GROUPED_PREVIEW_SIZE && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setActiveCategory(category)}
+                    >
+                      View all
+                      <ArrowRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {categoryApps.slice(0, GROUPED_PREVIEW_SIZE).map((app) => (
+                    <AppCard
+                      key={`${app.source_id}-${app.id}`}
+                      app={app}
+                      onInstall={setInstallApp}
+                      onDetail={setDetailApp}
+                      installedContainerId={getInstalledId(app)}
+                      containerUrl={getInstalledUrl(app)}
+                      onUpdated={fetchInstalledContainers}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
 
-        {filteredApps.length === 0 && !loading && (
-          <div className="py-12 text-center text-muted-foreground">
-            {search || activeCategory !== 'all'
-              ? 'No apps match your filters'
-              : 'No apps available. Try refreshing sources.'}
+            {apps.length === 0 && (
+              <div className="py-12 text-center text-muted-foreground">
+                No apps available. Try refreshing sources.
+              </div>
+            )}
           </div>
-        )}
+        ) : (
+          <>
+            {/* Flat grid with pagination */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {paginatedApps.map((app) => (
+                <AppCard
+                  key={`${app.source_id}-${app.id}`}
+                  app={app}
+                  onInstall={setInstallApp}
+                  onDetail={setDetailApp}
+                  installedContainerId={getInstalledId(app)}
+                  containerUrl={getInstalledUrl(app)}
+                  onUpdated={fetchInstalledContainers}
+                />
+              ))}
+            </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 pt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+            {filteredApps.length === 0 && !loading && (
+              <div className="py-12 text-center text-muted-foreground">
+                No apps match your filters
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {page} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Detail Dialog */}

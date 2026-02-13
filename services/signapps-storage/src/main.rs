@@ -17,7 +17,7 @@ mod minio;
 
 use handlers::{
     buckets, external, favorites, files, health, mounts, preview, quotas, raid, search, shares,
-    trash,
+    stats, trash,
 };
 use minio::MinioClient;
 
@@ -250,6 +250,9 @@ fn create_router(state: AppState) -> Router {
         .route("/external", post(external::connect_external))
         .route("/external/:id", delete(external::disconnect_external));
 
+    // Stats route
+    let stats_routes = Router::new().route("/stats", get(stats::get_stats));
+
     // Combine protected routes
     let protected_routes = Router::new()
         .merge(file_routes)
@@ -265,6 +268,7 @@ fn create_router(state: AppState) -> Router {
         .merge(preview_routes)
         .merge(mount_routes)
         .merge(external_routes)
+        .merge(stats_routes)
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
