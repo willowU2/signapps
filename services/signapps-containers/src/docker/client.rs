@@ -114,6 +114,17 @@ impl DockerClient {
                     ports,
                     labels: c.labels.unwrap_or_default(),
                     networks,
+                    env: None,
+                    mounts: None,
+                    cmd: None,
+                    entrypoint: None,
+                    working_dir: None,
+                    hostname: None,
+                    user: None,
+                    restart_policy: None,
+                    restart_count: None,
+                    resources: None,
+                    health: None,
                 }
             })
             .collect();
@@ -170,17 +181,84 @@ impl DockerClient {
             .map(|n| n.keys().cloned().collect())
             .unwrap_or_default();
 
+        // Extract all config fields before consuming config
+        let config = &inspect.config;
+        let image = config
+            .as_ref()
+            .and_then(|c| c.image.clone())
+            .unwrap_or_default();
+        let env = config.as_ref().and_then(|c| c.env.clone());
+        let cmd = config.as_ref().and_then(|c| c.cmd.clone());
+        let entrypoint = config.as_ref().and_then(|c| c.entrypoint.clone());
+        let working_dir = config
+            .as_ref()
+            .and_then(|c| c.working_dir.clone())
+            .filter(|s| !s.is_empty());
+        let hostname = config
+            .as_ref()
+            .and_then(|c| c.hostname.clone())
+            .filter(|s| !s.is_empty());
+        let user = config
+            .as_ref()
+            .and_then(|c| c.user.clone())
+            .filter(|s| !s.is_empty());
+        let labels = config
+            .as_ref()
+            .and_then(|c| c.labels.clone())
+            .unwrap_or_default();
+
+        // Extract mounts
+        let mounts = inspect.mounts.as_ref().map(|ms| {
+            ms.iter()
+                .map(|m| MountInfo {
+                    source: m.source.clone(),
+                    destination: m.destination.clone().unwrap_or_default(),
+                    mount_type: m
+                        .typ
+                        .as_ref()
+                        .map(|t| format!("{:?}", t).to_lowercase())
+                        .unwrap_or_default(),
+                    rw: m.rw.unwrap_or(true),
+                })
+                .collect()
+        });
+
+        // Extract host_config fields
+        let host_config = &inspect.host_config;
+        let restart_policy = host_config
+            .as_ref()
+            .and_then(|hc| hc.restart_policy.as_ref())
+            .and_then(|rp| rp.name.as_ref())
+            .map(|n| format!("{:?}", n).to_lowercase());
+        let resources = host_config.as_ref().map(|hc| ResourceInfo {
+            memory_limit: hc.memory,
+            nano_cpus: hc.nano_cpus,
+            cpu_shares: hc.cpu_shares,
+        });
+
+        // Extract restart count and health from state
+        let restart_count = inspect.restart_count;
+        let health = inspect
+            .state
+            .as_ref()
+            .and_then(|s| s.health.as_ref())
+            .map(|h| HealthInfo {
+                status: h
+                    .status
+                    .as_ref()
+                    .map(|s| format!("{:?}", s).to_lowercase())
+                    .unwrap_or_default(),
+                failing_streak: h.failing_streak.unwrap_or(0),
+                test: None,
+            });
+
         Ok(ContainerInfo {
             id: inspect.id.unwrap_or_default(),
             name: inspect
                 .name
                 .map(|n| n.trim_start_matches('/').to_string())
                 .unwrap_or_default(),
-            image: inspect
-                .config
-                .as_ref()
-                .and_then(|c| c.image.clone())
-                .unwrap_or_default(),
+            image,
             status: inspect
                 .state
                 .as_ref()
@@ -195,8 +273,19 @@ impl DockerClient {
                 .unwrap_or_default(),
             created: inspect.created.unwrap_or_default(),
             ports,
-            labels: inspect.config.and_then(|c| c.labels).unwrap_or_default(),
+            labels,
             networks,
+            env,
+            mounts,
+            cmd,
+            entrypoint,
+            working_dir,
+            hostname,
+            user,
+            restart_policy,
+            restart_count,
+            resources,
+            health,
         })
     }
 

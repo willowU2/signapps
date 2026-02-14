@@ -90,6 +90,31 @@ pub struct ResourceLimits {
     pub memory_swap_mb: Option<i64>,
 }
 
+/// Mount point information from Docker inspect.
+#[derive(Debug, Clone, Serialize)]
+pub struct MountInfo {
+    pub source: Option<String>,
+    pub destination: String,
+    pub mount_type: String,
+    pub rw: bool,
+}
+
+/// Resource usage/limits from Docker inspect.
+#[derive(Debug, Clone, Serialize)]
+pub struct ResourceInfo {
+    pub memory_limit: Option<i64>,
+    pub nano_cpus: Option<i64>,
+    pub cpu_shares: Option<i64>,
+}
+
+/// Health check status from Docker inspect.
+#[derive(Debug, Clone, Serialize)]
+pub struct HealthInfo {
+    pub status: String,
+    pub failing_streak: i64,
+    pub test: Option<Vec<String>>,
+}
+
 /// Container information returned by Docker.
 #[derive(Debug, Clone, Serialize)]
 pub struct ContainerInfo {
@@ -102,6 +127,28 @@ pub struct ContainerInfo {
     pub ports: Vec<PortInfo>,
     pub labels: HashMap<String, String>,
     pub networks: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub env: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mounts: Option<Vec<MountInfo>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cmd: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entrypoint: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub working_dir: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hostname: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub restart_policy: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub restart_count: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resources: Option<ResourceInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub health: Option<HealthInfo>,
 }
 
 /// Port information.

@@ -29,12 +29,14 @@ import {
   ArrowUpCircle,
   ExternalLink,
   FileCode,
+  Info,
 } from 'lucide-react';
 import { cn, getContainerUrl } from '@/lib/utils';
 import { LogsDialog } from '@/components/containers/logs-dialog';
 import { ContainerDialog } from '@/components/containers/container-dialog';
 import { ContainerTerminal } from '@/components/containers/container-terminal';
 import { ComposeImportDialog } from '@/components/containers/compose-import-dialog';
+import { ContainerDetailsSheet } from '@/components/containers/container-details-sheet';
 import { useContainers, useContainerAction, Container } from '@/hooks/use-containers';
 
 export default function ContainersPage() {
@@ -56,6 +58,18 @@ export default function ContainersPage() {
     open: false,
     id: '',
     name: '',
+  });
+  const [detailsSheet, setDetailsSheet] = useState<{
+    open: boolean;
+    id: string;
+    name: string;
+    dockerId?: string;
+    isManaged: boolean;
+  }>({
+    open: false,
+    id: '',
+    name: '',
+    isManaged: true,
   });
 
   const handleAction = (id: string, action: 'start' | 'stop' | 'restart' | 'remove' | 'update') => {
@@ -227,7 +241,20 @@ export default function ContainersPage() {
                         />
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold">{container.name}</span>
+                            <button
+                              className="font-semibold hover:underline cursor-pointer text-left"
+                              onClick={() =>
+                                setDetailsSheet({
+                                  open: true,
+                                  id: container.id,
+                                  name: container.name,
+                                  dockerId: container.docker_id,
+                                  isManaged: container.is_managed,
+                                })
+                              }
+                            >
+                              {container.name}
+                            </button>
                             {getStatusBadge(container.state)}
                             {container.category && (
                               <Badge variant="outline" className="text-xs">
@@ -256,6 +283,23 @@ export default function ContainersPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setDetailsSheet({
+                              open: true,
+                              id: container.id,
+                              name: container.name,
+                              dockerId: container.docker_id,
+                              isManaged: container.is_managed,
+                            })
+                          }
+                        >
+                          <Info className="mr-1 h-4 w-4" />
+                          Details
+                        </Button>
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -392,6 +436,16 @@ export default function ContainersPage() {
           onOpenChange={(open) => setTerminalDialog({ ...terminalDialog, open })}
           containerId={terminalDialog.id}
           containerName={terminalDialog.name}
+        />
+
+        {/* Container Details Sheet */}
+        <ContainerDetailsSheet
+          open={detailsSheet.open}
+          onOpenChange={(open) => setDetailsSheet({ ...detailsSheet, open })}
+          containerId={detailsSheet.id}
+          containerName={detailsSheet.name}
+          dockerId={detailsSheet.dockerId}
+          isManaged={detailsSheet.isManaged}
         />
       </div>
     </AppLayout>

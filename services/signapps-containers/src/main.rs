@@ -182,6 +182,10 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/containers/docker/:docker_id/stats",
             get(handlers::containers::stats_docker),
         )
+        .route(
+            "/api/v1/containers/docker/:docker_id/inspect",
+            get(handlers::containers::inspect_docker),
+        )
         .route("/api/v1/containers/:id", get(handlers::containers::get))
         .route(
             "/api/v1/containers/:id/start",

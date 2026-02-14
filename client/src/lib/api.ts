@@ -342,6 +342,7 @@ export const containersApi = {
   logsDocker: (dockerId: string, tail?: number) =>
     containersApiClient.get<string>(`/containers/docker/${dockerId}/logs`, { params: { tail } }),
   statsDocker: (dockerId: string) => containersApiClient.get(`/containers/docker/${dockerId}/stats`),
+  inspectDocker: (dockerId: string) => containersApiClient.get<ContainerInfo>(`/containers/docker/${dockerId}/inspect`),
   // Updates
   checkUpdate: (id: string) =>
     containersApiClient.post<CheckUpdateResponse>(`/containers/${id}/check-update`),
@@ -368,12 +369,45 @@ export interface ContainerInfo {
   cpu_percent?: number;
   memory_usage?: number;
   memory_limit?: number;
+  env?: string[];
+  mounts?: DockerMountInfo[];
+  cmd?: string[];
+  entrypoint?: string[];
+  working_dir?: string;
+  hostname?: string;
+  user?: string;
+  restart_policy?: string;
+  restart_count?: number;
+  resources?: DockerResourceInfo;
+  health?: DockerHealthInfo;
+  labels?: Record<string, string>;
+  networks?: string[];
 }
 
 export interface PortMapping {
   container_port: number;
   host_port?: number;
+  host_ip?: string;
   protocol: string;
+}
+
+export interface DockerMountInfo {
+  source?: string;
+  destination: string;
+  mount_type: string;
+  rw: boolean;
+}
+
+export interface DockerResourceInfo {
+  memory_limit?: number;
+  nano_cpus?: number;
+  cpu_shares?: number;
+}
+
+export interface DockerHealthInfo {
+  status: string;
+  failing_streak: number;
+  test?: string[];
 }
 
 export interface CheckUpdateResponse {

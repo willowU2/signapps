@@ -677,3 +677,13 @@ pub async fn stats_docker(
     let stats = state.docker.get_stats(&docker_id).await?;
     Ok(Json(stats))
 }
+
+/// Inspect a Docker container directly by docker_id (for unmanaged containers).
+#[tracing::instrument(skip(state))]
+pub async fn inspect_docker(
+    State(state): State<AppState>,
+    Path(docker_id): Path<String>,
+) -> Result<Json<ContainerInfo>> {
+    let info = state.docker.get_container(&docker_id).await?;
+    Ok(Json(info))
+}
