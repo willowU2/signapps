@@ -343,30 +343,6 @@ services:
     networks:
       - signapps-network
 
-  # === API GATEWAY ===
-  traefik:
-    image: traefik:v3.0
-    container_name: signapps-traefik
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@signapps.cloud}"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik_certs:/letsencrypt
-    networks:
-      - signapps-network
-
 networks:
   signapps-network:
     driver: bridge
@@ -377,7 +353,6 @@ volumes:
   qdrant_data:
   minio_data:
   vllm_cache:
-  traefik_certs:
   whisper_cache:
   piper_data:
   surya_cache:

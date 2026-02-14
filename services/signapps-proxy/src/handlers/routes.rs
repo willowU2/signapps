@@ -91,9 +91,6 @@ pub async fn create_route(
     // Refresh proxy route cache
     state.route_cache.force_refresh();
 
-    // Regenerate Traefik config (optional fallback)
-    regenerate_config(&state).await.ok();
-
     Ok((StatusCode::CREATED, Json(RouteResponse::from(route))))
 }
 
@@ -136,9 +133,6 @@ pub async fn update_route(
     // Refresh proxy route cache
     state.route_cache.force_refresh();
 
-    // Regenerate Traefik config (optional fallback)
-    regenerate_config(&state).await.ok();
-
     Ok(Json(RouteResponse::from(route)))
 }
 
@@ -163,9 +157,6 @@ pub async fn delete_route(
     // Refresh proxy route cache
     state.route_cache.force_refresh();
 
-    // Regenerate Traefik config (optional fallback)
-    regenerate_config(&state).await.ok();
-
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -183,9 +174,6 @@ pub async fn enable_route(
 
     // Refresh proxy route cache
     state.route_cache.force_refresh();
-
-    // Regenerate Traefik config (optional fallback)
-    regenerate_config(&state).await.ok();
 
     Ok(Json(RouteResponse::from(route)))
 }
@@ -205,36 +193,5 @@ pub async fn disable_route(
     // Refresh proxy route cache
     state.route_cache.force_refresh();
 
-    // Regenerate Traefik config (optional fallback)
-    regenerate_config(&state).await.ok();
-
     Ok(Json(RouteResponse::from(route)))
-}
-
-/// Regenerate Traefik configuration (optional fallback).
-/// Only writes if TRAEFIK_CONFIG_PATH is set.
-async fn regenerate_config(state: &AppState) -> Result<()> {
-    let config_path = match std::env::var("TRAEFIK_CONFIG_PATH") {
-        Ok(path) => path,
-        Err(_) => {
-            tracing::debug!("TRAEFIK_CONFIG_PATH not set, skipping Traefik config generation");
-            return Ok(());
-        }
-    };
-
-    let repo = RouteRepository::new(&state.pool);
-    let routes = repo.list_enabled().await?;
-
-    let config = state.traefik.generate_config(&routes);
-
-    let yaml = serde_yaml::to_string(&config)
-        .map_err(|e| Error::Internal(format!("Failed to serialize config: {}", e)))?;
-
-    tokio::fs::write(&config_path, yaml)
-        .await
-        .map_err(|e| Error::Internal(format!("Failed to write config: {}", e)))?;
-
-    tracing::info!(path = %config_path, routes = routes.len(), "Traefik config regenerated");
-
-    Ok(())
 }

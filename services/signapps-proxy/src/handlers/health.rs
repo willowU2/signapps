@@ -17,14 +17,15 @@ pub struct HealthResponse {
 pub struct ComponentsHealth {
     pub database: bool,
     pub redis: bool,
-    pub traefik: bool,
+    pub proxy: bool,
 }
 
 /// Health check endpoint.
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let db_healthy = state.pool.health_check().await.is_ok();
     let redis_healthy = state.shield.health_check().await.unwrap_or(false);
-    let traefik_healthy = state.traefik.health_check().await.unwrap_or(false);
+    let proxy_healthy = state.route_cache.route_count() > 0
+        || state.tls_resolver.is_some();
 
     let all_healthy = db_healthy && redis_healthy;
 
@@ -35,7 +36,7 @@ pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse>
         components: ComponentsHealth {
             database: db_healthy,
             redis: redis_healthy,
-            traefik: traefik_healthy,
+            proxy: proxy_healthy,
         },
     })
 }

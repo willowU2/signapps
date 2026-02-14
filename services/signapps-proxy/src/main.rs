@@ -17,7 +17,6 @@ use tower_http::cors::{Any, CorsLayer};
 mod handlers;
 mod proxy;
 mod shield;
-mod traefik;
 
 use handlers::{certificates, config, health, proxy_status, routes, shield as shield_handlers};
 use proxy::acme::{AcmeChallengeStore, AcmeService};
@@ -26,13 +25,11 @@ use proxy::forwarder::HttpForwarder;
 use proxy::tls::TlsCertResolver;
 use proxy::RouteCache;
 use shield::ShieldService;
-use traefik::TraefikClient;
 
 /// Application state shared across handlers.
 #[derive(Clone)]
 pub struct AppState {
     pub pool: DatabasePool,
-    pub traefik: TraefikClient,
     pub shield: ShieldService,
     pub jwt_config: JwtConfig,
     pub route_cache: RouteCache,
@@ -70,9 +67,6 @@ async fn main() -> anyhow::Result<()> {
         std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".into());
     let jwt_secret =
         std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
-    let traefik_api_url =
-        std::env::var("TRAEFIK_API_URL").unwrap_or_else(|_| "http://localhost:8080".into());
-
     // Proxy configuration
     let proxy_enabled = std::env::var("PROXY_ENABLED")
         .unwrap_or_else(|_| "true".into())
@@ -98,10 +92,6 @@ async fn main() -> anyhow::Result<()> {
     // Run migrations
     signapps_db::run_migrations(&pool).await?;
     tracing::info!("Database migrations completed");
-
-    // Initialize Traefik client
-    let traefik = TraefikClient::new(&traefik_api_url);
-    tracing::info!("Traefik client initialized");
 
     // Initialize SmartShield service
     let shield = ShieldService::new(&redis_url).await?;
@@ -150,7 +140,6 @@ async fn main() -> anyhow::Result<()> {
     // Create application state
     let state = AppState {
         pool: pool.clone(),
-        traefik,
         shield: shield.clone(),
         jwt_config,
         route_cache: route_cache.clone(),
@@ -313,11 +302,8 @@ fn create_router(state: AppState) -> Router {
 
     // Protected config routes
     let config_routes = Router::new()
-        .route("/config/traefik", get(config::get_traefik_config))
-        .route(
-            "/config/traefik/overview",
-            get(config::get_traefik_overview),
-        )
+        .route("/config/proxy", get(config::get_proxy_config))
+        .route("/config/proxy/overview", get(config::get_proxy_overview))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -326,7 +312,7 @@ fn create_router(state: AppState) -> Router {
     // Admin routes
     let admin_routes = Router::new()
         .route("/shield/stats/reset", post(shield_handlers::reset_stats))
-        .route("/config/regenerate", post(config::regenerate_config))
+        .route("/config/refresh", post(config::refresh_config))
         .route_layer(middleware::from_fn(require_admin))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

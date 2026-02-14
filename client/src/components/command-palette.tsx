@@ -101,7 +101,7 @@ export function CommandPalette() {
       description: 'Configure proxy routes',
       icon: Network,
       action: () => router.push('/routes'),
-      keywords: ['proxy', 'traefik', 'ssl', 'certificates'],
+      keywords: ['proxy', 'reverse-proxy', 'ssl', 'certificates'],
     },
     {
       id: 'vpn',

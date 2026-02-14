@@ -82,7 +82,7 @@ crates/
 services/
   signapps-identity/    → Port 3001 – Auth, LDAP/AD, MFA, RBAC, groups
   signapps-containers/  → Port 3002 – Docker container lifecycle (bollard)
-  signapps-proxy/       → Port 3003 – Traefik route management, SmartShield
+  signapps-proxy/       → Port 3003 – Reverse proxy, TLS/ACME, SmartShield
   signapps-storage/     → Port 3004 – MinIO S3 storage, RAID, NAS features
   signapps-ai/          → Port 3005 – RAG, LLM (multi-provider), embeddings
   signapps-securelink/  → Port 3006 – Web tunnels, DNS with ad-blocking

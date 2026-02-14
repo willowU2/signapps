@@ -8,7 +8,7 @@ SignApps est une plateforme de gestion d'infrastructure enterprise moderne, cons
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        API Gateway (Traefik)                     │
+│                     Reverse Proxy (signapps-proxy)                │
 └─────────────────────────────────────────────────────────────────┘
                                   │
     ┌─────────────┬───────────────┼───────────────┬─────────────┐
