@@ -498,6 +498,94 @@ impl ModelManager {
                 },
             );
         }
+
+        // LLM (GGUF) models
+        let llm_models: [(
+            &str,
+            &str,
+            &str,
+            u64,
+            u64,
+            &str,
+        ); 5] = [
+            (
+                "llama-3.2-1b-q8",
+                "bartowski/Llama-3.2-1B-Instruct-GGUF",
+                "Llama-3.2-1B-Instruct-Q8_0.gguf",
+                1_320_000_000,
+                0,
+                "Llama 3.2 1B Q8 - compact, runs on CPU",
+            ),
+            (
+                "llama-3.2-3b-q4",
+                "bartowski/Llama-3.2-3B-Instruct-GGUF",
+                "Llama-3.2-3B-Instruct-Q4_K_M.gguf",
+                2_020_000_000,
+                2048,
+                "Llama 3.2 3B Q4 - good balance speed/quality",
+            ),
+            (
+                "phi-3.5-mini-q4",
+                "bartowski/Phi-3.5-mini-instruct-GGUF",
+                "Phi-3.5-mini-instruct-Q4_K_M.gguf",
+                2_400_000_000,
+                3072,
+                "Phi 3.5 Mini 3.8B Q4 - excellent quality/size ratio",
+            ),
+            (
+                "qwen2.5-3b-q4",
+                "Qwen/Qwen2.5-3B-Instruct-GGUF",
+                "qwen2.5-3b-instruct-q4_k_m.gguf",
+                2_070_000_000,
+                2048,
+                "Qwen 2.5 3B Q4 - strong multilingual",
+            ),
+            (
+                "qwen2.5-7b-q4",
+                "Qwen/Qwen2.5-7B-Instruct-GGUF",
+                "qwen2.5-7b-instruct-q4_k_m.gguf",
+                4_680_000_000,
+                6144,
+                "Qwen 2.5 7B Q4 - best quality, needs 6GB+ VRAM",
+            ),
+        ];
+
+        for (id, repo, file, size, vram, desc) in llm_models {
+            self.registry.insert(
+                id.to_string(),
+                ModelEntry {
+                    id: id.to_string(),
+                    model_type: ModelType::Llm,
+                    source: ModelSource::HuggingFace {
+                        repo_id: repo.to_string(),
+                        filename: file.to_string(),
+                    },
+                    size_bytes: size,
+                    status: ModelStatus::Available,
+                    local_path: None,
+                    recommended_vram_mb: vram,
+                    description: desc.to_string(),
+                },
+            );
+        }
+
+        // Embeddings models
+        self.registry.insert(
+            "nomic-embed-text-v1.5".to_string(),
+            ModelEntry {
+                id: "nomic-embed-text-v1.5".to_string(),
+                model_type: ModelType::Embeddings,
+                source: ModelSource::HuggingFace {
+                    repo_id: "nomic-ai/nomic-embed-text-v1.5-GGUF".to_string(),
+                    filename: "nomic-embed-text-v1.5.Q8_0.gguf".to_string(),
+                },
+                size_bytes: 141_000_000,
+                status: ModelStatus::Available,
+                local_path: None,
+                recommended_vram_mb: 0,
+                description: "Nomic Embed Text v1.5 - 768-dim embeddings".to_string(),
+            },
+        );
     }
 }
 

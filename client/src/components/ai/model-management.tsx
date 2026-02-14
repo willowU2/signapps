@@ -15,6 +15,7 @@ import {
   Monitor,
   MemoryStick,
   CircuitBoard,
+  Play,
 } from 'lucide-react';
 import {
   aiApi,
@@ -86,7 +87,11 @@ function getModelTypeLabel(type: string): string {
   return labels[type] || type;
 }
 
-export function ModelManagement() {
+interface ModelManagementProps {
+  onSelectLlmModel?: (modelId: string) => void;
+}
+
+export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {}) {
   const [hardware, setHardware] = useState<HardwareProfile | null>(null);
   const [localModels, setLocalModels] = useState<ModelEntry[]>([]);
   const [availableModels, setAvailableModels] = useState<ModelEntry[]>([]);
@@ -275,6 +280,16 @@ export function ModelManagement() {
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     {getStatusBadge(model.status)}
+                    {(model.status === 'ready' || model.status === 'loaded') && model.model_type === 'llm' && onSelectLlmModel && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onSelectLlmModel(model.id)}
+                      >
+                        <Play className="h-3 w-3 mr-1" />
+                        Utiliser
+                      </Button>
+                    )}
                     {(model.status === 'ready' || model.status === 'loaded') && (
                       <Button
                         variant="ghost"

@@ -103,11 +103,36 @@ impl LlmProvider for LlamaCppProvider {
     }
 
     async fn list_models(&self) -> Result<Vec<ModelInfo>> {
-        Ok(vec![ModelInfo {
+        let mut models = Vec::new();
+
+        // Currently loaded model
+        models.push(ModelInfo {
             id: self.model_name.clone(),
             object: "model".to_string(),
             owned_by: "llamacpp".to_string(),
-        }])
+        });
+
+        // Add ready/available LLM models from model manager
+        let local_llm_models = self
+            .model_manager
+            .list_models(Some(signapps_runtime::ModelType::Llm));
+        for entry in local_llm_models {
+            if entry.id != self.model_name {
+                let status_str = match &entry.status {
+                    signapps_runtime::ModelStatus::Ready
+                    | signapps_runtime::ModelStatus::Loaded => "model",
+                    signapps_runtime::ModelStatus::Available => "model.available",
+                    _ => continue,
+                };
+                models.push(ModelInfo {
+                    id: entry.id,
+                    object: status_str.to_string(),
+                    owned_by: "llamacpp".to_string(),
+                });
+            }
+        }
+
+        Ok(models)
     }
 
     async fn chat(

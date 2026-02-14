@@ -982,18 +982,35 @@ export default function AIPage() {
                 <Cpu className="h-4 w-4 text-muted-foreground" />
                 <Select
                   value={selectedModel}
-                  onValueChange={setSelectedModel}
+                  onValueChange={(value) => {
+                    if (value === '__manage_models__') {
+                      setActiveTab('models');
+                      return;
+                    }
+                    setSelectedModel(value);
+                  }}
                   disabled={loadingModels}
                 >
-                  <SelectTrigger className="w-[160px] h-8">
+                  <SelectTrigger className="w-[200px] h-8">
                     <SelectValue placeholder="Modele" />
                   </SelectTrigger>
                   <SelectContent>
-                    {models.map((model) => (
+                    {models.filter(m => m.object !== 'model.available').map((model) => (
                       <SelectItem key={model.id} value={model.id}>
                         {model.id}
                       </SelectItem>
                     ))}
+                    {models.some(m => m.object === 'model.available') && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <SelectItem value="__manage_models__" className="text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Download className="h-3 w-3" />
+                            Telecharger des modeles...
+                          </div>
+                        </SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -1341,7 +1358,18 @@ export default function AIPage() {
 
             {/* Models Tab */}
             <TabsContent value="models" className="flex-1 m-0 p-4 overflow-auto">
-              <ModelManagement />
+              <ModelManagement
+                onSelectLlmModel={(modelId) => {
+                  setSelectedModel(modelId);
+                  // Find the llamacpp provider and select it
+                  const llmProvider = providers.find(p => p.provider_type === 'llamacpp');
+                  if (llmProvider) {
+                    setSelectedProvider(llmProvider.id);
+                  }
+                  setActiveTab('chat');
+                  toast.success(`Modele ${modelId} selectionne`);
+                }}
+              />
             </TabsContent>
           </Tabs>
         </div>
