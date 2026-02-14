@@ -11,7 +11,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -27,10 +26,10 @@ import {
   ChevronDown,
   AlertTriangle,
   Plus,
-  Settings,
   Trash2,
+  Globe,
 } from 'lucide-react';
-import { storeApi } from '@/lib/api';
+import { storeApi, routesApi } from '@/lib/api';
 import type {
   StoreApp,
   AppDetails,
@@ -50,9 +49,12 @@ interface InstallDialogProps {
 
 interface ServiceFormState {
   containerName: string;
+  hostname: string;
   envValues: Record<string, string>;
+  customEnvValues: { key: string; value: string }[];
   portValues: { host: number; container: number; protocol: string }[];
   volumeValues: { source: string; target: string }[];
+  labelValues: { key: string; value: string }[];
 }
 
 export function InstallDialog({
@@ -82,9 +84,6 @@ export function InstallDialog({
   const [installId, setInstallId] = useState<string | null>(null);
   const [progressOpen, setProgressOpen] = useState(false);
 
-  // One-click vs advanced mode
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
   const isMultiService = (details?.config.services.length ?? 0) > 1;
 
   // Helper: resolve {ServiceName} template with actual container name
@@ -100,7 +99,6 @@ export function InstallDialog({
     setDetails(null);
     setPortConflicts(new Map());
     setInstallId(null);
-    setShowAdvanced(false);
 
     storeApi
       .getAppDetails(app.source_id, app.id)
@@ -130,15 +128,22 @@ export function InstallDialog({
             envMap[e.key] = resolveServiceName(e.default || '', name);
           });
 
+          // Extract labels from compose, filtering out signapps.app.* keys
+          const labelEntries = Object.entries(svc.labels || {})
+            .filter(([k]) => !k.startsWith('signapps.app.'))
+            .map(([key, value]) => ({ key, value }));
+
           forms.set(svc.service_name, {
             containerName: name,
+            hostname: '',
             envValues: envMap,
+            customEnvValues: [],
             portValues: svc.ports.map((p) => ({ ...p })),
-            // Resolve {ServiceName} in volume sources
             volumeValues: svc.volumes.map((v) => ({
               source: resolveServiceName(v.source, name),
               target: v.target,
             })),
+            labelValues: labelEntries,
           });
         });
         setServiceForms(forms);
@@ -201,25 +206,40 @@ export function InstallDialog({
         // Multi-service install
         const services = details.config.services.map((svc) => {
           const form = serviceForms.get(svc.service_name);
+
+          // Merge template env + custom env
+          const mergedEnv = { ...form?.envValues };
+          form?.customEnvValues.forEach((ce) => {
+            if (ce.key.trim()) {
+              mergedEnv[ce.key.trim()] = ce.value;
+            }
+          });
+
+          // Build labels map
+          const labelsMap: Record<string, string> = {};
+          form?.labelValues.forEach((l) => {
+            if (l.key.trim()) {
+              labelsMap[l.key.trim()] = l.value;
+            }
+          });
+
+          const validPorts = (form?.portValues || []).filter(
+            (p) => p.host > 0 && p.container > 0
+          );
+
           return {
             service_name: svc.service_name,
             container_name: form?.containerName || svc.service_name,
-            environment: form?.envValues,
-            ports: showAdvanced
-              ? (() => {
-                  const valid = (form?.portValues || []).filter(
-                    (p) => p.host > 0 && p.container > 0
-                  );
-                  return valid.length > 0
-                    ? valid.map((p) => ({
-                        host: p.host,
-                        container: p.container,
-                        protocol: p.protocol,
-                      }))
-                    : undefined;
-                })()
+            environment: mergedEnv,
+            ports: validPorts.length > 0
+              ? validPorts.map((p) => ({
+                  host: p.host,
+                  container: p.container,
+                  protocol: p.protocol,
+                }))
               : undefined,
-            volumes: showAdvanced ? form?.volumeValues : undefined,
+            volumes: form?.volumeValues,
+            labels: Object.keys(labelsMap).length > 0 ? labelsMap : undefined,
           };
         });
 
@@ -233,27 +253,86 @@ export function InstallDialog({
 
         setInstallId(res.data.install_id);
         setProgressOpen(true);
+
+        // Create route for the first service with ports and a hostname
+        const firstFormWithHostname = details.config.services
+          .map((svc) => serviceForms.get(svc.service_name))
+          .find((f) => f && f.hostname.trim());
+        if (firstFormWithHostname) {
+          const hostPort = firstFormWithHostname.portValues[0]?.host;
+          if (hostPort && hostPort > 0) {
+            try {
+              await routesApi.create({
+                name: firstFormWithHostname.containerName,
+                host: firstFormWithHostname.hostname.trim(),
+                target: `http://localhost:${hostPort}`,
+                mode: 'proxy',
+                enabled: true,
+              });
+              toast.success(`Route created: ${firstFormWithHostname.hostname.trim()}`);
+            } catch {
+              toast.error('Container installed but route creation failed');
+            }
+          }
+        }
       } else {
         // Single-service install
         const form = serviceForms.values().next().value;
         if (!form) return;
 
+        // Merge template env + custom env
+        const mergedEnv = { ...form.envValues };
+        form.customEnvValues.forEach((ce) => {
+          if (ce.key.trim()) {
+            mergedEnv[ce.key.trim()] = ce.value;
+          }
+        });
+
+        // Build labels map
+        const labelsMap: Record<string, string> = {};
+        form.labelValues.forEach((l) => {
+          if (l.key.trim()) {
+            labelsMap[l.key.trim()] = l.value;
+          }
+        });
+
         const validPorts = form.portValues.filter(
           (p) => p.host > 0 && p.container > 0
         );
+
         const res = await storeApi.install({
           app_id: app.id,
           source_id: app.source_id,
           container_name: form.containerName,
-          environment: form.envValues,
-          ports: showAdvanced
-            ? validPorts.length > 0
-              ? validPorts
-              : undefined
-            : undefined,
-          volumes: showAdvanced ? form.volumeValues : undefined,
+          environment: mergedEnv,
+          ports: validPorts.length > 0 ? validPorts : undefined,
+          volumes: form.volumeValues,
+          labels: Object.keys(labelsMap).length > 0 ? labelsMap : undefined,
           auto_start: autoStart,
         });
+
+        // Create route if hostname is set
+        if (form.hostname.trim()) {
+          const hostPort =
+            validPorts[0]?.host ||
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (res.data?.docker_info?.ports || []).find((p: any) => p.host_port)
+              ?.host_port;
+          if (hostPort) {
+            try {
+              await routesApi.create({
+                name: form.containerName,
+                host: form.hostname.trim(),
+                target: `http://localhost:${hostPort}`,
+                mode: 'proxy',
+                enabled: true,
+              });
+              toast.success(`Route created: ${form.hostname.trim()}`);
+            } catch {
+              toast.error('Container installed but route creation failed');
+            }
+          }
+        }
 
         // Extract URL from install response
         const portMappings = (res.data?.docker_info?.ports || [])
@@ -297,27 +376,55 @@ export function InstallDialog({
 
     return (
       <div key={svc.service_name} className="space-y-4">
-        <div className="space-y-2">
-          <Label>Container Name</Label>
+        {/* Service info */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Container Name</Label>
+            <Input
+              value={form.containerName}
+              onChange={(e) =>
+                updateServiceForm(svc.service_name, {
+                  containerName: e.target.value,
+                })
+              }
+              placeholder="my-container"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Image</Label>
+            <Input value={svc.image} disabled className="text-muted-foreground" />
+          </div>
+        </div>
+
+        {/* URL / Hostname */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+            <Label className="text-xs font-medium">Hostname (URL)</Label>
+            <span className="text-xs text-muted-foreground">- optional, creates a proxy route</span>
+          </div>
           <Input
-            value={form.containerName}
+            value={form.hostname}
             onChange={(e) =>
               updateServiceForm(svc.service_name, {
-                containerName: e.target.value,
+                hostname: e.target.value,
               })
             }
-            placeholder="my-container"
+            placeholder="myapp.example.com"
           />
-        </div>
-        <div className="space-y-2">
-          <Label>Image</Label>
-          <Input value={svc.image} disabled />
         </div>
 
         {/* Ports */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-xs font-medium">Ports</Label>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs font-medium">Ports</Label>
+              {form.portValues.length > 0 && (
+                <Badge variant="secondary" className="h-5 text-xs px-1.5">
+                  {form.portValues.length}
+                </Badge>
+              )}
+            </div>
             <Button
               type="button"
               variant="ghost"
@@ -333,7 +440,7 @@ export function InstallDialog({
               }}
             >
               <Plus className="mr-1 h-3 w-3" />
-              Add port
+              Add
             </Button>
           </div>
           {form.portValues.length === 0 ? (
@@ -341,34 +448,41 @@ export function InstallDialog({
               No ports configured. Exposed ports will be auto-assigned on install.
             </p>
           ) : (
-            form.portValues.map((port, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="flex-1 space-y-1">
-                  <Input
-                    type="number"
-                    value={port.host || ''}
-                    placeholder="Host"
-                    onChange={(e) => {
-                      const next = [...form.portValues];
-                      next[i] = {
-                        ...next[i],
-                        host: parseInt(e.target.value) || 0,
-                      };
-                      updateServiceForm(svc.service_name, {
-                        portValues: next,
-                      });
-                    }}
-                  />
-                  {portConflicts.has(port.host) && (
-                    <p className="flex items-center gap-1 text-xs text-destructive">
-                      <AlertTriangle className="h-3 w-3" />
-                      Port {port.host} in use by{' '}
-                      {portConflicts.get(port.host)?.used_by || 'another container'}
-                    </p>
-                  )}
-                </div>
-                <span className="text-muted-foreground">:</span>
-                <div className="flex-1">
+            <div className="space-y-1.5">
+              <div className="grid grid-cols-[1fr_auto_1fr_3.5rem_2rem] gap-2 text-xs text-muted-foreground px-1">
+                <span>Host</span>
+                <span />
+                <span>Container</span>
+                <span className="text-center">Proto</span>
+                <span />
+              </div>
+              {form.portValues.map((port, i) => (
+                <div key={i} className="grid grid-cols-[1fr_auto_1fr_3.5rem_2rem] items-center gap-2">
+                  <div className="space-y-1">
+                    <Input
+                      type="number"
+                      value={port.host || ''}
+                      placeholder="Host"
+                      onChange={(e) => {
+                        const next = [...form.portValues];
+                        next[i] = {
+                          ...next[i],
+                          host: parseInt(e.target.value) || 0,
+                        };
+                        updateServiceForm(svc.service_name, {
+                          portValues: next,
+                        });
+                      }}
+                    />
+                    {portConflicts.has(port.host) && (
+                      <p className="flex items-center gap-1 text-xs text-destructive">
+                        <AlertTriangle className="h-3 w-3" />
+                        In use by{' '}
+                        {portConflicts.get(port.host)?.used_by || 'another container'}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-muted-foreground">:</span>
                   <Input
                     type="number"
                     value={port.container || ''}
@@ -384,70 +498,193 @@ export function InstallDialog({
                       });
                     }}
                   />
-                </div>
-                <div className="w-14">
                   <Input
                     value={port.protocol}
                     disabled
                     className="text-center text-xs"
                   />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      const next = form.portValues.filter((_, j) => j !== i);
+                      updateServiceForm(svc.service_name, {
+                        portValues: next,
+                      });
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => {
-                    const next = form.portValues.filter((_, j) => j !== i);
-                    updateServiceForm(svc.service_name, {
-                      portValues: next,
-                    });
-                  }}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Environment */}
-        {svc.environment.length > 0 && (
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Environment</Label>
-            {svc.environment.map((env) => (
-              <div key={env.key} className="space-y-1">
-                <Label className="text-xs font-mono">{env.key}</Label>
-                <Input
-                  type={
-                    env.key.toLowerCase().includes('password') ||
-                    env.key.toLowerCase().includes('secret')
-                      ? 'password'
-                      : 'text'
-                  }
-                  value={form.envValues[env.key] || ''}
-                  placeholder={env.default || ''}
-                  onChange={(e) =>
-                    updateServiceForm(svc.service_name, {
-                      envValues: {
-                        ...form.envValues,
-                        [env.key]: e.target.value,
-                      },
-                    })
-                  }
-                />
-              </div>
-            ))}
+        {/* Environment Variables */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Label className="text-xs font-medium">Environment</Label>
+              {(svc.environment.length + form.customEnvValues.length) > 0 && (
+                <Badge variant="secondary" className="h-5 text-xs px-1.5">
+                  {svc.environment.length + form.customEnvValues.length}
+                </Badge>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs"
+              onClick={() => {
+                updateServiceForm(svc.service_name, {
+                  customEnvValues: [
+                    ...form.customEnvValues,
+                    { key: '', value: '' },
+                  ],
+                });
+              }}
+            >
+              <Plus className="mr-1 h-3 w-3" />
+              Add
+            </Button>
           </div>
-        )}
+          {svc.environment.length === 0 && form.customEnvValues.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No environment variables
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {/* Template env vars (key fixed, value editable) */}
+              {svc.environment.map((env) => (
+                <div key={env.key} className="flex items-center gap-2">
+                  <div className="w-2/5">
+                    <Input
+                      value={env.key}
+                      disabled
+                      className="text-xs font-mono text-muted-foreground"
+                    />
+                  </div>
+                  <span className="text-muted-foreground">=</span>
+                  <div className="flex-1">
+                    <Input
+                      type={
+                        env.key.toLowerCase().includes('password') ||
+                        env.key.toLowerCase().includes('secret')
+                          ? 'password'
+                          : 'text'
+                      }
+                      value={form.envValues[env.key] || ''}
+                      placeholder={env.default || ''}
+                      onChange={(e) =>
+                        updateServiceForm(svc.service_name, {
+                          envValues: {
+                            ...form.envValues,
+                            [env.key]: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              ))}
+              {/* Custom env vars (both key and value editable) */}
+              {form.customEnvValues.map((ce, i) => (
+                <div key={`custom-${i}`} className="flex items-center gap-2">
+                  <div className="w-2/5">
+                    <Input
+                      value={ce.key}
+                      placeholder="KEY"
+                      className="text-xs font-mono"
+                      onChange={(e) => {
+                        const next = [...form.customEnvValues];
+                        next[i] = { ...next[i], key: e.target.value };
+                        updateServiceForm(svc.service_name, {
+                          customEnvValues: next,
+                        });
+                      }}
+                    />
+                  </div>
+                  <span className="text-muted-foreground">=</span>
+                  <div className="flex-1">
+                    <Input
+                      value={ce.value}
+                      placeholder="value"
+                      onChange={(e) => {
+                        const next = [...form.customEnvValues];
+                        next[i] = { ...next[i], value: e.target.value };
+                        updateServiceForm(svc.service_name, {
+                          customEnvValues: next,
+                        });
+                      }}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      const next = form.customEnvValues.filter((_, j) => j !== i);
+                      updateServiceForm(svc.service_name, {
+                        customEnvValues: next,
+                      });
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Volumes */}
-        {form.volumeValues.length > 0 && (
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">Volumes</Label>
-            {form.volumeValues.map((vol, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="flex-1">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Label className="text-xs font-medium">Volumes</Label>
+              {form.volumeValues.length > 0 && (
+                <Badge variant="secondary" className="h-5 text-xs px-1.5">
+                  {form.volumeValues.length}
+                </Badge>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs"
+              onClick={() => {
+                updateServiceForm(svc.service_name, {
+                  volumeValues: [
+                    ...form.volumeValues,
+                    { source: '', target: '' },
+                  ],
+                });
+              }}
+            >
+              <Plus className="mr-1 h-3 w-3" />
+              Add
+            </Button>
+          </div>
+          {form.volumeValues.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No volumes configured
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              <div className="grid grid-cols-[1fr_auto_1fr_2rem] gap-2 text-xs text-muted-foreground px-1">
+                <span>Host Path / Volume</span>
+                <span />
+                <span>Container Path</span>
+                <span />
+              </div>
+              {form.volumeValues.map((vol, i) => (
+                <div key={i} className="grid grid-cols-[1fr_auto_1fr_2rem] items-center gap-2">
                   <Input
                     value={vol.source}
                     onChange={(e) => {
@@ -458,15 +695,121 @@ export function InstallDialog({
                       });
                     }}
                   />
+                  <span className="text-muted-foreground">:</span>
+                  <Input
+                    value={vol.target}
+                    onChange={(e) => {
+                      const next = [...form.volumeValues];
+                      next[i] = { ...next[i], target: e.target.value };
+                      updateServiceForm(svc.service_name, {
+                        volumeValues: next,
+                      });
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      const next = form.volumeValues.filter((_, j) => j !== i);
+                      updateServiceForm(svc.service_name, {
+                        volumeValues: next,
+                      });
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
-                <span className="text-muted-foreground">:</span>
-                <div className="flex-1">
-                  <Input value={vol.target} disabled />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Labels */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Label className="text-xs font-medium">Labels</Label>
+              {form.labelValues.length > 0 && (
+                <Badge variant="secondary" className="h-5 text-xs px-1.5">
+                  {form.labelValues.length}
+                </Badge>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs"
+              onClick={() => {
+                updateServiceForm(svc.service_name, {
+                  labelValues: [
+                    ...form.labelValues,
+                    { key: '', value: '' },
+                  ],
+                });
+              }}
+            >
+              <Plus className="mr-1 h-3 w-3" />
+              Add
+            </Button>
           </div>
-        )}
+          {form.labelValues.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No custom labels
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              {form.labelValues.map((label, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="w-2/5">
+                    <Input
+                      value={label.key}
+                      placeholder="label.key"
+                      className="text-xs font-mono"
+                      onChange={(e) => {
+                        const next = [...form.labelValues];
+                        next[i] = { ...next[i], key: e.target.value };
+                        updateServiceForm(svc.service_name, {
+                          labelValues: next,
+                        });
+                      }}
+                    />
+                  </div>
+                  <span className="text-muted-foreground">=</span>
+                  <div className="flex-1">
+                    <Input
+                      value={label.value}
+                      placeholder="value"
+                      onChange={(e) => {
+                        const next = [...form.labelValues];
+                        next[i] = { ...next[i], value: e.target.value };
+                        updateServiceForm(svc.service_name, {
+                          labelValues: next,
+                        });
+                      }}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      const next = form.labelValues.filter((_, j) => j !== i);
+                      updateServiceForm(svc.service_name, {
+                        labelValues: next,
+                      });
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -509,308 +852,31 @@ export function InstallDialog({
               </div>
 
               {isMultiService ? (
-                // Multi-service
+                // Multi-service: collapsible per service
                 <div className="space-y-3">
-                  {showAdvanced ? (
-                    // Advanced: collapsible per service
-                    services.map((svc) => (
-                      <Collapsible key={svc.service_name} defaultOpen>
-                        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border p-3 hover:bg-muted/50">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs font-mono">
-                              {svc.service_name}
-                            </Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {svc.image}
-                            </span>
-                          </div>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="px-1 pt-3">
-                          {renderServiceForm(svc)}
-                        </CollapsibleContent>
-                      </Collapsible>
-                    ))
-                  ) : (
-                    // Simple: just service list
-                    services.map((svc) => (
-                      <div
-                        key={svc.service_name}
-                        className="flex items-center gap-2 rounded-lg border p-3"
-                      >
-                        <Badge variant="outline" className="text-xs font-mono">
-                          {svc.service_name}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {svc.image}
-                        </span>
-                      </div>
-                    ))
-                  )}
+                  {services.map((svc) => (
+                    <Collapsible key={svc.service_name} defaultOpen>
+                      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border p-3 hover:bg-muted/50">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs font-mono">
+                            {svc.service_name}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {svc.image}
+                          </span>
+                        </div>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="px-1 pt-3">
+                        {renderServiceForm(svc)}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
                 </div>
               ) : (
-                // Single-service
-                services[0] && (
-                  <div className="space-y-4">
-                    {/* Always show container name + image */}
-                    <div className="space-y-2">
-                      <Label>Container Name</Label>
-                      <Input
-                        value={
-                          serviceForms.get(services[0].service_name)
-                            ?.containerName || ''
-                        }
-                        onChange={(e) =>
-                          updateServiceForm(services[0].service_name, {
-                            containerName: e.target.value,
-                          })
-                        }
-                        placeholder="my-container"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Image</Label>
-                      <Input value={services[0].image} disabled />
-                    </div>
-
-                    {/* Advanced: Ports/Env/Volumes tabs */}
-                    {showAdvanced && (
-                      <Tabs defaultValue="ports" className="w-full">
-                        <TabsList className="w-full">
-                          <TabsTrigger value="ports" className="flex-1">
-                            Ports{' '}
-                            {services[0].ports.length > 0 &&
-                              `(${services[0].ports.length})`}
-                          </TabsTrigger>
-                          <TabsTrigger value="env" className="flex-1">
-                            Env{' '}
-                            {services[0].environment.length > 0 &&
-                              `(${services[0].environment.length})`}
-                          </TabsTrigger>
-                          <TabsTrigger value="volumes" className="flex-1">
-                            Volumes{' '}
-                            {services[0].volumes.length > 0 &&
-                              `(${services[0].volumes.length})`}
-                          </TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="ports" className="space-y-3 pt-4">
-                          {(() => {
-                            const form = serviceForms.get(
-                              services[0].service_name
-                            );
-                            if (!form) return null;
-                            return (
-                              <>
-                                {form.portValues.length === 0 && (
-                                  <p className="text-sm text-muted-foreground">
-                                    No ports configured. Exposed ports will be auto-assigned on install.
-                                  </p>
-                                )}
-                                {form.portValues.map((port, i) => (
-                                  <div key={i} className="flex items-center gap-2">
-                                    <div className="flex-1 space-y-1">
-                                      <Label className="text-xs">Host Port</Label>
-                                      <Input
-                                        type="number"
-                                        value={port.host || ''}
-                                        placeholder="Host"
-                                        onChange={(e) => {
-                                          const next = [...form.portValues];
-                                          next[i] = {
-                                            ...next[i],
-                                            host: parseInt(e.target.value) || 0,
-                                          };
-                                          updateServiceForm(
-                                            services[0].service_name,
-                                            { portValues: next }
-                                          );
-                                        }}
-                                      />
-                                      {portConflicts.has(port.host) && (
-                                        <p className="flex items-center gap-1 text-xs text-destructive">
-                                          <AlertTriangle className="h-3 w-3" />
-                                          In use by{' '}
-                                          {portConflicts.get(port.host)?.used_by ||
-                                            'another container'}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <span className="mt-6 text-muted-foreground">
-                                      :
-                                    </span>
-                                    <div className="flex-1 space-y-1">
-                                      <Label className="text-xs">Container Port</Label>
-                                      <Input
-                                        type="number"
-                                        value={port.container || ''}
-                                        placeholder="Container"
-                                        onChange={(e) => {
-                                          const next = [...form.portValues];
-                                          next[i] = {
-                                            ...next[i],
-                                            container: parseInt(e.target.value) || 0,
-                                          };
-                                          updateServiceForm(
-                                            services[0].service_name,
-                                            { portValues: next }
-                                          );
-                                        }}
-                                      />
-                                    </div>
-                                    <div className="w-16 space-y-1">
-                                      <Label className="text-xs">Proto</Label>
-                                      <Input
-                                        value={port.protocol}
-                                        disabled
-                                        className="text-center"
-                                      />
-                                    </div>
-                                    <div className="mt-6">
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                        onClick={() => {
-                                          const next = form.portValues.filter((_, j) => j !== i);
-                                          updateServiceForm(
-                                            services[0].service_name,
-                                            { portValues: next }
-                                          );
-                                        }}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    updateServiceForm(
-                                      services[0].service_name,
-                                      {
-                                        portValues: [
-                                          ...form.portValues,
-                                          { host: 0, container: 0, protocol: 'tcp' },
-                                        ],
-                                      }
-                                    );
-                                  }}
-                                >
-                                  <Plus className="mr-1 h-3 w-3" />
-                                  Add port
-                                </Button>
-                              </>
-                            );
-                          })()}
-                        </TabsContent>
-
-                        <TabsContent value="env" className="space-y-3 pt-4">
-                          {services[0].environment.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
-                              No environment variables
-                            </p>
-                          ) : (
-                            services[0].environment.map((env) => {
-                              const form = serviceForms.get(
-                                services[0].service_name
-                              );
-                              return (
-                                <div key={env.key} className="space-y-1">
-                                  <Label className="text-xs font-mono">
-                                    {env.key}
-                                  </Label>
-                                  <Input
-                                    type={
-                                      env.key.toLowerCase().includes('password') ||
-                                      env.key.toLowerCase().includes('secret')
-                                        ? 'password'
-                                        : 'text'
-                                    }
-                                    value={form?.envValues[env.key] || ''}
-                                    placeholder={env.default || ''}
-                                    onChange={(e) =>
-                                      updateServiceForm(
-                                        services[0].service_name,
-                                        {
-                                          envValues: {
-                                            ...form?.envValues,
-                                            [env.key]: e.target.value,
-                                          },
-                                        }
-                                      )
-                                    }
-                                  />
-                                </div>
-                              );
-                            })
-                          )}
-                        </TabsContent>
-
-                        <TabsContent value="volumes" className="space-y-3 pt-4">
-                          {(() => {
-                            const form = serviceForms.get(
-                              services[0].service_name
-                            );
-                            if (!form || form.volumeValues.length === 0)
-                              return (
-                                <p className="text-sm text-muted-foreground">
-                                  No volumes configured
-                                </p>
-                              );
-                            return form.volumeValues.map((vol, i) => (
-                              <div key={i} className="flex items-center gap-2">
-                                <div className="flex-1 space-y-1">
-                                  <Label className="text-xs">
-                                    Host Path / Volume
-                                  </Label>
-                                  <Input
-                                    value={vol.source}
-                                    onChange={(e) => {
-                                      const next = [...form.volumeValues];
-                                      next[i] = {
-                                        ...next[i],
-                                        source: e.target.value,
-                                      };
-                                      updateServiceForm(
-                                        services[0].service_name,
-                                        { volumeValues: next }
-                                      );
-                                    }}
-                                  />
-                                </div>
-                                <span className="mt-6 text-muted-foreground">
-                                  :
-                                </span>
-                                <div className="flex-1 space-y-1">
-                                  <Label className="text-xs">Container Path</Label>
-                                  <Input value={vol.target} disabled />
-                                </div>
-                              </div>
-                            ));
-                          })()}
-                        </TabsContent>
-                      </Tabs>
-                    )}
-                  </div>
-                )
+                // Single-service: show form directly
+                services[0] && renderServiceForm(services[0])
               )}
-
-              {/* Advanced settings toggle */}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="w-full text-xs text-muted-foreground"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-              >
-                <Settings className="mr-1 h-3 w-3" />
-                {showAdvanced ? 'Hide advanced settings' : 'Advanced settings'}
-              </Button>
             </div>
           )}
 

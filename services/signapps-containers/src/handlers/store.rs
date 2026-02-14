@@ -196,8 +196,15 @@ pub async fn install_app(
         _ => Some(RestartPolicy::UnlessStopped),
     };
 
-    // Build labels: start with compose labels, then inject store metadata
+    // Build labels: start with compose labels, merge user labels, then inject store metadata
     let mut labels = svc.labels.clone();
+    if let Some(user_labels) = &req.labels {
+        for (k, v) in user_labels {
+            if !k.starts_with("signapps.app.") {
+                labels.insert(k.clone(), v.clone());
+            }
+        }
+    }
     labels.insert("signapps.app.id".to_string(), req.app_id.clone());
     labels.insert("signapps.app.name".to_string(), app.name.clone());
     if !app.tags.is_empty() {
@@ -639,8 +646,17 @@ async fn run_multi_install(
             _ => Some(RestartPolicy::UnlessStopped),
         };
 
-        // Build labels: start with compose labels, then inject store metadata
+        // Build labels: start with compose labels, merge user labels, then inject store metadata
         let mut labels = svc.labels.clone();
+        if let Some(ovr) = overrides {
+            if let Some(user_labels) = &ovr.labels {
+                for (k, v) in user_labels {
+                    if !k.starts_with("signapps.app.") {
+                        labels.insert(k.clone(), v.clone());
+                    }
+                }
+            }
+        }
         labels.insert(
             "signapps.app.id".to_string(),
             store_meta.app_id.clone(),

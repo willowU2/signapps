@@ -255,6 +255,7 @@ export interface StoreInstallRequest {
   environment?: Record<string, string>;
   ports?: { host: number; container: number; protocol?: string }[];
   volumes?: { source: string; target: string }[];
+  labels?: Record<string, string>;
   auto_start?: boolean;
 }
 
@@ -272,6 +273,7 @@ export interface ServiceOverride {
   environment?: Record<string, string>;
   ports?: { host: number; container: number; protocol?: string }[];
   volumes?: { source: string; target: string }[];
+  labels?: Record<string, string>;
 }
 
 export interface InstallStartedResponse {

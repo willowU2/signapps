@@ -204,6 +204,7 @@ pub struct InstallRequest {
     pub environment: Option<HashMap<String, String>>,
     pub ports: Option<Vec<PortOverride>>,
     pub volumes: Option<Vec<VolumeOverride>>,
+    pub labels: Option<HashMap<String, String>>,
     pub auto_start: Option<bool>,
 }
 
@@ -224,6 +225,7 @@ pub struct ServiceOverride {
     pub environment: Option<HashMap<String, String>>,
     pub ports: Option<Vec<PortOverride>>,
     pub volumes: Option<Vec<VolumeOverride>>,
+    pub labels: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize)]
