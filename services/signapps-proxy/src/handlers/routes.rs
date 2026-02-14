@@ -88,8 +88,11 @@ pub async fn create_route(
 
     tracing::info!(route_id = %route.id, name = %route.name, "Route created");
 
-    // Regenerate Traefik config
-    regenerate_config(&state).await?;
+    // Refresh proxy route cache
+    state.route_cache.force_refresh();
+
+    // Regenerate Traefik config (optional fallback)
+    regenerate_config(&state).await.ok();
 
     Ok((StatusCode::CREATED, Json(RouteResponse::from(route))))
 }
@@ -130,8 +133,11 @@ pub async fn update_route(
 
     tracing::info!(route_id = %route.id, "Route updated");
 
-    // Regenerate Traefik config
-    regenerate_config(&state).await?;
+    // Refresh proxy route cache
+    state.route_cache.force_refresh();
+
+    // Regenerate Traefik config (optional fallback)
+    regenerate_config(&state).await.ok();
 
     Ok(Json(RouteResponse::from(route)))
 }
@@ -154,8 +160,11 @@ pub async fn delete_route(
 
     tracing::info!(route_id = %id, name = %route.name, "Route deleted");
 
-    // Regenerate Traefik config
-    regenerate_config(&state).await?;
+    // Refresh proxy route cache
+    state.route_cache.force_refresh();
+
+    // Regenerate Traefik config (optional fallback)
+    regenerate_config(&state).await.ok();
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -172,8 +181,11 @@ pub async fn enable_route(
 
     tracing::info!(route_id = %route.id, "Route enabled");
 
-    // Regenerate Traefik config
-    regenerate_config(&state).await?;
+    // Refresh proxy route cache
+    state.route_cache.force_refresh();
+
+    // Regenerate Traefik config (optional fallback)
+    regenerate_config(&state).await.ok();
 
     Ok(Json(RouteResponse::from(route)))
 }
@@ -190,22 +202,30 @@ pub async fn disable_route(
 
     tracing::info!(route_id = %route.id, "Route disabled");
 
-    // Regenerate Traefik config
-    regenerate_config(&state).await?;
+    // Refresh proxy route cache
+    state.route_cache.force_refresh();
+
+    // Regenerate Traefik config (optional fallback)
+    regenerate_config(&state).await.ok();
 
     Ok(Json(RouteResponse::from(route)))
 }
 
-/// Regenerate Traefik configuration.
+/// Regenerate Traefik configuration (optional fallback).
+/// Only writes if TRAEFIK_CONFIG_PATH is set.
 async fn regenerate_config(state: &AppState) -> Result<()> {
+    let config_path = match std::env::var("TRAEFIK_CONFIG_PATH") {
+        Ok(path) => path,
+        Err(_) => {
+            tracing::debug!("TRAEFIK_CONFIG_PATH not set, skipping Traefik config generation");
+            return Ok(());
+        }
+    };
+
     let repo = RouteRepository::new(&state.pool);
     let routes = repo.list_enabled().await?;
 
     let config = state.traefik.generate_config(&routes);
-
-    // Write config to file (Traefik file provider)
-    let config_path = std::env::var("TRAEFIK_CONFIG_PATH")
-        .unwrap_or_else(|_| "/etc/traefik/dynamic/signapps.yml".to_string());
 
     let yaml = serde_yaml::to_string(&config)
         .map_err(|e| Error::Internal(format!("Failed to serialize config: {}", e)))?;

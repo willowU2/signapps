@@ -13,6 +13,7 @@ import { WidgetSystemHealth } from './widget-system-health';
 import { WidgetQuickActions } from './widget-quick-actions';
 import { WidgetNetworkTraffic } from './widget-network-traffic';
 import { WidgetBookmarks } from './widget-bookmarks';
+import { WidgetProxyStatus } from './widget-proxy-status';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -31,6 +32,8 @@ function WidgetRenderer({ type }: { type: WidgetConfig['type'] }) {
       return <WidgetNetworkTraffic />;
     case 'bookmarks':
       return <WidgetBookmarks />;
+    case 'proxy-status':
+      return <WidgetProxyStatus />;
     default:
       return <div>Unknown widget</div>;
   }

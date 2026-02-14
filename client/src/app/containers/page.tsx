@@ -37,7 +37,9 @@ import { ContainerDialog } from '@/components/containers/container-dialog';
 import { ContainerTerminal } from '@/components/containers/container-terminal';
 import { ComposeImportDialog } from '@/components/containers/compose-import-dialog';
 import { ContainerDetailsSheet } from '@/components/containers/container-details-sheet';
+import { RouteDialog } from '@/components/routes/route-dialog';
 import { useContainers, useContainerAction, Container } from '@/hooks/use-containers';
+import { Globe } from 'lucide-react';
 
 export default function ContainersPage() {
   const queryClient = useQueryClient();
@@ -70,6 +72,14 @@ export default function ContainersPage() {
     id: '',
     name: '',
     isManaged: true,
+  });
+  const [routeDialog, setRouteDialog] = useState<{
+    open: boolean;
+    containerName: string;
+    hostPort?: string;
+  }>({
+    open: false,
+    containerName: '',
   });
 
   const handleAction = (id: string, action: 'start' | 'stop' | 'restart' | 'remove' | 'update') => {
@@ -382,6 +392,19 @@ export default function ContainersPage() {
                                 Update
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem
+                              onClick={() => {
+                                const firstPort = container.ports[0]?.split(':')[0];
+                                setRouteDialog({
+                                  open: true,
+                                  containerName: container.name,
+                                  hostPort: firstPort,
+                                });
+                              }}
+                            >
+                              <Globe className="mr-2 h-4 w-4" />
+                              Create Route
+                            </DropdownMenuItem>
                             {!container.is_system && (
                               <DropdownMenuItem
                                 className="text-destructive"
@@ -446,6 +469,13 @@ export default function ContainersPage() {
           containerName={detailsSheet.name}
           dockerId={detailsSheet.dockerId}
           isManaged={detailsSheet.isManaged}
+        />
+
+        {/* Route Dialog */}
+        <RouteDialog
+          open={routeDialog.open}
+          onOpenChange={(open) => setRouteDialog({ ...routeDialog, open })}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['routes'] })}
         />
       </div>
     </AppLayout>

@@ -1,4 +1,4 @@
-//! SignApps Proxy Service - Reverse proxy control plane
+//! SignApps Proxy Service - Reverse proxy with integrated data plane
 
 use axum::{
     middleware,
@@ -15,10 +15,16 @@ use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
 mod handlers;
+mod proxy;
 mod shield;
 mod traefik;
 
-use handlers::{config, health, routes, shield as shield_handlers};
+use handlers::{certificates, config, health, proxy_status, routes, shield as shield_handlers};
+use proxy::acme::{AcmeChallengeStore, AcmeService};
+use proxy::engine::ProxyEngine;
+use proxy::forwarder::HttpForwarder;
+use proxy::tls::TlsCertResolver;
+use proxy::RouteCache;
 use shield::ShieldService;
 use traefik::TraefikClient;
 
@@ -29,6 +35,8 @@ pub struct AppState {
     pub traefik: TraefikClient,
     pub shield: ShieldService,
     pub jwt_config: JwtConfig,
+    pub route_cache: RouteCache,
+    pub tls_resolver: Option<TlsCertResolver>,
 }
 
 impl AuthState for AppState {
@@ -58,10 +66,30 @@ async fn main() -> anyhow::Result<()> {
     // Load configuration
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
-    let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".into());
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
+    let redis_url =
+        std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".into());
+    let jwt_secret =
+        std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
     let traefik_api_url =
         std::env::var("TRAEFIK_API_URL").unwrap_or_else(|_| "http://localhost:8080".into());
+
+    // Proxy configuration
+    let proxy_enabled = std::env::var("PROXY_ENABLED")
+        .unwrap_or_else(|_| "true".into())
+        .parse::<bool>()
+        .unwrap_or(true);
+    let proxy_http_port: u16 = std::env::var("PROXY_HTTP_PORT")
+        .unwrap_or_else(|_| "80".into())
+        .parse()
+        .unwrap_or(80);
+    let proxy_https_port: u16 = std::env::var("PROXY_HTTPS_PORT")
+        .unwrap_or_else(|_| "443".into())
+        .parse()
+        .unwrap_or(443);
+    let route_refresh_secs: u64 = std::env::var("PROXY_ROUTE_REFRESH_SECS")
+        .unwrap_or_else(|_| "5".into())
+        .parse()
+        .unwrap_or(5);
 
     // Initialize database pool
     let pool = signapps_db::create_pool(&database_url).await?;
@@ -79,6 +107,9 @@ async fn main() -> anyhow::Result<()> {
     let shield = ShieldService::new(&redis_url).await?;
     tracing::info!("SmartShield service initialized");
 
+    // Initialize route cache
+    let route_cache = RouteCache::new(pool.clone());
+
     // JWT configuration
     let jwt_config = JwtConfig {
         secret: jwt_secret,
@@ -88,25 +119,126 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
-    // Create application state
-    let state = AppState {
-        pool,
-        traefik,
-        shield,
-        jwt_config,
+    // Initialize TLS resolver early so it can be shared with state
+    let tls_resolver = if proxy_enabled {
+        match TlsCertResolver::new() {
+            Ok(resolver) => {
+                let resolver_clone = resolver.clone();
+                let pool_clone = pool.clone();
+                tokio::spawn(async move {
+                    proxy::tls::start_cert_refresh_loop(
+                        resolver_clone,
+                        pool_clone,
+                        60,
+                    )
+                    .await;
+                });
+                Some(resolver)
+            }
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    "TLS resolver init failed, HTTPS disabled"
+                );
+                None
+            }
+        }
+    } else {
+        None
     };
 
-    // Build router
+    // Create application state
+    let state = AppState {
+        pool: pool.clone(),
+        traefik,
+        shield: shield.clone(),
+        jwt_config,
+        route_cache: route_cache.clone(),
+        tls_resolver: tls_resolver.clone(),
+    };
+
+    // Start route cache refresh loop
+    let cache_for_refresh = route_cache.clone();
+    tokio::spawn(async move {
+        cache_for_refresh.start_refresh_loop(route_refresh_secs).await;
+    });
+
+    // Start integrated proxy if enabled
+    if proxy_enabled {
+        let https_port = if tls_resolver.is_some() {
+            Some(proxy_https_port)
+        } else {
+            None
+        };
+
+        let acme_store = AcmeChallengeStore::new();
+
+        // Start ACME auto-renewal if enabled
+        let acme_enabled = std::env::var("ACME_ENABLED")
+            .unwrap_or_else(|_| "false".into())
+            .parse::<bool>()
+            .unwrap_or(false);
+
+        if acme_enabled {
+            let acme_email = std::env::var("ACME_EMAIL")
+                .unwrap_or_else(|_| "admin@example.com".into());
+            let acme_directory = std::env::var("ACME_DIRECTORY_URL")
+                .unwrap_or_else(|_| {
+                    "https://acme-v02.api.letsencrypt.org/directory".into()
+                });
+
+            let acme_service = AcmeService::new(
+                pool.clone(),
+                acme_store.clone(),
+                tls_resolver.clone(),
+                acme_email,
+                acme_directory,
+            );
+
+            tokio::spawn(proxy::acme::start_auto_renewal_loop(
+                acme_service,
+                12,  // every 12 hours
+                30,  // renew 30 days before expiry
+            ));
+
+            tracing::info!("ACME auto-renewal enabled");
+        }
+
+        let engine = ProxyEngine {
+            route_cache: route_cache.clone(),
+            forwarder: HttpForwarder::new(),
+            shield: shield.clone(),
+            acme_store,
+            tls_resolver,
+        };
+
+        tokio::spawn(async move {
+            if let Err(e) = proxy::run_proxy(proxy_http_port, https_port, engine).await
+            {
+                tracing::error!(error = %e, "Proxy engine failed");
+            }
+        });
+
+        tracing::info!(
+            http_port = proxy_http_port,
+            https_port = proxy_https_port,
+            "Integrated proxy engine started"
+        );
+    } else {
+        tracing::info!("Integrated proxy disabled (PROXY_ENABLED=false)");
+    }
+
+    // Build management API router
     let app = create_router(state);
 
-    // Start server
+    // Start management API server
     let port: u16 = std::env::var("SERVER_PORT")
         .unwrap_or_else(|_| "3003".into())
         .parse()
         .unwrap_or(3003);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
-    tracing::info!("Listening on {}", addr);
+    tracing::info!("Management API listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
@@ -150,6 +282,35 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Protected certificate routes
+    let cert_routes = Router::new()
+        .route("/certificates", get(certificates::list_certificates))
+        .route("/certificates", post(certificates::upload_certificate))
+        .route(
+            "/certificates/request",
+            post(certificates::request_certificate),
+        )
+        .route(
+            "/certificates/:id/renew",
+            post(certificates::renew_certificate),
+        )
+        .route(
+            "/certificates/:id",
+            delete(certificates::delete_certificate),
+        )
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Protected proxy status route
+    let proxy_routes = Router::new()
+        .route("/proxy/status", get(proxy_status::get_proxy_status))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     // Protected config routes
     let config_routes = Router::new()
         .route("/config/traefik", get(config::get_traefik_config))
@@ -182,6 +343,8 @@ fn create_router(state: AppState) -> Router {
     Router::new()
         .nest("/api/v1", public_routes)
         .nest("/api/v1", route_routes)
+        .nest("/api/v1", cert_routes)
+        .nest("/api/v1", proxy_routes)
         .nest("/api/v1", shield_routes)
         .nest("/api/v1", config_routes)
         .nest("/api/v1/admin", admin_routes)

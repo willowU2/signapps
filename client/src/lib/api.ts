@@ -690,6 +690,8 @@ export const routesApi = {
     proxyApiClient.delete(`/certificates/${id}`),
   // Shield stats
   shieldStats: () => proxyApiClient.get<ShieldStats>('/shield/stats'),
+  // Proxy status
+  proxyStatus: () => proxyApiClient.get<ProxyStatus>('/proxy/status'),
 };
 
 export interface Route {
@@ -763,6 +765,14 @@ export interface ShieldStats {
   requests_total: number;
   requests_blocked: number;
   active_rules: number;
+}
+
+export interface ProxyStatus {
+  http_listener: { port: number; active: boolean };
+  https_listener: { port: number; active: boolean };
+  routes_cached: number;
+  certificates_loaded: number;
+  requests_total: number;
 }
 
 // Users API

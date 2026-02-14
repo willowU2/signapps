@@ -21,8 +21,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Eye, EyeOff, Copy } from 'lucide-react';
+import { Eye, EyeOff, Copy, Globe, Plus } from 'lucide-react';
 import { useContainerDetails } from '@/hooks/use-container-details';
+import { useRoutes } from '@/hooks/use-routes';
+import { RouteDialog } from '@/components/routes/route-dialog';
+import { Route } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface ContainerDetailsSheetProps {
@@ -67,6 +70,26 @@ export function ContainerDetailsSheet({
   });
 
   const [showEnvValues, setShowEnvValues] = useState(false);
+  const [routeDialogOpen, setRouteDialogOpen] = useState(false);
+
+  // Fetch routes to show matching ones for this container
+  const { data: allRoutes = [], refetch: refetchRoutes } = useRoutes();
+
+  // Find routes whose target matches any port of this container
+  const containerRoutes = allRoutes.filter((r: Route) => {
+    if (!details?.ports) return false;
+    return details.ports.some((p) => {
+      if (!p.host_port) return false;
+      return (
+        r.target.includes(`:${p.host_port}`) ||
+        r.target.includes(`localhost:${p.host_port}`) ||
+        r.name.toLowerCase().includes(containerName.toLowerCase())
+      );
+    });
+  });
+
+  // Pre-fill route dialog with container info
+  const firstHostPort = details?.ports?.find((p) => p.host_port)?.host_port;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -112,6 +135,7 @@ export function ContainerDetailsSheet({
               <TabsTrigger value="volumes">Volumes</TabsTrigger>
               <TabsTrigger value="env">Environment</TabsTrigger>
               <TabsTrigger value="labels">Labels</TabsTrigger>
+              <TabsTrigger value="routes">Routes</TabsTrigger>
               {details.health && (
                 <TabsTrigger value="health">Health</TabsTrigger>
               )}
@@ -335,6 +359,73 @@ export function ContainerDetailsSheet({
                     </TableBody>
                   </Table>
                 )}
+              </TabsContent>
+
+              {/* Routes */}
+              <TabsContent value="routes">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      {containerRoutes.length} route(s) linked
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRouteDialogOpen(true)}
+                    >
+                      <Plus className="mr-1 h-4 w-4" />
+                      Create Route
+                    </Button>
+                  </div>
+                  {containerRoutes.length === 0 ? (
+                    <div className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">
+                      <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No routes configured for this container</p>
+                      <p className="text-xs mt-1">
+                        Create a route to expose this container to the web
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {containerRoutes.map((route) => (
+                        <div
+                          key={route.id}
+                          className="flex items-center justify-between rounded-lg border p-3"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Globe className="h-4 w-4 text-blue-500" />
+                              <span className="font-medium text-sm">{route.name}</span>
+                              <Badge
+                                className={
+                                  route.enabled
+                                    ? 'bg-green-500/10 text-green-600'
+                                    : 'bg-gray-500/10 text-gray-600'
+                                }
+                              >
+                                {route.enabled ? 'Active' : 'Disabled'}
+                              </Badge>
+                              {route.tls_enabled && (
+                                <Badge variant="outline" className="text-xs">HTTPS</Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground font-mono">
+                              {route.host} → {route.target}
+                            </p>
+                          </div>
+                          <Badge variant="outline">{route.mode}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <RouteDialog
+                  open={routeDialogOpen}
+                  onOpenChange={setRouteDialogOpen}
+                  route={null}
+                  onSuccess={() => refetchRoutes()}
+                />
               </TabsContent>
 
               {/* Health */}

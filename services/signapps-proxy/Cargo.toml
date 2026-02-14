@@ -30,3 +30,15 @@ dotenvy = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true }
 anyhow = { workspace = true }
+hyper = { workspace = true }
+hyper-util = { workspace = true }
+http-body-util = "0.1"
+arc-swap = { workspace = true }
+tokio-rustls = { workspace = true }
+rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
+rcgen = { workspace = true }
+instant-acme = { workspace = true }
+bytes = { workspace = true }
+dashmap = { workspace = true }
+futures-util = { workspace = true }

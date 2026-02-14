@@ -9,7 +9,9 @@ pub mod raid;
 pub mod route;
 pub mod user;
 pub mod backup;
+pub mod certificate;
 
+pub use certificate::*;
 pub use container::*;
 pub use device::*;
 pub use group::*;

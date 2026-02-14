@@ -7,7 +7,8 @@ export type WidgetType =
   | 'system-health'
   | 'quick-actions'
   | 'network-traffic'
-  | 'bookmarks';
+  | 'bookmarks'
+  | 'proxy-status';
 
 export interface WidgetConfig {
   id: string;
@@ -41,6 +42,7 @@ export const WIDGET_CATALOG: { type: WidgetType; label: string; description: str
   { type: 'quick-actions', label: 'Actions rapides', description: 'Boutons raccourcis', defaultW: 4, defaultH: 5 },
   { type: 'network-traffic', label: 'Trafic reseau', description: 'Statistiques RX/TX', defaultW: 12, defaultH: 2 },
   { type: 'bookmarks', label: 'Bookmarks', description: 'Liens rapides personnalises', defaultW: 6, defaultH: 3 },
+  { type: 'proxy-status', label: 'Reverse Proxy', description: 'Status proxy, routes, certificats, SmartShield', defaultW: 4, defaultH: 4 },
 ];
 
 interface DashboardStore {
