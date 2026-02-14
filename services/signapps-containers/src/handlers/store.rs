@@ -116,25 +116,28 @@ pub async fn install_app(
     };
 
     // Auto-assign host ports when user didn't provide explicit port mappings.
-    // Uses compose container ports if available, otherwise falls back to image EXPOSE.
+    // Merges compose ports with image EXPOSE to catch ports like WebUI that
+    // may only be declared in the Dockerfile but not in the compose file.
     let image_pulled = if req.ports.is_none() {
         tracing::info!(image = %svc.image, "Pulling image for store install");
         if let Err(e) = state.docker.pull_image(&svc.image).await {
             tracing::warn!(image = %svc.image, "Image pull failed (may already exist): {e}");
         }
 
-        let target_ports: Vec<(u16, String)> = if !svc.ports.is_empty() {
-            svc.ports
-                .iter()
-                .map(|p| (p.container, p.protocol.clone()))
-                .collect()
-        } else {
-            state
-                .docker
-                .get_image_exposed_ports(&svc.image)
-                .await
-                .unwrap_or_default()
-        };
+        let mut target_ports: Vec<(u16, String)> = svc
+            .ports
+            .iter()
+            .map(|p| (p.container, p.protocol.clone()))
+            .collect();
+
+        // Merge in image EXPOSE ports not already covered by compose
+        if let Ok(exposed) = state.docker.get_image_exposed_ports(&svc.image).await {
+            for (port, proto) in exposed {
+                if !target_ports.iter().any(|(p, pr)| *p == port && *pr == proto) {
+                    target_ports.push((port, proto));
+                }
+            }
+        }
 
         if !target_ports.is_empty() {
             let used_ports = state.docker.get_used_host_ports().await.unwrap_or_default();
@@ -544,19 +547,23 @@ async fn run_multi_install(
             Vec::new()
         };
 
-        // Auto-assign host ports when user didn't provide explicit port mappings
+        // Auto-assign host ports when user didn't provide explicit port mappings.
+        // Merges compose ports with image EXPOSE to catch all exposed ports.
         if !has_user_ports {
-            let target_ports: Vec<(u16, String)> = if !svc.ports.is_empty() {
-                svc.ports
-                    .iter()
-                    .map(|p| (p.container, p.protocol.clone()))
-                    .collect()
-            } else {
-                docker
-                    .get_image_exposed_ports(&svc.image)
-                    .await
-                    .unwrap_or_default()
-            };
+            let mut target_ports: Vec<(u16, String)> = svc
+                .ports
+                .iter()
+                .map(|p| (p.container, p.protocol.clone()))
+                .collect();
+
+            // Merge in image EXPOSE ports not already covered by compose
+            if let Ok(exposed) = docker.get_image_exposed_ports(&svc.image).await {
+                for (port, proto) in exposed {
+                    if !target_ports.iter().any(|(p, pr)| *p == port && *pr == proto) {
+                        target_ports.push((port, proto));
+                    }
+                }
+            }
 
             if !target_ports.is_empty() {
                 let used_ports = docker.get_used_host_ports().await.unwrap_or_default();

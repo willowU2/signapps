@@ -131,6 +131,13 @@ export const useDashboardStore = create<DashboardStore>()(
           ),
         })),
     }),
-    { name: 'dashboard-layout' },
+    {
+      name: 'dashboard-layout',
+      version: 2,
+      migrate: (persisted: unknown) => {
+        const state = persisted as Record<string, unknown>;
+        return { ...state, widgets: DEFAULT_WIDGETS };
+      },
+    },
   ),
 );

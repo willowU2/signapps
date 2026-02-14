@@ -5,6 +5,7 @@ import { ResponsiveGridLayout, useContainerWidth, Layout } from 'react-grid-layo
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { useDashboardStore, WidgetConfig } from '@/stores/dashboard-store';
+import { useContainers } from '@/hooks/use-containers';
 
 import { WidgetStatCards } from './widget-stat-cards';
 import { WidgetInstalledApps } from './widget-installed-apps';
@@ -35,23 +36,49 @@ function WidgetRenderer({ type }: { type: WidgetConfig['type'] }) {
   }
 }
 
+function computeInstalledAppsH(appCount: number): number {
+  const cols = 4;
+  const rows = Math.ceil(appCount / cols);
+  return Math.max(3, 2 + rows);
+}
+
+// Compact layout vertically: push widgets down if they overlap with widgets above
+function compactLayout(items: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number }[]) {
+  const sorted = [...items].sort((a, b) => a.y - b.y || a.x - b.x);
+  for (let i = 0; i < sorted.length; i++) {
+    for (let j = 0; j < i; j++) {
+      const above = sorted[j];
+      const current = sorted[i];
+      const hOverlap = current.x < above.x + above.w && current.x + current.w > above.x;
+      if (hOverlap && current.y < above.y + above.h) {
+        sorted[i] = { ...current, y: above.y + above.h };
+      }
+    }
+  }
+  return sorted;
+}
+
 export function WidgetGrid() {
   const { widgets, editMode, updateLayout, removeWidget } = useDashboardStore();
   const { width, containerRef, mounted } = useContainerWidth();
+  const { data: containers = [] } = useContainers();
 
-  const lgLayout = useMemo<Layout>(
-    () =>
-      widgets.map((w) => ({
-        i: w.id,
-        x: w.x,
-        y: w.y,
-        w: w.w,
-        h: w.h,
-        minW: 3,
-        minH: 2,
-      })),
-    [widgets],
-  );
+  const installedAppsCount = containers.filter(
+    (c) => c.is_managed && !c.is_system && c.state === 'running',
+  ).length;
+
+  const lgLayout = useMemo<Layout>(() => {
+    const items = widgets.map((w) => ({
+      i: w.id,
+      x: w.x,
+      y: w.y,
+      w: w.w,
+      h: w.type === 'installed-apps' ? computeInstalledAppsH(installedAppsCount) : w.h,
+      minW: 3,
+      minH: 2,
+    }));
+    return compactLayout(items);
+  }, [widgets, installedAppsCount]);
 
   const onLayoutChange = useCallback(
     (currentLayout: Layout) => {
