@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SignApps Platform is a microservices-based infrastructure management system. Backend in Rust (Axum/Tokio), frontend in Next.js 16 (React 19, TypeScript). All services communicate via REST APIs with JWT authentication.
 
-All system dependencies (database, cache, storage) run natively — no Docker required for core services. Docker is only used for optional media processing services (Whisper STT, Coqui TTS, PaddleOCR).
+All dependencies run natively — no Docker required. Media processing (STT, TTS, OCR) uses native Rust engines (whisper-rs, piper-rs, ocrs). LLM inference supports native GGUF models via llama-cpp-2 alongside cloud providers.
 
 ## Build & Development Commands
 
@@ -61,12 +61,12 @@ npm run test:e2e:chromium     # single browser
 
 ```bash
 # PostgreSQL: install natively (auto-detected by services)
-# No Redis, Qdrant, or MinIO needed — replaced by native alternatives
+# No Redis, Qdrant, MinIO, or media Docker containers needed
 
-# Optional: media processing services (Docker)
-docker-compose up -d faster-whisper piper surya-ocr
+# Models are downloaded automatically on first use to ./data/models/
+# Override with MODELS_DIR env var
 
-# Start all services (including media Docker containers)
+# Start all services via docker-compose (optional, for deployment)
 docker-compose up -d
 
 # With AI services (Ollama/vLLM)
@@ -85,18 +85,17 @@ crates/
   signapps-common/    → Shared: JWT auth, middleware, error types, value objects
   signapps-db/        → Database: models, repositories, migrations, PgPool, pgvector
   signapps-cache/     → In-process TTL cache (moka) — replaces Redis
-  signapps-runtime/   → PostgreSQL lifecycle: detection, auto-configuration
+  signapps-runtime/   → PostgreSQL lifecycle, hardware detection, model manager
 services/
   signapps-identity/    → Port 3001 – Auth, LDAP/AD, MFA, RBAC, groups
   signapps-containers/  → Port 3002 – Docker container lifecycle (bollard)
   signapps-proxy/       → Port 3003 – Reverse proxy, TLS/ACME, SmartShield
   signapps-storage/     → Port 3004 – File storage (OpenDAL: local FS or S3)
-  signapps-ai/          → Port 3005 – RAG, LLM (multi-provider), pgvector, indexing
+  signapps-ai/          → Port 3005 – RAG, LLM (multi-provider + native GGUF), pgvector, indexing
   signapps-securelink/  → Port 3006 – Web tunnels, DNS with ad-blocking
   signapps-scheduler/   → Port 3007 – CRON job management
   signapps-metrics/     → Port 3008 – System monitoring, Prometheus, alerts
-  signapps-media/       → Port 3009 – OCR, TTS, STT
-  paddleocr-server/     → Python OCR microservice
+  signapps-media/       → Port 3009 – Native STT/TTS/OCR, voice WebSocket pipeline
 client/               → Next.js 16 frontend (App Router)
 migrations/           → PostgreSQL schema migrations (including pgvector)
 ```
@@ -106,8 +105,13 @@ migrations/           → PostgreSQL schema migrations (including pgvector)
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
 | Database | PostgreSQL (native) + pgvector extension | All data + vector similarity search |
-| Cache | moka (in-process, Rust) | Rate limiting, token blacklist (replaces Redis) |
-| Storage | OpenDAL (filesystem or S3) | File storage (replaces MinIO) |
+| Cache | moka (in-process, Rust) | Rate limiting, token blacklist |
+| Storage | OpenDAL (filesystem or S3) | File storage |
+| STT | whisper-rs (native) or HTTP backend | Speech-to-text transcription |
+| TTS | piper-rs (native) or HTTP backend | Text-to-speech synthesis |
+| OCR | ocrs + rten (native) or HTTP backend | Optical character recognition |
+| LLM | llama-cpp-2 (native GGUF) + cloud APIs | Language model inference |
+| Hardware | sysinfo + GPU probes | Auto-detect GPU/VRAM for model selection |
 
 ### Service Pattern
 
@@ -138,6 +142,9 @@ Every Rust service follows the same structure:
 
 **signapps-runtime:**
 - `RuntimeManager::ensure_database()` — auto-detects PostgreSQL (DATABASE_URL → pg_isready → TCP probe)
+- `HardwareProfile::detect()` — auto-detects GPU (NVIDIA/AMD/Intel/Apple), VRAM, CPU cores
+- `ModelManager` — downloads, caches, and manages AI models (STT/TTS/OCR/LLM/Embeddings)
+- Model cache: `data/models/{stt,tts,ocr,llm,embeddings}/` (configurable via `MODELS_DIR`)
 
 ### Frontend Architecture
 
@@ -184,9 +191,15 @@ DATABASE_URL=postgres://signapps:password@localhost:5432/signapps  # auto-detect
 JWT_SECRET=<32+ chars>
 STORAGE_MODE=fs                          # "fs" (default) or "s3"
 STORAGE_FS_ROOT=./data/storage           # filesystem root (fs mode)
-LLM_PROVIDER=ollama|vllm|openai|anthropic
+LLM_PROVIDER=ollama|vllm|openai|anthropic|llamacpp
 OLLAMA_URL / VLLM_URL / OPENAI_API_KEY / ANTHROPIC_API_KEY
-OCR_URL=http://localhost:8101            # PaddleOCR service
+LLAMACPP_MODEL=                          # native GGUF model (name or path)
+MODELS_DIR=./data/models                 # model cache directory
+GPU_BACKEND=auto                         # auto|cuda|rocm|metal|vulkan|cpu
+STT_URL=                                 # empty = native whisper-rs
+TTS_URL=                                 # empty = native piper-rs
+OCR_URL=                                 # empty = native ocrs
+AI_URL=http://localhost:3005/api/v1      # AI service URL for voice pipeline
 ```
 
 See `.env.example` for the full list.

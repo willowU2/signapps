@@ -63,18 +63,13 @@ pub async fn synthesize(
         output_format: Some(format.clone()),
     };
 
-    let result = state
-        .tts_client
-        .synthesize(tts_request)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("TTS failed: {}", e),
-            )
-        })?;
+    let result = state.tts.synthesize(tts_request).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("TTS failed: {}", e),
+        )
+    })?;
 
-    // Return audio as binary with correct content type
     let content_type = match format {
         AudioFormat::Wav => "audio/wav",
         AudioFormat::Mp3 => "audio/mpeg",
@@ -91,7 +86,7 @@ pub async fn synthesize(
         .unwrap())
 }
 
-/// Synthesize speech with streaming (for long texts)
+/// Synthesize speech with streaming
 pub async fn synthesize_stream(
     State(state): State<Arc<AppState>>,
     Json(request): Json<SynthesizeRequest>,
@@ -109,7 +104,7 @@ pub async fn synthesize_stream(
     };
 
     let stream = state
-        .tts_client
+        .tts
         .synthesize_stream(tts_request)
         .await
         .map_err(|e| {
@@ -131,7 +126,7 @@ pub async fn synthesize_stream(
 pub async fn list_voices(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<Voice>>, (StatusCode, String)> {
-    let voices = state.tts_client.list_voices().await.map_err(|e| {
+    let voices = state.tts.list_voices().await.map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to list voices: {}", e),

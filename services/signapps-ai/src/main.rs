@@ -10,6 +10,7 @@ use signapps_common::middleware::{
 };
 use signapps_common::{AuthState, JwtConfig};
 use signapps_db::DatabasePool;
+use signapps_runtime::{HardwareProfile, ModelManager};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower::ServiceBuilder;
@@ -23,7 +24,7 @@ mod rag;
 mod vectors;
 
 use embeddings::EmbeddingsClient;
-use handlers::{chat, health, index, models, providers, search};
+use handlers::{chat, health, index, model_management, models, providers, search};
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
 use rag::RagPipeline;
@@ -39,6 +40,8 @@ pub struct AppState {
     pub rag: RagPipeline,
     pub indexer: IndexPipeline,
     pub jwt_config: JwtConfig,
+    pub model_manager: Option<Arc<ModelManager>>,
+    pub hardware: Option<HardwareProfile>,
 }
 
 impl AuthState for AppState {
@@ -80,6 +83,16 @@ async fn main() -> anyhow::Result<()> {
     signapps_db::run_migrations(&pool).await?;
     tracing::info!("Database migrations completed");
 
+    // Hardware detection + model manager
+    let hardware = HardwareProfile::detect().await;
+    tracing::info!(
+        "Hardware: {} (VRAM: {} MB, CPU: {} cores)",
+        hardware.preferred_backend,
+        hardware.total_vram_mb,
+        hardware.cpu_cores
+    );
+    let model_manager = Arc::new(ModelManager::new(None));
+
     // Initialize clients
     let vectors = VectorService::new(pool.clone());
     tracing::info!("Vector service initialized (pgvector)");
@@ -91,8 +104,6 @@ async fn main() -> anyhow::Result<()> {
     let requested_default = std::env::var("LLM_PROVIDER").unwrap_or_default();
     let mut registry = ProviderRegistry::new(requested_default.clone());
     let mut first_provider_id: Option<String> = None;
-
-    // Helper macro would be nice, but let's keep it explicit.
 
     // vLLM
     if let Ok(url) = std::env::var("VLLM_URL") {
@@ -114,10 +125,10 @@ async fn main() -> anyhow::Result<()> {
                         first_provider_id = Some("vllm".to_string());
                     }
                     registry.register("vllm", config, provider);
-                },
+                }
                 Err(e) => {
                     tracing::warn!("Failed to create vLLM provider: {}", e)
-                },
+                }
             }
         }
     }
@@ -141,10 +152,10 @@ async fn main() -> anyhow::Result<()> {
                         first_provider_id = Some("ollama".to_string());
                     }
                     registry.register("ollama", config, provider);
-                },
+                }
                 Err(e) => {
                     tracing::warn!("Failed to create Ollama provider: {}", e)
-                },
+                }
             }
         }
     }
@@ -168,10 +179,10 @@ async fn main() -> anyhow::Result<()> {
                         first_provider_id = Some("openai".to_string());
                     }
                     registry.register("openai", config, provider);
-                },
+                }
                 Err(e) => {
                     tracing::warn!("Failed to create OpenAI provider: {}", e)
-                },
+                }
             }
         }
     }
@@ -195,15 +206,41 @@ async fn main() -> anyhow::Result<()> {
                         first_provider_id = Some("anthropic".to_string());
                     }
                     registry.register("anthropic", config, provider);
-                },
+                }
                 Err(e) => {
                     tracing::warn!("Failed to create Anthropic provider: {}", e)
-                },
+                }
             }
         }
     }
 
-    // Resolve default: if the requested default is invalid, use the first registered one
+    // LlamaCpp (native GGUF)
+    #[cfg(feature = "native-llm")]
+    if let Ok(model_path) = std::env::var("LLAMACPP_MODEL") {
+        if !model_path.is_empty() {
+            match llm::LlamaCppProvider::new(&model_path, model_manager.clone(), &hardware).await {
+                Ok(provider) => {
+                    tracing::info!("Registered LlamaCpp provider (model: {})", model_path);
+                    let config = ProviderConfig {
+                        provider_type: LlmProviderType::LlamaCpp,
+                        base_url: "native".to_string(),
+                        api_key: None,
+                        default_model: model_path,
+                        enabled: true,
+                    };
+                    if first_provider_id.is_none() {
+                        first_provider_id = Some("llamacpp".to_string());
+                    }
+                    registry.register("llamacpp", config, Box::new(provider));
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to create LlamaCpp provider: {}", e);
+                }
+            }
+        }
+    }
+
+    // Resolve default
     if registry.get_default().is_err() {
         if let Some(fallback) = first_provider_id {
             tracing::info!(
@@ -218,7 +255,7 @@ async fn main() -> anyhow::Result<()> {
     if registry.is_empty() {
         tracing::warn!(
             "No LLM providers configured! Set VLLM_URL, OLLAMA_URL, \
-             OPENAI_API_KEY, or ANTHROPIC_API_KEY."
+             OPENAI_API_KEY, ANTHROPIC_API_KEY, or LLAMACPP_MODEL."
         );
     } else {
         tracing::info!(
@@ -234,7 +271,7 @@ async fn main() -> anyhow::Result<()> {
     let rag = RagPipeline::new(embeddings.clone(), vectors.clone(), Arc::clone(&providers));
     tracing::info!("RAG pipeline initialized");
 
-    // Initialize index pipeline (OCR-aware document indexing)
+    // Initialize index pipeline
     let ocr_url = std::env::var("OCR_URL").ok().filter(|u| !u.is_empty());
     let indexer = IndexPipeline::new(embeddings.clone(), vectors.clone(), ocr_url);
     tracing::info!("Index pipeline initialized");
@@ -257,6 +294,8 @@ async fn main() -> anyhow::Result<()> {
         rag,
         indexer,
         jwt_config,
+        model_manager: Some(model_manager),
+        hardware: Some(hardware),
     };
 
     // Build router
@@ -296,6 +335,18 @@ fn create_router(state: AppState) -> Router {
         // Models & Providers
         .route("/models", get(models::list_models))
         .route("/providers", get(providers::list_providers))
+        // Model management
+        .route("/models/local", get(model_management::list_local_models))
+        .route(
+            "/models/available",
+            get(model_management::list_available_models),
+        )
+        .route("/models/download", post(model_management::download_model))
+        .route(
+            "/models/:model_id",
+            delete(model_management::delete_model),
+        )
+        .route("/hardware", get(model_management::get_hardware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

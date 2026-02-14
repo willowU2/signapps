@@ -73,6 +73,7 @@ impl ProviderRegistry {
             LlmProviderType::OpenAI => "OpenAI",
             LlmProviderType::Anthropic => "Anthropic Claude",
             LlmProviderType::OpenAICompatible => "OpenAI Compatible",
+            LlmProviderType::LlamaCpp => "LlamaCpp (Native GGUF)",
         }
     }
 
@@ -85,7 +86,10 @@ impl ProviderRegistry {
     pub fn is_local(provider_type: &LlmProviderType) -> bool {
         matches!(
             provider_type,
-            LlmProviderType::Ollama | LlmProviderType::Vllm | LlmProviderType::OpenAICompatible
+            LlmProviderType::Ollama
+                | LlmProviderType::Vllm
+                | LlmProviderType::OpenAICompatible
+                | LlmProviderType::LlamaCpp
         )
     }
 }

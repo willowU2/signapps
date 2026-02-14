@@ -86,7 +86,6 @@ pub async fn transcribe(
         )
     })?;
 
-    // Check file size (max 100MB)
     if data.len() > 100 * 1024 * 1024 {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -109,7 +108,7 @@ pub async fn transcribe(
     };
 
     let result = state
-        .stt_client
+        .stt
         .transcribe(data, &filename, Some(options))
         .await
         .map_err(|e| {
@@ -198,7 +197,7 @@ pub async fn transcribe_stream(
     };
 
     let stream = state
-        .stt_client
+        .stt
         .transcribe_stream(data, &filename, Some(options))
         .await
         .map_err(|e| {
@@ -208,10 +207,7 @@ pub async fn transcribe_stream(
             )
         })?;
 
-    // Pin the stream for use with unfold
-    let pinned_stream = Box::pin(stream);
-
-    let sse_stream = futures::stream::unfold(pinned_stream, |mut s| async move {
+    let sse_stream = futures::stream::unfold(stream, |mut s| async move {
         use futures::StreamExt;
         match s.as_mut().next().await {
             Some(Ok(chunk)) => {
@@ -225,7 +221,7 @@ pub async fn transcribe_stream(
                     }))
                     .unwrap();
                 Some((Ok(event), s))
-            },
+            }
             Some(Err(e)) => {
                 let event = Event::default()
                     .json_data(serde_json::json!({
@@ -233,7 +229,7 @@ pub async fn transcribe_stream(
                     }))
                     .unwrap();
                 Some((Ok(event), s))
-            },
+            }
             None => None,
         }
     });
@@ -249,7 +245,7 @@ pub async fn transcribe_stream(
 pub async fn list_models(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<SttModel>>, (StatusCode, String)> {
-    let models = state.stt_client.list_models().await.map_err(|e| {
+    let models = state.stt.list_models().await.map_err(|e| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to list models: {}", e),

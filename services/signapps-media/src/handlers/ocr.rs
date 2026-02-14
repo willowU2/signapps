@@ -48,7 +48,6 @@ pub async fn extract_text(
 ) -> Result<Json<OcrResponse>, (StatusCode, String)> {
     tracing::info!("OCR request received");
 
-    // Get the file from multipart
     let field = multipart
         .next_field()
         .await
@@ -86,7 +85,7 @@ pub async fn extract_text(
     };
 
     let result = state
-        .ocr_client
+        .ocr
         .extract_text(data, Some(options))
         .await
         .map_err(|e| {
@@ -122,7 +121,7 @@ pub async fn extract_text(
     }))
 }
 
-/// Process a multi-page document (PDF, DOCX, etc.)
+/// Process a multi-page document
 pub async fn process_document(
     State(state): State<Arc<AppState>>,
     Query(params): Query<OcrQueryParams>,
@@ -156,7 +155,7 @@ pub async fn process_document(
     };
 
     let result = state
-        .ocr_client
+        .ocr
         .process_document(data, &filename, Some(options))
         .await
         .map_err(|e| {
@@ -192,7 +191,7 @@ pub async fn process_document(
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct BatchOcrRequest {
-    pub files: Vec<String>, // File paths from storage
+    pub files: Vec<String>,
     pub languages: Option<Vec<String>>,
     pub detect_layout: Option<bool>,
     pub detect_tables: Option<bool>,
@@ -211,9 +210,6 @@ pub async fn batch_process(
     Json(request): Json<BatchOcrRequest>,
 ) -> Result<Json<BatchOcrResponse>, (StatusCode, String)> {
     let job_id = uuid::Uuid::new_v4().to_string();
-
-    // TODO: Create async job for batch processing
-    // This would queue the files for processing and return immediately
 
     Ok(Json(BatchOcrResponse {
         job_id,

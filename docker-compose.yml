@@ -1,48 +1,6 @@
 version: '3.8'
 
 services:
-  # === MEDIA PROCESSING (GPU) ===
-
-  # Faster-Whisper STT (Speech-to-Text) - Using medium model for better accuracy
-  faster-whisper:
-    image: onerahmet/openai-whisper-asr-webservice:latest
-    container_name: signapps-whisper
-    environment:
-      ASR_MODEL: medium
-      ASR_ENGINE: faster_whisper
-    ports:
-      - "8100:9000"
-    volumes:
-      - whisper_cache:/root/.cache
-    networks:
-      - signapps-network
-    restart: unless-stopped
-
-  # Coqui TTS (Text-to-Speech) - Using French VITS model for natural voice
-  piper:
-    image: ghcr.io/coqui-ai/tts:latest
-    container_name: signapps-piper
-    entrypoint: ["python3", "-m", "TTS.server.server", "--model_name", "tts_models/fr/mai/tacotron2-DDC", "--use_cuda", "false"]
-    ports:
-      - "10200:5002"
-    volumes:
-      - piper_data:/root/.local/share/tts
-    networks:
-      - signapps-network
-    restart: unless-stopped
-
-  # OCR Service - PaddleOCR (high accuracy, multilingual, table detection)
-  surya-ocr:
-    build:
-      context: ./services/paddleocr-server
-      dockerfile: Dockerfile
-    container_name: signapps-surya
-    ports:
-      - "8101:9003"
-    networks:
-      - signapps-network
-    restart: unless-stopped
-
   # === LLM LOCAL (vLLM) - Optionnel, decommenter si GPU disponible ===
   # vllm:
   #   image: vllm/vllm-openai:latest
@@ -221,17 +179,11 @@ services:
     environment:
       DATABASE_URL: postgres://signapps:${DB_PASSWORD:-signapps_dev}@host.docker.internal/signapps
       JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
-      STT_URL: http://faster-whisper:9000
-      TTS_URL: http://piper:5002
-      OCR_URL: http://surya-ocr:9003
+      AI_URL: http://signapps-ai:3000/api/v1
+      MODELS_DIR: /data/models
       RUST_LOG: info,signapps=debug
-    depends_on:
-      faster-whisper:
-        condition: service_started
-      piper:
-        condition: service_started
-      surya-ocr:
-        condition: service_started
+    volumes:
+      - models_data:/data/models
     ports:
       - "3009:3009"
     networks:
@@ -243,7 +195,5 @@ networks:
 
 volumes:
   storage_data:
+  models_data:
   vllm_cache:
-  whisper_cache:
-  piper_data:
-  surya_cache:

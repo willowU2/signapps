@@ -5,8 +5,14 @@ edition = "2021"
 rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Runtime manager for SignApps Platform - manages PostgreSQL lifecycle"
+description = "Runtime manager for SignApps Platform - manages PostgreSQL lifecycle, hardware detection, and model management"
 
 [dependencies]
 tokio = { workspace = true }
 tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+dashmap = { workspace = true }
+reqwest = { workspace = true }
+futures-util = { workspace = true }
+thiserror = { workspace = true }

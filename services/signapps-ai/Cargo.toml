@@ -14,6 +14,7 @@ path = "src/main.rs"
 [dependencies]
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
+signapps-runtime = { path = "../../crates/signapps-runtime" }
 axum = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
@@ -33,3 +34,13 @@ anyhow = { workspace = true }
 futures-util = { workspace = true }
 async-stream = { workspace = true }
 async-trait = { workspace = true }
+
+# Native LLM inference
+llama-cpp-2 = { version = "0.1", optional = true }
+
+[features]
+default = []
+native-llm = ["dep:llama-cpp-2"]
+cuda = ["llama-cpp-2/cuda"]
+metal = ["llama-cpp-2/metal"]
+vulkan = ["llama-cpp-2/vulkan"]

@@ -24,6 +24,9 @@ sqlx = { version = "0.7", features = ["postgres", "runtime-tokio", "uuid", "chro
 # Auth & common
 signapps-common = { path = "../../crates/signapps-common" }
 
+# Runtime (hardware detection, model management)
+signapps-runtime = { path = "../../crates/signapps-runtime" }
+
 # File handling
 tokio-util = { version = "0.7", features = ["io"] }
 bytes = "1"
@@ -32,7 +35,10 @@ tempfile = "3"
 
 # Async utilities
 futures = "0.3"
+futures-util = "0.3"
 async-stream = "0.3"
+async-trait = "0.1"
+tokio-stream = "0.1"
 
 # UUID
 uuid = { version = "1", features = ["v4", "serde"] }
@@ -56,3 +62,27 @@ anyhow = "1.0"
 
 # URL encoding
 urlencoding = "2.1"
+
+# Native STT (whisper.cpp bindings)
+whisper-rs = { version = "0.15", optional = true }
+
+# Audio decoding (multi-format → PCM)
+symphonia = { version = "0.5", features = ["mp3", "ogg", "flac", "wav", "pcm", "aac"], optional = true }
+hound = { version = "3.5", optional = true }
+
+# Native TTS (Piper ONNX)
+piper-rs = { version = "0.1", optional = true }
+
+# Native OCR
+ocrs = { version = "0.11", optional = true }
+rten = { version = "0.14", optional = true }
+rten-imageproc = { version = "0.14", optional = true }
+image = { version = "0.25", optional = true }
+
+[features]
+default = []
+native-stt = ["dep:whisper-rs", "dep:symphonia", "dep:hound"]
+native-tts = ["dep:piper-rs", "dep:hound"]
+native-ocr = ["dep:ocrs", "dep:rten", "dep:rten-imageproc", "dep:image"]
+cuda = ["whisper-rs/cuda"]
+metal = ["whisper-rs/metal"]

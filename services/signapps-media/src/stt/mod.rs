@@ -1,19 +1,44 @@
-//! STT Module - Faster-Whisper / WhisperX integration
+//! STT Module - Speech-to-Text with pluggable backends.
 //!
-//! Faster-Whisper is up to 4x faster than OpenAI Whisper with same accuracy.
-//! WhisperX adds word-level timestamps and speaker diarization.
+//! Supports:
+//! - HTTP backend (Faster-Whisper via Docker) when STT_URL is set
+//! - Native backend (whisper-rs) when STT_URL is empty
 
+use async_trait::async_trait;
 use bytes::Bytes;
-use reqwest::Client;
+use futures::Stream;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use std::pin::Pin;
 
-#[derive(Clone)]
-pub struct SttClient {
-    client: Client,
-    base_url: String,
-    default_model: String,
-    default_language: Option<String>,
+mod http;
+#[cfg(feature = "native-stt")]
+pub mod native;
+
+pub use self::http::HttpSttBackend;
+#[cfg(feature = "native-stt")]
+pub use self::native::NativeSttBackend;
+
+/// Backend trait for STT implementations.
+#[async_trait]
+pub trait SttBackend: Send + Sync {
+    /// Transcribe a complete audio file.
+    async fn transcribe(
+        &self,
+        audio: Bytes,
+        filename: &str,
+        opts: Option<TranscribeRequest>,
+    ) -> Result<TranscribeResult, SttError>;
+
+    /// Transcribe with streaming segment results.
+    async fn transcribe_stream(
+        &self,
+        audio: Bytes,
+        filename: &str,
+        opts: Option<TranscribeRequest>,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<TranscribeChunk, SttError>> + Send>>, SttError>;
+
+    /// List available models.
+    async fn list_models(&self) -> Result<Vec<SttModel>, SttError>;
 }
 
 #[derive(Debug, Serialize)]
@@ -94,224 +119,6 @@ pub struct SttModel {
     pub description: String,
 }
 
-impl SttClient {
-    pub fn new(base_url: &str, default_model: &str, default_language: Option<String>) -> Self {
-        let client = Client::builder()
-            .timeout(Duration::from_secs(600)) // 10 min timeout for large audio
-            .build()
-            .expect("Failed to build HTTP client");
-
-        Self {
-            client,
-            base_url: base_url.trim_end_matches('/').to_string(),
-            default_model: default_model.to_string(),
-            default_language,
-        }
-    }
-
-    /// Transcribe audio file
-    pub async fn transcribe(
-        &self,
-        audio_data: Bytes,
-        filename: &str,
-        options: Option<TranscribeRequest>,
-    ) -> Result<TranscribeResult, SttError> {
-        let start = std::time::Instant::now();
-
-        let mime_type = mime_guess::from_path(filename)
-            .first_or_octet_stream()
-            .to_string();
-
-        // Whisper ASR API uses /asr endpoint with audio_file part
-        let form = reqwest::multipart::Form::new().part(
-            "audio_file",
-            reqwest::multipart::Part::bytes(audio_data.to_vec())
-                .file_name(filename.to_string())
-                .mime_str(&mime_type)?,
-        );
-
-        let opts = options.unwrap_or_default();
-        let task = match opts.task.unwrap_or_default() {
-            TranscribeTask::Transcribe => "transcribe",
-            TranscribeTask::Translate => "translate",
-        };
-
-        let mut url = format!("{}/asr?output=json&task={}", self.base_url, task);
-
-        if let Some(lang) = opts.language.as_ref().or(self.default_language.as_ref()) {
-            url.push_str(&format!("&language={}", lang));
-        }
-
-        if opts.word_timestamps.unwrap_or(false) {
-            url.push_str("&word_timestamps=true");
-        }
-
-        let response = self.client.post(&url).multipart(form).send().await?;
-
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_text = response.text().await.unwrap_or_default();
-            return Err(SttError::ServiceError(format!(
-                "STT service error {}: {}",
-                status, error_text
-            )));
-        }
-
-        let processing_time = start.elapsed().as_millis() as u64;
-
-        // Whisper ASR returns simple JSON with text field
-        let whisper_response: serde_json::Value = response.json().await?;
-        let text = whisper_response["text"].as_str().unwrap_or("").to_string();
-
-        Ok(TranscribeResult {
-            text: text.clone(),
-            language: self
-                .default_language
-                .clone()
-                .unwrap_or_else(|| "en".to_string()),
-            language_probability: 0.95,
-            duration_seconds: 0.0,
-            segments: vec![Segment {
-                id: 0,
-                start: 0.0,
-                end: 0.0,
-                text,
-                speaker: None,
-                avg_logprob: 0.0,
-                no_speech_prob: 0.0,
-            }],
-            words: None,
-            speakers: None,
-            model_used: self.default_model.clone(),
-            processing_time_ms: processing_time,
-        })
-    }
-
-    /// Transcribe with streaming results
-    pub async fn transcribe_stream(
-        &self,
-        audio_data: Bytes,
-        filename: &str,
-        options: Option<TranscribeRequest>,
-    ) -> Result<impl futures::Stream<Item = Result<TranscribeChunk, SttError>>, SttError> {
-        let mime_type = mime_guess::from_path(filename)
-            .first_or_octet_stream()
-            .to_string();
-
-        let mut form = reqwest::multipart::Form::new().part(
-            "file",
-            reqwest::multipart::Part::bytes(audio_data.to_vec())
-                .file_name(filename.to_string())
-                .mime_str(&mime_type)?,
-        );
-
-        let opts = options.unwrap_or_default();
-        let model = opts.model.as_ref().unwrap_or(&self.default_model);
-        form = form.text("model", model.clone());
-        form = form.text("stream", "true");
-
-        if let Some(lang) = opts.language.as_ref().or(self.default_language.as_ref()) {
-            form = form.text("language", lang.clone());
-        }
-
-        let response = self
-            .client
-            .post(format!("{}/transcribe/stream", self.base_url))
-            .multipart(form)
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_text = response.text().await.unwrap_or_default();
-            return Err(SttError::ServiceError(format!(
-                "STT service error {}: {}",
-                status, error_text
-            )));
-        }
-
-        Ok(futures::stream::unfold(response, |mut resp| async move {
-            match resp.chunk().await {
-                Ok(Some(chunk)) => {
-                    // Parse SSE chunk
-                    let text = String::from_utf8_lossy(&chunk);
-                    if text.starts_with("data: ") {
-                        let json_str = text.trim_start_matches("data: ").trim();
-                        if json_str == "[DONE]" {
-                            return None;
-                        }
-                        match serde_json::from_str::<TranscribeChunk>(json_str) {
-                            Ok(chunk) => Some((Ok(chunk), resp)),
-                            Err(e) => Some((Err(SttError::InvalidResponse(e.to_string())), resp)),
-                        }
-                    } else {
-                        Some((
-                            Err(SttError::InvalidResponse("Invalid SSE format".to_string())),
-                            resp,
-                        ))
-                    }
-                },
-                Ok(None) => None,
-                Err(e) => Some((Err(SttError::HttpError(e)), resp)),
-            }
-        }))
-    }
-
-    /// List available models
-    pub async fn list_models(&self) -> Result<Vec<SttModel>, SttError> {
-        let response = self
-            .client
-            .get(format!("{}/models", self.base_url))
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            // Return default models if service unavailable
-            return Ok(default_whisper_models());
-        }
-
-        let models: Vec<SttModel> = response.json().await?;
-        Ok(models)
-    }
-
-    /// Detect language from audio
-    pub async fn detect_language(
-        &self,
-        audio_data: Bytes,
-        filename: &str,
-    ) -> Result<LanguageDetection, SttError> {
-        let mime_type = mime_guess::from_path(filename)
-            .first_or_octet_stream()
-            .to_string();
-
-        let form = reqwest::multipart::Form::new().part(
-            "file",
-            reqwest::multipart::Part::bytes(audio_data.to_vec())
-                .file_name(filename.to_string())
-                .mime_str(&mime_type)?,
-        );
-
-        let response = self
-            .client
-            .post(format!("{}/detect-language", self.base_url))
-            .multipart(form)
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            let status = response.status();
-            let error_text = response.text().await.unwrap_or_default();
-            return Err(SttError::ServiceError(format!(
-                "Language detection error {}: {}",
-                status, error_text
-            )));
-        }
-
-        let result: LanguageDetection = response.json().await?;
-        Ok(result)
-    }
-}
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TranscribeChunk {
     pub segment_id: u32,
@@ -322,6 +129,7 @@ pub struct TranscribeChunk {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[allow(dead_code)]
 pub struct LanguageDetection {
     pub detected_language: String,
     pub language_probability: f32,
@@ -329,6 +137,7 @@ pub struct LanguageDetection {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[allow(dead_code)]
 pub struct LanguageProbability {
     pub language: String,
     pub probability: f32,
@@ -347,7 +156,7 @@ impl Default for TranscribeRequest {
     }
 }
 
-fn default_whisper_models() -> Vec<SttModel> {
+pub fn default_whisper_models() -> Vec<SttModel> {
     vec![
         SttModel {
             id: "tiny".to_string(),
@@ -405,4 +214,7 @@ pub enum SttError {
 
     #[error("Audio format not supported: {0}")]
     UnsupportedFormat(String),
+
+    #[error("Model error: {0}")]
+    ModelError(String),
 }

@@ -22,6 +22,8 @@ pub enum LlmProviderType {
     Anthropic,
     /// Generic OpenAI-compatible API
     OpenAICompatible,
+    /// Native llama.cpp (GGUF models)
+    LlamaCpp,
 }
 
 /// Provider configuration.
@@ -805,6 +807,14 @@ pub fn create_provider(config: &ProviderConfig) -> Result<Box<dyn LlmProvider>> 
                 api_key,
                 &config.default_model,
             )))
+        },
+        LlmProviderType::LlamaCpp => {
+            // LlamaCpp requires async construction with model_manager + hardware
+            // Use create_provider only for simple HTTP providers;
+            // LlamaCpp is registered directly in main.rs
+            Err(Error::Validation(
+                "LlamaCpp provider requires async init via LlamaCppProvider::new()".to_string(),
+            ))
         },
     }
 }
