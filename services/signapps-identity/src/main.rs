@@ -54,10 +54,11 @@ async fn main() -> anyhow::Result<()> {
     // Run migrations
     run_migrations(&pool).await?;
 
-    // Create Redis client
-    let redis_url =
-        std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
-    let redis = redis::Client::open(redis_url)?;
+    // Create in-process cache for token blacklisting
+    let cache = signapps_cache::CacheService::new(
+        50_000,
+        std::time::Duration::from_secs(900), // 15min default (matches access token TTL)
+    );
 
     // Create JWT config
     let jwt_config = JwtConfig {
@@ -73,7 +74,7 @@ async fn main() -> anyhow::Result<()> {
         pool,
         jwt_secret,
         jwt_config,
-        redis,
+        cache,
     };
 
     // Build router
@@ -101,7 +102,7 @@ pub struct AppState {
     pub pool: DatabasePool,
     pub jwt_secret: String,
     pub jwt_config: JwtConfig,
-    pub redis: redis::Client,
+    pub cache: signapps_cache::CacheService,
 }
 
 impl AuthState for AppState {

@@ -24,8 +24,7 @@ pub fn is_websocket_upgrade(req: &Request<Incoming>) -> bool {
         .and_then(|v| v.to_str().ok())
         .unwrap_or("");
 
-    connection.to_lowercase().contains("upgrade")
-        && upgrade.to_lowercase() == "websocket"
+    connection.to_lowercase().contains("upgrade") && upgrade.to_lowercase() == "websocket"
 }
 
 /// Forward a WebSocket upgrade request to the backend and tunnel data.
@@ -41,7 +40,7 @@ pub async fn handle_websocket_upgrade(
                 .status(StatusCode::BAD_GATEWAY)
                 .body(full_body("Invalid WebSocket target"))
                 .unwrap());
-        }
+        },
     };
 
     let path_and_query = req
@@ -63,7 +62,7 @@ pub async fn handle_websocket_upgrade(
                 .status(StatusCode::BAD_GATEWAY)
                 .body(full_body("Failed to build WebSocket target URI"))
                 .unwrap());
-        }
+        },
     };
 
     *req.uri_mut() = new_uri;
@@ -75,11 +74,8 @@ pub async fn handle_websocket_upgrade(
     }
 
     // Use a separate HTTP client for the upgrade
-    let client: Client<
-        hyper_util::client::legacy::connect::HttpConnector,
-        Incoming,
-    > = Client::builder(TokioExecutor::new())
-        .build_http();
+    let client: Client<hyper_util::client::legacy::connect::HttpConnector, Incoming> =
+        Client::builder(TokioExecutor::new()).build_http();
 
     match client.request(req).await {
         Ok(mut backend_resp) => {
@@ -88,8 +84,7 @@ pub async fn handle_websocket_upgrade(
                 let _backend_upgraded = hyper::upgrade::on(&mut backend_resp);
 
                 // Return 101 to client and spawn tunnel
-                let mut resp = Response::builder()
-                    .status(StatusCode::SWITCHING_PROTOCOLS);
+                let mut resp = Response::builder().status(StatusCode::SWITCHING_PROTOCOLS);
 
                 // Copy relevant headers
                 for (key, value) in backend_resp.headers() {
@@ -103,13 +98,15 @@ pub async fn handle_websocket_upgrade(
             } else {
                 // Backend didn't accept the upgrade
                 let (parts, body) = backend_resp.into_parts();
-                let boxed = body.map_err(|e| {
-                    let _ = e;
-                    unreachable!()
-                }).boxed();
+                let boxed = body
+                    .map_err(|e| {
+                        let _ = e;
+                        unreachable!()
+                    })
+                    .boxed();
                 Ok(Response::from_parts(parts, boxed))
             }
-        }
+        },
         Err(_) => Ok(Response::builder()
             .status(StatusCode::BAD_GATEWAY)
             .body(full_body("WebSocket backend unreachable"))

@@ -33,8 +33,8 @@ serde_json = { workspace = true }
 # Database
 sqlx = { workspace = true }
 
-# Redis
-redis = { workspace = true }
+# In-process cache
+signapps-cache = { path = "../../crates/signapps-cache" }
 
 # Authentication
 jsonwebtoken = { workspace = true }

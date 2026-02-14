@@ -22,14 +22,8 @@ impl ProviderRegistry {
     }
 
     /// Register a provider.
-    pub fn register(
-        &mut self,
-        id: &str,
-        config: ProviderConfig,
-        provider: Box<dyn LlmProvider>,
-    ) {
-        self.providers
-            .insert(id.to_string(), (config, provider));
+    pub fn register(&mut self, id: &str, config: ProviderConfig, provider: Box<dyn LlmProvider>) {
+        self.providers.insert(id.to_string(), (config, provider));
     }
 
     /// Get a provider by ID.
@@ -37,9 +31,7 @@ impl ProviderRegistry {
         self.providers
             .get(id)
             .map(|(_, p)| p.as_ref())
-            .ok_or_else(|| {
-                Error::Validation(format!("Provider '{}' not found", id))
-            })
+            .ok_or_else(|| Error::Validation(format!("Provider '{}' not found", id)))
     }
 
     /// Get the default provider.
@@ -48,10 +40,7 @@ impl ProviderRegistry {
     }
 
     /// Resolve a provider: use the given ID if Some, otherwise the default.
-    pub fn resolve(
-        &self,
-        id: Option<&str>,
-    ) -> Result<&dyn LlmProvider> {
+    pub fn resolve(&self, id: Option<&str>) -> Result<&dyn LlmProvider> {
         match id {
             Some(id) => self.get(id),
             None => self.get_default(),
@@ -96,9 +85,7 @@ impl ProviderRegistry {
     pub fn is_local(provider_type: &LlmProviderType) -> bool {
         matches!(
             provider_type,
-            LlmProviderType::Ollama
-                | LlmProviderType::Vllm
-                | LlmProviderType::OpenAICompatible
+            LlmProviderType::Ollama | LlmProviderType::Vllm | LlmProviderType::OpenAICompatible
         )
     }
 }

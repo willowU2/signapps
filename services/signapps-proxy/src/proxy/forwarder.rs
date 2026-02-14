@@ -13,10 +13,8 @@ use super::route_cache::CachedRoute;
 /// HTTP forwarder with connection pooling.
 #[derive(Clone)]
 pub struct HttpForwarder {
-    client: Client<
-        hyper_util::client::legacy::connect::HttpConnector,
-        BoxBody<Bytes, hyper::Error>,
-    >,
+    client:
+        Client<hyper_util::client::legacy::connect::HttpConnector, BoxBody<Bytes, hyper::Error>>,
 }
 
 impl HttpForwarder {
@@ -107,15 +105,12 @@ impl HttpForwarder {
                     })
                     .boxed();
                 Ok(Response::from_parts(parts, boxed_body))
-            }
+            },
             Err(_) => Ok(bad_gateway("Backend unreachable")),
         }
     }
 
-    fn redirect_response(
-        &self,
-        target: &str,
-    ) -> Response<BoxBody<Bytes, hyper::Error>> {
+    fn redirect_response(&self, target: &str) -> Response<BoxBody<Bytes, hyper::Error>> {
         Response::builder()
             .status(StatusCode::MOVED_PERMANENTLY)
             .header("location", target)

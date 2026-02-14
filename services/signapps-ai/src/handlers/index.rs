@@ -83,9 +83,9 @@ pub async fn remove_document(
 /// Get indexing stats.
 #[tracing::instrument(skip(state))]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsResponse>> {
-    let stats = state.qdrant.get_stats().await?;
+    let stats = state.vectors.get_stats().await?;
 
-    // points_count = number of chunks in Qdrant
+    // points_count = number of chunks in pgvector
     // Estimate documents as roughly 1 doc per 10 chunks (average)
     let chunks_count = stats.points_count;
     let documents_count = if chunks_count > 0 {

@@ -140,9 +140,7 @@ pub struct AppState {
     pub jwt_secret: String,
     pub jwt_config: JwtConfig,
     pub store: StoreManager,
-    pub install_channels: Arc<
-        DashMap<uuid::Uuid, tokio::sync::broadcast::Sender<InstallEvent>>,
-    >,
+    pub install_channels: Arc<DashMap<uuid::Uuid, tokio::sync::broadcast::Sender<InstallEvent>>>,
 }
 
 impl AuthState for AppState {

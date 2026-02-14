@@ -129,7 +129,7 @@ pub async fn move_to_trash(
     let mut failed = Vec::new();
 
     // Ensure trash bucket exists
-    if let Err(e) = state.minio.create_bucket(TRASH_BUCKET).await {
+    if let Err(e) = state.storage.create_bucket(TRASH_BUCKET).await {
         tracing::warn!("Trash bucket creation warning: {}", e);
     }
 
@@ -161,7 +161,7 @@ async fn move_single_to_trash(
     user_id: Uuid,
 ) -> Result<TrashItem> {
     // Get file info before moving
-    let info = state.minio.get_object_info(bucket, key).await?;
+    let info = state.storage.get_object_info(bucket, key).await?;
 
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -177,7 +177,7 @@ async fn move_single_to_trash(
 
     // Move file to trash bucket
     state
-        .minio
+        .storage
         .move_object(bucket, key, TRASH_BUCKET, &trash_key)
         .await?;
 

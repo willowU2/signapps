@@ -20,14 +20,14 @@ pub struct StorageStatsResponse {
 
 /// Get aggregated storage statistics.
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StorageStatsResponse>> {
-    let buckets = state.minio.list_buckets().await.unwrap_or_default();
+    let buckets = state.storage.list_buckets().await.unwrap_or_default();
     let buckets_count = buckets.len();
 
     // Aggregate object stats across all buckets
     let mut total_objects = 0usize;
     let mut total_size: i64 = 0;
     for bucket in &buckets {
-        if let Ok(stats) = state.minio.get_bucket_stats(&bucket.name).await {
+        if let Ok(stats) = state.storage.get_bucket_stats(&bucket.name).await {
             total_objects += stats.total_objects;
             total_size += stats.total_size_bytes;
         }
@@ -35,14 +35,10 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StorageStat
 
     // Count RAID arrays
     let raid_repo = RaidRepository::new(&state.pool);
-    let arrays_count = raid_repo
-        .list_arrays()
-        .await
-        .map(|a| a.len())
-        .unwrap_or(0);
+    let arrays_count = raid_repo.list_arrays().await.map(|a| a.len()).unwrap_or(0);
 
-    // Health: healthy if MinIO is reachable
-    let health_status = if state.minio.list_buckets().await.is_ok() {
+    // Health: healthy if storage backend is reachable
+    let health_status = if state.storage.list_buckets().await.is_ok() {
         "healthy"
     } else {
         "critical"

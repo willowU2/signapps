@@ -54,14 +54,14 @@ impl TlsCertResolver {
                 Ok(certified_key) => {
                     map.insert(cert.domain.clone(), Arc::new(certified_key));
                     tracing::debug!(domain = %cert.domain, "Loaded TLS certificate");
-                }
+                },
                 Err(e) => {
                     tracing::warn!(
                         domain = %cert.domain,
                         error = %e,
                         "Failed to load TLS certificate"
                     );
-                }
+                },
             }
         }
 
@@ -110,8 +110,8 @@ pub fn parse_certificate(
     cert_pem: &str,
     key_pem: &str,
 ) -> Result<CertifiedKey, Box<dyn std::error::Error + Send + Sync>> {
-    let cert_chain = rustls_pemfile::certs(&mut cert_pem.as_bytes())
-        .collect::<Result<Vec<_>, _>>()?;
+    let cert_chain =
+        rustls_pemfile::certs(&mut cert_pem.as_bytes()).collect::<Result<Vec<_>, _>>()?;
 
     if cert_chain.is_empty() {
         return Err("No certificates found in PEM".into());
@@ -139,8 +139,7 @@ fn generate_self_signed() -> Result<CertifiedKey, Box<dyn std::error::Error>> {
     let cert_pem = cert.pem();
     let key_pem = key_pair.serialize_pem();
 
-    parse_certificate(&cert_pem, &key_pem)
-        .map_err(|e| -> Box<dyn std::error::Error> { e })
+    parse_certificate(&cert_pem, &key_pem).map_err(|e| -> Box<dyn std::error::Error> { e })
 }
 
 /// Start TLS certificate refresh loop.

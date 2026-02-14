@@ -1,4 +1,4 @@
-//! RAG pipeline orchestrating embeddings, Qdrant, and LLM.
+//! RAG pipeline orchestrating embeddings, pgvector, and LLM.
 
 use std::sync::Arc;
 
@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::embeddings::EmbeddingsClient;
 use crate::llm::{ChatMessage, ProviderRegistry};
-use crate::qdrant::{DocumentChunk, QdrantService, SearchResult};
+use crate::vectors::{DocumentChunk, SearchResult, VectorService};
 
 use super::chunker::TextChunker;
 
@@ -43,7 +43,7 @@ impl Default for RagConfig {
 #[derive(Clone)]
 pub struct RagPipeline {
     embeddings: EmbeddingsClient,
-    qdrant: QdrantService,
+    vectors: VectorService,
     providers: Arc<ProviderRegistry>,
     chunker: TextChunker,
     config: RagConfig,
@@ -53,12 +53,12 @@ impl RagPipeline {
     /// Create a new RAG pipeline.
     pub fn new(
         embeddings: EmbeddingsClient,
-        qdrant: QdrantService,
+        vectors: VectorService,
         providers: Arc<ProviderRegistry>,
     ) -> Self {
         Self {
             embeddings,
-            qdrant,
+            vectors,
             providers,
             chunker: TextChunker::new(),
             config: RagConfig::default(),
@@ -97,12 +97,11 @@ impl RagPipeline {
             .collect();
 
         // Generate embeddings for all chunks
-        let texts: Vec<String> =
-            chunks.iter().map(|c| c.content.clone()).collect();
+        let texts: Vec<String> = chunks.iter().map(|c| c.content.clone()).collect();
         let embeddings = self.embeddings.embed_batch(&texts).await?;
 
-        // Store in Qdrant
-        self.qdrant.upsert_chunks(&chunks, embeddings).await?;
+        // Store in pgvector
+        self.vectors.upsert_chunks(&chunks, embeddings).await?;
 
         let count = chunks.len();
         tracing::info!(
@@ -115,23 +114,16 @@ impl RagPipeline {
     }
 
     /// Remove a document from the index.
-    pub async fn remove_document(
-        &self,
-        document_id: Uuid,
-    ) -> Result<()> {
-        self.qdrant.delete_document(document_id).await
+    pub async fn remove_document(&self, document_id: Uuid) -> Result<()> {
+        self.vectors.delete_document(document_id).await
     }
 
     /// Search for relevant documents.
-    pub async fn search(
-        &self,
-        query: &str,
-        limit: Option<u64>,
-    ) -> Result<Vec<SearchResult>> {
+    pub async fn search(&self, query: &str, limit: Option<u64>) -> Result<Vec<SearchResult>> {
         let query_embedding = self.embeddings.embed(query).await?;
 
         let results = self
-            .qdrant
+            .vectors
             .search(
                 query_embedding,
                 limit.unwrap_or(self.config.top_k),
@@ -176,8 +168,7 @@ impl RagPipeline {
         let context = self.build_context(&search_results);
 
         // 3. Generate response with LLM
-        let messages =
-            self.build_messages(&context, question, language, custom_system_prompt);
+        let messages = self.build_messages(&context, question, language, custom_system_prompt);
 
         let response = provider
             .chat(
@@ -209,8 +200,7 @@ impl RagPipeline {
     pub async fn query_stream(
         &self,
         question: &str,
-    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)>
-    {
+    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
         self.query_stream_with_provider(question, None, None, None, None)
             .await
     }
@@ -220,8 +210,7 @@ impl RagPipeline {
         &self,
         question: &str,
         model: Option<&str>,
-    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)>
-    {
+    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
         self.query_stream_with_provider(question, None, model, None, None)
             .await
     }
@@ -234,8 +223,7 @@ impl RagPipeline {
         model: Option<&str>,
         language: Option<&str>,
         custom_system_prompt: Option<&str>,
-    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)>
-    {
+    ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
         let provider = self.providers.resolve(provider_id)?;
 
         // 1. Retrieve relevant context
@@ -245,8 +233,7 @@ impl RagPipeline {
         let context = self.build_context(&search_results);
 
         // 3. Stream response from LLM
-        let messages =
-            self.build_messages(&context, question, language, custom_system_prompt);
+        let messages = self.build_messages(&context, question, language, custom_system_prompt);
 
         let stream = provider
             .chat_stream(
@@ -269,14 +256,7 @@ impl RagPipeline {
         results
             .iter()
             .enumerate()
-            .map(|(i, r)| {
-                format!(
-                    "[Source {} - {}]\n{}",
-                    i + 1,
-                    r.filename,
-                    r.content
-                )
-            })
+            .map(|(i, r)| format!("[Source {} - {}]\n{}", i + 1, r.filename, r.content))
             .collect::<Vec<_>>()
             .join("\n\n---\n\n")
     }
@@ -291,14 +271,10 @@ impl RagPipeline {
         language: Option<&str>,
         custom_system_prompt: Option<&str>,
     ) -> Vec<ChatMessage> {
-        let base_prompt = custom_system_prompt
-            .unwrap_or(&self.config.system_prompt);
+        let base_prompt = custom_system_prompt.unwrap_or(&self.config.system_prompt);
 
         let system = if let Some(lang) = language {
-            format!(
-                "IMPORTANT: You must reply in {}.\n\n{}",
-                lang, base_prompt
-            )
+            format!("IMPORTANT: You must reply in {}.\n\n{}", lang, base_prompt)
         } else {
             base_prompt.to_string()
         };

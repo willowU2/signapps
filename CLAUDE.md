@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SignApps Platform is a microservices-based infrastructure management system. Backend in Rust (Axum/Tokio), frontend in Next.js 16 (React 19, TypeScript). All services communicate via REST APIs with JWT authentication.
 
+All system dependencies (database, cache, storage) run natively — no Docker required for core services. Docker is only used for optional media processing services (Whisper STT, Coqui TTS, PaddleOCR).
+
 ## Build & Development Commands
 
 ### Rust Backend
@@ -55,13 +57,16 @@ npm run test:e2e:ui           # Playwright with UI
 npm run test:e2e:chromium     # single browser
 ```
 
-### Infrastructure (Docker)
+### Infrastructure
 
 ```bash
-# Start dependencies (postgres, redis, qdrant, minio)
-docker-compose up -d postgres redis qdrant minio
+# PostgreSQL: install natively (auto-detected by services)
+# No Redis, Qdrant, or MinIO needed — replaced by native alternatives
 
-# Start everything including services
+# Optional: media processing services (Docker)
+docker-compose up -d faster-whisper piper surya-ocr
+
+# Start all services (including media Docker containers)
 docker-compose up -d
 
 # With AI services (Ollama/vLLM)
@@ -78,21 +83,31 @@ docker-compose -f docker-compose.yml -f docker-compose.ai.yml up -d
 ```
 crates/
   signapps-common/    → Shared: JWT auth, middleware, error types, value objects
-  signapps-db/        → Database: models, repositories, migrations, PgPool
+  signapps-db/        → Database: models, repositories, migrations, PgPool, pgvector
+  signapps-cache/     → In-process TTL cache (moka) — replaces Redis
+  signapps-runtime/   → PostgreSQL lifecycle: detection, auto-configuration
 services/
   signapps-identity/    → Port 3001 – Auth, LDAP/AD, MFA, RBAC, groups
   signapps-containers/  → Port 3002 – Docker container lifecycle (bollard)
   signapps-proxy/       → Port 3003 – Reverse proxy, TLS/ACME, SmartShield
-  signapps-storage/     → Port 3004 – MinIO S3 storage, RAID, NAS features
-  signapps-ai/          → Port 3005 – RAG, LLM (multi-provider), embeddings
+  signapps-storage/     → Port 3004 – File storage (OpenDAL: local FS or S3)
+  signapps-ai/          → Port 3005 – RAG, LLM (multi-provider), pgvector, indexing
   signapps-securelink/  → Port 3006 – Web tunnels, DNS with ad-blocking
   signapps-scheduler/   → Port 3007 – CRON job management
   signapps-metrics/     → Port 3008 – System monitoring, Prometheus, alerts
   signapps-media/       → Port 3009 – OCR, TTS, STT
   paddleocr-server/     → Python OCR microservice
 client/               → Next.js 16 frontend (App Router)
-migrations/           → PostgreSQL schema migrations
+migrations/           → PostgreSQL schema migrations (including pgvector)
 ```
+
+### System Dependencies (Native, no Docker)
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| Database | PostgreSQL (native) + pgvector extension | All data + vector similarity search |
+| Cache | moka (in-process, Rust) | Rate limiting, token blacklist (replaces Redis) |
+| Storage | OpenDAL (filesystem or S3) | File storage (replaces MinIO) |
 
 ### Service Pattern
 
@@ -114,6 +129,15 @@ Every Rust service follows the same structure:
 - Repository pattern: each entity has a `*Repository` with CRUD methods taking `&PgPool`
 - Models map 1:1 to PostgreSQL tables in the `identity` schema
 - `create_pool(url)` and `run_migrations(pool)` for initialization
+- `VectorRepository` for pgvector operations (384-dim embeddings, HNSW index)
+
+**signapps-cache:**
+- `CacheService` wrapping `moka::future::Cache` (TTL cache) + `DashMap` (atomic counters)
+- Methods: `get/set/del/exists` (TTL-based), `incr/decr/get_counter` (atomic)
+- Used by proxy (SmartShield rate limiting) and identity (JWT blacklist)
+
+**signapps-runtime:**
+- `RuntimeManager::ensure_database()` — auto-detects PostgreSQL (DATABASE_URL → pg_isready → TCP probe)
 
 ### Frontend Architecture
 
@@ -149,21 +173,20 @@ GitHub Actions runs on push/PR to main and develop:
 1. `cargo check --workspace --all-features`
 2. `cargo fmt --all -- --check`
 3. `cargo clippy --workspace --all-features -- -D warnings`
-4. `cargo test --workspace --all-features` (requires postgres + redis services)
+4. `cargo test --workspace --all-features` (requires PostgreSQL with pgvector)
 5. `cargo audit` (security)
 6. `cargo llvm-cov` (coverage → Codecov)
 
 ## Key Environment Variables
 
 ```
-DATABASE_URL=postgres://signapps:password@localhost:5432/signapps
-REDIS_URL=redis://localhost:6379
+DATABASE_URL=postgres://signapps:password@localhost:5432/signapps  # auto-detected if not set
 JWT_SECRET=<32+ chars>
-MINIO_ENDPOINT=http://localhost:9000
-MINIO_ACCESS_KEY / MINIO_SECRET_KEY
+STORAGE_MODE=fs                          # "fs" (default) or "s3"
+STORAGE_FS_ROOT=./data/storage           # filesystem root (fs mode)
 LLM_PROVIDER=ollama|vllm|openai|anthropic
 OLLAMA_URL / VLLM_URL / OPENAI_API_KEY / ANTHROPIC_API_KEY
-QDRANT_URL=http://localhost:6333
+OCR_URL=http://localhost:8101            # PaddleOCR service
 ```
 
 See `.env.example` for the full list.

@@ -3,6 +3,8 @@ resolver = "2"
 members = [
     "crates/signapps-common",
     "crates/signapps-db",
+    "crates/signapps-cache",
+    "crates/signapps-runtime",
     "services/signapps-identity",
     "services/signapps-containers",
     "services/signapps-proxy",
@@ -40,8 +42,8 @@ serde_json = "1.0"
 # Database
 sqlx = { version = "0.7", features = ["runtime-tokio", "postgres", "uuid", "chrono", "json"] }
 
-# Redis
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+# In-process cache (replaces Redis)
+moka = { version = "0.12", features = ["future"] }
 
 # Authentication
 jsonwebtoken = "9"
@@ -56,15 +58,14 @@ reqwest = { version = "0.12", features = ["json", "stream"] }
 # Docker
 bollard = "0.16"
 
-# Vector DB
-qdrant-client = "1"
+# Vector DB (pgvector via PostgreSQL)
+pgvector = { version = "0.3", features = ["sqlx"] }
 
 # OpenAI-compatible (vLLM)
 async-openai = "0.20"
 
-# S3/MinIO
-aws-sdk-s3 = "1"
-aws-config = "1"
+# Storage (OpenDAL - local FS or S3)
+opendal = { version = "0.51", features = ["services-fs", "services-s3"] }
 
 # Observability
 tracing = "0.1"

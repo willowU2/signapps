@@ -377,7 +377,7 @@ pub async fn start(
             let new_id = state.docker.create_container(config).await?;
             repo.update_docker_info(id, &new_id, "created").await?;
             new_id
-        }
+        },
     };
 
     state.docker.start_container(&docker_id).await?;

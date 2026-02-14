@@ -20,7 +20,7 @@ pub async fn run_backup_scheduler(pool: DatabasePool) {
             Err(e) => {
                 tracing::error!("Backup scheduler: failed to list profiles: {e}");
                 continue;
-            }
+            },
         };
 
         for profile in profiles {
@@ -55,10 +55,7 @@ pub async fn run_backup_scheduler(pool: DatabasePool) {
 }
 
 /// Check if a cron schedule should run now given the last run time.
-fn should_run_now(
-    schedule: &str,
-    last_run: Option<chrono::DateTime<chrono::Utc>>,
-) -> bool {
+fn should_run_now(schedule: &str, last_run: Option<chrono::DateTime<chrono::Utc>>) -> bool {
     // Simple interval-based scheduling: e.g. "every 6h", "every 24h", "every 1h"
     let interval_secs = parse_interval(schedule);
     if interval_secs == 0 {
@@ -68,11 +65,9 @@ fn should_run_now(
     match last_run {
         None => true,
         Some(last) => {
-            let elapsed = chrono::Utc::now()
-                .signed_duration_since(last)
-                .num_seconds();
+            let elapsed = chrono::Utc::now().signed_duration_since(last).num_seconds();
             elapsed >= interval_secs
-        }
+        },
     }
 }
 
@@ -126,8 +121,7 @@ pub async fn run_backup(
     }
 
     // Collect volume paths from container configs
-    let container_repo =
-        signapps_db::repositories::ContainerRepository::new(pool);
+    let container_repo = signapps_db::repositories::ContainerRepository::new(pool);
     let mut paths = Vec::new();
     let mut tags = vec![format!("profile:{}", profile.name)];
 
@@ -139,9 +133,7 @@ pub async fn run_backup(
             if let Some(config) = &container.config {
                 if let Some(volumes) = config.get("volumes").and_then(|v| v.as_array()) {
                     for vol in volumes {
-                        if let Some(host_path) =
-                            vol.get("host_path").and_then(|v| v.as_str())
-                        {
+                        if let Some(host_path) = vol.get("host_path").and_then(|v| v.as_str()) {
                             paths.push(host_path.to_string());
                         }
                     }
@@ -204,9 +196,7 @@ pub async fn run_backup(
 
             // Apply retention policy if configured
             if let Some(policy_val) = &profile.retention_policy {
-                if let Ok(policy) =
-                    serde_json::from_value::<RetentionPolicy>(policy_val.clone())
-                {
+                if let Ok(policy) = serde_json::from_value::<RetentionPolicy>(policy_val.clone()) {
                     if let Err(e) = restic
                         .forget(
                             &profile.destination_type,
@@ -228,14 +218,12 @@ pub async fn run_backup(
             }
 
             Ok(())
-        }
+        },
         Err(e) => {
             let duration = start.elapsed().as_secs() as i32;
-            let _ = repo
-                .fail_run(run.id, &e.to_string(), duration)
-                .await;
+            let _ = repo.fail_run(run.id, &e.to_string(), duration).await;
             Err(e)
-        }
+        },
     }
 }
 

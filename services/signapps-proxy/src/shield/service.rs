@@ -1,33 +1,29 @@
-//! SmartShield rate limiting service using Redis.
+//! SmartShield rate limiting service using in-process cache.
 
-use redis::aio::ConnectionManager;
-use redis::AsyncCommands;
-use signapps_common::{Error, Result};
+use signapps_cache::CacheService;
+use signapps_common::Result;
 use signapps_db::models::{ShieldConfig, ShieldStats};
 use std::net::IpAddr;
-use std::sync::Arc;
+use std::time::Duration;
 
 /// SmartShield service for rate limiting.
 #[derive(Clone)]
 pub struct ShieldService {
-    redis: Arc<ConnectionManager>,
+    cache: CacheService,
     key_prefix: String,
 }
 
 impl ShieldService {
-    /// Create a new shield service.
-    pub async fn new(redis_url: &str) -> Result<Self> {
-        let client = redis::Client::open(redis_url)
-            .map_err(|e| Error::Internal(format!("Failed to create Redis client: {}", e)))?;
+    /// Create a new shield service with in-process cache.
+    pub fn new() -> Self {
+        // Rate-limit windows are 2s, blocked IPs up to ~5min.
+        // 100k entries is more than enough for rate-limit keys.
+        let cache = CacheService::new(100_000, Duration::from_secs(10));
 
-        let manager = ConnectionManager::new(client)
-            .await
-            .map_err(|e| Error::Internal(format!("Failed to connect to Redis: {}", e)))?;
-
-        Ok(Self {
-            redis: Arc::new(manager),
+        Self {
+            cache,
             key_prefix: "shield".to_string(),
-        })
+        }
     }
 
     /// Check if a request should be allowed.
@@ -38,53 +34,48 @@ impl ShieldService {
         requests_per_second: i32,
         burst_size: i32,
     ) -> Result<RateLimitResult> {
-        let key = format!("{}:rate:{}:{}", self.key_prefix, route_id, client_ip);
         let block_key = format!("{}:block:{}:{}", self.key_prefix, route_id, client_ip);
 
-        let mut conn = (*self.redis).clone();
-
         // Check if IP is blocked
-        let blocked: Option<String> = conn
-            .get(&block_key)
-            .await
-            .map_err(|e| Error::Internal(format!("Redis error: {}", e)))?;
-
-        if blocked.is_some() {
+        if self.cache.exists(&block_key).await {
             return Ok(RateLimitResult::Blocked);
         }
 
-        // Increment counter with sliding window
+        // Sliding window rate limiting using atomic counters
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_secs();
 
-        let window_key = format!("{}:{}", key, now);
+        let window_key = format!(
+            "{}:rate:{}:{}:{}",
+            self.key_prefix, route_id, client_ip, now
+        );
+        let prev_key = format!(
+            "{}:rate:{}:{}:{}",
+            self.key_prefix,
+            route_id,
+            client_ip,
+            now - 1
+        );
 
         // Increment current second counter
-        let count: i32 = redis::pipe()
-            .atomic()
-            .incr(&window_key, 1)
-            .expire(&window_key, 2)
-            .query_async(&mut conn)
-            .await
-            .map_err(|e| Error::Internal(format!("Redis error: {}", e)))
-            .map(|v: (i32, ())| v.0)?;
+        let count = self.cache.incr(&window_key) as i32;
+
+        // Mark current window key for expiry (2 seconds)
+        self.cache
+            .set(&format!("{}:ttl", window_key), "1", Duration::from_secs(2))
+            .await;
 
         // Get previous second count
-        let prev_key = format!("{}:{}", key, now - 1);
-        let prev_count: i32 = conn.get(&prev_key).await.unwrap_or(0);
+        let prev_count = self.cache.get_counter(&prev_key) as i32;
 
         let total = count + prev_count;
 
         // Check against burst limit
         if total > burst_size {
-            // Increment blocked counter
-            let _: () = conn
-                .incr(format!("{}:stats:blocked", self.key_prefix), 1)
-                .await
-                .unwrap_or(());
-
+            self.cache
+                .incr(&format!("{}:stats:blocked", self.key_prefix));
             return Ok(RateLimitResult::RateLimited {
                 current: total,
                 limit: requests_per_second,
@@ -92,10 +83,7 @@ impl ShieldService {
         }
 
         // Increment total requests counter
-        let _: () = conn
-            .incr(format!("{}:stats:total", self.key_prefix), 1)
-            .await
-            .unwrap_or(());
+        self.cache.incr(&format!("{}:stats:total", self.key_prefix));
 
         Ok(RateLimitResult::Allowed {
             remaining: burst_size - total,
@@ -111,16 +99,16 @@ impl ShieldService {
     ) -> Result<()> {
         let block_key = format!("{}:block:{}:{}", self.key_prefix, route_id, client_ip);
 
-        let mut conn = (*self.redis).clone();
+        self.cache
+            .set(
+                &block_key,
+                "blocked",
+                Duration::from_secs(duration_seconds as u64),
+            )
+            .await;
 
-        conn.set_ex::<_, _, ()>(&block_key, "blocked", duration_seconds as u64)
-            .await
-            .map_err(|e| Error::Internal(format!("Redis error: {}", e)))?;
-
-        // Track active blocks
-        conn.incr::<_, _, i32>(format!("{}:stats:active_blocks", self.key_prefix), 1)
-            .await
-            .unwrap_or(0);
+        self.cache
+            .incr(&format!("{}:stats:active_blocks", self.key_prefix));
 
         tracing::warn!(
             route_id = %route_id,
@@ -136,17 +124,10 @@ impl ShieldService {
     pub async fn unblock_ip(&self, route_id: &str, client_ip: &str) -> Result<()> {
         let block_key = format!("{}:block:{}:{}", self.key_prefix, route_id, client_ip);
 
-        let mut conn = (*self.redis).clone();
-
-        let deleted: i32 = conn
-            .del(&block_key)
-            .await
-            .map_err(|e| Error::Internal(format!("Redis error: {}", e)))?;
-
-        if deleted > 0 {
-            conn.decr::<_, _, i32>(format!("{}:stats:active_blocks", self.key_prefix), 1)
-                .await
-                .unwrap_or(0);
+        if self.cache.exists(&block_key).await {
+            self.cache.del(&block_key).await;
+            self.cache
+                .decr(&format!("{}:stats:active_blocks", self.key_prefix));
         }
 
         Ok(())
@@ -155,40 +136,24 @@ impl ShieldService {
     /// Check if an IP is blocked.
     pub async fn is_blocked(&self, route_id: &str, client_ip: &str) -> Result<bool> {
         let block_key = format!("{}:block:{}:{}", self.key_prefix, route_id, client_ip);
-
-        let mut conn = (*self.redis).clone();
-
-        let exists: bool = conn
-            .exists(&block_key)
-            .await
-            .map_err(|e| Error::Internal(format!("Redis error: {}", e)))?;
-
-        Ok(exists)
+        Ok(self.cache.exists(&block_key).await)
     }
 
     /// Get shield statistics.
     pub async fn get_stats(&self) -> Result<ShieldStats> {
-        let mut conn = (*self.redis).clone();
-
-        let total: u64 = conn
-            .get(format!("{}:stats:total", self.key_prefix))
-            .await
-            .unwrap_or(0);
-
-        let blocked: u64 = conn
-            .get(format!("{}:stats:blocked", self.key_prefix))
-            .await
-            .unwrap_or(0);
-
-        let rate_limited: u64 = conn
-            .get(format!("{}:stats:rate_limited", self.key_prefix))
-            .await
-            .unwrap_or(0);
-
-        let active_blocks: u32 = conn
-            .get(format!("{}:stats:active_blocks", self.key_prefix))
-            .await
-            .unwrap_or(0);
+        let total = self
+            .cache
+            .get_counter(&format!("{}:stats:total", self.key_prefix)) as u64;
+        let blocked =
+            self.cache
+                .get_counter(&format!("{}:stats:blocked", self.key_prefix)) as u64;
+        let rate_limited =
+            self.cache
+                .get_counter(&format!("{}:stats:rate_limited", self.key_prefix)) as u64;
+        let active_blocks = self
+            .cache
+            .get_counter(&format!("{}:stats:active_blocks", self.key_prefix))
+            as u32;
 
         Ok(ShieldStats {
             total_requests: total,
@@ -200,20 +165,12 @@ impl ShieldService {
 
     /// Reset statistics.
     pub async fn reset_stats(&self) -> Result<()> {
-        let mut conn = (*self.redis).clone();
-
-        let keys = vec![
-            format!("{}:stats:total", self.key_prefix),
-            format!("{}:stats:blocked", self.key_prefix),
-            format!("{}:stats:rate_limited", self.key_prefix),
-        ];
-
-        for key in keys {
-            let _: () = conn
-                .del(&key)
-                .await
-                .map_err(|e| Error::Internal(format!("Redis error: {}", e)))?;
-        }
+        self.cache
+            .reset_counter(&format!("{}:stats:total", self.key_prefix));
+        self.cache
+            .reset_counter(&format!("{}:stats:blocked", self.key_prefix));
+        self.cache
+            .reset_counter(&format!("{}:stats:rate_limited", self.key_prefix));
 
         Ok(())
     }
@@ -227,18 +184,14 @@ impl ShieldService {
         config: &ShieldConfig,
     ) -> Result<RateLimitResult> {
         // Whitelist: always allow
-        if !config.whitelist.is_empty()
-            && ip_matches_list(client_ip, &config.whitelist)
-        {
+        if !config.whitelist.is_empty() && ip_matches_list(client_ip, &config.whitelist) {
             return Ok(RateLimitResult::Allowed {
                 remaining: config.burst_size,
             });
         }
 
         // Blacklist: always block
-        if !config.blacklist.is_empty()
-            && ip_matches_list(client_ip, &config.blacklist)
-        {
+        if !config.blacklist.is_empty() && ip_matches_list(client_ip, &config.blacklist) {
             tracing::info!(
                 route_id = %route_id,
                 ip = %client_ip,
@@ -258,15 +211,8 @@ impl ShieldService {
     }
 
     /// Check if the service is healthy.
-    pub async fn health_check(&self) -> Result<bool> {
-        let mut conn = (*self.redis).clone();
-
-        let pong: String = redis::cmd("PING")
-            .query_async(&mut conn)
-            .await
-            .map_err(|e| Error::Internal(format!("Redis ping failed: {}", e)))?;
-
-        Ok(pong == "PONG")
+    pub fn health_check(&self) -> bool {
+        self.cache.health_check()
     }
 }
 
@@ -342,7 +288,7 @@ fn cidr_contains(cidr: &str, ip: &IpAddr) -> bool {
             }
             let mask = !0u32 << (32 - prefix_len);
             (u32::from(*addr) & mask) == (u32::from(net) & mask)
-        }
+        },
         (IpAddr::V6(net), IpAddr::V6(addr)) => {
             if prefix_len > 128 {
                 return false;
@@ -362,13 +308,12 @@ fn cidr_contains(cidr: &str, ip: &IpAddr) -> bool {
             }
             if remaining_bits > 0 && full_bytes < 16 {
                 let mask = !0u8 << (8 - remaining_bits);
-                if (net_bytes[full_bytes] & mask) != (addr_bytes[full_bytes] & mask)
-                {
+                if (net_bytes[full_bytes] & mask) != (addr_bytes[full_bytes] & mask) {
                     return false;
                 }
             }
             true
-        }
+        },
         _ => false,
     }
 }

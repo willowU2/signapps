@@ -16,18 +16,17 @@ pub struct HealthResponse {
 #[derive(Serialize)]
 pub struct ComponentsHealth {
     pub database: bool,
-    pub redis: bool,
+    pub cache: bool,
     pub proxy: bool,
 }
 
 /// Health check endpoint.
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
     let db_healthy = state.pool.health_check().await.is_ok();
-    let redis_healthy = state.shield.health_check().await.unwrap_or(false);
-    let proxy_healthy = state.route_cache.route_count() > 0
-        || state.tls_resolver.is_some();
+    let cache_healthy = state.shield.health_check();
+    let proxy_healthy = state.route_cache.route_count() > 0 || state.tls_resolver.is_some();
 
-    let all_healthy = db_healthy && redis_healthy;
+    let all_healthy = db_healthy && cache_healthy;
 
     Json(HealthResponse {
         status: if all_healthy { "healthy" } else { "degraded" }.to_string(),
@@ -35,7 +34,7 @@ pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse>
         version: env!("CARGO_PKG_VERSION").to_string(),
         components: ComponentsHealth {
             database: db_healthy,
-            redis: redis_healthy,
+            cache: cache_healthy,
             proxy: proxy_healthy,
         },
     })

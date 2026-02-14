@@ -20,7 +20,6 @@ tokio-stream = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sqlx = { workspace = true }
-qdrant-client = { workspace = true }
 async-openai = { workspace = true }
 reqwest = { workspace = true }
 uuid = { workspace = true }

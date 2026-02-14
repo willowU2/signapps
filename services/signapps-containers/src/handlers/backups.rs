@@ -82,7 +82,11 @@ pub async fn create_profile(
     // Initialize the restic repository
     let restic = ResticClient::new();
     restic
-        .init(&req.destination_type, &req.destination_config, &req.password)
+        .init(
+            &req.destination_type,
+            &req.destination_config,
+            &req.password,
+        )
         .await
         .map_err(|e| Error::Internal(format!("Failed to init restic repo: {}", e)))?;
 
@@ -208,7 +212,9 @@ pub async fn restore_snapshot(
         .await?
         .ok_or_else(|| Error::NotFound(format!("Backup profile {}", id)))?;
 
-    let target = req.target_path.unwrap_or_else(|| "/tmp/restore".to_string());
+    let target = req
+        .target_path
+        .unwrap_or_else(|| "/tmp/restore".to_string());
 
     let restic = ResticClient::new();
     restic

@@ -1,0 +1,12 @@
+[package]
+name = "signapps-runtime"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Runtime manager for SignApps Platform - manages PostgreSQL lifecycle"
+
+[dependencies]
+tokio = { workspace = true }
+tracing = { workspace = true }

@@ -34,11 +34,9 @@ impl StoreManager {
     // ── Source CRUD ──────────────────────────────────────────────
 
     pub async fn list_sources(&self) -> Result<Vec<AppSource>, sqlx::Error> {
-        sqlx::query_as::<_, AppSource>(
-            "SELECT * FROM containers.app_sources ORDER BY created_at",
-        )
-        .fetch_all(&*self.pool)
-        .await
+        sqlx::query_as::<_, AppSource>("SELECT * FROM containers.app_sources ORDER BY created_at")
+            .fetch_all(&*self.pool)
+            .await
     }
 
     pub async fn add_source(&self, name: &str, url: &str) -> Result<AppSource, sqlx::Error> {
@@ -56,13 +54,12 @@ impl StoreManager {
         }
 
         // Re-read to get updated app_count
-        let updated = sqlx::query_as::<_, AppSource>(
-            "SELECT * FROM containers.app_sources WHERE id = $1",
-        )
-        .bind(source.id)
-        .fetch_one(&*self.pool)
-        .await
-        .unwrap_or(source);
+        let updated =
+            sqlx::query_as::<_, AppSource>("SELECT * FROM containers.app_sources WHERE id = $1")
+                .bind(source.id)
+                .fetch_one(&*self.pool)
+                .await
+                .unwrap_or(source);
 
         Ok(updated)
     }
@@ -77,11 +74,7 @@ impl StoreManager {
         Ok(())
     }
 
-    pub async fn toggle_source(
-        &self,
-        id: Uuid,
-        enabled: bool,
-    ) -> Result<AppSource, sqlx::Error> {
+    pub async fn toggle_source(&self, id: Uuid, enabled: bool) -> Result<AppSource, sqlx::Error> {
         let source = sqlx::query_as::<_, AppSource>(
             "UPDATE containers.app_sources SET enabled = $2, updated_at = NOW() \
              WHERE id = $1 RETURNING *",
@@ -106,7 +99,7 @@ impl StoreManager {
             Err(e) => {
                 tracing::error!("Failed to load app sources: {e}");
                 return;
-            }
+            },
         };
 
         for source in sources.iter().filter(|s| s.enabled) {
@@ -130,14 +123,13 @@ impl StoreManager {
 
     /// Refresh a single source.
     pub async fn refresh_source(&self, source_id: Uuid) -> Result<usize, String> {
-        let source = sqlx::query_as::<_, AppSource>(
-            "SELECT * FROM containers.app_sources WHERE id = $1",
-        )
-        .bind(source_id)
-        .fetch_optional(&*self.pool)
-        .await
-        .map_err(|e| e.to_string())?
-        .ok_or_else(|| "Source not found".to_string())?;
+        let source =
+            sqlx::query_as::<_, AppSource>("SELECT * FROM containers.app_sources WHERE id = $1")
+                .bind(source_id)
+                .fetch_optional(&*self.pool)
+                .await
+                .map_err(|e| e.to_string())?
+                .ok_or_else(|| "Source not found".to_string())?;
 
         let index_url = format!("{}/index.json", source.url.trim_end_matches('/'));
 
@@ -188,10 +180,7 @@ impl StoreManager {
                 long_description: meta.long_description.clone().unwrap_or_default(),
                 icon: meta.icon.clone().unwrap_or_default(),
                 tags: meta.tags.clone().unwrap_or_default(),
-                supported_architectures: meta
-                    .supported_architectures
-                    .clone()
-                    .unwrap_or_default(),
+                supported_architectures: meta.supported_architectures.clone().unwrap_or_default(),
                 compose_url,
                 source_id: source.id,
                 source_name: source.name.clone(),
@@ -234,11 +223,7 @@ impl StoreManager {
 
     // ── Catalog queries ─────────────────────────────────────────
 
-    pub async fn list_apps(
-        &self,
-        search: Option<&str>,
-        category: Option<&str>,
-    ) -> Vec<StoreApp> {
+    pub async fn list_apps(&self, search: Option<&str>, category: Option<&str>) -> Vec<StoreApp> {
         let cache = self.cache.read().await;
         let all: Vec<StoreApp> = cache.values().flatten().cloned().collect();
 
@@ -284,9 +269,7 @@ impl StoreManager {
         if let Some(cat) = category {
             if cat != "all" {
                 let cat_lower = cat.to_lowercase();
-                result.retain(|app| {
-                    app.tags.iter().any(|t| t.to_lowercase() == cat_lower)
-                });
+                result.retain(|app| app.tags.iter().any(|t| t.to_lowercase() == cat_lower));
             }
         }
 
@@ -334,7 +317,7 @@ impl StoreManager {
                     app_count: None,
                     error: Some(format!("HTTP error: {e}")),
                 };
-            }
+            },
         };
 
         if !resp.status().is_success() {
@@ -353,7 +336,7 @@ impl StoreManager {
                     app_count: None,
                     error: Some(format!("Read error: {e}")),
                 };
-            }
+            },
         };
 
         match serde_json::from_str::<AppStoreIndex>(&text) {
@@ -364,7 +347,7 @@ impl StoreManager {
                     app_count: Some(count),
                     error: None,
                 }
-            }
+            },
             Err(e) => SourceValidation {
                 valid: false,
                 app_count: None,

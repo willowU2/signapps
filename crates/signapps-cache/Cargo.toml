@@ -1,0 +1,14 @@
+[package]
+name = "signapps-cache"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "In-process cache service for SignApps Platform (replaces Redis)"
+
+[dependencies]
+moka = { version = "0.12", features = ["future"] }
+dashmap = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }

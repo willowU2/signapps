@@ -138,10 +138,7 @@ impl RouteCache {
 
     /// Start background refresh loop.
     pub async fn start_refresh_loop(self, interval_secs: u64) {
-        tracing::info!(
-            interval_secs,
-            "Starting route cache refresh loop"
-        );
+        tracing::info!(interval_secs, "Starting route cache refresh loop");
 
         // Initial load
         if let Err(e) = self.refresh().await {
@@ -184,10 +181,7 @@ impl RouteCache {
         self.inner.store(Arc::new(exact_map));
         self.wildcards.store(Arc::new(wildcard_list));
 
-        tracing::debug!(
-            routes = routes.len(),
-            "Route cache refreshed"
-        );
+        tracing::debug!(routes = routes.len(), "Route cache refreshed");
 
         Ok(())
     }

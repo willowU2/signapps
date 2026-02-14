@@ -90,12 +90,8 @@ impl AcmeService {
         // Store ACME account in DB
         let repo = CertificateRepository::new(&self.pool);
         let cred_json = serde_json::to_value(&credentials)?;
-        repo.get_or_create_acme_account(
-            &self.email,
-            &self.directory_url,
-            &cred_json,
-        )
-        .await?;
+        repo.get_or_create_acme_account(&self.email, &self.directory_url, &cred_json)
+            .await?;
 
         tracing::debug!("ACME account created/loaded");
 
@@ -114,14 +110,12 @@ impl AcmeService {
         for auth in &authorizations {
             match auth.status {
                 AuthorizationStatus::Valid => continue,
-                AuthorizationStatus::Pending => {}
+                AuthorizationStatus::Pending => {},
                 _ => {
-                    return Err(format!(
-                        "Unexpected authorization status: {:?}",
-                        auth.status
-                    )
-                    .into());
-                }
+                    return Err(
+                        format!("Unexpected authorization status: {:?}", auth.status).into(),
+                    );
+                },
             }
 
             // Find HTTP-01 challenge
@@ -135,10 +129,8 @@ impl AcmeService {
             let key_auth = order.key_authorization(challenge);
 
             // Store token → key authorization in challenge store
-            self.challenge_store.insert(
-                challenge.token.clone(),
-                key_auth.as_str().to_string(),
-            );
+            self.challenge_store
+                .insert(challenge.token.clone(), key_auth.as_str().to_string());
 
             challenge_tokens.push(challenge.token.clone());
 
@@ -162,27 +154,22 @@ impl AcmeService {
                 OrderStatus::Ready | OrderStatus::Valid => {
                     tracing::debug!("ACME order is ready for finalization");
                     break;
-                }
+                },
                 OrderStatus::Invalid => {
                     return Err("ACME order is invalid".into());
-                }
+                },
                 _ => {
                     delay *= 2;
                     tries += 1;
                     if tries >= 10 {
-                        return Err(format!(
-                            "ACME order timed out: {:?}",
-                            state.status
-                        )
-                        .into());
+                        return Err(format!("ACME order timed out: {:?}", state.status).into());
                     }
-                }
+                },
             }
         }
 
         // Generate CSR with rcgen
-        let mut params =
-            rcgen::CertificateParams::new(vec![domain.to_string()])?;
+        let mut params = rcgen::CertificateParams::new(vec![domain.to_string()])?;
         params.distinguished_name = rcgen::DistinguishedName::new();
 
         let key_pair = rcgen::KeyPair::generate()?;
@@ -197,7 +184,7 @@ impl AcmeService {
                 Some(cert) => break cert,
                 None => {
                     tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-                }
+                },
             }
         };
 
@@ -225,14 +212,14 @@ impl AcmeService {
                 Ok(certified_key) => {
                     resolver.upsert_cert(domain, certified_key);
                     tracing::info!(domain, "TLS certificate loaded into resolver");
-                }
+                },
                 Err(e) => {
                     tracing::error!(
                         domain,
                         error = %e,
                         "Failed to load cert into resolver"
                     );
-                }
+                },
             }
         }
 
@@ -260,13 +247,9 @@ pub async fn start_auto_renewal_loop(
     );
 
     loop {
-        tokio::time::sleep(std::time::Duration::from_secs(
-            interval_hours * 3600,
-        ))
-        .await;
+        tokio::time::sleep(std::time::Duration::from_secs(interval_hours * 3600)).await;
 
-        let threshold =
-            chrono::Utc::now() + chrono::Duration::days(days_before_expiry);
+        let threshold = chrono::Utc::now() + chrono::Duration::days(days_before_expiry);
         let repo = CertificateRepository::new(&acme_service.pool);
 
         match repo.list_expiring_before(threshold).await {
@@ -278,10 +261,7 @@ pub async fn start_auto_renewal_loop(
                         "Renewing expiring certificate"
                     );
 
-                    if let Err(e) = acme_service
-                        .provision_certificate(&cert.domain)
-                        .await
-                    {
+                    if let Err(e) = acme_service.provision_certificate(&cert.domain).await {
                         tracing::error!(
                             domain = %cert.domain,
                             error = %e,
@@ -289,10 +269,10 @@ pub async fn start_auto_renewal_loop(
                         );
                     }
                 }
-            }
+            },
             Err(e) => {
                 tracing::error!(error = %e, "Failed to query expiring certs");
-            }
+            },
         }
     }
 }

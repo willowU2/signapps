@@ -10,6 +10,7 @@ description = "Database access layer for SignApps Platform"
 [dependencies]
 # Database
 sqlx = { workspace = true }
+pgvector = { workspace = true }
 
 # Serialization
 serde = { workspace = true }

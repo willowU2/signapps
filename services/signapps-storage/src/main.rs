@@ -13,19 +13,19 @@ use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
 mod handlers;
-mod minio;
+mod storage;
 
 use handlers::{
     buckets, external, favorites, files, health, mounts, preview, quotas, raid, search, shares,
     stats, trash,
 };
-use minio::MinioClient;
+use storage::StorageBackend;
 
 /// Application state shared across handlers.
 #[derive(Clone)]
 pub struct AppState {
     pub pool: DatabasePool,
-    pub minio: MinioClient,
+    pub storage: StorageBackend,
     pub jwt_config: JwtConfig,
 }
 
@@ -57,13 +57,7 @@ async fn main() -> anyhow::Result<()> {
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
     let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
-    let minio_endpoint =
-        std::env::var("MINIO_ENDPOINT").unwrap_or_else(|_| "http://localhost:9000".into());
-    let minio_access_key =
-        std::env::var("MINIO_ACCESS_KEY").unwrap_or_else(|_| "minioadmin".into());
-    let minio_secret_key =
-        std::env::var("MINIO_SECRET_KEY").unwrap_or_else(|_| "minioadmin".into());
-    let minio_region = std::env::var("MINIO_REGION").unwrap_or_else(|_| "us-east-1".into());
+    let storage_mode = std::env::var("STORAGE_MODE").unwrap_or_else(|_| "fs".into());
 
     // Initialize database pool
     let pool = signapps_db::create_pool(&database_url).await?;
@@ -73,15 +67,28 @@ async fn main() -> anyhow::Result<()> {
     signapps_db::run_migrations(&pool).await?;
     tracing::info!("Database migrations completed");
 
-    // Initialize MinIO client
-    let minio = MinioClient::new(
-        &minio_endpoint,
-        &minio_access_key,
-        &minio_secret_key,
-        &minio_region,
-    )
-    .await?;
-    tracing::info!("MinIO client initialized");
+    // Initialize storage backend
+    let storage = match storage_mode.as_str() {
+        "s3" => {
+            let endpoint = std::env::var("STORAGE_S3_ENDPOINT")
+                .unwrap_or_else(|_| "http://localhost:9000".into());
+            let access_key =
+                std::env::var("STORAGE_S3_ACCESS_KEY").unwrap_or_else(|_| "minioadmin".into());
+            let secret_key =
+                std::env::var("STORAGE_S3_SECRET_KEY").unwrap_or_else(|_| "minioadmin".into());
+            let region = std::env::var("STORAGE_S3_REGION").unwrap_or_else(|_| "us-east-1".into());
+            let bucket = std::env::var("STORAGE_S3_BUCKET").unwrap_or_else(|_| "signapps".into());
+
+            StorageBackend::new_s3(&endpoint, &access_key, &secret_key, &region, &bucket)?
+        },
+        _ => {
+            let root = std::env::var("STORAGE_FS_ROOT").unwrap_or_else(|_| "./data/storage".into());
+            // Ensure root directory exists
+            std::fs::create_dir_all(&root).ok();
+            StorageBackend::new_fs(&root)?
+        },
+    };
+    tracing::info!("Storage backend initialized");
 
     // JWT configuration
     let jwt_config = JwtConfig {
@@ -95,7 +102,7 @@ async fn main() -> anyhow::Result<()> {
     // Create application state
     let state = AppState {
         pool,
-        minio,
+        storage,
         jwt_config,
     };
 

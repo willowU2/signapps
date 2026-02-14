@@ -9,8 +9,6 @@ pub struct AppConfig {
     pub server: ServerConfig,
     /// Database configuration
     pub database: DatabaseConfig,
-    /// Redis configuration
-    pub redis: Option<RedisConfig>,
     /// JWT configuration
     pub jwt: JwtSettings,
     /// LDAP configuration (optional)
@@ -48,13 +46,6 @@ pub struct DatabaseConfig {
 
 fn default_max_connections() -> u32 {
     20
-}
-
-/// Redis configuration.
-#[derive(Debug, Clone, Deserialize)]
-pub struct RedisConfig {
-    /// Redis connection URL
-    pub url: String,
 }
 
 /// JWT settings.

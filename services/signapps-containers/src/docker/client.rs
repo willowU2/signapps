@@ -6,9 +6,7 @@ use bollard::container::{
     StopContainerOptions,
 };
 use bollard::image::{CreateImageOptions, ListImagesOptions, RemoveImageOptions};
-use bollard::network::{
-    ConnectNetworkOptions, CreateNetworkOptions, ListNetworksOptions,
-};
+use bollard::network::{ConnectNetworkOptions, CreateNetworkOptions, ListNetworksOptions};
 use bollard::volume::ListVolumesOptions;
 use bollard::Docker;
 use futures_util::StreamExt;
@@ -695,16 +693,14 @@ impl DockerClient {
         let (registry, repository, tag) = parse_image_ref(image);
 
         let token = fetch_registry_token(&client, &registry, &repository).await;
-        let remote_digest = fetch_remote_digest(
-            &client, &registry, &repository, &tag, token.as_deref(),
-        )
-        .await;
+        let remote_digest =
+            fetch_remote_digest(&client, &registry, &repository, &tag, token.as_deref()).await;
 
         match (&local_digest, &remote_digest) {
             (Some(local), Some(remote)) => {
                 let update_available = local != remote;
                 Ok((update_available, Some(local.clone()), Some(remote.clone())))
-            }
+            },
             _ => Ok((false, local_digest, remote_digest)),
         }
     }
@@ -875,11 +871,7 @@ fn parse_image_ref(image: &str) -> (String, String, String) {
         (parts[0].to_string(), parts[1].to_string(), tag)
     } else {
         // Docker Hub user image (e.g. "user/repo")
-        (
-            "registry-1.docker.io".to_string(),
-            image_part.clone(),
-            tag,
-        )
+        ("registry-1.docker.io".to_string(), image_part.clone(), tag)
     }
 }
 

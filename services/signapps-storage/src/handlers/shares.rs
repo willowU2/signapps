@@ -121,7 +121,7 @@ pub async fn create_share(
 ) -> Result<Json<CreateShareResponse>> {
     // Verify file exists
     let _info = state
-        .minio
+        .storage
         .get_object_info(&request.bucket, &request.key)
         .await?;
 

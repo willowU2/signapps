@@ -87,7 +87,7 @@ pub async fn add_favorite(
     // Verify item exists
     if !request.is_folder {
         let _info = state
-            .minio
+            .storage
             .get_object_info(&request.bucket, &request.key)
             .await?;
     }

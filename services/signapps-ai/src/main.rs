@@ -17,26 +17,27 @@ use tower_http::cors::{Any, CorsLayer};
 
 mod embeddings;
 mod handlers;
+mod indexer;
 mod llm;
-mod qdrant;
 mod rag;
+mod vectors;
 
 use embeddings::EmbeddingsClient;
 use handlers::{chat, health, index, models, providers, search};
-use llm::{
-    create_provider, LlmProviderType, ProviderConfig, ProviderRegistry,
-};
-use qdrant::QdrantService;
+use indexer::IndexPipeline;
+use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
 use rag::RagPipeline;
+use vectors::VectorService;
 
 /// Application state shared across handlers.
 #[derive(Clone)]
 pub struct AppState {
     pub pool: DatabasePool,
-    pub qdrant: QdrantService,
+    pub vectors: VectorService,
     pub embeddings: EmbeddingsClient,
     pub providers: Arc<ProviderRegistry>,
     pub rag: RagPipeline,
+    pub indexer: IndexPipeline,
     pub jwt_config: JwtConfig,
 }
 
@@ -67,10 +68,7 @@ async fn main() -> anyhow::Result<()> {
     // Load configuration
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
-    let jwt_secret =
-        std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
-    let qdrant_url =
-        std::env::var("QDRANT_URL").unwrap_or_else(|_| "http://localhost:6334".into());
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
     let embeddings_url =
         std::env::var("EMBEDDINGS_URL").unwrap_or_else(|_| "http://localhost:8080".into());
 
@@ -83,17 +81,15 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Database migrations completed");
 
     // Initialize clients
-    let qdrant = QdrantService::new(&qdrant_url).await?;
-    tracing::info!("Qdrant client initialized");
+    let vectors = VectorService::new(pool.clone());
+    tracing::info!("Vector service initialized (pgvector)");
 
     let embeddings = EmbeddingsClient::new(&embeddings_url);
     tracing::info!("Embeddings client initialized");
 
     // Build provider registry from environment variables
-    let requested_default =
-        std::env::var("LLM_PROVIDER").unwrap_or_default();
-    let mut registry =
-        ProviderRegistry::new(requested_default.clone());
+    let requested_default = std::env::var("LLM_PROVIDER").unwrap_or_default();
+    let mut registry = ProviderRegistry::new(requested_default.clone());
     let mut first_provider_id: Option<String> = None;
 
     // Helper macro would be nice, but let's keep it explicit.
@@ -103,9 +99,7 @@ async fn main() -> anyhow::Result<()> {
         if !url.is_empty() {
             let default_model = std::env::var("VLLM_MODEL")
                 .or_else(|_| std::env::var("DEFAULT_MODEL"))
-                .unwrap_or_else(|_| {
-                    "meta-llama/Llama-3.2-3B-Instruct".to_string()
-                });
+                .unwrap_or_else(|_| "meta-llama/Llama-3.2-3B-Instruct".to_string());
             let config = ProviderConfig {
                 provider_type: LlmProviderType::Vllm,
                 base_url: url,
@@ -120,10 +114,10 @@ async fn main() -> anyhow::Result<()> {
                         first_provider_id = Some("vllm".to_string());
                     }
                     registry.register("vllm", config, provider);
-                }
+                },
                 Err(e) => {
                     tracing::warn!("Failed to create vLLM provider: {}", e)
-                }
+                },
             }
         }
     }
@@ -131,8 +125,8 @@ async fn main() -> anyhow::Result<()> {
     // Ollama
     if let Ok(url) = std::env::var("OLLAMA_URL") {
         if !url.is_empty() {
-            let default_model = std::env::var("OLLAMA_MODEL")
-                .unwrap_or_else(|_| "llama3.2:3b".to_string());
+            let default_model =
+                std::env::var("OLLAMA_MODEL").unwrap_or_else(|_| "llama3.2:3b".to_string());
             let config = ProviderConfig {
                 provider_type: LlmProviderType::Ollama,
                 base_url: url,
@@ -144,17 +138,13 @@ async fn main() -> anyhow::Result<()> {
                 Ok(provider) => {
                     tracing::info!("Registered Ollama provider");
                     if first_provider_id.is_none() {
-                        first_provider_id =
-                            Some("ollama".to_string());
+                        first_provider_id = Some("ollama".to_string());
                     }
                     registry.register("ollama", config, provider);
-                }
+                },
                 Err(e) => {
-                    tracing::warn!(
-                        "Failed to create Ollama provider: {}",
-                        e
-                    )
-                }
+                    tracing::warn!("Failed to create Ollama provider: {}", e)
+                },
             }
         }
     }
@@ -162,8 +152,8 @@ async fn main() -> anyhow::Result<()> {
     // OpenAI
     if let Ok(key) = std::env::var("OPENAI_API_KEY") {
         if !key.is_empty() {
-            let default_model = std::env::var("OPENAI_MODEL")
-                .unwrap_or_else(|_| "gpt-4o-mini".to_string());
+            let default_model =
+                std::env::var("OPENAI_MODEL").unwrap_or_else(|_| "gpt-4o-mini".to_string());
             let config = ProviderConfig {
                 provider_type: LlmProviderType::OpenAI,
                 base_url: "https://api.openai.com".to_string(),
@@ -175,17 +165,13 @@ async fn main() -> anyhow::Result<()> {
                 Ok(provider) => {
                     tracing::info!("Registered OpenAI provider");
                     if first_provider_id.is_none() {
-                        first_provider_id =
-                            Some("openai".to_string());
+                        first_provider_id = Some("openai".to_string());
                     }
                     registry.register("openai", config, provider);
-                }
+                },
                 Err(e) => {
-                    tracing::warn!(
-                        "Failed to create OpenAI provider: {}",
-                        e
-                    )
-                }
+                    tracing::warn!("Failed to create OpenAI provider: {}", e)
+                },
             }
         }
     }
@@ -194,9 +180,7 @@ async fn main() -> anyhow::Result<()> {
     if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
         if !key.is_empty() {
             let default_model = std::env::var("ANTHROPIC_MODEL")
-                .unwrap_or_else(|_| {
-                    "claude-3-5-sonnet-20241022".to_string()
-                });
+                .unwrap_or_else(|_| "claude-3-5-sonnet-20241022".to_string());
             let config = ProviderConfig {
                 provider_type: LlmProviderType::Anthropic,
                 base_url: "https://api.anthropic.com".to_string(),
@@ -208,18 +192,13 @@ async fn main() -> anyhow::Result<()> {
                 Ok(provider) => {
                     tracing::info!("Registered Anthropic provider");
                     if first_provider_id.is_none() {
-                        first_provider_id =
-                            Some("anthropic".to_string());
+                        first_provider_id = Some("anthropic".to_string());
                     }
-                    registry
-                        .register("anthropic", config, provider);
-                }
+                    registry.register("anthropic", config, provider);
+                },
                 Err(e) => {
-                    tracing::warn!(
-                        "Failed to create Anthropic provider: {}",
-                        e
-                    )
-                }
+                    tracing::warn!("Failed to create Anthropic provider: {}", e)
+                },
             }
         }
     }
@@ -252,12 +231,13 @@ async fn main() -> anyhow::Result<()> {
     let providers = Arc::new(registry);
 
     // Initialize RAG pipeline
-    let rag = RagPipeline::new(
-        embeddings.clone(),
-        qdrant.clone(),
-        Arc::clone(&providers),
-    );
+    let rag = RagPipeline::new(embeddings.clone(), vectors.clone(), Arc::clone(&providers));
     tracing::info!("RAG pipeline initialized");
+
+    // Initialize index pipeline (OCR-aware document indexing)
+    let ocr_url = std::env::var("OCR_URL").ok().filter(|u| !u.is_empty());
+    let indexer = IndexPipeline::new(embeddings.clone(), vectors.clone(), ocr_url);
+    tracing::info!("Index pipeline initialized");
 
     // JWT configuration
     let jwt_config = JwtConfig {
@@ -271,10 +251,11 @@ async fn main() -> anyhow::Result<()> {
     // Create application state
     let state = AppState {
         pool,
-        qdrant,
+        vectors,
         embeddings,
         providers,
         rag,
+        indexer,
         jwt_config,
     };
 
@@ -299,8 +280,7 @@ async fn main() -> anyhow::Result<()> {
 /// Create the application router with all routes.
 fn create_router(state: AppState) -> Router {
     // Public routes (health check)
-    let public_routes =
-        Router::new().route("/health", get(health::health_check));
+    let public_routes = Router::new().route("/health", get(health::health_check));
 
     // Protected AI routes
     let ai_routes = Router::new()

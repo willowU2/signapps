@@ -106,9 +106,7 @@ pub async fn set_auto_update(
 }
 
 /// Get update status for all containers.
-pub async fn updates_status(
-    State(state): State<AppState>,
-) -> Result<Json<UpdatesStatusResponse>> {
+pub async fn updates_status(State(state): State<AppState>) -> Result<Json<UpdatesStatusResponse>> {
     let repo = ContainerRepository::new(&state.pool);
     let containers = repo.list(100, 0).await?;
 
@@ -148,7 +146,7 @@ pub async fn run_auto_update_task(
             Err(e) => {
                 tracing::error!("Auto-update: failed to list containers: {e}");
                 continue;
-            }
+            },
         };
 
         for container in containers {
@@ -175,7 +173,7 @@ pub async fn run_auto_update_task(
                         "Update check failed: {e}"
                     );
                     continue;
-                }
+                },
             };
 
             if !has_update {
@@ -210,7 +208,7 @@ pub async fn run_auto_update_task(
                         "No saved config, skipping update"
                     );
                     continue;
-                }
+                },
             };
 
             // Stop old container
@@ -234,7 +232,7 @@ pub async fn run_auto_update_task(
                         "Failed to create updated container: {e}"
                     );
                     continue;
-                }
+                },
             };
 
             // Update DB

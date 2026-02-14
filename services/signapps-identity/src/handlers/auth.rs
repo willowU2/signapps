@@ -140,7 +140,7 @@ pub async fn login(
     }))
 }
 
-/// Logout endpoint - blacklists the token in Redis.
+/// Logout endpoint - blacklists the token in cache.
 #[tracing::instrument(skip(state, headers))]
 pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<()> {
     if let Some(auth_header) = headers.get(header::AUTHORIZATION) {
@@ -150,16 +150,12 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result
                 if let Ok(claims) = verify_token(token, &state.jwt_secret) {
                     let ttl = claims.exp - chrono::Utc::now().timestamp();
                     if ttl > 0 {
-                        // Blacklist token in Redis with remaining TTL
-                        if let Ok(mut conn) = state.redis.get_multiplexed_async_connection().await {
-                            let key = format!("blacklist:{}", token);
-                            let _: redis::RedisResult<()> = redis::cmd("SETEX")
-                                .arg(&key)
-                                .arg(ttl)
-                                .arg(1)
-                                .query_async(&mut conn)
-                                .await;
-                        }
+                        // Blacklist token in cache with remaining TTL
+                        let key = format!("blacklist:{}", token);
+                        state
+                            .cache
+                            .set(&key, "1", std::time::Duration::from_secs(ttl as u64))
+                            .await;
                     }
                 }
                 tracing::info!("User logged out, token blacklisted");

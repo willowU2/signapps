@@ -1,0 +1,106 @@
+//! Vector service implementation using pgvector (PostgreSQL).
+
+use signapps_common::{Error, Result};
+use signapps_db::repositories::vector_repository::{ChunkInput, VectorRepository};
+use signapps_db::DatabasePool;
+use uuid::Uuid;
+
+use super::types::*;
+
+/// Vector service for document storage and search using pgvector.
+#[derive(Clone)]
+pub struct VectorService {
+    pool: DatabasePool,
+}
+
+impl VectorService {
+    /// Create a new vector service backed by pgvector.
+    pub fn new(pool: DatabasePool) -> Self {
+        Self { pool }
+    }
+
+    /// Insert document chunks with their embeddings.
+    pub async fn upsert_chunks(
+        &self,
+        chunks: &[DocumentChunk],
+        embeddings: Vec<Vec<f32>>,
+    ) -> Result<()> {
+        if chunks.len() != embeddings.len() {
+            return Err(Error::Internal(
+                "Chunks and embeddings count mismatch".to_string(),
+            ));
+        }
+
+        let document_id = chunks
+            .first()
+            .map(|c| c.document_id)
+            .ok_or_else(|| Error::Internal("No chunks provided".to_string()))?;
+
+        let inputs: Vec<ChunkInput> = chunks
+            .iter()
+            .map(|c| ChunkInput {
+                id: c.id,
+                chunk_index: c.chunk_index,
+                content: c.content.clone(),
+                filename: c.filename.clone(),
+                path: c.path.clone(),
+                mime_type: c.mime_type.clone(),
+            })
+            .collect();
+
+        VectorRepository::upsert_chunks(&self.pool, document_id, &inputs, &embeddings).await?;
+
+        tracing::debug!(count = chunks.len(), "Upserted document chunks to pgvector");
+
+        Ok(())
+    }
+
+    /// Search for similar documents.
+    pub async fn search(
+        &self,
+        query_vector: Vec<f32>,
+        limit: u64,
+        score_threshold: Option<f32>,
+    ) -> Result<Vec<SearchResult>> {
+        let results =
+            VectorRepository::search(&self.pool, &query_vector, limit as i64, score_threshold)
+                .await?;
+
+        Ok(results
+            .into_iter()
+            .map(|r| SearchResult {
+                id: r.id,
+                document_id: r.document_id,
+                content: r.content,
+                filename: r.filename,
+                score: r.score,
+            })
+            .collect())
+    }
+
+    /// Delete all chunks for a document.
+    pub async fn delete_document(&self, document_id: Uuid) -> Result<()> {
+        let deleted = VectorRepository::delete_by_document(&self.pool, document_id).await?;
+
+        tracing::info!(
+            document_id = %document_id,
+            deleted = deleted,
+            "Deleted document chunks from pgvector"
+        );
+
+        Ok(())
+    }
+
+    /// Get collection statistics.
+    pub async fn get_stats(&self) -> Result<CollectionStats> {
+        let stats = VectorRepository::get_stats(&self.pool).await?;
+
+        Ok(CollectionStats {
+            name: "document_vectors".to_string(),
+            vectors_count: stats.total_chunks as u64,
+            indexed_vectors_count: stats.total_chunks as u64,
+            points_count: stats.total_chunks as u64,
+            status: "green".to_string(),
+        })
+    }
+}

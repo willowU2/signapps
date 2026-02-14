@@ -163,7 +163,7 @@ pub async fn search(
     let start = std::time::Instant::now();
 
     // TODO: Implement actual search
-    // - Query MinIO for object listing with prefix
+    // - Query storage backend for object listing with prefix
     // - Filter by metadata
     // - If include_content, query AI service for content search
     // - Calculate relevance scores
@@ -217,7 +217,7 @@ pub async fn quick_search(
 ) -> Result<Json<QuickSearchResponse>> {
     let _limit = query.limit.unwrap_or(10);
 
-    // TODO: Quick search in MinIO object listing
+    // TODO: Quick search in storage object listing
 
     Ok(Json(QuickSearchResponse {
         results: vec![],

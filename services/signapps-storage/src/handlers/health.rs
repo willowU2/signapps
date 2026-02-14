@@ -10,15 +10,15 @@ pub struct HealthResponse {
     pub status: String,
     pub service: String,
     pub version: String,
-    pub minio_connected: bool,
+    pub storage_connected: bool,
 }
 
 /// Health check endpoint.
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
-    let minio_connected = state.minio.list_buckets().await.is_ok();
+    let storage_connected = state.storage.list_buckets().await.is_ok();
 
     Json(HealthResponse {
-        status: if minio_connected {
+        status: if storage_connected {
             "healthy"
         } else {
             "degraded"
@@ -26,6 +26,6 @@ pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse>
         .to_string(),
         service: "signapps-storage".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        minio_connected,
+        storage_connected,
     })
 }

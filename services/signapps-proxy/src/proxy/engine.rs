@@ -59,7 +59,7 @@ pub async fn run_proxy(
             Err(e) => {
                 tracing::debug!(error = %e, "Failed to accept TCP connection");
                 continue;
-            }
+            },
         };
 
         let engine = engine.clone();
@@ -67,9 +67,7 @@ pub async fn run_proxy(
             let io = TokioIo::new(stream);
             let svc = service_fn(move |req: Request<Incoming>| {
                 let engine = engine.clone();
-                async move {
-                    handle_http_request(req, client_addr, &engine, false).await
-                }
+                async move { handle_http_request(req, client_addr, &engine, false).await }
             });
 
             if let Err(e) = ServerBuilder::new(TokioExecutor::new())
@@ -106,7 +104,7 @@ async fn run_https_listener(
             Err(e) => {
                 tracing::debug!(error = %e, "Failed to accept TLS connection");
                 continue;
-            }
+            },
         };
 
         let tls_acceptor = tls_acceptor.clone();
@@ -118,15 +116,13 @@ async fn run_https_listener(
                 Err(e) => {
                     tracing::debug!(error = %e, "TLS handshake failed");
                     return;
-                }
+                },
             };
 
             let io = TokioIo::new(tls_stream);
             let svc = service_fn(move |req: Request<Incoming>| {
                 let engine = engine.clone();
-                async move {
-                    handle_http_request(req, client_addr, &engine, true).await
-                }
+                async move { handle_http_request(req, client_addr, &engine, true).await }
             });
 
             if let Err(e) = ServerBuilder::new(TokioExecutor::new())
@@ -168,7 +164,7 @@ async fn handle_http_request(
                 .status(StatusCode::BAD_REQUEST)
                 .body(full_body("Missing Host header"))
                 .unwrap());
-        }
+        },
     };
 
     // Lookup route in cache
@@ -180,7 +176,7 @@ async fn handle_http_request(
                 .header("content-type", "text/plain")
                 .body(full_body(format!("No route for host: {}", host)))
                 .unwrap());
-        }
+        },
     };
 
     // HTTPS redirect if route requires TLS and we're on HTTP
@@ -261,7 +257,7 @@ fn handle_acme_challenge(
                     .body(full_body(proof))
                     .unwrap(),
             )
-        }
+        },
         None => {
             tracing::debug!(token, "ACME challenge token not found");
             Some(
@@ -270,6 +266,6 @@ fn handle_acme_challenge(
                     .body(full_body("Challenge not found"))
                     .unwrap(),
             )
-        }
+        },
     }
 }

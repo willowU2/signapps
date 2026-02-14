@@ -29,10 +29,7 @@ impl<'a> BackupRepository<'a> {
     }
 
     /// List profiles by owner.
-    pub async fn list_profiles_by_owner(
-        &self,
-        owner_id: Uuid,
-    ) -> Result<Vec<BackupProfile>> {
+    pub async fn list_profiles_by_owner(&self, owner_id: Uuid) -> Result<Vec<BackupProfile>> {
         let profiles = sqlx::query_as::<_, BackupProfile>(
             "SELECT * FROM containers.backup_profiles WHERE owner_id = $1 ORDER BY created_at DESC",
         )

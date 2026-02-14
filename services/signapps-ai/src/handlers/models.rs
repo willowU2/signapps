@@ -35,8 +35,7 @@ pub async fn list_models(
     State(state): State<AppState>,
     Query(query): Query<ModelsQuery>,
 ) -> Result<Json<ModelsResponse>> {
-    let provider =
-        state.providers.resolve(query.provider.as_deref())?;
+    let provider = state.providers.resolve(query.provider.as_deref())?;
     let models = provider.list_models().await?;
 
     let model_infos: Vec<ModelInfo> = models

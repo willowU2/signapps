@@ -77,13 +77,15 @@ impl ResticClient {
             if let Some(endpoint) = destination_config.get("endpoint").and_then(|v| v.as_str()) {
                 env.insert("AWS_DEFAULT_REGION".to_string(), "us-east-1".to_string());
                 // Restic uses s3:endpoint/bucket format
-                if let Some(access_key) =
-                    destination_config.get("access_key").and_then(|v| v.as_str())
+                if let Some(access_key) = destination_config
+                    .get("access_key")
+                    .and_then(|v| v.as_str())
                 {
                     env.insert("AWS_ACCESS_KEY_ID".to_string(), access_key.to_string());
                 }
-                if let Some(secret_key) =
-                    destination_config.get("secret_key").and_then(|v| v.as_str())
+                if let Some(secret_key) = destination_config
+                    .get("secret_key")
+                    .and_then(|v| v.as_str())
                 {
                     env.insert("AWS_SECRET_ACCESS_KEY".to_string(), secret_key.to_string());
                 }
@@ -110,7 +112,7 @@ impl ResticClient {
                     .and_then(|v| v.as_str())
                     .unwrap_or("backups");
                 format!("s3:{endpoint}/{bucket}")
-            }
+            },
             "sftp" => {
                 let host = destination_config
                     .get("host")
@@ -125,7 +127,7 @@ impl ResticClient {
                     .and_then(|v| v.as_str())
                     .unwrap_or("backup");
                 format!("sftp:{user}@{host}:{path}")
-            }
+            },
             _ => {
                 // local
                 destination_config
@@ -133,16 +135,12 @@ impl ResticClient {
                     .and_then(|v| v.as_str())
                     .unwrap_or("/var/backups/signapps")
                     .to_string()
-            }
+            },
         }
     }
 
     /// Run a restic command.
-    async fn run(
-        &self,
-        args: &[&str],
-        env: &HashMap<String, String>,
-    ) -> Result<String> {
+    async fn run(&self, args: &[&str], env: &HashMap<String, String>) -> Result<String> {
         let output = Command::new(&self.binary)
             .args(args)
             .envs(env)
@@ -179,7 +177,7 @@ impl ResticClient {
                 } else {
                     Err(e)
                 }
-            }
+            },
         }
     }
 

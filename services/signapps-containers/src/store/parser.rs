@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use rand::Rng;
 use super::types::*;
+use rand::Rng;
 
 /// Strip store template directives (`{if ...}`, `{/if}`, `{else}`) and fix
 /// resulting JSON/YAML syntax (trailing/leading commas).
@@ -10,7 +10,10 @@ fn strip_store_templates(text: &str) -> String {
     for line in text.lines() {
         let trimmed = line.trim();
         // Skip template conditionals
-        if trimmed.starts_with("{if ") || trimmed.starts_with("{/if") || trimmed.starts_with("{else") {
+        if trimmed.starts_with("{if ")
+            || trimmed.starts_with("{/if")
+            || trimmed.starts_with("{else")
+        {
             continue;
         }
         lines.push(line);
@@ -43,8 +46,7 @@ pub fn resolve_store_templates(value: &str, service_name: &str) -> String {
     let mut result = value.to_string();
 
     // Replace {Passwords.*} patterns with random passwords
-    let password_re =
-        regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
+    let password_re = regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
@@ -72,8 +74,7 @@ fn resolve_for_display(value: &str) -> String {
     let mut result = value.to_string();
 
     // Replace {Passwords.*} patterns with random passwords (external format)
-    let password_re =
-        regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
+    let password_re = regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
@@ -98,8 +99,7 @@ fn resolve_volume_for_display(source: &str) -> String {
     let mut result = source.to_string();
 
     // Replace {Passwords.*} patterns with random passwords (external format)
-    let password_re =
-        regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
+    let password_re = regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
@@ -146,13 +146,11 @@ pub fn parse_compose(text: &str, is_yaml: bool) -> Result<ParsedAppConfig, Strin
 
     let compose: ComposeSpec = if is_yaml {
         serde_yaml::from_str(text).or_else(|yaml_err| {
-            serde_json::from_str(text)
-                .map_err(|_| format!("YAML parse error: {yaml_err}"))
+            serde_json::from_str(text).map_err(|_| format!("YAML parse error: {yaml_err}"))
         })?
     } else {
         serde_json::from_str(text).or_else(|json_err| {
-            serde_yaml::from_str(text)
-                .map_err(|_| format!("JSON parse error: {json_err}"))
+            serde_yaml::from_str(text).map_err(|_| format!("JSON parse error: {json_err}"))
         })?
     };
 
@@ -199,7 +197,10 @@ fn parse_service(name: &str, svc: &ComposeService) -> ParsedService {
         service_name: name.to_string(),
         image: svc.image.clone().unwrap_or_default(),
         container_name,
-        restart: svc.restart.clone().unwrap_or_else(|| "unless-stopped".into()),
+        restart: svc
+            .restart
+            .clone()
+            .unwrap_or_else(|| "unless-stopped".into()),
         environment: env,
         ports: parse_ports(&svc.ports),
         volumes,
@@ -276,7 +277,7 @@ fn parse_ports(ports: &Option<Vec<serde_json::Value>>) -> Vec<AppPort> {
                         container: port,
                         protocol: "tcp".to_string(),
                     })
-                }
+                },
                 // Object format: {"published": 8080, "target": 80, "protocol": "tcp"}
                 serde_json::Value::Object(obj) => {
                     let host = obj
@@ -297,7 +298,7 @@ fn parse_ports(ports: &Option<Vec<serde_json::Value>>) -> Vec<AppPort> {
                         container,
                         protocol,
                     })
-                }
+                },
                 _ => None,
             }
         })
@@ -374,7 +375,7 @@ fn parse_volumes(volumes: &Option<Vec<ComposeVolume>>) -> Vec<AppVolume> {
                 } else {
                     None
                 }
-            }
+            },
             ComposeVolume::Long {
                 source,
                 target,
@@ -394,7 +395,7 @@ fn parse_command(cmd: &Option<ComposeCommand>) -> Option<Vec<String>> {
         None => None,
         Some(ComposeCommand::String(s)) => {
             Some(s.split_whitespace().map(|w| w.to_string()).collect())
-        }
+        },
         Some(ComposeCommand::List(l)) => Some(l.clone()),
     }
 }

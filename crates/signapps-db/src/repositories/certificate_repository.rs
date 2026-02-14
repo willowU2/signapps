@@ -18,44 +18,38 @@ impl<'a> CertificateRepository<'a> {
 
     /// Find certificate by ID.
     pub async fn find(&self, id: Uuid) -> Result<Option<Certificate>> {
-        let cert = sqlx::query_as::<_, Certificate>(
-            "SELECT * FROM proxy.certificates WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let cert =
+            sqlx::query_as::<_, Certificate>("SELECT * FROM proxy.certificates WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.pool.inner())
+                .await?;
 
         Ok(cert)
     }
 
     /// Find certificate by domain.
     pub async fn find_by_domain(&self, domain: &str) -> Result<Option<Certificate>> {
-        let cert = sqlx::query_as::<_, Certificate>(
-            "SELECT * FROM proxy.certificates WHERE domain = $1",
-        )
-        .bind(domain)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let cert =
+            sqlx::query_as::<_, Certificate>("SELECT * FROM proxy.certificates WHERE domain = $1")
+                .bind(domain)
+                .fetch_optional(self.pool.inner())
+                .await?;
 
         Ok(cert)
     }
 
     /// List all certificates.
     pub async fn list(&self) -> Result<Vec<Certificate>> {
-        let certs = sqlx::query_as::<_, Certificate>(
-            "SELECT * FROM proxy.certificates ORDER BY domain",
-        )
-        .fetch_all(self.pool.inner())
-        .await?;
+        let certs =
+            sqlx::query_as::<_, Certificate>("SELECT * FROM proxy.certificates ORDER BY domain")
+                .fetch_all(self.pool.inner())
+                .await?;
 
         Ok(certs)
     }
 
     /// List certificates expiring before a given threshold.
-    pub async fn list_expiring_before(
-        &self,
-        threshold: DateTime<Utc>,
-    ) -> Result<Vec<Certificate>> {
+    pub async fn list_expiring_before(&self, threshold: DateTime<Utc>) -> Result<Vec<Certificate>> {
         let certs = sqlx::query_as::<_, Certificate>(
             "SELECT * FROM proxy.certificates WHERE auto_renew = true AND not_after < $1 ORDER BY not_after",
         )
@@ -111,12 +105,11 @@ impl<'a> CertificateRepository<'a> {
 
     /// Find ACME account by ID.
     pub async fn find_acme_account(&self, id: Uuid) -> Result<Option<AcmeAccount>> {
-        let account = sqlx::query_as::<_, AcmeAccount>(
-            "SELECT * FROM proxy.acme_accounts WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let account =
+            sqlx::query_as::<_, AcmeAccount>("SELECT * FROM proxy.acme_accounts WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.pool.inner())
+                .await?;
 
         Ok(account)
     }

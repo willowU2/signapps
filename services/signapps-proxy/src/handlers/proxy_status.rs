@@ -24,9 +24,7 @@ pub struct ListenerStatus {
 }
 
 /// Get proxy engine status.
-pub async fn get_proxy_status(
-    State(state): State<AppState>,
-) -> Json<ProxyStatusResponse> {
+pub async fn get_proxy_status(State(state): State<AppState>) -> Json<ProxyStatusResponse> {
     let proxy_enabled = std::env::var("PROXY_ENABLED")
         .unwrap_or_else(|_| "true".to_string())
         .parse::<bool>()

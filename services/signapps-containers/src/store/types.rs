@@ -283,15 +283,36 @@ pub struct SourceValidation {
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type")]
 pub enum InstallEvent {
-    Started { install_id: Uuid, service_count: usize },
-    PullingImage { service_name: String, image: String },
-    ImagePulled { service_name: String },
-    CreatingContainer { service_name: String },
-    ContainerCreated { service_name: String, container_name: String },
-    Starting { service_name: String },
-    ServiceReady { service_name: String },
-    Complete { install_id: Uuid },
-    Error { message: String },
+    Started {
+        install_id: Uuid,
+        service_count: usize,
+    },
+    PullingImage {
+        service_name: String,
+        image: String,
+    },
+    ImagePulled {
+        service_name: String,
+    },
+    CreatingContainer {
+        service_name: String,
+    },
+    ContainerCreated {
+        service_name: String,
+        container_name: String,
+    },
+    Starting {
+        service_name: String,
+    },
+    ServiceReady {
+        service_name: String,
+    },
+    Complete {
+        install_id: Uuid,
+    },
+    Error {
+        message: String,
+    },
 }
 
 /// Response for install initiation.

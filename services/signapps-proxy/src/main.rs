@@ -63,10 +63,7 @@ async fn main() -> anyhow::Result<()> {
     // Load configuration
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
-    let redis_url =
-        std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".into());
-    let jwt_secret =
-        std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
     // Proxy configuration
     let proxy_enabled = std::env::var("PROXY_ENABLED")
         .unwrap_or_else(|_| "true".into())
@@ -93,9 +90,9 @@ async fn main() -> anyhow::Result<()> {
     signapps_db::run_migrations(&pool).await?;
     tracing::info!("Database migrations completed");
 
-    // Initialize SmartShield service
-    let shield = ShieldService::new(&redis_url).await?;
-    tracing::info!("SmartShield service initialized");
+    // Initialize SmartShield service (in-process, no Redis needed)
+    let shield = ShieldService::new();
+    tracing::info!("SmartShield service initialized (in-process cache)");
 
     // Initialize route cache
     let route_cache = RouteCache::new(pool.clone());
@@ -116,22 +113,17 @@ async fn main() -> anyhow::Result<()> {
                 let resolver_clone = resolver.clone();
                 let pool_clone = pool.clone();
                 tokio::spawn(async move {
-                    proxy::tls::start_cert_refresh_loop(
-                        resolver_clone,
-                        pool_clone,
-                        60,
-                    )
-                    .await;
+                    proxy::tls::start_cert_refresh_loop(resolver_clone, pool_clone, 60).await;
                 });
                 Some(resolver)
-            }
+            },
             Err(e) => {
                 tracing::warn!(
                     error = %e,
                     "TLS resolver init failed, HTTPS disabled"
                 );
                 None
-            }
+            },
         }
     } else {
         None
@@ -149,7 +141,9 @@ async fn main() -> anyhow::Result<()> {
     // Start route cache refresh loop
     let cache_for_refresh = route_cache.clone();
     tokio::spawn(async move {
-        cache_for_refresh.start_refresh_loop(route_refresh_secs).await;
+        cache_for_refresh
+            .start_refresh_loop(route_refresh_secs)
+            .await;
     });
 
     // Start integrated proxy if enabled
@@ -169,12 +163,10 @@ async fn main() -> anyhow::Result<()> {
             .unwrap_or(false);
 
         if acme_enabled {
-            let acme_email = std::env::var("ACME_EMAIL")
-                .unwrap_or_else(|_| "admin@example.com".into());
+            let acme_email =
+                std::env::var("ACME_EMAIL").unwrap_or_else(|_| "admin@example.com".into());
             let acme_directory = std::env::var("ACME_DIRECTORY_URL")
-                .unwrap_or_else(|_| {
-                    "https://acme-v02.api.letsencrypt.org/directory".into()
-                });
+                .unwrap_or_else(|_| "https://acme-v02.api.letsencrypt.org/directory".into());
 
             let acme_service = AcmeService::new(
                 pool.clone(),
@@ -186,8 +178,8 @@ async fn main() -> anyhow::Result<()> {
 
             tokio::spawn(proxy::acme::start_auto_renewal_loop(
                 acme_service,
-                12,  // every 12 hours
-                30,  // renew 30 days before expiry
+                12, // every 12 hours
+                30, // renew 30 days before expiry
             ));
 
             tracing::info!("ACME auto-renewal enabled");
@@ -202,8 +194,7 @@ async fn main() -> anyhow::Result<()> {
         };
 
         tokio::spawn(async move {
-            if let Err(e) = proxy::run_proxy(proxy_http_port, https_port, engine).await
-            {
+            if let Err(e) = proxy::run_proxy(proxy_http_port, https_port, engine).await {
                 tracing::error!(error = %e, "Proxy engine failed");
             }
         });

@@ -81,7 +81,7 @@ pub async fn get_thumbnail(
     Query(query): Query<ThumbnailQuery>,
 ) -> Result<Response> {
     // Get file info
-    let info = state.minio.get_object_info(&bucket, &key).await?;
+    let info = state.storage.get_object_info(&bucket, &key).await?;
 
     // Check if we can generate thumbnail
     let content_type = info
@@ -114,7 +114,7 @@ pub async fn get_preview(
     Path((bucket, key)): Path<(String, String)>,
     Query(query): Query<PreviewQuery>,
 ) -> Result<Response> {
-    let info = state.minio.get_object_info(&bucket, &key).await?;
+    let info = state.storage.get_object_info(&bucket, &key).await?;
     let content_type = info
         .content_type
         .as_deref()
@@ -124,19 +124,13 @@ pub async fn get_preview(
     match preview_type {
         PreviewType::Text | PreviewType::Code => {
             // Return raw text content (limited)
-            let object = state.minio.get_object(&bucket, &key).await?;
-            let bytes = object
-                .body
-                .collect()
-                .await
-                .map_err(|e| Error::Internal(format!("Failed to read: {}", e)))?
-                .into_bytes();
+            let object = state.storage.get_object(&bucket, &key).await?;
 
             // Limit to 100KB for preview
-            let preview_bytes = if bytes.len() > 100_000 {
-                bytes.slice(0..100_000)
+            let preview_bytes = if object.data.len() > 100_000 {
+                object.data.slice(0..100_000)
             } else {
-                bytes
+                object.data
             };
 
             Ok(Response::builder()
@@ -184,7 +178,7 @@ pub async fn get_preview_info(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<Json<PreviewInfo>> {
-    let info = state.minio.get_object_info(&bucket, &key).await?;
+    let info = state.storage.get_object_info(&bucket, &key).await?;
     let content_type = info
         .content_type
         .as_deref()

@@ -27,9 +27,7 @@ pub async fn get_proxy_config(State(state): State<AppState>) -> Result<Json<serd
 
 /// Get proxy overview stats.
 #[tracing::instrument(skip(state))]
-pub async fn get_proxy_overview(
-    State(state): State<AppState>,
-) -> Result<Json<serde_json::Value>> {
+pub async fn get_proxy_overview(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     let repo = RouteRepository::new(&state.pool);
     let routes = repo.list_enabled().await?;
 

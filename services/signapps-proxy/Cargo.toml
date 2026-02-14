@@ -14,13 +14,13 @@ path = "src/main.rs"
 [dependencies]
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
+signapps-cache = { path = "../../crates/signapps-cache" }
 axum = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_yaml = "0.9"
 sqlx = { workspace = true }
-redis = { workspace = true }
 reqwest = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }

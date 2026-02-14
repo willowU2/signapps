@@ -86,9 +86,7 @@ pub async fn import_compose(
     if claims.role < 2 {
         if let Some(quota) = repo.get_quota(claims.sub).await? {
             if quota.current_containers + service_count as i32 > quota.max_containers {
-                return Err(Error::Forbidden(
-                    "Container quota exceeded".to_string(),
-                ));
+                return Err(Error::Forbidden("Container quota exceeded".to_string()));
             }
         }
     }
@@ -103,14 +101,10 @@ pub async fn import_compose(
     let mut results = Vec::new();
 
     // Track ports assigned within this batch
-    let mut batch_assigned_ports: std::collections::HashSet<u16> =
-        std::collections::HashSet::new();
+    let mut batch_assigned_ports: std::collections::HashSet<u16> = std::collections::HashSet::new();
 
     for svc in &parsed.services {
-        let container_name = svc
-            .container_name
-            .as_deref()
-            .unwrap_or(&svc.service_name);
+        let container_name = svc.container_name.as_deref().unwrap_or(&svc.service_name);
 
         // Build environment variables
         let mut env_vars: Vec<String> = Vec::new();
@@ -142,8 +136,7 @@ pub async fn import_compose(
         };
 
         if !target_ports.is_empty() {
-            let used_ports =
-                state.docker.get_used_host_ports().await.unwrap_or_default();
+            let used_ports = state.docker.get_used_host_ports().await.unwrap_or_default();
             const APP_PORT_BASE: u16 = 10300;
             let mut next_port = APP_PORT_BASE;
             for (container_port, protocol) in &target_ports {
@@ -169,9 +162,7 @@ pub async fn import_compose(
             .volumes
             .iter()
             .map(|v| VolumeMount {
-                source: v
-                    .source
-                    .replace("{ServiceName}", container_name),
+                source: v.source.replace("{ServiceName}", container_name),
                 target: v.target.clone(),
                 read_only: v.read_only,
             })
@@ -190,11 +181,7 @@ pub async fn import_compose(
             image: svc.image.clone(),
             cmd: svc.command.clone(),
             env: Some(env_vars),
-            ports: if ports.is_empty() {
-                None
-            } else {
-                Some(ports)
-            },
+            ports: if ports.is_empty() { None } else { Some(ports) },
             volumes: if volumes.is_empty() {
                 None
             } else {
@@ -250,8 +237,7 @@ pub async fn import_compose(
             let _ = repo.increment_usage(owner, 1, 0.0, 0, 0).await;
         }
 
-        let docker_info =
-            state.docker.get_container(&docker_id).await.ok();
+        let docker_info = state.docker.get_container(&docker_id).await.ok();
 
         results.push(ContainerResponse {
             id: container.id,

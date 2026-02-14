@@ -32,10 +32,10 @@ pub async fn check_shield(
                 let (status, msg) = match result {
                     crate::shield::service::RateLimitResult::RateLimited { .. } => {
                         (StatusCode::TOO_MANY_REQUESTS, "Rate limit exceeded")
-                    }
+                    },
                     crate::shield::service::RateLimitResult::Blocked => {
                         (StatusCode::FORBIDDEN, "IP blocked")
-                    }
+                    },
                     _ => unreachable!(),
                 };
 
@@ -48,10 +48,10 @@ pub async fn check_shield(
                         .unwrap(),
                 )
             }
-        }
+        },
         Err(e) => {
             tracing::warn!(error = %e, "Shield check failed, allowing request");
             None
-        }
+        },
     }
 }

@@ -133,7 +133,10 @@ pub async fn install_app(
         // Merge in image EXPOSE ports not already covered by compose
         if let Ok(exposed) = state.docker.get_image_exposed_ports(&svc.image).await {
             for (port, proto) in exposed {
-                if !target_ports.iter().any(|(p, pr)| *p == port && *pr == proto) {
+                if !target_ports
+                    .iter()
+                    .any(|(p, pr)| *p == port && *pr == proto)
+                {
                     target_ports.push((port, proto));
                 }
             }
@@ -209,10 +212,7 @@ pub async fn install_app(
     labels.insert("signapps.app.name".to_string(), app.name.clone());
     if !app.tags.is_empty() {
         labels.insert("signapps.app.tags".to_string(), app.tags.join(","));
-        labels.insert(
-            "signapps.app.category".to_string(),
-            app.tags[0].clone(),
-        );
+        labels.insert("signapps.app.category".to_string(), app.tags[0].clone());
     }
 
     // Build container config
@@ -477,8 +477,7 @@ async fn run_multi_install(
     let mut created_docker_ids: Vec<String> = Vec::new();
 
     // Track ports assigned within this batch to avoid collisions between services
-    let mut batch_assigned_ports: std::collections::HashSet<u16> =
-        std::collections::HashSet::new();
+    let mut batch_assigned_ports: std::collections::HashSet<u16> = std::collections::HashSet::new();
 
     for svc_name in &ordered {
         // Find the parsed service definition
@@ -566,7 +565,10 @@ async fn run_multi_install(
             // Merge in image EXPOSE ports not already covered by compose
             if let Ok(exposed) = docker.get_image_exposed_ports(&svc.image).await {
                 for (port, proto) in exposed {
-                    if !target_ports.iter().any(|(p, pr)| *p == port && *pr == proto) {
+                    if !target_ports
+                        .iter()
+                        .any(|(p, pr)| *p == port && *pr == proto)
+                    {
                         target_ports.push((port, proto));
                     }
                 }
@@ -606,9 +608,7 @@ async fn run_multi_install(
                 vol_ovr
                     .iter()
                     .map(|v| VolumeMount {
-                        source: v
-                            .source
-                            .replace("{ServiceName}", container_name),
+                        source: v.source.replace("{ServiceName}", container_name),
                         target: v.target.clone(),
                         read_only: false,
                     })
@@ -617,9 +617,7 @@ async fn run_multi_install(
                 svc.volumes
                     .iter()
                     .map(|v| VolumeMount {
-                        source: v
-                            .source
-                            .replace("{ServiceName}", container_name),
+                        source: v.source.replace("{ServiceName}", container_name),
                         target: v.target.clone(),
                         read_only: v.read_only,
                     })
@@ -629,9 +627,7 @@ async fn run_multi_install(
             svc.volumes
                 .iter()
                 .map(|v| VolumeMount {
-                    source: v
-                        .source
-                        .replace("{ServiceName}", container_name),
+                    source: v.source.replace("{ServiceName}", container_name),
                     target: v.target.clone(),
                     read_only: v.read_only,
                 })
@@ -657,14 +653,8 @@ async fn run_multi_install(
                 }
             }
         }
-        labels.insert(
-            "signapps.app.id".to_string(),
-            store_meta.app_id.clone(),
-        );
-        labels.insert(
-            "signapps.app.name".to_string(),
-            store_meta.app_name.clone(),
-        );
+        labels.insert("signapps.app.id".to_string(), store_meta.app_id.clone());
+        labels.insert("signapps.app.name".to_string(), store_meta.app_name.clone());
         if !store_meta.app_tags.is_empty() {
             labels.insert(
                 "signapps.app.tags".to_string(),
@@ -720,17 +710,15 @@ async fn run_multi_install(
                 });
                 rollback(docker, &created_docker_ids, network_name).await;
                 return Err(msg);
-            }
+            },
         };
 
         // Link to install group
-        let _ = sqlx::query(
-            "UPDATE containers.managed SET install_group_id = $2 WHERE id = $1",
-        )
-        .bind(container.id)
-        .bind(install_id)
-        .execute(&**pool)
-        .await;
+        let _ = sqlx::query("UPDATE containers.managed SET install_group_id = $2 WHERE id = $1")
+            .bind(container.id)
+            .bind(install_id)
+            .execute(&**pool)
+            .await;
 
         // Create Docker container
         let docker_id = match docker.create_container(config).await {
@@ -742,7 +730,7 @@ async fn run_multi_install(
                 });
                 rollback(docker, &created_docker_ids, network_name).await;
                 return Err(msg);
-            }
+            },
         };
 
         created_docker_ids.push(docker_id.clone());
@@ -771,7 +759,7 @@ async fn run_multi_install(
             match docker.start_container(&docker_id).await {
                 Ok(()) => {
                     let _ = repo.update_status(container.id, "running").await;
-                }
+                },
                 Err(e) => {
                     let msg = format!("Failed to start {container_name}: {e}");
                     let _ = tx.send(InstallEvent::Error {
@@ -779,7 +767,7 @@ async fn run_multi_install(
                     });
                     rollback(docker, &created_docker_ids, network_name).await;
                     return Err(msg);
-                }
+                },
             }
         }
 
@@ -832,11 +820,7 @@ fn topo_sort_services(services: &[ParsedService]) -> Vec<String> {
 }
 
 /// Rollback: remove created containers and network.
-async fn rollback(
-    docker: &crate::docker::DockerClient,
-    docker_ids: &[String],
-    network_name: &str,
-) {
+async fn rollback(docker: &crate::docker::DockerClient, docker_ids: &[String], network_name: &str) {
     for id in docker_ids {
         let _ = docker.remove_container(id, true, false).await;
     }
@@ -866,9 +850,7 @@ pub async fn install_progress(
         .install_channels
         .get(&install_id)
         .map(|entry| entry.value().subscribe())
-        .ok_or_else(|| {
-            Error::NotFound(format!("Install session {install_id} not found"))
-        })?;
+        .ok_or_else(|| Error::NotFound(format!("Install session {install_id} not found")))?;
 
     let stream = async_stream::stream! {
         let mut rx = rx;
@@ -935,10 +917,7 @@ pub async fn validate_source(
     State(state): State<AppState>,
     Json(req): Json<AddSourceRequest>,
 ) -> Result<Json<SourceValidation>> {
-    let validation = state
-        .store
-        .validate_source(&req.url)
-        .await;
+    let validation = state.store.validate_source(&req.url).await;
     Ok(Json(validation))
 }
 
@@ -998,7 +977,9 @@ pub async fn refresh_source(
         .refresh_source(id)
         .await
         .map_err(|e| Error::Internal(e.to_string()))?;
-    Ok(Json(serde_json::json!({ "success": true, "app_count": count })))
+    Ok(Json(
+        serde_json::json!({ "success": true, "app_count": count }),
+    ))
 }
 
 /// Refresh all sources (admin only).

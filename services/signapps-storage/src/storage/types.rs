@@ -1,4 +1,4 @@
-//! MinIO/S3 types.
+//! Storage types.
 #![allow(dead_code)]
 
 use serde::{Deserialize, Serialize};

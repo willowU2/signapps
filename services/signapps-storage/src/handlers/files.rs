@@ -11,7 +11,7 @@ use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 
-use crate::minio::{CopyRequest, ListObjectsQuery, ListObjectsResponse, ObjectInfo};
+use crate::storage::{CopyRequest, ListObjectsQuery, ListObjectsResponse, ObjectInfo};
 use crate::AppState;
 
 /// Upload response.
@@ -36,7 +36,7 @@ pub async fn list(
     Path(bucket): Path<String>,
     Query(query): Query<ListObjectsQuery>,
 ) -> Result<Json<ListObjectsResponse>> {
-    let response = state.minio.list_objects(&bucket, query).await?;
+    let response = state.storage.list_objects(&bucket, query).await?;
     Ok(Json(response))
 }
 
@@ -46,7 +46,7 @@ pub async fn get_info(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<Json<ObjectInfo>> {
-    let info = state.minio.get_object_info(&bucket, &key).await?;
+    let info = state.storage.get_object_info(&bucket, &key).await?;
     Ok(Json(info))
 }
 
@@ -56,26 +56,15 @@ pub async fn download(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<Response> {
-    let object = state.minio.get_object(&bucket, &key).await?;
+    let object = state.storage.get_object(&bucket, &key).await?;
 
-    let content_type = object
-        .content_type()
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| "application/octet-stream".to_string());
-
-    let content_length = object.content_length().unwrap_or(0);
+    let content_type = object.content_type;
+    let content_length = object.content_length;
 
     // Get filename from key
     let filename = key.split('/').next_back().unwrap_or(&key);
 
-    // Collect body bytes from ByteStream
-    let bytes = object
-        .body
-        .collect()
-        .await
-        .map_err(|e| Error::Internal(format!("Failed to read object body: {}", e)))?
-        .into_bytes();
-    let body = Body::from(bytes);
+    let body = Body::from(object.data);
 
     let response = Response::builder()
         .status(StatusCode::OK)
@@ -127,7 +116,7 @@ pub async fn upload(
         let size = data.len();
 
         state
-            .minio
+            .storage
             .put_object(&bucket, &filename, data, Some(&content_type))
             .await?;
 
@@ -169,7 +158,7 @@ pub async fn upload_with_key(
     let size = body.len();
 
     state
-        .minio
+        .storage
         .put_object(&bucket, &key, body, Some(&content_type))
         .await?;
 
@@ -189,7 +178,7 @@ pub async fn delete(
     State(state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<StatusCode> {
-    state.minio.delete_object(&bucket, &key).await?;
+    state.storage.delete_object(&bucket, &key).await?;
     tracing::info!(bucket = %bucket, key = %key, "File deleted");
     Ok(StatusCode::NO_CONTENT)
 }
@@ -202,7 +191,7 @@ pub async fn delete_many(
     Json(payload): Json<DeleteFilesRequest>,
 ) -> Result<StatusCode> {
     for key in &payload.keys {
-        state.minio.delete_object(&bucket, key).await?;
+        state.storage.delete_object(&bucket, key).await?;
     }
 
     tracing::info!(bucket = %bucket, count = payload.keys.len(), "Files deleted");
@@ -217,7 +206,7 @@ pub async fn copy(
     Json(payload): Json<CopyRequest>,
 ) -> Result<Json<ObjectInfo>> {
     state
-        .minio
+        .storage
         .copy_object(
             &payload.source_bucket,
             &payload.source_key,
@@ -227,7 +216,7 @@ pub async fn copy(
         .await?;
 
     let info = state
-        .minio
+        .storage
         .get_object_info(&payload.dest_bucket, &payload.dest_key)
         .await?;
 
@@ -247,7 +236,7 @@ pub async fn move_file(
     Json(payload): Json<CopyRequest>,
 ) -> Result<Json<ObjectInfo>> {
     state
-        .minio
+        .storage
         .move_object(
             &payload.source_bucket,
             &payload.source_key,
@@ -257,7 +246,7 @@ pub async fn move_file(
         .await?;
 
     let info = state
-        .minio
+        .storage
         .get_object_info(&payload.dest_bucket, &payload.dest_key)
         .await?;
 

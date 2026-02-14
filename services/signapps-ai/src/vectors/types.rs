@@ -1,9 +1,9 @@
-//! Qdrant types for document storage.
+//! Vector types for document storage.
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Document chunk stored in Qdrant.
+/// Document chunk for indexing.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocumentChunk {
     /// Unique ID of this chunk.
@@ -22,7 +22,7 @@ pub struct DocumentChunk {
     pub mime_type: Option<String>,
 }
 
-/// Search result from Qdrant.
+/// Search result from vector similarity search.
 #[derive(Debug, Clone, Serialize)]
 pub struct SearchResult {
     /// Chunk ID.

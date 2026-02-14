@@ -8,7 +8,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 
-use crate::minio::{BucketInfo, StorageStats};
+use crate::storage::{BucketInfo, StorageStats};
 use crate::AppState;
 
 /// Create bucket request.
@@ -29,7 +29,7 @@ pub struct BucketResponse {
 /// List all buckets.
 #[tracing::instrument(skip(state))]
 pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<BucketInfo>>> {
-    let buckets = state.minio.list_buckets().await?;
+    let buckets = state.storage.list_buckets().await?;
     Ok(Json(buckets))
 }
 
@@ -40,11 +40,11 @@ pub async fn get(
     Path(name): Path<String>,
 ) -> Result<Json<BucketResponse>> {
     // Check bucket exists
-    if !state.minio.bucket_exists(&name).await? {
+    if !state.storage.bucket_exists(&name).await? {
         return Err(Error::NotFound(format!("Bucket {}", name)));
     }
 
-    let stats = state.minio.get_bucket_stats(&name).await.ok();
+    let stats = state.storage.get_bucket_stats(&name).await.ok();
 
     Ok(Json(BucketResponse {
         name,
@@ -77,11 +77,11 @@ pub async fn create(
     }
 
     // Check if already exists
-    if state.minio.bucket_exists(&payload.name).await? {
+    if state.storage.bucket_exists(&payload.name).await? {
         return Err(Error::AlreadyExists(format!("Bucket {}", payload.name)));
     }
 
-    state.minio.create_bucket(&payload.name).await?;
+    state.storage.create_bucket(&payload.name).await?;
 
     tracing::info!(bucket = %payload.name, "Bucket created");
 
@@ -96,26 +96,26 @@ pub async fn create(
 #[tracing::instrument(skip(state))]
 pub async fn delete(State(state): State<AppState>, Path(name): Path<String>) -> Result<StatusCode> {
     // Check bucket exists
-    if !state.minio.bucket_exists(&name).await? {
+    if !state.storage.bucket_exists(&name).await? {
         return Err(Error::NotFound(format!("Bucket {}", name)));
     }
 
     // Check if empty
-    let query = crate::minio::ListObjectsQuery {
+    let query = crate::storage::ListObjectsQuery {
         prefix: None,
         delimiter: None,
         max_keys: Some(1),
         continuation_token: None,
     };
 
-    let objects = state.minio.list_objects(&name, query).await?;
+    let objects = state.storage.list_objects(&name, query).await?;
     if !objects.objects.is_empty() {
         return Err(Error::BadRequest(
             "Bucket is not empty. Delete all objects first.".to_string(),
         ));
     }
 
-    state.minio.delete_bucket(&name).await?;
+    state.storage.delete_bucket(&name).await?;
 
     tracing::info!(bucket = %name, "Bucket deleted");
 
