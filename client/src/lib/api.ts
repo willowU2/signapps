@@ -589,6 +589,14 @@ export const aiApi = {
       params: provider ? { provider } : undefined,
     }),
   providers: () => aiApiClient.get<ProvidersResponse>('/ai/providers'),
+  // Model management
+  localModels: () => aiApiClient.get<{ models: ModelEntry[] }>('/ai/models/local'),
+  availableModels: () => aiApiClient.get<{ models: ModelEntry[] }>('/ai/models/available'),
+  downloadModel: (modelId: string) =>
+    aiApiClient.post<{ model_id: string; status: string; path?: string }>('/ai/models/download', { model_id: modelId }),
+  deleteModel: (modelId: string) => aiApiClient.delete(`/ai/models/${modelId}`),
+  hardware: () => aiApiClient.get<{ hardware: HardwareProfile }>('/ai/hardware'),
+
   // Knowledge Bases / Collections
   listCollections: () => aiApiClient.get<CollectionsResponse>('/ai/collections'),
   getCollection: (name: string) => aiApiClient.get<KnowledgeBase>(`/ai/collections/${name}`),
@@ -637,7 +645,7 @@ export interface ProvidersResponse {
 export interface ProviderInfo {
   id: string;
   name: string;
-  provider_type: 'ollama' | 'vllm' | 'openai' | 'anthropic';
+  provider_type: 'ollama' | 'vllm' | 'openai' | 'anthropic' | 'llamacpp';
   enabled: boolean;
   default_model: string;
   is_local: boolean;
@@ -670,6 +678,48 @@ export interface CollectionStats {
 export interface CreateCollectionRequest {
   name: string;
   description?: string;
+}
+
+// Hardware types (aligned with signapps-runtime gpu.rs)
+export interface GpuInfo {
+  name: string;
+  vendor: 'nvidia' | 'amd' | 'intel' | 'apple' | 'unknown';
+  vram_mb: number;
+}
+
+export interface HardwareProfile {
+  gpus: GpuInfo[];
+  preferred_backend: InferenceBackend;
+  total_vram_mb: number;
+  cpu_cores: number;
+  system_ram_mb: number;
+}
+
+export type InferenceBackend =
+  | { type: 'cuda'; version: string }
+  | { type: 'rocm'; version: string }
+  | { type: 'vulkan' }
+  | { type: 'metal' }
+  | { type: 'cpu' };
+
+// Model management types (aligned with signapps-runtime models.rs)
+export type ModelType = 'stt' | 'tts' | 'ocr' | 'llm' | 'embeddings';
+
+export type ModelStatus =
+  | 'available'
+  | { downloading: { progress: number } }
+  | 'ready'
+  | 'loaded'
+  | { error: { message: string } };
+
+export interface ModelEntry {
+  id: string;
+  model_type: ModelType;
+  size_bytes: number;
+  status: ModelStatus;
+  local_path?: string;
+  recommended_vram_mb: number;
+  description: string;
 }
 
 // Routes/Proxy API
@@ -2044,4 +2094,10 @@ export interface ConnectExternalRequest {
   username?: string;
   password?: string;
   options?: Record<string, string>;
+}
+
+// Voice WebSocket helper
+export function getVoiceWebSocketUrl(): string {
+  const baseUrl = MEDIA_URL.replace(/^http/, 'ws');
+  return `${baseUrl}/voice`;
 }

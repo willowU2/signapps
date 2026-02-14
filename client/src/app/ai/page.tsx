@@ -73,6 +73,7 @@ import { cn } from '@/lib/utils';
 import { DocumentUpload } from '@/components/ai/document-upload';
 import { VoiceChatButton } from '@/components/ai/voice-chat-button';
 import { useVoiceChat } from '@/hooks/use-voice-chat';
+import { ModelManagement } from '@/components/ai/model-management';
 import { toast } from 'sonner';
 
 // Types for conversations
@@ -233,7 +234,7 @@ export default function AIPage() {
   const [tempSystemPrompt, setTempSystemPrompt] = useState('');
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'chat' | 'knowledge'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'knowledge' | 'models'>('chat');
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -806,10 +807,28 @@ export default function AIPage() {
 
   // Voice chat hook
   const { voiceEnabled, voiceState, toggleVoice } = useVoiceChat({
-    onTranscript: (text) => handleSend(text),
-    abortControllerRef,
-    getStreamingText: () => accumulatedRef.current,
-    isLoading,
+    onTranscript: (text) => {
+      const userMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: text,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, userMessage]);
+    },
+    onAssistantMessage: (text) => {
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: text,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    },
+    provider: selectedProvider,
+    model: selectedModel,
+    language: selectedLanguage,
+    systemPrompt: customSystemPrompt,
   });
 
   return (
@@ -919,7 +938,9 @@ export default function AIPage() {
             <div className="flex items-center gap-2">
               {/* Provider Selector */}
               <div className="flex items-center gap-2">
-                {providers.find(p => p.id === selectedProvider)?.is_local ? (
+                {providers.find(p => p.id === selectedProvider)?.provider_type === 'llamacpp' ? (
+                  <Cpu className="h-4 w-4 text-muted-foreground" />
+                ) : providers.find(p => p.id === selectedProvider)?.is_local ? (
                   <Server className="h-4 w-4 text-muted-foreground" />
                 ) : (
                   <Cloud className="h-4 w-4 text-muted-foreground" />
@@ -941,7 +962,9 @@ export default function AIPage() {
                     {providers.filter(p => p.enabled).map((provider) => (
                       <SelectItem key={provider.id} value={provider.id}>
                         <div className="flex items-center gap-2">
-                          {provider.is_local ? (
+                          {provider.provider_type === 'llamacpp' ? (
+                            <Cpu className="h-3 w-3" />
+                          ) : provider.is_local ? (
                             <Server className="h-3 w-3" />
                           ) : (
                             <Cloud className="h-3 w-3" />
@@ -1021,7 +1044,7 @@ export default function AIPage() {
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'chat' | 'knowledge')} className="flex-1 flex flex-col">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'chat' | 'knowledge' | 'models')} className="flex-1 flex flex-col">
             <div className="border-b px-4">
               <TabsList variant="line">
                 <TabsTrigger value="chat">
@@ -1031,6 +1054,10 @@ export default function AIPage() {
                 <TabsTrigger value="knowledge">
                   <Database className="h-4 w-4 mr-2" />
                   Knowledge Bases
+                </TabsTrigger>
+                <TabsTrigger value="models">
+                  <Cpu className="h-4 w-4 mr-2" />
+                  Modeles
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -1310,6 +1337,11 @@ export default function AIPage() {
                   </div>
                 )}
               </div>
+            </TabsContent>
+
+            {/* Models Tab */}
+            <TabsContent value="models" className="flex-1 m-0 p-4 overflow-auto">
+              <ModelManagement />
             </TabsContent>
           </Tabs>
         </div>
