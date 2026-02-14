@@ -62,18 +62,13 @@ npm run test:e2e:chromium     # single browser
 ```bash
 # PostgreSQL: install natively (auto-detected by services)
 # No Redis, Qdrant, MinIO, or media Docker containers needed
+# All AI models (STT, TTS, OCR, LLM, embeddings) run natively
 
 # Models are downloaded automatically on first use to ./data/models/
 # Override with MODELS_DIR env var
 
 # Start all services via docker-compose (optional, for deployment)
 docker-compose up -d
-
-# With AI services (Ollama/vLLM)
-docker-compose -f docker-compose.yml -f docker-compose.ai.yml up -d
-
-# AI setup (pulls models)
-.\scripts\setup-ai.ps1
 ```
 
 ## Architecture
