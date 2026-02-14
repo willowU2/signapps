@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use rand::Rng;
 use super::types::*;
 
-/// Strip Cosmos template directives (`{if ...}`, `{/if}`, `{else}`) and fix
+/// Strip store template directives (`{if ...}`, `{/if}`, `{else}`) and fix
 /// resulting JSON/YAML syntax (trailing/leading commas).
-fn strip_cosmos_templates(text: &str) -> String {
+fn strip_store_templates(text: &str) -> String {
     let mut lines: Vec<&str> = Vec::new();
     for line in text.lines() {
         let trimmed = line.trim();
@@ -28,21 +28,21 @@ fn strip_cosmos_templates(text: &str) -> String {
     re_double.replace_all(&cleaned, ",").to_string()
 }
 
-/// Resolve Cosmos template variables in a string value.
+/// Resolve store template variables in a string value.
 ///
 /// Supported patterns:
-/// - `{Passwords.CosmosString.SEED}` → random 16-char alphanumeric password
-/// - `{Passwords.CosmosString.LENGTH.SEED}` → random password of LENGTH chars
+/// - `{Passwords.*.SEED}` → random 16-char alphanumeric password
+/// - `{Passwords.*.LENGTH.SEED}` → random password of LENGTH chars
 /// - `{ServiceName}` → replaced with the given service name
-/// - `{Context.*}` → removed (not applicable outside Cosmos)
-pub fn resolve_cosmos_templates(value: &str, service_name: &str) -> String {
+/// - `{Context.*}` → removed (not applicable in this context)
+pub fn resolve_store_templates(value: &str, service_name: &str) -> String {
     if !value.contains('{') {
         return value.to_string();
     }
 
     let mut result = value.to_string();
 
-    // Replace {Passwords.CosmosString.*} with random passwords
+    // Replace {Passwords.*} patterns with random passwords
     let password_re =
         regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
     result = password_re
@@ -59,7 +59,7 @@ pub fn resolve_cosmos_templates(value: &str, service_name: &str) -> String {
     result
 }
 
-/// Resolve Cosmos templates for display (used by the parser).
+/// Resolve store templates for display (used by the parser).
 ///
 /// Resolves `{Passwords.*}` and removes `{Context.*}`, but keeps
 /// `{ServiceName}` as a placeholder so the frontend can replace it with
@@ -71,14 +71,14 @@ fn resolve_for_display(value: &str) -> String {
 
     let mut result = value.to_string();
 
-    // Replace {Passwords.CosmosString.*} with random passwords
+    // Replace {Passwords.*} patterns with random passwords (external format)
     let password_re =
         regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
 
-    // Remove any {Context.*} references (not applicable outside Cosmos)
+    // Remove any {Context.*} references (not applicable locally)
     let context_re = regex::Regex::new(r"\{Context\.[^}]+\}").unwrap();
     result = context_re.replace_all(&result, "").to_string();
 
@@ -97,7 +97,7 @@ fn resolve_volume_for_display(source: &str) -> String {
 
     let mut result = source.to_string();
 
-    // Replace {Passwords.CosmosString.*} with random passwords
+    // Replace {Passwords.*} patterns with random passwords (external format)
     let password_re =
         regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
     result = password_re
@@ -138,13 +138,13 @@ fn generate_password(len: usize) -> String {
 }
 
 /// Parse a compose file (JSON or YAML) into a `ParsedAppConfig`.
-/// Strips Cosmos template directives first, then tries the format
+/// Strips store template directives first, then tries the format
 /// indicated by the URL extension, with fallback to the other format.
 pub fn parse_compose(text: &str, is_yaml: bool) -> Result<ParsedAppConfig, String> {
-    let clean = strip_cosmos_templates(text);
+    let clean = strip_store_templates(text);
     let text = &clean;
 
-    let compose: CosmosCompose = if is_yaml {
+    let compose: ComposeSpec = if is_yaml {
         serde_yaml::from_str(text).or_else(|yaml_err| {
             serde_json::from_str(text)
                 .map_err(|_| format!("YAML parse error: {yaml_err}"))
@@ -170,7 +170,7 @@ pub fn parse_compose(text: &str, is_yaml: bool) -> Result<ParsedAppConfig, Strin
     Ok(ParsedAppConfig { services: parsed })
 }
 
-fn parse_service(name: &str, svc: &CosmosService) -> ParsedService {
+fn parse_service(name: &str, svc: &ComposeService) -> ParsedService {
     let mut env = parse_env(&svc.environment);
     // Resolve passwords and remove {Context.*} in env defaults.
     // Keep {ServiceName} as template for the frontend to resolve with the
@@ -224,10 +224,10 @@ fn parse_depends_on(val: &Option<serde_json::Value>) -> Vec<String> {
     }
 }
 
-fn parse_env(env: &Option<CosmosEnv>) -> Vec<EnvVar> {
+fn parse_env(env: &Option<ComposeEnv>) -> Vec<EnvVar> {
     match env {
         None => vec![],
-        Some(CosmosEnv::List(list)) => list
+        Some(ComposeEnv::List(list)) => list
             .iter()
             .map(|s| {
                 if let Some((k, v)) = s.split_once('=') {
@@ -243,7 +243,7 @@ fn parse_env(env: &Option<CosmosEnv>) -> Vec<EnvVar> {
                 }
             })
             .collect(),
-        Some(CosmosEnv::Map(map)) => map
+        Some(ComposeEnv::Map(map)) => map
             .iter()
             .map(|(k, v)| EnvVar {
                 key: k.to_string(),
@@ -330,10 +330,10 @@ fn parse_port_string(s: &str) -> Option<AppPort> {
     })
 }
 
-fn parse_labels(labels: &Option<CosmosLabels>) -> HashMap<String, String> {
+fn parse_labels(labels: &Option<ComposeLabels>) -> HashMap<String, String> {
     match labels {
         None => HashMap::new(),
-        Some(CosmosLabels::Map(map)) => map
+        Some(ComposeLabels::Map(map)) => map
             .iter()
             .map(|(k, v)| {
                 let val = match v {
@@ -345,7 +345,7 @@ fn parse_labels(labels: &Option<CosmosLabels>) -> HashMap<String, String> {
                 (k.clone(), val)
             })
             .collect(),
-        Some(CosmosLabels::List(list)) => list
+        Some(ComposeLabels::List(list)) => list
             .iter()
             .filter_map(|s| {
                 let (k, v) = s.split_once('=')?;
@@ -355,7 +355,7 @@ fn parse_labels(labels: &Option<CosmosLabels>) -> HashMap<String, String> {
     }
 }
 
-fn parse_volumes(volumes: &Option<Vec<CosmosVolume>>) -> Vec<AppVolume> {
+fn parse_volumes(volumes: &Option<Vec<ComposeVolume>>) -> Vec<AppVolume> {
     let Some(volumes) = volumes else {
         return vec![];
     };
@@ -363,7 +363,7 @@ fn parse_volumes(volumes: &Option<Vec<CosmosVolume>>) -> Vec<AppVolume> {
     volumes
         .iter()
         .filter_map(|v| match v {
-            CosmosVolume::Short(s) => {
+            ComposeVolume::Short(s) => {
                 let parts: Vec<&str> = s.splitn(2, ':').collect();
                 if parts.len() == 2 {
                     Some(AppVolume {
@@ -375,7 +375,7 @@ fn parse_volumes(volumes: &Option<Vec<CosmosVolume>>) -> Vec<AppVolume> {
                     None
                 }
             }
-            CosmosVolume::Long {
+            ComposeVolume::Long {
                 source,
                 target,
                 read_only,
@@ -389,13 +389,13 @@ fn parse_volumes(volumes: &Option<Vec<CosmosVolume>>) -> Vec<AppVolume> {
         .collect()
 }
 
-fn parse_command(cmd: &Option<CosmosCommand>) -> Option<Vec<String>> {
+fn parse_command(cmd: &Option<ComposeCommand>) -> Option<Vec<String>> {
     match cmd {
         None => None,
-        Some(CosmosCommand::String(s)) => {
+        Some(ComposeCommand::String(s)) => {
             Some(s.split_whitespace().map(|w| w.to_string()).collect())
         }
-        Some(CosmosCommand::List(l)) => Some(l.clone()),
+        Some(ComposeCommand::List(l)) => Some(l.clone()),
     }
 }
 

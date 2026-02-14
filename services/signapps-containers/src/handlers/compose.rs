@@ -9,7 +9,7 @@ use signapps_db::models::CreateContainer;
 use signapps_db::repositories::ContainerRepository;
 
 use crate::docker::{ContainerConfig, PortMapping, RestartPolicy, VolumeMount};
-use crate::store::parser::{parse_compose, resolve_cosmos_templates};
+use crate::store::parser::{parse_compose, resolve_store_templates};
 use crate::store::types::ParsedAppConfig;
 use crate::AppState;
 
@@ -116,7 +116,7 @@ pub async fn import_compose(
         let mut env_vars: Vec<String> = Vec::new();
         for ev in &svc.environment {
             let val = ev.default.as_deref().unwrap_or("");
-            let resolved = resolve_cosmos_templates(val, container_name);
+            let resolved = resolve_store_templates(val, container_name);
             env_vars.push(format!("{}={}", ev.key, resolved));
         }
 

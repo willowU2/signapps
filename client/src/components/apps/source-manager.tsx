@@ -149,7 +149,7 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
                   setNewUrl(e.target.value);
                   setValidation(null);
                 }}
-                placeholder="https://example.com/cosmos-store"
+                placeholder="https://example.com/app-store"
               />
               <Button
                 size="sm"

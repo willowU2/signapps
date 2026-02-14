@@ -156,10 +156,10 @@ impl StoreManager {
 
         let text = resp.text().await.map_err(|e| format!("Read error: {e}"))?;
 
-        // Parse index.json – Cosmos format:
+        // Parse index.json – app store format:
         // { "source": "...", "showcase": [...], "all": [...] }
         // where "all" is an array of app metadata objects.
-        let index: CosmosIndex =
+        let index: AppStoreIndex =
             serde_json::from_str(&text).map_err(|e| format!("JSON parse error: {e}"))?;
 
         let all_apps = index.all.unwrap_or_default();
@@ -178,7 +178,7 @@ impl StoreManager {
             let compose_url = match &meta.compose {
                 Some(c) if c.starts_with("http") => c.clone(),
                 Some(c) => format!("{base_url}/{c}"),
-                None => format!("{base_url}/{app_id}/cosmos-compose.json"),
+                None => format!("{base_url}/{app_id}/compose.json"),
             };
 
             apps.push(StoreApp {
@@ -356,7 +356,7 @@ impl StoreManager {
             }
         };
 
-        match serde_json::from_str::<CosmosIndex>(&text) {
+        match serde_json::from_str::<AppStoreIndex>(&text) {
             Ok(index) => {
                 let count = index.all.map(|a| a.len()).unwrap_or(0);
                 SourceValidation {

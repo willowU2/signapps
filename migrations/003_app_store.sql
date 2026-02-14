@@ -1,4 +1,4 @@
--- App Store: sources for external app catalogs (Cosmos/CasaOS format)
+-- App Store: sources for external app catalogs
 
 CREATE TABLE IF NOT EXISTS containers.app_sources (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS containers.app_sources (
 
 -- Default sources
 INSERT INTO containers.app_sources (name, url) VALUES
-    ('Cosmos CasaOS Store', 'https://azukaar.github.io/cosmos-casaos-store'),
-    ('Cosmos ManhTuong', 'https://cosmos.manhtuong.net'),
-    ('Cosmos Unofficial', 'https://lilkidsuave.github.io/cosmos-servapps-unofficial'),
-    ('Cosmos Ragdata', 'https://ragdata.github.io/cosmos-servapps')
+    ('CasaOS Store', 'https://azukaar.github.io/cosmos-casaos-store'),
+    ('ManhTuong Store', 'https://cosmos.manhtuong.net'),
+    ('Community Apps', 'https://lilkidsuave.github.io/cosmos-servapps-unofficial'),
+    ('Ragdata Apps', 'https://ragdata.github.io/cosmos-servapps')
 ON CONFLICT (url) DO NOTHING;

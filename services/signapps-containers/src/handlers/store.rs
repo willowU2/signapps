@@ -94,8 +94,8 @@ pub async fn install_app(
             .or(ev.default.as_ref())
             .cloned()
             .unwrap_or_default();
-        // Resolve any remaining Cosmos template variables
-        val = crate::store::parser::resolve_cosmos_templates(&val, &req.container_name);
+        // Resolve any remaining store template variables
+        val = crate::store::parser::resolve_store_templates(&val, &req.container_name);
         env_vars.push(format!("{}={}", ev.key, val));
     }
 
@@ -524,8 +524,8 @@ async fn run_multi_install(
             .or_else(|| ev.default.clone())
             .unwrap_or_default();
 
-            // Resolve Cosmos template variables
-            val = crate::store::parser::resolve_cosmos_templates(&val, container_name);
+            // Resolve store template variables
+            val = crate::store::parser::resolve_store_templates(&val, container_name);
             // Replace service name references in env values
             for (sname, cname) in &name_map {
                 val = val.replace(sname, cname);

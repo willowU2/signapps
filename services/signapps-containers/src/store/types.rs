@@ -65,17 +65,17 @@ pub struct SourceInfo {
     pub source_name: String,
 }
 
-// ── Cosmos index.json format ────────────────────────────────────
+// ── App store index.json format ─────────────────────────────────
 
-/// Top-level structure of a Cosmos-format index.json.
+/// Top-level structure of an app store index.json.
 /// Format: { "source": "...", "showcase": [...], "all": [...] }
 #[derive(Debug, Deserialize)]
-pub struct CosmosIndex {
-    pub all: Option<Vec<CosmosAppMeta>>,
+pub struct AppStoreIndex {
+    pub all: Option<Vec<AppStoreMeta>>,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct CosmosAppMeta {
+pub struct AppStoreMeta {
     pub id: Option<String>,
     pub name: Option<String>,
     pub description: Option<String>,
@@ -89,23 +89,23 @@ pub struct CosmosAppMeta {
     pub image: Option<String>,
 }
 
-// ── Cosmos-compose / docker-compose parsed types ────────────────
+// ── Compose / docker-compose parsed types ───────────────────────
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct CosmosCompose {
-    pub services: Option<HashMap<String, CosmosService>>,
+pub struct ComposeSpec {
+    pub services: Option<HashMap<String, ComposeService>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct CosmosService {
+pub struct ComposeService {
     pub image: Option<String>,
     pub container_name: Option<String>,
     pub restart: Option<String>,
-    pub environment: Option<CosmosEnv>,
+    pub environment: Option<ComposeEnv>,
     pub ports: Option<Vec<serde_json::Value>>,
-    pub volumes: Option<Vec<CosmosVolume>>,
-    pub labels: Option<CosmosLabels>,
-    pub command: Option<CosmosCommand>,
+    pub volumes: Option<Vec<ComposeVolume>>,
+    pub labels: Option<ComposeLabels>,
+    pub command: Option<ComposeCommand>,
     pub hostname: Option<String>,
     pub depends_on: Option<serde_json::Value>,
     #[allow(dead_code)]
@@ -118,21 +118,21 @@ pub struct CosmosService {
 /// Labels can be a map {"key": "value"} or an array ["key=value"].
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
-pub enum CosmosLabels {
+pub enum ComposeLabels {
     Map(HashMap<String, serde_json::Value>),
     List(Vec<String>),
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
-pub enum CosmosEnv {
+pub enum ComposeEnv {
     List(Vec<String>),
     Map(HashMap<String, serde_json::Value>),
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
-pub enum CosmosVolume {
+pub enum ComposeVolume {
     Short(String),
     Long {
         source: Option<String>,
@@ -146,7 +146,7 @@ pub enum CosmosVolume {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
-pub enum CosmosCommand {
+pub enum ComposeCommand {
     String(String),
     List(Vec<String>),
 }
