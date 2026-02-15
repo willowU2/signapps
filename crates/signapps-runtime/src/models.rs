@@ -307,7 +307,7 @@ impl ModelManager {
             ModelType::Ocr => Some("ocrs-text-detection".to_string()),
             ModelType::Llm => Some(
                 match tier {
-                    ModelTier::Large => "llama-3.2-8b-q4",
+                    ModelTier::Large => "llama-3.1-8b-q4",
                     ModelTier::Medium => "llama-3.2-3b-q4",
                     ModelTier::Small => "llama-3.2-1b-q8",
                 }
@@ -499,22 +499,42 @@ impl ModelManager {
             );
         }
 
-        // LLM (GGUF) models
-        let llm_models: [(
-            &str,
-            &str,
-            &str,
-            u64,
-            u64,
-            &str,
-        ); 5] = [
+        // LLM (GGUF) models — sorted by size (tiny → XXL)
+        let llm_models: [(&str, &str, &str, u64, u64, &str); 18] = [
+            // --- Tiny (CPU, < 1 GB) ---
+            (
+                "qwen2.5-0.5b-q8",
+                "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+                "qwen2.5-0.5b-instruct-q8_0.gguf",
+                530_000_000,
+                0,
+                "Qwen 2.5 0.5B Q8 - ultra-leger, CPU, multilingue",
+            ),
+            // --- Small (1-2 GB) ---
+            (
+                "qwen2.5-1.5b-q4",
+                "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+                "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+                1_000_000_000,
+                0,
+                "Qwen 2.5 1.5B Q4 - compact, multilingue, CPU",
+            ),
             (
                 "llama-3.2-1b-q8",
                 "bartowski/Llama-3.2-1B-Instruct-GGUF",
                 "Llama-3.2-1B-Instruct-Q8_0.gguf",
                 1_320_000_000,
                 0,
-                "Llama 3.2 1B Q8 - compact, runs on CPU",
+                "Llama 3.2 1B Q8 - rapide, tourne sur CPU",
+            ),
+            // --- Medium (2-3 GB) ---
+            (
+                "gemma-2-2b-q4",
+                "bartowski/gemma-2-2b-it-GGUF",
+                "gemma-2-2b-it-Q4_K_M.gguf",
+                1_500_000_000,
+                2048,
+                "Gemma 2 2B Q4 - Google, compact et performant",
             ),
             (
                 "llama-3.2-3b-q4",
@@ -522,15 +542,7 @@ impl ModelManager {
                 "Llama-3.2-3B-Instruct-Q4_K_M.gguf",
                 2_020_000_000,
                 2048,
-                "Llama 3.2 3B Q4 - good balance speed/quality",
-            ),
-            (
-                "phi-3.5-mini-q4",
-                "bartowski/Phi-3.5-mini-instruct-GGUF",
-                "Phi-3.5-mini-instruct-Q4_K_M.gguf",
-                2_400_000_000,
-                3072,
-                "Phi 3.5 Mini 3.8B Q4 - excellent quality/size ratio",
+                "Llama 3.2 3B Q4 - bon equilibre vitesse/qualite",
             ),
             (
                 "qwen2.5-3b-q4",
@@ -538,7 +550,24 @@ impl ModelManager {
                 "qwen2.5-3b-instruct-q4_k_m.gguf",
                 2_070_000_000,
                 2048,
-                "Qwen 2.5 3B Q4 - strong multilingual",
+                "Qwen 2.5 3B Q4 - multilingue, polyvalent",
+            ),
+            (
+                "phi-3.5-mini-q4",
+                "bartowski/Phi-3.5-mini-instruct-GGUF",
+                "Phi-3.5-mini-instruct-Q4_K_M.gguf",
+                2_400_000_000,
+                3072,
+                "Phi 3.5 Mini 3.8B Q4 - excellent ratio qualite/taille",
+            ),
+            // --- Large (4-6 GB) ---
+            (
+                "mistral-7b-v0.3-q4",
+                "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
+                "Mistral-7B-Instruct-v0.3-Q4_K_M.gguf",
+                4_370_000_000,
+                5120,
+                "Mistral 7B v0.3 Q4 - generaliste francais/anglais",
             ),
             (
                 "qwen2.5-7b-q4",
@@ -546,7 +575,81 @@ impl ModelManager {
                 "qwen2.5-7b-instruct-q4_k_m.gguf",
                 4_680_000_000,
                 6144,
-                "Qwen 2.5 7B Q4 - best quality, needs 6GB+ VRAM",
+                "Qwen 2.5 7B Q4 - excellent multilingue, 6 GB VRAM",
+            ),
+            (
+                "qwen2.5-coder-7b-q4",
+                "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
+                "qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+                4_680_000_000,
+                6144,
+                "Qwen 2.5 Coder 7B Q4 - specialise code, 6 GB VRAM",
+            ),
+            (
+                "llama-3.1-8b-q4",
+                "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+                "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
+                4_920_000_000,
+                6144,
+                "Llama 3.1 8B Q4 - excellent generaliste, multilingue",
+            ),
+            // --- XL (6-10 GB) ---
+            (
+                "gemma-2-9b-q4",
+                "bartowski/gemma-2-9b-it-GGUF",
+                "gemma-2-9b-it-Q4_K_M.gguf",
+                5_760_000_000,
+                7168,
+                "Gemma 2 9B Q4 - Google, tres performant, 7 GB VRAM",
+            ),
+            (
+                "mistral-nemo-12b-q4",
+                "bartowski/Mistral-Nemo-Instruct-2407-GGUF",
+                "Mistral-Nemo-Instruct-2407-Q4_K_M.gguf",
+                7_000_000_000,
+                8192,
+                "Mistral Nemo 12B Q4 - haute qualite, 8 GB VRAM",
+            ),
+            (
+                "qwen2.5-14b-q4",
+                "Qwen/Qwen2.5-14B-Instruct-GGUF",
+                "qwen2.5-14b-instruct-q4_k_m.gguf",
+                8_700_000_000,
+                10240,
+                "Qwen 2.5 14B Q4 - quasi-GPT-4, 10 GB VRAM",
+            ),
+            // --- XXL (> 10 GB) ---
+            (
+                "qwen2.5-32b-q4",
+                "Qwen/Qwen2.5-32B-Instruct-GGUF",
+                "qwen2.5-32b-instruct-q4_k_m.gguf",
+                19_800_000_000,
+                22528,
+                "Qwen 2.5 32B Q4 - niveau GPT-4, 22 GB VRAM",
+            ),
+            (
+                "qwen2.5-coder-32b-q4",
+                "Qwen/Qwen2.5-Coder-32B-Instruct-GGUF",
+                "qwen2.5-coder-32b-instruct-q4_k_m.gguf",
+                19_800_000_000,
+                22528,
+                "Qwen 2.5 Coder 32B Q4 - top code, 22 GB VRAM",
+            ),
+            (
+                "llama-3.1-70b-q4",
+                "bartowski/Meta-Llama-3.1-70B-Instruct-GGUF",
+                "Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf",
+                40_800_000_000,
+                44032,
+                "Llama 3.1 70B Q4 - meilleur open-source, 44 GB VRAM",
+            ),
+            (
+                "llama-3.3-70b-q4",
+                "bartowski/Llama-3.3-70B-Instruct-GGUF",
+                "Llama-3.3-70B-Instruct-Q4_K_M.gguf",
+                40_800_000_000,
+                44032,
+                "Llama 3.3 70B Q4 - derniere version, 44 GB VRAM",
             ),
         ];
 

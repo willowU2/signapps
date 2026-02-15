@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Cpu,
   HardDrive,
@@ -16,6 +18,7 @@ import {
   MemoryStick,
   CircuitBoard,
   Play,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   aiApi,
@@ -87,6 +90,23 @@ function getModelTypeLabel(type: string): string {
   return labels[type] || type;
 }
 
+function formatVram(vramMb: number): string {
+  if (vramMb === 0) return 'CPU';
+  if (vramMb < 1024) return `${vramMb} MB VRAM`;
+  return `${(vramMb / 1024).toFixed(0)} GB VRAM`;
+}
+
+const MODEL_TYPE_FILTERS = [
+  { value: 'all', label: 'Tous' },
+  { value: 'llm', label: 'LLM' },
+  { value: 'stt', label: 'STT' },
+  { value: 'tts', label: 'TTS' },
+  { value: 'ocr', label: 'OCR' },
+  { value: 'embeddings', label: 'Embeddings' },
+] as const;
+
+type TypeFilter = (typeof MODEL_TYPE_FILTERS)[number]['value'];
+
 interface ModelManagementProps {
   onSelectLlmModel?: (modelId: string) => void;
 }
@@ -97,6 +117,8 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
   const [availableModels, setAvailableModels] = useState<ModelEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [compatibleOnly, setCompatibleOnly] = useState(true);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -114,7 +136,9 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
         setLocalModels(localRes.value.data.models || []);
       }
       if (availableRes.status === 'fulfilled') {
-        setAvailableModels(availableRes.value.data.models || []);
+        // Only show models not yet downloaded
+        const all = availableRes.value.data.models || [];
+        setAvailableModels(all.filter(m => m.status === 'available'));
       }
     } catch (error) {
       console.error('Failed to fetch model data:', error);
@@ -156,6 +180,37 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
       toast.error('Erreur lors de la suppression');
     }
   };
+
+  const totalVram = hardware?.total_vram_mb ?? 0;
+
+  const isCompatible = useCallback(
+    (model: ModelEntry) =>
+      model.recommended_vram_mb === 0 || model.recommended_vram_mb <= totalVram,
+    [totalVram],
+  );
+
+  const filterAndSort = useCallback(
+    (models: ModelEntry[]) => {
+      let filtered = models;
+      if (typeFilter !== 'all') {
+        filtered = filtered.filter((m) => m.model_type === typeFilter);
+      }
+      if (compatibleOnly) {
+        filtered = filtered.filter(isCompatible);
+      }
+      return filtered.sort((a, b) => a.size_bytes - b.size_bytes);
+    },
+    [typeFilter, compatibleOnly, isCompatible],
+  );
+
+  const filteredLocal = useMemo(
+    () => filterAndSort(localModels),
+    [localModels, filterAndSort],
+  );
+  const filteredAvailable = useMemo(
+    () => filterAndSort(availableModels),
+    [availableModels, filterAndSort],
+  );
 
   if (loading) {
     return (
@@ -240,69 +295,108 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
         </Card>
       )}
 
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex flex-wrap gap-1">
+              {MODEL_TYPE_FILTERS.map((f) => (
+                <Button
+                  key={f.value}
+                  variant={typeFilter === f.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setTypeFilter(f.value)}
+                >
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 sm:ml-auto">
+              <Switch
+                id="compat-filter"
+                checked={compatibleOnly}
+                onCheckedChange={setCompatibleOnly}
+              />
+              <Label htmlFor="compat-filter" className="text-sm cursor-pointer">
+                Compatible avec mon hardware
+              </Label>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Local Models Card */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <HardDrive className="h-5 w-5" />
             Modeles locaux
-            <Badge variant="outline" className="ml-2">{localModels.length}</Badge>
+            <Badge variant="outline" className="ml-2">{filteredLocal.length}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {localModels.length === 0 ? (
+          {filteredLocal.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
-              Aucun modele local installe
+              Aucun modele local{typeFilter !== 'all' ? ` (${getModelTypeLabel(typeFilter)})` : ''}
             </p>
           ) : (
             <div className="space-y-3">
-              {localModels.map((model) => (
-                <div
-                  key={model.id}
-                  className="flex items-center justify-between p-3 rounded-lg border"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium truncate">{model.id}</p>
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {getModelTypeLabel(model.model_type)}
-                      </Badge>
+              {filteredLocal.map((model) => {
+                const compat = isCompatible(model);
+                return (
+                  <div
+                    key={model.id}
+                    className="flex items-center justify-between p-3 rounded-lg border"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium truncate">{model.id}</p>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {getModelTypeLabel(model.model_type)}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs shrink-0">
+                          {formatBytes(model.size_bytes)}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs shrink-0">
+                          {formatVram(model.recommended_vram_mb)}
+                        </Badge>
+                        {!compat && (
+                          <Badge className="text-xs shrink-0 bg-orange-500/15 text-orange-700 border-orange-200">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            VRAM insuffisante
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {model.description}
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {model.description}
-                    </p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span>{formatBytes(model.size_bytes)}</span>
-                      {model.recommended_vram_mb > 0 && (
-                        <span>VRAM recommandee : {formatBytes(model.recommended_vram_mb * 1024 * 1024)}</span>
+                    <div className="flex items-center gap-2 ml-4">
+                      {getStatusBadge(model.status)}
+                      {(model.status === 'ready' || model.status === 'loaded') && model.model_type === 'llm' && onSelectLlmModel && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onSelectLlmModel(model.id)}
+                        >
+                          <Play className="h-3 w-3 mr-1" />
+                          Utiliser
+                        </Button>
+                      )}
+                      {(model.status === 'ready' || model.status === 'loaded') && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          onClick={() => handleDelete(model.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    {getStatusBadge(model.status)}
-                    {(model.status === 'ready' || model.status === 'loaded') && model.model_type === 'llm' && onSelectLlmModel && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onSelectLlmModel(model.id)}
-                      >
-                        <Play className="h-3 w-3 mr-1" />
-                        Utiliser
-                      </Button>
-                    )}
-                    {(model.status === 'ready' || model.status === 'loaded') && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive"
-                        onClick={() => handleDelete(model.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -314,55 +408,66 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
           <CardTitle className="text-lg flex items-center gap-2">
             <Download className="h-5 w-5" />
             Modeles disponibles
-            <Badge variant="outline" className="ml-2">{availableModels.length}</Badge>
+            <Badge variant="outline" className="ml-2">{filteredAvailable.length}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {availableModels.length === 0 ? (
+          {filteredAvailable.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
-              Tous les modeles sont deja installes
+              {typeFilter !== 'all'
+                ? `Aucun modele ${getModelTypeLabel(typeFilter)} disponible`
+                : 'Tous les modeles sont deja installes'}
             </p>
           ) : (
             <div className="space-y-3">
-              {availableModels.map((model) => (
-                <div
-                  key={model.id}
-                  className="flex items-center justify-between p-3 rounded-lg border"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium truncate">{model.id}</p>
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {getModelTypeLabel(model.model_type)}
-                      </Badge>
+              {filteredAvailable.map((model) => {
+                const compat = isCompatible(model);
+                return (
+                  <div
+                    key={model.id}
+                    className="flex items-center justify-between p-3 rounded-lg border"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium truncate">{model.id}</p>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {getModelTypeLabel(model.model_type)}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs shrink-0">
+                          {formatBytes(model.size_bytes)}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs shrink-0">
+                          {formatVram(model.recommended_vram_mb)}
+                        </Badge>
+                        {!compat && (
+                          <Badge className="text-xs shrink-0 bg-orange-500/15 text-orange-700 border-orange-200">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            VRAM insuffisante
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {model.description}
+                      </p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {model.description}
-                    </p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span>{formatBytes(model.size_bytes)}</span>
-                      {model.recommended_vram_mb > 0 && (
-                        <span>VRAM recommandee : {formatBytes(model.recommended_vram_mb * 1024 * 1024)}</span>
-                      )}
+                    <div className="ml-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(model.id)}
+                        disabled={downloadingIds.has(model.id)}
+                      >
+                        {downloadingIds.has(model.id) ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4 mr-2" />
+                        )}
+                        Telecharger
+                      </Button>
                     </div>
                   </div>
-                  <div className="ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(model.id)}
-                      disabled={downloadingIds.has(model.id)}
-                    >
-                      {downloadingIds.has(model.id) ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4 mr-2" />
-                      )}
-                      Telecharger
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
