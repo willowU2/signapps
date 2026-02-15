@@ -9,15 +9,15 @@ export interface ServiceHealth {
 }
 
 const SERVICES = [
-  { name: 'Identity', port: 3001 },
-  { name: 'Containers', port: 3002 },
-  { name: 'Proxy', port: 3003 },
-  { name: 'Storage', port: 3004 },
-  { name: 'AI', port: 3005 },
-  { name: 'SecureLink', port: 3006 },
-  { name: 'Scheduler', port: 3007 },
-  { name: 'Metrics', port: 3008 },
-  { name: 'Media', port: 3009 },
+  { name: 'Identity', port: 3001, healthPath: '/health' },
+  { name: 'Containers', port: 3002, healthPath: '/health' },
+  { name: 'Proxy', port: 3003, healthPath: '/api/v1/health' },
+  { name: 'Storage', port: 3004, healthPath: '/api/v1/health' },
+  { name: 'AI', port: 3005, healthPath: '/api/v1/health' },
+  { name: 'SecureLink', port: 3006, healthPath: '/health' },
+  { name: 'Scheduler', port: 3007, healthPath: '/health' },
+  { name: 'Metrics', port: 3008, healthPath: '/health' },
+  { name: 'Media', port: 3009, healthPath: '/health' },
 ];
 
 export function useServiceHealth() {
@@ -28,7 +28,7 @@ export function useServiceHealth() {
         SERVICES.map(async (service) => {
           const start = Date.now();
           try {
-            await axios.get(`http://localhost:${service.port}/health`, {
+            await axios.get(`http://localhost:${service.port}${service.healthPath}`, {
               timeout: 3000,
             });
             return {

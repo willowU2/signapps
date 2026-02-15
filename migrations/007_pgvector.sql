@@ -5,7 +5,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE SCHEMA IF NOT EXISTS ai;
 
 -- Table for document vector embeddings
-CREATE TABLE ai.document_vectors (
+CREATE TABLE IF NOT EXISTS ai.document_vectors (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     document_id UUID NOT NULL,
     chunk_index INTEGER NOT NULL DEFAULT 0,
@@ -19,11 +19,11 @@ CREATE TABLE ai.document_vectors (
 );
 
 -- HNSW index for fast cosine similarity search
-CREATE INDEX idx_document_vectors_embedding
+CREATE INDEX IF NOT EXISTS idx_document_vectors_embedding
     ON ai.document_vectors
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 16, ef_construction = 64);
 
 -- Index for lookup by document
-CREATE INDEX idx_document_vectors_document_id
+CREATE INDEX IF NOT EXISTS idx_document_vectors_document_id
     ON ai.document_vectors(document_id);
