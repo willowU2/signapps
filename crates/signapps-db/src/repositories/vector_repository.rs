@@ -1,6 +1,8 @@
 //! Vector repository for pgvector document storage.
 
-use crate::models::{VectorSearchResult, VectorStats};
+use crate::models::{
+    Collection, CollectionStatsDetail, CollectionWithStats, VectorSearchResult, VectorStats,
+};
 use crate::DatabasePool;
 use pgvector::Vector;
 use signapps_common::{Error, Result};
@@ -28,14 +30,16 @@ impl VectorRepository {
             sqlx::query(
                 r#"
                 INSERT INTO ai.document_vectors
-                    (id, document_id, chunk_index, content, filename, path, mime_type, embedding)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    (id, document_id, chunk_index, content, filename,
+                     path, mime_type, embedding, collection)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 ON CONFLICT (document_id, chunk_index) DO UPDATE SET
                     content = EXCLUDED.content,
                     filename = EXCLUDED.filename,
                     path = EXCLUDED.path,
                     mime_type = EXCLUDED.mime_type,
-                    embedding = EXCLUDED.embedding
+                    embedding = EXCLUDED.embedding,
+                    collection = EXCLUDED.collection
                 "#,
             )
             .bind(chunk.id)
@@ -46,6 +50,7 @@ impl VectorRepository {
             .bind(&chunk.path)
             .bind(&chunk.mime_type)
             .bind(vec)
+            .bind(&chunk.collection)
             .execute(pool.inner())
             .await
             .map_err(|e| Error::Internal(format!("Failed to upsert chunk: {}", e)))?;
@@ -60,32 +65,50 @@ impl VectorRepository {
         query_vector: &[f32],
         limit: i64,
         score_threshold: Option<f32>,
+        collection: Option<&str>,
     ) -> Result<Vec<VectorSearchResult>> {
         let vec = Vector::from(query_vector.to_vec());
         let threshold = score_threshold.unwrap_or(0.0);
 
-        let rows = sqlx::query_as::<_, VectorSearchRow>(
-            r#"
-            SELECT
-                id,
-                document_id,
-                chunk_index,
-                content,
-                filename,
-                path,
-                mime_type,
-                1 - (embedding <=> $1::vector) AS score
-            FROM ai.document_vectors
-            WHERE 1 - (embedding <=> $1::vector) >= $2
-            ORDER BY embedding <=> $1::vector
-            LIMIT $3
-            "#,
-        )
-        .bind(vec)
-        .bind(threshold)
-        .bind(limit)
-        .fetch_all(pool.inner())
-        .await
+        let rows = if let Some(coll) = collection {
+            sqlx::query_as::<_, VectorSearchRow>(
+                r#"
+                SELECT
+                    id, document_id, chunk_index, content,
+                    filename, path, mime_type,
+                    1 - (embedding <=> $1::vector) AS score
+                FROM ai.document_vectors
+                WHERE 1 - (embedding <=> $1::vector) >= $2
+                  AND collection = $4
+                ORDER BY embedding <=> $1::vector
+                LIMIT $3
+                "#,
+            )
+            .bind(&vec)
+            .bind(threshold)
+            .bind(limit)
+            .bind(coll)
+            .fetch_all(pool.inner())
+            .await
+        } else {
+            sqlx::query_as::<_, VectorSearchRow>(
+                r#"
+                SELECT
+                    id, document_id, chunk_index, content,
+                    filename, path, mime_type,
+                    1 - (embedding <=> $1::vector) AS score
+                FROM ai.document_vectors
+                WHERE 1 - (embedding <=> $1::vector) >= $2
+                ORDER BY embedding <=> $1::vector
+                LIMIT $3
+                "#,
+            )
+            .bind(&vec)
+            .bind(threshold)
+            .bind(limit)
+            .fetch_all(pool.inner())
+            .await
+        }
         .map_err(|e| Error::Internal(format!("Vector search failed: {}", e)))?;
 
         Ok(rows
@@ -115,22 +138,197 @@ impl VectorRepository {
     }
 
     /// Get vector collection statistics.
-    pub async fn get_stats(pool: &DatabasePool) -> Result<VectorStats> {
-        let row = sqlx::query_as::<_, StatsRow>(
-            r#"
-            SELECT
-                COUNT(*) as total_chunks,
-                COUNT(DISTINCT document_id) as total_documents
-            FROM ai.document_vectors
-            "#,
-        )
-        .fetch_one(pool.inner())
-        .await
+    pub async fn get_stats(pool: &DatabasePool, collection: Option<&str>) -> Result<VectorStats> {
+        let row = if let Some(coll) = collection {
+            sqlx::query_as::<_, StatsRow>(
+                r#"
+                SELECT
+                    COUNT(*) as total_chunks,
+                    COUNT(DISTINCT document_id) as total_documents
+                FROM ai.document_vectors
+                WHERE collection = $1
+                "#,
+            )
+            .bind(coll)
+            .fetch_one(pool.inner())
+            .await
+        } else {
+            sqlx::query_as::<_, StatsRow>(
+                r#"
+                SELECT
+                    COUNT(*) as total_chunks,
+                    COUNT(DISTINCT document_id) as total_documents
+                FROM ai.document_vectors
+                "#,
+            )
+            .fetch_one(pool.inner())
+            .await
+        }
         .map_err(|e| Error::Internal(format!("Failed to get stats: {}", e)))?;
 
         Ok(VectorStats {
             total_chunks: row.total_chunks.unwrap_or(0),
             total_documents: row.total_documents.unwrap_or(0),
+        })
+    }
+
+    // ── Collection CRUD ──────────────────────────────────────────
+
+    /// Create a new collection.
+    pub async fn create_collection(
+        pool: &DatabasePool,
+        name: &str,
+        description: Option<&str>,
+    ) -> Result<Collection> {
+        let row = sqlx::query_as::<_, Collection>(
+            r#"
+            INSERT INTO ai.collections (name, description)
+            VALUES ($1, $2)
+            RETURNING name, description, created_at, updated_at
+            "#,
+        )
+        .bind(name)
+        .bind(description)
+        .fetch_one(pool.inner())
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::Database(ref db_err) if db_err.is_unique_violation() => {
+                Error::Conflict(format!("Collection '{}' already exists", name))
+            },
+            _ => Error::Internal(format!("Failed to create collection: {}", e)),
+        })?;
+
+        Ok(row)
+    }
+
+    /// List all collections with aggregated stats.
+    pub async fn list_collections(pool: &DatabasePool) -> Result<Vec<CollectionWithStats>> {
+        let rows = sqlx::query_as::<_, CollectionWithStatsRow>(
+            r#"
+            SELECT
+                c.name,
+                c.description,
+                COUNT(DISTINCT dv.document_id) AS documents_count,
+                COUNT(dv.id) AS chunks_count,
+                COALESCE(SUM(LENGTH(dv.content)), 0) AS size_bytes,
+                c.created_at,
+                c.updated_at
+            FROM ai.collections c
+            LEFT JOIN ai.document_vectors dv ON dv.collection = c.name
+            GROUP BY c.name, c.description, c.created_at, c.updated_at
+            ORDER BY c.created_at
+            "#,
+        )
+        .fetch_all(pool.inner())
+        .await
+        .map_err(|e| Error::Internal(format!("Failed to list collections: {}", e)))?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| CollectionWithStats {
+                name: r.name,
+                description: r.description,
+                documents_count: r.documents_count.unwrap_or(0),
+                chunks_count: r.chunks_count.unwrap_or(0),
+                size_bytes: r.size_bytes.unwrap_or(0),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
+            })
+            .collect())
+    }
+
+    /// Get a single collection with stats.
+    pub async fn get_collection(pool: &DatabasePool, name: &str) -> Result<CollectionWithStats> {
+        let row = sqlx::query_as::<_, CollectionWithStatsRow>(
+            r#"
+            SELECT
+                c.name,
+                c.description,
+                COUNT(DISTINCT dv.document_id) AS documents_count,
+                COUNT(dv.id) AS chunks_count,
+                COALESCE(SUM(LENGTH(dv.content)), 0) AS size_bytes,
+                c.created_at,
+                c.updated_at
+            FROM ai.collections c
+            LEFT JOIN ai.document_vectors dv ON dv.collection = c.name
+            WHERE c.name = $1
+            GROUP BY c.name, c.description, c.created_at, c.updated_at
+            "#,
+        )
+        .bind(name)
+        .fetch_optional(pool.inner())
+        .await
+        .map_err(|e| Error::Internal(format!("Failed to get collection: {}", e)))?
+        .ok_or_else(|| Error::NotFound(format!("Collection '{}' not found", name)))?;
+
+        Ok(CollectionWithStats {
+            name: row.name,
+            description: row.description,
+            documents_count: row.documents_count.unwrap_or(0),
+            chunks_count: row.chunks_count.unwrap_or(0),
+            size_bytes: row.size_bytes.unwrap_or(0),
+            created_at: row.created_at.to_rfc3339(),
+            updated_at: row.updated_at.to_rfc3339(),
+        })
+    }
+
+    /// Delete a collection (CASCADE removes all its vectors).
+    pub async fn delete_collection(pool: &DatabasePool, name: &str) -> Result<()> {
+        let result = sqlx::query("DELETE FROM ai.collections WHERE name = $1")
+            .bind(name)
+            .execute(pool.inner())
+            .await
+            .map_err(|e| Error::Internal(format!("Failed to delete collection: {}", e)))?;
+
+        if result.rows_affected() == 0 {
+            return Err(Error::NotFound(format!("Collection '{}' not found", name)));
+        }
+
+        Ok(())
+    }
+
+    /// Get detailed stats for a single collection.
+    pub async fn get_collection_stats(
+        pool: &DatabasePool,
+        name: &str,
+    ) -> Result<CollectionStatsDetail> {
+        // First verify the collection exists
+        let exists = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM ai.collections WHERE name = $1)",
+        )
+        .bind(name)
+        .fetch_one(pool.inner())
+        .await
+        .map_err(|e| Error::Internal(format!("Failed to check collection: {}", e)))?;
+
+        if !exists {
+            return Err(Error::NotFound(format!("Collection '{}' not found", name)));
+        }
+
+        let row = sqlx::query_as::<_, CollectionStatsDetailRow>(
+            r#"
+            SELECT
+                COUNT(DISTINCT document_id) AS documents_count,
+                COUNT(*) AS chunks_count,
+                COALESCE(SUM(LENGTH(content)), 0) AS size_bytes,
+                COALESCE(AVG(LENGTH(content)), 0)::BIGINT AS avg_chunk_size,
+                MAX(created_at) AS last_indexed
+            FROM ai.document_vectors
+            WHERE collection = $1
+            "#,
+        )
+        .bind(name)
+        .fetch_one(pool.inner())
+        .await
+        .map_err(|e| Error::Internal(format!("Failed to get collection stats: {}", e)))?;
+
+        Ok(CollectionStatsDetail {
+            name: name.to_string(),
+            documents_count: row.documents_count.unwrap_or(0),
+            chunks_count: row.chunks_count.unwrap_or(0),
+            size_bytes: row.size_bytes.unwrap_or(0),
+            avg_chunk_size: row.avg_chunk_size.unwrap_or(0),
+            last_indexed: row.last_indexed.map(|t| t.to_rfc3339()),
         })
     }
 }
@@ -143,6 +341,7 @@ pub struct ChunkInput {
     pub filename: String,
     pub path: String,
     pub mime_type: Option<String>,
+    pub collection: String,
 }
 
 /// Internal row type for search results.
@@ -163,4 +362,26 @@ struct VectorSearchRow {
 struct StatsRow {
     total_chunks: Option<i64>,
     total_documents: Option<i64>,
+}
+
+/// Internal row for collection list with stats.
+#[derive(sqlx::FromRow)]
+struct CollectionWithStatsRow {
+    name: String,
+    description: Option<String>,
+    documents_count: Option<i64>,
+    chunks_count: Option<i64>,
+    size_bytes: Option<i64>,
+    created_at: chrono::DateTime<chrono::Utc>,
+    updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// Internal row for detailed collection stats.
+#[derive(sqlx::FromRow)]
+struct CollectionStatsDetailRow {
+    documents_count: Option<i64>,
+    chunks_count: Option<i64>,
+    size_bytes: Option<i64>,
+    avg_chunk_size: Option<i64>,
+    last_indexed: Option<chrono::DateTime<chrono::Utc>>,
 }

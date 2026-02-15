@@ -33,6 +33,8 @@ pub struct ChatRequest {
     pub language: Option<String>,
     /// Optional custom system prompt (overrides default).
     pub system_prompt: Option<String>,
+    /// Filter by collection.
+    pub collection: Option<String>,
 }
 
 fn default_include_sources() -> bool {
@@ -88,6 +90,7 @@ pub async fn chat(
             payload.model.as_deref(),
             payload.language.as_deref(),
             payload.system_prompt.as_deref(),
+            payload.collection.as_deref(),
         )
         .await?;
 
@@ -123,9 +126,10 @@ pub async fn chat_stream(
     let provider = payload.provider.clone();
     let language = payload.language.clone();
     let system_prompt = payload.system_prompt.clone();
+    let collection = payload.collection.clone();
     let stream = async_stream::stream! {
         // First, retrieve sources
-        match state.rag.query_stream_with_provider(&payload.question, provider.as_deref(), model.as_deref(), language.as_deref(), system_prompt.as_deref()).await {
+        match state.rag.query_stream_with_provider(&payload.question, provider.as_deref(), model.as_deref(), language.as_deref(), system_prompt.as_deref(), collection.as_deref()).await {
             Ok((sources, mut token_rx)) => {
                 // Send sources first
                 if payload.include_sources {

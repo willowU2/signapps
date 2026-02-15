@@ -24,7 +24,7 @@ mod rag;
 mod vectors;
 
 use embeddings::EmbeddingsClient;
-use handlers::{chat, health, index, model_management, models, providers, search};
+use handlers::{chat, collections, health, index, model_management, models, providers, search};
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
 use rag::RagPipeline;
@@ -127,10 +127,10 @@ async fn main() -> anyhow::Result<()> {
                         first_provider_id = Some("vllm".to_string());
                     }
                     registry.register("vllm", config, provider);
-                }
+                },
                 Err(e) => {
                     tracing::warn!("Failed to create vLLM provider: {}", e)
-                }
+                },
             }
         }
     }
@@ -154,10 +154,10 @@ async fn main() -> anyhow::Result<()> {
                         first_provider_id = Some("ollama".to_string());
                     }
                     registry.register("ollama", config, provider);
-                }
+                },
                 Err(e) => {
                     tracing::warn!("Failed to create Ollama provider: {}", e)
-                }
+                },
             }
         }
     }
@@ -181,10 +181,10 @@ async fn main() -> anyhow::Result<()> {
                         first_provider_id = Some("openai".to_string());
                     }
                     registry.register("openai", config, provider);
-                }
+                },
                 Err(e) => {
                     tracing::warn!("Failed to create OpenAI provider: {}", e)
-                }
+                },
             }
         }
     }
@@ -208,10 +208,10 @@ async fn main() -> anyhow::Result<()> {
                         first_provider_id = Some("anthropic".to_string());
                     }
                     registry.register("anthropic", config, provider);
-                }
+                },
                 Err(e) => {
                     tracing::warn!("Failed to create Anthropic provider: {}", e)
-                }
+                },
             }
         }
     }
@@ -234,10 +234,10 @@ async fn main() -> anyhow::Result<()> {
                         first_provider_id = Some("llamacpp".to_string());
                     }
                     registry.register("llamacpp", config, Box::new(provider));
-                }
+                },
                 Err(e) => {
                     tracing::warn!("Failed to create LlamaCpp provider: {}", e);
-                }
+                },
             }
         }
     }
@@ -334,6 +334,21 @@ fn create_router(state: AppState) -> Router {
         .route("/index", post(index::index_document))
         .route("/index/:document_id", delete(index::remove_document))
         .route("/stats", get(index::get_stats))
+        // Collections
+        .route(
+            "/collections",
+            get(collections::list_collections)
+                .post(collections::create_collection),
+        )
+        .route(
+            "/collections/:name",
+            get(collections::get_collection)
+                .delete(collections::delete_collection),
+        )
+        .route(
+            "/collections/:name/stats",
+            get(collections::get_collection_stats),
+        )
         // Models & Providers
         .route("/models", get(models::list_models))
         .route("/providers", get(providers::list_providers))

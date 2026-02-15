@@ -1,6 +1,7 @@
 //! Vector service implementation using pgvector (PostgreSQL).
 
 use signapps_common::{Error, Result};
+use signapps_db::models::{CollectionStatsDetail, CollectionWithStats};
 use signapps_db::repositories::vector_repository::{ChunkInput, VectorRepository};
 use signapps_db::DatabasePool;
 use uuid::Uuid;
@@ -45,6 +46,10 @@ impl VectorService {
                 filename: c.filename.clone(),
                 path: c.path.clone(),
                 mime_type: c.mime_type.clone(),
+                collection: c
+                    .collection
+                    .clone()
+                    .unwrap_or_else(|| "default".to_string()),
             })
             .collect();
 
@@ -61,10 +66,16 @@ impl VectorService {
         query_vector: Vec<f32>,
         limit: u64,
         score_threshold: Option<f32>,
+        collection: Option<&str>,
     ) -> Result<Vec<SearchResult>> {
-        let results =
-            VectorRepository::search(&self.pool, &query_vector, limit as i64, score_threshold)
-                .await?;
+        let results = VectorRepository::search(
+            &self.pool,
+            &query_vector,
+            limit as i64,
+            score_threshold,
+            collection,
+        )
+        .await?;
 
         Ok(results
             .into_iter()
@@ -92,15 +103,46 @@ impl VectorService {
     }
 
     /// Get collection statistics.
-    pub async fn get_stats(&self) -> Result<CollectionStats> {
-        let stats = VectorRepository::get_stats(&self.pool).await?;
+    pub async fn get_stats(&self, collection: Option<&str>) -> Result<CollectionStats> {
+        let stats = VectorRepository::get_stats(&self.pool, collection).await?;
 
         Ok(CollectionStats {
-            name: "document_vectors".to_string(),
+            name: collection.unwrap_or("document_vectors").to_string(),
             vectors_count: stats.total_chunks as u64,
             indexed_vectors_count: stats.total_chunks as u64,
             points_count: stats.total_chunks as u64,
             status: "green".to_string(),
         })
+    }
+
+    // ── Collection CRUD delegation ───────────────────────────────
+
+    /// List all collections with stats.
+    pub async fn list_collections(&self) -> Result<Vec<CollectionWithStats>> {
+        VectorRepository::list_collections(&self.pool).await
+    }
+
+    /// Get a single collection with stats.
+    pub async fn get_collection(&self, name: &str) -> Result<CollectionWithStats> {
+        VectorRepository::get_collection(&self.pool, name).await
+    }
+
+    /// Create a new collection.
+    pub async fn create_collection(
+        &self,
+        name: &str,
+        description: Option<&str>,
+    ) -> Result<signapps_db::models::Collection> {
+        VectorRepository::create_collection(&self.pool, name, description).await
+    }
+
+    /// Delete a collection.
+    pub async fn delete_collection(&self, name: &str) -> Result<()> {
+        VectorRepository::delete_collection(&self.pool, name).await
+    }
+
+    /// Get detailed stats for a collection.
+    pub async fn get_collection_stats(&self, name: &str) -> Result<CollectionStatsDetail> {
+        VectorRepository::get_collection_stats(&self.pool, name).await
     }
 }

@@ -22,7 +22,7 @@ pub struct ComponentsHealth {
 
 /// Health check endpoint.
 pub async fn health_check(State(state): State<AppState>) -> Json<HealthResponse> {
-    let vectors_healthy = state.vectors.get_stats().await.is_ok();
+    let vectors_healthy = state.vectors.get_stats(None).await.is_ok();
     let embeddings_healthy = state.embeddings.health_check().await.unwrap_or(false);
     let llm_healthy = match state.providers.get_default() {
         Ok(provider) => provider.health_check().await.unwrap_or(false),

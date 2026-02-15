@@ -1,6 +1,7 @@
 //! HTTP handlers for the AI service.
 
 pub mod chat;
+pub mod collections;
 pub mod health;
 pub mod index;
 pub mod model_management;

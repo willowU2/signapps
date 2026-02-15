@@ -22,6 +22,8 @@ pub struct IndexRequest {
     pub path: String,
     /// MIME type.
     pub mime_type: Option<String>,
+    /// Target collection.
+    pub collection: Option<String>,
 }
 
 /// Index response.
@@ -57,6 +59,7 @@ pub async fn index_document(
             &payload.filename,
             &payload.path,
             payload.mime_type.as_deref(),
+            payload.collection.as_deref(),
         )
         .await?;
 
@@ -83,7 +86,7 @@ pub async fn remove_document(
 /// Get indexing stats.
 #[tracing::instrument(skip(state))]
 pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsResponse>> {
-    let stats = state.vectors.get_stats().await?;
+    let stats = state.vectors.get_stats(None).await?;
 
     // points_count = number of chunks in pgvector
     // Estimate documents as roughly 1 doc per 10 chunks (average)

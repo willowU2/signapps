@@ -20,6 +20,8 @@ pub struct DocumentChunk {
     pub path: String,
     /// MIME type.
     pub mime_type: Option<String>,
+    /// Collection name.
+    pub collection: Option<String>,
 }
 
 /// Search result from vector similarity search.

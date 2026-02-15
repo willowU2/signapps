@@ -20,6 +20,8 @@ pub struct SearchQuery {
     /// Minimum similarity score.
     #[allow(dead_code)]
     pub threshold: Option<f32>,
+    /// Filter by collection.
+    pub collection: Option<String>,
 }
 
 /// Search result item.
@@ -46,7 +48,10 @@ pub async fn search(
     State(state): State<AppState>,
     Query(query): Query<SearchQuery>,
 ) -> Result<Json<SearchResponse>> {
-    let results = state.rag.search(&query.q, query.limit).await?;
+    let results = state
+        .rag
+        .search(&query.q, query.limit, query.collection.as_deref())
+        .await?;
 
     let items: Vec<SearchResultItem> = results
         .into_iter()

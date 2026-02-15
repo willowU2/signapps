@@ -71,6 +71,7 @@ impl IndexPipeline {
                 filename: filename.to_string(),
                 path: path.to_string(),
                 mime_type: mime_type.map(|s| s.to_string()),
+                collection: None,
             })
             .collect();
 

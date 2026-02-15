@@ -73,6 +73,7 @@ impl RagPipeline {
         filename: &str,
         path: &str,
         mime_type: Option<&str>,
+        collection: Option<&str>,
     ) -> Result<usize> {
         // Chunk the document
         let text_chunks = self.chunker.chunk_by_paragraphs(content);
@@ -93,6 +94,7 @@ impl RagPipeline {
                 filename: filename.to_string(),
                 path: path.to_string(),
                 mime_type: mime_type.map(|s| s.to_string()),
+                collection: collection.map(|s| s.to_string()),
             })
             .collect();
 
@@ -119,7 +121,12 @@ impl RagPipeline {
     }
 
     /// Search for relevant documents.
-    pub async fn search(&self, query: &str, limit: Option<u64>) -> Result<Vec<SearchResult>> {
+    pub async fn search(
+        &self,
+        query: &str,
+        limit: Option<u64>,
+        collection: Option<&str>,
+    ) -> Result<Vec<SearchResult>> {
         let query_embedding = self.embeddings.embed(query).await?;
 
         let results = self
@@ -128,6 +135,7 @@ impl RagPipeline {
                 query_embedding,
                 limit.unwrap_or(self.config.top_k),
                 Some(self.config.score_threshold),
+                collection,
             )
             .await?;
 
@@ -136,7 +144,7 @@ impl RagPipeline {
 
     /// Query with RAG (retrieve + generate), using default provider.
     pub async fn query(&self, question: &str) -> Result<RagResponse> {
-        self.query_with_provider(question, None, None, None, None)
+        self.query_with_provider(question, None, None, None, None, None)
             .await
     }
 
@@ -146,7 +154,7 @@ impl RagPipeline {
         question: &str,
         model: Option<&str>,
     ) -> Result<RagResponse> {
-        self.query_with_provider(question, None, model, None, None)
+        self.query_with_provider(question, None, model, None, None, None)
             .await
     }
 
@@ -158,11 +166,12 @@ impl RagPipeline {
         model: Option<&str>,
         language: Option<&str>,
         custom_system_prompt: Option<&str>,
+        collection: Option<&str>,
     ) -> Result<RagResponse> {
         let provider = self.providers.resolve(provider_id)?;
 
         // 1. Retrieve relevant context
-        let search_results = self.search(question, None).await?;
+        let search_results = self.search(question, None, collection).await?;
 
         // 2. Build context from results
         let context = self.build_context(&search_results);
@@ -201,7 +210,7 @@ impl RagPipeline {
         &self,
         question: &str,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
-        self.query_stream_with_provider(question, None, None, None, None)
+        self.query_stream_with_provider(question, None, None, None, None, None)
             .await
     }
 
@@ -211,7 +220,7 @@ impl RagPipeline {
         question: &str,
         model: Option<&str>,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
-        self.query_stream_with_provider(question, None, model, None, None)
+        self.query_stream_with_provider(question, None, model, None, None, None)
             .await
     }
 
@@ -223,11 +232,12 @@ impl RagPipeline {
         model: Option<&str>,
         language: Option<&str>,
         custom_system_prompt: Option<&str>,
+        collection: Option<&str>,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
         let provider = self.providers.resolve(provider_id)?;
 
         // 1. Retrieve relevant context
-        let search_results = self.search(question, None).await?;
+        let search_results = self.search(question, None, collection).await?;
 
         // 2. Build context from results
         let context = self.build_context(&search_results);
