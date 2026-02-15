@@ -35,16 +35,9 @@ impl ModelType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "lowercase")]
 pub enum ModelSource {
-    HuggingFace {
-        repo_id: String,
-        filename: String,
-    },
-    Url {
-        url: String,
-    },
-    LocalPath {
-        path: PathBuf,
-    },
+    HuggingFace { repo_id: String, filename: String },
+    Url { url: String },
+    LocalPath { path: PathBuf },
 }
 
 /// Model download/load status.
@@ -154,9 +147,9 @@ impl ModelManager {
 
         // Create parent directories
         if let Some(parent) = dest_path.parent() {
-            tokio::fs::create_dir_all(parent).await.map_err(|e| {
-                ModelError::IoError(format!("Failed to create directory: {}", e))
-            })?;
+            tokio::fs::create_dir_all(parent)
+                .await
+                .map_err(|e| ModelError::IoError(format!("Failed to create directory: {}", e)))?;
         }
 
         // Update status
@@ -171,14 +164,14 @@ impl ModelManager {
                     "https://huggingface.co/{}/resolve/main/{}",
                     repo_id, filename
                 )
-            }
+            },
             ModelSource::Url { url } => url.clone(),
             ModelSource::LocalPath { path } => {
                 // Just copy or symlink
                 if path.exists() {
-                    tokio::fs::copy(path, &dest_path).await.map_err(|e| {
-                        ModelError::IoError(format!("Failed to copy model: {}", e))
-                    })?;
+                    tokio::fs::copy(path, &dest_path)
+                        .await
+                        .map_err(|e| ModelError::IoError(format!("Failed to copy model: {}", e)))?;
                     self.registry.alter(model_id, |_, mut e| {
                         e.local_path = Some(dest_path.clone());
                         e.status = ModelStatus::Ready;
@@ -190,14 +183,17 @@ impl ModelManager {
                     "Local path not found: {}",
                     path.display()
                 )));
-            }
+            },
         };
 
         tracing::info!("Downloading model '{}' from {}", model_id, url);
 
-        let response = self.client.get(&url).send().await.map_err(|e| {
-            ModelError::DownloadFailed(format!("HTTP request failed: {}", e))
-        })?;
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| ModelError::DownloadFailed(format!("HTTP request failed: {}", e)))?;
 
         if !response.status().is_success() {
             return Err(ModelError::DownloadFailed(format!(
@@ -209,19 +205,18 @@ impl ModelManager {
 
         let total_size = response.content_length().unwrap_or(0);
         let mut downloaded: u64 = 0;
-        let mut file = tokio::fs::File::create(&dest_path).await.map_err(|e| {
-            ModelError::IoError(format!("Failed to create file: {}", e))
-        })?;
+        let mut file = tokio::fs::File::create(&dest_path)
+            .await
+            .map_err(|e| ModelError::IoError(format!("Failed to create file: {}", e)))?;
 
         let mut stream = response.bytes_stream();
         use futures_util::StreamExt;
         while let Some(chunk) = stream.next().await {
-            let chunk = chunk.map_err(|e| {
-                ModelError::DownloadFailed(format!("Download stream error: {}", e))
-            })?;
-            file.write_all(&chunk).await.map_err(|e| {
-                ModelError::IoError(format!("Write error: {}", e))
-            })?;
+            let chunk = chunk
+                .map_err(|e| ModelError::DownloadFailed(format!("Download stream error: {}", e)))?;
+            file.write_all(&chunk)
+                .await
+                .map_err(|e| ModelError::IoError(format!("Write error: {}", e)))?;
             downloaded += chunk.len() as u64;
 
             if total_size > 0 {
@@ -234,15 +229,11 @@ impl ModelManager {
             }
         }
 
-        file.flush().await.map_err(|e| {
-            ModelError::IoError(format!("Flush error: {}", e))
-        })?;
+        file.flush()
+            .await
+            .map_err(|e| ModelError::IoError(format!("Flush error: {}", e)))?;
 
-        tracing::info!(
-            "Model '{}' downloaded ({} bytes)",
-            model_id,
-            downloaded
-        );
+        tracing::info!("Model '{}' downloaded ({} bytes)", model_id, downloaded);
 
         self.registry.alter(model_id, |_, mut e| {
             e.local_path = Some(dest_path.clone());
@@ -272,9 +263,9 @@ impl ModelManager {
 
         if let Some(ref path) = entry.local_path {
             if path.exists() {
-                tokio::fs::remove_file(path).await.map_err(|e| {
-                    ModelError::IoError(format!("Failed to delete: {}", e))
-                })?;
+                tokio::fs::remove_file(path)
+                    .await
+                    .map_err(|e| ModelError::IoError(format!("Failed to delete: {}", e)))?;
             }
         }
 
@@ -330,11 +321,7 @@ impl ModelManager {
     fn model_path(&self, entry: &ModelEntry) -> PathBuf {
         let filename = match &entry.source {
             ModelSource::HuggingFace { filename, .. } => filename.clone(),
-            ModelSource::Url { url } => url
-                .rsplit('/')
-                .next()
-                .unwrap_or("model.bin")
-                .to_string(),
+            ModelSource::Url { url } => url.rsplit('/').next().unwrap_or("model.bin").to_string(),
             ModelSource::LocalPath { path } => path
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())
@@ -466,15 +453,15 @@ impl ModelManager {
         let ocr_models = [
             (
                 "ocrs-text-detection",
-                "robertknight/ocrs-models",
-                "text-detection.rten",
+                "robertknight/ocrs",
+                "text-detection-ssfbcj81.rten",
                 4_200_000u64,
                 "Text detection ONNX model for ocrs",
             ),
             (
                 "ocrs-text-recognition",
-                "robertknight/ocrs-models",
-                "text-recognition.rten",
+                "robertknight/ocrs",
+                "text-rec-checkpoint-s52qdbqt.rten",
                 13_000_000,
                 "Text recognition ONNX model for ocrs",
             ),

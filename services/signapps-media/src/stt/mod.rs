@@ -18,6 +18,39 @@ pub use self::http::HttpSttBackend;
 #[cfg(feature = "native-stt")]
 pub use self::native::NativeSttBackend;
 
+/// Stub backend that returns errors when no STT backend is configured.
+pub struct StubSttBackend;
+
+#[async_trait]
+impl SttBackend for StubSttBackend {
+    async fn transcribe(
+        &self,
+        _audio: Bytes,
+        _filename: &str,
+        _opts: Option<TranscribeRequest>,
+    ) -> Result<TranscribeResult, SttError> {
+        Err(SttError::ServiceError(
+            "STT not configured. Set STT_URL or enable native-stt feature.".to_string(),
+        ))
+    }
+
+    async fn transcribe_stream(
+        &self,
+        _audio: Bytes,
+        _filename: &str,
+        _opts: Option<TranscribeRequest>,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<TranscribeChunk, SttError>> + Send>>, SttError>
+    {
+        Err(SttError::ServiceError(
+            "STT not configured. Set STT_URL or enable native-stt feature.".to_string(),
+        ))
+    }
+
+    async fn list_models(&self) -> Result<Vec<SttModel>, SttError> {
+        Ok(vec![])
+    }
+}
+
 /// Backend trait for STT implementations.
 #[async_trait]
 pub trait SttBackend: Send + Sync {

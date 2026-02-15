@@ -94,14 +94,14 @@ async fn handle_voice_session(socket: WebSocket, state: Arc<AppState>) {
             Err(e) => {
                 tracing::warn!("WebSocket receive error: {}", e);
                 break;
-            }
+            },
         };
 
         match msg {
             Message::Binary(data) => {
                 // Accumulate audio data
                 audio_buffer.extend_from_slice(&data);
-            }
+            },
             Message::Text(text) => {
                 match serde_json::from_str::<ClientControl>(&text) {
                     Ok(ClientControl::Config {
@@ -118,11 +118,11 @@ async fn handle_voice_session(socket: WebSocket, state: Arc<AppState>) {
                         if let Some(sp) = system_prompt {
                             config.system_prompt = sp;
                         }
-                    }
+                    },
                     Ok(ClientControl::Interrupt) => {
                         // Clear audio buffer, cancel pending operations
                         audio_buffer.clear();
-                    }
+                    },
                     Ok(ClientControl::SpeechEnd) => {
                         // Process accumulated audio
                         if !audio_buffer.is_empty() {
@@ -147,14 +147,14 @@ async fn handle_voice_session(socket: WebSocket, state: Arc<AppState>) {
                                 .await;
                             });
                         }
-                    }
+                    },
                     Err(e) => {
                         tracing::warn!("Invalid control message: {}", e);
-                    }
+                    },
                 }
-            }
+            },
             Message::Close(_) => break,
-            _ => {}
+            _ => {},
         }
     }
 
@@ -178,7 +178,11 @@ async fn process_speech_turn(
         ..Default::default()
     };
 
-    let transcript = match state.stt.transcribe(audio, "audio.wav", Some(stt_opts)).await {
+    let transcript = match state
+        .stt
+        .transcribe(audio, "audio.wav", Some(stt_opts))
+        .await
+    {
         Ok(result) => result.text,
         Err(e) => {
             let _ = tx
@@ -190,7 +194,7 @@ async fn process_speech_turn(
                 ))
                 .await;
             return;
-        }
+        },
     };
 
     if transcript.trim().is_empty() {
@@ -220,7 +224,7 @@ async fn process_speech_turn(
                 ))
                 .await;
             return;
-        }
+        },
     };
 
     if llm_response.trim().is_empty() {
@@ -259,10 +263,10 @@ async fn process_speech_turn(
             Ok(result) => {
                 // Send audio as binary frame
                 let _ = tx.send(Message::Binary(result.audio_data.into())).await;
-            }
+            },
             Err(e) => {
                 tracing::warn!("TTS failed for sentence: {}", e);
-            }
+            },
         }
     }
 

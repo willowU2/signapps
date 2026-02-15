@@ -84,10 +84,7 @@ impl SttBackend for HttpSttBackend {
         let processing_time = start.elapsed().as_millis() as u64;
 
         let whisper_response: serde_json::Value = response.json().await?;
-        let text = whisper_response["text"]
-            .as_str()
-            .unwrap_or("")
-            .to_string();
+        let text = whisper_response["text"].as_str().unwrap_or("").to_string();
 
         Ok(TranscribeResult {
             text: text.clone(),
@@ -167,9 +164,7 @@ impl SttBackend for HttpSttBackend {
                         }
                         match serde_json::from_str::<TranscribeChunk>(json_str) {
                             Ok(chunk) => Some((Ok(chunk), resp)),
-                            Err(e) => {
-                                Some((Err(SttError::InvalidResponse(e.to_string())), resp))
-                            }
+                            Err(e) => Some((Err(SttError::InvalidResponse(e.to_string())), resp)),
                         }
                     } else {
                         Some((
@@ -177,7 +172,7 @@ impl SttBackend for HttpSttBackend {
                             resp,
                         ))
                     }
-                }
+                },
                 Ok(None) => None,
                 Err(e) => Some((Err(SttError::HttpError(e)), resp)),
             }

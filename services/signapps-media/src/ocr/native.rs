@@ -90,9 +90,8 @@ impl OcrBackend for NativeOcrBackend {
             let (width, height) = rgb.dimensions();
 
             // Create ocrs image input
-            let img_source =
-                ocrs::ImageSource::from_bytes(rgb.as_raw(), rgb.dimensions())
-                    .map_err(|e| OcrError::ServiceError(format!("Image source: {}", e)))?;
+            let img_source = ocrs::ImageSource::from_bytes(rgb.as_raw(), rgb.dimensions())
+                .map_err(|e| OcrError::ServiceError(format!("Image source: {}", e)))?;
 
             let ocr_input = engine
                 .prepare_input(img_source)
@@ -103,8 +102,7 @@ impl OcrBackend for NativeOcrBackend {
                 .detect_words(&ocr_input)
                 .map_err(|e| OcrError::ServiceError(format!("Word detection: {}", e)))?;
 
-            let line_rects = engine
-                .find_text_lines(&ocr_input, &word_rects);
+            let line_rects = engine.find_text_lines(&ocr_input, &word_rects);
 
             let line_texts = engine
                 .recognize_text(&ocr_input, &line_rects)
@@ -114,8 +112,8 @@ impl OcrBackend for NativeOcrBackend {
             let mut blocks = Vec::new();
 
             for line in &line_texts {
-                if let Some(text) = line.to_string().into() {
-                    let text: String = text;
+                if let Some(text_line) = line {
+                    let text = text_line.to_string();
                     if !text.trim().is_empty() {
                         text_parts.push(text.clone());
                         blocks.push(TextBlock {

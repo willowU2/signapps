@@ -102,83 +102,89 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let hardware = signapps_runtime::HardwareProfile::detect().await;
     info!(
         "Hardware: {} (VRAM: {} MB, CPU: {} cores, RAM: {} MB)",
-        hardware.preferred_backend, hardware.total_vram_mb, hardware.cpu_cores, hardware.system_ram_mb
+        hardware.preferred_backend,
+        hardware.total_vram_mb,
+        hardware.cpu_cores,
+        hardware.system_ram_mb
     );
 
     let model_manager = Arc::new(ModelManager::new(None));
 
     // Initialize STT backend
-    let stt: Arc<dyn SttBackend> = if !config.stt_url.is_empty()
-        && config.stt_url.starts_with("http")
-    {
-        info!("STT: using HTTP backend at {}", config.stt_url);
-        Arc::new(stt::HttpSttBackend::new(
-            &config.stt_url,
-            &config.stt_model,
-            config.stt_language.clone(),
-        ))
-    } else {
-        #[cfg(feature = "native-stt")]
-        {
-            info!("STT: using native whisper-rs backend (model: {})", config.stt_model);
-            Arc::new(
-                stt::NativeSttBackend::new(&config.stt_model, model_manager.clone(), &hardware)
-                    .await?,
-            )
-        }
-        #[cfg(not(feature = "native-stt"))]
-        {
-            return Err("STT_URL not set and native-stt feature not enabled".into());
-        }
-    };
+    let stt: Arc<dyn SttBackend> =
+        if !config.stt_url.is_empty() && config.stt_url.starts_with("http") {
+            info!("STT: using HTTP backend at {}", config.stt_url);
+            Arc::new(stt::HttpSttBackend::new(
+                &config.stt_url,
+                &config.stt_model,
+                config.stt_language.clone(),
+            ))
+        } else {
+            #[cfg(feature = "native-stt")]
+            {
+                info!(
+                    "STT: using native whisper-rs backend (model: {})",
+                    config.stt_model
+                );
+                Arc::new(
+                    stt::NativeSttBackend::new(&config.stt_model, model_manager.clone(), &hardware)
+                        .await?,
+                )
+            }
+            #[cfg(not(feature = "native-stt"))]
+            {
+                tracing::warn!("STT: no backend available (set STT_URL or enable native-stt)");
+                Arc::new(stt::StubSttBackend)
+            }
+        };
 
     // Initialize TTS backend
-    let tts: Arc<dyn TtsBackend> = if !config.tts_url.is_empty()
-        && config.tts_url.starts_with("http")
-    {
-        info!("TTS: using HTTP backend at {}", config.tts_url);
-        Arc::new(tts::HttpTtsBackend::new(
-            &config.tts_url,
-            &config.tts_default_voice,
-        ))
-    } else {
-        #[cfg(feature = "native-tts")]
-        {
-            info!(
-                "TTS: using native piper-rs backend (voice: {})",
-                config.tts_default_voice
-            );
-            Arc::new(
-                tts::NativeTtsBackend::new(&config.tts_default_voice, model_manager.clone())
-                    .await?,
-            )
-        }
-        #[cfg(not(feature = "native-tts"))]
-        {
-            return Err("TTS_URL not set and native-tts feature not enabled".into());
-        }
-    };
+    let tts: Arc<dyn TtsBackend> =
+        if !config.tts_url.is_empty() && config.tts_url.starts_with("http") {
+            info!("TTS: using HTTP backend at {}", config.tts_url);
+            Arc::new(tts::HttpTtsBackend::new(
+                &config.tts_url,
+                &config.tts_default_voice,
+            ))
+        } else {
+            #[cfg(feature = "native-tts")]
+            {
+                info!(
+                    "TTS: using native piper-rs backend (voice: {})",
+                    config.tts_default_voice
+                );
+                Arc::new(
+                    tts::NativeTtsBackend::new(&config.tts_default_voice, model_manager.clone())
+                        .await?,
+                )
+            }
+            #[cfg(not(feature = "native-tts"))]
+            {
+                tracing::warn!("TTS: no backend available (set TTS_URL or enable native-tts)");
+                Arc::new(tts::StubTtsBackend)
+            }
+        };
 
     // Initialize OCR backend
-    let ocr: Arc<dyn OcrBackend> = if !config.ocr_url.is_empty()
-        && config.ocr_url.starts_with("http")
-    {
-        info!("OCR: using HTTP backend at {}", config.ocr_url);
-        Arc::new(ocr::HttpOcrBackend::new(
-            &config.ocr_url,
-            ocr::http::OcrProvider::default(),
-        ))
-    } else {
-        #[cfg(feature = "native-ocr")]
-        {
-            info!("OCR: using native ocrs backend");
-            Arc::new(ocr::NativeOcrBackend::new(model_manager.clone()).await?)
-        }
-        #[cfg(not(feature = "native-ocr"))]
-        {
-            return Err("OCR_URL not set and native-ocr feature not enabled".into());
-        }
-    };
+    let ocr: Arc<dyn OcrBackend> =
+        if !config.ocr_url.is_empty() && config.ocr_url.starts_with("http") {
+            info!("OCR: using HTTP backend at {}", config.ocr_url);
+            Arc::new(ocr::HttpOcrBackend::new(
+                &config.ocr_url,
+                ocr::http::OcrProvider::default(),
+            ))
+        } else {
+            #[cfg(feature = "native-ocr")]
+            {
+                info!("OCR: using native ocrs backend");
+                Arc::new(ocr::NativeOcrBackend::new(model_manager.clone()).await?)
+            }
+            #[cfg(not(feature = "native-ocr"))]
+            {
+                tracing::warn!("OCR: no backend available (set OCR_URL or enable native-ocr)");
+                Arc::new(ocr::StubOcrBackend)
+            }
+        };
 
     let state = Arc::new(AppState {
         pool,

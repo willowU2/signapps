@@ -35,11 +35,7 @@ pub fn decode_to_pcm_f32(data: &[u8], _mime_type: &str) -> Result<Vec<f32>, Audi
         .sample_rate
         .ok_or_else(|| AudioError::DecodeError("Unknown sample rate".to_string()))?;
 
-    let channels = track
-        .codec_params
-        .channels
-        .map(|c| c.count())
-        .unwrap_or(1);
+    let channels = track.codec_params.channels.map(|c| c.count()).unwrap_or(1);
 
     let mut decoder = symphonia::default::get_codecs()
         .make(&track.codec_params, &decoder_opts)
@@ -55,7 +51,7 @@ pub fn decode_to_pcm_f32(data: &[u8], _mime_type: &str) -> Result<Vec<f32>, Audi
             Err(e) => {
                 tracing::warn!("Packet read error (continuing): {}", e);
                 break;
-            }
+            },
         };
 
         if packet.track_id() != track_id {
@@ -67,7 +63,7 @@ pub fn decode_to_pcm_f32(data: &[u8], _mime_type: &str) -> Result<Vec<f32>, Audi
             Err(e) => {
                 tracing::warn!("Decode error (skipping packet): {}", e);
                 continue;
-            }
+            },
         };
 
         let spec = *decoded.spec();

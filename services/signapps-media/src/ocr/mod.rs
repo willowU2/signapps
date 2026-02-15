@@ -16,6 +16,33 @@ pub use self::http::HttpOcrBackend;
 #[cfg(feature = "native-ocr")]
 pub use self::native::NativeOcrBackend;
 
+/// Stub backend that returns errors when no OCR backend is configured.
+pub struct StubOcrBackend;
+
+#[async_trait]
+impl OcrBackend for StubOcrBackend {
+    async fn extract_text(
+        &self,
+        _image_data: Bytes,
+        _options: Option<OcrRequest>,
+    ) -> Result<OcrResult, OcrError> {
+        Err(OcrError::ServiceError(
+            "OCR not configured. Set OCR_URL or enable native-ocr feature.".to_string(),
+        ))
+    }
+
+    async fn process_document(
+        &self,
+        _document_data: Bytes,
+        _filename: &str,
+        _options: Option<OcrRequest>,
+    ) -> Result<OcrResult, OcrError> {
+        Err(OcrError::ServiceError(
+            "OCR not configured. Set OCR_URL or enable native-ocr feature.".to_string(),
+        ))
+    }
+}
+
 /// Backend trait for OCR implementations.
 #[async_trait]
 pub trait OcrBackend: Send + Sync {

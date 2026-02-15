@@ -111,27 +111,21 @@ impl SttBackend for NativeSttBackend {
                 .full(params, &pcm_samples)
                 .map_err(|e| SttError::ServiceError(format!("Inference failed: {}", e)))?;
 
-            let num_segments = state.full_n_segments().map_err(|e| {
-                SttError::ServiceError(format!("Failed to get segments: {}", e))
-            })?;
+            let num_segments = state
+                .full_n_segments()
+                .map_err(|e| SttError::ServiceError(format!("Failed to get segments: {}", e)))?;
 
             let mut segments = Vec::new();
             for i in 0..num_segments {
-                let text = state
-                    .full_get_segment_text(i)
-                    .map_err(|e| {
-                        SttError::ServiceError(format!("Failed to get segment text: {}", e))
-                    })?;
-                let start_ts = state
-                    .full_get_segment_t0(i)
-                    .map_err(|e| {
-                        SttError::ServiceError(format!("Failed to get segment t0: {}", e))
-                    })?;
-                let end_ts = state
-                    .full_get_segment_t1(i)
-                    .map_err(|e| {
-                        SttError::ServiceError(format!("Failed to get segment t1: {}", e))
-                    })?;
+                let text = state.full_get_segment_text(i).map_err(|e| {
+                    SttError::ServiceError(format!("Failed to get segment text: {}", e))
+                })?;
+                let start_ts = state.full_get_segment_t0(i).map_err(|e| {
+                    SttError::ServiceError(format!("Failed to get segment t0: {}", e))
+                })?;
+                let end_ts = state.full_get_segment_t1(i).map_err(|e| {
+                    SttError::ServiceError(format!("Failed to get segment t1: {}", e))
+                })?;
 
                 segments.push(Segment {
                     id: i as u32,

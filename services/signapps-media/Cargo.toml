@@ -75,8 +75,8 @@ piper-rs = { version = "0.1", optional = true }
 
 # Native OCR
 ocrs = { version = "0.11", optional = true }
-rten = { version = "0.14", optional = true }
-rten-imageproc = { version = "0.14", optional = true }
+rten = { version = "0.22", optional = true }
+rten-imageproc = { version = "0.22", optional = true }
 image = { version = "0.25", optional = true }
 
 [features]

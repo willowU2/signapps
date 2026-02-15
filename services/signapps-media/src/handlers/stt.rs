@@ -221,7 +221,7 @@ pub async fn transcribe_stream(
                     }))
                     .unwrap();
                 Some((Ok(event), s))
-            }
+            },
             Some(Err(e)) => {
                 let event = Event::default()
                     .json_data(serde_json::json!({
@@ -229,7 +229,7 @@ pub async fn transcribe_stream(
                     }))
                     .unwrap();
                 Some((Ok(event), s))
-            }
+            },
             None => None,
         }
     });

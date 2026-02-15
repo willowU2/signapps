@@ -18,6 +18,31 @@ pub use self::http::HttpTtsBackend;
 #[cfg(feature = "native-tts")]
 pub use self::native::NativeTtsBackend;
 
+/// Stub backend that returns errors when no TTS backend is configured.
+pub struct StubTtsBackend;
+
+#[async_trait]
+impl TtsBackend for StubTtsBackend {
+    async fn synthesize(&self, _request: TtsRequest) -> Result<TtsResult, TtsError> {
+        Err(TtsError::ServiceError(
+            "TTS not configured. Set TTS_URL or enable native-tts feature.".to_string(),
+        ))
+    }
+
+    async fn synthesize_stream(
+        &self,
+        _request: TtsRequest,
+    ) -> Result<Pin<Box<dyn Stream<Item = Result<Bytes, TtsError>> + Send>>, TtsError> {
+        Err(TtsError::ServiceError(
+            "TTS not configured. Set TTS_URL or enable native-tts feature.".to_string(),
+        ))
+    }
+
+    async fn list_voices(&self) -> Result<Vec<Voice>, TtsError> {
+        Ok(vec![])
+    }
+}
+
 /// Backend trait for TTS implementations.
 #[async_trait]
 pub trait TtsBackend: Send + Sync {

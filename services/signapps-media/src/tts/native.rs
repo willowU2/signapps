@@ -56,10 +56,7 @@ impl NativeTtsBackend {
         }
 
         // Map voice_id to model IDs
-        let model_id = format!(
-            "piper-{}",
-            voice_id.replace('_', "-").replace('/', "-")
-        );
+        let model_id = format!("piper-{}", voice_id.replace('_', "-").replace('/', "-"));
         let config_id = format!("{}-config", model_id);
 
         // Download model and config
