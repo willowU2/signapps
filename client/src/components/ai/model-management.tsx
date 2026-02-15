@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -117,8 +117,10 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
   const [availableModels, setAvailableModels] = useState<ModelEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
+  const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [compatibleOnly, setCompatibleOnly] = useState(true);
+  const pollIntervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -151,20 +153,92 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
     fetchData();
   }, [fetchData]);
 
+  // Cleanup polling intervals on unmount
+  useEffect(() => {
+    const intervals = pollIntervalsRef.current;
+    return () => {
+      intervals.forEach((interval) => clearInterval(interval));
+      intervals.clear();
+    };
+  }, []);
+
+  const stopPolling = useCallback((modelId: string) => {
+    const interval = pollIntervalsRef.current.get(modelId);
+    if (interval) {
+      clearInterval(interval);
+      pollIntervalsRef.current.delete(modelId);
+    }
+  }, []);
+
+  const startPolling = useCallback((modelId: string) => {
+    // Don't start if already polling
+    if (pollIntervalsRef.current.has(modelId)) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await aiApi.getModelStatus(modelId);
+        const status = res.data.status;
+
+        if (typeof status === 'object' && 'downloading' in status) {
+          setDownloadProgress((prev) => ({
+            ...prev,
+            [modelId]: status.downloading.progress,
+          }));
+        } else if (status === 'ready') {
+          // Download finished
+          stopPolling(modelId);
+          setDownloadingIds((prev) => {
+            const next = new Set(prev);
+            next.delete(modelId);
+            return next;
+          });
+          setDownloadProgress((prev) => {
+            const next = { ...prev };
+            delete next[modelId];
+            return next;
+          });
+          toast.success(`${modelId} telecharge`);
+          fetchData();
+        } else if (typeof status === 'object' && 'error' in status) {
+          stopPolling(modelId);
+          setDownloadingIds((prev) => {
+            const next = new Set(prev);
+            next.delete(modelId);
+            return next;
+          });
+          setDownloadProgress((prev) => {
+            const next = { ...prev };
+            delete next[modelId];
+            return next;
+          });
+          toast.error(`Erreur: ${status.error.message}`);
+        }
+      } catch {
+        // Network error — keep polling
+      }
+    }, 2000);
+
+    pollIntervalsRef.current.set(modelId, interval);
+  }, [stopPolling, fetchData]);
+
   const handleDownload = async (modelId: string) => {
-    setDownloadingIds(prev => new Set(prev).add(modelId));
+    setDownloadingIds((prev) => new Set(prev).add(modelId));
+    setDownloadProgress((prev) => ({ ...prev, [modelId]: 0 }));
     try {
       await aiApi.downloadModel(modelId);
       toast.success(`Telechargement de ${modelId} lance`);
-      // Refresh after a short delay
-      setTimeout(fetchData, 2000);
+      startPolling(modelId);
     } catch (error) {
       console.error('Failed to download model:', error);
       toast.error('Erreur lors du telechargement');
-    } finally {
-      setDownloadingIds(prev => {
+      setDownloadingIds((prev) => {
         const next = new Set(prev);
         next.delete(modelId);
+        return next;
+      });
+      setDownloadProgress((prev) => {
+        const next = { ...prev };
+        delete next[modelId];
         return next;
       });
     }
@@ -450,20 +524,30 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
                         {model.description}
                       </p>
                     </div>
-                    <div className="ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(model.id)}
-                        disabled={downloadingIds.has(model.id)}
-                      >
-                        {downloadingIds.has(model.id) ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
+                    <div className="ml-4 min-w-[140px] flex flex-col items-end gap-1">
+                      {downloadingIds.has(model.id) ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-xs text-muted-foreground">
+                              {((downloadProgress[model.id] ?? 0) * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                          <Progress
+                            value={(downloadProgress[model.id] ?? 0) * 100}
+                            className="w-full h-2"
+                          />
+                        </>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownload(model.id)}
+                        >
                           <Download className="h-4 w-4 mr-2" />
-                        )}
-                        Telecharger
-                      </Button>
+                          Telecharger
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );

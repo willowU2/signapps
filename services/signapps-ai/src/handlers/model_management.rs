@@ -79,7 +79,7 @@ pub async fn list_available_models(
     Ok(Json(AvailableModelsResponse { models }))
 }
 
-/// Download a model.
+/// Download a model (async — spawns background task and returns immediately).
 pub async fn download_model(
     State(state): State<AppState>,
     Json(request): Json<DownloadModelRequest>,
@@ -92,21 +92,58 @@ pub async fn download_model(
             "Model manager not initialized".to_string(),
         ))?;
 
-    let path = model_manager
-        .ensure_model(&request.model_id)
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Download failed: {}", e),
-            )
-        })?;
+    // Verify model exists in registry
+    let entry = model_manager.get_model(&request.model_id).ok_or((
+        StatusCode::NOT_FOUND,
+        format!("Model '{}' not found", request.model_id),
+    ))?;
+
+    // If already downloaded, return immediately
+    if let Some(ref path) = entry.local_path {
+        if path.exists() {
+            return Ok(Json(DownloadModelResponse {
+                model_id: request.model_id,
+                status: "ready".to_string(),
+                path: Some(path.to_string_lossy().to_string()),
+            }));
+        }
+    }
+
+    // Spawn download in background task
+    let mm = model_manager.clone();
+    let model_id = request.model_id.clone();
+    tokio::spawn(async move {
+        if let Err(e) = mm.ensure_model(&model_id).await {
+            tracing::error!("Background download failed for '{}': {}", model_id, e);
+        }
+    });
 
     Ok(Json(DownloadModelResponse {
         model_id: request.model_id,
-        status: "ready".to_string(),
-        path: Some(path.to_string_lossy().to_string()),
+        status: "downloading".to_string(),
+        path: None,
     }))
+}
+
+/// Get status of a single model.
+pub async fn get_model_status(
+    State(state): State<AppState>,
+    Path(model_id): Path<String>,
+) -> Result<Json<ModelEntry>, (StatusCode, String)> {
+    let model_manager = state
+        .model_manager
+        .as_ref()
+        .ok_or((
+            StatusCode::SERVICE_UNAVAILABLE,
+            "Model manager not initialized".to_string(),
+        ))?;
+
+    let entry = model_manager.get_model(&model_id).ok_or((
+        StatusCode::NOT_FOUND,
+        format!("Model '{}' not found", model_id),
+    ))?;
+
+    Ok(Json(entry))
 }
 
 /// Delete a downloaded model.

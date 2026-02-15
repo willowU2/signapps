@@ -595,6 +595,7 @@ export const aiApi = {
   downloadModel: (modelId: string) =>
     aiApiClient.post<{ model_id: string; status: string; path?: string }>('/ai/models/download', { model_id: modelId }),
   deleteModel: (modelId: string) => aiApiClient.delete(`/ai/models/${modelId}`),
+  getModelStatus: (modelId: string) => aiApiClient.get<ModelEntry>(`/ai/models/${encodeURIComponent(modelId)}`),
   hardware: () => aiApiClient.get<{ hardware: HardwareProfile }>('/ai/hardware'),
 
   // Knowledge Bases / Collections

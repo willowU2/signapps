@@ -79,9 +79,11 @@ async fn main() -> anyhow::Result<()> {
     let pool = signapps_db::create_pool(&database_url).await?;
     tracing::info!("Database connection established");
 
-    // Run migrations
-    signapps_db::run_migrations(&pool).await?;
-    tracing::info!("Database migrations completed");
+    // Run migrations (non-fatal: pgvector may not be installed)
+    match signapps_db::run_migrations(&pool).await {
+        Ok(()) => tracing::info!("Database migrations completed"),
+        Err(e) => tracing::warn!("Migration warning (non-fatal): {}", e),
+    }
 
     // Hardware detection + model manager
     let hardware = HardwareProfile::detect().await;
@@ -344,7 +346,8 @@ fn create_router(state: AppState) -> Router {
         .route("/models/download", post(model_management::download_model))
         .route(
             "/models/:model_id",
-            delete(model_management::delete_model),
+            get(model_management::get_model_status)
+                .delete(model_management::delete_model),
         )
         .route("/hardware", get(model_management::get_hardware))
         .route_layer(middleware::from_fn_with_state(
