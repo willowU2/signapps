@@ -69,8 +69,8 @@ impl LlamaCppProvider {
         let model_name = model_path.to_string();
 
         let (backend, model) = tokio::task::spawn_blocking(move || {
-            let backend =
-                LlamaBackend::init().map_err(|e| Error::Internal(format!("Backend init: {}", e)))?;
+            let backend = LlamaBackend::init()
+                .map_err(|e| Error::Internal(format!("Backend init: {}", e)))?;
 
             let mut model_params = LlamaModelParams::default();
             model_params = model_params.with_n_gpu_layers(gpu_layers as u32);
@@ -241,7 +241,8 @@ fn generate_response(
 ) -> Result<String> {
     let prompt = format_prompt(messages);
 
-    let ctx_params = LlamaContextParams::default().with_n_ctx(std::num::NonZeroU32::new(context_size));
+    let ctx_params =
+        LlamaContextParams::default().with_n_ctx(std::num::NonZeroU32::new(context_size));
     let mut ctx = model
         .new_context(_backend, ctx_params)
         .map_err(|e| Error::Internal(format!("Context creation: {}", e)))?;
@@ -264,10 +265,8 @@ fn generate_response(
     let mut output = String::new();
     let mut n_cur = tokens.len() as i32;
 
-    let mut sampler = LlamaSampler::chain_simple([
-        LlamaSampler::temp(temperature),
-        LlamaSampler::dist(42),
-    ]);
+    let mut sampler =
+        LlamaSampler::chain_simple([LlamaSampler::temp(temperature), LlamaSampler::dist(42)]);
 
     for _ in 0..max_tokens {
         let token = sampler.sample(&ctx, -1);
@@ -312,7 +311,8 @@ fn generate_response_streaming(
 ) -> Result<()> {
     let prompt = format_prompt(messages);
 
-    let ctx_params = LlamaContextParams::default().with_n_ctx(std::num::NonZeroU32::new(context_size));
+    let ctx_params =
+        LlamaContextParams::default().with_n_ctx(std::num::NonZeroU32::new(context_size));
     let mut ctx = model
         .new_context(_backend, ctx_params)
         .map_err(|e| Error::Internal(format!("Context creation: {}", e)))?;
@@ -334,10 +334,8 @@ fn generate_response_streaming(
 
     let mut n_cur = tokens.len() as i32;
 
-    let mut sampler = LlamaSampler::chain_simple([
-        LlamaSampler::temp(temperature),
-        LlamaSampler::dist(42),
-    ]);
+    let mut sampler =
+        LlamaSampler::chain_simple([LlamaSampler::temp(temperature), LlamaSampler::dist(42)]);
 
     for _ in 0..max_tokens {
         let token = sampler.sample(&ctx, -1);
@@ -386,6 +384,6 @@ fn auto_gpu_layers(hardware: &HardwareProfile) -> i32 {
             } else {
                 0
             }
-        }
+        },
     }
 }

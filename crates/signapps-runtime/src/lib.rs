@@ -7,9 +7,9 @@
 //!
 //! Also provides hardware detection and AI model management.
 
-mod postgres;
 pub mod gpu;
 pub mod models;
+mod postgres;
 
 pub use gpu::{GpuInfo, GpuVendor, HardwareProfile, InferenceBackend, ModelTier};
 pub use models::{ModelEntry, ModelError, ModelManager, ModelSource, ModelStatus, ModelType};

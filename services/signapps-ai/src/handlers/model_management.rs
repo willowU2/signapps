@@ -41,13 +41,10 @@ pub struct HardwareResponse {
 pub async fn list_local_models(
     State(state): State<AppState>,
 ) -> Result<Json<LocalModelsResponse>, (StatusCode, String)> {
-    let model_manager = state
-        .model_manager
-        .as_ref()
-        .ok_or((
-            StatusCode::SERVICE_UNAVAILABLE,
-            "Model manager not initialized".to_string(),
-        ))?;
+    let model_manager = state.model_manager.as_ref().ok_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        "Model manager not initialized".to_string(),
+    ))?;
 
     let models = model_manager
         .list_models(None)
@@ -67,13 +64,10 @@ pub async fn list_local_models(
 pub async fn list_available_models(
     State(state): State<AppState>,
 ) -> Result<Json<AvailableModelsResponse>, (StatusCode, String)> {
-    let model_manager = state
-        .model_manager
-        .as_ref()
-        .ok_or((
-            StatusCode::SERVICE_UNAVAILABLE,
-            "Model manager not initialized".to_string(),
-        ))?;
+    let model_manager = state.model_manager.as_ref().ok_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        "Model manager not initialized".to_string(),
+    ))?;
 
     let models = model_manager.list_models(None);
     Ok(Json(AvailableModelsResponse { models }))
@@ -84,13 +78,10 @@ pub async fn download_model(
     State(state): State<AppState>,
     Json(request): Json<DownloadModelRequest>,
 ) -> Result<Json<DownloadModelResponse>, (StatusCode, String)> {
-    let model_manager = state
-        .model_manager
-        .as_ref()
-        .ok_or((
-            StatusCode::SERVICE_UNAVAILABLE,
-            "Model manager not initialized".to_string(),
-        ))?;
+    let model_manager = state.model_manager.as_ref().ok_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        "Model manager not initialized".to_string(),
+    ))?;
 
     // Verify model exists in registry
     let entry = model_manager.get_model(&request.model_id).ok_or((
@@ -130,13 +121,10 @@ pub async fn get_model_status(
     State(state): State<AppState>,
     Path(model_id): Path<String>,
 ) -> Result<Json<ModelEntry>, (StatusCode, String)> {
-    let model_manager = state
-        .model_manager
-        .as_ref()
-        .ok_or((
-            StatusCode::SERVICE_UNAVAILABLE,
-            "Model manager not initialized".to_string(),
-        ))?;
+    let model_manager = state.model_manager.as_ref().ok_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        "Model manager not initialized".to_string(),
+    ))?;
 
     let entry = model_manager.get_model(&model_id).ok_or((
         StatusCode::NOT_FOUND,
@@ -151,13 +139,10 @@ pub async fn delete_model(
     State(state): State<AppState>,
     Path(model_id): Path<String>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
-    let model_manager = state
-        .model_manager
-        .as_ref()
-        .ok_or((
-            StatusCode::SERVICE_UNAVAILABLE,
-            "Model manager not initialized".to_string(),
-        ))?;
+    let model_manager = state.model_manager.as_ref().ok_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        "Model manager not initialized".to_string(),
+    ))?;
 
     model_manager.delete_model(&model_id).await.map_err(|e| {
         (
@@ -176,13 +161,10 @@ pub async fn delete_model(
 pub async fn get_hardware(
     State(state): State<AppState>,
 ) -> Result<Json<HardwareResponse>, (StatusCode, String)> {
-    let hardware = state
-        .hardware
-        .as_ref()
-        .ok_or((
-            StatusCode::SERVICE_UNAVAILABLE,
-            "Hardware detection not available".to_string(),
-        ))?;
+    let hardware = state.hardware.as_ref().ok_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        "Hardware detection not available".to_string(),
+    ))?;
 
     Ok(Json(HardwareResponse {
         hardware: hardware.clone(),

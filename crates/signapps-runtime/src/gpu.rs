@@ -113,11 +113,7 @@ impl HardwareProfile {
         if gpus.is_empty() {
             if let Some((amd_gpus, rocm_version)) = detect_amd().await {
                 for gpu in &amd_gpus {
-                    tracing::info!(
-                        "Detected AMD GPU: {} ({} MB VRAM)",
-                        gpu.name,
-                        gpu.vram_mb
-                    );
+                    tracing::info!("Detected AMD GPU: {} ({} MB VRAM)", gpu.name, gpu.vram_mb);
                 }
                 preferred_backend = InferenceBackend::Rocm {
                     version: rocm_version,
@@ -298,7 +294,12 @@ async fn detect_amd() -> Option<(Vec<GpuInfo>, String)> {
 
     for line in stdout.lines().skip(1) {
         // Skip header
-        let name = line.split(',').next().unwrap_or("AMD GPU").trim().to_string();
+        let name = line
+            .split(',')
+            .next()
+            .unwrap_or("AMD GPU")
+            .trim()
+            .to_string();
         if !name.is_empty() {
             gpus.push(GpuInfo {
                 name,

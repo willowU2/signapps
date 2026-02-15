@@ -26,24 +26,60 @@ pub struct ProvidersResponse {
 }
 
 /// List available providers from the registry.
+/// Probes local providers for connectivity and marks unreachable ones as disabled.
 #[tracing::instrument(skip(state))]
 pub async fn list_providers(State(state): State<AppState>) -> Result<Json<ProvidersResponse>> {
     let entries = state.providers.list_providers();
 
-    let providers: Vec<ProviderInfo> = entries
-        .iter()
-        .map(|(id, config)| ProviderInfo {
+    let mut providers: Vec<ProviderInfo> = Vec::new();
+    let mut first_available: Option<String> = None;
+    let default_id = state.providers.default_provider_id().to_string();
+
+    for (id, config) in &entries {
+        let is_local = ProviderRegistry::is_local(&config.provider_type);
+        let mut enabled = config.enabled;
+
+        // For local providers, probe connectivity
+        if is_local && enabled {
+            if let Ok(provider) = state.providers.get(id) {
+                match tokio::time::timeout(
+                    std::time::Duration::from_secs(2),
+                    provider.health_check(),
+                )
+                .await
+                {
+                    Ok(Ok(true)) => {}
+                    _ => {
+                        tracing::debug!(provider = id, "Local provider unreachable, marking disabled");
+                        enabled = false;
+                    }
+                }
+            }
+        }
+
+        if enabled && first_available.is_none() {
+            first_available = Some(id.to_string());
+        }
+
+        providers.push(ProviderInfo {
             id: id.to_string(),
             name: ProviderRegistry::provider_name(&config.provider_type).to_string(),
             provider_type: config.provider_type.clone(),
-            enabled: config.enabled,
+            enabled,
             default_model: config.default_model.clone(),
-            is_local: ProviderRegistry::is_local(&config.provider_type),
-        })
-        .collect();
+            is_local,
+        });
+    }
+
+    // If the default provider is disabled, fall back to first available
+    let active = if providers.iter().any(|p| p.id == default_id && p.enabled) {
+        default_id
+    } else {
+        first_available.unwrap_or(default_id)
+    };
 
     Ok(Json(ProvidersResponse {
         providers,
-        active_provider: state.providers.default_provider_id().to_string(),
+        active_provider: active,
     }))
 }

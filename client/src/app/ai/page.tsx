@@ -319,16 +319,16 @@ export default function AIPage() {
       const providerList = response.data.providers || [];
       const activeProvider = response.data.active_provider;
       setProviders(providerList);
-      if (!selectedProvider) {
+      setSelectedProvider(prev => {
+        if (prev) return prev; // keep user selection
         const defaultProvider = providerList.find(p => p.id === activeProvider && p.enabled)
           || providerList.find(p => p.enabled);
         if (defaultProvider) {
-          setSelectedProvider(defaultProvider.id);
-          if (!selectedModel) {
-            setSelectedModel(defaultProvider.default_model);
-          }
+          setSelectedModel(curr => curr || defaultProvider.default_model);
+          return defaultProvider.id;
         }
-      }
+        return prev;
+      });
     } catch (error) {
       console.error('Failed to fetch providers:', error);
       setProviders([{
@@ -339,41 +339,40 @@ export default function AIPage() {
         default_model: 'llama3.2:3b',
         is_local: true,
       }]);
-      if (!selectedProvider) {
-        setSelectedProvider('ollama');
-      }
+      setSelectedProvider(prev => prev || 'ollama');
     }
-  }, [selectedProvider, selectedModel]);
+  }, []);
 
-  const fetchModels = useCallback(async () => {
-    if (!selectedProvider) return;
+  const fetchModels = useCallback(async (providerId: string, providersList: ProviderInfo[]) => {
+    if (!providerId) return;
     setLoadingModels(true);
     try {
-      const response = await aiApi.models(selectedProvider);
+      const response = await aiApi.models(providerId);
       const modelList = response.data.models || [];
       setModels(modelList);
-      // Auto-select the provider's default model, or first available
-      const provider = providers.find(p => p.id === selectedProvider);
-      if (provider && modelList.some(m => m.id === provider.default_model)) {
-        setSelectedModel(provider.default_model);
-      } else if (modelList.length > 0) {
-        setSelectedModel(modelList[0].id);
-      }
+      // Only auto-select if current model is not in the list
+      setSelectedModel(prev => {
+        if (prev && modelList.some(m => m.id === prev)) return prev;
+        const provider = providersList.find(p => p.id === providerId);
+        if (provider && modelList.some(m => m.id === provider.default_model)) {
+          return provider.default_model;
+        }
+        return modelList.length > 0 ? modelList[0].id : prev;
+      });
     } catch (error) {
       console.error('Failed to fetch models:', error);
-      // Fallback: use the provider's default model
-      const provider = providers.find(p => p.id === selectedProvider);
+      const provider = providersList.find(p => p.id === providerId);
       if (provider) {
         setModels([{ id: provider.default_model, name: provider.default_model }]);
-        setSelectedModel(provider.default_model);
+        setSelectedModel(prev => prev || provider.default_model);
       } else {
         setModels([{ id: 'default', name: 'Default Model' }]);
-        setSelectedModel('default');
+        setSelectedModel(prev => prev || 'default');
       }
     } finally {
       setLoadingModels(false);
     }
-  }, [selectedProvider, providers]);
+  }, []);
 
   const fetchKnowledgeBases = useCallback(async () => {
     setLoadingKnowledgeBases(true);
@@ -382,35 +381,27 @@ export default function AIPage() {
       setKnowledgeBases(response.data.collections || []);
     } catch (error) {
       console.error('Failed to fetch knowledge bases:', error);
-      // Provide mock data for development
-      setKnowledgeBases([
-        {
-          name: 'default',
-          description: 'Collection par defaut',
-          documents_count: stats?.documents_count || 0,
-          chunks_count: stats?.chunks_count || 0,
-          size_bytes: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ]);
+      setKnowledgeBases([]);
     } finally {
       setLoadingKnowledgeBases(false);
     }
-  }, [stats]);
+  }, []);
 
+  // Initial data fetch — run once on mount
   useEffect(() => {
     fetchStats();
     fetchProviders();
     fetchKnowledgeBases();
-  }, [fetchStats, fetchProviders, fetchKnowledgeBases]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Re-fetch models when provider changes
   useEffect(() => {
     if (selectedProvider) {
-      fetchModels();
+      fetchModels(selectedProvider, providers);
     }
-  }, [selectedProvider, fetchModels]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProvider]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -948,11 +939,11 @@ export default function AIPage() {
                 <Select
                   value={selectedProvider}
                   onValueChange={(value) => {
-                    setSelectedProvider(value);
                     const provider = providers.find(p => p.id === value);
                     if (provider) {
                       setSelectedModel(provider.default_model);
                     }
+                    setSelectedProvider(value);
                   }}
                 >
                   <SelectTrigger className="w-[140px] h-8">
@@ -1054,7 +1045,7 @@ export default function AIPage() {
                 {stats?.documents_count || 0} docs
               </Badge>
 
-              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => { fetchStats(); fetchKnowledgeBases(); }}>
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => { fetchStats(); fetchProviders(); fetchKnowledgeBases(); }}>
                 <RefreshCw className="h-4 w-4" />
               </Button>
             </div>

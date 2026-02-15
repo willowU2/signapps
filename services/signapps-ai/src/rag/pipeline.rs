@@ -159,6 +159,7 @@ impl RagPipeline {
     }
 
     /// Query with RAG using a specific provider and model.
+    /// Falls back to direct LLM chat when embeddings are unavailable.
     pub async fn query_with_provider(
         &self,
         question: &str,
@@ -170,8 +171,17 @@ impl RagPipeline {
     ) -> Result<RagResponse> {
         let provider = self.providers.resolve(provider_id)?;
 
-        // 1. Retrieve relevant context
-        let search_results = self.search(question, None, collection).await?;
+        // 1. Try to retrieve relevant context (graceful fallback)
+        let search_results = match self.search(question, None, collection).await {
+            Ok(results) => results,
+            Err(e) => {
+                tracing::warn!(
+                    "RAG search failed, falling back to direct LLM: {}",
+                    e
+                );
+                vec![]
+            }
+        };
 
         // 2. Build context from results
         let context = self.build_context(&search_results);
@@ -236,8 +246,17 @@ impl RagPipeline {
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
         let provider = self.providers.resolve(provider_id)?;
 
-        // 1. Retrieve relevant context
-        let search_results = self.search(question, None, collection).await?;
+        // 1. Try to retrieve relevant context (graceful fallback)
+        let search_results = match self.search(question, None, collection).await {
+            Ok(results) => results,
+            Err(e) => {
+                tracing::warn!(
+                    "RAG search failed, falling back to direct LLM streaming: {}",
+                    e
+                );
+                vec![]
+            }
+        };
 
         // 2. Build context from results
         let context = self.build_context(&search_results);
