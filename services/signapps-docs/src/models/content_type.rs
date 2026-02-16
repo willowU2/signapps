@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-/// Document content type
+/// Document content type (for future use)
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
+#[allow(dead_code)]
 pub enum DocumentType {
     /// Rich text document (Tiptap editor)
     Text,
@@ -14,6 +15,7 @@ pub enum DocumentType {
     Board,
 }
 
+#[allow(dead_code)]
 impl DocumentType {
     pub fn as_str(&self) -> &'static str {
         match self {

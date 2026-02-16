@@ -7,22 +7,26 @@ use yrs::Doc;
 /// These functions are placeholders for future structured initialization.
 
 /// Initialize a text document structure
+#[allow(dead_code)]
 pub fn init_text_structure(_doc: &Doc) {
     // Text content is created on-demand by Y.js client
     // No explicit initialization needed in backend
 }
 
 /// Initialize a spreadsheet structure
+#[allow(dead_code)]
 pub fn init_sheet_structure(_doc: &Doc) {
     // Sheet structure (Map<Array>) is created on-demand by client
 }
 
 /// Initialize a presentation structure
+#[allow(dead_code)]
 pub fn init_presentation_structure(_doc: &Doc) {
     // Slide array is created on-demand by client
 }
 
 /// Initialize a board structure
+#[allow(dead_code)]
 pub fn init_board_structure(_doc: &Doc) {
     // Board columns structure is created on-demand by client
 }

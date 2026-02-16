@@ -1,14 +1,16 @@
 use tokio::sync::broadcast;
 use uuid::Uuid;
 
-/// Represents a connected client session
+/// Represents a connected client session (for future use)
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct ClientSession {
     pub id: Uuid,
     pub doc_id: String,
     pub tx: broadcast::Sender<Vec<u8>>,
 }
 
+#[allow(dead_code)]
 impl ClientSession {
     /// Create a new client session
     pub fn new(doc_id: String, tx: broadcast::Sender<Vec<u8>>) -> Self {
