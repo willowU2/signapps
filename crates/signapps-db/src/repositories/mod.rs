@@ -28,3 +28,13 @@ pub use certificate_repository::CertificateRepository;
 
 pub mod vector_repository;
 pub use vector_repository::VectorRepository;
+
+pub mod calendar_repository;
+pub use calendar_repository::{
+    CalendarRepository,
+    CalendarMemberRepository,
+    EventRepository,
+    EventAttendeeRepository,
+    TaskRepository,
+    ResourceRepository,
+};

@@ -15,6 +15,7 @@ members = [
     "services/signapps-metrics",
     "services/signapps-media",
     "services/signapps-docs",
+    "services/signapps-calendar",
 ]
 
 [workspace.package]

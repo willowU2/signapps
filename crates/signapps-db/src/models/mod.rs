@@ -1,6 +1,7 @@
 //! Database models for SignApps Platform.
 
 pub mod backup;
+pub mod calendar;
 pub mod certificate;
 pub mod container;
 pub mod device;
@@ -13,6 +14,7 @@ pub mod route;
 pub mod user;
 
 pub use backup::*;
+pub use calendar::*;
 pub use certificate::*;
 pub use container::*;
 pub use device::*;
