@@ -9,7 +9,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use signapps_common::{AppError, Claims};
+use signapps_common::Claims;
 use signapps_db::{
     models::{NotificationChannel, UpdateNotificationPreferencesRequest, NotificationFilter},
     repositories::{
@@ -17,7 +17,7 @@ use signapps_db::{
     },
 };
 
-use crate::AppState;
+use crate::{AppState, CalendarError};
 
 // ============================================================================
 // REQUEST/RESPONSE TYPES
@@ -66,11 +66,11 @@ pub struct NotificationRecord {
 /// Get user's notification preferences
 pub async fn get_preferences(
     State(state): State<AppState>,
-    Claims { sub, .. }: Claims,
-) -> Result<Json<serde_json::Value>, AppError> {
-    let prefs = NotificationPreferencesRepository::get_or_create(&state.pool, sub)
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+) -> Result<Json<serde_json::Value>, CalendarError> {
+    let prefs = NotificationPreferencesRepository::get_or_create(&state.pool, claims.sub)
         .await
-        .map_err(|_| AppError::not_found("Notification preferences not found"))?;
+        .map_err(|_| CalendarError::not_found("Notification preferences not found"))?;
 
     Ok(Json(serde_json::json!({
         "id": prefs.id.to_string(),
@@ -90,9 +90,9 @@ pub async fn get_preferences(
 /// Update user's notification preferences
 pub async fn update_preferences(
     State(state): State<AppState>,
-    Claims { sub, .. }: Claims,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     Json(req): Json<UpdatePreferencesRequest>,
-) -> Result<Json<serde_json::Value>, AppError> {
+) -> Result<Json<serde_json::Value>, CalendarError> {
     // Convert quiet hours to NaiveTime
     let quiet_start = req.quiet_start.and_then(|s| {
         chrono::NaiveTime::parse_from_str(&s, "%H:%M").ok()
@@ -114,9 +114,9 @@ pub async fn update_preferences(
         reminder_times: req.reminder_times,
     };
 
-    let prefs = NotificationPreferencesRepository::update(&state.pool, sub, update)
+    let prefs = NotificationPreferencesRepository::update(&state.pool, claims.sub, update)
         .await
-        .map_err(|_| AppError::internal("Failed to update preferences"))?;
+        .map_err(|_| CalendarError::internal("Failed to update preferences"))?;
 
     Ok(Json(serde_json::json!({
         "id": prefs.id.to_string(),
@@ -137,17 +137,17 @@ pub struct PushSubscriptionRequest {
 
 pub async fn subscribe_push(
     State(state): State<AppState>,
-    Claims { sub, .. }: Claims,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     Json(req): Json<PushSubscriptionRequest>,
-) -> Result<StatusCode, AppError> {
+) -> Result<StatusCode, CalendarError> {
     PushSubscriptionRepository::create(
         &state.pool,
-        sub,
+        claims.sub,
         req.subscription,
         req.browser_name,
     )
     .await
-    .map_err(|_| AppError::internal("Failed to register push subscription"))?;
+    .map_err(|_| CalendarError::internal("Failed to register push subscription"))?;
 
     Ok(StatusCode::CREATED)
 }
@@ -156,11 +156,11 @@ pub async fn subscribe_push(
 /// Get all push subscriptions for user
 pub async fn list_push_subscriptions(
     State(state): State<AppState>,
-    Claims { sub, .. }: Claims,
-) -> Result<Json<Vec<serde_json::Value>>, AppError> {
-    let subscriptions = PushSubscriptionRepository::get_by_user(&state.pool, sub)
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+) -> Result<Json<Vec<serde_json::Value>>, CalendarError> {
+    let subscriptions = PushSubscriptionRepository::get_by_user(&state.pool, claims.sub)
         .await
-        .map_err(|_| AppError::internal("Failed to fetch push subscriptions"))?;
+        .map_err(|_| CalendarError::internal("Failed to fetch push subscriptions"))?;
 
     let response: Vec<serde_json::Value> = subscriptions
         .iter()
@@ -180,21 +180,21 @@ pub async fn list_push_subscriptions(
 /// Unregister a push subscription
 pub async fn unsubscribe_push(
     State(state): State<AppState>,
-    Claims { sub, .. }: Claims,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     Path(subscription_id): Path<Uuid>,
-) -> Result<StatusCode, AppError> {
+) -> Result<StatusCode, CalendarError> {
     // Verify subscription belongs to user (simple check)
-    let subs = PushSubscriptionRepository::get_by_user(&state.pool, sub)
+    let subs = PushSubscriptionRepository::get_by_user(&state.pool, claims.sub)
         .await
-        .map_err(|_| AppError::internal("Failed to fetch subscriptions"))?;
+        .map_err(|_| CalendarError::internal("Failed to fetch subscriptions"))?;
 
     if !subs.iter().any(|s| s.id == subscription_id) {
-        return Err(AppError::forbidden("Subscription not owned by user"));
+        return Err(CalendarError::forbidden("Subscription not owned by user"));
     }
 
     PushSubscriptionRepository::delete(&state.pool, subscription_id)
         .await
-        .map_err(|_| AppError::internal("Failed to delete subscription"))?;
+        .map_err(|_| CalendarError::internal("Failed to delete subscription"))?;
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -212,15 +212,15 @@ pub struct NotificationHistoryQuery {
 
 pub async fn get_notification_history(
     State(state): State<AppState>,
-    Claims { sub, .. }: Claims,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     Query(query): Query<NotificationHistoryQuery>,
-) -> Result<Json<NotificationHistoryResponse>, AppError> {
+) -> Result<Json<NotificationHistoryResponse>, CalendarError> {
     let limit = query.limit.unwrap_or(20).min(100);
     let offset = query.offset.unwrap_or(0);
 
-    let notifications = NotificationSentRepository::get_history(&state.pool, sub, limit, offset)
+    let notifications = NotificationSentRepository::get_history(&state.pool, claims.sub, limit, offset)
         .await
-        .map_err(|_| AppError::internal("Failed to fetch notification history"))?;
+        .map_err(|_| CalendarError::internal("Failed to fetch notification history"))?;
 
     let response: Vec<NotificationRecord> = notifications
         .iter()
@@ -247,21 +247,21 @@ pub async fn get_notification_history(
 /// Resend a failed notification
 pub async fn resend_notification(
     State(state): State<AppState>,
-    Claims { sub, .. }: Claims,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     Path(notification_id): Path<Uuid>,
-) -> Result<StatusCode, AppError> {
+) -> Result<StatusCode, CalendarError> {
     let notification = NotificationSentRepository::get_by_id(&state.pool, notification_id)
         .await
-        .map_err(|_| AppError::not_found("Notification not found"))?;
+        .map_err(|_| CalendarError::not_found("Notification not found"))?;
 
     // Verify user owns this notification
-    if notification.user_id != sub {
-        return Err(AppError::forbidden("Notification not owned by user"));
+    if notification.user_id != claims.sub {
+        return Err(CalendarError::forbidden("Notification not owned by user"));
     }
 
     // Only allow resending failed notifications
     if notification.status != "failed" {
-        return Err(AppError::bad_request(
+        return Err(CalendarError::bad_request(
             "Can only resend failed notifications",
         ));
     }
@@ -270,7 +270,7 @@ pub async fn resend_notification(
     // For now, just mark as pending again
     NotificationSentRepository::update_status(&state.pool, notification_id, "pending", None)
         .await
-        .map_err(|_| AppError::internal("Failed to resend notification"))?;
+        .map_err(|_| CalendarError::internal("Failed to resend notification"))?;
 
     Ok(StatusCode::OK)
 }
@@ -279,13 +279,13 @@ pub async fn resend_notification(
 /// Get count of unread notifications
 pub async fn get_unread_count(
     State(state): State<AppState>,
-    Claims { sub, .. }: Claims,
-) -> Result<Json<serde_json::Value>, AppError> {
-    let pending = NotificationSentRepository::count_by_status(&state.pool, sub, "pending")
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+) -> Result<Json<serde_json::Value>, CalendarError> {
+    let pending = NotificationSentRepository::count_by_status(&state.pool, claims.sub, "pending")
         .await
         .unwrap_or(0);
 
-    let failed = NotificationSentRepository::count_by_status(&state.pool, sub, "failed")
+    let failed = NotificationSentRepository::count_by_status(&state.pool, claims.sub, "failed")
         .await
         .unwrap_or(0);
 

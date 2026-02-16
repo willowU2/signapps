@@ -10,7 +10,7 @@ pub mod shares;
 pub mod icalendar;
 pub mod websocket;
 pub mod ws_messages;
-// pub mod notifications;  // TODO: Wire up after refactoring API error types
+pub mod notifications;
 
 pub use calendars::*;
 pub use events::*;
@@ -22,4 +22,4 @@ pub use shares::*;
 pub use icalendar::*;
 pub use websocket::*;
 pub use ws_messages::*;
-// pub use notifications::*;  // TODO: Wire up after refactoring API error types
+pub use notifications::*;

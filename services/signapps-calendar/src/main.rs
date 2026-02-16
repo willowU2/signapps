@@ -93,7 +93,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Initialize and spawn notification scheduler
     let scheduler_config = SchedulerConfig::new();
-    let scheduler = NotificationScheduler::new(state.pool.clone(), scheduler_config);
+    let scheduler = NotificationScheduler::new(state.pool.inner().clone(), scheduler_config);
 
     // Spawn scheduler in background
     tokio::spawn(async move {
@@ -113,7 +113,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use handlers::{calendars, events, recurrence, timezones, tasks, resources, shares, icalendar, websocket};
+    use handlers::{calendars, events, recurrence, timezones, tasks, resources, shares, icalendar, websocket, notifications};
     use axum::routing::{delete, post, put};
 
     Router::new()
@@ -181,6 +181,17 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/icalendar/validate", post(icalendar::validate_icalendar))
         // Real-time collaboration WebSocket routes
         .route("/api/v1/calendars/:calendar_id/ws", get(websocket::websocket_handler))
+        // Notification preferences routes
+        .route("/api/v1/notifications/preferences", get(notifications::get_preferences))
+        .route("/api/v1/notifications/preferences", put(notifications::update_preferences))
+        // Push subscription routes
+        .route("/api/v1/notifications/subscriptions/push", post(notifications::subscribe_push))
+        .route("/api/v1/notifications/subscriptions/push", get(notifications::list_push_subscriptions))
+        .route("/api/v1/notifications/subscriptions/push/:subscription_id", delete(notifications::unsubscribe_push))
+        // Notification history and management routes
+        .route("/api/v1/notifications/history", get(notifications::get_notification_history))
+        .route("/api/v1/notifications/:notification_id/resend", post(notifications::resend_notification))
+        .route("/api/v1/notifications/unread-count", get(notifications::get_unread_count))
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))  // 100MB
         .layer(TraceLayer::new_for_http())
         .with_state(state)

@@ -29,6 +29,32 @@ pub enum CalendarError {
     InternalError,
 }
 
+impl CalendarError {
+    pub fn not_found(msg: &str) -> Self {
+        CalendarError::NotFound
+    }
+
+    pub fn unauthorized() -> Self {
+        CalendarError::Unauthorized
+    }
+
+    pub fn forbidden(msg: &str) -> Self {
+        CalendarError::Forbidden
+    }
+
+    pub fn bad_request(msg: &str) -> Self {
+        CalendarError::InvalidInput(msg.to_string())
+    }
+
+    pub fn internal(msg: &str) -> Self {
+        CalendarError::InternalError
+    }
+
+    pub fn conflict(msg: &str) -> Self {
+        CalendarError::Conflict(msg.to_string())
+    }
+}
+
 impl IntoResponse for CalendarError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {

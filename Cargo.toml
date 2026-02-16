@@ -119,6 +119,10 @@ instant-acme = "0.7"
 # Testing
 tokio-test = "0.4"
 
+# Email and notifications (will add when OpenSSL properly configured)
+# lettre = "0.11"  # TODO: Requires OpenSSL on Windows
+# web-push = "0.11"  # TODO: Add after lettre works
+
 [profile.release]
 lto = true
 codegen-units = 1
