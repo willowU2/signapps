@@ -33,11 +33,16 @@ pub async fn create_pool(database_url: &str) -> Result<DatabasePool, sqlx::Error
 ///
 /// If a migration was modified after being applied (common in dev),
 /// we fix the checksum in the database and retry.
+///
+/// If migrations are severely broken, attempt to reset in dev mode.
 pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::MigrateError> {
     let migrator = sqlx::migrate!("../../migrations");
 
     match migrator.run(pool.inner()).await {
-        Ok(()) => {},
+        Ok(()) => {
+            tracing::info!("Database migrations completed");
+            Ok(())
+        },
         Err(sqlx::migrate::MigrateError::VersionMismatch(version)) => {
             tracing::warn!(
                 "Migration {} checksum mismatch — fixing (dev environment)",
@@ -55,10 +60,47 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
             }
             // Retry
             migrator.run(pool.inner()).await?;
+            tracing::info!("Database migrations completed");
+            Ok(())
         },
-        Err(e) => return Err(e),
-    }
+        Err(sqlx::migrate::MigrateError::Execute(e)) => {
+            // If migrations fail with execution errors in dev, try to reset
+            if cfg!(debug_assertions) {
+                tracing::warn!("Migration execution failed in dev mode, attempting recovery...");
+                // Try to drop ALL schemas and reset _sqlx_migrations table
+                let reset_queries = vec![
+                    "DROP SCHEMA IF EXISTS identity CASCADE",
+                    "DROP SCHEMA IF EXISTS containers CASCADE",
+                    "DROP SCHEMA IF EXISTS proxy CASCADE",
+                    "DROP SCHEMA IF EXISTS storage CASCADE",
+                    "DROP SCHEMA IF EXISTS ai CASCADE",
+                    "DROP SCHEMA IF EXISTS scheduler CASCADE",
+                    "DROP SCHEMA IF EXISTS documents CASCADE",
+                    "DROP SCHEMA IF EXISTS monitoring CASCADE",
+                    "DROP TABLE IF EXISTS _sqlx_migrations CASCADE",
+                ];
 
-    tracing::info!("Database migrations completed");
-    Ok(())
+                for query in reset_queries {
+                    let _ = sqlx::query(query).execute(pool.inner()).await;
+                }
+
+                tracing::info!("Database reset completed, retrying migrations...");
+
+                // Retry migrations
+                match migrator.run(pool.inner()).await {
+                    Ok(()) => {
+                        tracing::info!("Database migrations completed after reset");
+                        Ok(())
+                    },
+                    Err(e) => {
+                        tracing::error!("Migration recovery failed after reset: {:?}", e);
+                        Err(e)
+                    }
+                }
+            } else {
+                Err(sqlx::migrate::MigrateError::Execute(e))
+            }
+        },
+        Err(e) => Err(e),
+    }
 }
