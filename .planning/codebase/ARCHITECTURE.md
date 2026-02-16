@@ -1,146 +1,185 @@
 # Architecture
 
-**Analysis Date:** 2026-02-15
+**Analysis Date:** 2026-02-16
 
 ## Pattern Overview
 
-**Overall:** Microservices with Shared Foundational Crates
+**Overall:** Microservices Architecture with Shared Library Model
 
 **Key Characteristics:**
-- 9 independent Rust services communicating via REST APIs
-- 4 shared crates providing common functionality (auth, DB, cache, runtime)
-- Next.js 16 frontend connecting directly to each service
-- PostgreSQL as single shared database (multi-schema)
-- JWT-based authentication across all services
+- Workspace monorepo (Cargo workspace, 13 members: 9 services + 4 shared crates)
+- Independent services communicating via REST APIs on ports 3001-3009
+- Shared foundation (signapps-common, signapps-db, signapps-cache, signapps-runtime)
+- JWT authentication with optional refresh tokens
+- PostgreSQL + pgvector as central data store
+- Native runtime (no Docker required for core services)
 
 ## Layers
 
-**Middleware Layer:**
-- Purpose: Cross-cutting concerns (auth, logging, CORS)
-- Contains: JWT validation, admin checks, request ID propagation, tracing
-- Location: `crates/signapps-common/src/middleware.rs`
-- Used by: All services via `middleware::from_fn_with_state()`
+### Backend (Rust) - 4-Tier Model
 
-**Handler Layer:**
-- Purpose: HTTP request handling and response formatting
-- Contains: Route handlers organized by domain (one file per domain)
-- Location: `services/signapps-{name}/src/handlers/*.rs`
-- Depends on: Repository layer, AppState, Claims from middleware
-- Pattern: `pub async fn verb_noun(State, Extension<Claims>, Json<Request>) -> Result<Json<Response>>`
+**API Layer (Handlers):**
+- Purpose: HTTP request handling and response serialization
+- Contains: Route handlers organized by domain (`services/signapps-*/src/handlers/`)
+- Depends on: Business logic layer for data operations
+- Used by: Axum router and middleware pipeline
+- Pattern: Handlers extract AppState, call service methods, return responses
 
-**Repository Layer:**
-- Purpose: Data access with compile-time SQL verification
-- Contains: Static methods on Repository structs (`UserRepository::find_by_id`)
-- Location: `crates/signapps-db/src/repositories/*.rs`
-- Depends on: `&PgPool`, model types
-- Pattern: `pub async fn method(pool: &PgPool, ...) -> Result<T>`
+**Business Logic Layer:**
+- Purpose: Domain-specific operations and service logic
+- Contains: Services, RAG pipeline, LLM providers, Docker client wrappers
+- Examples: `services/signapps-ai/src/llm/`, `services/signapps-ai/src/rag/`
+- Depends on: Data access layer (repositories)
+- Used by: Handlers for core functionality
 
-**Model Layer:**
-- Purpose: Data structures mapping 1:1 to PostgreSQL tables
-- Contains: Structs with `#[derive(FromRow, Serialize, Deserialize)]`
-- Location: `crates/signapps-db/src/models/*.rs`
-- Used by: Repositories and handlers
+**Data Access Layer (Repositories):**
+- Purpose: Database interaction and query abstraction
+- Contains: Repository pattern implementations (`crates/signapps-db/src/repositories/`)
+- Examples: `UserRepository`, `GroupRepository`, `VectorRepository`, `ContainerRepository`
+- Depends on: PostgreSQL connection pool and SQLx
+- Used by: Business logic for CRUD operations
 
-**Service-Specific Logic:**
-- Purpose: Domain-specific business logic beyond CRUD
-- Contains: Docker client, LLM providers, storage backends, RAG pipeline, DNS server, etc.
-- Location: Service-specific modules (e.g., `services/signapps-ai/src/llm/`, `services/signapps-containers/src/docker/`)
+**Infrastructure Layer:**
+- Purpose: Cross-cutting concerns and shared utilities
+- Contains: Middleware, auth, error types, value objects, caching, runtime management
+- Locations: `crates/signapps-common/`, `crates/signapps-cache/`, `crates/signapps-runtime/`
+- Depends on: External libraries only
+- Used by: All other layers
+
+### Frontend (React) - 3-Tier Model
+
+**Pages (App Router):**
+- Purpose: Route definitions and top-level layout
+- Contains: `client/src/app/*/page.tsx` organized by feature
+- Examples: dashboard, containers, ai, storage, users, settings
+- Depends on: Components and custom hooks
+
+**Components & Hooks:**
+- Purpose: UI rendering and business logic encapsulation
+- Contains: `client/src/components/` and `client/src/hooks/`
+- Hooks: `useContainers()`, `useUsers()`, `useMonitoring()`, `useVoiceChat()`, etc.
+- Depends on: API client and state management
+
+**State Management & API:**
+- Purpose: Centralized state and API communication
+- Contains: Zustand stores (`client/src/stores/`) and axios clients (`client/src/lib/api.ts`)
+- Pattern: Per-service axios instances with JWT interceptors
+- Handles: Token refresh, error handling, request/response transformation
 
 ## Data Flow
 
 **HTTP Request Lifecycle:**
 
-1. TCP listener accepts connection on service port (3001-3009)
-2. `request_id_middleware` injects unique request ID
-3. `logging_middleware` starts tracing span
-4. CORS layer processes preflight / adds headers
-5. `auth_middleware` validates JWT, injects `Claims` into extensions (protected routes)
-6. `require_admin` checks role == 0 (admin routes)
-7. Handler extracts `State(AppState)`, `Extension(Claims)`, `Json(payload)`
-8. Handler calls Repository static methods with `&state.pool`
-9. Repository executes sqlx query, maps rows to models
-10. Handler returns `Result<Json<Response>>` or `Error` (RFC 7807)
+1. **Browser/Client** - User interaction or page load
+2. **next/lib/api.ts** - Axios instance with request interceptor
+   - Injects JWT from localStorage
+   - On 401: Calls refresh endpoint, retries original request
+3. **Service Port 300X/api/v1/...** - Route matches in Axum
+4. **Middleware Pipeline:**
+   - logging_middleware - logs request info
+   - request_id_middleware - adds request ID header
+   - TraceLayer - distributed tracing
+   - CorsLayer - CORS handling
+5. **auth_middleware** - JWT validation from signapps-common
+   - Extracts and validates token
+   - Injects Claims into request
+   - Rejects if invalid
+6. **Handler** - Business logic execution
+   - Extracts State<AppState>
+   - Validates input from request body/params
+   - Calls repository methods for data access
+   - Transforms response to JSON
+7. **Repository** - Database query execution
+   - SQLx compiled queries (type-safe)
+   - Executes against PostgreSQL
+   - Returns Result<T, Error>
+8. **Response** - JSON serialized back to client
 
 **State Management:**
-- Per-service `AppState` struct (Clone-able, injected via Axum `with_state`)
-- Database pool shared across all handlers
-- In-process cache (moka) for rate limiting and token blacklist
-- No inter-service state sharing (each service independent)
+
+- **Frontend state**: Zustand stores with localStorage persistence
+- **Backend state**: Stateless - request context contained in JWT claims
+- **Shared state**: PostgreSQL database (source of truth)
+- **Cache state**: moka in-process TTL cache (JWT blacklist, rate limits)
 
 ## Key Abstractions
 
-**AppState:**
-- Purpose: Service-wide shared state
-- Examples: `pool`, `jwt_config`, `cache`, `storage`, `docker`, `vectors`, `rag`
-- Pattern: Each service defines its own `AppState` implementing `AuthState` trait
+**Repository Pattern:**
+- Purpose: Encapsulate database access
+- Examples: `UserRepository`, `GroupRepository`, `VectorRepository` in `crates/signapps-db/`
+- Pattern: Each entity has dedicated repo with CRUD methods
+- Usage: `repository.find_by_id(id).await?` returns `Result<T>`
 
-**AuthState Trait:**
-- Purpose: Decouple JWT config from service-specific state
-- Location: `crates/signapps-common/src/middleware.rs`
-- Pattern: `trait AuthState: Clone + Send + Sync + 'static { fn jwt_config(&self) -> &JwtConfig; }`
+**Middleware Stack:**
+- Purpose: Cross-cutting concerns (auth, logging, tracing)
+- Examples: `auth_middleware`, `require_admin`, `logging_middleware` in `crates/signapps-common/`
+- Pattern: Tower middleware composed with `MiddlewareLayer::new()`
 
-**Repository:**
-- Purpose: Data access layer per entity
-- Examples: `UserRepository`, `ContainerRepository`, `GroupRepository`, `VectorRepository`
-- Pattern: Struct with static async methods accepting `&PgPool`
+**Error Handling (RFC 7807):**
+- Purpose: Unified error responses
+- Type: `signapps_common::Error` implements `IntoResponse`
+- Pattern: All handlers return `Result<T, AppError>`, Axum converts to HTTP response
+- Example: 401 unauthorized, 400 bad request, 500 server error
 
-**CacheService:**
-- Purpose: In-process caching (replaces Redis)
-- Location: `crates/signapps-cache/src/lib.rs`
-- Pattern: TTL-based key-value (moka) + atomic counters (DashMap)
+**State Injection:**
+- Purpose: Pass shared state to handlers
+- Pattern: Each service defines `AppState` implementing `AuthState` trait
+- Contents: `pool`, `jwt_config`, service-specific components
+- Method: Axum `Extension<AppState>` or `State<AppState>` extractor
 
-**Error:**
-- Purpose: Unified error handling across all services
-- Location: `crates/signapps-common/src/error.rs`
-- Pattern: `#[derive(Error)]` enum with `IntoResponse` impl (RFC 7807)
+**Zustand Stores (Frontend):**
+- Purpose: React state management with persistence
+- Examples: `useAuthStore` (user, token), `useUIStore` (theme, sidebar)
+- Pattern: Single store per domain, export hooks for components
+- Persistence: Auto-sync to localStorage
 
 ## Entry Points
 
-**Rust Services (9):**
-- Location: `services/signapps-{name}/src/main.rs`
-- Pattern: Load env -> create pool -> run migrations -> init service -> build router -> serve
-- Ports: identity=3001, containers=3002, proxy=3003, storage=3004, ai=3005, securelink=3006, scheduler=3007, metrics=3008, media=3009
+**Rust Services:**
+- Location: `services/signapps-*/src/main.rs`
+- Pattern: `#[tokio::main]` async fn main()
+- Responsibilities: Initialize db pool, migrate schema, setup JWT config, create Axum router, listen on port
 
-**Frontend:**
-- Location: `client/src/app/layout.tsx` (root layout)
-- Pattern: Next.js App Router with auth guards in middleware
-- Dev server: `npm run dev` (port 3010)
+**Frontend (App Router):**
+- Location: `client/src/app/layout.tsx`
+- Triggers: Server startup, requests to any route
+- Responsibilities: Load providers (auth, UI), render layout, pass state to children
 
 ## Error Handling
 
-**Strategy:** Typed errors with automatic HTTP response mapping (RFC 7807)
+**Strategy:** Unified error type propagated up, caught by middleware/handler
 
 **Patterns:**
-- `thiserror` for library error types (`crates/signapps-common/src/error.rs`)
-- `anyhow` for application-level errors in main.rs
-- All handlers return `Result<T, Error>` where Error implements `IntoResponse`
-- Validation via `serde` deserialization + custom `.validate()` methods
-- 30+ error variants: `InvalidCredentials`, `Unauthorized`, `NotFound`, `Validation`, `Database`, etc.
+- Services throw `signapps_common::Error` with context
+- Handlers catch via `Result` type, Axum auto-converts to JSON response
+- Status codes: 400 (validation), 401 (auth), 403 (forbidden), 404 (not found), 500 (server)
+- Error format: RFC 7807 Problem Details with title, detail, type
+
+**Frontend:**
+- Axios interceptor catches errors on 401, attempts refresh
+- Components display error toasts via UI state
+- Global error boundary for unhandled exceptions
 
 ## Cross-Cutting Concerns
 
 **Logging:**
-- `tracing` crate with structured logging
-- `tracing-subscriber` with EnvFilter
-- `RUST_LOG=info,signapps=debug,sqlx=warn`
-- Request/response logging via middleware
+- Approach: Structured logging via tracing middleware
+- Format: Stdout JSON format (pick up by log aggregators)
+- Levels: Debug, info, warn, error
+- Context: Request ID included in all logs
 
 **Validation:**
-- Serde deserialization at API boundary (automatic via `Json<T>` extractor)
-- Value objects with built-in validation: `Email`, `Password`, `Username` (`crates/signapps-common/src/types.rs`)
-- Zod schemas on frontend (`client/`)
+- Approach: Handler-level validation on request body
+- Pattern: Deserialize with serde, optional validation via `thiserror`
+- Example: Email format, password strength, required fields
 
 **Authentication:**
-- JWT middleware on all protected routes
-- Claims extraction via request extensions
-- Token refresh flow (frontend axios interceptor)
-- MFA/TOTP support in identity service
-
-**CORS:**
-- `tower-http::cors::CorsLayer` with Allow-Origin: Any (dev configuration)
-- Applied as outermost layer on all service routers
+- Approach: JWT middleware validates token, injects Claims
+- Pattern: Extract Claims from request, pass to handler
+- Refresh: Axios interceptor handles 401 → refresh → retry
+- Roles: Optional `require_admin` middleware for RBAC
 
 ---
 
-*Architecture analysis: 2026-02-15*
+*Architecture analysis: 2026-02-16*
 *Update when major patterns change*

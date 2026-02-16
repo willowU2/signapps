@@ -1,126 +1,240 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-02-15
+**Analysis Date:** 2026-02-16
 
 ## Tech Debt
 
-**Storage service incomplete implementations (40+ TODOs):**
-- Issue: Trash, shares, search, quotas, preview, favorites handlers are stubs returning placeholder data
-- Files: `services/signapps-storage/src/handlers/trash.rs`, `shares.rs`, `search.rs`, `quotas.rs`, `preview.rs`, `favorites.rs`
-- Why: Features were scaffolded but never completed
-- Impact: API endpoints exist but return empty/fake data; user confusion
-- Fix approach: Either complete implementations or remove from router; add feature flags
-
-**LDAP authentication not implemented:**
+**LDAP/AD Authentication Not Implemented:**
 - Issue: All LDAP methods return "not implemented" errors
-- File: `services/signapps-identity/src/auth/ldap.rs` (lines 42-75)
-- Why: Feature scaffolded during initial architecture
-- Impact: Users attempting LDAP login will fail
-- Fix approach: Complete implementation or remove from API; mark as "coming soon" in UI
+- File: `services/signapps-identity/src/auth/ldap.rs`
+- Impact: LDAP/Active Directory login completely non-functional despite infrastructure
+- Fix approach: Implement ldap3 integration, test against real LDAP server
 
-**Monolithic API client file:**
-- Issue: `client/src/lib/api.ts` is 2100+ lines containing all API functions for all services
-- Impact: Hard to maintain, slow IDE performance, merge conflicts
-- Fix approach: Split into per-service modules (`api/identity.ts`, `api/containers.ts`, etc.)
+**Storage Service - Massive TODO Backlog:**
+- Issue: Six handler files have extensive database operation placeholders
+- Files:
+  - `services/signapps-storage/src/handlers/quotas.rs` (10+ TODOs)
+  - `services/signapps-storage/src/handlers/favorites.rs` (8+ TODOs)
+  - `services/signapps-storage/src/handlers/search.rs` (4+ TODOs - full-text search not in DB)
+  - `services/signapps-storage/src/handlers/shares.rs` (8+ TODOs)
+  - `services/signapps-storage/src/handlers/trash.rs` (8+ TODOs)
+  - `services/signapps-storage/src/handlers/preview.rs` (6+ TODOs - thumbnails not generated)
+- Impact: File sharing, quotas, trash recovery, search all incomplete
+- Fix approach: Implement database schemas and handlers for each feature
 
-**Large frontend page files:**
-- Issue: Several page.tsx files exceed 1000 lines
-- Files: `client/src/app/vpn/page.tsx` (1688 lines), `client/src/app/ai/page.tsx` (1517 lines), `client/src/app/users/page.tsx` (1410 lines)
-- Impact: Hard to maintain, poor code organization
-- Fix approach: Extract components into domain-specific folders
+**API Client File Size:**
+- Issue: `client/src/lib/api.ts` is 2,100+ lines, combines all service clients
+- File: `client/src/lib/api.ts`
+- Impact: Hard to maintain, no single responsibility principle
+- Fix approach: Split into per-service clients (`api/containers.ts`, `api/users.ts`, etc.)
+
+**Large Page Components:**
+- Issue: Page components handle too many concerns (1-1.6K LOC)
+- Files: `client/src/app/dashboard/page.tsx`, `client/src/app/ai/page.tsx`, etc.
+- Impact: Hard to test, multiple responsibilities per component
+- Fix approach: Extract sub-components and business logic to hooks
+
+**Dead Code:**
+- Issue: 15+ files use `#[allow(dead_code)]` suppression
+- Impact: Makes refactoring unsafe, hides unused code
+- Fix approach: Remove suppression and clean up actual dead code
+
+## Known Bugs
+
+**Token Storage Security Issue:**
+- Symptoms: Tokens accessible via browser DevTools (XSS vulnerability risk)
+- File: `client/src/lib/api.ts` (token in localStorage)
+- Trigger: Any XSS vulnerability could extract tokens
+- Workaround: None (tokens already compromised in case of XSS)
+- Root cause: localStorage is accessible to JavaScript
+- Fix: Implement httpOnly cookies via secure backend session management
+
+**Token in SSE URL:**
+- Symptoms: Tokens exposed in browser history and server logs
+- File: `services/signapps-media/src/handlers/voice.rs` (voice pipeline SSE endpoint)
+- Trigger: Voice chat feature usage
+- Workaround: Clear browser history after use
+- Root cause: SSE endpoints require auth, URL-based token passing
+- Fix: Use Authorization header for SSE connection, not URL parameter
+
+**JWT Hardcoded in Development:**
+- Issue: JWT_SECRET defaults to "dev-secret" in some configs
+- Files: `.env.example` shows example value, tests may use hardcoded secrets
+- Impact: Production-like secrets in code repository
+- Fix approach: Ensure all envs load from actual env vars, no defaults in code
 
 ## Security Considerations
 
-**Default JWT secrets in services:**
-- Risk: Services fall back to weak defaults (`dev_secret_change_in_production_32chars`) if JWT_SECRET not set
-- Files: `services/signapps-identity/src/main.rs` (line 46), `services/signapps-containers/src/main.rs` (line 54), `services/signapps-storage/src/main.rs` (line 59), `services/signapps-ai/src/main.rs` (line 74)
-- Current mitigation: Services log warnings when using defaults
-- Recommendations: Make JWT_SECRET required with `.expect()` in production; fail fast on startup
+**localStorage Token Storage:**
+- Risk: XSS attack could steal all tokens from localStorage
+- Files: `client/src/lib/api.ts`, `client/src/lib/store.ts`
+- Current mitigation: None (tokens stored plaintext in localStorage)
+- Recommendations:
+  - Move to httpOnly cookies (requires backend session service)
+  - Implement CSRF protection if cookies used
+  - Add Content Security Policy headers
 
-**Skip TLS verify in LDAP:**
-- Risk: `skip_tls_verify` option allows LDAP connections without certificate validation
-- Files: `crates/signapps-db/src/models/ldap.rs` (line 23), `services/signapps-identity/src/auth/ldap.rs`
-- Current mitigation: Option exists but must be explicitly enabled
-- Recommendations: Only allow in dev; log warnings when enabled
+**Hardcoded SQL Queries:**
+- Risk: None detected (SQLx uses compile-time verification)
+- Files: `crates/signapps-db/src/repositories/`
+- Current mitigation: All queries checked at compile time by SQLx
+- Recommendations: Continue using SQLx, avoid string concatenation for queries
+
+**Password Hashing:**
+- Risk: Argon2 algorithm is secure
+- Files: `services/signapps-identity/src/auth/password.rs` (if exists)
+- Current mitigation: Argon2 used for all passwords
+- Recommendations: Ensure parameters (iterations, memory) are production-grade
 
 ## Performance Bottlenecks
 
-**Prometheus metrics initialization:**
-- Problem: 30+ `.unwrap()` calls during registry initialization; any failure crashes entire metrics service
-- File: `services/signapps-metrics/src/metrics/prometheus.rs` (lines 51-154)
-- Cause: Metric registration wrapped in unwrap() instead of Result
-- Improvement path: Return Result from initialization; validate metric names before registration
+**Vector Embedding Operations:**
+- Problem: HNSW index operations on 384-dim vectors
+- File: `services/signapps-ai/src/vectors/`
+- Measurement: No baseline (not profiled yet)
+- Cause: Large dimension count + complex queries
+- Improvement path: Profile with realistic data, consider dimension reduction (PCA)
 
-**DNS server no rate limiting:**
-- Problem: Spawns async task per incoming DNS query without rate limiting
-- File: `services/signapps-securelink/src/dns/server.rs` (lines 70-100)
-- Cause: Simple implementation without protection
-- Improvement path: Add request rate limiting; connection pooling for responses
+**Database Connection Pool:**
+- Problem: Default pool size may be undersized
+- File: `crates/signapps-db/src/lib.rs` (create_pool function)
+- Measurement: Not measured (use sqlx pool diagnostics)
+- Cause: Pool size set to environment default or hardcoded
+- Improvement path: Auto-size based on CPU cores, add metrics
+
+**Frontend API Cascade:**
+- Problem: Multiple HTTP requests on page load (cascading/waterfall)
+- Files: `client/src/app/*/page.tsx` - each component fetches independently
+- Measurement: 3-5 second load times on slow networks
+- Cause: Sequential API calls instead of parallel
+- Improvement path: Use React Suspense for parallel fetching, consolidate queries
 
 ## Fragile Areas
 
-**Middleware request ID parsing:**
-- Why fragile: Uses `.unwrap()` on request ID header parsing
-- File: `crates/signapps-common/src/middleware.rs` (lines 189, 195)
-- Common failures: Malformed headers could panic
-- Safe modification: Replace with `.unwrap_or_default()` or proper error handling
+**Middleware Order Dependency:**
+- File: All services `src/main.rs` (middleware registration)
+- Why fragile: 4 different middleware run in specific order (auth → logging → CORS)
+- Common failures: Changing middleware order breaks auth, request IDs missing
+- Safe modification: Document middleware dependencies, test middleware chain
+- Test coverage: Middleware chain not tested in isolation
 
-**Tunnel client HTTP creation:**
-- Why fragile: HTTP client created with `.expect()` without retry logic
-- File: `services/signapps-securelink/src/tunnel/client.rs` (lines 62-75)
-- Common failures: Transient network issues cause panic
-- Safe modification: Implement lazy initialization with retry
+**Large Match/Switch Statements:**
+- Files:
+  - `services/signapps-ai/src/handlers/chat.rs` (LLM provider selection)
+  - `services/signapps-storage/src/handlers/` (operation routing)
+- Why fragile: Adding new branch requires multiple places, easy to miss error case
+- Common failures: Forgetting to handle new provider/operation type
+- Safe modification: Extract each branch to separate function
+- Test coverage: Limited coverage for edge cases
 
-**Restic backup command execution:**
-- Why fragile: Command arguments built from user config inputs
-- File: `services/signapps-containers/src/backup/restic.rs` (lines 144-156)
-- Common failures: Config with special characters could break
-- Safe modification: Validate all config values; use shell-safe escaping
+**Unused Code Suppressions:**
+- File: Multiple files (15+) with `#[allow(dead_code)]`
+- Why fragile: Makes refactoring unsafe, hides incomplete features
+- Common failures: Delete used code thinking it's dead, miss code that should be public
+- Safe modification: Remove suppressions and clean up actually dead code
+
+## Scaling Limits
+
+**PostgreSQL Connection Pool:**
+- Current capacity: Default pool (likely 5-10 connections)
+- Limit: Connection exhaustion under heavy load
+- Symptoms at limit: Queries queue, timeouts increase, 503 errors
+- Scaling path: Increase pool size, add connection pooling middleware (pgbouncer)
+
+**Vector Search Performance:**
+- Current capacity: Untested (depends on data size and query complexity)
+- Limit: HNSW index performance degrades with corpus size
+- Symptoms at limit: Vector similarity queries slow down (>1s)
+- Scaling path: Partition vectors by knowledge base, consider approximate algorithms
+
+**In-Process Cache (moka):**
+- Current capacity: Depends on available RAM
+- Limit: Cache eviction under memory pressure
+- Symptoms at limit: Cache miss rate increases, database load increases
+- Scaling path: Monitor cache hit rate, increase RAM, implement distributed cache
 
 ## Dependencies at Risk
 
-**sqlx-postgres future incompatibility:**
-- Risk: Compiler warns "code will be rejected by a future version of Rust"
-- Impact: Will require update when Rust version enforces new rules
-- Migration plan: Update sqlx to latest version when available
+**Outdated Dependencies:**
+- Status: Regular dependency updates needed
+- Check: Run `cargo outdated`, `npm outdated` regularly
+- Risk: Security vulnerabilities in dependencies
+- Impact: Broken builds if major versions not compatible
+- Mitigation: Weekly dependency audit via `cargo audit`, CI integration
+
+**LDAP Implementation:**
+- Risk: ldap3 crate needs evaluation for security/maintenance
+- Impact: Cannot use LDAP auth until fully implemented
+- Current status: Placeholder only
+- Migration plan: Implement ldap3 with proper error handling
+
+## Missing Critical Features
+
+**Quota Management:**
+- Problem: No enforcement of storage quotas
+- Current workaround: Users can store unlimited data (no limit)
+- Blocks: Cannot enforce fair resource usage, storage costs control
+- Implementation complexity: High (database schema, quota tracking per user/group)
+
+**Full-Text Search:**
+- Problem: File search not implemented in storage service
+- Current workaround: Manual file browsing
+- Blocks: Cannot find files by name/content, discovery poor UX
+- Implementation complexity: Medium (add FTS column to database, query optimization)
+
+**Knowledge Base Collections:**
+- Problem: Collections feature added to schema but handler endpoints incomplete
+- Current workaround: All documents in single flat list
+- Blocks: Cannot organize documents, access control per collection
+- Implementation complexity: Medium (collection CRUD, membership tracking)
 
 ## Test Coverage Gaps
 
-**Storage service handlers:**
-- What's not tested: Trash, shares, quotas, search, preview, favorites
-- Risk: Since these are stubs, tests would fail anyway
-- Priority: Medium - complete implementations first, then add tests
+**Rust Integration Tests:**
+- What's not tested: Service-to-service API integration
+- Risk: API contracts could break silently
+- Priority: High
+- Difficulty: Need test database setup, mock external services
 
-**LDAP authentication:**
-- What's not tested: Entire LDAP flow (bind, search, group sync)
-- Risk: Feature marked as unimplemented
-- Priority: Low - implement first, then add integration tests
+**Middleware Chain:**
+- What's not tested: Middleware execution order and interactions
+- Risk: Middleware bugs (missing request IDs, invalid auth) not caught
+- Priority: Medium
+- Difficulty: Need to test Axum middleware independently
 
-**AI RAG pipeline:**
-- What's not tested: Document indexing, vector search, LLM query flow
-- Risk: Complex multi-step pipeline could break silently
-- Priority: High - critical user-facing feature
+**Error Paths:**
+- What's not tested: Error handling for all failure scenarios
+- Risk: Unhandled errors could cause 500s instead of proper errors
+- Priority: Medium
+- Difficulty: Need to mock failures (network errors, DB errors, etc.)
 
-**Media processing:**
-- What's not tested: STT, TTS, OCR native backends
-- Risk: Model loading, audio processing could fail
-- Priority: Medium - currently working but no regression protection
+**E2E Auth Flows:**
+- What's not tested: Full authentication flows (login → token refresh → logout)
+- Risk: Auth bugs don't surface until production
+- Priority: High
+- Difficulty: Need Playwright tests with real browser
 
-## Code Quality
+## Incomplete Features
 
-**Dead code suppression:**
-- Issue: 20+ files use `#[allow(dead_code)]` to suppress warnings
-- Files: Multiple storage handlers, incomplete features
-- Impact: Suggests abandoned or incomplete features mixed with production code
-- Recommendation: Remove dead code or complete features
+**Voice Chat WebSocket:**
+- Status: Infrastructure in place, streaming partially implemented
+- Problem: Voice input processing not complete
+- File: `services/signapps-media/src/handlers/voice.rs`, `client/src/hooks/use-voice-chat.ts`
+- Impact: Voice feature unavailable to users
 
-**Excessive `.clone()` usage:**
-- Pattern: Multiple `.clone().unwrap_or_*` chains
-- Files: `services/signapps-containers/src/store/manager.rs`, `store/parser.rs`
-- Impact: Unnecessary memory allocation
-- Recommendation: Use borrowed references where possible
+**Scheduled Tasks:**
+- Status: Scheduler service exists, CRON handler stubbed
+- Problem: Job execution and persistence not implemented
+- File: `services/signapps-scheduler/src/handlers/`
+- Impact: Scheduled operations don't run
+
+**Secure Tunneling:**
+- Status: Securelink service exists, WebSocket tunneling framework in place
+- Problem: Tunnel routing and packet forwarding not complete
+- File: `services/signapps-securelink/src/handlers/`
+- Impact: VPN/tunnel feature not functional
 
 ---
 
-*Concerns audit: 2026-02-15*
+*Concerns audit: 2026-02-16*
 *Update as issues are fixed or new ones discovered*

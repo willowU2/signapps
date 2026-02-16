@@ -1,178 +1,301 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-02-15
+**Analysis Date:** 2026-02-16
 
 ## Directory Layout
 
 ```
 signapps-platform/
-├── crates/                          # Shared foundational libraries
-│   ├── signapps-common/             # Auth, middleware, error handling, value objects
-│   ├── signapps-db/                 # Database models, repositories, migrations, PgPool
-│   ├── signapps-cache/              # In-process TTL cache (moka) + atomic counters
-│   └── signapps-runtime/            # Hardware detection, model manager, PostgreSQL lifecycle
-├── services/                        # 9 independent microservices
-│   ├── signapps-identity/           # Port 3001 - Auth, LDAP, MFA, RBAC, groups
-│   ├── signapps-containers/         # Port 3002 - Docker container lifecycle (bollard)
-│   ├── signapps-proxy/              # Port 3003 - Reverse proxy, TLS/ACME, SmartShield
-│   ├── signapps-storage/            # Port 3004 - File storage (OpenDAL: FS or S3)
-│   ├── signapps-ai/                 # Port 3005 - RAG, LLM, pgvector, embeddings
-│   ├── signapps-securelink/         # Port 3006 - Web tunnels, DNS with ad-blocking
-│   ├── signapps-scheduler/          # Port 3007 - CRON job management
-│   ├── signapps-metrics/            # Port 3008 - System monitoring, Prometheus
-│   └── signapps-media/             # Port 3009 - Native STT/TTS/OCR, voice pipeline
-├── client/                          # Next.js 16 frontend (App Router)
+├── Cargo.toml                    # Workspace manifest (13 members)
+├── Cargo.lock                    # Lock file
+├── package.json (in client/)     # Frontend dependencies
+│
+├── crates/                       # Shared Rust libraries (4 crates)
+│   ├── signapps-common/          # Auth, middleware, error types
+│   │   ├── src/lib.rs           # Re-exports: auth, config, error, middleware, types
+│   │   ├── src/auth.rs          # JWT validation, Claims struct
+│   │   ├── src/error.rs         # RFC 7807 AppError type
+│   │   └── src/middleware.rs    # auth_middleware, require_admin, logging
+│   │
+│   ├── signapps-db/              # Database abstraction
+│   │   ├── src/lib.rs           # create_pool(), run_migrations()
+│   │   ├── src/models/          # Entity structs (User, Group, Container, etc.)
+│   │   └── src/repositories/    # 12 repositories (user, group, vector, container, etc.)
+│   │
+│   ├── signapps-cache/           # TTL cache service (moka + DashMap)
+│   │   ├── src/lib.rs           # CacheService: get/set/del/exists/incr/decr
+│   │
+│   └── signapps-runtime/         # Hardware, models, database detection
+│       ├── src/lib.rs           # Exports: HardwareProfile, ModelManager, RuntimeManager
+│       ├── src/gpu.rs           # GPU detection (NVIDIA/AMD/Intel/Apple)
+│       ├── src/models.rs        # Model download/cache management
+│       └── src/postgres.rs      # PostgreSQL auto-detection
+│
+├── services/                     # 9 Microservices (ports 3001-3009)
+│   ├── signapps-identity/        # Auth, users, groups, LDAP, MFA (3001)
+│   │   ├── src/main.rs          # Axum setup, router, server startup
+│   │   ├── src/handlers/        # 8 handlers: auth, users, groups, ldap, mfa, roles, webhooks, health
+│   │   ├── src/auth/            # JWT, LDAP, password, MFA logic
+│   │   └── src/ldap/            # LDAP/AD client
+│   │
+│   ├── signapps-containers/      # Docker management (3002)
+│   │   ├── src/main.rs
+│   │   ├── src/handlers/        # 10+ handlers: containers, images, compose, store, backups, etc.
+│   │   └── src/docker/          # Bollard wrapper
+│   │
+│   ├── signapps-ai/              # RAG, LLM, embeddings (3005)
+│   │   ├── src/main.rs
+│   │   ├── src/handlers/        # 8 handlers: chat, collections, index, search, models, providers, health
+│   │   ├── src/llm/             # LLM providers (llamacpp, ollama, vllm, openai, anthropic)
+│   │   ├── src/rag/             # RAG pipeline: chunker, pipeline, indexer
+│   │   ├── src/embeddings/      # Embedding client (Ollama or HF-based)
+│   │   ├── src/indexer/         # Indexing pipeline
+│   │   ├── src/tools/           # Tool executor & registry
+│   │   └── src/vectors/         # pgvector operations
+│   │
+│   ├── signapps-storage/         # File storage (3004)
+│   ├── signapps-proxy/           # Reverse proxy (3003)
+│   ├── signapps-media/           # STT/TTS/OCR (3009)
+│   ├── signapps-metrics/         # Prometheus (3008)
+│   ├── signapps-scheduler/       # CRON jobs (3007)
+│   └── signapps-securelink/      # VPN/tunnel (3006)
+│
+├── client/                       # Next.js 16 Frontend
+│   ├── package.json              # Dependencies
+│   ├── tsconfig.json             # TypeScript config
+│   ├── next.config.ts            # Next.js config
+│   ├── playwright.config.ts      # E2E test config
+│   │
 │   └── src/
-│       ├── app/                     # Pages (dashboard, containers, storage, ai, etc.)
-│       ├── components/              # React components (ui/, layout/, domain-specific)
-│       ├── hooks/                   # Custom React hooks
-│       ├── lib/                     # API client, utilities
-│       ├── stores/                  # Zustand stores
-│       └── e2e/                     # Playwright E2E tests
-├── migrations/                      # PostgreSQL schema migrations (001-008)
-├── data/                            # Runtime data (gitignored)
-│   ├── models/                      # AI model cache (stt/, tts/, ocr/, llm/, embeddings/)
-│   └── storage/                     # File storage root (fs mode)
-├── .github/workflows/               # CI/CD (ci.yml, release.yml)
-├── Cargo.toml                       # Workspace manifest
-├── .env                             # Local environment (gitignored)
-└── CLAUDE.md                        # AI assistant instructions
+│       ├── app/                  # Next.js App Router
+│       │   ├── layout.tsx        # Root layout (metadata, fonts, Providers)
+│       │   ├── page.tsx          # Home page
+│       │   ├── globals.css       # Global styles (Tailwind 4)
+│       │   ├── login/            # Login pages
+│       │   ├── dashboard/        # Dashboard
+│       │   ├── ai/               # AI chat interface
+│       │   ├── containers/       # Container management
+│       │   ├── storage/          # Storage management
+│       │   ├── users/            # User management
+│       │   ├── monitoring/       # Metrics dashboard
+│       │   ├── scheduler/        # CRON jobs
+│       │   └── settings/         # Settings pages
+│       │
+│       ├── components/           # React components (136+ files)
+│       │   ├── layout/           # app-layout, header, sidebar, ai-chat-bar, right-sidebar
+│       │   ├── ui/               # shadcn/ui components (buttons, dialogs, cards, etc.)
+│       │   ├── auth/             # Login, MFA components
+│       │   ├── dashboard/        # Dashboard cards, activity feed, stats
+│       │   ├── containers/       # Container cards, logs viewer
+│       │   ├── storage/          # Disk, RAID, shares components
+│       │   ├── ai/               # Chat interface, tool display, uploads
+│       │   ├── monitoring/       # Metrics, alerts, charts
+│       │   └── [other domains]/
+│       │
+│       ├── hooks/                # Custom React hooks (12+ files)
+│       │   ├── use-containers.ts    # Container CRUD + updates
+│       │   ├── use-users.ts         # User operations
+│       │   ├── use-monitoring.ts    # Metrics polling
+│       │   ├── use-voice-chat.ts    # Voice AI pipeline
+│       │   ├── use-ai-brief.ts      # AI daily brief
+│       │   ├── use-ai-search.ts     # AI search operations
+│       │   └── [other domain hooks]/
+│       │
+│       ├── lib/                  # Utilities and API clients
+│       │   ├── api.ts            # Axios clients for all 9 services with auth interceptors
+│       │   ├── store.ts          # Zustand stores (useAuthStore, useUIStore)
+│       │   └── [other utilities]/
+│       │
+│       └── stores/               # Zustand state management
+│           ├── dashboard-store.ts   # Dashboard state
+│           └── [other stores]/
+│
+├── migrations/                   # PostgreSQL migrations (SQLx)
+│   ├── 001_initial_schema.sql    # Users, groups, roles, RBAC
+│   ├── 002_add_columns.sql
+│   ├── 003_app_store.sql         # App installation tracking
+│   ├── 004_app_install_groups.sql
+│   ├── 005_add_backups.sql       # Backup tracking
+│   ├── 006_proxy_certificates.sql
+│   ├── 007_pgvector.sql          # Vector extensions (384-dim HNSW)
+│   └── 008_collections.sql       # AI knowledge base collections
+│
+├── data/                         # Runtime data (created at runtime)
+│   ├── models/                   # Model cache (STT, TTS, OCR, LLM, embeddings)
+│   ├── storage/                  # File storage root (configurable via STORAGE_FS_ROOT)
+│
+├── .cargo/                       # Cargo configuration
+│   └── config.toml               # Aliases: c, t, lint, fmt
+│
+├── .env.example                  # Environment template
+├── .env                          # Active configuration (gitignored)
+├── clippy.toml                   # Clippy linter config
+├── deny.toml                     # Dependency audit
+├── rustfmt.toml                  # Rust formatter config (100 char, 4-space)
+├── CLAUDE.md                     # Project instructions for Claude
+├── README.md                     # Main documentation
+│
+└── [.github, .git, target, .next, etc.]
 ```
 
 ## Directory Purposes
 
-**crates/signapps-common/:**
-- Purpose: Shared types, middleware, error handling
-- Contains: `auth.rs`, `middleware.rs`, `error.rs`, `types.rs`, `config.rs`
-- Key files: `error.rs` (30+ error variants), `middleware.rs` (auth/admin/logging)
+**crates/signapps-common:**
+- Purpose: Shared middleware, auth, error types, value objects
+- Contains: auth.rs, config.rs, error.rs, middleware.rs, types.rs
+- Re-exports: Clean API for all services
+- Subdirectories: None (flat structure for easy imports)
 
-**crates/signapps-db/:**
-- Purpose: Database access layer
-- Contains: `models/*.rs`, `repositories/*.rs`, `lib.rs` (pool + migrations)
-- Key files: `lib.rs` (create_pool, run_migrations), `repositories/user_repository.rs`
-- Subdirectories: `models/` (entity structs), `repositories/` (CRUD methods)
+**crates/signapps-db:**
+- Purpose: Database abstraction layer and schema management
+- Contains: Connection pool creation, migrations runner, models, repositories
+- Models: Entity definitions (User, Group, Container, etc.)
+- Repositories: CRUD operations for each entity
 
-**crates/signapps-cache/:**
-- Purpose: In-process caching (replaces Redis)
-- Contains: Single `lib.rs` with CacheService (moka + DashMap)
+**crates/signapps-cache:**
+- Purpose: In-process TTL cache (moka-based)
+- Contains: CacheService with get/set/del + atomic counters
+- Replaces: Redis (native in-process alternative)
 
-**crates/signapps-runtime/:**
-- Purpose: Runtime infrastructure
-- Contains: `postgres.rs`, `hardware.rs`, `models.rs`
-- Key files: `hardware.rs` (GPU detection), `models.rs` (model download/cache)
+**crates/signapps-runtime:**
+- Purpose: System management (GPU detection, model manager, DB probe)
+- Contains: Hardware detection, model download/cache, PostgreSQL auto-detection
+- Used by: signapps-ai for model loading, all services for DB setup
 
-**services/signapps-{name}/:**
-- Purpose: Independent microservice
-- Contains: `main.rs` (router + AppState), `handlers/` (domain handlers)
-- Some services have additional modules: `docker/`, `llm/`, `rag/`, `vectors/`, `dns/`, `tunnel/`, `shield/`, `stt/`, `tts/`, `ocr/`
+**services/signapps-identity:**
+- Purpose: Authentication, user management, LDAP, MFA, RBAC
+- Handlers: auth, users, groups, ldap, mfa, roles, webhooks, health
+- Port: 3001
+
+**services/signapps-containers:**
+- Purpose: Docker container lifecycle management
+- Handlers: Containers, images, compose, app store, backups, export, metrics
+- Port: 3002
+
+**services/signapps-ai:**
+- Purpose: RAG, LLM inference, embeddings, vector search, tool execution
+- Handlers: Chat, collections, index, search, models, providers, tools, health
+- Subdirs: llm/, rag/, embeddings/, indexer/, tools/, vectors/
+- Port: 3005
+
+**services/signapps-storage:**
+- Purpose: File storage (filesystem or S3), disk management, RAID, shares
+- Handlers: Disk, mount, RAID, external storage, shares, search, preview, quotas, favorites, trash
+- Port: 3004
 
 **client/src/app/:**
-- Purpose: Next.js App Router pages
-- Contains: `dashboard/`, `containers/`, `storage/`, `ai/`, `users/`, `vpn/`, `proxy/`, `scheduler/`, `metrics/`, `media/`, `login/`
-- Pattern: `{feature}/page.tsx` with `layout.tsx` for auth guards
+- Purpose: Page definitions (Next.js App Router)
+- Structure: Feature-based (dashboard/, ai/, containers/, storage/, users/, etc.)
+- Each directory: Contains page.tsx (+ optional layout.tsx, loading.tsx, error.tsx)
 
 **client/src/components/:**
 - Purpose: Reusable React components
-- Subdirectories: `ui/` (shadcn/ui), `layout/` (Header, Sidebar), domain-specific folders
+- Organization: By domain/feature (layout/, ui/, auth/, dashboard/, containers/, storage/, ai/, monitoring/)
+- UI components: shadcn/ui imports from @/components/ui/
+
+**client/src/hooks/:**
+- Purpose: Custom React hooks for state and API operations
+- Pattern: use{Domain}() returning CRUD functions and state
+- Examples: useContainers(), useUsers(), useMonitoring(), useVoiceChat()
 
 **client/src/lib/:**
-- Purpose: Core utilities and API client
-- Key files: `api.ts` (2100+ lines, all service API functions), `utils.ts` (cn helper)
+- Purpose: Utility functions and API clients
+- api.ts: Per-service axios instances with JWT interceptors
+- store.ts: Zustand stores (useAuthStore, useUIStore)
 
 ## Key File Locations
 
 **Entry Points:**
-- `services/signapps-{name}/src/main.rs` - Service startup (9 services)
-- `client/src/app/layout.tsx` - Frontend root layout
+- `services/signapps-identity/src/main.rs` - Port 3001
+- `services/signapps-containers/src/main.rs` - Port 3002
+- `services/signapps-ai/src/main.rs` - Port 3005
+- `services/signapps-storage/src/main.rs` - Port 3004
+- `services/signapps-proxy/src/main.rs` - Port 3003
+- `services/signapps-media/src/main.rs` - Port 3009
+- `client/src/app/layout.tsx` - Frontend root
 
 **Configuration:**
-- `Cargo.toml` - Workspace manifest with centralized dependencies
+- `Cargo.toml` - Workspace manifest
+- `.env.example` - Environment template
 - `rustfmt.toml` - Rust formatting rules
-- `clippy.toml` - Clippy lint thresholds
-- `.cargo/config.toml` - Cargo aliases and env defaults
 - `client/tsconfig.json` - TypeScript config
-- `client/eslint.config.mjs` - ESLint rules
 - `client/next.config.ts` - Next.js config
+- `client/playwright.config.ts` - E2E test config
 
 **Core Logic:**
-- `crates/signapps-common/src/` - Shared auth, errors, middleware
-- `crates/signapps-db/src/repositories/` - All database operations
-- `crates/signapps-db/src/models/` - All entity types
-- `client/src/lib/api.ts` - All frontend API calls
+- `crates/signapps-db/src/repositories/` - Database operations
+- `services/signapps-ai/src/llm/` - LLM providers
+- `services/signapps-ai/src/rag/` - RAG pipeline
+- `client/src/hooks/` - Business logic hooks
+- `client/src/lib/api.ts` - API client setup
 
-**Testing:**
-- `client/e2e/` - Playwright E2E tests
-- `client/e2e/fixtures.ts` - Test data and selectors
-- `.github/workflows/ci.yml` - CI test pipeline
+**Migrations:**
+- `migrations/` - All SQL migration files (001-008)
+- Named sequentially, auto-run by signapps-runtime
 
 ## Naming Conventions
 
-**Files (Rust):**
-- `snake_case.rs` for all Rust source files
-- `mod.rs` for module declarations
-- `main.rs` for service entry points
-
-**Files (TypeScript):**
-- `kebab-case.ts` for utilities, hooks, stores
-- `PascalCase.tsx` for React components (in `components/ui/`)
-- `page.tsx` for Next.js pages
-- `layout.tsx` for Next.js layouts
+**Files:**
+- Rust: `snake_case.rs` (user_repository.rs, jwt_config.rs)
+- TypeScript: `kebab-case.ts(x)` (command-palette.tsx, use-containers.ts)
+- Components: `PascalCase.tsx` (CommandPalette.tsx)
 
 **Directories:**
-- `kebab-case` for all directories
-- Plural for collections: `handlers/`, `models/`, `repositories/`, `stores/`, `hooks/`
+- Rust: `snake_case/` (services, handlers, repositories)
+- TypeScript: `kebab-case/` or `PascalCase/` (components/, hooks/, lib/)
+- Plural for collections: `handlers/`, `repositories/`, `components/`
 
 **Special Patterns:**
-- `use-{name}.ts` for React hooks
-- `{domain}.rs` for handler files (e.g., `auth.rs`, `containers.rs`)
-- `{entity}_repository.rs` for repository files
-- `{NNN}_{name}.sql` for migrations
+- `mod.rs` - Module re-exports in Rust
+- `index.ts` - Barrel exports in TypeScript
+- `*_test.rs` - Inline tests in Rust (via #[cfg(test)])
+- `*.spec.ts` - Playwright E2E tests
 
 ## Where to Add New Code
 
-**New Backend Endpoint:**
-- Handler: `services/signapps-{service}/src/handlers/{domain}.rs`
-- Route: Register in `create_router()` in service `main.rs`
-- Repository: `crates/signapps-db/src/repositories/{entity}_repository.rs`
-- Model: `crates/signapps-db/src/models/{entity}.rs`
-- Migration: `migrations/{NNN}_{name}.sql`
-
 **New Service:**
-- Create `services/signapps-{name}/` with `Cargo.toml` + `src/main.rs`
-- Add to workspace members in root `Cargo.toml`
-- Follow AppState + AuthState trait pattern
-- Assign next available port (3010+)
+- Entry: `services/signapps-new/src/main.rs`
+- Handlers: `services/signapps-new/src/handlers/`
+- Config: Add to `Cargo.toml` workspace members, `.env.example`
 
-**New Frontend Page:**
-- Page: `client/src/app/{feature}/page.tsx`
-- Components: `client/src/components/{feature}/`
-- API functions: Add to `client/src/lib/api.ts`
-- Store: `client/src/stores/{feature}-store.ts`
-- Hook: `client/src/hooks/use-{feature}.ts`
+**New Component:**
+- UI component: `client/src/components/[domain]/ComponentName.tsx`
+- Hook: `client/src/hooks/use-[domain].ts`
+- Tests: `client/e2e/[feature].spec.ts` (Playwright)
 
-**New Shared Functionality:**
-- Types/errors: `crates/signapps-common/src/`
-- DB operations: `crates/signapps-db/src/`
-- Cache patterns: `crates/signapps-cache/src/`
+**New Database Entity:**
+- Model: `crates/signapps-db/src/models/entity.rs`
+- Repository: `crates/signapps-db/src/repositories/entity_repository.rs`
+- Migration: `migrations/NNN_add_entity.sql`
+
+**New API Endpoint:**
+- Handler: `services/signapps-*/src/handlers/domain.rs`
+- Route: Register in `services/signapps-*/src/main.rs` router
 
 ## Special Directories
 
-**data/:**
-- Purpose: Runtime data (model cache, file storage)
-- Source: Created at runtime by services
-- Committed: No (gitignored)
+**data/models/:**
+- Purpose: Model cache (auto-created at runtime)
+- Contents: STT, TTS, OCR, LLM, embeddings models
+- Source: Auto-downloaded by signapps-runtime
+- Committed: No (in .gitignore)
 
-**.next/:**
-- Purpose: Next.js build output
-- Source: Generated by `npm run build` / `npm run dev`
-- Committed: No (gitignored)
+**data/storage/:**
+- Purpose: File storage root
+- Source: Configurable via STORAGE_FS_ROOT env var
+- Committed: No (in .gitignore)
 
 **target/:**
 - Purpose: Rust build artifacts
-- Source: Generated by `cargo build`
-- Committed: No (gitignored)
+- Source: Created by `cargo build`
+- Committed: No (in .gitignore)
+
+**.next/:**
+- Purpose: Next.js build output
+- Source: Created by `npm run build`
+- Committed: No (in .gitignore)
 
 ---
 
-*Structure analysis: 2026-02-15*
+*Structure analysis: 2026-02-16*
 *Update when directory structure changes*

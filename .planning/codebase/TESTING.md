@@ -1,183 +1,265 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-02-15
+**Analysis Date:** 2026-02-16
 
 ## Test Framework
 
-**Rust:**
-- Runner: cargo test (built-in)
-- Async: tokio-test 0.4 for async test runtime
-- Config: No dedicated test config file (uses Cargo.toml dev-dependencies)
+**Rust Testing:**
+- Runner: Built-in `cargo test` with `#[cfg(test)]` modules
+- Async: `#[tokio::test]` for async test functions
+- Assertions: Standard `assert!()`, `assert_eq!()`, expect-style with `Result`
+- Location: Inline in source files (same file as code under test)
 
-**Frontend E2E:**
-- Runner: Playwright 1.58.2
+**TypeScript E2E Testing:**
+- Runner: Playwright test runner (`npx playwright test`)
 - Config: `client/playwright.config.ts`
-- Browsers: Chromium, Firefox, WebKit, Mobile Chrome (Pixel 5), Mobile Safari (iPhone 12)
-
-**Run Commands:**
-```bash
-# Rust
-cargo test --workspace --all-features    # All tests
-cargo test -p signapps-identity          # Single crate
-cargo test -- test_name                  # Filter by name
-cargo t                                  # Alias for cargo test
-
-# Frontend E2E
-cd client
-npm run test:e2e                         # All browsers
-npm run test:e2e:chromium                # Chromium only
-npm run test:e2e:ui                      # With UI mode
-npm run test:e2e:headed                  # Headed mode
-npm run test:e2e:debug                   # Debug mode
-npm run test:e2e:report                  # Show HTML report
-```
+- Browsers: Chromium, Firefox, WebKit
+- Run commands:
+  ```bash
+  npm run test:e2e              # Run all E2E tests
+  npm run test:e2e:ui           # Interactive UI
+  npm run test:e2e:debug        # Debug mode
+  ```
 
 ## Test File Organization
 
-**Rust:**
-- Location: Inline `#[cfg(test)]` modules within source files
-- No separate `tests/` directory convention observed
-- Test discovery: `#[test]` or `#[tokio::test]` attributes
+**Rust Test Location:**
+- Inline: `src/lib.rs` or `src/handlers/users.rs`
+- Module: `#[cfg(test)] mod tests { ... }`
+- Pattern: Co-located with source code
 
-**Frontend E2E:**
-- Location: `client/e2e/` directory (separate from source)
-- Naming: `{feature}.spec.ts` (e.g., `auth.spec.ts`, `containers.spec.ts`, `storage.spec.ts`)
-- Setup: `auth.setup.ts` (runs before dependent tests)
-- Fixtures: `fixtures.ts` (shared test data and selectors)
-- Global: `global.setup.ts`
-
-**Structure:**
-```
-client/
-  e2e/
-    auth.setup.ts              # Authentication setup (runs first)
-    global.setup.ts            # Global setup
-    fixtures.ts                # Test data, selectors, helpers
-    auth.spec.ts               # Authentication flow tests
-    containers.spec.ts         # Container management tests
-    storage.spec.ts            # Storage management tests
-    navigation.spec.ts         # Navigation tests
-  playwright.config.ts         # Playwright configuration
-```
+**TypeScript E2E Location:**
+- Directory: `client/e2e/` (separate from source)
+- Files: `auth.spec.ts`, `containers.spec.ts`, `navigation.spec.ts`, `storage.spec.ts`
+- Shared: `client/e2e/fixtures.ts` (test data, selectors)
+- Setup: `client/e2e/global.setup.ts`
 
 ## Test Structure
 
-**E2E Suite Organization:**
+**Rust Pattern:**
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validation() {
+        // Arrange
+        let input = "test";
+
+        // Act
+        let result = validate(input);
+
+        // Assert
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_async_operation() {
+        let db = setup_test_db().await;
+        let user = create_test_user(&db).await;
+        assert_eq!(user.email, "test@example.com");
+    }
+}
+```
+
+**TypeScript (Playwright) Pattern:**
 ```typescript
-import { unauthenticatedTest, test, selectors, testData } from './fixtures';
+import { test, expect } from '@playwright/test';
+import { loginAs } from './fixtures';
 
-unauthenticatedTest.describe('Authentication Flow', () => {
-  unauthenticatedTest('should display login form', async ({ page }) => {
-    await page.goto('/login');
-    await expect(page.getByText('Welcome Back')).toBeVisible();
-  });
+test.describe('Dashboard', () => {
+    test('loads with user data', async ({ page }) => {
+        // Arrange
+        await loginAs(page, 'admin');
 
-  unauthenticatedTest('should login with valid credentials', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill(selectors.loginForm.username, testData.validUser.username);
-    await page.fill(selectors.loginForm.password, testData.validUser.password);
-    await page.click(selectors.loginForm.submit);
-    await page.waitForURL('/dashboard');
-  });
+        // Act
+        await page.goto('/dashboard');
+
+        // Assert
+        await expect(page.locator('[data-testid="dashboard"]')).toBeVisible();
+        await expect(page.locator('text=Welcome')).toContainText('Welcome');
+    });
 });
 ```
 
-**Patterns:**
-- `unauthenticatedTest` for login/public page tests (fresh browser)
-- `test` for authenticated tests (uses stored auth state)
-- Playwright auto-waits for elements
-- Screenshots on failure, video on first retry
-
 ## Mocking
 
-**Not heavily used:**
-- Rust: No mock framework observed (tests use real DB in CI)
-- Frontend: Playwright tests run against live services (not mocked)
+**Rust (None currently used):**
+- Tests use real database (via test fixtures)
+- No mock libraries (prefer integration tests)
 
-**CI Database:**
-- PostgreSQL 16 + pgvector service in GitHub Actions
-- Fresh database per CI run
+**TypeScript (Playwright):**
+- No mocking library (tests against real API)
+- Can use `page.route()` for API interception if needed
+- Fixtures: Shared test data in `client/e2e/fixtures.ts`
+
+**Example (TypeScript - intercepting API):**
+```typescript
+test('handles API error gracefully', async ({ page }) => {
+    // Intercept API and return error
+    await page.route('**/api/*/users', (route) => {
+        route.abort('failed');
+    });
+
+    await page.goto('/users');
+    await expect(page.locator('text=Error')).toBeVisible();
+});
+```
 
 ## Fixtures and Factories
 
-**E2E Test Data** (`client/e2e/fixtures.ts`):
-```typescript
-export const testData = {
-  validUser: { username: 'admin', password: 'admin123' },
-  invalidUser: { username: 'invalid', password: 'wrong' },
-  testContainer: { name: 'test-container-e2e', image: 'nginx:alpine' },
-  testBucket: { name: 'test-bucket-e2e' },
-  testFolder: { name: 'test-folder-e2e' },
-};
+**Rust Test Helpers:**
+- Create test data inline or in helper functions
+- Example: `create_test_user()`, `setup_test_db()`
+- Location: Same test module or separate test utilities module
 
-export const selectors = {
-  loginForm: { username: 'input[id="username"]', password: '...', submit: '...' },
-  dashboard: { title: 'h1:has-text("Dashboard")' },
-};
-```
-
-**Auth State Fixture:**
+**TypeScript Test Fixtures:**
 ```typescript
-// Authenticated test uses stored session
-export const test = base.extend({ storageState: authFile });
-// Unauthenticated test uses clean session
-export const unauthenticatedTest = base.extend({ storageState: { cookies: [], origins: [] } });
+// client/e2e/fixtures.ts
+import { test as base } from '@playwright/test';
+
+export const test = base.extend({
+    authenticatedPage: async ({ page }, use) => {
+        await page.goto('/login');
+        await page.fill('input[name="email"]', 'admin@example.com');
+        await page.fill('input[name="password"]', 'password');
+        await page.click('button:has-text("Login")');
+        await page.waitForNavigation();
+        await use(page);
+    },
+});
+
+export async function loginAs(page, role) {
+    // Reusable login helper
+    await page.goto('/login');
+    await page.fill('input[name="email"]', `${role}@example.com`);
+    // ... continue login
+}
 ```
 
 ## Coverage
 
 **Requirements:**
-- No enforced coverage target
-- Coverage tracked via cargo-llvm-cov -> Codecov
-
-**Configuration:**
-- CI: `cargo llvm-cov --workspace --lcov --output-path lcov.info`
-- Upload to Codecov with `codecov/codecov-action@v4`
+- No hard target (tracked for awareness)
+- Focus: Critical paths (authentication, data operations)
+- Current: Unit test coverage for core utilities and services
 
 **View Coverage:**
-```bash
-cargo llvm-cov --workspace --html
-# Open target/llvm-cov/html/index.html
-```
+- Rust: `cargo tarpaulin` (if installed) or `cargo llvm-cov`
+- TypeScript E2E: Coverage not applicable (end-to-end tests)
 
 ## Test Types
 
 **Unit Tests (Rust):**
-- Inline `#[cfg(test)]` modules
-- Test single functions in isolation
-- Limited coverage currently (infrastructure-focused codebase)
+- Scope: Single function or method in isolation
+- Mocking: Use real dependencies (database, etc.)
+- Speed: <1s per test
+- Location: `#[cfg(test)]` modules inline
+- Examples: `crates/signapps-cache/src/lib.rs` (lines 156-222)
 
-**Integration Tests (CI):**
-- Full test suite with real PostgreSQL + pgvector
-- `cargo test --workspace --all-features`
-- Validates compile-time SQL queries
+**Integration Tests (TypeScript - Playwright):**
+- Scope: Full user flows (login → action → verify)
+- Mocking: None (tests against real API)
+- Setup: Global auth setup in `global.setup.ts`
+- Location: `client/e2e/` directory
+- Examples: `auth.spec.ts`, `containers.spec.ts`
 
-**E2E Tests (Playwright):**
-- Full browser tests against running services
-- Auth flows, container management, storage operations, navigation
-- Multi-browser + mobile device testing
-- Retry: 2 retries on CI, 0 in dev
-- Parallel execution in dev, sequential on CI
-- Base URL: `http://localhost:3010`
+**Manual Testing:**
+- E2E scenarios not covered by Playwright
+- Local development with real services
+- GPU/hardware-specific scenarios
 
-## CI Pipeline
+## Common Patterns
 
-**GitHub Actions** (`.github/workflows/ci.yml`):
+**Async Testing (Rust):**
+```rust
+#[tokio::test]
+async fn test_database_operation() {
+    let pool = create_test_db_pool().await;
+    let result = fetch_user(&pool, user_id).await;
+    assert!(result.is_ok());
+}
+```
+
+**Error Testing (Rust):**
+```rust
+#[test]
+fn test_validation_error() {
+    let result = validate_email("");
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_async_error() {
+    let result = fetch_non_existent_user().await;
+    assert!(matches!(result, Err(AppError::NotFound(_))));
+}
+```
+
+**Error Testing (TypeScript):**
+```typescript
+test('shows error message on invalid input', async ({ page }) => {
+    await page.goto('/login');
+    await page.click('button:has-text("Login")');
+
+    // Email validation error appears
+    await expect(page.locator('text=Email is required')).toBeVisible();
+});
+```
+
+**Authentication Testing (TypeScript):**
+```typescript
+test('requires login for protected routes', async ({ page }) => {
+    // Navigate to protected page without auth
+    await page.goto('/dashboard', { waitUntil: 'networkidle' });
+
+    // Should redirect to login
+    expect(page.url()).toContain('/login');
+});
+```
+
+## Run Commands
+
+**Rust:**
+```bash
+cargo test --workspace              # All tests
+cargo test -p signapps-cache       # Specific crate
+cargo test test_name               # Filter by name
+cargo test -- --test-threads=1     # Single threaded
+cargo test -- --nocapture          # Show output
+```
+
+**TypeScript:**
+```bash
+npm run test:e2e                    # All E2E tests
+npm run test:e2e:chromium          # Single browser
+npm run test:e2e:ui                # Interactive mode
+npm run test:e2e:debug             # Debug with inspector
+npx playwright test auth.spec.ts   # Single file
+npx playwright test -g "login"     # Match test name
+```
+
+## CI/CD Testing
+
+**Pre-commit (Local):**
+- `cargo fmt --all -- --check` - Formatting
+- `cargo clippy --workspace --all-features -- -D warnings` - Linting
+- `cargo test --workspace --all-features` - Unit tests (requires PostgreSQL)
+
+**CI Pipeline (.github/workflows/):**
 1. `cargo check --workspace --all-features`
 2. `cargo fmt --all -- --check`
 3. `cargo clippy --workspace --all-features -- -D warnings`
-4. `cargo test --workspace --all-features` (with PostgreSQL 16 + pgvector)
-5. `cargo audit` (security)
-6. `cargo llvm-cov` (coverage -> Codecov)
+4. `cargo test --workspace --all-features`
+5. `cargo audit` - Dependency security check
+6. `cargo llvm-cov` - Coverage report → Codecov
 
-**Cargo Aliases:**
-```toml
-t = "test"
-lint = "clippy --workspace --all-targets --all-features -- -D warnings"
-precommit = ["fmt", "lint", "test"]
-```
+**E2E in CI:**
+- Playwright tests run against deployed test environment
+- Screenshots/videos saved on failure
 
 ---
 
-*Testing analysis: 2026-02-15*
+*Testing analysis: 2026-02-16*
 *Update when test patterns change*
