@@ -11,6 +11,7 @@ pub mod icalendar;
 pub mod websocket;
 pub mod ws_messages;
 pub mod notifications;
+pub mod push;
 
 pub use calendars::*;
 pub use events::*;
@@ -23,3 +24,4 @@ pub use icalendar::*;
 pub use websocket::*;
 pub use ws_messages::*;
 pub use notifications::*;
+pub use push::*;

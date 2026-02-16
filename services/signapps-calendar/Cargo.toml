@@ -37,4 +37,5 @@ futures = "0.3"
 minijinja = "1.0"
 tokio-util = "0.7"
 # lettre = { workspace = true }  # TODO: Fix OpenSSL on Windows
-# web-push = { workspace = true }  # TODO: Add after email service works
+# web-push = "0.11"  # TODO: Fix OpenSSL dependency on Windows - use container build instead
+reqwest = { workspace = true }  # For HTTP calls to push service

@@ -113,7 +113,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use handlers::{calendars, events, recurrence, timezones, tasks, resources, shares, icalendar, websocket, notifications};
+    use handlers::{calendars, events, recurrence, timezones, tasks, resources, shares, icalendar, websocket, notifications, push};
     use axum::routing::{delete, post, put};
 
     Router::new()
@@ -192,6 +192,9 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/notifications/history", get(notifications::get_notification_history))
         .route("/api/v1/notifications/:notification_id/resend", post(notifications::resend_notification))
         .route("/api/v1/notifications/unread-count", get(notifications::get_unread_count))
+        // Web Push notification routes
+        .route("/api/v1/notifications/push/vapid-key", get(push::get_vapid_key))
+        .route("/api/v1/notifications/push/send", post(push::send_push))
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))  // 100MB
         .layer(TraceLayer::new_for_http())
         .with_state(state)
