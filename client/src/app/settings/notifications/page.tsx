@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Mail, MessageSquare, Bell, Clock, Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '@/hooks/use-auth';
+import { PushSubscriptionManager } from '@/components/notifications/push-subscription-manager';
 
 interface NotificationPreferences {
   id: string;
@@ -40,7 +41,7 @@ export default function NotificationSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [push Registered, setPushRegistered] = useState(false);
+  const [pushRegistered, setPushRegistered] = useState(false);
 
   // Load preferences
   useEffect(() => {
@@ -326,6 +327,11 @@ export default function NotificationSettingsPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Push Subscription Manager */}
+          <div className="mt-6">
+            <PushSubscriptionManager />
+          </div>
         </TabsContent>
 
         {/* QUIET HOURS TAB */}

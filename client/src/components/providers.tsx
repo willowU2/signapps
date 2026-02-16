@@ -5,6 +5,7 @@ import { useState, Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { CommandPalette } from '@/components/command-palette';
+import { NotificationPermissionDialog } from '@/components/notifications/notification-permission-dialog';
 
 function LoadingFallback() {
   return (
@@ -36,6 +37,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthProvider>{children}</AuthProvider>
       </Suspense>
       <CommandPalette />
+      <NotificationPermissionDialog />
       <Toaster />
     </QueryClientProvider>
   );
