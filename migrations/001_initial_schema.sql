@@ -5,6 +5,20 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Reset migrations table to allow restart
+DROP TABLE IF EXISTS _sqlx_migrations CASCADE;
+
+-- Drop all schemas and functions if they exist (for fresh restart)
+DROP FUNCTION IF EXISTS reset_all_schemas() CASCADE;
+DROP SCHEMA IF EXISTS identity CASCADE;
+DROP SCHEMA IF EXISTS containers CASCADE;
+DROP SCHEMA IF EXISTS proxy CASCADE;
+DROP SCHEMA IF EXISTS storage CASCADE;
+DROP SCHEMA IF EXISTS ai CASCADE;
+DROP SCHEMA IF EXISTS scheduler CASCADE;
+DROP SCHEMA IF EXISTS documents CASCADE;
+DROP SCHEMA IF EXISTS monitoring CASCADE;
+
 -- ============================================================================
 -- Schema: Identity (Authentication, Users, Groups, RBAC)
 -- ============================================================================
