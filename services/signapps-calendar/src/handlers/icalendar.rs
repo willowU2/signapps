@@ -3,10 +3,10 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    response::IntoResponse,
     Json,
 };
-use serde::Deserialize;
+use chrono;
+use serde::{Deserialize, Serialize};
 use signapps_db::{models::*, EventRepository, CalendarRepository};
 use uuid::Uuid;
 
@@ -15,10 +15,10 @@ use crate::{services::icalendar as ical, AppState, CalendarError};
 #[derive(Debug, Deserialize)]
 pub struct ImportCalendarRequest {
     pub ics_content: String,
-    pub calendar_id: Uuid,
+    pub calendar_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ImportResult {
     pub imported: usize,
     pub skipped: usize,
@@ -131,21 +131,59 @@ pub async fn get_calendar_feed(
     ))
 }
 
-/// Import calendar from iCalendar format (RFC 5545) - Placeholder for Phase 6
-/// TODO: Implement full import logic with conflict detection
-pub async fn import_calendar() -> Result<Json<ImportResult>, CalendarError> {
-    // Phase 6: Import functionality
-    // This endpoint will:
-    // 1. Accept iCalendar format (.ics file upload)
-    // 2. Parse RFC 5545 RRULE events
-    // 3. Check for duplicates using UID
-    // 4. Import events to specified calendar
-    // 5. Return import statistics
+/// Import calendar from iCalendar format (RFC 5545)
+pub async fn import_calendar(
+    State(state): State<AppState>,
+    Path(calendar_id): Path<Uuid>,
+    Json(payload): Json<ValidateICalendarRequest>,
+) -> Result<Json<ImportResult>, CalendarError> {
+    let event_repo = EventRepository::new(&state.pool);
+    let system_user_id = Uuid::nil(); // System import user ID
+
+    // Parse iCalendar content
+    let ical_events = match ical::import_calendar_from_ics(&payload.ics_content) {
+        Ok(events) => events,
+        Err(e) => {
+            return Ok(Json(ImportResult {
+                imported: 0,
+                skipped: 0,
+                errors: vec![e],
+            }))
+        }
+    };
+
+    let mut imported = 0;
+    let mut skipped = 0;
+    let mut errors = vec![];
+
+    // Import each event
+    for ical_event in ical_events {
+        // Create event input
+        let event_input = CreateEvent {
+            title: ical_event.title.clone(),
+            description: ical_event.description,
+            location: ical_event.location,
+            start_time: ical_event.start_time,
+            end_time: ical_event.end_time,
+            rrule: ical_event.rrule,
+            timezone: Some("UTC".to_string()),
+            is_all_day: Some(false),
+        };
+
+        // Insert event
+        match event_repo.create(calendar_id, event_input, system_user_id).await {
+            Ok(_) => imported += 1,
+            Err(e) => {
+                errors.push(format!("Failed to import event '{}': {}", ical_event.title, e));
+                skipped += 1;
+            }
+        }
+    }
 
     Ok(Json(ImportResult {
-        imported: 0,
-        skipped: 0,
-        errors: vec!["Import not yet implemented - Phase 6 feature".to_string()],
+        imported,
+        skipped,
+        errors,
     }))
 }
 

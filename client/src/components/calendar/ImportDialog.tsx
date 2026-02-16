@@ -84,16 +84,22 @@ export function ImportDialog({
           return;
         }
 
-        // TODO: Implement actual import once backend endpoint is complete
+        // Call actual import endpoint
+        const importResult = await calendarApi.post(
+          `/calendars/${calendarId}/import`,
+          { ics_content: fileContent },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
         setResult({
           success: true,
-          importedCount: validationResult.data.event_count,
-          skippedCount: 0,
-          errors: [],
+          importedCount: importResult.data.imported,
+          skippedCount: importResult.data.skipped,
+          errors: importResult.data.errors || [],
         });
 
         if (onImportComplete) {
-          onImportComplete(validationResult.data.event_count);
+          onImportComplete(importResult.data.imported);
         }
       } else if (selectedFile.name.endsWith(".json")) {
         // Parse JSON format
