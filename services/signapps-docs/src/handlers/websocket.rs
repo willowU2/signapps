@@ -1,10 +1,9 @@
 use axum::{
-    extract::{ws::{WebSocket, WebSocketUpgrade}, Path, State},
+    extract::{ws::{WebSocket, WebSocketUpgrade, Message}, Path, State},
     response::IntoResponse,
 };
 use futures::{stream::StreamExt, SinkExt};
 use tokio::sync::broadcast;
-use tokio_tungstenite::tungstenite::Message;
 use tracing::{debug, error, info};
 use uuid::Uuid;
 use yrs::Doc;
@@ -50,7 +49,7 @@ async fn handle_socket(
     let cache_key = format!("{}::{}", doc_type, doc_id);
 
     // Get or create document in memory
-    let doc = if let Some(entry) = state.docs.get(&cache_key) {
+    let _doc = if let Some(entry) = state.docs.get(&cache_key) {
         entry.clone()
     } else {
         let new_doc = Doc::new();
@@ -110,7 +109,6 @@ async fn handle_socket(
                     );
                     break;
                 }
-                _ => {}
             }
         }
     });

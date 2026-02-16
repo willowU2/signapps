@@ -5,6 +5,7 @@ use axum::{
 use signapps_cache::CacheService;
 use std::sync::Arc;
 use std::net::SocketAddr;
+use std::time::Duration;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use tracing::info;
@@ -33,7 +34,7 @@ async fn main() -> anyhow::Result<()> {
         .parse::<u16>()?;
 
     // Initialize cache
-    let cache = Arc::new(CacheService::new());
+    let cache = Arc::new(CacheService::new(1000, Duration::from_secs(3600)));
 
     // Initialize app state
     let app_state = AppState {

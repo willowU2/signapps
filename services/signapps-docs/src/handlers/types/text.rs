@@ -1,5 +1,4 @@
 use axum::{extract::State, http::StatusCode, Json};
-use serde_json::json;
 use uuid::Uuid;
 use tracing::info;
 

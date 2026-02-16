@@ -1,5 +1,4 @@
-use sqlx::PgPool;
-use tracing::{debug, error};
+use tracing::debug;
 use uuid::Uuid;
 use yrs::Doc;
 
@@ -7,19 +6,15 @@ use yrs::Doc;
 pub async fn save_document(
     doc_id: &str,
     doc_type: &str,
-    doc: &Doc,
-    pool: &PgPool,
-) -> Result<(), sqlx::Error> {
-    let state_vector = doc.get_state_vector();
-    let doc_binary = doc.encode_state_as_update(&state_vector);
+    _doc: &Doc,
+) -> Result<(), String> {
+    // Parse and validate doc_id
+    Uuid::parse_str(doc_id)
+        .map_err(|e| format!("Invalid document ID: {}", e))?;
 
-    let doc_uuid = Uuid::parse_str(doc_id)
-        .map_err(|e| sqlx::Error::Encode(Box::new(e)))?;
-
-    // Note: Using offline mode, so this may not compile
-    // In production, run: cargo sqlx prepare
-
-    debug!(doc_id = %doc_id, doc_type = %doc_type, "Document persisted to PostgreSQL");
+    // TODO: Implement persistence with Yrs state vector and encoded updates
+    // Current Yrs version 0.17 API requires checking updated methods for state encoding
+    debug!(doc_id = %doc_id, doc_type = %doc_type, "Document persistence stub");
 
     Ok(())
 }
@@ -27,27 +22,27 @@ pub async fn save_document(
 /// Load document state from PostgreSQL
 pub async fn load_document(
     doc_id: &str,
-    pool: &PgPool,
-) -> Result<Option<Doc>, sqlx::Error> {
-    let doc_uuid = Uuid::parse_str(doc_id)
-        .map_err(|e| sqlx::Error::Encode(Box::new(e)))?;
+) -> Result<Option<Doc>, String> {
+    // Parse and validate doc_id
+    Uuid::parse_str(doc_id)
+        .map_err(|e| format!("Invalid document ID: {}", e))?;
 
-    // Note: Using offline mode
-
-    debug!(doc_id = %doc_id, "Document loaded from PostgreSQL");
+    // TODO: Implement loading with proper Yrs state restoration
+    debug!(doc_id = %doc_id, "Document loading stub");
     Ok(None)
 }
 
 /// Record individual update for audit trail
 pub async fn log_update(
     doc_id: &str,
-    update: &[u8],
-    pool: &PgPool,
-) -> Result<(), sqlx::Error> {
-    let doc_uuid = Uuid::parse_str(doc_id)
-        .map_err(|e| sqlx::Error::Encode(Box::new(e)))?;
+    _update: &[u8],
+) -> Result<(), String> {
+    // Parse and validate doc_id
+    Uuid::parse_str(doc_id)
+        .map_err(|e| format!("Invalid document ID: {}", e))?;
 
-    debug!(doc_id = %doc_id, "Update logged to audit trail");
+    // TODO: Log updates to audit trail
+    debug!(doc_id = %doc_id, "Update logging stub");
 
     Ok(())
 }
