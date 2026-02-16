@@ -7,6 +7,7 @@ pub mod timezones;
 pub mod tasks;
 pub mod resources;
 pub mod shares;
+pub mod icalendar;
 
 pub use calendars::*;
 pub use events::*;
@@ -15,3 +16,4 @@ pub use timezones::*;
 pub use tasks::*;
 pub use resources::*;
 pub use shares::*;
+pub use icalendar::*;

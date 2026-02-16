@@ -81,7 +81,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use handlers::{calendars, events, recurrence, timezones, tasks, resources, shares};
+    use handlers::{calendars, events, recurrence, timezones, tasks, resources, shares, icalendar};
     use axum::routing::{delete, post, put};
 
     Router::new()
@@ -142,6 +142,10 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/resources/type/:resource_type", get(resources::list_resources_by_type))
         .route("/api/v1/resources/availability", post(resources::check_availability))
         .route("/api/v1/resources/:resource_id/book", post(resources::book_resources))
+        // iCalendar import/export routes
+        .route("/api/v1/calendars/:calendar_id/export", get(icalendar::export_calendar))
+        .route("/api/v1/calendars/:calendar_id/feed.ics", get(icalendar::get_calendar_feed))
+        .route("/api/v1/icalendar/validate", post(icalendar::validate_icalendar))
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))  // 100MB
         .layer(TraceLayer::new_for_http())
         .with_state(state)
