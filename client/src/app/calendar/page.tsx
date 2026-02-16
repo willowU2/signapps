@@ -5,9 +5,19 @@ import { useCalendarStore } from "@/stores/calendar-store";
 import { calendarApi } from "@/lib/calendar-api";
 import { MonthCalendar } from "@/components/calendar/MonthCalendar";
 import { EventForm } from "@/components/calendar/EventForm";
+import { ExportDialog } from "@/components/calendar/ExportDialog";
+import { ImportDialog } from "@/components/calendar/ImportDialog";
+import { ShareDialog } from "@/components/calendar/ShareDialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Download, Upload, MoreVertical, Share2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function CalendarPage() {
   const {
@@ -19,6 +29,9 @@ export default function CalendarPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [eventFormOpen, setEventFormOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null);
 
   // Load calendars on mount
@@ -55,13 +68,48 @@ export default function CalendarPage() {
               Manage your schedule and events
             </p>
           </div>
-          <Button
-            onClick={() => setEventFormOpen(true)}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            New Event
-          </Button>
+
+          <div className="flex gap-2">
+            {/* Export/Import menu */}
+            {selectedCalendarId && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="gap-2">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setShareDialogOpen(true)} className="gap-2">
+                    <Share2 className="h-4 w-4" />
+                    <span>Share Calendar</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setExportDialogOpen(true)} className="gap-2">
+                    <Download className="h-4 w-4" />
+                    <span>Export Calendar</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setImportDialogOpen(true)} className="gap-2">
+                    <Upload className="h-4 w-4" />
+                    <span>Import Calendar</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setEventFormOpen(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    <span>New Event</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* New Event button (primary) */}
+            <Button
+              onClick={() => setEventFormOpen(true)}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              New Event
+            </Button>
+          </div>
         </div>
 
         {/* Content */}
@@ -121,6 +169,37 @@ export default function CalendarPage() {
           open={eventFormOpen}
           onOpenChange={setEventFormOpen}
           calendarId={selectedCalendarId || calendars[0]?.id || ""}
+        />
+
+        {/* Export dialog */}
+        <ExportDialog
+          open={exportDialogOpen}
+          onOpenChange={setExportDialogOpen}
+          calendarId={selectedCalendarId}
+          calendarName={
+            calendars.find((c) => c.id === selectedCalendarId)?.name || "Calendar"
+          }
+        />
+
+        {/* Import dialog */}
+        <ImportDialog
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          calendarId={selectedCalendarId}
+          onImportComplete={() => {
+            // Refresh calendar data after import
+            setEventFormOpen(false);
+          }}
+        />
+
+        {/* Share dialog */}
+        <ShareDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          calendarId={selectedCalendarId}
+          calendarName={
+            calendars.find((c) => c.id === selectedCalendarId)?.name || "Calendar"
+          }
         />
       </div>
     </AppLayout>
