@@ -22,6 +22,8 @@ use handlers::types::{text, sheet, slide, board};
 pub struct AppState {
     pub cache: Arc<CacheService>,
     pub docs: Arc<dashmap::DashMap<String, yrs::Doc>>,
+    // Broadcast channels per document (key: "type::doc_id")
+    pub broadcasts: Arc<dashmap::DashMap<String, tokio::sync::broadcast::Sender<Vec<u8>>>>,
 }
 
 #[tokio::main]
@@ -41,6 +43,7 @@ async fn main() -> anyhow::Result<()> {
     let app_state = AppState {
         cache,
         docs: Arc::new(dashmap::DashMap::new()),
+        broadcasts: Arc::new(dashmap::DashMap::new()),
     };
 
     // Build router with document type endpoints

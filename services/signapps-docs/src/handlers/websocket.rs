@@ -57,8 +57,14 @@ async fn handle_socket(
         new_doc
     };
 
-    // Create broadcast channel for this document
-    let (tx, _rx) = broadcast::channel(100);
+    // Get or create broadcast channel for this document
+    let tx = if let Some(entry) = state.broadcasts.get(&cache_key) {
+        entry.clone()
+    } else {
+        let (tx, _rx) = broadcast::channel(100);
+        state.broadcasts.insert(cache_key.clone(), tx.clone());
+        tx
+    };
 
     // Split WebSocket into sender and receiver
     let (mut sender, mut receiver) = socket.split();
