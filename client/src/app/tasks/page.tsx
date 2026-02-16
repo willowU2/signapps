@@ -1,18 +1,29 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Download, Upload, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskForm } from "@/components/tasks/TaskForm";
+import { ExportDialog } from "@/components/calendar/ExportDialog";
+import { ImportDialog } from "@/components/calendar/ImportDialog";
 import { calendarApi } from "@/lib/calendar-api";
 import { AppLayout } from "@/components/layout/app-layout";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function TasksPage() {
   const [calendars, setCalendars] = useState<any[]>([]);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [parentTaskId, setParentTaskId] = useState<string | undefined>();
   const [treeKey, setTreeKey] = useState(0);
 
@@ -64,10 +75,40 @@ export default function TasksPage() {
               Organize your work with hierarchical tasks
             </p>
           </div>
-          <Button onClick={handleAddTask} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Task
-          </Button>
+
+          <div className="flex gap-2">
+            {/* Export/Import menu */}
+            {selectedCalendarId && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="gap-2">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setExportDialogOpen(true)} className="gap-2">
+                    <Download className="h-4 w-4" />
+                    <span>Export Tasks</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setImportDialogOpen(true)} className="gap-2">
+                    <Upload className="h-4 w-4" />
+                    <span>Import Tasks</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleAddTask} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    <span>New Task</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* New Task button (primary) */}
+            <Button onClick={handleAddTask} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Task
+            </Button>
+          </div>
         </div>
 
         {/* Content */}
@@ -129,6 +170,27 @@ export default function TasksPage() {
           calendarId={selectedCalendarId || calendars[0]?.id || ""}
           parentTaskId={parentTaskId}
           onTaskCreated={handleTaskCreated}
+        />
+
+        {/* Export dialog */}
+        <ExportDialog
+          open={exportDialogOpen}
+          onOpenChange={setExportDialogOpen}
+          calendarId={selectedCalendarId}
+          calendarName={
+            calendars.find((c) => c.id === selectedCalendarId)?.name || "Tasks"
+          }
+        />
+
+        {/* Import dialog */}
+        <ImportDialog
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          calendarId={selectedCalendarId}
+          onImportComplete={() => {
+            // Refresh task tree after import
+            setTreeKey((prev) => prev + 1);
+          }}
         />
       </div>
     </AppLayout>
