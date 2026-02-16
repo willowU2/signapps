@@ -81,7 +81,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use handlers::{calendars, events, recurrence, timezones, tasks};
+    use handlers::{calendars, events, recurrence, timezones, tasks, resources, shares};
     use axum::routing::{delete, post, put};
 
     Router::new()
@@ -97,6 +97,12 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/calendars/:id/members", post(calendars::add_member))
         .route("/api/v1/calendars/:id/members/:user_id", delete(calendars::remove_member))
         .route("/api/v1/calendars/:id/members/:user_id", put(calendars::update_member_role))
+        // Share endpoints (alternative routes)
+        .route("/api/v1/calendars/:calendar_id/shares", post(shares::share_calendar))
+        .route("/api/v1/calendars/:calendar_id/shares/:user_id", delete(shares::unshare_calendar))
+        .route("/api/v1/calendars/:calendar_id/shares/:user_id", put(shares::update_permission))
+        .route("/api/v1/calendars/:calendar_id/shares", get(shares::get_members))
+        .route("/api/v1/calendars/:calendar_id/shares/:user_id/check", get(shares::check_permission))
         // Event CRUD routes
         .route("/api/v1/calendars/:calendar_id/events", post(events::create_event))
         .route("/api/v1/calendars/:calendar_id/events", get(events::list_events))
@@ -127,6 +133,15 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/tasks/:task_id/children", get(tasks::list_children))
         .route("/api/v1/calendars/:calendar_id/tasks/tree", get(tasks::get_task_tree))
         .route("/api/v1/calendars/:calendar_id/tasks/info", get(tasks::get_task_tree_info))
+        // Resource routes
+        .route("/api/v1/resources", post(resources::create_resource))
+        .route("/api/v1/resources", get(resources::list_resources))
+        .route("/api/v1/resources/:id", get(resources::get_resource))
+        .route("/api/v1/resources/:id", put(resources::update_resource))
+        .route("/api/v1/resources/:id", delete(resources::delete_resource))
+        .route("/api/v1/resources/type/:resource_type", get(resources::list_resources_by_type))
+        .route("/api/v1/resources/availability", post(resources::check_availability))
+        .route("/api/v1/resources/:resource_id/book", post(resources::book_resources))
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))  // 100MB
         .layer(TraceLayer::new_for_http())
         .with_state(state)

@@ -17,6 +17,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { ResourceSelector } from "./ResourceSelector";
+import { AttendeeList } from "./AttendeeList";
+import { Users, Package } from "lucide-react";
 
 interface EventFormProps {
   open: boolean;
@@ -69,6 +72,10 @@ export function EventForm({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
+  const [resourceSelectorOpen, setResourceSelectorOpen] = useState(false);
+  const [attendeeListOpen, setAttendeeListOpen] = useState(false);
+  const [attendees, setAttendees] = useState<any[]>([]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -246,6 +253,51 @@ export function EventForm({
             </Label>
           </div>
 
+          {/* Resources section */}
+          <div className="space-y-2 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Resources
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setResourceSelectorOpen(true)}
+              >
+                {selectedResourceIds.length > 0
+                  ? `${selectedResourceIds.length} selected`
+                  : "Add Resources"}
+              </Button>
+            </div>
+            {selectedResourceIds.length > 0 && (
+              <div className="text-sm text-muted-foreground">
+                {selectedResourceIds.length} resource(s) will be booked for this event
+              </div>
+            )}
+          </div>
+
+          {/* Attendees section */}
+          <div className="space-y-2 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Attendees
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAttendeeListOpen(true)}
+              >
+                {attendees.length > 0
+                  ? `${attendees.length} invited`
+                  : "Add Attendees"}
+              </Button>
+            </div>
+          </div>
+
           <DialogFooter className="gap-2">
             {initialEvent && (
               <Button
@@ -272,5 +324,24 @@ export function EventForm({
         </form>
       </DialogContent>
     </Dialog>
+
+    {/* Resource Selector Dialog */}
+    <ResourceSelector
+      open={resourceSelectorOpen}
+      onOpenChange={setResourceSelectorOpen}
+      selectedResourceIds={selectedResourceIds}
+      onResourcesSelected={setSelectedResourceIds}
+      startTime={formData.start_time}
+      endTime={formData.end_time}
+    />
+
+    {/* Attendee List Dialog */}
+    <AttendeeList
+      eventId={initialEvent?.id || ""}
+      open={attendeeListOpen}
+      onOpenChange={setAttendeeListOpen}
+      attendees={attendees}
+      onAttendeesChange={setAttendees}
+    />
   );
 }
