@@ -38,3 +38,12 @@ pub use calendar_repository::{
     TaskRepository,
     ResourceRepository,
 };
+
+pub mod notification_repository;
+pub use notification_repository::{
+    NotificationPreferencesRepository,
+    PushSubscriptionRepository,
+    NotificationSentRepository,
+    NotificationTemplateRepository,
+    NotificationDigestRepository,
+};
