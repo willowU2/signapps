@@ -34,7 +34,8 @@ petgraph = "0.6"
 dashmap = "5.5"
 yrs = "0.17"
 futures = "0.3"
-lettre = { version = "0.11", features = ["smtp"] }
 minijinja = "1.0"
-web_push = "0.28"
 tokio-util = "0.7"
+# Email: lettre requires OpenSSL - will configure in next phase
+# Push notifications: web-push 0.11 for Web Push API support
+# For now: focus on notification infrastructure (scheduler, preferences, history)

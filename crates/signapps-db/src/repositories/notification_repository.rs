@@ -167,7 +167,7 @@ impl PushSubscriptionRepository {
     }
 
     /// Delete expired subscriptions (for cleanup job)
-    pub async fn delete_old(pool: &PgPool, days: i32) -> Result<i64, sqlx::Error> {
+    pub async fn delete_old(pool: &PgPool, days: i32) -> Result<u64, sqlx::Error> {
         let result = sqlx::query(
             "DELETE FROM push_subscriptions WHERE created_at < NOW() - INTERVAL '1 day' * $1"
         )
@@ -336,7 +336,7 @@ impl NotificationSentRepository {
     }
 
     /// Delete old notifications (for archival)
-    pub async fn delete_old(pool: &PgPool, days: i32) -> Result<i64, sqlx::Error> {
+    pub async fn delete_old(pool: &PgPool, days: i32) -> Result<u64, sqlx::Error> {
         let result = sqlx::query(
             "DELETE FROM notifications_sent WHERE created_at < NOW() - INTERVAL '1 day' * $1"
         )

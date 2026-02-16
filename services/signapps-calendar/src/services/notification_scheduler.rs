@@ -8,7 +8,6 @@ use tokio::time::{interval, Duration as TokioDuration};
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
-use crate::services::email_service::EmailService;
 use signapps_db::models::{NotificationChannel, NotificationType};
 use signapps_db::repositories::{
     EventRepository, NotificationPreferencesRepository, NotificationSentRepository,
@@ -20,17 +19,14 @@ use signapps_db::repositories::{
 pub struct SchedulerConfig {
     /// Check interval in seconds (default: 60)
     pub check_interval: u64,
-    /// Email service for sending notifications
-    pub email_service: Arc<EmailService>,
     /// Maximum notifications to process per run (default: 100)
     pub batch_size: i32,
 }
 
 impl SchedulerConfig {
-    pub fn new(email_service: Arc<EmailService>) -> Self {
+    pub fn new() -> Self {
         Self {
             check_interval: 60,
-            email_service,
             batch_size: 100,
         }
     }
@@ -91,13 +87,13 @@ impl NotificationScheduler {
         info!(count = events.len(), "Found pending reminders");
 
         // Process each event
-        for (event, user_id, reminder_minutes) in events {
+        for (event_id, user_id, reminder_minutes) in events {
             if let Err(e) = self
-                .send_reminder_for_event(&event, user_id, reminder_minutes)
+                .send_reminder_for_event(event_id, user_id, reminder_minutes)
                 .await
             {
                 error!(
-                    event_id = %event.id,
+                    event_id = %event_id,
                     user_id = %user_id,
                     error = %e,
                     "Failed to send reminder"
@@ -111,19 +107,17 @@ impl NotificationScheduler {
     /// Get events with reminders due in next N minutes
     async fn get_pending_reminder_events(
         &self,
-    ) -> Result<Vec<(crate::models::Event, Uuid, i32)>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<(Uuid, Uuid, i32)>, Box<dyn std::error::Error>> {
         // SQL to find events where reminder should be sent
         // 1. Event is in future
         // 2. Event has attendees (user_id from event_attendees)
         // 3. Reminder time not yet sent
         // 4. Start time is within reminder window (15m, 1h, 1d)
 
-        let rows = sqlx::query_as::<_, (String, String, String, String, i32)>(
+        let rows = sqlx::query_as::<_, (String, String, i32)>(
             r#"
             SELECT
               e.id::text,
-              e.title,
-              e.start_time::text,
               ea.user_id::text,
               CASE
                 WHEN e.start_time - INTERVAL '15 minutes' <= NOW()
@@ -157,31 +151,12 @@ impl NotificationScheduler {
 
         let mut events = Vec::new();
 
-        for (event_id, _title, _start_time, user_id_str, reminder_minutes) in rows {
+        for (event_id, user_id_str, reminder_minutes) in rows {
             if let (Ok(event_id), Ok(user_id)) = (
                 event_id.parse::<Uuid>(),
                 user_id_str.parse::<Uuid>(),
             ) {
-                // In real implementation, fetch full event
-                // For now, create placeholder
-                events.push((
-                    crate::models::Event {
-                        id: event_id,
-                        title: "Event".to_string(),
-                        description: None,
-                        start_time: Utc::now(),
-                        end_time: Utc::now() + Duration::hours(1),
-                        location: None,
-                        calendar_id: Uuid::new_v4(),
-                        organizer_id: Uuid::new_v4(),
-                        rrule: None,
-                        timezone: "UTC".to_string(),
-                        created_at: Utc::now(),
-                        updated_at: Utc::now(),
-                    },
-                    user_id,
-                    reminder_minutes,
-                ));
+                events.push((event_id, user_id, reminder_minutes));
             }
         }
 
@@ -191,9 +166,9 @@ impl NotificationScheduler {
     /// Send reminder for a specific event to a user
     async fn send_reminder_for_event(
         &self,
-        event: &crate::models::Event,
+        event_id: Uuid,
         user_id: Uuid,
-        reminder_minutes: i32,
+        _reminder_minutes: i32,
     ) -> Result<(), Box<dyn std::error::Error>> {
         // Get user preferences
         let prefs = NotificationPreferencesRepository::get_or_create(&self.pool, user_id).await?;
@@ -204,56 +179,27 @@ impl NotificationScheduler {
             return Ok(());
         }
 
-        // Get user email
-        let user = UserRepository::get_by_id(&self.pool, user_id).await?;
-
         // Create notification record
         let notification = NotificationSentRepository::create(
             &self.pool,
             user_id,
-            Some(event.id),
+            Some(event_id),
             None,
             NotificationType::EventReminder.as_str(),
             NotificationChannel::Email.as_str(),
-            Some(&user.email),
+            None,
         )
         .await?;
 
-        // Send email
-        match self
-            .config
-            .email_service
-            .send_event_reminder(
-                &self.pool,
-                &user.email,
-                &event.title,
-                &event.start_time.to_rfc3339(),
-                &event.location.clone().unwrap_or_default(),
-                event.id,
-                &event.organizer_id.to_string(),
-            )
-            .await
-        {
-            Ok(result) => {
-                // Update status to sent
-                NotificationSentRepository::update_status(&self.pool, notification.id, "sent", None)
-                    .await?;
-                info!(
-                    user_id = %user_id,
-                    event_id = %event.id,
-                    reminder_minutes = reminder_minutes,
-                    "Reminder sent: {}", result
-                );
-                Ok(())
-            }
-            Err(e) => {
-                // Update status to failed
-                let error_msg = format!("{:?}", e);
-                NotificationSentRepository::mark_failed(&self.pool, notification.id, &error_msg)
-                    .await?;
-                Err(e)
-            }
-        }
+        // Mark as pending (email service to be configured later)
+        // TODO: Wire up email_service when SMTP is configured
+        info!(
+            user_id = %user_id,
+            event_id = %event_id,
+            notification_id = %notification.id,
+            "Reminder notification created (pending email service)"
+        );
+        Ok(())
     }
 
     /// Check if user is in quiet hours
