@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Bell, Trash2, AlertCircle, Loader } from 'lucide-react';
-import { apiClient } from '@/lib/api';
+import { calendarApi } from '@/lib/api';
 import { usePushNotifications } from '@/hooks/use-push-notifications';
 
 export interface PushSubscription {
@@ -57,7 +57,7 @@ export function PushSubscriptionManager({
       setLoading(true);
       setError(null);
 
-      const response = await apiClient.get(
+      const response = await calendarApi.get(
         'http://localhost:3011/api/v1/notifications/subscriptions/push'
       );
 
@@ -75,7 +75,7 @@ export function PushSubscriptionManager({
       setDeletingId(subscriptionId);
       setError(null);
 
-      await apiClient.delete(
+      await calendarApi.delete(
         `http://localhost:3011/api/v1/notifications/subscriptions/push/${subscriptionId}`
       );
 

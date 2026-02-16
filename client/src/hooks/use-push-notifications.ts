@@ -5,7 +5,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { ServiceWorkerManager } from '@/lib/service-worker-manager';
-import { apiClient } from '@/lib/api';
+import { calendarApi } from '@/lib/api';
 
 export interface PushNotificationState {
   isSupported: boolean;
@@ -56,7 +56,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
         // Get VAPID public key
         try {
-          const response = await apiClient.get(
+          const response = await calendarApi.get(
             'http://localhost:3011/api/v1/notifications/push/vapid-key'
           );
           const vapidKey = response.data.public_key;
@@ -110,7 +110,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
       // Get VAPID key
       if (!state.vapidKey) {
-        const response = await apiClient.get(
+        const response = await calendarApi.get(
           'http://localhost:3011/api/v1/notifications/push/vapid-key'
         );
         setState((prev) => ({ ...prev, vapidKey: response.data.public_key }));
@@ -122,7 +122,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       );
 
       // Register subscription with backend
-      await apiClient.post(
+      await calendarApi.post(
         'http://localhost:3011/api/v1/notifications/subscriptions/push',
         {
           subscription: subscription.toJSON(),
