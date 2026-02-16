@@ -77,6 +77,9 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
                     "DROP SCHEMA IF EXISTS scheduler CASCADE",
                     "DROP SCHEMA IF EXISTS documents CASCADE",
                     "DROP SCHEMA IF EXISTS monitoring CASCADE",
+                    "DROP TABLE IF EXISTS public.devices CASCADE",
+                    "DROP TABLE IF EXISTS public.calendar_events CASCADE",
+                    "DROP TABLE IF EXISTS public.calendar_tasks CASCADE",
                     "DROP TABLE IF EXISTS _sqlx_migrations CASCADE",
                 ];
 
