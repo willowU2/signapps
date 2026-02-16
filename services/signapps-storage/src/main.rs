@@ -16,8 +16,8 @@ mod handlers;
 mod storage;
 
 use handlers::{
-    buckets, external, favorites, files, health, mounts, preview, quotas, raid, search, shares,
-    stats, trash,
+    buckets, external, favorites, files, health, mounts, permissions, preview, quotas, raid,
+    search, shares, stats, trash,
 };
 use storage::StorageBackend;
 
@@ -245,6 +245,12 @@ fn create_router(state: AppState) -> Router {
             get(preview::get_thumbnail),
         );
 
+    // Permissions routes
+    let permissions_routes = Router::new()
+        .route("/permissions/:bucket/*key", get(permissions::get_permissions))
+        .route("/permissions/:bucket/*key", put(permissions::set_permissions))
+        .route("/permissions/:bucket/*key", delete(permissions::reset_permissions));
+
     // Mount management routes
     let mount_routes = Router::new()
         .route("/mounts", get(mounts::list_mounts))
@@ -273,6 +279,7 @@ fn create_router(state: AppState) -> Router {
         .merge(search_routes)
         .merge(quota_routes)
         .merge(preview_routes)
+        .merge(permissions_routes)
         .merge(mount_routes)
         .merge(external_routes)
         .merge(stats_routes)

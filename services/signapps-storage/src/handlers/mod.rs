@@ -7,6 +7,7 @@ pub mod favorites;
 pub mod files;
 pub mod health;
 pub mod mounts;
+pub mod permissions;
 pub mod preview;
 pub mod quotas;
 pub mod raid;

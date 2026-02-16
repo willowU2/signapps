@@ -537,6 +537,34 @@ export const storageApi = {
     storageApiClient.delete(`/files/${bucket}/${encodeURIComponent(key)}`),
   getInfo: (bucket: string, key: string) =>
     storageApiClient.get<FileInfo>(`/files/${bucket}/info/${encodeURIComponent(key)}`),
+
+  // Favorites endpoints
+  listFavorites: (bucket?: string, foldersOnly?: boolean, filesOnly?: boolean) =>
+    storageApiClient.get<{ favorites: FavoriteItem[]; total: number }>('/favorites', {
+      params: { bucket, folders_only: foldersOnly, files_only: filesOnly },
+    }),
+  addFavorite: (data: { bucket: string; key: string; is_folder: boolean; display_name?: string; color?: string }) =>
+    storageApiClient.post<FavoriteItem>('/favorites', data),
+  getFavorite: (id: string) =>
+    storageApiClient.get<FavoriteItem>(`/favorites/${id}`),
+  updateFavorite: (id: string, data: { display_name?: string; color?: string; sort_order?: number }) =>
+    storageApiClient.put<FavoriteItem>(`/favorites/${id}`, data),
+  removeFavorite: (id: string) =>
+    storageApiClient.delete(`/favorites/${id}`),
+  checkFavorite: (bucket: string, key: string) =>
+    storageApiClient.get<boolean>(`/favorites/check/${bucket}/${encodeURIComponent(key)}`),
+  removeFavoriteByPath: (bucket: string, key: string) =>
+    storageApiClient.delete(`/favorites/path/${bucket}/${encodeURIComponent(key)}`),
+  reorderFavorites: (order: string[]) =>
+    storageApiClient.post('/favorites/reorder', { order }),
+
+  // Permissions endpoints
+  getPermissions: (bucket: string, key: string) =>
+    storageApiClient.get<PermissionsResponse>(`/permissions/${bucket}/${encodeURIComponent(key)}`),
+  setPermissions: (bucket: string, key: string, data: { mode: number }) =>
+    storageApiClient.put<PermissionsResponse>(`/permissions/${bucket}/${encodeURIComponent(key)}`, data),
+  resetPermissions: (bucket: string, key: string) =>
+    storageApiClient.delete(`/permissions/${bucket}/${encodeURIComponent(key)}`),
 };
 
 export interface Bucket {
@@ -552,9 +580,40 @@ export interface FileInfo {
   is_directory?: boolean;
 }
 
+export interface FavoriteItem {
+  id: string;
+  bucket: string;
+  key: string;
+  is_folder: boolean;
+  display_name?: string;
+  color?: string;
+  added_at: string;
+  sort_order: number;
+  filename: string;
+  size?: number;
+  content_type?: string;
+  exists: boolean;
+}
+
+export interface PermissionsResponse {
+  bucket: string;
+  key: string;
+  mode: number;
+  mode_string: string;
+  owner_readable: boolean;
+  owner_writable: boolean;
+  owner_executable: boolean;
+  group_readable: boolean;
+  group_writable: boolean;
+  group_executable: boolean;
+  other_readable: boolean;
+  other_writable: boolean;
+  other_executable: boolean;
+}
+
 // AI API
 export const aiApi = {
-  chat: (question: string, options?: { model?: string; provider?: string; conversationId?: string; includesSources?: boolean; collection?: string; language?: string; systemPrompt?: string }) =>
+  chat: (question: string, options?: { model?: string; provider?: string; conversationId?: string; includesSources?: boolean; collection?: string; language?: string; systemPrompt?: string; enableTools?: boolean }) =>
     aiApiClient.post<ChatResponse>('/ai/chat', {
       question,
       model: options?.model,
@@ -564,8 +623,9 @@ export const aiApi = {
       collection: options?.collection,
       language: options?.language,
       system_prompt: options?.systemPrompt,
+      enable_tools: options?.enableTools ?? true,
     }),
-  chatStream: (question: string, options?: { model?: string; provider?: string; conversationId?: string; collection?: string; language?: string; systemPrompt?: string }) =>
+  chatStream: (question: string, options?: { model?: string; provider?: string; conversationId?: string; collection?: string; language?: string; systemPrompt?: string; enableTools?: boolean }) =>
     aiApiClient.post('/ai/chat/stream', {
       question,
       model: options?.model,
@@ -574,6 +634,7 @@ export const aiApi = {
       collection: options?.collection,
       language: options?.language,
       system_prompt: options?.systemPrompt,
+      enable_tools: options?.enableTools ?? true,
     }, {
       responseType: 'stream',
     }),
