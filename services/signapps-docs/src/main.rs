@@ -15,6 +15,7 @@ mod models;
 mod utils;
 
 use handlers::health::health_handler;
+use handlers::websocket::websocket_handler;
 use handlers::types::{text, sheet, slide, board};
 
 #[derive(Clone)]
@@ -46,6 +47,9 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         // Health check
         .route("/health", get(health_handler))
+
+        // WebSocket endpoint for real-time collaboration
+        .route("/api/v1/docs/:doc_type/:doc_id/ws", get(websocket_handler))
 
         // Document creation endpoints
         .route("/api/v1/docs/text", post(text::create_document))
