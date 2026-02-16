@@ -160,6 +160,7 @@ pub async fn send_push_notification(
 }
 
 /// Batch send push notifications to multiple subscriptions
+#[allow(dead_code)]
 pub async fn send_push_batch(
     subscriptions: Vec<PushSubscriptionPayload>,
     payload: &PushNotificationPayload,
