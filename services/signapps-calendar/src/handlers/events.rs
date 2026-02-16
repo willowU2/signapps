@@ -1,0 +1,195 @@
+//! Event CRUD handlers.
+
+use axum::{
+    extract::{Extension, Path, Query, State},
+    http::StatusCode,
+    Json,
+};
+use chrono::{DateTime, TimeZone, Utc};
+use serde::Deserialize;
+use signapps_common::Claims;
+use signapps_db::{
+    models::*,
+    EventRepository, EventAttendeeRepository,
+};
+use uuid::Uuid;
+
+use crate::{AppState, CalendarError};
+
+#[derive(Debug, Deserialize)]
+pub struct DateRangeQuery {
+    pub start: Option<DateTime<Utc>>,
+    pub end: Option<DateTime<Utc>>,
+}
+
+/// Create a new event.
+pub async fn create_event(
+    State(state): State<AppState>,
+    Path(calendar_id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<CreateEvent>,
+) -> Result<(StatusCode, Json<Event>), CalendarError> {
+    // Basic validation
+    if payload.end_time <= payload.start_time {
+        return Err(CalendarError::InvalidInput(
+            "end_time must be after start_time".to_string(),
+        ));
+    }
+
+    let repo = EventRepository::new(&state.pool);
+    let event = repo
+        .create(calendar_id, payload, claims.sub)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    Ok((StatusCode::CREATED, Json(event)))
+}
+
+/// Get events in a calendar within a date range.
+pub async fn list_events(
+    State(state): State<AppState>,
+    Path(calendar_id): Path<Uuid>,
+    Query(query): Query<DateRangeQuery>,
+) -> Result<Json<Vec<Event>>, CalendarError> {
+    use chrono::Datelike;
+
+    // Default to current month if not provided
+    let now = Utc::now();
+    let year = now.year();
+    let month = now.month();
+
+    let start = query.start.unwrap_or_else(|| {
+        now.with_day(1).unwrap_or_else(|| {
+            Utc.with_ymd_and_hms(year, month, 1, 0, 0, 0).unwrap()
+        })
+    });
+
+    let next_month = if month == 12 { 1 } else { month + 1 };
+    let next_year = if month == 12 { year + 1 } else { year };
+
+    let end = query.end.unwrap_or_else(|| {
+        Utc.with_ymd_and_hms(next_year, next_month, 1, 0, 0, 0).unwrap()
+    });
+
+    let repo = EventRepository::new(&state.pool);
+    let events = repo
+        .list_by_date_range(calendar_id, start, end)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    Ok(Json(events))
+}
+
+
+/// Get event by ID.
+pub async fn get_event(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Event>, CalendarError> {
+    let repo = EventRepository::new(&state.pool);
+    let event = repo
+        .find_by_id(id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?
+        .ok_or(CalendarError::NotFound)?;
+
+    Ok(Json(event))
+}
+
+/// Update an event.
+pub async fn update_event(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateEvent>,
+) -> Result<Json<Event>, CalendarError> {
+    // Validate dates if both provided
+    if let (Some(start), Some(end)) = (payload.start_time, payload.end_time) {
+        if end <= start {
+            return Err(CalendarError::InvalidInput(
+                "end_time must be after start_time".to_string(),
+            ));
+        }
+    }
+
+    let repo = EventRepository::new(&state.pool);
+    let event = repo
+        .update(id, payload)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    Ok(Json(event))
+}
+
+/// Delete an event (soft delete).
+pub async fn delete_event(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, CalendarError> {
+    let repo = EventRepository::new(&state.pool);
+    repo.delete(id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Add an attendee to an event.
+pub async fn add_attendee(
+    State(state): State<AppState>,
+    Path(event_id): Path<Uuid>,
+    Json(payload): Json<AddEventAttendee>,
+) -> Result<(StatusCode, Json<EventAttendee>), CalendarError> {
+    let repo = EventAttendeeRepository::new(&state.pool);
+    let attendee = repo
+        .add_attendee(event_id, payload)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    Ok((StatusCode::CREATED, Json(attendee)))
+}
+
+/// Get attendees for an event.
+pub async fn list_attendees(
+    State(state): State<AppState>,
+    Path(event_id): Path<Uuid>,
+) -> Result<Json<Vec<EventAttendee>>, CalendarError> {
+    let repo = EventAttendeeRepository::new(&state.pool);
+    let attendees = repo
+        .list_attendees(event_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    Ok(Json(attendees))
+}
+
+/// Update attendee RSVP status.
+pub async fn update_rsvp(
+    State(state): State<AppState>,
+    Path(attendee_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Result<StatusCode, CalendarError> {
+    let status = payload
+        .get("rsvp_status")
+        .and_then(|v| v.as_str())
+        .ok_or(CalendarError::InvalidInput("Missing rsvp_status".to_string()))?;
+
+    let repo = EventAttendeeRepository::new(&state.pool);
+    repo.update_rsvp(attendee_id, status)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    Ok(StatusCode::OK)
+}
+
+/// Remove an attendee from an event.
+pub async fn remove_attendee(
+    State(state): State<AppState>,
+    Path(attendee_id): Path<Uuid>,
+) -> Result<StatusCode, CalendarError> {
+    let repo = EventAttendeeRepository::new(&state.pool);
+    repo.remove_attendee(attendee_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    Ok(StatusCode::NO_CONTENT)
+}

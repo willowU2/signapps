@@ -8,6 +8,10 @@ pub mod pool;
 pub mod repositories;
 
 pub use pool::DatabasePool;
+pub use repositories::{
+    CalendarRepository, CalendarMemberRepository, EventRepository,
+    EventAttendeeRepository, TaskRepository, ResourceRepository,
+};
 
 use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
