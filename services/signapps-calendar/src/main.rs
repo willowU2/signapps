@@ -17,6 +17,8 @@ use tower_http::trace::TraceLayer;
 use tracing::info;
 use yrs::Doc;
 
+use crate::services::presence::PresenceManager;
+
 mod error;
 pub use error::CalendarError;
 
@@ -32,6 +34,8 @@ pub struct AppState {
     pub calendar_docs: Arc<DashMap<String, Arc<Doc>>>,
     /// Broadcast channels for calendar updates
     pub calendar_broadcasts: Arc<DashMap<String, broadcast::Sender<Vec<u8>>>>,
+    /// Presence tracking for active users
+    pub presence_manager: Arc<PresenceManager>,
 }
 
 impl AuthState for AppState {
@@ -80,9 +84,11 @@ async fn main() -> anyhow::Result<()> {
         jwt_config,
         calendar_docs: Arc::new(DashMap::new()),
         calendar_broadcasts: Arc::new(DashMap::new()),
+        presence_manager: Arc::new(PresenceManager::new()),
     };
 
     info!("Real-time collaboration system initialized");
+    info!("Presence tracking system initialized");
 
     // Build router
     let app = build_router(state);

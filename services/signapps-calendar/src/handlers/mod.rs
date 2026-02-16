@@ -9,6 +9,7 @@ pub mod resources;
 pub mod shares;
 pub mod icalendar;
 pub mod websocket;
+pub mod ws_messages;
 
 pub use calendars::*;
 pub use events::*;
@@ -19,3 +20,4 @@ pub use resources::*;
 pub use shares::*;
 pub use icalendar::*;
 pub use websocket::*;
+pub use ws_messages::*;

@@ -1,5 +1,6 @@
 //! Real-time calendar collaboration via WebSocket
 //! Implements Yrs CRDT-based document sync for multi-user editing
+//! Includes presence tracking for active users
 
 use axum::{
     extract::{ws::{WebSocket, WebSocketUpgrade, Message}, Path, State},
@@ -7,12 +8,14 @@ use axum::{
 };
 use futures::{stream::StreamExt, SinkExt};
 use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::broadcast;
 use tracing::{debug, error, info};
 use uuid::Uuid;
 use yrs::Doc;
 
 use crate::AppState;
+use crate::handlers::ws_messages::{PresenceMessage, PresenceAction};
 
 /// Calendar document session metadata
 #[derive(Debug, Clone)]
@@ -46,6 +49,7 @@ async fn handle_socket(
 
     // For now, use Uuid::nil as system user (should be from JWT auth in production)
     let user_id = Uuid::nil();
+    let username = "System".to_string(); // Should come from JWT claims
 
     info!(
         session_id = %session_id,
@@ -53,6 +57,22 @@ async fn handle_socket(
         user_id = %user_id,
         "New calendar WebSocket connection"
     );
+
+    // Get presence manager for this calendar
+    let presence_manager = state.presence_manager.get_calendar_presence(calendar_id);
+
+    // Register user join
+    let _user_presence = presence_manager.on_user_join(user_id, username.clone(), session_id);
+
+    // Send presence update to all clients
+    let join_msg = PresenceMessage {
+        user_id,
+        username: username.clone(),
+        action: PresenceAction::Join,
+        editing_item_id: None,
+        timestamp: timestamp_now(),
+    };
+    let presence_json = serde_json::to_vec(&join_msg).unwrap_or_default();
 
     // Get or create Yrs document for this calendar
     let cache_key = format!("calendar::{}", calendar_id);
@@ -76,6 +96,9 @@ async fn handle_socket(
         tx
     };
 
+    // Broadcast join message
+    let _ = tx.send(presence_json);
+
     // Split WebSocket into sender and receiver
     let (mut sender, mut receiver) = socket.split();
 
@@ -97,6 +120,7 @@ async fn handle_socket(
     let mut client_rx = tx.subscribe();
     let calendar_id_log = calendar_id;
     let session_id_log = session_id;
+    let tx_cleanup = tx.clone(); // Clone for cleanup code after tasks complete
 
     let mut receive_task = tokio::spawn(async move {
         while let Some(msg_result) = receiver.next().await {
@@ -200,6 +224,36 @@ async fn handle_socket(
         calendar_id = %calendar_id,
         "WebSocket connection closed"
     );
+
+    // Unregister user on disconnect
+    presence_manager.on_user_leave(user_id);
+
+    // Send leave message
+    let leave_msg = PresenceMessage {
+        user_id,
+        username,
+        action: PresenceAction::Leave,
+        editing_item_id: None,
+        timestamp: timestamp_now(),
+    };
+    if let Ok(leave_json) = serde_json::to_vec(&leave_msg) {
+        let _ = tx_cleanup.send(leave_json);
+    }
+
+    info!(
+        session_id = %session_id,
+        calendar_id = %calendar_id,
+        active_users = presence_manager.active_user_count(),
+        "User left, broadcasting disconnect"
+    );
+}
+
+/// Get Unix timestamp in seconds
+fn timestamp_now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -219,5 +273,12 @@ mod tests {
         let key = format!("calendar::{}", calendar_id);
         assert!(key.starts_with("calendar::"));
         assert!(key.contains("550e8400"));
+    }
+
+    #[test]
+    fn test_timestamp_now() {
+        let ts1 = timestamp_now();
+        let ts2 = timestamp_now();
+        assert!(ts2 >= ts1);
     }
 }
