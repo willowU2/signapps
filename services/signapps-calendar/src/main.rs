@@ -81,7 +81,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use handlers::{calendars, events, recurrence, timezones};
+    use handlers::{calendars, events, recurrence, timezones, tasks};
     use axum::routing::{delete, post, put};
 
     Router::new()
@@ -116,6 +116,17 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/timezones", get(timezones::list_timezones))
         .route("/api/v1/timezones/validate", post(timezones::validate_timezone))
         .route("/api/v1/timezones/convert", post(timezones::convert_timezone))
+        // Task routes
+        .route("/api/v1/calendars/:calendar_id/tasks", post(tasks::create_task))
+        .route("/api/v1/calendars/:calendar_id/tasks", get(tasks::list_root_tasks))
+        .route("/api/v1/tasks/:id", get(tasks::get_task))
+        .route("/api/v1/tasks/:id", put(tasks::update_task))
+        .route("/api/v1/tasks/:id/move", put(tasks::move_task))
+        .route("/api/v1/tasks/:id/complete", post(tasks::complete_task))
+        .route("/api/v1/tasks/:id", delete(tasks::delete_task))
+        .route("/api/v1/tasks/:task_id/children", get(tasks::list_children))
+        .route("/api/v1/calendars/:calendar_id/tasks/tree", get(tasks::get_task_tree))
+        .route("/api/v1/calendars/:calendar_id/tasks/info", get(tasks::get_task_tree_info))
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))  // 100MB
         .layer(TraceLayer::new_for_http())
         .with_state(state)
