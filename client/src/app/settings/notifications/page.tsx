@@ -15,10 +15,13 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Mail, MessageSquare, Bell, Clock, Save, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Mail, MessageSquare, Bell, Clock, Save, Loader2, CheckCircle2, AlertCircle, History, Settings } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '@/hooks/use-auth';
 import { PushSubscriptionManager } from '@/components/notifications/push-subscription-manager';
+import { NotificationPreferencesForm } from '@/components/notifications/notification-preferences-form';
+import { NotificationHistory } from '@/components/notifications/notification-history';
+import { SendNotificationAdmin } from '@/components/notifications/send-notification-admin';
 
 interface NotificationPreferences {
   id: string;
@@ -189,7 +192,7 @@ export default function NotificationSettingsPage() {
       )}
 
       <Tabs defaultValue="email" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="email" className="flex gap-2">
             <Mail className="h-4 w-4" />
             <span className="hidden sm:inline">Email</span>
@@ -197,6 +200,14 @@ export default function NotificationSettingsPage() {
           <TabsTrigger value="push" className="flex gap-2">
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">Push</span>
+          </TabsTrigger>
+          <TabsTrigger value="preferences" className="flex gap-2">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Preferences</span>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex gap-2">
+            <History className="h-4 w-4" />
+            <span className="hidden sm:inline">History</span>
           </TabsTrigger>
           <TabsTrigger value="quiet" className="flex gap-2">
             <Clock className="h-4 w-4" />
@@ -331,6 +342,23 @@ export default function NotificationSettingsPage() {
           {/* Push Subscription Manager */}
           <div className="mt-6">
             <PushSubscriptionManager />
+          </div>
+        </TabsContent>
+
+        {/* PREFERENCES TAB */}
+        <TabsContent value="preferences" className="space-y-6">
+          <NotificationPreferencesForm />
+        </TabsContent>
+
+        {/* HISTORY TAB */}
+        <TabsContent value="history" className="space-y-6">
+          <div className="space-y-4">
+            <NotificationHistory limit={100} />
+          </div>
+
+          {/* Admin Test Tool */}
+          <div className="mt-8">
+            <SendNotificationAdmin />
           </div>
         </TabsContent>
 

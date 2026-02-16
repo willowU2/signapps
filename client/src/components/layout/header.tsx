@@ -15,6 +15,7 @@ import { Moon, Sun, Menu, LogOut, User, Settings, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
+import { NotificationBadge } from '@/components/notifications/notification-badge';
 
 export function Header() {
   const { user, logout } = useAuthStore();
@@ -97,6 +98,9 @@ export function Header() {
 
         {/* Notifications */}
         <NotificationPopover />
+
+        {/* Notification Badge */}
+        <NotificationBadge className="cursor-pointer" />
 
         {/* Theme Toggle */}
         <Button

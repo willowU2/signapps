@@ -1,0 +1,243 @@
+/**
+ * Notification Preferences Form
+ * Allows users to configure notification settings
+ */
+
+'use client';
+
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import useNotificationPreferences from '@/hooks/use-notification-preferences';
+
+/**
+ * Form component for notification preferences
+ */
+export function NotificationPreferencesForm() {
+  const {
+    email_enabled,
+    push_enabled,
+    sms_enabled,
+    event_reminders,
+    task_reminders,
+    attendee_responses,
+    calendar_invites,
+    loading,
+    error,
+    updatePreferences,
+    resetToDefaults,
+  } = useNotificationPreferences();
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleToggle = async (field: string, value: boolean) => {
+    try {
+      setIsSaving(true);
+      setSaved(false);
+
+      await updatePreferences({
+        [field]: value,
+      } as any);
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error('Failed to update preference:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleResetDefaults = async () => {
+    try {
+      setIsSaving(true);
+      await resetToDefaults();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error('Failed to reset defaults:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Notification Preferences</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <Loader className="h-5 w-5 animate-spin text-gray-400" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Notification Preferences</CardTitle>
+        <CardDescription>
+          Configure how and when you receive notifications
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {error && (
+          <div className="flex items-start gap-2 rounded-md bg-red-50 p-3">
+            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
+        {saved && (
+          <div className="flex items-start gap-2 rounded-md bg-green-50 p-3">
+            <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-green-700">Preferences saved successfully</p>
+          </div>
+        )}
+
+        {/* Notification Channels */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-gray-900">
+            Notification Channels
+          </h3>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-2">
+              <label htmlFor="email-enabled" className="text-sm text-gray-700">
+                📧 Email Notifications
+              </label>
+              <Switch
+                id="email-enabled"
+                checked={email_enabled}
+                onCheckedChange={(checked) =>
+                  handleToggle('email_enabled', checked)
+                }
+                disabled={isSaving}
+              />
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <label htmlFor="push-enabled" className="text-sm text-gray-700">
+                🔔 Browser Push Notifications
+              </label>
+              <Switch
+                id="push-enabled"
+                checked={push_enabled}
+                onCheckedChange={(checked) =>
+                  handleToggle('push_enabled', checked)
+                }
+                disabled={isSaving}
+              />
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <label htmlFor="sms-enabled" className="text-sm text-gray-700">
+                📱 SMS Notifications
+              </label>
+              <Switch
+                id="sms-enabled"
+                checked={sms_enabled}
+                onCheckedChange={(checked) =>
+                  handleToggle('sms_enabled', checked)
+                }
+                disabled={isSaving}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Notification Types */}
+        <div className="space-y-4 border-t pt-4">
+          <h3 className="text-sm font-semibold text-gray-900">
+            Notification Types
+          </h3>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-2">
+              <label htmlFor="event-reminders" className="text-sm text-gray-700">
+                📅 Event Reminders
+              </label>
+              <Switch
+                id="event-reminders"
+                checked={event_reminders}
+                onCheckedChange={(checked) =>
+                  handleToggle('event_reminders', checked)
+                }
+                disabled={isSaving}
+              />
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <label htmlFor="task-reminders" className="text-sm text-gray-700">
+                ✓ Task Reminders
+              </label>
+              <Switch
+                id="task-reminders"
+                checked={task_reminders}
+                onCheckedChange={(checked) =>
+                  handleToggle('task_reminders', checked)
+                }
+                disabled={isSaving}
+              />
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <label htmlFor="attendee-responses" className="text-sm text-gray-700">
+                👥 Attendee Responses
+              </label>
+              <Switch
+                id="attendee-responses"
+                checked={attendee_responses}
+                onCheckedChange={(checked) =>
+                  handleToggle('attendee_responses', checked)
+                }
+                disabled={isSaving}
+              />
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <label htmlFor="calendar-invites" className="text-sm text-gray-700">
+                ✉️ Calendar Invites
+              </label>
+              <Switch
+                id="calendar-invites"
+                checked={calendar_invites}
+                onCheckedChange={(checked) =>
+                  handleToggle('calendar_invites', checked)
+                }
+                disabled={isSaving}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 border-t pt-4">
+          <Button
+            variant="outline"
+            onClick={handleResetDefaults}
+            disabled={isSaving}
+          >
+            Reset to Defaults
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default NotificationPreferencesForm;

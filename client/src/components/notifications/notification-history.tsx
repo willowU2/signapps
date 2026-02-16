@@ -5,27 +5,16 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Mail, MessageSquare, Bell, RotateCw, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, MessageSquare, Bell, RotateCcw, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
-
-interface Notification {
-  id: string;
-  notification_type: string;
-  channel: string;
-  status: string;
-  recipient_address: string | null;
-  created_at: string;
-  sent_at: string | null;
-}
+import useNotificationHistory, { Notification as HistoryNotification } from '@/hooks/use-notification-history';
 
 interface NotificationHistoryProps {
   limit?: number;
@@ -33,7 +22,7 @@ interface NotificationHistoryProps {
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
-  sent: 'bg-blue-100 text-blue-800',
+  sent: 'bg-green-100 text-green-800',
   delivered: 'bg-green-100 text-green-800',
   failed: 'bg-red-100 text-red-800',
   bounced: 'bg-red-100 text-red-800',
@@ -45,45 +34,19 @@ const channelIcons: Record<string, any> = {
   push: <Bell className="h-4 w-4" />,
 };
 
-export function NotificationHistory({ limit = 20 }: NotificationHistoryProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
+  const { notifications, loading, error, refetch, resendNotification } =
+    useNotificationHistory(limit);
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [resendingId, setResendingId] = useState<string | null>(null);
 
-  // Load notifications
-  useEffect(() => {
-    loadNotifications();
-  }, []);
-
-  const loadNotifications = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/v1/notifications/history', {
-        params: {
-          limit,
-        },
-      });
-      setNotifications(response.data.notifications);
-      setError(null);
-    } catch (err) {
-      setError('Failed to load notification history');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleResend = async (id: string) => {
     try {
       setResendingId(id);
-      await axios.post(`/api/v1/notifications/${id}/resend`);
-      await loadNotifications();
+      await resendNotification(id);
     } catch (err) {
-      setError('Failed to resend notification');
-      console.error(err);
+      console.error('Failed to resend notification:', err);
     } finally {
       setResendingId(null);
     }
@@ -92,10 +55,10 @@ export function NotificationHistory({ limit = 20 }: NotificationHistoryProps) {
   // Filter notifications
   let filtered = notifications;
   if (filterType !== 'all') {
-    filtered = filtered.filter((n) => n.notification_type === filterType);
+    filtered = filtered.filter((n) => n.channel === filterType);
   }
   if (filterStatus !== 'all') {
-    filtered = filtered.filter((n) => n.status === filterStatus);
+    filtered = filtered.filter((n) => n.delivery_status === filterStatus);
   }
 
   if (loading) {
@@ -128,17 +91,17 @@ export function NotificationHistory({ limit = 20 }: NotificationHistoryProps) {
         {/* FILTERS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Type</label>
+            <label className="text-sm font-medium">Channel</label>
             <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger>
-                <SelectValue placeholder="Filter by type" />
+                <SelectValue placeholder="Filter by channel" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="all">All Channels</SelectItem>
                 <SelectItem value="event_reminder">Event Reminder</SelectItem>
-                <SelectItem value="event_invitation">Event Invitation</SelectItem>
-                <SelectItem value="task_assigned">Task Assigned</SelectItem>
-                <SelectItem value="daily_digest">Daily Digest</SelectItem>
+                <SelectItem value="task_due">Task Due</SelectItem>
+                <SelectItem value="attendee_response">Attendee Response</SelectItem>
+                <SelectItem value="calendar_invite">Calendar Invite</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -161,12 +124,12 @@ export function NotificationHistory({ limit = 20 }: NotificationHistoryProps) {
 
           <div className="flex items-end">
             <Button
-              onClick={loadNotifications}
+              onClick={() => refetch()}
               variant="outline"
               size="sm"
               className="w-full"
             >
-              <RotateCw className="h-4 w-4 mr-2" />
+              <RotateCcw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
           </div>
@@ -179,15 +142,15 @@ export function NotificationHistory({ limit = 20 }: NotificationHistoryProps) {
             <div className="text-muted-foreground text-xs">Total</div>
           </div>
           <div className="p-3 bg-muted rounded">
-            <div className="font-semibold">{notifications.filter((n) => n.status === 'sent').length}</div>
+            <div className="font-semibold">{notifications.filter((n) => n.delivery_status === 'sent').length}</div>
             <div className="text-muted-foreground text-xs">Sent</div>
           </div>
           <div className="p-3 bg-muted rounded">
-            <div className="font-semibold">{notifications.filter((n) => n.status === 'pending').length}</div>
+            <div className="font-semibold">{notifications.filter((n) => n.delivery_status === 'pending').length}</div>
             <div className="text-muted-foreground text-xs">Pending</div>
           </div>
           <div className="p-3 bg-muted rounded">
-            <div className="font-semibold">{notifications.filter((n) => n.status === 'failed').length}</div>
+            <div className="font-semibold">{notifications.filter((n) => n.delivery_status === 'failed').length}</div>
             <div className="text-muted-foreground text-xs">Failed</div>
           </div>
         </div>
@@ -195,17 +158,17 @@ export function NotificationHistory({ limit = 20 }: NotificationHistoryProps) {
         {/* TABLE */}
         {filtered.length === 0 ? (
           <div className="text-center py-10 text-muted-foreground">
-            {notifications.length === 0 ? 'No notifications sent yet' : 'No notifications match filters'}
+            {notifications.length === 0 ? 'No notifications yet' : 'No notifications match filters'}
           </div>
         ) : (
           <div className="border rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type</TableHead>
                   <TableHead>Channel</TableHead>
+                  <TableHead>Message</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Recipient</TableHead>
                   <TableHead>Time</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
@@ -213,28 +176,28 @@ export function NotificationHistory({ limit = 20 }: NotificationHistoryProps) {
               <TableBody>
                 {filtered.map((notification) => (
                   <TableRow key={notification.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium text-sm">
-                      {notification.notification_type.replace(/_/g, ' ')}
-                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {channelIcons[notification.channel]}
+                        {channelIcons[notification.type] || <Bell className="h-4 w-4" />}
                         <span className="text-sm">{notification.channel}</span>
                       </div>
                     </TableCell>
+                    <TableCell className="text-sm font-medium max-w-xs truncate">
+                      {notification.title || '-'}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {notification.type}
+                    </TableCell>
                     <TableCell>
-                      <Badge className={statusColors[notification.status]}>
-                        {notification.status}
+                      <Badge className={statusColors[notification.delivery_status || 'sent']}>
+                        {notification.delivery_status || 'sent'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {notification.recipient_address || '-'}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(notification.sent_at), { addSuffix: true })}
                     </TableCell>
                     <TableCell className="text-right">
-                      {notification.status === 'failed' && (
+                      {notification.delivery_status === 'failed' && (
                         <Button
                           onClick={() => handleResend(notification.id)}
                           disabled={resendingId === notification.id}
@@ -244,7 +207,7 @@ export function NotificationHistory({ limit = 20 }: NotificationHistoryProps) {
                           {resendingId === notification.id ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
                           ) : (
-                            <RotateCw className="h-3 w-3" />
+                            <RotateCcw className="h-3 w-3" />
                           )}
                         </Button>
                       )}
