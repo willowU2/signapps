@@ -18,6 +18,7 @@ use tracing::info;
 use yrs::Doc;
 
 use crate::services::presence::PresenceManager;
+use crate::services::{NotificationScheduler, SchedulerConfig};
 
 mod error;
 pub use error::CalendarError;
@@ -89,6 +90,16 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Real-time collaboration system initialized");
     info!("Presence tracking system initialized");
+
+    // Initialize and spawn notification scheduler
+    let scheduler_config = SchedulerConfig::new();
+    let scheduler = NotificationScheduler::new(state.pool.clone(), scheduler_config);
+
+    // Spawn scheduler in background
+    tokio::spawn(async move {
+        info!("Notification scheduler started");
+        scheduler.run().await;
+    });
 
     // Build router
     let app = build_router(state);
