@@ -7,11 +7,15 @@ use axum::{
     routing::get,
     Router,
 };
+use dashmap::DashMap;
 use signapps_common::middleware::AuthState;
 use signapps_common::JwtConfig;
 use signapps_db::{create_pool, run_migrations, DatabasePool};
+use std::sync::Arc;
+use tokio::sync::broadcast;
 use tower_http::trace::TraceLayer;
 use tracing::info;
+use yrs::Doc;
 
 mod error;
 pub use error::CalendarError;
@@ -24,6 +28,10 @@ mod services;
 pub struct AppState {
     pub pool: DatabasePool,
     pub jwt_config: JwtConfig,
+    /// In-memory Yrs documents for real-time collaboration
+    pub calendar_docs: Arc<DashMap<String, Arc<Doc>>>,
+    /// Broadcast channels for calendar updates
+    pub calendar_broadcasts: Arc<DashMap<String, broadcast::Sender<Vec<u8>>>>,
 }
 
 impl AuthState for AppState {
@@ -67,7 +75,14 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // Create application state
-    let state = AppState { pool, jwt_config };
+    let state = AppState {
+        pool,
+        jwt_config,
+        calendar_docs: Arc::new(DashMap::new()),
+        calendar_broadcasts: Arc::new(DashMap::new()),
+    };
+
+    info!("Real-time collaboration system initialized");
 
     // Build router
     let app = build_router(state);
@@ -81,7 +96,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use handlers::{calendars, events, recurrence, timezones, tasks, resources, shares, icalendar};
+    use handlers::{calendars, events, recurrence, timezones, tasks, resources, shares, icalendar, websocket};
     use axum::routing::{delete, post, put};
 
     Router::new()
@@ -147,6 +162,8 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/calendars/:calendar_id/feed.ics", get(icalendar::get_calendar_feed))
         .route("/api/v1/calendars/:calendar_id/import", post(icalendar::import_calendar))
         .route("/api/v1/icalendar/validate", post(icalendar::validate_icalendar))
+        // Real-time collaboration WebSocket routes
+        .route("/api/v1/calendars/:calendar_id/ws", get(websocket::websocket_handler))
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))  // 100MB
         .layer(TraceLayer::new_for_http())
         .with_state(state)
