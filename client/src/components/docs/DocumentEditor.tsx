@@ -1,0 +1,46 @@
+'use client';
+
+import { Suspense } from 'react';
+import { TextEditor } from './TextEditor';
+import { SheetEditor } from './SheetEditor';
+import { SlideEditor } from './SlideEditor';
+import { BoardEditor } from './BoardEditor';
+
+interface DocumentEditorProps {
+    docId: string;
+    docType: 'text' | 'sheet' | 'slide' | 'board';
+    docName?: string;
+}
+
+export function DocumentEditor({ docId, docType, docName }: DocumentEditorProps) {
+    return (
+        <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="border-b border-gray-200 p-4 bg-white">
+                <h2 className="text-lg font-semibold text-gray-900">{docName || 'Untitled'}</h2>
+                <p className="text-sm text-gray-600">Type: {docType}</p>
+            </div>
+
+            {/* Editor Content */}
+            <div className="flex-1 overflow-auto">
+                <Suspense fallback={<LoadingFallback />}>
+                    {docType === 'text' && <TextEditor docId={docId} />}
+                    {docType === 'sheet' && <SheetEditor docId={docId} />}
+                    {docType === 'slide' && <SlideEditor docId={docId} />}
+                    {docType === 'board' && <BoardEditor docId={docId} />}
+                </Suspense>
+            </div>
+        </div>
+    );
+}
+
+function LoadingFallback() {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+                <div className="animate-spin text-2xl">⏳</div>
+                <p className="text-gray-500 mt-2">Loading editor...</p>
+            </div>
+        </div>
+    );
+}

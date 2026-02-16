@@ -52,6 +52,9 @@
     "@tiptap/extension-collaboration-cursor": "^2.1.8",
     "@tiptap/starter-kit": "^2.1.8",
     "@tiptap/extension-placeholder": "^2.1.8",
+    "fortune-sheet": "^1.1.2",
+    "reveal.js": "^4.5.0",
+    "react-beautiful-dnd": "^13.1.1",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
