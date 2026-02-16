@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
-import useNotificationPreferences from '@/hooks/use-notification-preferences';
+import useNotificationPreferences, { NotificationPreferences } from '@/hooks/use-notification-preferences';
 
 /**
  * Form component for notification preferences
@@ -44,9 +44,8 @@ export function NotificationPreferencesForm() {
       setIsSaving(true);
       setSaved(false);
 
-      await updatePreferences({
-        [field]: value,
-      } as any);
+      const updates: Record<string, unknown> = { [field]: value };
+      await updatePreferences(updates as Partial<NotificationPreferences>);
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
