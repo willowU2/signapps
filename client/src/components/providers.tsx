@@ -34,10 +34,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<LoadingFallback />}>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <NotificationPermissionDialog />
+        </AuthProvider>
       </Suspense>
       <CommandPalette />
-      <NotificationPermissionDialog />
       <Toaster />
     </QueryClientProvider>
   );

@@ -5,6 +5,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { calendarApi } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
+
+function hasAccessToken(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!localStorage.getItem('access_token');
+}
 
 export interface UseUnreadCountReturn {
   unreadCount: number;
@@ -16,16 +22,19 @@ export interface UseUnreadCountReturn {
 
 /**
  * Hook to fetch unread notification count with polling
+ * Only polls when user is authenticated
  * @param initialInterval - Polling interval in milliseconds (default: 30000ms = 30s)
  */
 export function useUnreadCount(initialInterval: number = 30000): UseUnreadCountReturn {
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pollingInterval, setPollingInterval] = useState(initialInterval);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   // Fetch unread count
   const fetchUnreadCount = useCallback(async () => {
+    if (!isAuthenticated || !hasAccessToken()) return;
     try {
       setError(null);
 
@@ -39,23 +48,29 @@ export function useUnreadCount(initialInterval: number = 30000): UseUnreadCountR
       setError('Failed to load unread count');
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
-  // Fetch on mount
+  // Fetch on mount (only if authenticated)
   useEffect(() => {
-    fetchUnreadCount();
-  }, [fetchUnreadCount]);
+    if (isAuthenticated && hasAccessToken()) {
+      setLoading(true);
+      fetchUnreadCount();
+    } else {
+      setUnreadCount(0);
+      setLoading(false);
+    }
+  }, [isAuthenticated, fetchUnreadCount]);
 
-  // Set up polling
+  // Set up polling (only if authenticated)
   useEffect(() => {
-    if (pollingInterval <= 0) return;
+    if (pollingInterval <= 0 || !isAuthenticated) return;
 
     const interval = setInterval(() => {
       fetchUnreadCount();
     }, pollingInterval);
 
     return () => clearInterval(interval);
-  }, [pollingInterval, fetchUnreadCount]);
+  }, [pollingInterval, isAuthenticated, fetchUnreadCount]);
 
   return {
     unreadCount,
