@@ -13,6 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { storageApi } from '@/lib/api';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface UploadFile {
   id: string;
@@ -28,6 +29,8 @@ interface DropZoneProps {
   onUploadComplete?: () => void;
   acceptedTypes?: string;
   maxFileSize?: number; // in bytes
+  children?: React.ReactNode;
+  className?: string;
 }
 
 /**
@@ -47,6 +50,8 @@ export function DropZone({
   onUploadComplete,
   acceptedTypes = '*',
   maxFileSize = 10 * 1024 * 1024, // 10 MB default
+  children,
+  className,
 }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploads, setUploads] = useState<UploadFile[]>([]);
@@ -71,7 +76,7 @@ export function DropZone({
         await uploadFile(upload);
       }
     },
-    [bucket]
+    [bucket, prefix]
   );
 
   const uploadFile = async (upload: UploadFile) => {
@@ -81,10 +86,10 @@ export function DropZone({
         prev.map((u) =>
           u.id === upload.id
             ? {
-                ...u,
-                status: 'error',
-                error: `File size exceeds ${Math.round(maxFileSize / 1024 / 1024)} MB limit`,
-              }
+              ...u,
+              status: 'error',
+              error: `File size exceeds ${Math.round(maxFileSize / 1024 / 1024)} MB limit`,
+            }
             : u
         )
       );
@@ -140,10 +145,10 @@ export function DropZone({
             prev.map((u) =>
               u.id === upload.id
                 ? {
-                    ...u,
-                    status: 'error',
-                    error: `Upload failed (${xhr.status})`,
-                  }
+                  ...u,
+                  status: 'error',
+                  error: `Upload failed (${xhr.status})`,
+                }
                 : u
             )
           );
@@ -174,13 +179,14 @@ export function DropZone({
         }
       });
 
-      // Set auth header
+      xhr.open('POST', `${process.env.NEXT_PUBLIC_STORAGE_URL || 'http://localhost:3004/api/v1'}/files/${bucket}`);
+
+      // Set auth header (must be after xhr.open)
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       if (token) {
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       }
 
-      xhr.open('POST', `${process.env.NEXT_PUBLIC_STORAGE_URL || 'http://localhost:3004/api/v1'}/files/${bucket}`);
       xhr.send(formData);
 
       abortControllersRef.current.delete(upload.id);
@@ -189,10 +195,10 @@ export function DropZone({
         prev.map((u) =>
           u.id === upload.id
             ? {
-                ...u,
-                status: 'error',
-                error: error instanceof Error ? error.message : 'Unknown error',
-              }
+              ...u,
+              status: 'error',
+              error: error instanceof Error ? error.message : 'Unknown error',
+            }
             : u
         )
       );
@@ -259,133 +265,151 @@ export function DropZone({
   const errorCount = uploads.filter((u) => u.status === 'error').length;
 
   return (
-    <div className="space-y-4">
-      {/* Drop Zone */}
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`
-          relative border-2 border-dashed rounded-lg p-8 transition-all text-center
-          ${isDragging
-            ? 'border-primary bg-primary/5'
-            : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-          }
-        `}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          onChange={handleFileSelect}
-          accept={acceptedTypes}
-          className="hidden"
-          disabled={hasActiveUploads}
-        />
+    <div
+      className={cn("relative", className)}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Content */}
+      {children}
 
-        <div className="space-y-2">
-          <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-          <div>
-            <p className="font-medium">
-              {isDragging
-                ? 'Déposez vos fichiers ici'
-                : 'Glissez-déposez vos fichiers ici'}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              ou
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
+      {/* Drop Overlay or Default UI */}
+      {(isDragging || !children) && (
+        <div
+          className={cn(
+            "flex flex-col items-center justify-center p-8 text-center transition-all",
+            children
+              ? "absolute inset-0 bg-background/80 z-50 border-2 border-dashed border-primary rounded-lg backdrop-blur-sm"
+              : `border-2 border-dashed rounded-lg ${isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}`
+          )}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            accept={acceptedTypes}
+            className="hidden"
             disabled={hasActiveUploads}
-          >
-            Sélectionner les fichiers
-          </Button>
-          <p className="text-xs text-muted-foreground">
-            Taille max: {Math.round(maxFileSize / 1024 / 1024)} MB
-          </p>
-        </div>
-      </div>
+          />
 
-      {/* Upload Progress List */}
-      {uploads.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">
-                Téléchargements{' '}
-                {successCount > 0 && (
-                  <span className="text-green-600">({successCount})</span>
-                )}
-                {errorCount > 0 && (
-                  <span className="text-red-600">({errorCount})</span>
-                )}
-              </CardTitle>
-              {hasCompletedUploads && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearCompleted}
-                >
-                  Effacer complétés
-                </Button>
+          <div className="space-y-2 pointer-events-none">
+            <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+            <div>
+              <p className="font-medium">
+                {isDragging
+                  ? 'Drop files here'
+                  : 'Drag & drop files here'}
+              </p>
+              {!isDragging && (
+                <p className="text-sm text-muted-foreground">
+                  or click to select
+                </p>
               )}
             </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {uploads.map((upload) => (
-              <div
-                key={upload.id}
-                className="space-y-2 p-3 rounded-lg border border-muted"
+            {!isDragging && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  // Prevent event propagation if clicking through overlay?
+                  // Use pointer-events-auto for button
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+                className="pointer-events-auto"
+                disabled={hasActiveUploads}
               >
-                {/* File header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {upload.file.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {(upload.file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {upload.status === 'uploading' && (
-                      <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
-                    )}
-                    {upload.status === 'success' && (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    )}
-                    {upload.status === 'error' && (
-                      <AlertCircle className="h-4 w-4 text-red-500" />
-                    )}
-                    {['pending', 'uploading'].includes(upload.status) && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => cancelUpload(upload.id)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
+                Select Files
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Max size: {Math.round(maxFileSize / 1024 / 1024)} MB
+            </p>
+          </div>
+        </div>
+      )}
 
-                {/* Progress bar */}
-                {['pending', 'uploading'].includes(upload.status) && (
-                  <Progress value={upload.progress} className="h-1" />
-                )}
-
-                {/* Error message */}
-                {upload.status === 'error' && upload.error && (
-                  <p className="text-xs text-red-600">{upload.error}</p>
+      {/* Upload Progress Overlay/Card */}
+      {uploads.length > 0 && (
+        <div className={cn(
+          children ? "fixed bottom-6 right-6 w-96 z-50 shadow-lg" : "mt-4"
+        )}>
+          <Card>
+            <CardHeader className="pb-3 py-3 px-4 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium">
+                  Uploads{' '}
+                  {successCount > 0 && (
+                    <span className="text-green-600">({successCount})</span>
+                  )}
+                  {errorCount > 0 && (
+                    <span className="text-red-600">({errorCount})</span>
+                  )}
+                </CardTitle>
+                {hasCompletedUploads && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs"
+                    onClick={clearCompleted}
+                  >
+                    Clear done
+                  </Button>
                 )}
               </div>
-            ))}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="space-y-2 p-3 max-h-64 overflow-y-auto">
+              {uploads.map((upload) => (
+                <div
+                  key={upload.id}
+                  className="space-y-1.5 p-2 rounded-md border border-muted bg-background"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate" title={upload.file.name}>
+                        {upload.file.name}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {(upload.file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {upload.status === 'uploading' && (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
+                      )}
+                      {upload.status === 'success' && (
+                        <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                      )}
+                      {upload.status === 'error' && (
+                        <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                      )}
+                      {['pending', 'uploading'].includes(upload.status) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => cancelUpload(upload.id)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {['pending', 'uploading'].includes(upload.status) && (
+                    <Progress value={upload.progress} className="h-1" />
+                  )}
+
+                  {upload.status === 'error' && upload.error && (
+                    <p className="text-[10px] text-red-600">{upload.error}</p>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

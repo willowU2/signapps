@@ -5,6 +5,8 @@ export const metadata = {
     description: 'Real-time collaborative document editing',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function DocumentsPage() {
     // In a real app, this would come from URL params or state
     const docId = 'doc-demo-001';

@@ -7,6 +7,9 @@ import { AuthProvider } from '@/components/auth/auth-provider';
 import { CommandPalette } from '@/components/command-palette';
 import { NotificationPermissionDialog } from '@/components/notifications/notification-permission-dialog';
 
+import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 function LoadingFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -33,14 +36,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Suspense fallback={<LoadingFallback />}>
-        <AuthProvider>
-          {children}
-          <NotificationPermissionDialog />
-        </AuthProvider>
-      </Suspense>
-      <CommandPalette />
-      <Toaster />
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <TooltipProvider>
+          <Suspense fallback={<LoadingFallback />}>
+            <AuthProvider>
+              {children}
+              <NotificationPermissionDialog />
+            </AuthProvider>
+          </Suspense>
+          <CommandPalette />
+          <Toaster />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

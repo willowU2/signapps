@@ -13,7 +13,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+
+import { DriveSidebar } from '@/components/storage/drive-sidebar';
+import { DriveView } from '@/components/storage/types';
+import { FileGridItem } from '@/components/storage/file-grid-item';
+import { FileListItem } from '@/components/storage/file-list-item';
+import { RenameDialog } from '@/components/storage/rename-dialog';
+import { MoveToDialog } from '@/components/storage/move-to-dialog';
 import {
   Upload,
   Folder,
@@ -40,6 +48,8 @@ import {
   Eye,
   Lock,
   Star,
+  LayoutGrid,
+  List as ListIcon,
 } from 'lucide-react';
 import {
   Dialog,
@@ -49,7 +59,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { storageApi, favoritesApi } from '@/lib/api';
+import { storageApi, favoritesApi, searchApi, trashApi, sharesApi } from '@/lib/api';
 import { UploadDialog } from '@/components/storage/upload-dialog';
 import { FilePreviewDialog } from '@/components/storage/file-preview-dialog';
 import { FolderTree } from '@/components/storage/folder-tree';
@@ -74,14 +84,7 @@ import {
   useExternalStorage,
 } from './hooks/use-storage-data';
 
-interface FileItem {
-  key: string;
-  name: string;
-  type: 'folder' | 'file';
-  size?: number;
-  lastModified?: string;
-  contentType?: string;
-}
+import { FileItem } from '@/components/storage/types';
 
 interface Bucket {
   name: string;
@@ -102,6 +105,10 @@ export default function StoragePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
+
+  // Drive UI state
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [driveView, setDriveView] = useState<DriveView>('my-drive');
 
   // File browser state
   const [buckets, setBuckets] = useState<Bucket[]>([]);
@@ -124,6 +131,101 @@ export default function StoragePage() {
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [permissionsFile, setPermissionsFile] = useState<FileItem | null>(null);
 
+  // Dialog state for Rename/Move
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameItem, setRenameItem] = useState<FileItem | null>(null);
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [moveItem, setMoveItem] = useState<FileItem | null>(null);
+
+  const handleAction = async (action: string, item: FileItem) => {
+    if (action === 'open') {
+      if (item.type === 'folder') handleNavigate(item);
+      else if (isPreviewable(item)) handlePreview(item);
+    } else if (action === 'download') {
+      handleDownload(item);
+    } else if (action === 'delete') {
+      setDeleteItem(item);
+    } else if (action === 'rename') {
+      setRenameItem(item);
+      setRenameDialogOpen(true);
+    } else if (action === 'move') {
+      setMoveItem(item);
+      setMoveDialogOpen(true);
+    } else if (action === 'share') {
+      toast.info("Sharing not yet implemented");
+    } else if (action === 'restore' && item.id) {
+      try {
+        await trashApi.restore([item.id]);
+        toast.success("Restored");
+        fetchFiles();
+      } catch { toast.error("Failed to restore"); }
+    } else if (action === 'delete-forever') {
+      setDeleteItem(item);
+    } else if (action === 'star') {
+      try {
+        await favoritesApi.add({
+          bucket: currentBucket || item.bucket || '',
+          key: item.key,
+          is_folder: item.type === 'folder'
+        });
+        toast.success("Starred");
+        fetchFiles(); // Refresh to show star status if we had it
+      } catch { toast.error("Failed to star"); }
+    } else if (action === 'unstar' && item.id) {
+      try {
+        await favoritesApi.remove(item.id);
+        toast.success("Unstarred");
+        fetchFiles();
+      } catch { toast.error("Failed to unstar"); }
+    }
+  };
+
+  const handleRenameSubmit = async (newName: string) => {
+    if (!renameItem || !currentBucket) return;
+
+    try {
+      // Construct new key
+      const oldKey = renameItem.key;
+      let parentPath = '';
+
+      if (oldKey.includes('/')) {
+        const parts = oldKey.split('/');
+        // remove last part (filename or empty if folder)
+        parts.pop();
+        if (renameItem.type === 'folder') parts.pop();
+
+        parentPath = parts.join('/');
+      }
+
+      const newKey = (parentPath ? parentPath + '/' : '') + newName + (renameItem.type === 'folder' ? '/' : '');
+
+      await storageApi.move(currentBucket, oldKey, currentBucket, newKey);
+      toast.success("Renamed successfully");
+      fetchFiles();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to rename");
+    }
+  };
+
+  const handleMoveSubmit = async (destPath: string) => {
+    if (!moveItem || !currentBucket) return;
+    try {
+      const oldKey = moveItem.key;
+      // destPath usually ends with / e.g. "folder/" or "" for root
+      const newKey = destPath + moveItem.name + (moveItem.type === 'folder' ? '/' : '');
+
+      if (oldKey === newKey) return;
+
+      await storageApi.move(currentBucket, oldKey, currentBucket, newKey);
+      toast.success("Moved successfully");
+      fetchFiles();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to move");
+    }
+  };
+
   // Use hooks for other tabs
   const storageStats = useStorageStats();
   const raidData = useRaidData();
@@ -139,8 +241,8 @@ export default function StoragePage() {
   const fetchBuckets = useCallback(async () => {
     try {
       const response = await storageApi.listBuckets();
-      const bucketList = response.data || [];
-      setBuckets(bucketList.map((b) => ({ name: b.name, creationDate: b.created_at })));
+      const bucketList = (response.data || []).filter((b: { name: string }) => b.name);
+      setBuckets(bucketList.map((b: { name: string; created_at?: string }) => ({ name: b.name, creationDate: b.created_at })));
       if (bucketList.length > 0 && !currentBucket) {
         setCurrentBucket(bucketList[0].name);
       } else if (bucketList.length === 0) {
@@ -154,30 +256,96 @@ export default function StoragePage() {
   }, [currentBucket]);
 
   const fetchFiles = useCallback(async () => {
-    if (!currentBucket) {
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
+    setFiles([]);
+
     try {
-      const prefix = currentPath.length > 0 ? currentPath.join('/') + '/' : '';
-      const response = await storageApi.listFiles(currentBucket, prefix);
-      const fileList = (response.data || []).map((f) => ({
-        key: f.key,
-        name: f.key.split('/').filter(Boolean).pop() || f.key,
-        type: (f.is_directory || f.key.endsWith('/')) ? 'folder' as const : 'file' as const,
-        size: f.size,
-        lastModified: f.last_modified,
-        contentType: f.content_type,
-      }));
-      setFiles(fileList);
-    } catch {
+      if (driveView === 'recent') {
+        const response = await searchApi.recent(50);
+        const recentFiles: FileItem[] = response.data.map((item: any) => ({
+          key: item.key,
+          name: item.filename || item.key.split('/').pop() || item.key,
+          type: 'file',
+          size: item.size,
+          contentType: item.content_type,
+          bucket: item.bucket
+        }));
+        setFiles(recentFiles);
+      } else if (driveView === 'starred') {
+        const response = await favoritesApi.list();
+        const starredFiles: FileItem[] = response.data.favorites.map((item: any) => ({
+          key: item.key,
+          name: item.display_name || item.filename || item.key.split('/').pop() || item.key,
+          type: item.is_folder ? 'folder' : 'file',
+          size: item.size,
+          contentType: item.content_type,
+          bucket: item.bucket,
+          id: item.id
+        }));
+        setFiles(starredFiles);
+      } else if (driveView === 'trash') {
+        const response = await trashApi.list();
+        const trashFiles: FileItem[] = response.data.items.map((item: any) => ({
+          key: item.trash_key,
+          name: item.filename,
+          type: 'file', // Trash items are usually treated as files or bundles
+          size: item.size,
+          contentType: item.content_type,
+          bucket: item.original_bucket,
+          originalPath: item.original_key,
+          id: item.id,
+          lastModified: item.deleted_at
+        }));
+        setFiles(trashFiles);
+      } else if (driveView === 'shared') {
+        const response = await sharesApi.list();
+        const sharedFiles: FileItem[] = response.data.shares.map((item: any) => ({
+          key: item.key,
+          name: item.key.split('/').pop() || item.key,
+          type: 'file',
+          lastModified: item.created_at,
+          bucket: item.bucket,
+          id: item.id
+        }));
+        setFiles(sharedFiles);
+      } else {
+        // My Drive
+        if (!currentBucket) {
+          setLoading(false);
+          return;
+        }
+        const prefix = currentPath.length > 0 ? currentPath.join('/') + '/' : '';
+        const response = await storageApi.listFiles(currentBucket, prefix, '/');
+        const data = response.data;
+
+        const folders: FileItem[] = (data.prefixes || []).map((p: string) => ({
+          key: p,
+          name: p.replace(/\/$/, '').split('/').filter(Boolean).pop() || p,
+          type: 'folder' as const,
+          bucket: currentBucket
+        }));
+
+        const files: FileItem[] = (data.objects || [])
+          .filter((o: { key: string }) => !o.key.endsWith('/'))
+          .map((o: { key: string; size: number; last_modified: string | null; content_type: string | null }) => ({
+            key: o.key,
+            name: o.key.split('/').filter(Boolean).pop() || o.key,
+            type: 'file' as const,
+            size: o.size,
+            lastModified: o.last_modified || undefined,
+            contentType: o.content_type || undefined,
+            bucket: currentBucket
+          }));
+
+        setFiles([...folders, ...files]);
+      }
+    } catch (e) {
+      console.error(e);
       setFiles([]);
     } finally {
       setLoading(false);
     }
-  }, [currentBucket, currentPath]);
+  }, [currentBucket, currentPath, driveView]);
 
   useEffect(() => {
     if (activeTab === 'files') {
@@ -227,13 +395,20 @@ export default function StoragePage() {
 
   const handleDelete = async (item: FileItem) => {
     try {
-      const key = currentPath.length > 0
-        ? `${currentPath.join('/')}/${item.name}`
-        : item.name;
-      await storageApi.deleteFile(currentBucket, key);
+      if (driveView === 'trash' && item.id) {
+        await trashApi.delete(item.id);
+        toast.success("Deleted forever");
+      } else {
+        const key = currentPath.length > 0
+          ? `${currentPath.join('/')}/${item.name}`
+          : item.name;
+        await storageApi.deleteFile(currentBucket, key);
+        toast.success("Moved to trash");
+      }
       fetchFiles();
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to delete item");
     }
   };
 
@@ -435,231 +610,196 @@ export default function StoragePage() {
           </TabsContent>
 
           {/* Files Tab */}
-          <TabsContent value="files" className="space-y-6 mt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setFolderDialogOpen(true)} disabled={!currentBucket}>
-                  <FolderPlus className="mr-2 h-4 w-4" />
-                  New Folder
-                </Button>
-                <Button onClick={() => setUploadDialogOpen(true)} disabled={!currentBucket}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Files
-                </Button>
-              </div>
-            </div>
+          <TabsContent value="files" className="h-[calc(100vh-14rem)] mt-6">
+            <div className="flex h-full rounded-lg border bg-background/50 backdrop-blur-sm overflow-hidden">
+              <DriveSidebar
+                currentView={driveView}
+                onViewChange={setDriveView}
+                quota={storageStats.stats ? {
+                  used: storageStats.stats.used_bytes,
+                  total: storageStats.stats.total_bytes
+                } : undefined}
+                onNewClick={() => setUploadDialogOpen(true)}
+              />
 
-            {/* Bucket Selector & Breadcrumb */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="min-w-[150px] justify-between">
-                      {currentBucket || 'Select bucket'}
-                      <ChevronRight className="ml-2 h-4 w-4 rotate-90" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-[200px]">
-                    {buckets.map((bucket) => (
-                      <DropdownMenuItem
-                        key={bucket.name}
-                        className="flex items-center justify-between"
-                        onClick={() => {
-                          setCurrentBucket(bucket.name);
-                          setCurrentPath([]);
-                        }}
-                      >
-                        <span className={currentBucket === bucket.name ? 'font-medium' : ''}>
-                          {bucket.name}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteBucket(bucket.name);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
-                      </DropdownMenuItem>
-                    ))}
-                    {buckets.length === 0 && (
-                      <DropdownMenuItem disabled>No buckets</DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button variant="outline" size="icon" onClick={() => setBucketDialogOpen(true)}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-1 text-sm">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2"
-                  onClick={() => handleBreadcrumbClick(-1)}
-                >
-                  <Home className="h-4 w-4" />
-                </Button>
-                {currentPath.map((path, i) => (
-                  <span key={i} className="flex items-center">
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2"
-                      onClick={() => handleBreadcrumbClick(i)}
-                    >
-                      {path}
-                    </Button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Folder Tree + File List */}
-            <div className="flex gap-4">
-              {/* Folder Tree Sidebar */}
-              {currentBucket && (
-                <div className="w-56 shrink-0 space-y-4">
-                  <Card>
-                    <CardHeader className="py-3 px-3">
-                      <CardTitle className="text-xs font-medium text-muted-foreground">Folders</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2 pt-0 max-h-[400px] overflow-y-auto">
-                      <FolderTree
-                        bucket={currentBucket}
-                        currentPath={currentPath.length > 0 ? currentPath.join('/') + '/' : ''}
-                        onSelectFolder={(path) => {
-                          const parts = path.replace(/\/$/, '').split('/').filter(Boolean);
-                          setCurrentPath(parts);
-                        }}
-                      />
-                    </CardContent>
-                  </Card>
-                  <FavoritesBar />
-                </div>
-              )}
-
-              {/* Main file area */}
-              <div className="flex-1 min-w-0 space-y-4">
-                {/* Search */}
-                <div className="relative max-w-sm">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search files..."
-                    className="pl-9"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </div>
-
-                {/* Drop Zone for drag-and-drop uploads */}
-                {currentBucket && (
-                  <DropZone
-                    bucket={currentBucket}
-                    prefix={currentPath.length > 0 ? currentPath.join('/') : undefined}
-                    onUploadComplete={fetchFiles}
-                  />
-                )}
-
-                {/* File List */}
-                <Card>
-                  <CardHeader className="py-3">
-                    <div className="grid grid-cols-12 text-xs font-medium text-muted-foreground">
-                      <div className="col-span-6">Name</div>
-                      <div className="col-span-2">Size</div>
-                      <div className="col-span-3">Modified</div>
-                      <div className="col-span-1"></div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    {loading ? (
-                      <div className="space-y-2 p-4">
-                        {[...Array(5)].map((_, i) => (
-                          <Skeleton key={i} className="h-12" />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="divide-y">
-                        {filteredFiles.map((file) => (
-                          <div
-                            key={file.key}
-                            className="group grid grid-cols-12 items-center py-3 px-6 hover:bg-muted/50 cursor-pointer"
-                            onClick={() => file.type === 'folder' && handleNavigate(file)}
-                            onDoubleClick={() => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
-                          >
-                            <div className="col-span-6 flex items-center gap-3">
-                              {getFileIcon(file)}
-                              <span className="font-medium truncate">{file.name}</span>
-                              {file.type === 'file' && isPreviewable(file) && (
-                                <Eye className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                              )}
-                            </div>
-                            <div className="col-span-2 text-sm text-muted-foreground">
-                              {file.type === 'folder' ? '-' : formatSize(file.size)}
-                            </div>
-                            <div className="col-span-3 text-sm text-muted-foreground">
-                              {file.lastModified || '-'}
-                            </div>
-                            <div className="col-span-1 flex justify-end">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  {file.type === 'file' && isPreviewable(file) && (
-                                    <DropdownMenuItem onClick={() => handlePreview(file)}>
-                                      <Eye className="mr-2 h-4 w-4" />
-                                      Apercu
-                                    </DropdownMenuItem>
-                                  )}
-                                  {file.type === 'file' && (
-                                    <DropdownMenuItem onClick={() => handleDownload(file)}>
-                                      <Download className="mr-2 h-4 w-4" />
-                                      Telecharger
-                                    </DropdownMenuItem>
-                                  )}
-                                  <DropdownMenuItem onClick={() => handleAddToFavorites(file)}>
-                                    <Star className="mr-2 h-4 w-4" />
-                                    Ajouter aux favoris
+              <div className="flex-1 flex flex-col min-w-0">
+                {/* Toolbar */}
+                <div className="flex items-center justify-between p-4 border-b">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleBreadcrumbClick(-1)}>
+                        <Home className="h-4 w-4" />
+                      </Button>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground overflow-hidden">
+                        {currentBucket ? (
+                          <>
+                            <ChevronRight className="h-4 w-4 shrink-0" />
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-auto font-medium px-2 py-1">
+                                  {currentBucket}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent>
+                                {buckets.map(b => (
+                                  <DropdownMenuItem key={b.name} onClick={() => {
+                                    setCurrentBucket(b.name);
+                                    setCurrentPath([]);
+                                  }}>
+                                    {b.name}
                                   </DropdownMenuItem>
-                                  {file.type === 'file' && (
-                                    <DropdownMenuItem onClick={() => {
-                                      setPermissionsFile(file);
-                                      setPermissionsDialogOpen(true);
-                                    }}>
-                                      <Lock className="mr-2 h-4 w-4" />
-                                      Permissions
-                                    </DropdownMenuItem>
-                                  )}
-                                  <DropdownMenuItem
-                                    className="text-destructive"
-                                    onClick={() => setDeleteItem(file)}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Supprimer
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </div>
-                        ))}
-
-                        {filteredFiles.length === 0 && (
-                          <div className="py-12 text-center text-muted-foreground">
-                            No files found
-                          </div>
+                                ))}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setBucketDialogOpen(true)}>
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  New Bucket
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            {currentPath.map((path, i) => (
+                              <div key={i} className="flex items-center gap-1 shrink-0">
+                                <ChevronRight className="h-4 w-4 shrink-0" />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-auto px-2 py-1"
+                                  onClick={() => handleBreadcrumbClick(i)}
+                                >
+                                  {path}
+                                </Button>
+                              </div>
+                            ))}
+                          </>
+                        ) : (
+                          <div className="ml-2">Select a bucket to start</div>
                         )}
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 ml-4">
+                    <div className="relative w-64 hidden md:block">
+                      <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search files..."
+                        className="pl-9 h-9"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center border rounded-md p-1">
+                      <Button
+                        variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => setViewMode('grid')}
+                      >
+                        <LayoutGrid className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => setViewMode('list')}
+                      >
+                        <ListIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {currentBucket && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="default" size="sm" className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden sm:inline">New</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setFolderDialogOpen(true)}>
+                            <FolderPlus className="mr-2 h-4 w-4" />
+                            New Folder
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
+                            <Upload className="mr-2 h-4 w-4" />
+                            File Upload
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+
+                {/* Content Area */}
+                <div className="flex-1 overflow-y-auto p-4 bg-muted/10">
+                  {currentBucket ? (
+                    <DropZone
+                      bucket={currentBucket}
+                      prefix={currentPath.length > 0 ? currentPath.join('/') : undefined}
+                      onUploadComplete={fetchFiles}
+                      className="h-full"
+                    >
+                      {loading ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                          {[...Array(10)].map((_, i) => (
+                            <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
+                          ))}
+                        </div>
+                      ) : filteredFiles.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
+                          <FolderOpen className="h-16 w-16 mb-4" />
+                          <p>Empty folder</p>
+                          <p className="text-sm">Drag files here or click New</p>
+                        </div>
+                      ) : (
+                        viewMode === 'grid' ? (
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+                            {filteredFiles.map((file) => (
+                              <FileGridItem
+                                key={file.key}
+                                item={file}
+                                onNavigate={() => file.type === 'folder' && handleNavigate(file)}
+                                onPreview={() => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
+                                onAction={handleAction}
+                                viewMode={driveView}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <div className="grid grid-cols-12 px-2 py-2 text-xs font-medium text-muted-foreground border-b mb-2">
+                              <div className="col-span-6 ml-9">Name</div>
+                              <div className="col-span-3 hidden sm:block">Date modified</div>
+                              <div className="col-span-2 hidden sm:block text-right">Size</div>
+                              <div className="col-span-1"></div>
+                            </div>
+                            {filteredFiles.map((file) => (
+                              <FileListItem
+                                key={file.key}
+                                item={file}
+                                onNavigate={() => file.type === 'folder' && handleNavigate(file)}
+                                onPreview={() => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
+                                onAction={handleAction}
+                                viewMode={driveView}
+                              />
+                            ))}
+                          </div>
+                        )
+                      )}
+                    </DropZone>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
+                      <div className="p-4 bg-muted/50 rounded-full">
+                        <HardDrive className="h-8 w-8" />
+                      </div>
+                      <div className="text-center">
+                        <h3 className="font-semibold text-lg">No Bucket Selected</h3>
+                        <p className="text-sm">Select a bucket from the dropdown to view files.</p>
+                      </div>
+                      <Button onClick={() => setBucketDialogOpen(true)}>
+                        Create Bucket
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -722,6 +862,23 @@ export default function StoragePage() {
           onUploadComplete={fetchFiles}
         />
 
+        {/* Rename Dialog */}
+        <RenameDialog
+          open={renameDialogOpen}
+          onOpenChange={setRenameDialogOpen}
+          item={renameItem}
+          onRename={handleRenameSubmit}
+        />
+
+        {/* Move Dialog */}
+        <MoveToDialog
+          open={moveDialogOpen}
+          onOpenChange={setMoveDialogOpen}
+          item={moveItem}
+          currentBucket={currentBucket}
+          onMove={handleMoveSubmit}
+        />
+
         {/* File Preview Dialog */}
         <FilePreviewDialog
           open={previewDialogOpen}
@@ -773,8 +930,11 @@ export default function StoragePage() {
         <ConfirmDialog
           open={deleteItem !== null}
           onOpenChange={(open) => { if (!open) setDeleteItem(null); }}
-          title="Delete File"
-          description={`Are you sure you want to delete "${deleteItem?.name}"?`}
+          title={driveView === 'trash' ? "Delete Forever" : "Delete File"}
+          description={driveView === 'trash'
+            ? `Are you sure you want to permanently delete "${deleteItem?.name}"? This action cannot be undone.`
+            : `Are you sure you want to delete "${deleteItem?.name}"?`
+          }
           onConfirm={() => {
             if (deleteItem) handleDelete(deleteItem);
             setDeleteItem(null);

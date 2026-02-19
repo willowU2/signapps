@@ -29,10 +29,12 @@ CREATE TABLE IF NOT EXISTS storage.favorites (
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
     bucket VARCHAR(255) NOT NULL,
     key TEXT NOT NULL,
+    is_folder BOOLEAN NOT NULL DEFAULT FALSE,
     display_name TEXT,
+    color VARCHAR(32),
     sort_order INTEGER DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    
+    added_at TIMESTAMPTZ DEFAULT NOW(),
+
     CONSTRAINT unique_user_favorite UNIQUE (user_id, bucket, key)
 );
 

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useCalendarStore } from "@/stores/calendar-store";
-import { calendarApi } from "@/lib/calendar-api";
+import { calendarApi } from "@/lib/api";
 import { MonthCalendar } from "@/components/calendar/MonthCalendar";
+import { CalendarView } from "@/components/calendar/CalendarView";
 import { EventForm } from "@/components/calendar/EventForm";
 import { ExportDialog } from "@/components/calendar/ExportDialog";
 import { ImportDialog } from "@/components/calendar/ImportDialog";
@@ -23,9 +24,24 @@ export default function CalendarPage() {
   const {
     calendars,
     setCalendars,
+    events,
     selectedEventId,
+    selectEvent,
     setSelectedCalendars,
+    viewMode,
+    setViewMode,
   } = useCalendarStore();
+
+  const selectedEvent = useMemo(() =>
+    events.find((e) => e.id === selectedEventId),
+    [events, selectedEventId]
+  );
+
+  useEffect(() => {
+    if (selectedEventId) {
+      setEventFormOpen(true);
+    }
+  }, [selectedEventId]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [eventFormOpen, setEventFormOpen] = useState(false);
@@ -101,6 +117,31 @@ export default function CalendarPage() {
               </DropdownMenu>
             )}
 
+            {/* View Switcher */}
+            <div className="flex bg-muted/20 p-1 rounded-md border text-sm items-center">
+              <button
+                className={`px-3 py-1.5 rounded-sm transition-all ${viewMode === "month" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                onClick={() => setViewMode("month")}
+              >
+                Month
+              </button>
+              <button
+                className={`px-3 py-1.5 rounded-sm transition-all ${viewMode === "week" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                onClick={() => setViewMode("week")}
+              >
+                Week
+              </button>
+              <button
+                className={`px-3 py-1.5 rounded-sm transition-all ${viewMode === "day" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                onClick={() => setViewMode("day")}
+              >
+                Day
+              </button>
+            </div>
+
             {/* New Event button (primary) */}
             <Button
               onClick={() => setEventFormOpen(true)}
@@ -134,11 +175,10 @@ export default function CalendarPage() {
                   <div
                     key={calendar.id}
                     onClick={() => setSelectedCalendarId(calendar.id)}
-                    className={`p-3 rounded-lg cursor-pointer border-2 transition ${
-                      selectedCalendarId === calendar.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-transparent hover:bg-muted"
-                    }`}
+                    className={`p-3 rounded-lg cursor-pointer border-2 transition ${selectedCalendarId === calendar.id
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-transparent hover:bg-muted"
+                      }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <div
@@ -158,7 +198,7 @@ export default function CalendarPage() {
             {/* Main calendar view */}
             <div className="col-span-9">
               {selectedCalendarId && (
-                <MonthCalendar selectedCalendarId={selectedCalendarId} />
+                <CalendarView selectedCalendarId={selectedCalendarId} />
               )}
             </div>
           </div>
@@ -167,7 +207,11 @@ export default function CalendarPage() {
         {/* Event form dialog */}
         <EventForm
           open={eventFormOpen}
-          onOpenChange={setEventFormOpen}
+          onOpenChange={(open) => {
+            setEventFormOpen(open);
+            if (!open) selectEvent(null);
+          }}
+          initialEvent={selectedEvent}
           calendarId={selectedCalendarId || calendars[0]?.id || ""}
         />
 

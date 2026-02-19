@@ -28,17 +28,15 @@ export function FolderTree({ bucket, currentPath, onSelectFolder }: FolderTreePr
   const loadChildren = useCallback(async (prefix: string): Promise<FolderNode[]> => {
     try {
       const response = await storageApi.listFiles(bucket, prefix, '/');
-      const files = response.data || [];
-      return files
-        .filter(f => f.is_directory)
-        .map(f => ({
-          name: f.key.replace(prefix, '').replace(/\/$/, '') || f.key,
-          path: f.key,
-          children: [],
-          loaded: false,
-          loading: false,
-          expanded: false,
-        }));
+      const prefixes = response.data.prefixes || [];
+      return prefixes.map((p: string) => ({
+        name: p.replace(prefix, '').replace(/\/$/, '') || p,
+        path: p,
+        children: [],
+        loaded: false,
+        loading: false,
+        expanded: false,
+      }));
     } catch {
       return [];
     }

@@ -1,41 +1,89 @@
+use sqlx::Row;
 use uuid::Uuid;
-use yrs::Doc;
+use yrs::{Doc, ReadTxn, StateVector, Transact, updates::decoder::Decode};
 
-/// Save document state to PostgreSQL with type tracking
-/// TODO: Implement persistence with Yrs state vector and encoded updates
-#[allow(dead_code)]
+/// Save document state to PostgreSQL
 pub async fn save_document(
+    pool: &sqlx::PgPool,
     doc_id: &str,
-    _doc_type: &str,
-    _doc: &Doc,
+    doc_type: &str,
+    doc: &Doc,
 ) -> Result<(), String> {
-    // Validate doc_id format
-    Uuid::parse_str(doc_id)
+    let doc_uuid = Uuid::parse_str(doc_id)
         .map_err(|e| format!("Invalid document ID: {}", e))?;
+
+    // Encode the entire document state to binary
+    let doc_binary = doc.transact().encode_state_as_update_v1(&StateVector::default());
+
+    // Upsert the document
+    sqlx::query(
+        r#"
+        INSERT INTO documents (id, doc_type, doc_binary, updated_at)
+        VALUES ($1, $2, $3, NOW())
+        ON CONFLICT (id) 
+        DO UPDATE SET 
+            doc_binary = $3,
+            updated_at = NOW()
+        "#
+    )
+    .bind(doc_uuid)
+    .bind(doc_type)
+    .bind(doc_binary)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Database error: {}", e))?;
+
     Ok(())
 }
 
 /// Load document state from PostgreSQL
-/// TODO: Implement loading with proper Yrs state restoration
-#[allow(dead_code)]
 pub async fn load_document(
+    pool: &sqlx::PgPool,
     doc_id: &str,
 ) -> Result<Option<Doc>, String> {
-    // Validate doc_id format
-    Uuid::parse_str(doc_id)
+    let doc_uuid = Uuid::parse_str(doc_id)
         .map_err(|e| format!("Invalid document ID: {}", e))?;
-    Ok(None)
+
+    let row = sqlx::query(
+        "SELECT doc_binary FROM documents WHERE id = $1"
+    )
+    .bind(doc_uuid)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("Database error: {}", e))?;
+
+    if let Some(row) = row {
+        let doc_binary: Vec<u8> = row.try_get("doc_binary")
+            .map_err(|e| format!("Failed to read binary: {}", e))?;
+        
+        let doc = Doc::new();
+        let mut txn = doc.transact_mut();
+        txn.apply_update(yrs::Update::decode_v1(&doc_binary).map_err(|e| e.to_string())?);
+        drop(txn);
+        
+        Ok(Some(doc))
+    } else {
+        Ok(None)
+    }
 }
 
 /// Record individual update for audit trail
-/// TODO: Implement audit logging to database
-#[allow(dead_code)]
 pub async fn log_update(
+    pool: &sqlx::PgPool,
     doc_id: &str,
-    _update: &[u8],
+    update: &[u8],
 ) -> Result<(), String> {
-    // Validate doc_id format
-    Uuid::parse_str(doc_id)
+    let doc_uuid = Uuid::parse_str(doc_id)
         .map_err(|e| format!("Invalid document ID: {}", e))?;
+
+    sqlx::query(
+        "INSERT INTO document_updates (doc_id, update) VALUES ($1, $2)"
+    )
+    .bind(doc_uuid)
+    .bind(update)
+    .execute(pool)
+    .await
+    .map_err(|e| format!("Database error: {}", e))?;
+
     Ok(())
 }

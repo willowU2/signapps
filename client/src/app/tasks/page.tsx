@@ -7,7 +7,7 @@ import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskForm } from "@/components/tasks/TaskForm";
 import { ExportDialog } from "@/components/calendar/ExportDialog";
 import { ImportDialog } from "@/components/calendar/ImportDialog";
-import { calendarApi } from "@/lib/calendar-api";
+import { calendarApi } from "@/lib/api";
 import { AppLayout } from "@/components/layout/app-layout";
 import {
   DropdownMenu,
@@ -130,11 +130,10 @@ export default function TasksPage() {
                   <div
                     key={calendar.id}
                     onClick={() => setSelectedCalendarId(calendar.id)}
-                    className={`p-3 rounded-lg cursor-pointer border-2 transition ${
-                      selectedCalendarId === calendar.id
+                    className={`p-3 rounded-lg cursor-pointer border-2 transition ${selectedCalendarId === calendar.id
                         ? "border-blue-500 bg-blue-50"
                         : "border-transparent hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <div

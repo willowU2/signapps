@@ -57,7 +57,8 @@ pub async fn auth_middleware<S: AuthState>(
         return Err(Error::InvalidToken);
     }
 
-    // Add claims to request extensions for handlers to access
+    // Add claims and user ID to request extensions for handlers to access
+    request.extensions_mut().insert(claims.sub);
     request.extensions_mut().insert(claims);
 
     Ok(next.run(request).await)

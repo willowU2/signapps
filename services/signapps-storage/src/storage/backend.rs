@@ -189,12 +189,18 @@ impl StorageBackend {
             if meta.is_dir() {
                 prefixes.push(key);
             } else {
+                // Stat each file to get full metadata (size, last_modified, etc.)
+                let full_meta = self
+                    .operator
+                    .stat(full_path)
+                    .await
+                    .unwrap_or_else(|_| meta.clone());
                 objects.push(ObjectInfo {
                     key,
-                    size: meta.content_length() as i64,
-                    last_modified: meta.last_modified().map(|d| d.to_rfc3339()),
-                    etag: meta.etag().map(|s| s.to_string()),
-                    content_type: meta.content_type().map(|s| s.to_string()),
+                    size: full_meta.content_length() as i64,
+                    last_modified: full_meta.last_modified().map(|d| d.to_rfc3339()),
+                    etag: full_meta.etag().map(|s| s.to_string()),
+                    content_type: full_meta.content_type().map(|s| s.to_string()),
                 });
             }
 
@@ -242,16 +248,21 @@ impl StorageBackend {
     ) -> Result<()> {
         let path = format!("{}/{}", bucket, key);
 
-        let mut writer = self.operator.writer_with(&path);
+        let mut writer_builder = self.operator.writer_with(&path);
         if let Some(ct) = content_type {
-            writer = writer.content_type(ct);
+            writer_builder = writer_builder.content_type(ct);
         }
-        writer
+        let mut writer = writer_builder
             .await
-            .map_err(|e| Error::Storage(format!("Failed to create writer: {}", e)))?
+            .map_err(|e| Error::Storage(format!("Failed to create writer: {}", e)))?;
+        writer
             .write(data)
             .await
             .map_err(|e| Error::Storage(format!("Failed to upload object: {}", e)))?;
+        writer
+            .close()
+            .await
+            .map_err(|e| Error::Storage(format!("Failed to finalize upload: {}", e)))?;
 
         tracing::debug!(bucket = %bucket, key = %key, "Object uploaded");
         Ok(())

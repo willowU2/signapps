@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import DocsDashboard from '@/components/docs/dashboard';
 
 export const metadata: Metadata = {
     title: 'Documents - SignApps',
@@ -7,102 +8,83 @@ export const metadata: Metadata = {
 
 export default function DocsPage() {
     return (
-        <div className="flex-1 overflow-auto">
-            <div className="max-w-5xl mx-auto p-6 space-y-6">
+        <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950">
+            <div className="max-w-7xl mx-auto p-6 space-y-8">
                 {/* Header */}
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Collaborative Documents</h1>
-                    <p className="text-gray-600 mt-1">
-                        Create and collaborate on documents, sheets, slides, and boards in real-time
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Collaborative Documents</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-2 text-lg">
+                        Create and collaborate on documents, sheets, slides, and boards in real-time.
                     </p>
                 </div>
 
-                {/* Document types */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Text Documents */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer">
-                        <div className="text-3xl mb-3">📄</div>
-                        <h3 className="font-semibold text-gray-900">Text Documents</h3>
-                        <p className="text-sm text-gray-600 mt-2">
-                            Rich text editing with real-time collaboration (Tiptap)
-                        </p>
-                        <button className="mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium">
-                            New Document
-                        </button>
-                    </div>
-
-                    {/* Spreadsheets */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer">
-                        <div className="text-3xl mb-3">📊</div>
-                        <h3 className="font-semibold text-gray-900">Spreadsheets</h3>
-                        <p className="text-sm text-gray-600 mt-2">
-                            Excel-like spreadsheets with synchronized cells
-                        </p>
-                        <button className="mt-4 w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-sm font-medium">
-                            New Sheet
-                        </button>
-                    </div>
-
-                    {/* Presentations */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer">
-                        <div className="text-3xl mb-3">🎪</div>
-                        <h3 className="font-semibold text-gray-900">Presentations</h3>
-                        <p className="text-sm text-gray-600 mt-2">
-                            PowerPoint-like slides with collaborative editing
-                        </p>
-                        <button className="mt-4 w-full px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 text-sm font-medium">
-                            New Presentation
-                        </button>
-                    </div>
-
-                    {/* Boards */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer">
-                        <div className="text-3xl mb-3">📋</div>
-                        <h3 className="font-semibold text-gray-900">Kanban Boards</h3>
-                        <p className="text-sm text-gray-600 mt-2">
-                            Trello-like boards for task management and workflows
-                        </p>
-                        <button className="mt-4 w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-sm font-medium">
-                            New Board
-                        </button>
-                    </div>
-                </div>
+                {/* Document types (client component) */}
+                <DocsDashboard />
 
                 {/* Features */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mt-8">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">✨ Features</h2>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-700">
-                        <li>✅ Real-time collaboration with multiple users</li>
-                        <li>✅ Automatic synchronization using Y.js</li>
-                        <li>✅ Cursor and selection awareness</li>
-                        <li>✅ Document persistence to PostgreSQL</li>
-                        <li>✅ Share with team members</li>
-                        <li>✅ Edit history and version tracking</li>
-                        <li>✅ Works offline (sync when back online)</li>
-                        <li>✅ Mobile friendly</li>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-8">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">✨ Features & Capabilities</h2>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-sm text-gray-700 dark:text-gray-300">
+                        <li className="flex items-start gap-2">
+                            <span className="text-green-500 text-lg">✅</span>
+                            <span>Real-time collaboration with multiple users</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-green-500 text-lg">✅</span>
+                            <span>Automatic synchronization using Y.js</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-green-500 text-lg">✅</span>
+                            <span>Cursor and selection awareness</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-green-500 text-lg">✅</span>
+                            <span>Document persistence to PostgreSQL</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-green-500 text-lg">✅</span>
+                            <span>Share with team members</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-green-500 text-lg">✅</span>
+                            <span>Edit history and version tracking</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-green-500 text-lg">✅</span>
+                            <span>Works offline (sync when back online)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-green-500 text-lg">✅</span>
+                            <span>Mobile friendly interface</span>
+                        </li>
                     </ul>
                 </div>
 
                 {/* Architecture info */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-3">🏗️ Architecture</h2>
-                    <ul className="text-sm text-gray-700 space-y-2">
-                        <li>
-                            <strong>Backend:</strong> Rust (Axum) + Yrs CRDT on port 3010
-                        </li>
-                        <li>
-                            <strong>Frontend:</strong> Next.js + React with Y.js bindings
-                        </li>
-                        <li>
-                            <strong>Transport:</strong> WebSocket for real-time sync
-                        </li>
-                        <li>
-                            <strong>Storage:</strong> PostgreSQL with Y.js binary format
-                        </li>
-                        <li>
-                            <strong>Editors:</strong> Tiptap (text), FortuneSheet (sheet), Reveal.js (slides)
-                        </li>
-                    </ul>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">🏗️ System Architecture</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div className="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1">Backend</div>
+                            <div className="text-gray-900 dark:text-gray-200 font-medium">Rust (Axum) + Yrs CRDT</div>
+                            <div className="text-xs text-gray-500 mt-1">High performance sync</div>
+                        </div>
+                        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div className="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1">Frontend</div>
+                            <div className="text-gray-900 dark:text-gray-200 font-medium">Next.js + Tiptap</div>
+                            <div className="text-xs text-gray-500 mt-1">Rich interactions</div>
+                        </div>
+                        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div className="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1">Transport</div>
+                            <div className="text-gray-900 dark:text-gray-200 font-medium">WebSocket</div>
+                            <div className="text-xs text-gray-500 mt-1">Real-time updates</div>
+                        </div>
+                        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div className="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-1">Storage</div>
+                            <div className="text-gray-900 dark:text-gray-200 font-medium">PostgreSQL (Binares)</div>
+                            <div className="text-xs text-gray-500 mt-1">Persistent state</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

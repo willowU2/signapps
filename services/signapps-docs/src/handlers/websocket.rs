@@ -4,11 +4,11 @@ use axum::{
 };
 use futures::{stream::StreamExt, SinkExt};
 use tokio::sync::broadcast;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 use uuid::Uuid;
-use yrs::Doc;
+use yrs::{Doc, ReadTxn, Transact, updates::decoder::Decode, updates::encoder::Encode};
 
-use crate::{models::ClientSession, AppState};
+use crate::{models::ClientSession, AppState, handlers::persistence};
 
 /// Generic WebSocket handler for all document types
 /// Endpoint: GET /api/v1/docs/{type}/{doc_id}/ws
@@ -48,11 +48,25 @@ async fn handle_socket(
     // Use composite key: type::doc_id
     let cache_key = format!("{}::{}", doc_type, doc_id);
 
-    // Get or create document in memory
-    let _doc = if let Some(entry) = state.docs.get(&cache_key) {
+    // Get or create document
+    // First check memory
+    let doc = if let Some(entry) = state.docs.get(&cache_key) {
         entry.clone()
     } else {
-        let new_doc = Doc::new();
+        // Try loading from DB
+        let loaded_doc = match persistence::load_document(state.pool.inner(), &doc_id).await {
+            Ok(Some(d)) => {
+                info!(doc_id = %doc_id, "Loaded document from database");
+                Some(d)
+            },
+            Ok(None) => None,
+            Err(e) => {
+                error!(doc_id = %doc_id, error = %e, "Failed to load document");
+                None
+            }
+        };
+
+        let new_doc = loaded_doc.unwrap_or_else(|| Doc::new());
         state.docs.insert(cache_key.clone(), new_doc.clone());
         new_doc
     };
@@ -69,39 +83,73 @@ async fn handle_socket(
     // Split WebSocket into sender and receiver
     let (mut sender, mut receiver) = socket.split();
 
-    // Create session
-    let _session = ClientSession {
-        id: session_id,
-        doc_id: doc_id.clone(),
-        tx: tx.clone(),
-    };
+    // Send initial state to client
+    // We encode the whole document state as an update and send it
+    let initial_state = doc.transact().encode_state_as_update_v1(&yrs::StateVector::default());
+    if let Err(e) = sender.send(Message::Binary(initial_state)).await {
+        error!(session_id = %session_id, error = %e, "Failed to send initial state");
+        return;
+    }
 
-    // Note: In production, send proper Y.js state snapshot here
-    // For now, skip initial state sync
-    info!(session_id = %session_id, "Ready for WebSocket messages");
-
-    debug!(session_id = %session_id, doc_type = %doc_type, "Sent initial document state");
+    info!(session_id = %session_id, "Sent initial document state");
 
     // Handle incoming messages from client
     let mut client_rx = tx.subscribe();
+    
+    // We need to clone doc and state for the receive task
+    let doc_clone = doc.clone();
+    let state_clone = state.clone();
+    let doc_id_clone = doc_id.clone();
+    let doc_type_clone = doc_type.clone();
+
     let mut receive_task = tokio::spawn(async move {
         while let Some(msg_result) = receiver.next().await {
             match msg_result {
                 Ok(Message::Binary(data)) => {
-                    // In production: Apply Y.js update to document
-                    // For now: Just broadcast update to other clients
-                    let _ = tx.send(data);
+                    // Apply update to local Yjs document
+                    {
+                        let mut txn = doc_clone.transact_mut();
+                        match yrs::Update::decode_v1(&data) {
+                            Ok(update) => {
+                                txn.apply_update(update);
+                            },
+                            Err(e) => {
+                                error!(session_id = %session_id, error = %e, "Failed to decode update");
+                                continue;
+                            }
+                        }
+                    }
 
-                    debug!(session_id = %session_id, "Update broadcasted");
+                    // Broker to other clients
+                    let _ = tx.send(data.clone());
+
+                    // Persist to DB (fire and forget / async)
+                    // In a real app, you might batch this or use the audit trail
+                    let pool = state_clone.pool.clone();
+                    let d_id = doc_id_clone.clone();
+                    let d_type = doc_type_clone.clone();
+                    let d_ref = doc_clone.clone();
+                    
+                    tokio::spawn(async move {
+                         // Save snapshot
+                         if let Err(e) = persistence::save_document(pool.inner(), &d_id, &d_type, &d_ref).await {
+                             error!(doc_id = %d_id, error = %e, "Failed to persist document");
+                         }
+                    });
+
+                    // Log update
+                    // persistence::log_update(state_clone.pool.inner(), &doc_id_clone, &data).await.ok();
+
+                    debug!(session_id = %session_id, "Update processed and broadcasted");
                 }
                 Ok(Message::Text(msg)) => {
                     debug!(session_id = %session_id, message = %msg, "Text message received");
                 }
                 Ok(Message::Ping(_)) => {
-                    debug!(session_id = %session_id, "Ping received");
+                    // debug!(session_id = %session_id, "Ping received");
                 }
                 Ok(Message::Pong(_)) => {
-                    debug!(session_id = %session_id, "Pong received");
+                    // debug!(session_id = %session_id, "Pong received");
                 }
                 Ok(Message::Close(_)) => {
                     info!(session_id = %session_id, "Client requested close");
@@ -122,6 +170,9 @@ async fn handle_socket(
     // Handle outgoing broadcasts to client
     let mut broadcast_task = tokio::spawn(async move {
         while let Ok(data) = client_rx.recv().await {
+            // Prevent echoing back to sender? 
+            // Broadcaster sends to ALL. We should probably filter if possible, 
+            // but for now simple broadcast is fine as Yjs handles duplicate updates gracefully.
             if let Err(e) = sender.send(Message::Binary(data)).await {
                 error!(
                     session_id = %session_id,
@@ -148,7 +199,6 @@ async fn handle_socket(
     info!(
         session_id = %session_id,
         doc_id = %doc_id,
-        doc_type = %doc_type,
         "WebSocket connection closed"
     );
 }

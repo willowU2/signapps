@@ -20,6 +20,7 @@ use handlers::types::{text, sheet, slide, board};
 
 #[derive(Clone)]
 pub struct AppState {
+    pub pool: signapps_db::DatabasePool,
     pub cache: Arc<CacheService>,
     pub docs: Arc<dashmap::DashMap<String, yrs::Doc>>,
     // Broadcast channels per document (key: "type::doc_id")
@@ -36,11 +37,17 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or_else(|_| "3010".to_string())
         .parse::<u16>()?;
 
+    // Initialize database
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://signapps:password@localhost:5432/signapps".to_string());
+    let pool = signapps_db::create_pool(&database_url).await?;
+
     // Initialize cache
     let cache = Arc::new(CacheService::new(1000, Duration::from_secs(3600)));
 
     // Initialize app state
     let app_state = AppState {
+        pool,
         cache,
         docs: Arc::new(dashmap::DashMap::new()),
         broadcasts: Arc::new(dashmap::DashMap::new()),

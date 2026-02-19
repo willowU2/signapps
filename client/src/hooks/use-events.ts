@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useCallback } from "react";
-import { calendarApi } from "@/lib/calendar-api";
+import { calendarApi } from "@/lib/api";
 import { Event, CreateEvent, UpdateEvent } from "@/types/calendar";
 import { useCalendarStore } from "@/stores/calendar-store";
 
