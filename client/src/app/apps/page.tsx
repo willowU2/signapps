@@ -274,9 +274,9 @@ export default function AppsPage() {
                   )}
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {categoryApps.slice(0, GROUPED_PREVIEW_SIZE).map((app) => (
+                  {categoryApps.slice(0, GROUPED_PREVIEW_SIZE).map((app, idx) => (
                     <AppCard
-                      key={`${app.source_id}-${app.id}`}
+                      key={`${app.source_id}-${app.id}-${idx}`}
                       app={app}
                       onInstall={setInstallApp}
                       onDetail={setDetailApp}
@@ -299,9 +299,9 @@ export default function AppsPage() {
           <>
             {/* Flat grid with pagination */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {paginatedApps.map((app) => (
+              {paginatedApps.map((app, idx) => (
                 <AppCard
-                  key={`${app.source_id}-${app.id}`}
+                  key={`${app.source_id}-${app.id}-${idx}`}
                   app={app}
                   onInstall={setInstallApp}
                   onDetail={setDetailApp}
