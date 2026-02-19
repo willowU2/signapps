@@ -54,10 +54,10 @@ export function usePushNotifications(): UsePushNotificationsReturn {
           return;
         }
 
-        // Get VAPID public key
+        // Get VAPID public key (silently skip if service unavailable)
         try {
           const response = await calendarApi.get(
-            'http://localhost:3011/api/v1/notifications/push/vapid-key'
+            '/api/v1/notifications/push/vapid-key'
           );
           const vapidKey = response.data.public_key;
 
@@ -73,9 +73,9 @@ export function usePushNotifications(): UsePushNotificationsReturn {
             loading: false,
           }));
         } catch {
+          // Service unavailable - silently disable push notifications
           setState((prev) => ({
             ...prev,
-            error: 'Failed to fetch VAPID key',
             loading: false,
           }));
         }
@@ -109,7 +109,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       // Get VAPID key
       if (!state.vapidKey) {
         const response = await calendarApi.get(
-          'http://localhost:3011/api/v1/notifications/push/vapid-key'
+          '/api/v1/notifications/push/vapid-key'
         );
         setState((prev) => ({ ...prev, vapidKey: response.data.public_key }));
       }
@@ -121,7 +121,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
       // Register subscription with backend
       await calendarApi.post(
-        'http://localhost:3011/api/v1/notifications/subscriptions/push',
+        '/api/v1/notifications/subscriptions/push',
         {
           subscription: subscription.toJSON(),
           browser_name: `${getBrowserName()} ${getBrowserVersion()}`,

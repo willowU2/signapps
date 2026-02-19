@@ -32,7 +32,7 @@ export function NotificationPermissionDialog({
 }: NotificationPermissionDialogProps) {
   const [open, setOpen] = useState(controlledOpen ?? false);
   const [dismissed, setDismissed] = useState(false);
-  const { isSupported, permission, subscribe, loading, error } =
+  const { isSupported, permission, subscribe, loading, error, vapidKey } =
     usePushNotifications();
 
   // Sync controlled open state
@@ -42,12 +42,12 @@ export function NotificationPermissionDialog({
     }
   }, [controlledOpen]);
 
-  // Auto-show if permission not yet requested
+  // Auto-show if permission not yet requested and service is available
   useEffect(() => {
-    if (!dismissed && isSupported && permission === 'default') {
+    if (!dismissed && isSupported && permission === 'default' && vapidKey) {
       setOpen(true);
     }
-  }, [isSupported, permission, dismissed]);
+  }, [isSupported, permission, dismissed, vapidKey]);
 
   const handleClose = () => {
     setOpen(false);
@@ -72,7 +72,7 @@ export function NotificationPermissionDialog({
     handleClose();
   };
 
-  if (!isSupported || permission !== 'default' || dismissed) {
+  if (!isSupported || permission !== 'default' || dismissed || !vapidKey) {
     return null;
   }
 
