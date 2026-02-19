@@ -44,7 +44,6 @@ export function usePermissions(): UsePermissionsReturn {
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
-      console.error('Failed to fetch permissions:', error);
     } finally {
       setLoading(false);
     }

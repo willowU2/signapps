@@ -81,7 +81,6 @@ export function SendNotificationAdmin() {
       // Clear success message after 5 seconds
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
-      console.error('Failed to send notification:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to send notification';
       setError(errorMessage);
     } finally {

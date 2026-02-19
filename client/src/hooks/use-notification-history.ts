@@ -45,7 +45,7 @@ export function useNotificationHistory(
       setError(null);
 
       const response = await calendarApi.get(
-        `http://localhost:3011/api/v1/notifications/history?limit=${limit}`
+        `/notifications/history?limit=${limit}`
       );
 
       setNotifications(response.data || []);
@@ -68,7 +68,7 @@ export function useNotificationHistory(
         setError(null);
 
         await calendarApi.post(
-          `http://localhost:3011/api/v1/notifications/${notificationId}/resend`,
+          `/notifications/${notificationId}/resend`,
           {}
         );
 

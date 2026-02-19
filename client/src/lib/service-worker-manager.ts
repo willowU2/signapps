@@ -41,16 +41,10 @@ export class ServiceWorkerManager {
       throw new Error('Service Workers not supported in this browser');
     }
 
-    try {
-      const registration = await navigator.serviceWorker.register('/service-worker.js', {
-        scope: '/',
-      });
-      console.log('Service Worker registered:', registration);
-      return registration;
-    } catch (error) {
-      console.error('Service Worker registration failed:', error);
-      throw new Error(`Service Worker registration failed: ${error}`);
-    }
+    const registration = await navigator.serviceWorker.register('/service-worker.js', {
+      scope: '/',
+    });
+    return registration;
   }
 
   /**
@@ -61,8 +55,7 @@ export class ServiceWorkerManager {
       const registration = await navigator.serviceWorker.getRegistration();
       if (!registration) return null;
       return registration.pushManager.getSubscription();
-    } catch (error) {
-      console.error('Failed to get push subscription:', error);
+    } catch {
       return null;
     }
   }
@@ -71,37 +64,23 @@ export class ServiceWorkerManager {
    * Subscribe to push notifications
    */
   static async subscribe(vapidPublicKey: string): Promise<PushSubscription> {
-    try {
-      const registration = await this.register();
+    const registration = await this.register();
 
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
-      });
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
+    });
 
-      console.log('Push subscription created:', subscription);
-      return subscription;
-    } catch (error) {
-      console.error('Failed to subscribe to push notifications:', error);
-      throw new Error(`Push subscription failed: ${error}`);
-    }
+    return subscription;
   }
 
   /**
    * Unsubscribe from push notifications
    */
   static async unsubscribe(): Promise<boolean> {
-    try {
-      const subscription = await this.getSubscription();
-      if (!subscription) return false;
-
-      const unsubscribed = await subscription.unsubscribe();
-      console.log('Push unsubscription successful:', unsubscribed);
-      return unsubscribed;
-    } catch (error) {
-      console.error('Failed to unsubscribe from push notifications:', error);
-      throw new Error(`Unsubscribe failed: ${error}`);
-    }
+    const subscription = await this.getSubscription();
+    if (!subscription) return false;
+    return subscription.unsubscribe();
   }
 
   /**
@@ -118,15 +97,7 @@ export class ServiceWorkerManager {
     if (!ServiceWorkerManager.isSupported()) {
       throw new Error('Notifications not supported');
     }
-
-    try {
-      const permission = await Notification.requestPermission();
-      console.log('Notification permission:', permission);
-      return permission;
-    } catch (error) {
-      console.error('Failed to request notification permission:', error);
-      throw new Error(`Permission request failed: ${error}`);
-    }
+    return Notification.requestPermission();
   }
 
   /**

@@ -53,7 +53,6 @@ export function useFavorites(): UseFavoritesReturn {
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
-      console.error('Failed to fetch favorites:', error);
     } finally {
       setLoading(false);
     }

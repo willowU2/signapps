@@ -30,7 +30,7 @@ export function useUnreadCount(initialInterval: number = 30000): UseUnreadCountR
       setError(null);
 
       const response = await calendarApi.get(
-        'http://localhost:3011/api/v1/notifications/unread-count'
+        '/notifications/unread-count'
       );
 
       setUnreadCount(response.data?.count || 0);

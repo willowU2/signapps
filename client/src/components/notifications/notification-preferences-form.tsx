@@ -49,8 +49,8 @@ export function NotificationPreferencesForm() {
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
-      console.error('Failed to update preference:', err);
+    } catch {
+      // Error handled by useNotificationPreferences state
     } finally {
       setIsSaving(false);
     }
@@ -62,8 +62,8 @@ export function NotificationPreferencesForm() {
       await resetToDefaults();
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
-      console.error('Failed to reset defaults:', err);
+    } catch {
+      // Error handled by useNotificationPreferences state
     } finally {
       setIsSaving(false);
     }

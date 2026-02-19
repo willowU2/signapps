@@ -57,7 +57,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         // Get VAPID public key (silently skip if service unavailable)
         try {
           const response = await calendarApi.get(
-            '/api/v1/notifications/push/vapid-key'
+            '/notifications/push/vapid-key'
           );
           const vapidKey = response.data.public_key;
 
@@ -109,7 +109,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       // Get VAPID key
       if (!state.vapidKey) {
         const response = await calendarApi.get(
-          '/api/v1/notifications/push/vapid-key'
+          '/notifications/push/vapid-key'
         );
         setState((prev) => ({ ...prev, vapidKey: response.data.public_key }));
       }
@@ -121,7 +121,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
       // Register subscription with backend
       await calendarApi.post(
-        '/api/v1/notifications/subscriptions/push',
+        '/notifications/subscriptions/push',
         {
           subscription: subscription.toJSON(),
           browser_name: `${getBrowserName()} ${getBrowserVersion()}`,

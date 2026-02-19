@@ -43,7 +43,7 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
         setError(null);
 
         const response = await calendarApi.get(
-          'http://localhost:3011/api/v1/notifications/preferences'
+          '/notifications/preferences'
         );
 
         setPreferences(response.data);
@@ -81,7 +81,7 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
         const updatedPrefs = { ...preferences, ...updates };
 
         const response = await calendarApi.put(
-          'http://localhost:3011/api/v1/notifications/preferences',
+          '/notifications/preferences',
           updatedPrefs
         );
 

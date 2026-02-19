@@ -45,8 +45,8 @@ export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
     try {
       setResendingId(id);
       await resendNotification(id);
-    } catch (err) {
-      console.error('Failed to resend notification:', err);
+    } catch {
+      // Error handled by useNotificationHistory state
     } finally {
       setResendingId(null);
     }

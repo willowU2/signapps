@@ -58,8 +58,8 @@ export function NotificationPermissionDialog({
     try {
       await subscribe();
       handleClose();
-    } catch (err) {
-      console.error('Failed to enable notifications:', err);
+    } catch {
+      // Error is handled by usePushNotifications state
     }
   };
 

@@ -58,12 +58,11 @@ export function PushSubscriptionManager({
       setError(null);
 
       const response = await calendarApi.get(
-        'http://localhost:3011/api/v1/notifications/subscriptions/push'
+        '/notifications/subscriptions/push'
       );
 
       setSubscriptions(response.data || []);
-    } catch (err) {
-      console.error('Failed to load subscriptions:', err);
+    } catch {
       setError('Failed to load subscriptions');
     } finally {
       setLoading(false);
@@ -76,7 +75,7 @@ export function PushSubscriptionManager({
       setError(null);
 
       await calendarApi.delete(
-        `http://localhost:3011/api/v1/notifications/subscriptions/push/${subscriptionId}`
+        `/notifications/subscriptions/push/${subscriptionId}`
       );
 
       setSubscriptions((prev) =>
@@ -87,8 +86,7 @@ export function PushSubscriptionManager({
       if (subscriptions.length === 1 && isSubscribed) {
         await unsubscribe();
       }
-    } catch (err) {
-      console.error('Failed to delete subscription:', err);
+    } catch {
       setError('Failed to delete subscription');
     } finally {
       setDeletingId(null);
@@ -101,8 +99,7 @@ export function PushSubscriptionManager({
       await subscribe();
       // Reload subscriptions to show the new one
       await loadSubscriptions();
-    } catch (err) {
-      console.error('Failed to subscribe:', err);
+    } catch {
       setError('Failed to subscribe to notifications');
     }
   };
