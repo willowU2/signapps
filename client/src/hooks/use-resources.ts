@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { calendarApi } from "@/lib/api";
+import { calendarApiClient } from "@/lib/api/core";
 
 export interface Resource {
   id: string;
@@ -31,7 +31,7 @@ export function useResources() {
   const loadResources = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await calendarApi.get("/resources");
+      const response = await calendarApiClient.get("/resources");
       setResources(response.data);
       setError(null);
     } catch {
@@ -44,7 +44,7 @@ export function useResources() {
   const loadResourcesByType = useCallback(
     async (type: string) => {
       try {
-        const response = await calendarApi.get(`/resources/type/${type}`);
+        const response = await calendarApiClient.get(`/resources/type/${type}`);
         return response.data;
       } catch {
         return [];
@@ -61,7 +61,7 @@ export function useResources() {
       location?: string
     ) => {
       try {
-        const response = await calendarApi.post("/resources", {
+        const response = await calendarApiClient.post("/resources", {
           name,
           type,
           capacity,
@@ -85,7 +85,7 @@ export function useResources() {
       updates: { name?: string; is_available?: boolean }
     ) => {
       try {
-        const response = await calendarApi.put(
+        const response = await calendarApiClient.put(
           `/resources/${resourceId}`,
           updates
         );
@@ -105,7 +105,7 @@ export function useResources() {
   const deleteResource = useCallback(
     async (resourceId: string) => {
       try {
-        await calendarApi.delete(`/resources/${resourceId}`);
+        await calendarApiClient.delete(`/resources/${resourceId}`);
         setResources((prev) => prev.filter((r) => r.id !== resourceId));
         setError(null);
       } catch (err) {
@@ -123,7 +123,7 @@ export function useResources() {
       endTime: string
     ): Promise<AvailabilityResponse | null> => {
       try {
-        const response = await calendarApi.post("/resources/availability", {
+        const response = await calendarApiClient.post("/resources/availability", {
           resource_ids: resourceIds,
           start_time: startTime,
           end_time: endTime,
@@ -139,7 +139,7 @@ export function useResources() {
   const bookResources = useCallback(
     async (resourceId: string, eventId: string, resourceIds: string[]) => {
       try {
-        await calendarApi.post(`/resources/${resourceId}/book`, {
+        await calendarApiClient.post(`/resources/${resourceId}/book`, {
           event_id: eventId,
           resource_ids: resourceIds,
         });

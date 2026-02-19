@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { storageApi } from '@/lib/api';
+import { storageApiClient } from '@/lib/api/core';
 
 export interface Permissions {
   bucket: string;
@@ -39,7 +39,7 @@ export function usePermissions(): UsePermissionsReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await storageApi.getPermissions(bucket, key);
+      const response = await storageApiClient.get(`/permissions/${bucket}/${encodeURIComponent(key)}`);
       setPermissionsState(response.data);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -53,7 +53,7 @@ export function usePermissions(): UsePermissionsReturn {
     async (bucket: string, key: string, mode: number) => {
       setError(null);
       try {
-        const response = await storageApi.setPermissions(bucket, key, { mode });
+        const response = await storageApiClient.put(`/permissions/${bucket}/${encodeURIComponent(key)}`, { mode });
         setPermissionsState(response.data);
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -68,7 +68,7 @@ export function usePermissions(): UsePermissionsReturn {
     async (bucket: string, key: string) => {
       setError(null);
       try {
-        await storageApi.resetPermissions(bucket, key);
+        await storageApiClient.delete(`/permissions/${bucket}/${encodeURIComponent(key)}`);
         setPermissionsState(null);
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));

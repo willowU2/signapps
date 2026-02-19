@@ -88,9 +88,16 @@ export default function SettingsPage() {
   // LDAP config state
   const [ldapConfig, setLdapConfig] = useState<LdapConfig>({
     enabled: false,
+    url: '',
     server_url: '',
     bind_dn: '',
+    bind_password: '',
     base_dn: '',
+    user_filter: '',
+    group_filter: '',
+    email_attribute: '',
+    display_name_attribute: '',
+    sync_interval_seconds: 3600,
   });
   const [ldapSaving, setLdapSaving] = useState(false);
   const [ldapTesting, setLdapTesting] = useState(false);

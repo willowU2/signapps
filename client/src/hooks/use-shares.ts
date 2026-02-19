@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { calendarApi } from "@/lib/api";
+import { calendarApiClient } from "@/lib/api/core";
 
 export interface CalendarShare {
   calendar_id: string;
@@ -25,7 +25,7 @@ export function useShares(calendarId: string | null) {
 
     try {
       setLoading(true);
-      const response = await calendarApi.get(
+      const response = await calendarApiClient.get(
         `/calendars/${calendarId}/shares`
       );
       setShares(response.data);
@@ -42,7 +42,7 @@ export function useShares(calendarId: string | null) {
       if (!calendarId) return;
 
       try {
-        const response = await calendarApi.post(
+        const response = await calendarApiClient.post(
           `/calendars/${calendarId}/shares`,
           { user_id: userId, role }
         );
@@ -62,7 +62,7 @@ export function useShares(calendarId: string | null) {
       if (!calendarId) return;
 
       try {
-        await calendarApi.delete(
+        await calendarApiClient.delete(
           `/calendars/${calendarId}/shares/${userId}`
         );
         setShares((prev) => prev.filter((s) => s.user_id !== userId));
@@ -80,7 +80,7 @@ export function useShares(calendarId: string | null) {
       if (!calendarId) return;
 
       try {
-        await calendarApi.put(
+        await calendarApiClient.put(
           `/calendars/${calendarId}/shares/${userId}`,
           { role }
         );
@@ -101,7 +101,7 @@ export function useShares(calendarId: string | null) {
       if (!calendarId) return null;
 
       try {
-        const response = await calendarApi.get(
+        const response = await calendarApiClient.get(
           `/calendars/${calendarId}/shares/${userId}/check`
         );
         return response.data;

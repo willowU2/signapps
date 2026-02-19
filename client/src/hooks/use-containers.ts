@@ -71,7 +71,7 @@ export function useContainers() {
     retry: false,
     queryFn: async () => {
       const response = await containersApi.list();
-      return (response.data || []).map((c: ContainerApiResponse) => {
+      return ((response.data || []) as unknown as ContainerApiResponse[]).map((c) => {
         const dockerInfo = c.docker_info;
         return {
           id: c.id,

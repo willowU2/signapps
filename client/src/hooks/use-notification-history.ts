@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import { calendarApi } from '@/lib/api';
+import { calendarApiClient } from '@/lib/api/core';
 
 export interface Notification {
   id: string;
@@ -44,7 +44,7 @@ export function useNotificationHistory(
       setLoading(true);
       setError(null);
 
-      const response = await calendarApi.get(
+      const response = await calendarApiClient.get(
         `/notifications/history?limit=${limit}`
       );
 
@@ -67,7 +67,7 @@ export function useNotificationHistory(
       try {
         setError(null);
 
-        await calendarApi.post(
+        await calendarApiClient.post(
           `/notifications/${notificationId}/resend`,
           {}
         );

@@ -42,7 +42,7 @@ export default function AppsPage() {
 
   const fetchApps = async (params?: { search?: string; category?: string }) => {
     try {
-      const res = await storeApi.listApps(params);
+      const res = await storeApi.listApps(params?.category, params?.search);
       setApps(res.data);
     } catch {
       // Silently fail – store may not be loaded yet

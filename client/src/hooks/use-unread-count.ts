@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import { calendarApi } from '@/lib/api';
+import { calendarApiClient } from '@/lib/api/core';
 import { useAuthStore } from '@/lib/store';
 
 function hasAccessToken(): boolean {
@@ -38,7 +38,7 @@ export function useUnreadCount(initialInterval: number = 30000): UseUnreadCountR
     try {
       setError(null);
 
-      const response = await calendarApi.get(
+      const response = await calendarApiClient.get(
         '/notifications/unread-count'
       );
 

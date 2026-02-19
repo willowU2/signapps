@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import { calendarApi } from '@/lib/api';
+import { calendarApiClient } from '@/lib/api/core';
 
 export interface NotificationPreferences {
   id: string;
@@ -42,7 +42,7 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
         setLoading(true);
         setError(null);
 
-        const response = await calendarApi.get(
+        const response = await calendarApiClient.get(
           '/notifications/preferences'
         );
 
@@ -80,7 +80,7 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
         setError(null);
         const updatedPrefs = { ...preferences, ...updates };
 
-        const response = await calendarApi.put(
+        const response = await calendarApiClient.put(
           '/notifications/preferences',
           updatedPrefs
         );
