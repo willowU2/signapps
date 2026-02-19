@@ -1,0 +1,82 @@
+
+import { calendarApiClient } from './core';
+import { Calendar, CreateCalendar, UpdateCalendar, Event, CreateEvent, UpdateEvent, EventAttendee, AddEventAttendee } from '@/types/calendar';
+
+export const calendarApi = {
+    // Calendars
+    createCalendar: (data: CreateCalendar) =>
+        calendarApiClient.post<Calendar>("/calendars", data),
+
+    listCalendars: () =>
+        calendarApiClient.get<Calendar[]>("/calendars"),
+
+    getCalendar: (id: string) =>
+        calendarApiClient.get<Calendar>(`/calendars/${id}`),
+
+    updateCalendar: (id: string, data: UpdateCalendar) =>
+        calendarApiClient.put<Calendar>(`/calendars/${id}`, data),
+
+    deleteCalendar: (id: string) =>
+        calendarApiClient.delete(`/calendars/${id}`),
+
+    // Calendar members (sharing)
+    listMembers: (calendarId: string) =>
+        calendarApiClient.get(`/calendars/${calendarId}/members`),
+
+    addMember: (calendarId: string, userId: string, role: string) =>
+        calendarApiClient.post(`/calendars/${calendarId}/members`, { user_id: userId, role }),
+
+    removeMember: (calendarId: string, userId: string) =>
+        calendarApiClient.delete(`/calendars/${calendarId}/members/${userId}`),
+
+    updateMemberRole: (calendarId: string, userId: string, role: string) =>
+        calendarApiClient.put(`/calendars/${calendarId}/members/${userId}`, { role }),
+
+    // Events
+    createEvent: (calendarId: string, data: CreateEvent) =>
+        calendarApiClient.post<Event>(`/calendars/${calendarId}/events`, data),
+
+    listEvents: (calendarId: string, start?: Date, end?: Date) =>
+        calendarApiClient.get<Event[]>(`/calendars/${calendarId}/events`, {
+            params: {
+                start: start?.toISOString(),
+                end: end?.toISOString(),
+            },
+        }),
+
+    getEvent: (id: string) =>
+        calendarApiClient.get<Event>(`/events/${id}`),
+
+    updateEvent: (id: string, data: UpdateEvent) =>
+        calendarApiClient.put<Event>(`/events/${id}`, data),
+
+    deleteEvent: (id: string) =>
+        calendarApiClient.delete(`/events/${id}`),
+
+    // Event attendees
+    addAttendee: (eventId: string, data: AddEventAttendee) =>
+        calendarApiClient.post<EventAttendee>(`/events/${eventId}/attendees`, data),
+
+    listAttendees: (eventId: string) =>
+        calendarApiClient.get<EventAttendee[]>(`/events/${eventId}/attendees`),
+
+    updateRsvp: (attendeeId: string, rsvpStatus: string) =>
+        calendarApiClient.put(`/attendees/${attendeeId}/rsvp`, { rsvp_status: rsvpStatus }),
+
+    removeAttendee: (attendeeId: string) =>
+        calendarApiClient.delete(`/attendees/${attendeeId}`),
+
+    // Raw HTTP access for calendar-specific endpoints
+    // Used by components that need custom calendar endpoints (import/export, notifications, etc.)
+    get: <T = any>(url: string, config?: any) =>
+        calendarApiClient.get<T>(url, config),
+
+    post: <T = any>(url: string, data?: any, config?: any) =>
+        calendarApiClient.post<T>(url, data, config),
+
+    put: <T = any>(url: string, data?: any, config?: any) =>
+        calendarApiClient.put<T>(url, data, config),
+
+    delete: <T = any>(url: string, config?: any) =>
+        calendarApiClient.delete<T>(url, config),
+};

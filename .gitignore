@@ -18,10 +18,14 @@ Cargo.lock
 # OS
 .DS_Store
 Thumbs.db
+nul
 
 # Logs
 *.log
 logs/
+backend_logs.txt
+build_log.txt
+check_log.txt
 
 # Test coverage
 *.lcov
@@ -40,3 +44,65 @@ secrets/
 tmp/
 temp/
 *.tmp
+tmp_*/
+tmp_*.json
+progsignapps-platformtmp_containers.json
+
+# Node.js
+node_modules/
+.next/
+package-lock.json
+
+# Data & Models (runtime)
+data/
+
+# Screenshots (dev/test)
+*.png
+!client/public/**/*.png
+
+# Test artifacts
+client/playwright-report/
+client/test-results/
+client/**/build_output.txt
+client/**/lint*.txt
+client/**/find_output.txt
+client/**/all_files.txt
+
+# Build artifacts
+services/**/build_errors.txt
+services/**/check_output*.txt
+
+# Utility/setup scripts (not part of source)
+install-postgres.ps1
+reset_database.rs
+reset_db.sh
+init_db.sql
+init_admin.rs
+test_db.sql
+fix_hash.sql
+test-websocket*.js
+start_all_services.sh
+start_backend.sh
+launch_all.sh
+Cargo_reset.toml
+
+# Documentation artifacts (session-specific)
+DATABASE_SETUP.md
+DEPLOY_READY.md
+SETUP_COMPLETE.md
+TECH_SUMMARY.txt
+
+# Claude session artifacts
+.claude/BUILD_STATUS.md
+.claude/BUILD_TROUBLESHOOTING.md
+.claude/CORRECTION_REPORT.md
+.claude/FINAL_STATUS.md
+.claude/FINAL_SUMMARY.md
+.claude/FIXES_APPLIED.md
+.claude/PHASE6_INTEGRATION.md
+.claude/PHASE6_PROGRESS.md
+.claude/PROJECT_COMPLETE.md
+.claude/SESSION_COMPLETE_SUMMARY.md
+
+# WebAssembly (downloaded at runtime)
+client/public/vad/
