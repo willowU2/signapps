@@ -92,7 +92,7 @@ pub struct LogsQuery {
 }
 
 /// List containers from database with Docker info enrichment.
-/// Admin (role 0) sees all containers, regular users see only their own.
+/// Admin (role >= 2) sees all containers, regular users see only their own.
 #[tracing::instrument(skip(state))]
 pub async fn list(
     State(state): State<AppState>,
@@ -103,8 +103,8 @@ pub async fn list(
     let limit = query.limit.unwrap_or(50).min(100);
     let offset = query.offset.unwrap_or(0);
 
-    // Admin (role 0) sees all, otherwise filter by owner_id
-    let db_containers = if claims.role == 0 {
+    // Admin (role >= 2) sees all, otherwise filter by owner_id
+    let db_containers = if claims.role >= 2 {
         repo.list(limit, offset).await?
     } else {
         repo.list_by_owner(claims.sub).await?
@@ -157,7 +157,7 @@ pub async fn list(
         .collect();
 
     // For admin users, also include Docker-only containers (not in DB)
-    if claims.role == 0 {
+    if claims.role >= 2 {
         for docker_container in docker_containers.iter() {
             if matched_docker_ids.contains(&docker_container.id) {
                 continue;
