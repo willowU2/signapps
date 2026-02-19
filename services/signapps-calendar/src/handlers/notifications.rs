@@ -69,7 +69,10 @@ pub async fn get_preferences(
 ) -> Result<Json<serde_json::Value>, CalendarError> {
     let prefs = NotificationPreferencesRepository::get_or_create(&state.pool, claims.sub)
         .await
-        .map_err(|_| CalendarError::not_found("Notification preferences not found"))?;
+        .map_err(|e| {
+            tracing::error!("Failed to get/create notification preferences: {}", e);
+            CalendarError::internal(&format!("Notification preferences error: {}", e))
+        })?;
 
     Ok(Json(serde_json::json!({
         "id": prefs.id.to_string(),

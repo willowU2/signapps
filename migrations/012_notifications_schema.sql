@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
   reminder_times INT[] NOT NULL DEFAULT '{15,60,1440}'::INT[],
 
   -- Metadata
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   -- Constraints
   UNIQUE(user_id, calendar_id),
@@ -70,8 +70,8 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   browser_version VARCHAR(20),
 
   -- Metadata
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   -- Constraint
   UNIQUE(user_id, subscription_json)
@@ -121,11 +121,11 @@ CREATE TABLE IF NOT EXISTS notifications_sent (
   error_message TEXT,
 
   -- Timestamps
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  sent_at TIMESTAMP,
-  delivered_at TIMESTAMP,
-  read_at TIMESTAMP,
-  failed_at TIMESTAMP,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  sent_at TIMESTAMPTZ,
+  delivered_at TIMESTAMPTZ,
+  read_at TIMESTAMPTZ,
+  failed_at TIMESTAMPTZ,
 
   -- Tracking
   external_id VARCHAR(255),  -- Email message ID, Twilio SID, etc
@@ -186,8 +186,8 @@ CREATE TABLE IF NOT EXISTS notification_templates (
   -- Status
   is_active BOOLEAN NOT NULL DEFAULT true,
 
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   -- Constraints
   UNIQUE(notification_type, channel)
@@ -206,8 +206,8 @@ CREATE TABLE IF NOT EXISTS notification_digests (
   digest_type VARCHAR(20) NOT NULL
     CHECK (digest_type IN ('daily', 'weekly')),
 
-  scheduled_for TIMESTAMP NOT NULL,  -- When digest should be sent
-  sent_at TIMESTAMP,  -- When it was actually sent
+  scheduled_for TIMESTAMPTZ NOT NULL,  -- When digest should be sent
+  sent_at TIMESTAMPTZ,  -- When it was actually sent
 
   -- Status
   status VARCHAR(20) NOT NULL DEFAULT 'pending'
@@ -219,8 +219,8 @@ CREATE TABLE IF NOT EXISTS notification_digests (
 
   error_message TEXT,
 
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes

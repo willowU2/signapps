@@ -1,9 +1,9 @@
 //! SignApps Calendar Service
 //! Manages shared calendars, events, recurring meetings, and tasks with hierarchical support
 
-use axum::{extract::DefaultBodyLimit, http::StatusCode, routing::get, Router};
+use axum::{extract::DefaultBodyLimit, http::StatusCode, middleware, routing::get, Router};
 use dashmap::DashMap;
-use signapps_common::middleware::AuthState;
+use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::JwtConfig;
 use signapps_db::{create_pool, run_migrations, DatabasePool};
 use std::sync::Arc;
@@ -114,8 +114,14 @@ fn build_router(state: AppState) -> Router {
         timezones, websocket,
     };
 
-    Router::new()
+    // Public routes (no auth required)
+    let public_routes = Router::new()
         .route("/health", get(health_check))
+        .route("/api/v1/notifications/push/vapid-key", get(push::get_vapid_key))
+        .route("/api/v1/timezones", get(timezones::list_timezones));
+
+    // Protected routes (auth required)
+    let protected_routes = Router::new()
         // Calendar CRUD routes
         .route("/api/v1/calendars", post(calendars::create_calendar))
         .route("/api/v1/calendars", get(calendars::list_calendars))
@@ -149,7 +155,6 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/events/:event_id/exceptions", post(recurrence::create_exception))
         .route("/api/v1/rrule/validate", post(recurrence::validate_rrule))
         // Timezone routes
-        .route("/api/v1/timezones", get(timezones::list_timezones))
         .route("/api/v1/timezones/validate", post(timezones::validate_timezone))
         .route("/api/v1/timezones/convert", post(timezones::convert_timezone))
         // Task routes
@@ -190,9 +195,15 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/notifications/history", get(notifications::get_notification_history))
         .route("/api/v1/notifications/:notification_id/resend", post(notifications::resend_notification))
         .route("/api/v1/notifications/unread-count", get(notifications::get_unread_count))
-        // Web Push notification routes
-        .route("/api/v1/notifications/push/vapid-key", get(push::get_vapid_key))
+        // Web Push send (admin)
         .route("/api/v1/notifications/push/send", post(push::send_push))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    public_routes
+        .merge(protected_routes)
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))  // 100MB
         .layer(TraceLayer::new_for_http())
         .with_state(state)
