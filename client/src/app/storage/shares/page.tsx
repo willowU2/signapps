@@ -70,8 +70,7 @@ export default function SharesPage() {
     try {
       const response = await sharesApi.list();
       setShares(response.data.shares);
-    } catch (error) {
-      console.error('Failed to fetch shares:', error);
+    } catch {
       toast.error('Failed to load shares');
     } finally {
       setLoading(false);
@@ -116,8 +115,7 @@ export default function SharesPage() {
       toast.success('Share updated');
       setEditDialogOpen(false);
       fetchShares();
-    } catch (error) {
-      console.error('Failed to update share:', error);
+    } catch {
       toast.error('Failed to update share');
     } finally {
       setSaving(false);
@@ -129,8 +127,7 @@ export default function SharesPage() {
       await sharesApi.delete(id);
       toast.success('Share link revoked');
       fetchShares();
-    } catch (error) {
-      console.error('Failed to delete share:', error);
+    } catch {
       toast.error('Failed to revoke share');
     }
   };

@@ -82,8 +82,8 @@ export function AttendeeList({
       setLocalAttendees(updated);
       onAttendeesChange(updated);
       setEmail("");
-    } catch (err) {
-      console.error("Failed to add attendee:", err);
+    } catch {
+      // ignore
     } finally {
       setIsAdding(false);
     }
@@ -96,8 +96,8 @@ export function AttendeeList({
       const updated = localAttendees.filter((a) => a.id !== attendeeId);
       setLocalAttendees(updated);
       onAttendeesChange(updated);
-    } catch (err) {
-      console.error("Failed to remove attendee:", err);
+    } catch {
+      // ignore
     }
   };
 
@@ -116,8 +116,8 @@ export function AttendeeList({
       );
       setLocalAttendees(updated);
       onAttendeesChange(updated);
-    } catch (err) {
-      console.error("Failed to update RSVP:", err);
+    } catch {
+      // ignore
     }
   };
 

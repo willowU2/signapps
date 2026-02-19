@@ -84,8 +84,8 @@ export function ShareDialog({
     try {
       await unshareCalendar(removeId);
       setRemoveId(null);
-    } catch (err) {
-      console.error("Failed to remove share:", err);
+    } catch {
+      // ignore
     }
   };
 
@@ -95,8 +95,8 @@ export function ShareDialog({
     try {
       await updatePermission(editRole.id, editRole.role);
       setEditRole(null);
-    } catch (err) {
-      console.error("Failed to update permission:", err);
+    } catch {
+      // ignore
     }
   };
 

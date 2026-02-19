@@ -127,8 +127,7 @@ export default function SettingsPage() {
       if (response.data) {
         setLdapConfig(response.data);
       }
-    } catch (error) {
-      console.error('Failed to fetch LDAP config:', error);
+    } catch {
       // Config might not exist yet, use defaults
     }
   }, []);
@@ -138,8 +137,7 @@ export default function SettingsPage() {
     try {
       const response = await groupsApi.list();
       setGroups(response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch groups:', error);
+    } catch {
       setGroups([]);
     } finally {
       setGroupsLoading(false);
@@ -151,8 +149,7 @@ export default function SettingsPage() {
     try {
       const response = await api.get<WebhookConfig[]>('/webhooks');
       setWebhooks(response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch webhooks:', error);
+    } catch {
       setWebhooks([]);
     } finally {
       setWebhooksLoading(false);
@@ -170,8 +167,7 @@ export default function SettingsPage() {
     try {
       await authApi.ldapUpdateConfig(ldapConfig);
       toast.success('LDAP configuration saved');
-    } catch (error) {
-      console.error('Failed to save LDAP config:', error);
+    } catch {
       toast.error('Failed to save LDAP configuration');
     } finally {
       setLdapSaving(false);
@@ -187,8 +183,7 @@ export default function SettingsPage() {
       } else {
         toast.error(response.data.message || 'LDAP connection failed');
       }
-    } catch (error) {
-      console.error('LDAP test failed:', error);
+    } catch {
       toast.error('Failed to test LDAP connection');
     } finally {
       setLdapTesting(false);
@@ -228,8 +223,7 @@ export default function SettingsPage() {
       }
       setGroupDialogOpen(false);
       fetchGroups();
-    } catch (error) {
-      console.error('Failed to save group:', error);
+    } catch {
       toast.error('Failed to save group');
     } finally {
       setGroupSaving(false);
@@ -244,8 +238,7 @@ export default function SettingsPage() {
       toast.success('Group deleted successfully');
       setDeleteGroupDialog({ open: false, group: null });
       fetchGroups();
-    } catch (error) {
-      console.error('Failed to delete group:', error);
+    } catch {
       toast.error('Failed to delete group');
     }
   };
@@ -292,8 +285,7 @@ export default function SettingsPage() {
       }
       setWebhookDialogOpen(false);
       fetchWebhooks();
-    } catch (error) {
-      console.error('Failed to save webhook:', error);
+    } catch {
       toast.error('Failed to save webhook');
     } finally {
       setWebhookSaving(false);
@@ -305,8 +297,7 @@ export default function SettingsPage() {
       await api.put(`/webhooks/${webhook.id}`, { enabled: !webhook.enabled });
       toast.success(`Webhook ${webhook.enabled ? 'disabled' : 'enabled'}`);
       fetchWebhooks();
-    } catch (error) {
-      console.error('Failed to toggle webhook:', error);
+    } catch {
       toast.error('Failed to update webhook');
     }
   };
@@ -316,8 +307,7 @@ export default function SettingsPage() {
       await api.post(`/webhooks/${webhook.id}/test`);
       toast.success('Test webhook sent');
       fetchWebhooks();
-    } catch (error) {
-      console.error('Failed to test webhook:', error);
+    } catch {
       toast.error('Failed to send test webhook');
     }
   };
@@ -330,8 +320,7 @@ export default function SettingsPage() {
       toast.success('Webhook deleted successfully');
       setDeleteWebhookDialog({ open: false, webhook: null });
       fetchWebhooks();
-    } catch (error) {
-      console.error('Failed to delete webhook:', error);
+    } catch {
       toast.error('Failed to delete webhook');
     }
   };

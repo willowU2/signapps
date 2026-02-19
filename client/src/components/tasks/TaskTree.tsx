@@ -174,8 +174,8 @@ export function TaskTree({
         setIsLoading(true);
         const data = await getTaskTree(calendarId);
         setTree(data);
-      } catch (error) {
-        console.error("Failed to load task tree:", error);
+      } catch {
+        // ignore
       } finally {
         setIsLoading(false);
       }
@@ -192,8 +192,8 @@ export function TaskTree({
       // Reload tree
       const data = await getTaskTree(calendarId);
       setTree(data);
-    } catch (error) {
-      console.error("Failed to delete task:", error);
+    } catch {
+      // ignore
     }
   };
 

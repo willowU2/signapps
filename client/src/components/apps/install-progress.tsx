@@ -115,15 +115,14 @@ export function InstallProgress({
                   }
                   return next;
                 });
-              } catch (e) {
-                console.error('Failed to parse SSE event:', e);
+              } catch {
+                // ignore
               }
             }
           }
         }
       } catch (err) {
         if (!abortController.signal.aborted) {
-          console.error('Stream error:', err);
           setError(err instanceof Error ? err.message : 'Connection lost');
         }
       }

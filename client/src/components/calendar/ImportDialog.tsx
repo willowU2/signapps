@@ -124,7 +124,6 @@ export function ImportDialog({
         }
       }
     } catch (err) {
-      console.error("Failed to import calendar:", err);
       setResult({
         success: false,
         importedCount: 0,

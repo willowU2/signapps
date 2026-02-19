@@ -56,8 +56,7 @@ export function LogsDialog({ open, onOpenChange, containerId, containerName }: L
         logLines = [];
       }
       setLogs(logLines);
-    } catch (error) {
-      console.error('Failed to fetch logs:', error);
+    } catch {
       // Show error message instead of mock data
       setLogs(['Error: Failed to fetch container logs']);
     } finally {

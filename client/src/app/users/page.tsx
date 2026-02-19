@@ -335,8 +335,7 @@ function ImportUsersDialog({
 
       setParsedUsers(users);
       setValidationErrors(errors);
-    } catch (error) {
-      console.error('Failed to parse CSV:', error);
+    } catch {
       toast.error('Failed to parse CSV file');
     }
   };
@@ -663,8 +662,7 @@ function AuditLogTable({ users }: AuditLogTableProps) {
       const response = await auditApi.list(filters);
       setLogs(response.data?.logs || []);
       setTotal(response.data?.total || 0);
-    } catch (error) {
-      console.error('Failed to fetch audit logs:', error);
+    } catch {
       // Show empty list on error
       setLogs([]);
       setTotal(0);
@@ -961,8 +959,7 @@ export default function UsersPage() {
       }
       setDialogOpen(false);
       refreshUsers();
-    } catch (error) {
-      console.error('Failed to save user:', error);
+    } catch {
       toast.error(editingUser ? 'Failed to update user' : 'Failed to create user');
     } finally {
       setSaving(false);
@@ -976,8 +973,7 @@ export default function UsersPage() {
       await usersApi.delete(deleteDialog.user.id);
       toast.success('User deleted successfully');
       refreshUsers();
-    } catch (error) {
-      console.error('Failed to delete user:', error);
+    } catch {
       toast.error('Failed to delete user');
     } finally {
       setDeleteDialog({ open: false, user: null });
@@ -998,8 +994,7 @@ export default function UsersPage() {
       toast.success('Password reset successfully');
       setResetPasswordDialog({ open: false, user: null });
       setNewPassword('');
-    } catch (error) {
-      console.error('Failed to reset password:', error);
+    } catch {
       toast.error('Failed to reset password');
     } finally {
       setResettingPassword(false);

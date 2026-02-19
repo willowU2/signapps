@@ -58,8 +58,8 @@ export function CreateArrayDialog({ open, onOpenChange, onSubmit }: CreateArrayD
       // Filter out disks already in an array
       const available = response.data.filter(d => !d.array_id && d.status !== 'failed');
       setAvailableDisks(available);
-    } catch (err) {
-      console.error('Failed to load disks:', err);
+    } catch {
+      // ignore
     } finally {
       setLoadingDisks(false);
     }

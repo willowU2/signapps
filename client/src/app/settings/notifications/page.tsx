@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Mail, MessageSquare, Bell, Clock, Save, Loader2, CheckCircle2, AlertCircle, History, Settings } from 'lucide-react';
-import axios from 'axios';
+import { calendarApi } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { PushSubscriptionManager } from '@/components/notifications/push-subscription-manager';
 import { NotificationPreferencesForm } from '@/components/notifications/notification-preferences-form';
@@ -50,12 +50,11 @@ export default function NotificationSettingsPage() {
   useEffect(() => {
     const loadPreferences = async () => {
       try {
-        const response = await axios.get('/api/v1/notifications/preferences');
+        const response = await calendarApi.get('/notifications/preferences');
         setPrefs(response.data);
         checkPushRegistration();
-      } catch (err) {
+      } catch {
         setError('Failed to load notification preferences');
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -85,7 +84,7 @@ export default function NotificationSettingsPage() {
     setError(null);
 
     try {
-      await axios.put('/api/v1/notifications/preferences', {
+      await calendarApi.put('/notifications/preferences', {
         email_enabled: prefs.email_enabled,
         email_frequency: prefs.email_frequency,
         sms_enabled: prefs.sms_enabled,
@@ -98,9 +97,8 @@ export default function NotificationSettingsPage() {
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
+    } catch {
       setError('Failed to save preferences');
-      console.error(err);
     } finally {
       setSaving(false);
     }
@@ -129,16 +127,15 @@ export default function NotificationSettingsPage() {
       });
 
       // Send to backend
-      await axios.post('/api/v1/notifications/subscriptions/push', {
+      await calendarApi.post('/notifications/subscriptions/push', {
         subscription,
         browser_name: getBrowserName(),
       });
 
       setPushRegistered(true);
       handleChange('push_enabled', true);
-    } catch (err) {
+    } catch {
       setError('Failed to register push notifications');
-      console.error(err);
     }
   };
 

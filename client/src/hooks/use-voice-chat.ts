@@ -178,9 +178,7 @@ export function useVoiceChat({
 
     async function initVoice() {
       try {
-        console.log('[VoiceChat] Loading VAD module...');
         const { MicVAD } = await import('@ricky0123/vad-web');
-        console.log('[VoiceChat] VAD module loaded');
 
         if (cancelled) return;
 
@@ -199,12 +197,10 @@ export function useVoiceChat({
           ? localStorage.getItem('access_token')
           : null;
         const wsUrl = getVoiceWebSocketUrl();
-        console.log('[VoiceChat] Connecting WebSocket:', wsUrl);
         const ws = new WebSocket(wsUrl);
         ws.binaryType = 'arraybuffer';
 
         ws.onopen = () => {
-          console.log('[VoiceChat] WebSocket connected');
           // Send config message
           ws.send(JSON.stringify({
             type: 'config',
@@ -250,7 +246,6 @@ export function useVoiceChat({
                 }
                 break;
               case 'error':
-                console.error('[VoiceChat] Server error:', msg.message);
                 toast.error(msg.message || 'Erreur du pipeline vocal');
                 setVoiceState('listening');
                 accumulatedTextRef.current = '';
@@ -261,12 +256,11 @@ export function useVoiceChat({
           }
         };
 
-        ws.onerror = (err) => {
-          console.error('[VoiceChat] WebSocket error:', err);
+        ws.onerror = () => {
+          // WebSocket error
         };
 
-        ws.onclose = (event) => {
-          console.log('[VoiceChat] WebSocket closed:', event.code, event.reason);
+        ws.onclose = () => {
           if (enabledRef.current && !cancelled) {
             toast.error('Connexion vocale perdue');
             setVoiceEnabled(false);
@@ -281,7 +275,6 @@ export function useVoiceChat({
         }
 
         // Initialize VAD
-        console.log('[VoiceChat] Initializing MicVAD...');
         const vad = await MicVAD.new({
           baseAssetPath: '/vad/',
           onnxWASMBasePath: '/vad/',
@@ -289,7 +282,6 @@ export function useVoiceChat({
           startOnLoad: true,
 
           onSpeechStart: () => {
-            console.log('[VoiceChat] Speech start detected');
             if (!enabledRef.current) return;
 
             // If the AI is speaking, interrupt
@@ -311,7 +303,6 @@ export function useVoiceChat({
           },
 
           onSpeechEnd: () => {
-            console.log('[VoiceChat] Speech end detected');
             if (!enabledRef.current) return;
 
             setVoiceState('transcribing');
@@ -323,7 +314,6 @@ export function useVoiceChat({
           },
 
           onVADMisfire: () => {
-            console.log('[VoiceChat] VAD misfire (speech too short)');
             if (enabledRef.current) {
               setVoiceState('listening');
             }
@@ -338,10 +328,8 @@ export function useVoiceChat({
 
         vadRef.current = vad;
         setVoiceState('listening');
-        console.log('[VoiceChat] VAD ready, listening...');
         toast.success('Mode vocal active');
       } catch (err) {
-        console.error('[VoiceChat] Initialization failed:', err);
         toast.error(
           'Impossible d\'activer le micro : ' +
             (err instanceof Error ? err.message : String(err))

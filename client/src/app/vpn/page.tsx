@@ -196,8 +196,8 @@ export default function VpnPage() {
       if (dnsStatsRes.status === 'fulfilled') {
         setDnsStats(dnsStatsRes.value.data);
       }
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
+    } catch {
+      // ignore
     } finally {
       setLoading(false);
     }
@@ -249,8 +249,7 @@ export default function VpnPage() {
       }
       setTunnelDialogOpen(false);
       fetchData();
-    } catch (error) {
-      console.error('Failed to save tunnel:', error);
+    } catch {
       toast.error('Failed to save tunnel');
     } finally {
       setSubmitting(false);
@@ -262,8 +261,7 @@ export default function VpnPage() {
       await tunnelApi.reconnectTunnel(tunnel.id);
       toast.success('Reconnecting tunnel...');
       setTimeout(fetchData, 2000);
-    } catch (error) {
-      console.error('Failed to reconnect tunnel:', error);
+    } catch {
       toast.error('Failed to reconnect tunnel');
     }
   };
@@ -312,8 +310,7 @@ export default function VpnPage() {
       }
       setRelayDialogOpen(false);
       fetchData();
-    } catch (error) {
-      console.error('Failed to save relay:', error);
+    } catch {
       toast.error('Failed to save relay');
     } finally {
       setSubmitting(false);
@@ -328,8 +325,7 @@ export default function VpnPage() {
       } else {
         toast.error(`Relay test failed: ${result.data.error}`);
       }
-    } catch (error) {
-      console.error('Failed to test relay:', error);
+    } catch {
       toast.error('Failed to test relay');
     }
   };
@@ -339,8 +335,7 @@ export default function VpnPage() {
       await tunnelApi.setPrimaryRelay(relay.id);
       toast.success('Primary relay updated');
       fetchData();
-    } catch (error) {
-      console.error('Failed to set primary relay:', error);
+    } catch {
       toast.error('Failed to set primary relay');
     }
   };
@@ -351,8 +346,7 @@ export default function VpnPage() {
       await tunnelApi.updateDnsConfig({ enabled });
       setDnsConfig(prev => prev ? { ...prev, enabled } : null);
       toast.success(enabled ? 'DNS enabled' : 'DNS disabled');
-    } catch (error) {
-      console.error('Failed to toggle DNS:', error);
+    } catch {
       toast.error('Failed to update DNS settings');
     }
   };
@@ -362,8 +356,7 @@ export default function VpnPage() {
       await tunnelApi.updateDnsConfig({ adblock_enabled: enabled });
       setDnsConfig(prev => prev ? { ...prev, adblock_enabled: enabled } : null);
       toast.success(enabled ? 'Ad blocking enabled' : 'Ad blocking disabled');
-    } catch (error) {
-      console.error('Failed to toggle ad blocking:', error);
+    } catch {
       toast.error('Failed to update ad blocking settings');
     }
   };
@@ -376,8 +369,7 @@ export default function VpnPage() {
       setDnsConfig(prev => prev ? { ...prev, upstream: newUpstream } : null);
       setUpstreamInput('');
       toast.success('Upstream DNS added');
-    } catch (error) {
-      console.error('Failed to add upstream:', error);
+    } catch {
       toast.error('Failed to add upstream DNS');
     }
   };
@@ -388,8 +380,7 @@ export default function VpnPage() {
       await tunnelApi.updateDnsConfig({ upstream: newUpstream });
       setDnsConfig(prev => prev ? { ...prev, upstream: newUpstream } : null);
       toast.success('Upstream DNS removed');
-    } catch (error) {
-      console.error('Failed to remove upstream:', error);
+    } catch {
       toast.error('Failed to remove upstream DNS');
     }
   };
@@ -407,8 +398,7 @@ export default function VpnPage() {
       setBlocklistDialogOpen(false);
       setBlocklistForm({ name: '', url: '' });
       fetchData();
-    } catch (error) {
-      console.error('Failed to add blocklist:', error);
+    } catch {
       toast.error('Failed to add blocklist');
     } finally {
       setSubmitting(false);
@@ -428,8 +418,7 @@ export default function VpnPage() {
         };
       });
       toast.success(blocklist.enabled ? 'Blocklist disabled' : 'Blocklist enabled');
-    } catch (error) {
-      console.error('Failed to toggle blocklist:', error);
+    } catch {
       toast.error('Failed to toggle blocklist');
     }
   };
@@ -462,8 +451,7 @@ export default function VpnPage() {
       }
       setDnsRecordDialogOpen(false);
       fetchData();
-    } catch (error) {
-      console.error('Failed to save DNS record:', error);
+    } catch {
       toast.error('Failed to save DNS record');
     } finally {
       setSubmitting(false);
@@ -495,8 +483,7 @@ export default function VpnPage() {
       }
       setDeleteDialog({ open: false, type: 'tunnel', item: null });
       fetchData();
-    } catch (error) {
-      console.error('Failed to delete:', error);
+    } catch {
       toast.error('Failed to delete');
     }
   };
@@ -544,8 +531,7 @@ export default function VpnPage() {
       setQuickTunnel(result.data);
       toast.success('Quick tunnel created!');
       fetchData();
-    } catch (error) {
-      console.error('Quick connect failed:', error);
+    } catch {
       toast.error('Quick connect failed. Make sure a relay is configured.');
     } finally {
       setQuickConnecting(false);
@@ -559,8 +545,7 @@ export default function VpnPage() {
         setQuickTunnel(null);
         toast.success('Tunnel disconnected');
         fetchData();
-      } catch (error) {
-        console.error('Failed to disconnect:', error);
+      } catch {
         toast.error('Failed to disconnect tunnel');
       }
     }

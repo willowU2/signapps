@@ -54,8 +54,7 @@ export default function TrashPage() {
       ]);
       setItems(itemsResponse.data.items);
       setStats(statsResponse.data);
-    } catch (error) {
-      console.error('Failed to fetch trash:', error);
+    } catch {
       toast.error('Failed to load trash');
     } finally {
       setLoading(false);
@@ -83,8 +82,7 @@ export default function TrashPage() {
 
       setSelectedItems(new Set());
       fetchTrash();
-    } catch (error) {
-      console.error('Restore failed:', error);
+    } catch {
       toast.error('Failed to restore items');
     } finally {
       setRestoring(false);
@@ -100,8 +98,7 @@ export default function TrashPage() {
       toast.success(`Permanently deleted ${selectedItems.size} item(s)`);
       setSelectedItems(new Set());
       fetchTrash();
-    } catch (error) {
-      console.error('Delete failed:', error);
+    } catch {
       toast.error('Failed to delete items');
     } finally {
       setDeleting(false);
@@ -115,8 +112,7 @@ export default function TrashPage() {
       toast.success('Trash emptied');
       setEmptyDialogOpen(false);
       fetchTrash();
-    } catch (error) {
-      console.error('Empty trash failed:', error);
+    } catch {
       toast.error('Failed to empty trash');
     } finally {
       setDeleting(false);

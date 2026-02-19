@@ -122,8 +122,7 @@ export function DocumentUpload({ open, onOpenChange, onSuccess }: DocumentUpload
             f.id === uploadFile.id ? { ...f, status: 'done', progress: 100 } : f
           )
         );
-      } catch (error) {
-        console.error('Failed to process file:', error);
+      } catch {
         setFiles((prev) =>
           prev.map((f) =>
             f.id === uploadFile.id

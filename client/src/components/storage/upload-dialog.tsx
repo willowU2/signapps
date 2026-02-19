@@ -85,8 +85,7 @@ export function UploadDialog({ open, onOpenChange, bucket, onUploadComplete }: U
             idx === i ? { ...f, status: 'success', progress: 100 } : f
           )
         );
-      } catch (error) {
-        console.error('Upload failed:', error);
+      } catch {
         setFiles((prev) =>
           prev.map((f, idx) =>
             idx === i

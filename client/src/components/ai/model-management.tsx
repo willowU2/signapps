@@ -142,8 +142,8 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
         const all = availableRes.value.data.models || [];
         setAvailableModels(all.filter(m => m.status === 'available'));
       }
-    } catch (error) {
-      console.error('Failed to fetch model data:', error);
+    } catch {
+      // ignore
     } finally {
       setLoading(false);
     }
@@ -228,8 +228,7 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
       await aiApi.downloadModel(modelId);
       toast.success(`Telechargement de ${modelId} lance`);
       startPolling(modelId);
-    } catch (error) {
-      console.error('Failed to download model:', error);
+    } catch {
       toast.error('Erreur lors du telechargement');
       setDownloadingIds((prev) => {
         const next = new Set(prev);
@@ -249,8 +248,7 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
       await aiApi.deleteModel(modelId);
       toast.success('Modele supprime');
       fetchData();
-    } catch (error) {
-      console.error('Failed to delete model:', error);
+    } catch {
       toast.error('Erreur lors de la suppression');
     }
   };

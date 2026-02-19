@@ -54,7 +54,6 @@ export function ExportDialog({
 
       onOpenChange(false);
     } catch (err) {
-      console.error("Failed to export calendar:", err);
       setError(
         err instanceof Error ? err.message : "Failed to export calendar"
       );
@@ -88,7 +87,6 @@ export function ExportDialog({
 
       onOpenChange(false);
     } catch (err) {
-      console.error("Failed to export calendar as JSON:", err);
       setError(
         err instanceof Error ? err.message : "Failed to export calendar"
       );

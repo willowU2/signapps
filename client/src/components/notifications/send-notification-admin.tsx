@@ -53,7 +53,7 @@ export function SendNotificationAdmin() {
       setSuccess(false);
 
       const response = await calendarApi.post(
-        'http://localhost:3011/api/v1/notifications/push/send',
+        '/notifications/push/send',
         {
           title: title.trim(),
           body: body.trim(),

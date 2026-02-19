@@ -57,8 +57,7 @@ export function QuotaCard({ className }: QuotaCardProps) {
           setAlerts(alertsRes.value.data);
         }
         setError(null);
-      } catch (err) {
-        console.error('Failed to fetch quota:', err);
+      } catch {
         setError('Impossible de charger les quotas');
         // Mock data for development
         setQuota({

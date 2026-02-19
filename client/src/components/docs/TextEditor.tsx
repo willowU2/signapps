@@ -13,7 +13,7 @@ export function TextEditor({ docId }: TextEditorProps) {
                 docId={docId}
                 placeholder="Start typing your document..."
                 onSynced={() => {
-                    console.log('Text document synced');
+                    // synced
                 }}
             />
         </div>

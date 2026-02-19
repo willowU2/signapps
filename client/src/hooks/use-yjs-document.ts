@@ -66,11 +66,10 @@ export function useYjsDocument(
 
             // Handle connection state
             wsProvider.on('connection-close', () => {
-                console.warn('WebSocket disconnected');
+                // WebSocket disconnected
             });
 
             wsProvider.on('connection-error', (error: Error) => {
-                console.error('WebSocket error:', error);
                 if (onError) {
                     onError(error);
                 }
@@ -87,7 +86,6 @@ export function useYjsDocument(
             };
         } catch (error) {
             const err = error instanceof Error ? error : new Error(String(error));
-            console.error('Failed to initialize Y.js document:', err);
             if (onError) {
                 onError(err);
             }

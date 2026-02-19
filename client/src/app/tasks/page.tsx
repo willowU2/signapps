@@ -39,8 +39,8 @@ export default function TasksPage() {
         if (response.data.length > 0) {
           setSelectedCalendarId(response.data[0].id);
         }
-      } catch (error) {
-        console.error("Failed to load calendars:", error);
+      } catch {
+        // ignore
       } finally {
         setIsLoading(false);
       }

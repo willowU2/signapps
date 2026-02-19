@@ -136,9 +136,8 @@ export function AlertConfigDialog({
 
       onSuccess?.();
       onOpenChange(false);
-    } catch (err) {
+    } catch {
       setError('Failed to save alert configuration');
-      console.error(err);
     } finally {
       setLoading(false);
     }

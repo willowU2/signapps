@@ -104,8 +104,7 @@ export default function SchedulerPage() {
     try {
       const response = await schedulerApi.listJobs();
       setJobs(response.data || []);
-    } catch (error) {
-      console.error('Failed to fetch jobs:', error);
+    } catch {
       setJobs([]);
     } finally {
       setLoading(false);
@@ -160,8 +159,7 @@ export default function SchedulerPage() {
       }
       setDialogOpen(false);
       fetchJobs();
-    } catch (error) {
-      console.error('Failed to save job:', error);
+    } catch {
       toast.error('Failed to save job');
     } finally {
       setSaving(false);
@@ -178,8 +176,7 @@ export default function SchedulerPage() {
         toast.success('Job enabled');
       }
       fetchJobs();
-    } catch (error) {
-      console.error('Failed to toggle job:', error);
+    } catch {
       toast.error('Failed to update job');
     }
   };
@@ -189,8 +186,7 @@ export default function SchedulerPage() {
       await schedulerApi.runJob(job.id);
       toast.success('Job started');
       setTimeout(fetchJobs, 1000);
-    } catch (error) {
-      console.error('Failed to run job:', error);
+    } catch {
       toast.error('Failed to run job');
     }
   };
@@ -203,8 +199,7 @@ export default function SchedulerPage() {
         job,
         runs: response.data || [],
       });
-    } catch (error) {
-      console.error('Failed to fetch runs:', error);
+    } catch {
       toast.error('Failed to fetch job runs');
     }
   };
@@ -217,8 +212,7 @@ export default function SchedulerPage() {
       toast.success('Job deleted');
       setDeleteDialog({ open: false, job: null });
       fetchJobs();
-    } catch (error) {
-      console.error('Failed to delete job:', error);
+    } catch {
       toast.error('Failed to delete job');
     }
   };

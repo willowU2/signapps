@@ -81,8 +81,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
       const response = await storageApi.listFavorites();
       const items = response.data?.favorites || [];
       setFavorites(items.slice(0, maxFavorites));
-    } catch (error) {
-      console.error('Failed to fetch favorites:', error);
+    } catch {
       toast.error('Impossible de charger les favoris');
     } finally {
       setLoading(false);
@@ -110,8 +109,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
       await storageApi.removeFavorite(id);
       setFavorites((prev) => prev.filter((f) => f.id !== id));
       toast.success('Favori supprimé');
-    } catch (error) {
-      console.error('Failed to remove favorite:', error);
+    } catch {
       toast.error('Impossible de supprimer le favori');
     }
   };
@@ -135,8 +133,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
       );
       setEditingId(null);
       toast.success('Favori mis à jour');
-    } catch (error) {
-      console.error('Failed to update favorite:', error);
+    } catch {
       toast.error('Impossible de mettre à jour le favori');
     }
   };
@@ -174,8 +171,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
       const order = newFavorites.map((f) => f.id);
       await storageApi.reorderFavorites(order);
       toast.success('Favoris réorganisés');
-    } catch (error) {
-      console.error('Failed to reorder favorites:', error);
+    } catch {
       toast.error('Impossible de réorganiser les favoris');
       // Restore original order on error
       fetchFavorites();

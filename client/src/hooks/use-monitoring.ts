@@ -135,8 +135,8 @@ export function useMetricsStream(enabled: boolean) {
       try {
         const data = JSON.parse(event.data);
         setMetrics(data);
-      } catch (e) {
-        console.error('Failed to parse SSE data:', e);
+      } catch {
+        // ignore parse errors
       }
     };
 

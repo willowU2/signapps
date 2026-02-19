@@ -303,8 +303,7 @@ export default function AIPage() {
     try {
       const response = await aiApi.stats();
       setStats(response.data);
-    } catch (error) {
-      console.error('Failed to fetch AI stats:', error);
+    } catch {
       setStats({
         documents_count: 0,
         chunks_count: 0,
@@ -329,8 +328,7 @@ export default function AIPage() {
         }
         return prev;
       });
-    } catch (error) {
-      console.error('Failed to fetch providers:', error);
+    } catch {
       setProviders([{
         id: 'ollama',
         name: 'Ollama (Local)',
@@ -359,8 +357,7 @@ export default function AIPage() {
         }
         return modelList.length > 0 ? modelList[0].id : prev;
       });
-    } catch (error) {
-      console.error('Failed to fetch models:', error);
+    } catch {
       const provider = providersList.find(p => p.id === providerId);
       if (provider) {
         setModels([{ id: provider.default_model, name: provider.default_model }]);
@@ -379,8 +376,7 @@ export default function AIPage() {
     try {
       const response = await aiApi.listCollections();
       setKnowledgeBases(response.data.collections || []);
-    } catch (error) {
-      console.error('Failed to fetch knowledge bases:', error);
+    } catch {
       setKnowledgeBases([]);
     } finally {
       setLoadingKnowledgeBases(false);
@@ -481,8 +477,7 @@ export default function AIPage() {
       setNewKbName('');
       setNewKbDescription('');
       toast.success('Knowledge base creee');
-    } catch (error) {
-      console.error('Failed to create knowledge base:', error);
+    } catch {
       toast.error('Erreur lors de la creation');
     }
   }, [newKbName, newKbDescription, fetchKnowledgeBases]);
@@ -501,8 +496,7 @@ export default function AIPage() {
       setDeleteKbDialogOpen(false);
       setKbToDelete(null);
       toast.success('Knowledge base supprimee');
-    } catch (error) {
-      console.error('Failed to delete knowledge base:', error);
+    } catch {
       toast.error('Erreur lors de la suppression');
     }
   }, [kbToDelete, selectedKnowledgeBase, fetchKnowledgeBases]);
@@ -721,9 +715,7 @@ export default function AIPage() {
           };
 
           setMessages(prev => [...prev, assistantMessage]);
-        } catch (error) {
-          console.error('Chat error:', error);
-
+        } catch {
           const errorMessage: Message = {
             id: crypto.randomUUID(),
             role: 'assistant',
@@ -789,8 +781,8 @@ export default function AIPage() {
         ]);
       }
       setInput('');
-    } catch (error) {
-      console.error('Search error:', error);
+    } catch {
+      // ignore
     } finally {
       setIsLoading(false);
     }

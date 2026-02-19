@@ -31,7 +31,7 @@ export default function DocumentsPage() {
                         docId={docId}
                         placeholder="Start typing your document..."
                         onSynced={() => {
-                            console.log('Document synced with server');
+                            // synced
                         }}
                     />
                 </div>

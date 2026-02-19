@@ -60,8 +60,7 @@ export function ComposeImportDialog({
     try {
       const res = await composeApi.preview(yaml);
       setPreview(res.data.services);
-    } catch (error) {
-      console.error('Preview failed:', error);
+    } catch {
       toast.error('Erreur lors du parsing du fichier compose');
     } finally {
       setPreviewing(false);
@@ -79,8 +78,7 @@ export function ComposeImportDialog({
       onOpenChange(false);
       setYaml('');
       setPreview(null);
-    } catch (error) {
-      console.error('Import failed:', error);
+    } catch {
       toast.error("Erreur lors de l'import du compose");
     } finally {
       setLoading(false);

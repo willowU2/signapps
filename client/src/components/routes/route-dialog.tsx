@@ -190,8 +190,7 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
       }
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
-      console.error('Failed to save route:', error);
+    } catch {
       toast.error(isEdit ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
     } finally {
       setLoading(false);

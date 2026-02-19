@@ -101,8 +101,7 @@ export function PermissionsDialog({
         writable: perms.other_writable,
         executable: perms.other_executable,
       });
-    } catch (error) {
-      console.error('Failed to fetch permissions:', error);
+    } catch {
       toast.error('Impossible de charger les permissions');
     } finally {
       setFetching(false);
@@ -162,8 +161,7 @@ export function PermissionsDialog({
       await storageApi.setPermissions(bucket, fileKey, { mode: newMode });
       toast.success('Permissions mises à jour');
       onOpenChange(false);
-    } catch (error) {
-      console.error('Failed to set permissions:', error);
+    } catch {
       toast.error('Impossible de mettre à jour les permissions');
     } finally {
       setLoading(false);

@@ -153,8 +153,7 @@ export function ContainerDialog({ open, onOpenChange, onSuccess }: ContainerDial
       toast.success('Container created successfully');
       onSuccess();
       onOpenChange(false);
-    } catch (error) {
-      console.error('Failed to create container:', error);
+    } catch {
       toast.error('Failed to create container');
     } finally {
       setLoading(false);

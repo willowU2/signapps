@@ -87,8 +87,7 @@ export default function ProfilePage() {
       });
 
       toast.success('Profile updated successfully');
-    } catch (error) {
-      console.error('Failed to update profile:', error);
+    } catch {
       toast.error('Failed to update profile');
     } finally {
       setSaving(false);
@@ -116,8 +115,7 @@ export default function ProfilePage() {
       setNewPassword('');
       setConfirmPassword('');
       toast.success('Password changed successfully');
-    } catch (error) {
-      console.error('Failed to change password:', error);
+    } catch {
       toast.error('Failed to change password');
     } finally {
       setChangingPassword(false);
@@ -130,8 +128,7 @@ export default function ProfilePage() {
       const response = await authApi.mfaSetup();
       setMfaSetupData(response.data);
       setMfaDialogOpen(true);
-    } catch (error) {
-      console.error('Failed to setup MFA:', error);
+    } catch {
       toast.error('Failed to initialize MFA setup');
     } finally {
       setMfaLoading(false);
@@ -154,8 +151,7 @@ export default function ProfilePage() {
       setMfaSetupData(null);
       setMfaCode('');
       toast.success('Two-factor authentication enabled');
-    } catch (error) {
-      console.error('Failed to verify MFA:', error);
+    } catch {
       toast.error('Invalid verification code');
     } finally {
       setMfaLoading(false);
@@ -172,8 +168,7 @@ export default function ProfilePage() {
       }
       setMfaDisableDialog(false);
       toast.success('Two-factor authentication disabled');
-    } catch (error) {
-      console.error('Failed to disable MFA:', error);
+    } catch {
       toast.error('Failed to disable MFA');
     } finally {
       setMfaLoading(false);

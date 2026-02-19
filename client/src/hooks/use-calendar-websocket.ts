@@ -57,9 +57,10 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
       const yevents = ydoc.getMap('events');
       yeventsRef.current = yevents;
 
-      // Build WebSocket URL
+      // Build WebSocket URL - use calendar service (port 3011), not the frontend
+      const calendarHost = process.env.NEXT_PUBLIC_CALENDAR_URL?.replace(/^https?:\/\//, '').replace(/\/api\/v1$/, '') || 'localhost:3011';
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/api/v1/calendars/${calendar_id}/ws`;
+      const wsUrl = `${protocol}//${calendarHost}/api/v1/calendars/${calendar_id}/ws`;
 
       // Create WebSocket provider
       const provider = new WebsocketProvider(

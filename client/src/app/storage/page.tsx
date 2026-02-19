@@ -139,8 +139,7 @@ export default function StoragePage() {
       } else if (bucketList.length === 0) {
         setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch buckets:', error);
+    } catch {
       setBuckets([]);
       setCurrentBucket('');
       setLoading(false);
@@ -166,8 +165,7 @@ export default function StoragePage() {
         contentType: f.content_type,
       }));
       setFiles(fileList);
-    } catch (error) {
-      console.error('Failed to fetch files:', error);
+    } catch {
       setFiles([]);
     } finally {
       setLoading(false);
@@ -215,8 +213,8 @@ export default function StoragePage() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Download failed:', error);
+    } catch {
+      // ignore
     }
   };
 
@@ -227,8 +225,8 @@ export default function StoragePage() {
         : item.name;
       await storageApi.delete(currentBucket, key);
       fetchFiles();
-    } catch (error) {
-      console.error('Delete failed:', error);
+    } catch {
+      // ignore
     }
   };
 
@@ -277,8 +275,7 @@ export default function StoragePage() {
       setFolderDialogOpen(false);
       setNewFolderName('');
       fetchFiles();
-    } catch (error) {
-      console.error('Failed to create folder:', error);
+    } catch {
       toast.error('Failed to create folder');
     } finally {
       setCreatingFolder(false);
@@ -302,8 +299,7 @@ export default function StoragePage() {
       setNewBucketName('');
       fetchBuckets();
       setCurrentBucket(newBucketName);
-    } catch (error) {
-      console.error('Failed to create bucket:', error);
+    } catch {
       toast.error('Failed to create bucket');
     } finally {
       setCreatingBucket(false);
@@ -319,8 +315,7 @@ export default function StoragePage() {
         setCurrentBucket('');
         setCurrentPath([]);
       }
-    } catch (error) {
-      console.error('Failed to delete bucket:', error);
+    } catch {
       toast.error('Failed to delete bucket');
     }
   };

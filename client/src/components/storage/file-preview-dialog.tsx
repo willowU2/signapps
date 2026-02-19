@@ -168,8 +168,7 @@ export function FilePreviewDialog({
         const text = await blob.text();
         setContent(text);
       }
-    } catch (err) {
-      console.error('Failed to load file:', err);
+    } catch {
       setError('Impossible de charger le fichier');
     } finally {
       setLoading(false);

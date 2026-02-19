@@ -35,8 +35,7 @@ export function CodePreview({
       const text = await response.text();
       setContent(text);
       setLines(text.split('\n'));
-    } catch (error) {
-      console.error('Failed to load code:', error);
+    } catch {
       toast.error('Impossible de charger le fichier');
     } finally {
       setLoading(false);
@@ -73,8 +72,7 @@ export function CodePreview({
     try {
       await navigator.clipboard.writeText(content);
       toast.success('Copié !');
-    } catch (error) {
-      console.error('Failed to copy:', error);
+    } catch {
       toast.error('Impossible de copier');
     }
   };

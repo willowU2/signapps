@@ -96,8 +96,8 @@ export function VideoPreview({ src, fileName }: VideoPreviewProps) {
         await document.exitFullscreen();
         setIsFullscreen(false);
       }
-    } catch (err) {
-      console.error('Fullscreen error:', err);
+    } catch {
+      // ignore
     }
   };
 

@@ -47,8 +47,8 @@ export default function CalendarPage() {
           setSelectedCalendarId(response.data[0].id);
           setSelectedCalendars([response.data[0]]);
         }
-      } catch (error) {
-        console.error("Failed to load calendars:", error);
+      } catch {
+        // ignore
       } finally {
         setIsLoading(false);
       }

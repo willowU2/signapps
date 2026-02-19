@@ -102,8 +102,7 @@ function OcrTab() {
       });
       setResult(response.data);
       toast.success('OCR completed successfully');
-    } catch (error) {
-      console.error('OCR failed:', error);
+    } catch {
       toast.error('OCR processing failed');
     } finally {
       setProcessing(false);
@@ -290,8 +289,7 @@ function SttTab() {
       });
       setResult(response.data);
       toast.success('Transcription completed');
-    } catch (error) {
-      console.error('Transcription failed:', error);
+    } catch {
       toast.error('Transcription failed');
     } finally {
       setProcessing(false);
@@ -519,8 +517,7 @@ function TtsTab() {
 
       setAudioUrl(url);
       toast.success('Audio generated successfully');
-    } catch (error) {
-      console.error('TTS failed:', error);
+    } catch {
       toast.error('Failed to generate audio');
     } finally {
       setGenerating(false);

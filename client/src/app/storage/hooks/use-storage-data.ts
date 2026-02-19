@@ -29,8 +29,7 @@ export function useStorageStats() {
       const response = await storageStatsApi.getStats();
       setStats(response.data);
       setError(null);
-    } catch (err) {
-      console.error('Failed to fetch storage stats:', err);
+    } catch {
       setError('Impossible de charger les statistiques');
       // Provide mock data for development
       setStats({
@@ -78,8 +77,7 @@ export function useRaidData() {
       if (disksRes.status === 'fulfilled') setDisks(disksRes.value.data);
 
       setError(null);
-    } catch (err) {
-      console.error('Failed to fetch RAID data:', err);
+    } catch {
       setError('Impossible de charger les données RAID');
     } finally {
       setLoading(false);
@@ -92,7 +90,6 @@ export function useRaidData() {
       toast.success('Array créé avec succès');
       await fetchAll();
     } catch (err) {
-      console.error('Failed to create array:', err);
       toast.error('Erreur lors de la création de l\'array');
       throw err;
     }
@@ -104,7 +101,6 @@ export function useRaidData() {
       toast.success('Array supprimé');
       await fetchAll();
     } catch (err) {
-      console.error('Failed to delete array:', err);
       toast.error('Erreur lors de la suppression');
       throw err;
     }
@@ -116,7 +112,6 @@ export function useRaidData() {
       toast.success('Reconstruction lancée');
       await fetchAll();
     } catch (err) {
-      console.error('Failed to rebuild array:', err);
       toast.error('Erreur lors de la reconstruction');
       throw err;
     }
@@ -127,8 +122,7 @@ export function useRaidData() {
       const response = await raidApi.scanDisks();
       setDisks(response.data);
       toast.success('Scan terminé');
-    } catch (err) {
-      console.error('Failed to scan disks:', err);
+    } catch {
       toast.error('Erreur lors du scan');
     }
   };
@@ -163,8 +157,7 @@ export function useShares() {
       const response = await sharesApi.list();
       setShares(response.data.shares || []);
       setError(null);
-    } catch (err) {
-      console.error('Failed to fetch shares:', err);
+    } catch {
       setError('Impossible de charger les partages');
       setShares([]);
     } finally {
@@ -186,7 +179,6 @@ export function useShares() {
       await fetchShares();
       return response.data;
     } catch (err) {
-      console.error('Failed to create share:', err);
       toast.error('Erreur lors de la création du partage');
       throw err;
     }
@@ -198,7 +190,6 @@ export function useShares() {
       toast.success('Partage supprimé');
       await fetchShares();
     } catch (err) {
-      console.error('Failed to delete share:', err);
       toast.error('Erreur lors de la suppression');
       throw err;
     }
@@ -222,8 +213,7 @@ export function useMounts() {
       const response = await mountsApi.list();
       setMounts(response.data);
       setError(null);
-    } catch (err) {
-      console.error('Failed to fetch mounts:', err);
+    } catch {
       setError('Impossible de charger les montages');
       // Mock data for development
       setMounts([
@@ -271,8 +261,7 @@ export function useExternalStorage() {
       const response = await externalStorageApi.list();
       setStorages(response.data);
       setError(null);
-    } catch (err) {
-      console.error('Failed to fetch external storages:', err);
+    } catch {
       setError('Impossible de charger les stockages externes');
       setStorages([]);
     } finally {
@@ -285,8 +274,7 @@ export function useExternalStorage() {
       const response = await externalStorageApi.detect();
       setStorages(response.data);
       toast.success('Détection terminée');
-    } catch (err) {
-      console.error('Failed to detect storages:', err);
+    } catch {
       toast.error('Erreur lors de la détection');
     }
   };
@@ -296,8 +284,7 @@ export function useExternalStorage() {
       await externalStorageApi.disconnect(id);
       toast.success('Déconnecté');
       await fetchStorages();
-    } catch (err) {
-      console.error('Failed to disconnect:', err);
+    } catch {
       toast.error('Erreur lors de la déconnexion');
     }
   };
@@ -307,8 +294,7 @@ export function useExternalStorage() {
       await externalStorageApi.eject(id);
       toast.success('Éjecté');
       await fetchStorages();
-    } catch (err) {
-      console.error('Failed to eject:', err);
+    } catch {
       toast.error('Erreur lors de l\'éjection');
     }
   };
