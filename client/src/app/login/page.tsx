@@ -43,7 +43,11 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       setError(null);
-      const response = await authApi.login(data.username, data.password, rememberMe);
+      const response = await authApi.login({
+        username: data.username,
+        password: data.password,
+        remember_me: rememberMe,
+      });
 
       // Check if MFA is required
       if (response.data.mfa_required && response.data.mfa_session_token) {

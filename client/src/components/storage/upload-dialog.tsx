@@ -78,7 +78,7 @@ export function UploadDialog({ open, onOpenChange, bucket, onUploadComplete }: U
       );
 
       try {
-        await storageApi.upload(bucket, files[i].file);
+        await storageApi.uploadFile(bucket, files[i].file);
 
         setFiles((prev) =>
           prev.map((f, idx) =>

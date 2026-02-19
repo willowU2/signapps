@@ -133,7 +133,7 @@ export default function StoragePage() {
     try {
       const response = await storageApi.listBuckets();
       const bucketList = response.data || [];
-      setBuckets(bucketList.map((b) => ({ name: b.name, creationDate: b.creation_date })));
+      setBuckets(bucketList.map((b) => ({ name: b.name, creationDate: b.created_at })));
       if (bucketList.length > 0 && !currentBucket) {
         setCurrentBucket(bucketList[0].name);
       } else if (bucketList.length === 0) {
@@ -223,7 +223,7 @@ export default function StoragePage() {
       const key = currentPath.length > 0
         ? `${currentPath.join('/')}/${item.name}`
         : item.name;
-      await storageApi.delete(currentBucket, key);
+      await storageApi.deleteFile(currentBucket, key);
       fetchFiles();
     } catch {
       // ignore
@@ -264,12 +264,10 @@ export default function StoragePage() {
     setCreatingFolder(true);
     try {
       const folderPath = currentPath.length > 0
-        ? `${currentPath.join('/')}/${newFolderName}/.keep`
-        : `${newFolderName}/.keep`;
+        ? `${currentPath.join('/')}/${newFolderName}`
+        : newFolderName;
 
-      // Create an empty file for folder placeholder
-      const emptyFile = new File([''], '.keep', { type: 'text/plain' });
-      await storageApi.upload(currentBucket, emptyFile, folderPath.replace('/.keep', ''));
+      await storageApi.createFolder(currentBucket, folderPath);
 
       toast.success('Folder created successfully');
       setFolderDialogOpen(false);

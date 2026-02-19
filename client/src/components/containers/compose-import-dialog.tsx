@@ -175,7 +175,7 @@ export function ComposeImportDialog({
                   <Label>Services detectes</Label>
                   <Badge variant="secondary">{preview.length} service(s)</Badge>
                 </div>
-                {preview.map((svc) => (
+                {preview.map((svc: ComposeServicePreview) => (
                   <div
                     key={svc.service_name}
                     className="rounded-lg border p-3 space-y-2"

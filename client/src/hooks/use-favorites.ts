@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { storageApi } from '@/lib/api';
+import { favoritesApi } from '@/lib/api';
 
 export interface Favorite {
   id: string;
@@ -36,8 +36,8 @@ export interface UseFavoritesReturn {
 }
 
 /**
- * Hook pour gérer les favoris.
- * Fournit l'accès aux API favoris avec cache et gestion d'erreurs.
+ * Hook pour gerer les favoris.
+ * Fournit l'acces aux API favoris avec cache et gestion d'erreurs.
  */
 export function useFavorites(): UseFavoritesReturn {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
@@ -48,7 +48,7 @@ export function useFavorites(): UseFavoritesReturn {
     setLoading(true);
     setError(null);
     try {
-      const response = await storageApi.listFavorites();
+      const response = await favoritesApi.list();
       setFavorites(response.data?.favorites || []);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -68,7 +68,7 @@ export function useFavorites(): UseFavoritesReturn {
     ) => {
       setError(null);
       try {
-        const response = await storageApi.addFavorite({
+        await favoritesApi.add({
           bucket,
           key,
           is_folder: isFolder,
@@ -89,7 +89,7 @@ export function useFavorites(): UseFavoritesReturn {
   const removeFavorite = useCallback(async (id: string) => {
     setError(null);
     try {
-      await storageApi.removeFavorite(id);
+      await favoritesApi.remove(id);
       setFavorites((prev) => prev.filter((f) => f.id !== id));
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -102,7 +102,7 @@ export function useFavorites(): UseFavoritesReturn {
     async (id: string, displayName?: string, color?: string) => {
       setError(null);
       try {
-        await storageApi.updateFavorite(id, {
+        await favoritesApi.update(id, {
           display_name: displayName,
           color,
         });
@@ -129,7 +129,7 @@ export function useFavorites(): UseFavoritesReturn {
   const reorderFavorites = useCallback(async (order: string[]) => {
     setError(null);
     try {
-      await storageApi.reorderFavorites(order);
+      await favoritesApi.reorder(order);
       // Update local favorites order
       const favoriteMap = new Map(favorites.map((f) => [f.id, f]));
       const reordered = order
@@ -147,7 +147,7 @@ export function useFavorites(): UseFavoritesReturn {
     async (bucket: string, key: string): Promise<boolean> => {
       setError(null);
       try {
-        const response = await storageApi.checkFavorite(bucket, key);
+        const response = await favoritesApi.check(bucket, key);
         return response.data || false;
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -162,7 +162,7 @@ export function useFavorites(): UseFavoritesReturn {
     async (bucket: string, key: string) => {
       setError(null);
       try {
-        await storageApi.removeFavoriteByPath(bucket, key);
+        await favoritesApi.removeByPath(bucket, key);
         setFavorites((prev) =>
           prev.filter((f) => !(f.bucket === bucket && f.key === key))
         );

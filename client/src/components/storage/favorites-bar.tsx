@@ -33,7 +33,7 @@ import {
   Folder,
   FileIcon,
 } from 'lucide-react';
-import { storageApi } from '@/lib/api';
+import { favoritesApi } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface FavoriteItem {
@@ -52,12 +52,12 @@ export interface FavoritesBarProps {
 }
 
 /**
- * FavoritesBar - Affiche les favoris en haut à droite de l'interface.
+ * FavoritesBar - Affiche les favoris en haut a droite de l'interface.
  * Permet de :
  * - Voir les 4 premiers favoris en grid 2x2
- * - Drag-drop pour réorganiser
+ * - Drag-drop pour reorganiser
  * - Clic pour naviguer
- * - Menu pour ajouter/éditer/supprimer
+ * - Menu pour ajouter/editer/supprimer
  */
 export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
   const router = useRouter();
@@ -78,7 +78,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
   const fetchFavorites = async () => {
     try {
       setLoading(true);
-      const response = await storageApi.listFavorites();
+      const response = await favoritesApi.list();
       const items = response.data?.favorites || [];
       setFavorites(items.slice(0, maxFavorites));
     } catch {
@@ -106,9 +106,9 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
 
   const handleRemoveFavorite = async (id: string) => {
     try {
-      await storageApi.removeFavorite(id);
+      await favoritesApi.remove(id);
       setFavorites((prev) => prev.filter((f) => f.id !== id));
-      toast.success('Favori supprimé');
+      toast.success('Favori supprime');
     } catch {
       toast.error('Impossible de supprimer le favori');
     }
@@ -116,7 +116,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
 
   const handleUpdateFavorite = async (id: string) => {
     try {
-      await storageApi.updateFavorite(id, {
+      await favoritesApi.update(id, {
         display_name: editName || undefined,
         color: editColor || undefined,
       });
@@ -132,9 +132,9 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
         )
       );
       setEditingId(null);
-      toast.success('Favori mis à jour');
+      toast.success('Favori mis a jour');
     } catch {
-      toast.error('Impossible de mettre à jour le favori');
+      toast.error('Impossible de mettre a jour le favori');
     }
   };
 
@@ -169,10 +169,10 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
 
     try {
       const order = newFavorites.map((f) => f.id);
-      await storageApi.reorderFavorites(order);
-      toast.success('Favoris réorganisés');
+      await favoritesApi.reorder(order);
+      toast.success('Favoris reorganises');
     } catch {
-      toast.error('Impossible de réorganiser les favoris');
+      toast.error('Impossible de reorganiser les favoris');
       // Restore original order on error
       fetchFavorites();
     }
@@ -320,7 +320,7 @@ export function FavoritesBar({ maxFavorites = 4 }: FavoritesBarProps) {
               <div className="space-y-2">
                 <Label>Nom d'affichage</Label>
                 <Input
-                  placeholder="Nom personnalisé"
+                  placeholder="Nom personnalise"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                 />
