@@ -1903,7 +1903,7 @@ export const sttApi = {
     const formData = new FormData();
     formData.append('file', file);
     // Returns EventSource URL
-    return mediaApiClient.post('/stt/stream', formData, {
+    return mediaApiClient.post('/stt/transcribe/stream', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       params: options,
     });
