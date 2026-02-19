@@ -1,12 +1,7 @@
 //! SignApps Calendar Service
 //! Manages shared calendars, events, recurring meetings, and tasks with hierarchical support
 
-use axum::{
-    extract::DefaultBodyLimit,
-    http::StatusCode,
-    routing::get,
-    Router,
-};
+use axum::{extract::DefaultBodyLimit, http::StatusCode, routing::get, Router};
 use dashmap::DashMap;
 use signapps_common::middleware::AuthState;
 use signapps_common::JwtConfig;
@@ -113,8 +108,11 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use handlers::{calendars, events, recurrence, timezones, tasks, resources, shares, icalendar, websocket, notifications, push};
     use axum::routing::{delete, post, put};
+    use handlers::{
+        calendars, events, icalendar, notifications, push, recurrence, resources, shares, tasks,
+        timezones, websocket,
+    };
 
     Router::new()
         .route("/health", get(health_check))

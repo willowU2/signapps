@@ -3,9 +3,9 @@
 
 -- Notification preferences per user and per calendar
 CREATE TABLE IF NOT EXISTS notification_preferences (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  calendar_id UUID REFERENCES calendars(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
+  calendar_id UUID REFERENCES calendar.calendars(id) ON DELETE CASCADE,
 
   -- Email settings
   email_enabled BOOLEAN NOT NULL DEFAULT true,
@@ -50,8 +50,8 @@ CREATE INDEX IF NOT EXISTS idx_notification_preferences_user_calendar
 
 -- Web Push API subscriptions
 CREATE TABLE IF NOT EXISTS push_subscriptions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
 
   -- Web Push API subscription object
   subscription_json JSONB NOT NULL,
@@ -83,10 +83,10 @@ CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id
 
 -- Sent notifications audit log
 CREATE TABLE IF NOT EXISTS notifications_sent (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  event_id UUID REFERENCES events(id) ON DELETE SET NULL,
-  task_id UUID REFERENCES tasks(id) ON DELETE SET NULL,
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
+  event_id UUID REFERENCES calendar.events(id) ON DELETE SET NULL,
+  task_id UUID REFERENCES calendar.tasks(id) ON DELETE SET NULL,
 
   -- Notification details
   notification_type VARCHAR(50) NOT NULL
@@ -159,7 +159,7 @@ CREATE INDEX IF NOT EXISTS idx_notifications_sent_user_created
 
 -- Notification templates (for email rendering)
 CREATE TABLE IF NOT EXISTS notification_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) NOT NULL,
   notification_type VARCHAR(50) NOT NULL
     CHECK (notification_type IN (
@@ -199,8 +199,8 @@ CREATE INDEX IF NOT EXISTS idx_notification_templates_type_channel
 
 -- Notification digest batches (for digest emails)
 CREATE TABLE IF NOT EXISTS notification_digests (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
 
   -- Digest period
   digest_type VARCHAR(20) NOT NULL
@@ -239,7 +239,7 @@ CREATE INDEX IF NOT EXISTS idx_notification_digests_status
 INSERT INTO notification_templates (id, name, notification_type, channel, subject, template_html, variables, is_active)
 VALUES
   (
-    gen_random_uuid(),
+    uuid_generate_v4(),
     'Event Reminder - Email',
     'event_reminder',
     'email',
@@ -249,7 +249,7 @@ VALUES
     true
   ),
   (
-    gen_random_uuid(),
+    uuid_generate_v4(),
     'Event Reminder - SMS',
     'event_reminder',
     'sms',
@@ -259,7 +259,7 @@ VALUES
     true
   ),
   (
-    gen_random_uuid(),
+    uuid_generate_v4(),
     'Daily Digest - Email',
     'daily_digest',
     'email',
@@ -269,10 +269,9 @@ VALUES
     true
   );
 
--- Indexes on commonly queried fields
+-- Index on events start_time for notification scheduling
 CREATE INDEX IF NOT EXISTS idx_events_start_time
-  ON events(start_time)
-  WHERE (status = 'confirmed');
+  ON calendar.events(start_time);
 
 -- Comment on tables
 COMMENT ON TABLE notification_preferences IS 'User notification settings for email, SMS, and push channels';

@@ -68,6 +68,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
         ydoc,
         {
           connect: true,
+          // @ts-expect-error y-websocket accepts boolean for awareness
           awareness: true,
           resyncInterval: 5000, // Resync every 5 seconds
         }
@@ -165,7 +166,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
    */
   const addEvent = useCallback((event: any) => {
     if (yeventsRef.current) {
-      yeventsRef.current.set(event.id, Y.JSON.encode(event));
+      yeventsRef.current.set(event.id, JSON.parse(JSON.stringify(event)));
     }
   }, []);
 

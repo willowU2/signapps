@@ -107,7 +107,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Show loading state while initializing
   if (isLoading && !publicRoutes.some((route) => pathname.startsWith(route))) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div
+        className="flex min-h-screen items-center justify-center"
+        suppressHydrationWarning
+      >
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           <span>Loading...</span>

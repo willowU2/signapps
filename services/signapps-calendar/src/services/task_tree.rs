@@ -54,19 +54,16 @@ pub fn validate_parent_change(
         match existing_parents.get(&current) {
             Some(Some(parent_id)) => {
                 current = *parent_id;
-            }
+            },
             Some(None) => {
                 // Reached root - no cycle
                 break;
-            }
+            },
             None => {
                 // Parent not in map - should not happen in production
-                tracing::warn!(
-                    "Parent {} not found in task hierarchy map",
-                    current
-                );
+                tracing::warn!("Parent {} not found in task hierarchy map", current);
                 break;
-            }
+            },
         }
     }
 
@@ -93,7 +90,7 @@ pub fn get_tree_depth(
                 if depth > MAX_NESTING_DEPTH * 2 {
                     break;
                 }
-            }
+            },
             None => break,
         }
     }
@@ -102,6 +99,7 @@ pub fn get_tree_depth(
 }
 
 /// Get all ancestors of a task
+#[allow(dead_code)]
 pub fn get_ancestors(
     task_id: Uuid,
     existing_parents: &std::collections::HashMap<Uuid, Option<Uuid>>,
@@ -122,7 +120,7 @@ pub fn get_ancestors(
                 ancestors.push(parent_id);
                 current = Some(parent_id);
                 iterations += 1;
-            }
+            },
             None => break,
         }
     }

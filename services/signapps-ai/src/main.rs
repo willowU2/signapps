@@ -71,7 +71,7 @@ async fn main() -> anyhow::Result<()> {
     // Load configuration
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
+    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let embeddings_url =
         std::env::var("EMBEDDINGS_URL").unwrap_or_else(|_| "http://localhost:8080".into());
 

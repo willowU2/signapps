@@ -1,11 +1,7 @@
 //! Push notification handlers
 //! Manages Web Push API notifications and VAPID key distribution
 
-use axum::{
-    extract::{State},
-    http::StatusCode,
-    response::Json,
-};
+use axum::{extract::State, response::Json};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -22,14 +18,14 @@ use crate::{
 // ============================================================================
 
 /// Request to send a push notification
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SendPushRequest {
     /// Notification title
     pub title: String,
     /// Notification body/message
     pub body: String,
     /// Notification type (event_reminder, task_due, etc.)
-    pub notification_type: String,
+    pub _notification_type: String,
     /// Optional icon URL
     pub icon: Option<String>,
     /// Optional badge URL
@@ -48,14 +44,6 @@ pub struct SendPushRequest {
 #[derive(Debug, Clone, Serialize)]
 pub struct VapidKeyResponse {
     pub public_key: String,
-}
-
-/// Push send result
-#[derive(Debug, Clone, Serialize)]
-pub struct PushSendResult {
-    pub message_id: String,
-    pub subscription_id: String,
-    pub sent_at: String,
 }
 
 /// Batch push send result
@@ -98,9 +86,7 @@ pub async fn send_push(
 ) -> Result<Json<BatchPushSendResult>, CalendarError> {
     // Validate request
     if req.title.is_empty() || req.body.is_empty() {
-        return Err(CalendarError::bad_request(
-            "title and body are required",
-        ));
+        return Err(CalendarError::bad_request("title and body are required"));
     }
 
     // Get user's push subscriptions
@@ -163,13 +149,8 @@ pub async fn send_push(
                         });
 
                         // Log to database
-                        let _ = log_push_sent(
-                            &state,
-                            claims.sub,
-                            &message_id,
-                        )
-                        .await;
-                    }
+                        let _ = log_push_sent(&state, claims.sub, &message_id).await;
+                    },
                     Err(e) => {
                         failed += 1;
                         let error_msg = e.to_string();
@@ -179,9 +160,9 @@ pub async fn send_push(
                             message_id: None,
                             error: Some(error_msg),
                         });
-                    }
+                    },
                 }
-            }
+            },
             Err(e) => {
                 failed += 1;
                 results.push(PushSendResultItem {
@@ -190,7 +171,7 @@ pub async fn send_push(
                     message_id: None,
                     error: Some(format!("Invalid subscription JSON: {}", e)),
                 });
-            }
+            },
         }
     }
 
@@ -237,7 +218,7 @@ mod tests {
         let req = SendPushRequest {
             title: "Test".to_string(),
             body: "Test notification".to_string(),
-            notification_type: "event_reminder".to_string(),
+            _notification_type: "event_reminder".to_string(),
             icon: Some("https://example.com/icon.png".to_string()),
             badge: None,
             tag: Some("test-tag".to_string()),

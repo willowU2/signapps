@@ -1,22 +1,16 @@
 //! Resource management and booking handlers
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use signapps_db::{models::*, ResourceRepository, EventRepository};
+use signapps_db::{models::*, ResourceRepository};
 use uuid::Uuid;
 
-use crate::{services, AppState, CalendarError};
-
-#[derive(Debug, Deserialize)]
-pub struct DateRangeQuery {
-    pub start: Option<DateTime<Utc>>,
-    pub end: Option<DateTime<Utc>>,
-}
+use crate::{AppState, CalendarError};
 
 /// Create a new resource
 pub async fn create_resource(
@@ -114,6 +108,7 @@ pub struct ResourceConflict {
     pub conflicting_end: DateTime<Utc>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct CheckAvailabilityRequest {
     pub resource_ids: Vec<Uuid>,
@@ -129,8 +124,8 @@ pub struct AvailabilityResponse {
 
 /// Check resource availability for a time period
 pub async fn check_availability(
-    State(state): State<AppState>,
-    Json(payload): Json<CheckAvailabilityRequest>,
+    State(_state): State<AppState>,
+    Json(_payload): Json<CheckAvailabilityRequest>,
 ) -> Result<Json<AvailabilityResponse>, CalendarError> {
     // In a production system, you would:
     // 1. Query event_resources table
@@ -144,6 +139,7 @@ pub async fn check_availability(
     }))
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct BookResourceRequest {
     pub event_id: Uuid,
@@ -152,9 +148,9 @@ pub struct BookResourceRequest {
 
 /// Book resources for an event
 pub async fn book_resources(
-    State(state): State<AppState>,
-    Path(resource_id): Path<Uuid>,
-    Json(payload): Json<BookResourceRequest>,
+    State(_state): State<AppState>,
+    Path(_resource_id): Path<Uuid>,
+    Json(_payload): Json<BookResourceRequest>,
 ) -> Result<StatusCode, CalendarError> {
     // In a production system:
     // 1. Check resource availability

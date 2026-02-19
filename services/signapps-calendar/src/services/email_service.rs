@@ -9,8 +9,7 @@ use std::collections::HashMap;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
-use crate::models::{NotificationChannel, NotificationSent, NotificationStatus};
-use signapps_db::models::NotificationTemplate;
+use signapps_db::models::{NotificationChannel, NotificationSent, NotificationStatus, NotificationTemplate};
 use signapps_db::repositories::NotificationTemplateRepository;
 
 /// Email service for sending calendar notifications

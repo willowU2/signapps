@@ -36,6 +36,10 @@ export function InstallProgress({
   const [complete, setComplete] = useState(false);
   const esRef = useRef<EventSource | null>(null);
 
+  /* 
+   * Replaced EventSource with fetch + ReadableStream to support Authorization header
+   * and prevent token leakage in URL logs/history.
+   */
   useEffect(() => {
     if (!installId || !open) return;
 
@@ -46,51 +50,89 @@ export function InstallProgress({
     setError(null);
     setComplete(false);
 
-    const url = getInstallProgressUrl(installId);
-    const es = new EventSource(url);
-    esRef.current = es;
+    const abortController = new AbortController();
 
-    es.onmessage = (e) => {
+    const fetchProgress = async () => {
       try {
-        const event: InstallEvent = JSON.parse(e.data);
-        setStatuses((prev) => {
-          const next = new Map(prev);
-          switch (event.type) {
-            case 'PullingImage':
-              if (event.service_name) next.set(event.service_name, 'pulling');
-              break;
-            case 'CreatingContainer':
-              if (event.service_name) next.set(event.service_name, 'creating');
-              break;
-            case 'Starting':
-              if (event.service_name) next.set(event.service_name, 'starting');
-              break;
-            case 'ServiceReady':
-              if (event.service_name) next.set(event.service_name, 'done');
-              break;
-            case 'Error':
-              setError(event.message || 'Installation failed');
-              break;
-            case 'Complete':
-              setComplete(true);
-              toast.success('Installation complete');
-              onComplete?.();
-              break;
-          }
-          return next;
+        const url = getInstallProgressUrl(installId);
+        const token = localStorage.getItem('access_token');
+
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'text/event-stream',
+          },
+          signal: abortController.signal,
         });
-      } catch {
-        // ignore parse errors
+
+        if (!response.ok) {
+          throw new Error(`Connection failed: ${response.statusText}`);
+        }
+
+        if (!response.body) {
+          throw new Error('No response body');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = line.slice(6);
+                const event: InstallEvent = JSON.parse(data);
+
+                setStatuses((prev) => {
+                  const next = new Map(prev);
+                  switch (event.type) {
+                    case 'PullingImage':
+                      if (event.service_name) next.set(event.service_name, 'pulling');
+                      break;
+                    case 'CreatingContainer':
+                      if (event.service_name) next.set(event.service_name, 'creating');
+                      break;
+                    case 'Starting':
+                      if (event.service_name) next.set(event.service_name, 'starting');
+                      break;
+                    case 'ServiceReady':
+                      if (event.service_name) next.set(event.service_name, 'done');
+                      break;
+                    case 'Error':
+                      setError(event.message || 'Installation failed');
+                      break;
+                    case 'Complete':
+                      setComplete(true);
+                      toast.success('Installation complete');
+                      onComplete?.();
+                      break;
+                  }
+                  return next;
+                });
+              } catch (e) {
+                console.error('Failed to parse SSE event:', e);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        if (!abortController.signal.aborted) {
+          console.error('Stream error:', err);
+          setError(err instanceof Error ? err.message : 'Connection lost');
+        }
       }
     };
 
-    es.onerror = () => {
-      es.close();
-    };
+    fetchProgress();
 
     return () => {
-      es.close();
-      esRef.current = null;
+      abortController.abort();
     };
   }, [installId, open, serviceNames, onComplete]);
 

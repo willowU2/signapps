@@ -1,6 +1,6 @@
 -- Backup profiles: configuration for backup jobs
 CREATE TABLE IF NOT EXISTS containers.backup_profiles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     container_ids UUID[] NOT NULL,
     schedule VARCHAR(100),
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS containers.backup_profiles (
 
 -- Backup runs: history of backup executions
 CREATE TABLE IF NOT EXISTS containers.backup_runs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     profile_id UUID NOT NULL REFERENCES containers.backup_profiles(id) ON DELETE CASCADE,
     status VARCHAR(50) NOT NULL DEFAULT 'running',
     snapshot_id VARCHAR(255),

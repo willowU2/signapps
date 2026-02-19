@@ -28,14 +28,14 @@ pub enum PresenceAction {
     Idle,
 }
 
-/// Sync request from client
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct SyncRequest {
     pub state_vector: Vec<u8>,
     pub request_id: String,
 }
 
-/// Sync response to client
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SyncResponse {
     pub update: Vec<u8>,

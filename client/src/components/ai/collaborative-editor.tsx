@@ -42,9 +42,9 @@ export function CollaborativeEditor({
         extensions: [
             StarterKit,
             Placeholder.configure({ placeholder }),
-            ydoc && Collaboration.configure({ document: ydoc }),
-            provider && CollaborationCursor.configure({ provider }),
-        ].filter(Boolean),
+            ydoc ? Collaboration.configure({ document: ydoc }) : null,
+            provider ? CollaborationCursor.configure({ provider }) : null,
+        ].filter(Boolean) as any[],
         content: '',
         onUpdate: () => {
             // Auto-save could be added here

@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
-import { calendarApi } from "@/lib/calendar-api";
-import { useAuthStore } from "@/lib/store";
+import { calendarApi } from "@/lib/api";
 
 export interface CalendarShare {
   calendar_id: string;
@@ -20,108 +19,97 @@ export function useShares(calendarId: string | null) {
   const [shares, setShares] = useState<CalendarShare[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuthStore();
 
   const loadShares = useCallback(async () => {
-    if (!calendarId || !token) return;
+    if (!calendarId) return;
 
     try {
       setLoading(true);
       const response = await calendarApi.get(
-        `/calendars/${calendarId}/shares`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        `/calendars/${calendarId}/shares`
       );
       setShares(response.data);
       setError(null);
-    } catch (err) {
-      console.error("Failed to load shares:", err);
+    } catch {
       setError("Failed to load calendar shares");
     } finally {
       setLoading(false);
     }
-  }, [calendarId, token]);
+  }, [calendarId]);
 
   const shareCalendar = useCallback(
     async (userId: string, role: "owner" | "editor" | "viewer") => {
-      if (!calendarId || !token) return;
+      if (!calendarId) return;
 
       try {
         const response = await calendarApi.post(
           `/calendars/${calendarId}/shares`,
-          { user_id: userId, role },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { user_id: userId, role }
         );
-        setShares([...shares, response.data]);
+        setShares((prev) => [...prev, response.data]);
         setError(null);
         return response.data;
       } catch (err) {
-        console.error("Failed to share calendar:", err);
         setError("Failed to share calendar");
         throw err;
       }
     },
-    [calendarId, token, shares]
+    [calendarId]
   );
 
   const unshareCalendar = useCallback(
     async (userId: string) => {
-      if (!calendarId || !token) return;
+      if (!calendarId) return;
 
       try {
         await calendarApi.delete(
-          `/calendars/${calendarId}/shares/${userId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          `/calendars/${calendarId}/shares/${userId}`
         );
-        setShares(shares.filter((s) => s.user_id !== userId));
+        setShares((prev) => prev.filter((s) => s.user_id !== userId));
         setError(null);
       } catch (err) {
-        console.error("Failed to unshare calendar:", err);
         setError("Failed to remove share");
         throw err;
       }
     },
-    [calendarId, token, shares]
+    [calendarId]
   );
 
   const updatePermission = useCallback(
     async (userId: string, role: "owner" | "editor" | "viewer") => {
-      if (!calendarId || !token) return;
+      if (!calendarId) return;
 
       try {
         await calendarApi.put(
           `/calendars/${calendarId}/shares/${userId}`,
-          { role },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { role }
         );
-        setShares(
-          shares.map((s) => (s.user_id === userId ? { ...s, role } : s))
+        setShares((prev) =>
+          prev.map((s) => (s.user_id === userId ? { ...s, role } : s))
         );
         setError(null);
       } catch (err) {
-        console.error("Failed to update permission:", err);
         setError("Failed to update permission");
         throw err;
       }
     },
-    [calendarId, token, shares]
+    [calendarId]
   );
 
   const checkPermission = useCallback(
     async (userId: string): Promise<PermissionResponse | null> => {
-      if (!calendarId || !token) return null;
+      if (!calendarId) return null;
 
       try {
         const response = await calendarApi.get(
-          `/calendars/${calendarId}/shares/${userId}/check`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          `/calendars/${calendarId}/shares/${userId}/check`
         );
         return response.data;
-      } catch (err) {
-        console.error("Failed to check permission:", err);
+      } catch {
         return null;
       }
     },
-    [calendarId, token]
+    [calendarId]
   );
 
   return {

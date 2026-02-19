@@ -78,7 +78,7 @@ pub async fn create_exception(
     Json(payload): Json<CreateExceptionRequest>,
 ) -> Result<StatusCode, CalendarError> {
     let repo = EventRepository::new(&state.pool);
-    let mut event = repo
+    let event = repo
         .find_by_id(event_id)
         .await
         .map_err(|_| CalendarError::InternalError)?

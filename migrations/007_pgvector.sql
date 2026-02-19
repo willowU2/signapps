@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS ai;
 
 -- Table for document vector embeddings
 CREATE TABLE IF NOT EXISTS ai.document_vectors (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     document_id UUID NOT NULL,
     chunk_index INTEGER NOT NULL DEFAULT 0,
     content TEXT NOT NULL,

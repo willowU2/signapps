@@ -16,6 +16,7 @@ use signapps_db::models::PushSubscriptionPayload;
 #[derive(Error, Debug)]
 pub enum PushError {
     #[error("Invalid subscription: {0}")]
+    #[allow(dead_code)]
     InvalidSubscription(String),
 
     #[error("Failed to send notification: {0}")]
@@ -28,6 +29,7 @@ pub enum PushError {
     MissingVapidKeys,
 
     #[error("Invalid VAPID key: {0}")]
+    #[allow(dead_code)]
     InvalidVapidKey(String),
 
     #[error("HTTP error: {0}")]
@@ -45,17 +47,15 @@ impl VapidKeys {
     /// Load VAPID keys from environment
     /// For development: keys can be generated using web-push CLI
     pub fn load() -> Result<Self, PushError> {
-        let public_key = std::env::var("VAPID_PUBLIC_KEY")
-            .map_err(|_| {
-                tracing::warn!("VAPID_PUBLIC_KEY not set");
-                PushError::MissingVapidKeys
-            })?;
+        let public_key = std::env::var("VAPID_PUBLIC_KEY").map_err(|_| {
+            tracing::warn!("VAPID_PUBLIC_KEY not set");
+            PushError::MissingVapidKeys
+        })?;
 
-        let private_key = std::env::var("VAPID_PRIVATE_KEY")
-            .map_err(|_| {
-                tracing::warn!("VAPID_PRIVATE_KEY not set");
-                PushError::MissingVapidKeys
-            })?;
+        let private_key = std::env::var("VAPID_PRIVATE_KEY").map_err(|_| {
+            tracing::warn!("VAPID_PRIVATE_KEY not set");
+            PushError::MissingVapidKeys
+        })?;
 
         tracing::info!("VAPID keys loaded from environment");
         Ok(VapidKeys {
@@ -75,7 +75,7 @@ impl VapidKeys {
                     public_key: "BLmfHCrYiB1Y79lrZsXLGw1Vq0nCVf4eVLkpDVOb0zRH6tPBLlQZ5mO6PJKOQBhQvSmJgVLhLgyCbOUpQ9D7KGg".to_string(),
                     private_key: "KPOFZfD2z1-yPgTmfXc74iWXRKXVc5_9FgrTNFZQdI4".to_string(),
                 }
-            }
+            },
         }
     }
 }
@@ -152,10 +152,7 @@ pub async fn send_push_notification(
     } else {
         let status = response.status();
         let text = response.text().await.unwrap_or_default();
-        Err(PushError::SendFailed(format!(
-            "HTTP {}: {}",
-            status, text
-        )))
+        Err(PushError::SendFailed(format!("HTTP {}: {}", status, text)))
     }
 }
 

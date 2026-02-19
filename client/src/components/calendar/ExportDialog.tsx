@@ -10,8 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Download, Loader } from "lucide-react";
-import { calendarApi } from "@/lib/calendar-api";
-import { useAuthStore } from "@/lib/store";
+import { calendarApi } from "@/lib/api";
 
 interface ExportDialogProps {
   calendarId: string | null;
@@ -31,10 +30,8 @@ export function ExportDialog({
   const [format, setFormat] = useState<ExportFormat>("ics");
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuthStore();
-
   const handleExport = async () => {
-    if (!calendarId || !token) return;
+    if (!calendarId) return;
 
     try {
       setIsExporting(true);
@@ -42,10 +39,7 @@ export function ExportDialog({
 
       const response = await calendarApi.get(
         `/calendars/${calendarId}/export`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob",
-        }
+        { responseType: "blob" }
       );
 
       // Create download link
@@ -70,17 +64,14 @@ export function ExportDialog({
   };
 
   const handleExportAsJSON = async () => {
-    if (!calendarId || !token) return;
+    if (!calendarId) return;
 
     try {
       setIsExporting(true);
       setError(null);
 
       const response = await calendarApi.get(
-        `/calendars/${calendarId}/events`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `/calendars/${calendarId}/events`
       );
 
       // Create JSON blob

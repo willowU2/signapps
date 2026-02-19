@@ -10,7 +10,7 @@ CREATE SCHEMA IF NOT EXISTS calendar;
 -- Calendars table
 -- ============================================================================
 CREATE TABLE calendar.calendars (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     owner_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -29,7 +29,7 @@ CREATE INDEX idx_calendars_is_shared ON calendar.calendars(is_shared);
 -- Calendar Members (sharing and permissions)
 -- ============================================================================
 CREATE TABLE calendar.calendar_members (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     calendar_id UUID NOT NULL REFERENCES calendar.calendars(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
     role VARCHAR(32) NOT NULL DEFAULT 'viewer',  -- owner|editor|viewer
@@ -45,7 +45,7 @@ CREATE INDEX idx_calendar_members_user_id ON calendar.calendar_members(user_id);
 -- Events table (supports recurring with RRULE RFC 5545)
 -- ============================================================================
 CREATE TABLE calendar.events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     calendar_id UUID NOT NULL REFERENCES calendar.calendars(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     description TEXT,
@@ -74,7 +74,7 @@ CREATE INDEX idx_events_created_by ON calendar.events(created_by);
 -- Event Attendees (RSVP tracking)
 -- ============================================================================
 CREATE TABLE calendar.event_attendees (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID NOT NULL REFERENCES calendar.events(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
     email VARCHAR(255),  -- For external attendees
@@ -92,7 +92,7 @@ CREATE INDEX idx_event_attendees_user_id ON calendar.event_attendees(user_id);
 -- Event Metadata (iCalendar extensions, custom properties)
 -- ============================================================================
 CREATE TABLE calendar.event_metadata (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID NOT NULL REFERENCES calendar.events(id) ON DELETE CASCADE,
     key VARCHAR(255) NOT NULL,
     value TEXT,
@@ -106,7 +106,7 @@ CREATE INDEX idx_event_metadata_event_id ON calendar.event_metadata(event_id);
 -- Resources (rooms, equipment, vehicles)
 -- ============================================================================
 CREATE TABLE calendar.resources (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     resource_type VARCHAR(64) NOT NULL,  -- room|equipment|vehicle
     description TEXT,
@@ -125,7 +125,7 @@ CREATE INDEX idx_resources_is_available ON calendar.resources(is_available);
 -- Event Resources (booking: event ↔ resource)
 -- ============================================================================
 CREATE TABLE calendar.event_resources (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID NOT NULL REFERENCES calendar.events(id) ON DELETE CASCADE,
     resource_id UUID NOT NULL REFERENCES calendar.resources(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -139,7 +139,7 @@ CREATE INDEX idx_event_resources_resource_id ON calendar.event_resources(resourc
 -- Tasks (hierarchical with parent_id)
 -- ============================================================================
 CREATE TABLE calendar.tasks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     calendar_id UUID NOT NULL REFERENCES calendar.calendars(id) ON DELETE CASCADE,
     parent_task_id UUID REFERENCES calendar.tasks(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
@@ -164,7 +164,7 @@ CREATE INDEX idx_tasks_status ON calendar.tasks(status);
 -- Task Attachments (file references)
 -- ============================================================================
 CREATE TABLE calendar.task_attachments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     task_id UUID NOT NULL REFERENCES calendar.tasks(id) ON DELETE CASCADE,
     file_url TEXT NOT NULL,
     file_name VARCHAR(255),
@@ -178,7 +178,7 @@ CREATE INDEX idx_task_attachments_task_id ON calendar.task_attachments(task_id);
 -- Reminders / Notifications
 -- ============================================================================
 CREATE TABLE calendar.reminders (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_id UUID REFERENCES calendar.events(id) ON DELETE CASCADE,
     task_id UUID REFERENCES calendar.tasks(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
@@ -199,7 +199,7 @@ CREATE INDEX idx_reminders_is_sent ON calendar.reminders(is_sent);
 -- Activity Log (audit trail)
 -- ============================================================================
 CREATE TABLE calendar.activity_log (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     calendar_id UUID NOT NULL REFERENCES calendar.calendars(id) ON DELETE CASCADE,
     entity_type VARCHAR(64) NOT NULL,  -- 'event'|'task'|'calendar'|'resource'
     entity_id UUID NOT NULL,

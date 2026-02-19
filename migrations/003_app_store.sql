@@ -1,7 +1,7 @@
 -- App Store: sources for external app catalogs
 
 CREATE TABLE IF NOT EXISTS containers.app_sources (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     url TEXT NOT NULL UNIQUE,
     enabled BOOLEAN NOT NULL DEFAULT TRUE,

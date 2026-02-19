@@ -9,13 +9,14 @@ members = [
     "services/signapps-containers",
     "services/signapps-proxy",
     "services/signapps-storage",
-    "services/signapps-ai",
     "services/signapps-securelink",
     "services/signapps-scheduler",
     "services/signapps-metrics",
-    "services/signapps-media",
     "services/signapps-docs",
     "services/signapps-calendar",
+    "services/signapps-ai",
+    "services/signapps-collab",
+    "services/signapps-media",
 ]
 
 [workspace.package]

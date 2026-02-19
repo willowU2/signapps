@@ -50,10 +50,7 @@ async fn main() -> anyhow::Result<()> {
     // Load configuration
     dotenvy::dotenv().ok();
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        tracing::warn!("JWT_SECRET not set, using insecure default");
-        "dev_secret_change_in_production_32chars".to_string()
-    });
+    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
     // Create database pool
     let pool = create_pool(&database_url).await?;

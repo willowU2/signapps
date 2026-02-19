@@ -87,3 +87,72 @@ export const useUIStore = create<UIState>()(
     }
   )
 );
+
+// Notes State (Right Sidebar)
+interface Note {
+  id: string;
+  content: string;
+  createdAt: string;
+}
+
+interface NotesState {
+  notes: Note[];
+  addNote: (content: string) => void;
+  updateNote: (id: string, content: string) => void;
+  removeNote: (id: string) => void;
+}
+
+export const useNotesStore = create<NotesState>()(
+  persist(
+    (set) => ({
+      notes: [],
+      addNote: (content) =>
+        set((state) => ({
+          notes: [
+            { id: crypto.randomUUID(), content, createdAt: new Date().toISOString() },
+            ...state.notes,
+          ],
+        })),
+      updateNote: (id, content) =>
+        set((state) => ({
+          notes: state.notes.map((n) => (n.id === id ? { ...n, content } : n)),
+        })),
+      removeNote: (id) =>
+        set((state) => ({ notes: state.notes.filter((n) => n.id !== id) })),
+    }),
+    { name: 'notes-storage' }
+  )
+);
+
+// Quick Tasks State (Right Sidebar)
+interface QuickTask {
+  id: string;
+  label: string;
+  done: boolean;
+}
+
+interface QuickTasksState {
+  tasks: QuickTask[];
+  addTask: (label: string) => void;
+  toggleTask: (id: string) => void;
+  removeTask: (id: string) => void;
+}
+
+export const useQuickTasksStore = create<QuickTasksState>()(
+  persist(
+    (set) => ({
+      tasks: [],
+      addTask: (label) =>
+        set((state) => ({
+          tasks: [...state.tasks, { id: crypto.randomUUID(), label, done: false }],
+        })),
+      toggleTask: (id) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
+        })),
+      removeTask: (id) =>
+        set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
+    }),
+    { name: 'quick-tasks-storage' }
+  )
+);

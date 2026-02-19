@@ -1,6 +1,5 @@
 /// Notification handlers
 /// Manages user notification preferences, history, and settings
-
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -11,7 +10,7 @@ use uuid::Uuid;
 
 use signapps_common::Claims;
 use signapps_db::{
-    models::{NotificationChannel, UpdateNotificationPreferencesRequest, NotificationFilter},
+    models::UpdateNotificationPreferencesRequest,
     repositories::{
         NotificationPreferencesRepository, NotificationSentRepository, PushSubscriptionRepository,
     },
@@ -32,8 +31,8 @@ pub struct UpdatePreferencesRequest {
     pub phone_number: Option<String>,
     pub push_enabled: Option<bool>,
     pub quiet_hours_enabled: Option<bool>,
-    pub quiet_start: Option<String>,  // HH:MM format
-    pub quiet_end: Option<String>,    // HH:MM format
+    pub quiet_start: Option<String>, // HH:MM format
+    pub quiet_end: Option<String>,   // HH:MM format
     pub reminder_times: Option<Vec<i32>>,
 }
 
@@ -94,13 +93,13 @@ pub async fn update_preferences(
     Json(req): Json<UpdatePreferencesRequest>,
 ) -> Result<Json<serde_json::Value>, CalendarError> {
     // Convert quiet hours to NaiveTime
-    let quiet_start = req.quiet_start.and_then(|s| {
-        chrono::NaiveTime::parse_from_str(&s, "%H:%M").ok()
-    });
+    let quiet_start = req
+        .quiet_start
+        .and_then(|s| chrono::NaiveTime::parse_from_str(&s, "%H:%M").ok());
 
-    let quiet_end = req.quiet_end.and_then(|s| {
-        chrono::NaiveTime::parse_from_str(&s, "%H:%M").ok()
-    });
+    let quiet_end = req
+        .quiet_end
+        .and_then(|s| chrono::NaiveTime::parse_from_str(&s, "%H:%M").ok());
 
     let update = UpdateNotificationPreferencesRequest {
         email_enabled: req.email_enabled,
@@ -131,7 +130,7 @@ pub async fn update_preferences(
 /// Register a Web Push API subscription
 #[derive(Debug, Clone, Deserialize)]
 pub struct PushSubscriptionRequest {
-    pub subscription: serde_json::Value,  // Web Push API subscription object
+    pub subscription: serde_json::Value, // Web Push API subscription object
     pub browser_name: Option<String>,
 }
 
@@ -140,14 +139,9 @@ pub async fn subscribe_push(
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     Json(req): Json<PushSubscriptionRequest>,
 ) -> Result<StatusCode, CalendarError> {
-    PushSubscriptionRepository::create(
-        &state.pool,
-        claims.sub,
-        req.subscription,
-        req.browser_name,
-    )
-    .await
-    .map_err(|_| CalendarError::internal("Failed to register push subscription"))?;
+    PushSubscriptionRepository::create(&state.pool, claims.sub, req.subscription, req.browser_name)
+        .await
+        .map_err(|_| CalendarError::internal("Failed to register push subscription"))?;
 
     Ok(StatusCode::CREATED)
 }
@@ -201,6 +195,7 @@ pub async fn unsubscribe_push(
 
 /// GET /api/v1/notifications/history
 /// Get notification history with filtering and pagination
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 pub struct NotificationHistoryQuery {
     pub notification_type: Option<String>,
@@ -218,9 +213,10 @@ pub async fn get_notification_history(
     let limit = query.limit.unwrap_or(20).min(100);
     let offset = query.offset.unwrap_or(0);
 
-    let notifications = NotificationSentRepository::get_history(&state.pool, claims.sub, limit, offset)
-        .await
-        .map_err(|_| CalendarError::internal("Failed to fetch notification history"))?;
+    let notifications =
+        NotificationSentRepository::get_history(&state.pool, claims.sub, limit, offset)
+            .await
+            .map_err(|_| CalendarError::internal("Failed to fetch notification history"))?;
 
     let response: Vec<NotificationRecord> = notifications
         .iter()

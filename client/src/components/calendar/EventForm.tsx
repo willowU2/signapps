@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ResourceSelector } from "./ResourceSelector";
 import { AttendeeList } from "./AttendeeList";
 import { Users, Package } from "lucide-react";
@@ -37,12 +37,13 @@ export function EventForm({
   defaultStartDate,
 }: EventFormProps) {
   const { createEvent, updateEvent, deleteEvent } = useEvents(calendarId);
-  const { toast } = useToast();
 
-  const [formData, setFormData] = useState<Omit<CreateEvent | UpdateEvent, "rrule" | "timezone">> & {
+  type FormDataType = Omit<CreateEvent | UpdateEvent, "rrule" | "timezone"> & {
     rrule?: string;
     timezone?: string;
-  }>(() => {
+  };
+
+  const [formData, setFormData] = useState<FormDataType>(() => {
     if (initialEvent) {
       return {
         title: initialEvent.title,
@@ -99,28 +100,23 @@ export function EventForm({
           is_all_day: formData.is_all_day,
         };
         await updateEvent(initialEvent.id, updateData);
-        toast({ title: "Event updated successfully" });
+        toast.success("Event updated successfully");
       } else {
         const createData: CreateEvent = {
           title: formData.title || "Untitled Event",
           description: formData.description,
           location: formData.location,
-          start_time: formData.start_time,
-          end_time: formData.end_time,
+          start_time: formData.start_time || new Date().toISOString(),
+          end_time: formData.end_time || new Date().toISOString(),
           is_all_day: formData.is_all_day,
           timezone: formData.timezone,
         };
         await createEvent(createData);
-        toast({ title: "Event created successfully" });
+        toast.success("Event created successfully");
       }
       onOpenChange(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsSubmitting(false);
     }
@@ -134,22 +130,18 @@ export function EventForm({
     setIsSubmitting(true);
     try {
       await deleteEvent(initialEvent.id);
-      toast({ title: "Event deleted successfully" });
+      toast.success("Event deleted successfully");
       onOpenChange(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
@@ -325,7 +317,6 @@ export function EventForm({
       </DialogContent>
     </Dialog>
 
-    {/* Resource Selector Dialog */}
     <ResourceSelector
       open={resourceSelectorOpen}
       onOpenChange={setResourceSelectorOpen}
@@ -335,7 +326,6 @@ export function EventForm({
       endTime={formData.end_time}
     />
 
-    {/* Attendee List Dialog */}
     <AttendeeList
       eventId={initialEvent?.id || ""}
       open={attendeeListOpen}
@@ -343,5 +333,6 @@ export function EventForm({
       attendees={attendees}
       onAttendeesChange={setAttendees}
     />
+    </>
   );
 }

@@ -49,6 +49,7 @@ export function useYjsDocument(
                 docId,
                 doc,
                 {
+                    // @ts-expect-error y-websocket accepts boolean for awareness
                     awareness: enableAwareness,
                     resyncInterval: 5000,
                     connect: true,

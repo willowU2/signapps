@@ -9,8 +9,8 @@ pub mod repositories;
 
 pub use pool::DatabasePool;
 pub use repositories::{
-    CalendarRepository, CalendarMemberRepository, EventRepository,
-    EventAttendeeRepository, TaskRepository, ResourceRepository,
+    CalendarMemberRepository, CalendarRepository, EventAttendeeRepository, EventRepository,
+    ResourceRepository, TaskRepository,
 };
 
 use sqlx::postgres::PgPoolOptions;
@@ -20,7 +20,7 @@ use std::time::Duration;
 pub async fn create_pool(database_url: &str) -> Result<DatabasePool, sqlx::Error> {
     let pool = PgPoolOptions::new()
         .max_connections(20)
-        .acquire_timeout(Duration::from_secs(5))
+        .acquire_timeout(Duration::from_secs(30))  // Increased from 5 to 30 for WSL Docker startup
         .idle_timeout(Duration::from_secs(600))
         .connect(database_url)
         .await?;
@@ -66,20 +66,38 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
         Err(sqlx::migrate::MigrateError::Execute(e)) => {
             // If migrations fail with execution errors in dev, try to reset
             if cfg!(debug_assertions) {
-                tracing::warn!("Migration execution failed in dev mode, attempting recovery...");
+                tracing::warn!(
+                    "Migration execution failed in dev mode: {:?}. Attempting recovery...",
+                    e
+                );
                 // Try to drop ALL schemas and reset _sqlx_migrations table
                 let reset_queries = vec![
                     "DROP SCHEMA IF EXISTS identity CASCADE",
                     "DROP SCHEMA IF EXISTS containers CASCADE",
                     "DROP SCHEMA IF EXISTS proxy CASCADE",
+                    "DROP SCHEMA IF EXISTS securelink CASCADE",
                     "DROP SCHEMA IF EXISTS storage CASCADE",
                     "DROP SCHEMA IF EXISTS ai CASCADE",
+                    "DROP SCHEMA IF EXISTS calendar CASCADE",
                     "DROP SCHEMA IF EXISTS scheduler CASCADE",
                     "DROP SCHEMA IF EXISTS documents CASCADE",
                     "DROP SCHEMA IF EXISTS monitoring CASCADE",
-                    "DROP TABLE IF EXISTS public.devices CASCADE",
+                    // Public schema tables (documents, notifications, etc.)
+                    "DROP TABLE IF EXISTS public.document_metadata CASCADE",
+                    "DROP TABLE IF EXISTS public.document_presence CASCADE",
+                    "DROP TABLE IF EXISTS public.document_permissions CASCADE",
+                    "DROP TABLE IF EXISTS public.document_updates CASCADE",
+                    "DROP TABLE IF EXISTS public.documents CASCADE",
+                    "DROP TABLE IF EXISTS public.notification_digests CASCADE",
+                    "DROP TABLE IF EXISTS public.notification_templates CASCADE",
+                    "DROP TABLE IF EXISTS public.notifications_sent CASCADE",
+                    "DROP TABLE IF EXISTS public.push_subscriptions CASCADE",
+                    "DROP TABLE IF EXISTS public.notification_preferences CASCADE",
                     "DROP TABLE IF EXISTS public.calendar_events CASCADE",
                     "DROP TABLE IF EXISTS public.calendar_tasks CASCADE",
+                    "DROP FUNCTION IF EXISTS public.cleanup_stale_presence() CASCADE",
+                    "DROP EXTENSION IF EXISTS vector CASCADE",
+                    "DROP EXTENSION IF EXISTS \"uuid-ossp\" CASCADE",
                     "DROP TABLE IF EXISTS _sqlx_migrations CASCADE",
                 ];
 
@@ -98,7 +116,7 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
                     Err(e) => {
                         tracing::error!("Migration recovery failed after reset: {:?}", e);
                         Err(e)
-                    }
+                    },
                 }
             } else {
                 Err(sqlx::migrate::MigrateError::Execute(e))

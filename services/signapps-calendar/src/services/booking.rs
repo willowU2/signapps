@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 /// Conflict information for a resource
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Conflict {
     pub resource_id: Uuid,
@@ -14,6 +15,7 @@ pub struct Conflict {
 }
 
 /// Check if time ranges overlap
+#[allow(dead_code)]
 fn times_overlap(
     start1: DateTime<Utc>,
     end1: DateTime<Utc>,
@@ -33,6 +35,7 @@ fn times_overlap(
 ///
 /// # Returns
 /// Vec of conflicts found
+#[allow(dead_code)]
 pub fn check_conflicts(
     resource_id: Uuid,
     start_time: DateTime<Utc>,
@@ -55,6 +58,7 @@ pub fn check_conflicts(
 }
 
 /// Check for all resources conflicts
+#[allow(dead_code)]
 pub fn check_all_conflicts(
     resources: &[(Uuid, String)],
     start_time: DateTime<Utc>,
@@ -105,14 +109,29 @@ mod tests {
         let event_id = Uuid::new_v4();
         let now = Utc::now();
 
-        let booking = (event_id, "Existing Event".to_string(), now, now + chrono::Duration::hours(1));
+        let booking = (
+            event_id,
+            "Existing Event".to_string(),
+            now,
+            now + chrono::Duration::hours(1),
+        );
 
         // Overlapping time
-        let conflicts = check_conflicts(resource_id, now + chrono::Duration::minutes(30), now + chrono::Duration::hours(2), &[booking.clone()]);
+        let conflicts = check_conflicts(
+            resource_id,
+            now + chrono::Duration::minutes(30),
+            now + chrono::Duration::hours(2),
+            &[booking.clone()],
+        );
         assert_eq!(conflicts.len(), 1);
 
         // Non-overlapping time
-        let conflicts = check_conflicts(resource_id, now + chrono::Duration::hours(2), now + chrono::Duration::hours(3), &[booking]);
+        let conflicts = check_conflicts(
+            resource_id,
+            now + chrono::Duration::hours(2),
+            now + chrono::Duration::hours(3),
+            &[booking],
+        );
         assert_eq!(conflicts.len(), 0);
     }
 }

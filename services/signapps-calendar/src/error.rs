@@ -30,7 +30,7 @@ pub enum CalendarError {
 }
 
 impl CalendarError {
-    pub fn not_found(msg: &str) -> Self {
+    pub fn not_found(_msg: &str) -> Self {
         CalendarError::NotFound
     }
 
@@ -38,7 +38,7 @@ impl CalendarError {
         CalendarError::Unauthorized
     }
 
-    pub fn forbidden(msg: &str) -> Self {
+    pub fn forbidden(_msg: &str) -> Self {
         CalendarError::Forbidden
     }
 
@@ -46,7 +46,7 @@ impl CalendarError {
         CalendarError::InvalidInput(msg.to_string())
     }
 
-    pub fn internal(msg: &str) -> Self {
+    pub fn internal(_msg: &str) -> Self {
         CalendarError::InternalError
     }
 
@@ -63,7 +63,10 @@ impl IntoResponse for CalendarError {
             CalendarError::Forbidden => (StatusCode::FORBIDDEN, "Forbidden".to_string()),
             CalendarError::InvalidInput(msg) => (StatusCode::BAD_REQUEST, msg),
             CalendarError::Conflict(msg) => (StatusCode::CONFLICT, msg),
-            CalendarError::InternalError => (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string()),
+            CalendarError::InternalError => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string(),
+            ),
         };
 
         let body = Json(json!({

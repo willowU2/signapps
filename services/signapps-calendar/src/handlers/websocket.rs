@@ -3,7 +3,10 @@
 //! Includes presence tracking for active users
 
 use axum::{
-    extract::{ws::{WebSocket, WebSocketUpgrade, Message}, Path, State},
+    extract::{
+        ws::{Message, WebSocket, WebSocketUpgrade},
+        Path, State,
+    },
     response::IntoResponse,
 };
 use futures::{stream::StreamExt, SinkExt};
@@ -14,10 +17,11 @@ use tracing::{debug, error, info};
 use uuid::Uuid;
 use yrs::Doc;
 
+use crate::handlers::ws_messages::{PresenceAction, PresenceMessage};
 use crate::AppState;
-use crate::handlers::ws_messages::{PresenceMessage, PresenceAction};
 
 /// Calendar document session metadata
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct CalendarSession {
     pub id: Uuid,
@@ -33,18 +37,12 @@ pub async fn websocket_handler(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(move |socket| {
-        handle_socket(socket, calendar_id, state)
-    })
-    .into_response()
+    ws.on_upgrade(move |socket| handle_socket(socket, calendar_id, state))
+        .into_response()
 }
 
 /// Handle individual WebSocket connection
-async fn handle_socket(
-    socket: WebSocket,
-    calendar_id: Uuid,
-    state: AppState,
-) {
+async fn handle_socket(socket: WebSocket, calendar_id: Uuid, state: AppState) {
     let session_id = Uuid::new_v4();
 
     // For now, use Uuid::nil as system user (should be from JWT auth in production)
@@ -81,7 +79,9 @@ async fn handle_socket(
         entry.clone()
     } else {
         let new_doc = Arc::new(Doc::new());
-        state.calendar_docs.insert(cache_key.clone(), new_doc.clone());
+        state
+            .calendar_docs
+            .insert(cache_key.clone(), new_doc.clone());
         info!(calendar_id = %calendar_id, "Created new Yrs document");
         new_doc
     };
@@ -91,7 +91,9 @@ async fn handle_socket(
         entry.clone()
     } else {
         let (tx, _rx) = broadcast::channel(100);
-        state.calendar_broadcasts.insert(cache_key.clone(), tx.clone());
+        state
+            .calendar_broadcasts
+            .insert(cache_key.clone(), tx.clone());
         info!(calendar_id = %calendar_id, "Created new broadcast channel");
         tx
     };
@@ -141,20 +143,20 @@ async fn handle_socket(
                             "Failed to broadcast update (no receivers)"
                         );
                     }
-                }
+                },
                 Ok(Message::Text(msg)) => {
                     debug!(
                         session_id = %session_id_log,
                         message = %msg,
                         "Text message received"
                     );
-                }
+                },
                 Ok(Message::Ping(_)) => {
                     debug!(session_id = %session_id_log, "Ping received");
-                }
+                },
                 Ok(Message::Pong(_)) => {
                     debug!(session_id = %session_id_log, "Pong received");
-                }
+                },
                 Ok(Message::Close(_)) => {
                     info!(
                         session_id = %session_id_log,
@@ -162,7 +164,7 @@ async fn handle_socket(
                         "Client requested close"
                     );
                     break;
-                }
+                },
                 Err(e) => {
                     error!(
                         session_id = %session_id_log,
@@ -170,7 +172,7 @@ async fn handle_socket(
                         "WebSocket error"
                     );
                     break;
-                }
+                },
             }
         }
     });
@@ -187,7 +189,7 @@ async fn handle_socket(
                         session_id = %session_id_bc,
                         "Update sent to client"
                     );
-                }
+                },
                 Err(e) => {
                     error!(
                         session_id = %session_id_bc,
@@ -196,7 +198,7 @@ async fn handle_socket(
                         "Failed to send update to client"
                     );
                     break;
-                }
+                },
             }
         }
     });

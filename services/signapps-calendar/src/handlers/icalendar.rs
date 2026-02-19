@@ -7,12 +7,13 @@ use axum::{
 };
 use chrono;
 use serde::{Deserialize, Serialize};
-use signapps_db::{models::*, EventRepository, CalendarRepository};
+use signapps_db::{models::*, CalendarRepository, EventRepository};
 use uuid::Uuid;
 
 use crate::{services::icalendar as ical, AppState, CalendarError};
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct ImportCalendarRequest {
     pub ics_content: String,
     pub calendar_id: String,
@@ -26,6 +27,7 @@ pub struct ImportResult {
 }
 
 /// Export calendar to iCalendar format (RFC 5545)
+#[tracing::instrument(skip_all)]
 pub async fn export_calendar(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -74,7 +76,10 @@ pub async fn export_calendar(
     Ok((
         StatusCode::OK,
         [
-            ("Content-Type".to_string(), "text/calendar; charset=utf-8".to_string()),
+            (
+                "Content-Type".to_string(),
+                "text/calendar; charset=utf-8".to_string(),
+            ),
             ("Content-Disposition".to_string(), filename),
         ],
         ics,
@@ -126,12 +131,16 @@ pub async fn get_calendar_feed(
 
     Ok((
         StatusCode::OK,
-        [("Content-Type".to_string(), "text/calendar; charset=utf-8".to_string())],
+        [(
+            "Content-Type".to_string(),
+            "text/calendar; charset=utf-8".to_string(),
+        )],
         ics,
     ))
 }
 
 /// Import calendar from iCalendar format (RFC 5545)
+#[allow(dead_code)]
 pub async fn import_calendar(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,
@@ -149,7 +158,7 @@ pub async fn import_calendar(
                 skipped: 0,
                 errors: vec![e],
             }))
-        }
+        },
     };
 
     let mut imported = 0;
@@ -171,12 +180,18 @@ pub async fn import_calendar(
         };
 
         // Insert event
-        match event_repo.create(calendar_id, event_input, system_user_id).await {
+        match event_repo
+            .create(calendar_id, event_input, system_user_id)
+            .await
+        {
             Ok(_) => imported += 1,
             Err(e) => {
-                errors.push(format!("Failed to import event '{}': {}", ical_event.title, e));
+                errors.push(format!(
+                    "Failed to import event '{}': {}",
+                    ical_event.title, e
+                ));
                 skipped += 1;
-            }
+            },
         }
     }
 
@@ -198,6 +213,15 @@ pub struct ValidateICalendarResponse {
     pub valid: bool,
     pub event_count: usize,
     pub errors: Vec<String>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub struct CalendarSession {
+    pub id: Uuid,
+    pub calendar_id: Uuid,
+    pub user_id: Uuid,
+    pub tx: tokio::sync::broadcast::Sender<Vec<u8>>,
 }
 
 pub async fn validate_icalendar(

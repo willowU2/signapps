@@ -9,12 +9,13 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
+use sqlx::Row;
 use uuid::Uuid;
 
 use crate::AppState;
 
 /// Favorite item.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Favorite {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -77,14 +78,29 @@ pub struct FavoriteWithInfo {
     pub exists: bool,
 }
 
+/// Helper to map a row to a Favorite struct
+fn map_row_to_favorite(row: &sqlx::postgres::PgRow) -> Result<Favorite> {
+    Ok(Favorite {
+        id: row.get::<Uuid, _>("id"),
+        user_id: row.get::<Uuid, _>("user_id"),
+        bucket: row.get::<String, _>("bucket"),
+        key: row.get::<String, _>("key"),
+        is_folder: row.get::<bool, _>("is_folder"),
+        display_name: row.get::<Option<String>, _>("display_name"),
+        color: row.get::<Option<String>, _>("color"),
+        added_at: row.get::<DateTime<Utc>, _>("added_at"),
+        sort_order: row.get::<i32, _>("sort_order"),
+    })
+}
+
 /// Add a file or folder to favorites.
-#[tracing::instrument(skip(state, _user_id))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn add_favorite(
     State(state): State<AppState>,
-    axum::Extension(_user_id): axum::Extension<Uuid>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Json(request): Json<AddFavoriteRequest>,
 ) -> Result<Json<Favorite>> {
-    // Verify item exists
+    // Verify item exists if not a folder
     if !request.is_folder {
         let _info = state
             .storage
@@ -92,19 +108,27 @@ pub async fn add_favorite(
             .await?;
     }
 
-    let favorite = Favorite {
-        id: Uuid::new_v4(),
-        user_id: _user_id,
-        bucket: request.bucket,
-        key: request.key,
-        is_folder: request.is_folder,
-        display_name: request.display_name,
-        color: request.color,
-        added_at: Utc::now(),
-        sort_order: 0, // TODO: Get next sort order
-    };
+    let row = sqlx::query(
+        r#"
+        INSERT INTO storage.favorites (user_id, bucket, key, is_folder, display_name, color)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (user_id, bucket, key) DO UPDATE SET
+            is_folder = EXCLUDED.is_folder,
+            display_name = EXCLUDED.display_name,
+            color = EXCLUDED.color
+        RETURNING id, user_id, bucket, key, is_folder, display_name, color, added_at, sort_order
+        "#,
+    )
+    .bind(user_id)
+    .bind(&request.bucket)
+    .bind(&request.key)
+    .bind(request.is_folder)
+    .bind(&request.display_name)
+    .bind(&request.color)
+    .fetch_one(state.pool.inner())
+    .await?;
 
-    // TODO: Store in database
+    let favorite = map_row_to_favorite(&row)?;
 
     tracing::info!(
         id = %favorite.id,
@@ -117,81 +141,213 @@ pub async fn add_favorite(
 }
 
 /// List favorites for current user.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn list_favorites(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Query(query): Query<ListFavoritesQuery>,
 ) -> Result<Json<ListFavoritesResponse>> {
-    // TODO: Query from database with filters
+    let rows = sqlx::query(
+        r#"
+        SELECT id, user_id, bucket, key, is_folder, display_name, color, added_at, sort_order
+        FROM storage.favorites
+        WHERE user_id = $1
+          AND ($2::TEXT IS NULL OR bucket = $2)
+          AND ($3::BOOLEAN IS NULL OR is_folder = $3)
+          AND ($4::BOOLEAN IS NULL OR is_folder = NOT $4)
+        ORDER BY sort_order ASC, added_at DESC
+        "#,
+    )
+    .bind(user_id)
+    .bind(&query.bucket)
+    .bind(query.folders_only)
+    .bind(query.files_only)
+    .fetch_all(state.pool.inner())
+    .await?;
+
+    let favorites = rows
+        .iter()
+        .map(map_row_to_favorite)
+        .collect::<Result<Vec<_>>>()?;
+
+    let favorites_with_info = favorites
+        .into_iter()
+        .map(|fav| FavoriteWithInfo {
+            filename: fav.key.split('/').last().unwrap_or(&fav.key).to_string(),
+            size: None,
+            content_type: None,
+            exists: true,
+            favorite: fav,
+        })
+        .collect::<Vec<_>>();
+
+    let total = favorites_with_info.len() as i64;
 
     Ok(Json(ListFavoritesResponse {
-        favorites: vec![],
-        total: 0,
+        favorites: favorites_with_info,
+        total,
     }))
 }
 
 /// Get a specific favorite.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn get_favorite(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<FavoriteWithInfo>> {
-    // TODO: Fetch from database
-    Err(Error::NotFound(format!("Favorite {} not found", id)))
+    let row = sqlx::query(
+        r#"
+        SELECT id, user_id, bucket, key, is_folder, display_name, color, added_at, sort_order
+        FROM storage.favorites
+        WHERE id = $1 AND user_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(state.pool.inner())
+    .await?
+    .ok_or_else(|| Error::NotFound(format!("Favorite {} not found", id)))?;
+
+    let favorite = map_row_to_favorite(&row)?;
+
+    let favorite_with_info = FavoriteWithInfo {
+        filename: favorite
+            .key
+            .split('/')
+            .last()
+            .unwrap_or(&favorite.key)
+            .to_string(),
+        size: None,
+        content_type: None,
+        exists: true,
+        favorite,
+    };
+
+    Ok(Json(favorite_with_info))
 }
 
 /// Update a favorite.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn update_favorite(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path(id): Path<Uuid>,
-    Json(_request): Json<UpdateFavoriteRequest>,
+    Json(payload): Json<UpdateFavoriteRequest>,
 ) -> Result<Json<Favorite>> {
-    // TODO: Update in database
-    Err(Error::NotFound(format!("Favorite {} not found", id)))
+    let row = sqlx::query(
+        r#"
+        UPDATE storage.favorites
+        SET
+            display_name = COALESCE($1, display_name),
+            color = COALESCE($2, color),
+            sort_order = COALESCE($3, sort_order)
+        WHERE id = $4 AND user_id = $5
+        RETURNING id, user_id, bucket, key, is_folder, display_name, color, added_at, sort_order
+        "#,
+    )
+    .bind(&payload.display_name)
+    .bind(&payload.color)
+    .bind(payload.sort_order)
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(state.pool.inner())
+    .await?
+    .ok_or_else(|| Error::NotFound(format!("Favorite {} not found", id)))?;
+
+    let favorite = map_row_to_favorite(&row)?;
+
+    Ok(Json(favorite))
 }
 
 /// Remove from favorites.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn remove_favorite(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    // TODO: Delete from database
-    tracing::info!(id = %id, "Favorite removed");
+    let result = sqlx::query("DELETE FROM storage.favorites WHERE id = $1 AND user_id = $2")
+        .bind(id)
+        .bind(user_id)
+        .execute(state.pool.inner())
+        .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(Error::NotFound(format!("Favorite {} not found", id)));
+    }
+
+    tracing::info!(id = %id, user_id = %user_id, "Favorite removed");
     Ok(StatusCode::NO_CONTENT)
 }
 
 /// Remove favorite by path.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn remove_favorite_by_path(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<StatusCode> {
-    // TODO: Delete from database by bucket/key
-    tracing::info!(bucket = %bucket, key = %key, "Favorite removed by path");
+    let result = sqlx::query(
+        "DELETE FROM storage.favorites WHERE user_id = $1 AND bucket = $2 AND key = $3",
+    )
+    .bind(user_id)
+    .bind(&bucket)
+    .bind(&key)
+    .execute(state.pool.inner())
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(Error::NotFound(format!(
+            "Favorite for {}/{} not found",
+            bucket, key
+        )));
+    }
+
     Ok(StatusCode::NO_CONTENT)
 }
 
 /// Reorder favorites.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn reorder_favorites(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Json(request): Json<ReorderFavoritesRequest>,
 ) -> Result<StatusCode> {
-    // TODO: Update sort_order for each favorite
-    tracing::info!(count = request.order.len(), "Favorites reordered");
+    let mut tx = state.pool.inner().begin().await?;
+
+    for (index, id) in request.order.iter().enumerate() {
+        sqlx::query("UPDATE storage.favorites SET sort_order = $1 WHERE id = $2 AND user_id = $3")
+            .bind(index as i32)
+            .bind(id)
+            .bind(user_id)
+            .execute(&mut *tx)
+            .await?;
+    }
+
+    tx.commit().await?;
+
+    tracing::info!(count = request.order.len(), user_id = %user_id, "Favorites reordered");
     Ok(StatusCode::OK)
 }
 
 /// Check if a path is favorited.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn check_favorite(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<Json<bool>> {
-    // TODO: Check in database
-    Ok(Json(false))
+    let row = sqlx::query("SELECT EXISTS(SELECT 1 FROM storage.favorites WHERE user_id = $1 AND bucket = $2 AND key = $3)")
+        .bind(user_id)
+        .bind(&bucket)
+        .bind(&key)
+        .fetch_one(state.pool.inner())
+        .await?;
+
+    let exists: bool = row.get::<bool, _>(0);
+
+    Ok(Json(exists))
 }
 
 #[cfg(test)]

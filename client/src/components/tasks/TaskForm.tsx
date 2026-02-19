@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTasks, CreateTaskRequest } from "@/hooks/use-tasks";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface TaskFormProps {
   open: boolean;
@@ -46,7 +46,6 @@ export function TaskForm({
   onTaskCreated,
 }: TaskFormProps) {
   const { createTask } = useTasks(calendarId);
-  const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -78,17 +77,12 @@ export function TaskForm({
       };
 
       await createTask(createData);
-      toast({ title: "Task created successfully" });
+      toast.success("Task created successfully");
       onOpenChange(false);
       setFormData({ title: "", description: "", priority: "1", due_date: "" });
       onTaskCreated?.();
     } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsSubmitting(false);
     }

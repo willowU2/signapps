@@ -45,6 +45,7 @@
     "yjs": "^13.6.8",
     "y-websocket": "^1.5.0",
     "y-protocols": "^1.0.6",
+    "y-prosemirror": "^1.2.8",
     "@tiptap/core": "^2.1.8",
     "@tiptap/react": "^2.1.8",
     "@tiptap/pm": "^2.1.8",
@@ -53,7 +54,6 @@
     "@tiptap/starter-kit": "^2.1.8",
     "@tiptap/extension-placeholder": "^2.1.8",
     "reveal.js": "^4.5.0",
-    "react-beautiful-dnd": "^13.1.1",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },

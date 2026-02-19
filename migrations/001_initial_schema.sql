@@ -5,20 +5,6 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Reset migrations table to allow restart
-DROP TABLE IF EXISTS _sqlx_migrations CASCADE;
-
--- Drop all schemas and functions if they exist (for fresh restart)
-DROP FUNCTION IF EXISTS reset_all_schemas() CASCADE;
-DROP SCHEMA IF EXISTS identity CASCADE;
-DROP SCHEMA IF EXISTS containers CASCADE;
-DROP SCHEMA IF EXISTS proxy CASCADE;
-DROP SCHEMA IF EXISTS storage CASCADE;
-DROP SCHEMA IF EXISTS ai CASCADE;
-DROP SCHEMA IF EXISTS scheduler CASCADE;
-DROP SCHEMA IF EXISTS documents CASCADE;
-DROP SCHEMA IF EXISTS monitoring CASCADE;
-
 -- ============================================================================
 -- Schema: Identity (Authentication, Users, Groups, RBAC)
 -- ============================================================================
@@ -26,7 +12,7 @@ CREATE SCHEMA IF NOT EXISTS identity;
 
 -- Users table
 CREATE TABLE identity.users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(64) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE,
     password_hash TEXT,  -- NULL if auth_provider = 'ldap'
@@ -50,7 +36,7 @@ CREATE INDEX idx_users_auth_provider ON identity.users(auth_provider);
 
 -- LDAP Configuration
 CREATE TABLE identity.ldap_config (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     enabled BOOLEAN DEFAULT FALSE,
     server_url TEXT NOT NULL,
     bind_dn TEXT NOT NULL,
@@ -70,7 +56,7 @@ CREATE TABLE identity.ldap_config (
 
 -- Sessions
 CREATE TABLE identity.sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES identity.users(id) ON DELETE CASCADE,
     token_hash TEXT NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
@@ -84,7 +70,7 @@ CREATE INDEX idx_sessions_expires_at ON identity.sessions(expires_at);
 
 -- API Keys
 CREATE TABLE identity.api_keys (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES identity.users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     key_hash TEXT NOT NULL,
@@ -97,7 +83,7 @@ CREATE INDEX idx_api_keys_user_id ON identity.api_keys(user_id);
 
 -- Groups (RBAC)
 CREATE TABLE identity.groups (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
     parent_id UUID REFERENCES identity.groups(id),
@@ -119,7 +105,7 @@ CREATE TABLE identity.group_members (
 
 -- Roles
 CREATE TABLE identity.roles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
     permissions JSONB NOT NULL DEFAULT '{}',
@@ -136,7 +122,7 @@ CREATE TABLE identity.group_roles (
 
 -- Webhooks
 CREATE TABLE identity.webhooks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     url TEXT NOT NULL,
     secret TEXT,
@@ -156,7 +142,7 @@ CREATE SCHEMA IF NOT EXISTS containers;
 
 -- Managed containers
 CREATE TABLE containers.managed (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     docker_id VARCHAR(64) UNIQUE,
     name VARCHAR(255) NOT NULL,
     image TEXT NOT NULL,
@@ -193,7 +179,7 @@ CREATE SCHEMA IF NOT EXISTS proxy;
 
 -- Routes
 CREATE TABLE proxy.routes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     host VARCHAR(255) NOT NULL,
     target TEXT NOT NULL,
@@ -216,7 +202,7 @@ CREATE SCHEMA IF NOT EXISTS securelink;
 
 -- Devices
 CREATE TABLE securelink.devices (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     nickname VARCHAR(255),
     public_key TEXT NOT NULL,
@@ -235,7 +221,7 @@ CREATE SCHEMA IF NOT EXISTS storage;
 
 -- RAID Arrays
 CREATE TABLE storage.raid_arrays (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     device_path TEXT NOT NULL,
     raid_level VARCHAR(32) NOT NULL,
@@ -249,7 +235,7 @@ CREATE TABLE storage.raid_arrays (
 
 -- Disks
 CREATE TABLE storage.disks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     device_path TEXT UNIQUE NOT NULL,
     serial_number VARCHAR(255),
     model VARCHAR(255),
@@ -268,7 +254,7 @@ CREATE INDEX idx_disks_status ON storage.disks(status);
 
 -- RAID Events
 CREATE TABLE storage.raid_events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     array_id UUID REFERENCES storage.raid_arrays(id) ON DELETE CASCADE,
     event_type VARCHAR(64) NOT NULL,
     severity VARCHAR(32) NOT NULL,
@@ -287,7 +273,7 @@ CREATE SCHEMA IF NOT EXISTS documents;
 
 -- Files
 CREATE TABLE documents.files (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     filename VARCHAR(500) NOT NULL,
     path TEXT NOT NULL,
     mime_type VARCHAR(255),
@@ -307,7 +293,7 @@ CREATE INDEX idx_files_indexed ON documents.files(indexed);
 
 -- Chunks (for RAG)
 CREATE TABLE documents.chunks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     file_id UUID REFERENCES documents.files(id) ON DELETE CASCADE,
     chunk_index INT NOT NULL,
     content TEXT NOT NULL,
@@ -324,7 +310,7 @@ CREATE SCHEMA IF NOT EXISTS scheduler;
 
 -- Jobs
 CREATE TABLE scheduler.jobs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     cron_expression VARCHAR(100) NOT NULL,
     command TEXT NOT NULL,
@@ -338,7 +324,7 @@ CREATE TABLE scheduler.jobs (
 
 -- Job Runs
 CREATE TABLE scheduler.job_runs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     job_id UUID REFERENCES scheduler.jobs(id) ON DELETE CASCADE,
     started_at TIMESTAMPTZ DEFAULT NOW(),
     finished_at TIMESTAMPTZ,

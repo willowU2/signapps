@@ -18,8 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Upload, Check, AlertCircle, Loader } from "lucide-react";
-import { calendarApi } from "@/lib/calendar-api";
-import { useAuthStore } from "@/lib/store";
+import { calendarApi } from "@/lib/api";
 
 interface ImportDialogProps {
   calendarId: string | null;
@@ -46,8 +45,6 @@ export function ImportDialog({
   const [result, setResult] = useState<ImportResult | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { token } = useAuthStore();
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && (file.name.endsWith(".ics") || file.name.endsWith(".json"))) {
@@ -59,7 +56,7 @@ export function ImportDialog({
   };
 
   const handleImport = async () => {
-    if (!selectedFile || !calendarId || !token) return;
+    if (!selectedFile || !calendarId) return;
 
     try {
       setIsImporting(true);
@@ -70,8 +67,7 @@ export function ImportDialog({
         // Validate iCalendar format first
         const validationResult = await calendarApi.post(
           "/icalendar/validate",
-          { ics_content: fileContent },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { ics_content: fileContent }
         );
 
         if (!validationResult.data.valid) {
@@ -87,8 +83,7 @@ export function ImportDialog({
         // Call actual import endpoint
         const importResult = await calendarApi.post(
           `/calendars/${calendarId}/import`,
-          { ics_content: fileContent },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { ics_content: fileContent }
         );
 
         setResult({

@@ -1,6 +1,6 @@
 -- Install groups: track multi-service app installations
 CREATE TABLE IF NOT EXISTS containers.app_install_groups (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     app_id VARCHAR(255) NOT NULL,
     app_name VARCHAR(255) NOT NULL,
     source_id UUID REFERENCES containers.app_sources(id) ON DELETE SET NULL,

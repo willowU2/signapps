@@ -11,8 +11,10 @@ use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 
+use crate::handlers::quotas;
 use crate::storage::{CopyRequest, ListObjectsQuery, ListObjectsResponse, ObjectInfo};
 use crate::AppState;
+use uuid::Uuid;
 
 /// Upload response.
 #[derive(Debug, Serialize)]
@@ -84,6 +86,7 @@ pub async fn download(
 #[tracing::instrument(skip(state, multipart))]
 pub async fn upload(
     State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path(bucket): Path<String>,
     mut multipart: Multipart,
 ) -> Result<Json<Vec<UploadResponse>>> {
@@ -115,10 +118,27 @@ pub async fn upload(
 
         let size = data.len();
 
+        // Check quota before upload
+        quotas::check_quota(&state, user_id, size as i64).await?;
+
         state
             .storage
             .put_object(&bucket, &filename, data, Some(&content_type))
             .await?;
+
+        // Update quota after successful upload
+        if let Err(e) = quotas::record_upload(
+            &state,
+            user_id,
+            &bucket,
+            &filename,
+            size as i64,
+            Some(&content_type),
+        )
+        .await
+        {
+            tracing::error!(error = %e, "Failed to record upload quota");
+        }
 
         uploads.push(UploadResponse {
             bucket: bucket.clone(),
@@ -141,6 +161,7 @@ pub async fn upload(
 #[tracing::instrument(skip(state, body))]
 pub async fn upload_with_key(
     State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path((bucket, key)): Path<(String, String)>,
     headers: axum::http::HeaderMap,
     body: Bytes,
@@ -157,10 +178,27 @@ pub async fn upload_with_key(
 
     let size = body.len();
 
+    // Check quota before upload
+    quotas::check_quota(&state, user_id, size as i64).await?;
+
     state
         .storage
         .put_object(&bucket, &key, body, Some(&content_type))
         .await?;
+
+    // Update quota after successful upload
+    if let Err(e) = quotas::record_upload(
+        &state,
+        user_id,
+        &bucket,
+        &key,
+        size as i64,
+        Some(&content_type),
+    )
+    .await
+    {
+        tracing::error!(error = %e, "Failed to record upload quota");
+    }
 
     tracing::info!(bucket = %bucket, key = %key, size = size, "File uploaded");
 
@@ -176,9 +214,21 @@ pub async fn upload_with_key(
 #[tracing::instrument(skip(state))]
 pub async fn delete(
     State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<StatusCode> {
+    // Get info first to know size for quota update
+    let info = state.storage.get_object_info(&bucket, &key).await.ok();
+
     state.storage.delete_object(&bucket, &key).await?;
+
+    if let Some(info) = info {
+        if let Err(e) =
+            quotas::record_delete(&state, user_id, &bucket, &key, info.size as i64).await
+        {
+            tracing::error!(error = %e, "Failed to record delete quota");
+        }
+    }
     tracing::info!(bucket = %bucket, key = %key, "File deleted");
     Ok(StatusCode::NO_CONTENT)
 }
@@ -187,11 +237,25 @@ pub async fn delete(
 #[tracing::instrument(skip(state, payload))]
 pub async fn delete_many(
     State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path(bucket): Path<String>,
     Json(payload): Json<DeleteFilesRequest>,
 ) -> Result<StatusCode> {
     for key in &payload.keys {
+        // Get info first to know size for quota update
+        let info = state.storage.get_object_info(&bucket, key).await.ok();
+
+        // Even if delete fails, we might want to continue, but here we propagate error as typically requested
+        // Or we could try best effort. Using ? implies we stop on error.
         state.storage.delete_object(&bucket, key).await?;
+
+        if let Some(info) = info {
+            if let Err(e) =
+                quotas::record_delete(&state, user_id, &bucket, key, info.size as i64).await
+            {
+                tracing::error!(error = %e, "Failed to record delete quota");
+            }
+        }
     }
 
     tracing::info!(bucket = %bucket, count = payload.keys.len(), "Files deleted");
@@ -203,8 +267,19 @@ pub async fn delete_many(
 #[tracing::instrument(skip(state))]
 pub async fn copy(
     State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Json(payload): Json<CopyRequest>,
 ) -> Result<Json<ObjectInfo>> {
+    // 1. Get source info to check quota
+    let info = state
+        .storage
+        .get_object_info(&payload.source_bucket, &payload.source_key)
+        .await?;
+
+    // 2. Check quota
+    quotas::check_quota(&state, user_id, info.size).await?;
+
+    // 3. Perform copy
     state
         .storage
         .copy_object(
@@ -214,6 +289,20 @@ pub async fn copy(
             &payload.dest_key,
         )
         .await?;
+
+    // 4. Record the copy in database
+    if let Err(e) = quotas::record_copy(
+        &state,
+        user_id,
+        &payload.source_bucket,
+        &payload.source_key,
+        &payload.dest_bucket,
+        &payload.dest_key,
+    )
+    .await
+    {
+        tracing::error!(error = %e, "Failed to record copy quota");
+    }
 
     let info = state
         .storage
@@ -233,6 +322,7 @@ pub async fn copy(
 #[tracing::instrument(skip(state))]
 pub async fn move_file(
     State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Json(payload): Json<CopyRequest>,
 ) -> Result<Json<ObjectInfo>> {
     state
@@ -244,6 +334,20 @@ pub async fn move_file(
             &payload.dest_key,
         )
         .await?;
+
+    // 2. Record the move in database
+    if let Err(e) = quotas::record_move(
+        &state,
+        user_id,
+        &payload.source_bucket,
+        &payload.source_key,
+        &payload.dest_bucket,
+        &payload.dest_key,
+    )
+    .await
+    {
+        tracing::error!(error = %e, "Failed to record move quota");
+    }
 
     let info = state
         .storage

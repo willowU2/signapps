@@ -71,7 +71,7 @@ impl NotificationPreferencesRepository {
         update: UpdateNotificationPreferencesRequest,
     ) -> Result<NotificationPreferences, sqlx::Error> {
         // Get current preferences
-        let current = Self::get_by_user(pool, user_id).await?;
+        let _current = Self::get_by_user(pool, user_id).await?;
 
         // Apply updates
         sqlx::query_as::<_, NotificationPreferences>(

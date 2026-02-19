@@ -18,8 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, Mail } from "lucide-react";
-import { calendarApi } from "@/lib/calendar-api";
-import { useAuthStore } from "@/lib/store";
+import { calendarApi } from "@/lib/api";
 
 export interface Attendee {
   id: string;
@@ -54,14 +53,12 @@ export function AttendeeList({
   const [email, setEmail] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [localAttendees, setLocalAttendees] = useState<Attendee[]>(attendees);
-  const { token } = useAuthStore();
-
   useEffect(() => {
     setLocalAttendees(attendees);
   }, [attendees]);
 
   const handleAddAttendee = async () => {
-    if (!email.trim() || !token) return;
+    if (!email.trim()) return;
 
     try {
       setIsAdding(true);
@@ -70,8 +67,7 @@ export function AttendeeList({
         {
           email: email,
           rsvp_status: "pending",
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       );
 
       const newAttendee: Attendee = {
@@ -94,12 +90,8 @@ export function AttendeeList({
   };
 
   const handleRemoveAttendee = async (attendeeId: string) => {
-    if (!token) return;
-
     try {
-      await calendarApi.delete(`/attendees/${attendeeId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await calendarApi.delete(`/attendees/${attendeeId}`);
 
       const updated = localAttendees.filter((a) => a.id !== attendeeId);
       setLocalAttendees(updated);
@@ -113,13 +105,10 @@ export function AttendeeList({
     attendeeId: string,
     status: "pending" | "accepted" | "declined"
   ) => {
-    if (!token) return;
-
     try {
       await calendarApi.put(
         `/attendees/${attendeeId}/rsvp`,
-        { rsvp_status: status },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { rsvp_status: status }
       );
 
       const updated = localAttendees.map((a) =>

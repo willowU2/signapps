@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
-import { calendarApi } from "@/lib/calendar-api";
-import { useAuthStore } from "@/lib/store";
+import { calendarApi } from "@/lib/api";
 
 export interface Resource {
   id: string;
@@ -28,41 +27,30 @@ export function useResources() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuthStore();
 
   const loadResources = useCallback(async () => {
-    if (!token) return;
-
     try {
       setLoading(true);
-      const response = await calendarApi.get("/resources", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await calendarApi.get("/resources");
       setResources(response.data);
       setError(null);
-    } catch (err) {
-      console.error("Failed to load resources:", err);
+    } catch {
       setError("Failed to load resources");
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const loadResourcesByType = useCallback(
     async (type: string) => {
-      if (!token) return [];
-
       try {
-        const response = await calendarApi.get(`/resources/type/${type}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await calendarApi.get(`/resources/type/${type}`);
         return response.data;
-      } catch (err) {
-        console.error("Failed to load resources by type:", err);
+      } catch {
         return [];
       }
     },
-    [token]
+    []
   );
 
   const createResource = useCallback(
@@ -72,30 +60,23 @@ export function useResources() {
       capacity?: number,
       location?: string
     ) => {
-      if (!token) return;
-
       try {
-        const response = await calendarApi.post(
-          "/resources",
-          {
-            name,
-            type,
-            capacity,
-            location,
-            is_available: true,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setResources([...resources, response.data]);
+        const response = await calendarApi.post("/resources", {
+          name,
+          type,
+          capacity,
+          location,
+          is_available: true,
+        });
+        setResources((prev) => [...prev, response.data]);
         setError(null);
         return response.data;
       } catch (err) {
-        console.error("Failed to create resource:", err);
         setError("Failed to create resource");
         throw err;
       }
     },
-    [token, resources]
+    []
   );
 
   const updateResource = useCallback(
@@ -103,45 +84,36 @@ export function useResources() {
       resourceId: string,
       updates: { name?: string; is_available?: boolean }
     ) => {
-      if (!token) return;
-
       try {
         const response = await calendarApi.put(
           `/resources/${resourceId}`,
-          updates,
-          { headers: { Authorization: `Bearer ${token}` } }
+          updates
         );
-        setResources(
-          resources.map((r) => (r.id === resourceId ? response.data : r))
+        setResources((prev) =>
+          prev.map((r) => (r.id === resourceId ? response.data : r))
         );
         setError(null);
         return response.data;
       } catch (err) {
-        console.error("Failed to update resource:", err);
         setError("Failed to update resource");
         throw err;
       }
     },
-    [token, resources]
+    []
   );
 
   const deleteResource = useCallback(
     async (resourceId: string) => {
-      if (!token) return;
-
       try {
-        await calendarApi.delete(`/resources/${resourceId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setResources(resources.filter((r) => r.id !== resourceId));
+        await calendarApi.delete(`/resources/${resourceId}`);
+        setResources((prev) => prev.filter((r) => r.id !== resourceId));
         setError(null);
       } catch (err) {
-        console.error("Failed to delete resource:", err);
         setError("Failed to delete resource");
         throw err;
       }
     },
-    [token, resources]
+    []
   );
 
   const checkAvailability = useCallback(
@@ -150,48 +122,34 @@ export function useResources() {
       startTime: string,
       endTime: string
     ): Promise<AvailabilityResponse | null> => {
-      if (!token) return null;
-
       try {
-        const response = await calendarApi.post(
-          "/resources/availability",
-          {
-            resource_ids: resourceIds,
-            start_time: startTime,
-            end_time: endTime,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const response = await calendarApi.post("/resources/availability", {
+          resource_ids: resourceIds,
+          start_time: startTime,
+          end_time: endTime,
+        });
         return response.data;
-      } catch (err) {
-        console.error("Failed to check availability:", err);
+      } catch {
         return null;
       }
     },
-    [token]
+    []
   );
 
   const bookResources = useCallback(
     async (resourceId: string, eventId: string, resourceIds: string[]) => {
-      if (!token) return;
-
       try {
-        await calendarApi.post(
-          `/resources/${resourceId}/book`,
-          {
-            event_id: eventId,
-            resource_ids: resourceIds,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await calendarApi.post(`/resources/${resourceId}/book`, {
+          event_id: eventId,
+          resource_ids: resourceIds,
+        });
         setError(null);
       } catch (err) {
-        console.error("Failed to book resources:", err);
         setError("Failed to book resources");
         throw err;
       }
     },
-    [token]
+    []
   );
 
   return {

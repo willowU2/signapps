@@ -198,8 +198,7 @@ export const storeApi = {
 /** Get the SSE URL for install progress. */
 export function getInstallProgressUrl(installId: string): string {
   const base = CONTAINERS_URL.replace('/api/v1', '');
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') || '' : '';
-  return `${base}/api/v1/store/install/${installId}/progress?token=${encodeURIComponent(token)}`;
+  return `${base}/api/v1/store/install/${installId}/progress`;
 }
 
 export interface StoreApp {

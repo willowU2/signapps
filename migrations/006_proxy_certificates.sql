@@ -1,6 +1,6 @@
 -- Proxy certificates for TLS termination
 CREATE TABLE IF NOT EXISTS proxy.acme_accounts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) NOT NULL,
     directory_url TEXT NOT NULL DEFAULT 'https://acme-v02.api.letsencrypt.org/directory',
     account_credentials JSONB NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS proxy.acme_accounts (
 );
 
 CREATE TABLE IF NOT EXISTS proxy.certificates (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     domain VARCHAR(255) NOT NULL,
     cert_pem TEXT NOT NULL,
     key_pem TEXT NOT NULL,
