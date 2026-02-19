@@ -38,6 +38,8 @@ import {
   Usb,
   Share2,
   Eye,
+  Lock,
+  Star,
 } from 'lucide-react';
 import {
   Dialog,
@@ -47,10 +49,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { storageApi } from '@/lib/api';
+import { storageApi, favoritesApi } from '@/lib/api';
 import { UploadDialog } from '@/components/storage/upload-dialog';
 import { FilePreviewDialog } from '@/components/storage/file-preview-dialog';
 import { FolderTree } from '@/components/storage/folder-tree';
+import { PermissionsDialog } from '@/components/storage/permissions-dialog';
+import { DropZone } from '@/components/storage/drop-zone';
+import { FavoritesBar } from '@/components/storage/favorites-bar';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
 
@@ -116,6 +121,8 @@ export default function StoragePage() {
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
   const [deleteItem, setDeleteItem] = useState<FileItem | null>(null);
   const [deleteBucket, setDeleteBucket] = useState<string | null>(null);
+  const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
+  const [permissionsFile, setPermissionsFile] = useState<FileItem | null>(null);
 
   // Use hooks for other tabs
   const storageStats = useStorageStats();
@@ -235,6 +242,22 @@ export default function StoragePage() {
     setPreviewDialogOpen(true);
   };
 
+  const handleAddToFavorites = async (item: FileItem) => {
+    try {
+      const key = currentPath.length > 0
+        ? `${currentPath.join('/')}/${item.name}`
+        : item.name;
+      await favoritesApi.add({
+        bucket: currentBucket,
+        key,
+        is_folder: item.type === 'folder',
+      });
+      toast.success('Ajouté aux favoris');
+    } catch {
+      toast.error('Impossible d\'ajouter aux favoris');
+    }
+  };
+
   const isPreviewable = (item: FileItem): boolean => {
     if (item.type === 'folder') return false;
     const name = item.name.toLowerCase();
@@ -249,10 +272,30 @@ export default function StoragePage() {
     if (contentType === 'application/pdf' || ext === 'pdf') {
       return true;
     }
+    // Video
+    const videoExtensions = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'ogv'];
+    if (contentType.startsWith('video/') || videoExtensions.includes(ext)) {
+      return true;
+    }
+    // Audio
+    const audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'];
+    if (contentType.startsWith('audio/') || audioExtensions.includes(ext)) {
+      return true;
+    }
     // Text/Code
     const textExtensions = ['txt', 'log', 'csv', 'xml', 'yaml', 'yml', 'ini', 'conf', 'cfg', 'md', 'mdx', 'markdown'];
     const codeExtensions = ['js', 'ts', 'tsx', 'jsx', 'py', 'rs', 'go', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'php', 'rb', 'swift', 'kt', 'scala', 'sh', 'bash', 'zsh', 'ps1', 'sql', 'html', 'css', 'scss', 'less', 'json', 'toml'];
     if (contentType.startsWith('text/') || textExtensions.includes(ext) || codeExtensions.includes(ext)) {
+      return true;
+    }
+    // Archives
+    const archiveExtensions = ['zip', 'tar', 'gz', 'rar', '7z', 'bz2', 'xz'];
+    if (archiveExtensions.includes(ext)) {
+      return true;
+    }
+    // Documents
+    const docExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp'];
+    if (docExtensions.includes(ext)) {
       return true;
     }
     return false;
@@ -481,21 +524,24 @@ export default function StoragePage() {
             <div className="flex gap-4">
               {/* Folder Tree Sidebar */}
               {currentBucket && (
-                <Card className="w-56 shrink-0">
-                  <CardHeader className="py-3 px-3">
-                    <CardTitle className="text-xs font-medium text-muted-foreground">Folders</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-2 pt-0 max-h-[600px] overflow-y-auto">
-                    <FolderTree
-                      bucket={currentBucket}
-                      currentPath={currentPath.length > 0 ? currentPath.join('/') + '/' : ''}
-                      onSelectFolder={(path) => {
-                        const parts = path.replace(/\/$/, '').split('/').filter(Boolean);
-                        setCurrentPath(parts);
-                      }}
-                    />
-                  </CardContent>
-                </Card>
+                <div className="w-56 shrink-0 space-y-4">
+                  <Card>
+                    <CardHeader className="py-3 px-3">
+                      <CardTitle className="text-xs font-medium text-muted-foreground">Folders</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-2 pt-0 max-h-[400px] overflow-y-auto">
+                      <FolderTree
+                        bucket={currentBucket}
+                        currentPath={currentPath.length > 0 ? currentPath.join('/') + '/' : ''}
+                        onSelectFolder={(path) => {
+                          const parts = path.replace(/\/$/, '').split('/').filter(Boolean);
+                          setCurrentPath(parts);
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                  <FavoritesBar />
+                </div>
               )}
 
               {/* Main file area */}
@@ -510,6 +556,15 @@ export default function StoragePage() {
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
+
+                {/* Drop Zone for drag-and-drop uploads */}
+                {currentBucket && (
+                  <DropZone
+                    bucket={currentBucket}
+                    prefix={currentPath.length > 0 ? currentPath.join('/') : undefined}
+                    onUploadComplete={fetchFiles}
+                  />
+                )}
 
                 {/* File List */}
                 <Card>
@@ -551,34 +606,47 @@ export default function StoragePage() {
                               {file.lastModified || '-'}
                             </div>
                             <div className="col-span-1 flex justify-end">
-                              {file.type === 'file' && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                      <MoreVertical className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    {isPreviewable(file) && (
-                                      <DropdownMenuItem onClick={() => handlePreview(file)}>
-                                        <Eye className="mr-2 h-4 w-4" />
-                                        Preview
-                                      </DropdownMenuItem>
-                                    )}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  {file.type === 'file' && isPreviewable(file) && (
+                                    <DropdownMenuItem onClick={() => handlePreview(file)}>
+                                      <Eye className="mr-2 h-4 w-4" />
+                                      Apercu
+                                    </DropdownMenuItem>
+                                  )}
+                                  {file.type === 'file' && (
                                     <DropdownMenuItem onClick={() => handleDownload(file)}>
                                       <Download className="mr-2 h-4 w-4" />
-                                      Download
+                                      Telecharger
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      className="text-destructive"
-                                      onClick={() => setDeleteItem(file)}
-                                    >
-                                      <Trash2 className="mr-2 h-4 w-4" />
-                                      Delete
+                                  )}
+                                  <DropdownMenuItem onClick={() => handleAddToFavorites(file)}>
+                                    <Star className="mr-2 h-4 w-4" />
+                                    Ajouter aux favoris
+                                  </DropdownMenuItem>
+                                  {file.type === 'file' && (
+                                    <DropdownMenuItem onClick={() => {
+                                      setPermissionsFile(file);
+                                      setPermissionsDialogOpen(true);
+                                    }}>
+                                      <Lock className="mr-2 h-4 w-4" />
+                                      Permissions
                                     </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
+                                  )}
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => setDeleteItem(file)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Supprimer
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
                         ))}
@@ -724,6 +792,22 @@ export default function StoragePage() {
             setDeleteBucket(null);
           }}
         />
+
+        {/* Permissions Dialog */}
+        {permissionsFile && (
+          <PermissionsDialog
+            open={permissionsDialogOpen}
+            onOpenChange={(open) => {
+              setPermissionsDialogOpen(open);
+              if (!open) setPermissionsFile(null);
+            }}
+            bucket={currentBucket}
+            fileKey={currentPath.length > 0
+              ? `${currentPath.join('/')}/${permissionsFile.name}`
+              : permissionsFile.name}
+            fileName={permissionsFile.name}
+          />
+        )}
 
         {/* New Bucket Dialog */}
         <Dialog open={bucketDialogOpen} onOpenChange={setBucketDialogOpen}>

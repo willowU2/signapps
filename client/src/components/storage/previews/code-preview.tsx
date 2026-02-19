@@ -137,7 +137,7 @@ export function CodePreview({
  */
 function highlightLine(line: string): React.ReactNode {
   const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
+  const lastIndex = 0;
 
   // Patterns: strings, comments, keywords, numbers
   const patterns = [

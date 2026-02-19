@@ -18,13 +18,19 @@ import {
   Image as ImageIcon,
   FileCode,
   File as FileIcon,
+  FileArchive,
   Loader2,
   Maximize2,
   Minimize2,
   ZoomIn,
   ZoomOut,
+  Video,
+  Music,
 } from 'lucide-react';
 import { storageApi } from '@/lib/api';
+import { VideoPreview } from './previews/video-preview';
+import { ArchivePreview } from './previews/archive-preview';
+import { DocumentPreview } from './previews/document-preview';
 
 interface FileItem {
   key: string;
@@ -46,9 +52,13 @@ interface FilePreviewDialogProps {
   onNavigate?: (file: FileItem) => void;
 }
 
-type PreviewType = 'image' | 'pdf' | 'text' | 'code' | 'markdown' | 'unsupported';
+type PreviewType = 'image' | 'pdf' | 'text' | 'code' | 'markdown' | 'video' | 'audio' | 'archive' | 'document' | 'unsupported';
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'ogv'];
+const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'];
+const ARCHIVE_EXTENSIONS = ['zip', 'tar', 'gz', 'rar', '7z', 'bz2', 'xz'];
+const DOCUMENT_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp'];
 const TEXT_EXTENSIONS = ['txt', 'log', 'csv', 'xml', 'yaml', 'yml', 'ini', 'conf', 'cfg'];
 const CODE_EXTENSIONS = ['js', 'ts', 'tsx', 'jsx', 'py', 'rs', 'go', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'php', 'rb', 'swift', 'kt', 'scala', 'sh', 'bash', 'zsh', 'ps1', 'sql', 'html', 'css', 'scss', 'less', 'json', 'toml'];
 const MARKDOWN_EXTENSIONS = ['md', 'mdx', 'markdown'];
@@ -64,6 +74,15 @@ function getPreviewType(file: FileItem): PreviewType {
   if (contentType === 'application/pdf' || ext === 'pdf') {
     return 'pdf';
   }
+  if (contentType.startsWith('video/') || VIDEO_EXTENSIONS.includes(ext)) {
+    return 'video';
+  }
+  if (contentType.startsWith('audio/') || AUDIO_EXTENSIONS.includes(ext)) {
+    return 'audio';
+  }
+  if (ARCHIVE_EXTENSIONS.includes(ext)) {
+    return 'archive';
+  }
   if (MARKDOWN_EXTENSIONS.includes(ext)) {
     return 'markdown';
   }
@@ -72,6 +91,9 @@ function getPreviewType(file: FileItem): PreviewType {
   }
   if (contentType.startsWith('text/') || TEXT_EXTENSIONS.includes(ext)) {
     return 'text';
+  }
+  if (DOCUMENT_EXTENSIONS.includes(ext)) {
+    return 'document';
   }
 
   return 'unsupported';
@@ -84,6 +106,14 @@ function getPreviewIcon(previewType: PreviewType, size: 'sm' | 'lg' = 'lg') {
       return <ImageIcon className={`${sizeClass} text-green-500`} />;
     case 'pdf':
       return <FileText className={`${sizeClass} text-red-500`} />;
+    case 'video':
+      return <Video className={`${sizeClass} text-orange-500`} />;
+    case 'audio':
+      return <Music className={`${sizeClass} text-pink-500`} />;
+    case 'archive':
+      return <FileArchive className={`${sizeClass} text-yellow-500`} />;
+    case 'document':
+      return <FileText className={`${sizeClass} text-blue-600`} />;
     case 'code':
       return <FileCode className={`${sizeClass} text-purple-500`} />;
     case 'text':
@@ -151,6 +181,11 @@ export function FilePreviewDialog({
       return;
     }
 
+    // Archive and document are metadata-only (no download needed)
+    if (type === 'archive' || type === 'document') {
+      return;
+    }
+
     setLoading(true);
     try {
       const key = currentPath.length > 0
@@ -160,7 +195,7 @@ export function FilePreviewDialog({
       const response = await storageApi.download(bucket, key);
       const blob = new Blob([response.data]);
 
-      if (type === 'image' || type === 'pdf') {
+      if (type === 'image' || type === 'pdf' || type === 'video' || type === 'audio') {
         const url = URL.createObjectURL(blob);
         setBlobUrl(url);
       } else {
@@ -322,6 +357,26 @@ export function FilePreviewDialog({
             </div>
           </div>
         ) : null;
+
+      case 'video':
+        return blobUrl ? (
+          <VideoPreview src={blobUrl} fileName={file.name} />
+        ) : null;
+
+      case 'audio':
+        return blobUrl ? (
+          <div className="flex flex-col items-center justify-center p-8 space-y-4">
+            <Music className="h-16 w-16 text-pink-500" />
+            <p className="font-medium">{file.name}</p>
+            <audio controls src={blobUrl} className="w-full max-w-md" />
+          </div>
+        ) : null;
+
+      case 'archive':
+        return <ArchivePreview fileName={file.name} />;
+
+      case 'document':
+        return <DocumentPreview fileName={file.name} />;
 
       case 'unsupported':
       default:

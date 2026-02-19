@@ -24,6 +24,7 @@ interface UploadFile {
 
 interface DropZoneProps {
   bucket: string;
+  prefix?: string;
   onUploadComplete?: () => void;
   acceptedTypes?: string;
   maxFileSize?: number; // in bytes
@@ -42,6 +43,7 @@ interface DropZoneProps {
  */
 export function DropZone({
   bucket,
+  prefix,
   onUploadComplete,
   acceptedTypes = '*',
   maxFileSize = 10 * 1024 * 1024, // 10 MB default
@@ -103,6 +105,9 @@ export function DropZone({
       // Create a wrapper around XMLHttpRequest to track progress
       const formData = new FormData();
       formData.append('file', upload.file);
+      if (prefix) {
+        formData.append('path', prefix);
+      }
 
       // Use axios with onUploadProgress if possible, or fallback to XMLHttpRequest
       const xhr = new XMLHttpRequest();
