@@ -100,10 +100,21 @@ export default function AppsPage() {
     setPage(1);
   }, [search, activeCategory]);
 
+  // Deduplicate apps by name (keep first occurrence per name)
+  const deduplicatedApps = useMemo(() => {
+    const seen = new Set<string>();
+    return apps.filter((app) => {
+      const key = app.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [apps]);
+
   // Extract unique categories from tags
   const categories = useMemo(() => {
     const tagCounts = new Map<string, number>();
-    apps.forEach((app) => {
+    deduplicatedApps.forEach((app) => {
       app.tags.forEach((tag) => {
         tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
       });
@@ -112,11 +123,11 @@ export default function AppsPage() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 12)
       .map(([tag]) => tag);
-  }, [apps]);
+  }, [deduplicatedApps]);
 
   // Client-side filtering
   const filteredApps = useMemo(() => {
-    let result = apps;
+    let result = deduplicatedApps;
 
     if (search) {
       const q = search.toLowerCase();
@@ -136,7 +147,7 @@ export default function AppsPage() {
     }
 
     return result;
-  }, [apps, search, activeCategory]);
+  }, [deduplicatedApps, search, activeCategory]);
 
   // Determine if we should show grouped view (no search, no category filter)
   const isGroupedView = !search && activeCategory === 'all';
@@ -145,7 +156,7 @@ export default function AppsPage() {
   const groupedByCategory = useMemo(() => {
     if (!isGroupedView) return new Map<string, StoreApp[]>();
     const groups = new Map<string, StoreApp[]>();
-    for (const app of apps) {
+    for (const app of deduplicatedApps) {
       const cat = app.tags[0] || 'Other';
       if (!groups.has(cat)) groups.set(cat, []);
       groups.get(cat)!.push(app);
@@ -154,7 +165,7 @@ export default function AppsPage() {
     return new Map(
       Array.from(groups.entries()).sort((a, b) => b[1].length - a[1].length)
     );
-  }, [apps, isGroupedView]);
+  }, [deduplicatedApps, isGroupedView]);
 
   const GROUPED_PREVIEW_SIZE = 4;
 
