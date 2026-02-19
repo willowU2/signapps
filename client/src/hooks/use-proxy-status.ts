@@ -4,9 +4,14 @@ import { routesApi, ProxyStatus } from '@/lib/api';
 export function useProxyStatus() {
   return useQuery<ProxyStatus | null>({
     queryKey: ['proxy', 'status'],
+    retry: false,
     queryFn: async () => {
-      const response = await routesApi.proxyStatus();
-      return response.data || null;
+      try {
+        const response = await routesApi.proxyStatus();
+        return response.data || null;
+      } catch {
+        return null;
+      }
     },
     refetchInterval: 15000,
   });

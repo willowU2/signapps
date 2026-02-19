@@ -49,8 +49,7 @@ export function useNotificationHistory(
       );
 
       setNotifications(response.data || []);
-    } catch (err) {
-      console.error('Failed to fetch notification history:', err);
+    } catch {
       setError('Failed to load notification history');
     } finally {
       setLoading(false);
@@ -76,7 +75,6 @@ export function useNotificationHistory(
         // Refresh the list
         await fetchNotifications();
       } catch (err) {
-        console.error('Failed to resend notification:', err);
         setError('Failed to resend notification');
         throw err;
       }

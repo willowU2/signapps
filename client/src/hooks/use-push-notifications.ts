@@ -72,16 +72,14 @@ export function usePushNotifications(): UsePushNotificationsReturn {
             permission,
             loading: false,
           }));
-        } catch (err) {
-          console.error('Failed to fetch VAPID key:', err);
+        } catch {
           setState((prev) => ({
             ...prev,
             error: 'Failed to fetch VAPID key',
             loading: false,
           }));
         }
-      } catch (err) {
-        console.error('Failed to initialize push notifications:', err);
+      } catch {
         setState((prev) => ({
           ...prev,
           error: 'Initialization failed',
@@ -139,7 +137,6 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : 'Subscription failed';
-      console.error('Push subscription error:', err);
       setState((prev) => ({
         ...prev,
         error: errorMsg,
@@ -169,7 +166,6 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       }));
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Unsubscribe failed';
-      console.error('Push unsubscribe error:', err);
       setState((prev) => ({
         ...prev,
         error: errorMsg,
@@ -194,7 +190,6 @@ export function usePushNotifications(): UsePushNotificationsReturn {
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : 'Permission request failed';
-      console.error('Permission request error:', err);
       setState((prev) => ({
         ...prev,
         error: errorMsg,

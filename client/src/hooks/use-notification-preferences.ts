@@ -47,8 +47,7 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
         );
 
         setPreferences(response.data);
-      } catch (err) {
-        console.error('Failed to fetch preferences:', err);
+      } catch {
         setError('Failed to load notification preferences');
         // Set defaults if fetch fails
         setPreferences({
@@ -88,7 +87,6 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
 
         setPreferences(response.data);
       } catch (err) {
-        console.error('Failed to update preferences:', err);
         setError('Failed to save preferences');
         throw err;
       }

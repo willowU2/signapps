@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 export function useRoutes() {
   return useQuery<Route[]>({
     queryKey: ['routes'],
+    retry: false,
     queryFn: async () => {
       const response = await routesApi.list();
       return response.data || [];

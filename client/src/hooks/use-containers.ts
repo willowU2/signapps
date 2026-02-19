@@ -68,6 +68,7 @@ function formatBytes(bytes: number) {
 export function useContainers() {
   return useQuery<Container[]>({
     queryKey: ['containers'],
+    retry: false,
     queryFn: async () => {
       const response = await containersApi.list();
       return (response.data || []).map((c: ContainerApiResponse) => {
