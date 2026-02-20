@@ -91,9 +91,9 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
       });
 
       // Presence updates
-      provider.awareness.on('change', (changes: any[]) => {
+      provider.awareness?.on('change', (changes: any[]) => {
         const presences: CalendarPresence[] = [];
-        provider.awareness.getStates().forEach((state: any) => {
+        provider.awareness?.getStates().forEach((state: any) => {
           if (state.user) {
             presences.push({
               user_id: state.user.user_id,
@@ -108,7 +108,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
       });
 
       // Set local awareness
-      provider.awareness.setLocalState({
+      provider.awareness?.setLocalState({
         user: {
           user_id: Math.random().toString(36).substr(2, 9), // Temporary user ID
           username,
