@@ -43,7 +43,6 @@ export function useSpreadsheet(docId: string = 'default-sheet') {
         return () => {
             webrtcProvider.destroy()
             indexeddbProvider.destroy()
-            doc.destroy()
         }
     }, [docId, doc])
 

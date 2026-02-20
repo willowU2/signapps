@@ -72,7 +72,6 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
 
         return () => {
             wsProvider.destroy();
-            ydoc.destroy();
         };
     }, [documentId, ydoc]);
 

@@ -37,7 +37,6 @@ export function useSlides(docId: string = 'slides-demo') {
 
         return () => {
             webrtcProvider.destroy()
-            doc.destroy()
         }
     }, [docId, doc])
 

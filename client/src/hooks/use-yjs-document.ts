@@ -75,10 +75,8 @@ export function useYjsDocument(
             setProvider(wsProvider);
             setAwareness(wsProvider.awareness || null);
 
-            // Cleanup
             return () => {
                 wsProvider.disconnect();
-                ydoc.destroy();
             };
         } catch (error) {
             const err = error instanceof Error ? error : new Error(String(error));
