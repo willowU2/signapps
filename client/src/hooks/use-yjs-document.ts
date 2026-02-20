@@ -33,21 +33,18 @@ export function useYjsDocument(
         onError,
     } = options;
 
-    const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
+    const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
     const [awareness, setAwareness] = useState<Awareness | null>(null);
     const [isSynced, setIsSynced] = useState(false);
 
     useEffect(() => {
-        // Create new Y.js document
-        const doc = new Y.Doc();
-
         try {
             // Create WebSocket provider
             const wsProvider = new WebsocketProvider(
                 wsUrl,
                 docId,
-                doc,
+                ydoc,
                 {
                     // @ts-expect-error y-websocket accepts boolean for awareness
                     awareness: enableAwareness,
@@ -75,14 +72,13 @@ export function useYjsDocument(
                 }
             });
 
-            setYdoc(doc);
             setProvider(wsProvider);
             setAwareness(wsProvider.awareness || null);
 
             // Cleanup
             return () => {
                 wsProvider.disconnect();
-                doc.destroy();
+                ydoc.destroy();
             };
         } catch (error) {
             const err = error instanceof Error ? error : new Error(String(error));

@@ -3,8 +3,8 @@ use axum::{
     Router,
 };
 use signapps_cache::CacheService;
-use std::sync::Arc;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use std::time::Duration;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
@@ -15,8 +15,8 @@ mod models;
 mod utils;
 
 use handlers::health::health_handler;
+use handlers::types::{board, chat, sheet, slide, text};
 use handlers::websocket::websocket_handler;
-use handlers::types::{text, sheet, slide, board};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -32,6 +32,9 @@ async fn main() -> anyhow::Result<()> {
     // Initialize tracing
     tracing_subscriber::fmt::init();
 
+    // Load .env file
+    dotenvy::dotenv().ok();
+
     // Get configuration from environment
     let server_port = std::env::var("SERVER_PORT")
         .unwrap_or_else(|_| "3010".to_string())
@@ -41,6 +44,11 @@ async fn main() -> anyhow::Result<()> {
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://signapps:password@localhost:5432/signapps".to_string());
     let pool = signapps_db::create_pool(&database_url).await?;
+
+    // Run migrations (to ensure schema is up-to-date)
+    signapps_db::run_migrations(&pool)
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to run migrations: {}", e))?;
 
     // Initialize cache
     let cache = Arc::new(CacheService::new(1000, Duration::from_secs(3600)));
@@ -69,6 +77,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/docs/slide/:doc_id/slides", get(slide::get_slides))
         .route("/api/v1/docs/board", post(board::create_board))
         .route("/api/v1/docs/board/:doc_id/columns", get(board::get_columns))
+        .route("/api/v1/docs/chat", post(chat::create_channel))
+        .route("/api/v1/channels", get(chat::get_channels))
 
         // Global middleware
         .layer(TraceLayer::new_for_http())
@@ -78,8 +88,7 @@ async fn main() -> anyhow::Result<()> {
         .with_state(app_state);
 
     // Run server
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", server_port))
-        .await?;
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", server_port)).await?;
 
     info!(
         "🎨 signapps-docs listening on port {} (Text, Sheet, Slide, Board)",

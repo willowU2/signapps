@@ -13,6 +13,8 @@ pub enum DocumentType {
     Slide,
     /// Kanban board (Trello-like)
     Board,
+    /// Chat channel (Slack-like)
+    Chat,
 }
 
 #[allow(dead_code)]
@@ -23,6 +25,7 @@ impl DocumentType {
             DocumentType::Sheet => "sheet",
             DocumentType::Slide => "slide",
             DocumentType::Board => "board",
+            DocumentType::Chat => "chat",
         }
     }
 
@@ -32,6 +35,7 @@ impl DocumentType {
             "sheet" => Some(DocumentType::Sheet),
             "slide" => Some(DocumentType::Slide),
             "board" => Some(DocumentType::Board),
+            "chat" => Some(DocumentType::Chat),
             _ => None,
         }
     }

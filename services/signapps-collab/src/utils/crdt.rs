@@ -1,16 +1,15 @@
-use yrs::{Doc, Text};
+use yrs::{Doc, ReadTxn, TextRef, Transact};
 
-/// Helper to create a collaborative text type
-pub fn create_shared_text(doc: &Doc, name: &str) -> Text {
-    let mut txn = doc.transact_mut();
-    let text = txn.get_or_insert_text(name);
-    text
+pub fn create_shared_text(doc: &Doc, name: &str) -> TextRef {
+    let txn = doc.transact_mut();
+    // TODO: creation fails on yrs 0.17?
+    txn.get_text(name).expect("Text failed to load or create")
 }
 
 /// Helper to get shared text from document
-pub fn get_shared_text(doc: &Doc, name: &str) -> Option<Text> {
-    let map = doc.get_type("root");
-    map.get(name).and_then(|v| v.cast::<Text>())
+pub fn get_shared_text(doc: &Doc, name: &str) -> Option<TextRef> {
+    let txn = doc.transact();
+    txn.get_text(name)
 }
 
 #[cfg(test)]

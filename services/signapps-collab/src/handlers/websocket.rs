@@ -1,15 +1,22 @@
 use axum::{
-    extract::{ws::{WebSocket, WebSocketUpgrade}, Path, State},
+    extract::{
+        ws::{Message, WebSocket, WebSocketUpgrade},
+        Path, State,
+    },
     response::IntoResponse,
 };
 use futures::{stream::StreamExt, SinkExt};
 use tokio::sync::broadcast;
-use tokio_tungstenite::tungstenite::Message;
 use tracing::{debug, error, info};
 use uuid::Uuid;
-use yrs::Doc;
+use yrs::updates::decoder::Decode;
+use yrs::{Doc, ReadTxn, Transact};
+// Import Transact and ReadTxn for state_vector
 
-use crate::{models::ClientSession, AppState};
+use crate::{
+    models::{BroadcastMessage, ClientSession},
+    AppState,
+};
 
 /// WebSocket handler for collaborative document editing
 /// Endpoint: GET /api/v1/collab/ws/:doc_id?token=JWT_TOKEN
@@ -31,11 +38,8 @@ pub async fn websocket_handler(
         .into_response()
 }
 
-async fn handle_socket(
-    socket: WebSocket,
-    doc_id: String,
-    state: AppState,
-) {
+async fn handle_socket(socket: WebSocket, doc_id: String, state: AppState) {
+    let doc_id_main = doc_id.clone();
     let session_id = Uuid::new_v4();
 
     info!(
@@ -48,27 +52,45 @@ async fn handle_socket(
     let doc = if let Some(entry) = state.docs.get(&doc_id) {
         entry.clone()
     } else {
-        let new_doc = Doc::new();
-        state.docs.insert(doc_id.clone(), new_doc.clone());
-        new_doc
+        // Try to load from DB
+        match crate::utils::persistence::load_document(state.pool.inner(), &doc_id).await {
+            Ok(loaded_doc) => {
+                debug!("Loaded document {} from database", doc_id);
+                state.docs.insert(doc_id.clone(), loaded_doc.clone());
+                loaded_doc
+            },
+            Err(e) => {
+                error!("Failed to load document {}, creating new: {}", doc_id, e);
+                let new_doc = Doc::new();
+                state.docs.insert(doc_id.clone(), new_doc.clone());
+                new_doc
+            },
+        }
     };
 
-    // Create broadcast channel for this document
-    let (tx, _rx) = broadcast::channel(100);
+    // Get or create broadcast channel for this document
+    let tx = state
+        .channels
+        .entry(doc_id.clone())
+        .or_insert_with(|| {
+            let (tx, _rx) = broadcast::channel(100);
+            tx
+        })
+        .clone();
 
     // Split WebSocket into sender and receiver
     let (mut sender, mut receiver) = socket.split();
 
-    // Create session
-    let session = ClientSession {
+    // Create session (unused for now)
+    let _session = ClientSession {
         id: session_id,
         doc_id: doc_id.clone(),
         tx: tx.clone(),
     };
 
     // Send initial state to client
-    let state_vector = doc.get_state_vector();
-    let initial_state = doc.encode_state_as_update(&state_vector);
+    let state_vector = doc.transact().state_vector();
+    let initial_state = doc.transact().encode_state_as_update_v1(&state_vector);
 
     if let Err(e) = sender.send(Message::Binary(initial_state)).await {
         error!(
@@ -83,38 +105,57 @@ async fn handle_socket(
 
     // Handle incoming messages from client
     let mut client_rx = tx.subscribe();
+    // Clone for persistence task
+    let pool = state.pool.inner().clone();
+
     let mut receive_task = tokio::spawn(async move {
         while let Some(msg_result) = receiver.next().await {
             match msg_result {
                 Ok(Message::Binary(data)) => {
                     // Apply Y.js update to document
-                    if let Err(e) = doc.transact_mut().apply_update_from_binary(data.clone()) {
-                        error!(
-                            session_id = %session_id,
-                            error = ?e,
-                            "Failed to apply update"
-                        );
-                        continue;
+                    {
+                        let mut txn = doc.transact_mut();
+                        if let Ok(update) = yrs::Update::decode_v1(&data) {
+                            txn.apply_update(update);
+                        }
                     }
 
                     // Broadcast update to other clients
-                    let _ = tx.send(data);
+                    let _ = tx.send(BroadcastMessage::Binary(data.clone()));
 
-                    debug!(session_id = %session_id, "Update applied and broadcasted");
-                }
+                    // Persist update
+                    let pool_clone = pool.clone();
+                    let doc_id_clone = doc_id.clone();
+                    let update_data = data.clone();
+
+                    tokio::spawn(async move {
+                        if let Err(e) = crate::utils::persistence::save_update(
+                            &pool_clone,
+                            &doc_id_clone,
+                            update_data,
+                        )
+                        .await
+                        {
+                            error!("Failed to persist update for {}: {}", doc_id_clone, e);
+                        }
+                    });
+
+                    debug!(session_id = %session_id, "Update applied, broadcasted, and persisting");
+                },
                 Ok(Message::Text(msg)) => {
-                    debug!(session_id = %session_id, message = %msg, "Text message received");
-                }
+                    debug!(session_id = %session_id, "Broadcasting text message");
+                    let _ = tx.send(BroadcastMessage::Text(msg));
+                },
                 Ok(Message::Ping(_)) => {
                     debug!(session_id = %session_id, "Ping received");
-                }
+                },
                 Ok(Message::Pong(_)) => {
                     debug!(session_id = %session_id, "Pong received");
-                }
+                },
                 Ok(Message::Close(_)) => {
                     info!(session_id = %session_id, "Client requested close");
                     break;
-                }
+                },
                 Err(e) => {
                     error!(
                         session_id = %session_id,
@@ -122,16 +163,21 @@ async fn handle_socket(
                         "WebSocket error"
                     );
                     break;
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
     });
 
     // Handle outgoing broadcasts to client
     let mut broadcast_task = tokio::spawn(async move {
-        while let Ok(data) = client_rx.recv().await {
-            if let Err(e) = sender.send(Message::Binary(data)).await {
+        while let Ok(msg) = client_rx.recv().await {
+            let ws_msg = match msg {
+                BroadcastMessage::Binary(data) => Message::Binary(data),
+                BroadcastMessage::Text(text) => Message::Text(text),
+            };
+
+            if let Err(e) = sender.send(ws_msg).await {
                 error!(
                     session_id = %session_id,
                     error = ?e,
@@ -156,7 +202,7 @@ async fn handle_socket(
 
     info!(
         session_id = %session_id,
-        doc_id = %doc_id,
+        doc_id = %doc_id_main,
         "WebSocket connection closed"
     );
 

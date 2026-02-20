@@ -10,6 +10,7 @@ export const SECURELINK_URL = process.env.NEXT_PUBLIC_SECURELINK_URL || 'http://
 export const SCHEDULER_URL = process.env.NEXT_PUBLIC_SCHEDULER_URL || 'http://localhost:3007/api/v1';
 export const METRICS_URL = process.env.NEXT_PUBLIC_METRICS_URL || 'http://localhost:3008/api/v1';
 export const MEDIA_URL = process.env.NEXT_PUBLIC_MEDIA_URL || 'http://localhost:3009/api/v1';
+export const DOCS_URL = process.env.NEXT_PUBLIC_DOCS_URL || 'http://localhost:3010/api/v1';
 export const CALENDAR_URL = process.env.NEXT_PUBLIC_CALENDAR_URL || 'http://localhost:3011/api/v1';
 
 // Create axios instance with auth interceptors
@@ -86,6 +87,7 @@ export const securelinkApiClient = createApiClient(SECURELINK_URL);
 export const schedulerApiClient = createApiClient(SCHEDULER_URL);
 export const metricsApiClient = createApiClient(METRICS_URL);
 export const mediaApiClient = createApiClient(MEDIA_URL);
+export const docsApiClient = createApiClient(DOCS_URL);
 export const calendarApiClient = createApiClient(CALENDAR_URL);
 
 // Legacy api export for compatibility (aliased to identity for auth calls)

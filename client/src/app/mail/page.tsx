@@ -62,28 +62,31 @@ export default function MailPage() {
         <TooltipProvider delayDuration={0}>
             <AppLayout>
                 <div className="flex h-full flex-col">
-                    <div className="flex items-center p-4 border-b">
-                        <h1 className="text-xl font-bold">Inbox</h1>
-                        <div className="ml-auto flex items-center gap-2">
+                    <div className="flex items-center p-4 border-b bg-white/50 dark:bg-gray-950/50 backdrop-blur-md sticky top-0 z-10">
+                        <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">Inbox</h1>
+                        <div className="ml-auto flex items-center gap-3">
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-purple-600 border-purple-200 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                                className="text-purple-600 dark:text-purple-400 border-purple-200/60 dark:border-purple-800/60 bg-purple-50/30 dark:bg-purple-900/20 hover:bg-purple-100/50 dark:hover:bg-purple-900/40 rounded-full shadow-sm transition-all"
                                 onClick={() => setComposeAiOpen(true)}
                             >
-                                <Bot className="h-3.5 w-3.5 mr-2" />
+                                <Bot className="h-4 w-4 mr-2" />
                                 Compose with AI
                             </Button>
-                            <div className="relative">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input placeholder="Search" className="pl-8 w-[250px]" />
+                            <div className="relative group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-purple-500 transition-colors" />
+                                <Input
+                                    placeholder="Search emails..."
+                                    className="pl-9 w-[280px] rounded-full bg-gray-100/50 dark:bg-gray-800/50 border-transparent focus-visible:ring-purple-500/30 focus-visible:border-purple-500/50 transition-all"
+                                />
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-[200px_1fr_1fr] flex-1 overflow-hidden">
+                    <div className="grid grid-cols-[200px_350px_1fr] flex-1 overflow-hidden bg-gray-50/30 dark:bg-gray-900/10">
                         {/* Sidebar */}
-                        <div className="border-r bg-muted/10 p-2">
+                        <div className="border-r border-gray-200/60 dark:border-gray-800/60 p-3 flex flex-col gap-2">
                             <MailNav isCollapsed={false} links={[
                                 {
                                     title: "Inbox",
@@ -124,7 +127,7 @@ export default function MailPage() {
                         </div>
 
                         {/* List */}
-                        <div className="border-r overflow-auto">
+                        <div className="border-r border-gray-200/60 dark:border-gray-800/60 overflow-hidden bg-white/50 dark:bg-gray-950/20 backdrop-blur-sm">
                             {/* Accessing items from state */}
                             <MailList
                                 items={mailList}
@@ -134,8 +137,11 @@ export default function MailPage() {
                         </div>
 
                         {/* Display */}
-                        <div className="overflow-auto bg-white p-4">
-                            <MailDisplay mail={mailList.find(m => m.id === mailState.selected) || null} />
+                        <div className="overflow-hidden bg-white dark:bg-gray-950 relative">
+                            {/* Inner container to allow MailDisplay to fill space properly */}
+                            <div className="absolute inset-0 m-4 border border-gray-200/50 dark:border-gray-800/50 rounded-2xl overflow-hidden shadow-sm bg-gray-50/30 dark:bg-gray-900/20 flex flex-col">
+                                <MailDisplay mail={mailList.find(m => m.id === mailState.selected) || null} />
+                            </div>
                         </div>
                     </div>
                 </div>

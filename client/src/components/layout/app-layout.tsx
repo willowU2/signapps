@@ -3,6 +3,7 @@
 import { useUIStore } from '@/lib/store';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
+import { CommandBar } from './command-bar';
 import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
@@ -14,6 +15,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      <CommandBar />
       <Sidebar />
       <div
         className={cn(

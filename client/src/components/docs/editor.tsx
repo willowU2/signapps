@@ -48,7 +48,7 @@ const LANGUAGES = [
 const Editor = ({ documentId, className, userName }: EditorProps) => {
     const [status, setStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
-    const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
+    const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
 
     // AI state
     const { stream, stop, isStreaming } = useAiStream();
@@ -60,12 +60,9 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
     const promptInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const doc = new Y.Doc();
-        setYdoc(doc);
-
         const baseUrl = process.env.NEXT_PUBLIC_DOCS_WS_URL || 'ws://localhost:3010/api/v1/docs/text';
 
-        const wsProvider = new WebsocketProvider(baseUrl, documentId, doc);
+        const wsProvider = new WebsocketProvider(baseUrl, documentId, ydoc);
 
         wsProvider.on('status', (event: { status: 'connected' | 'disconnected' }) => {
             setStatus(event.status);
@@ -75,9 +72,9 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
 
         return () => {
             wsProvider.destroy();
-            doc.destroy();
+            ydoc.destroy();
         };
-    }, [documentId]);
+    }, [documentId, ydoc]);
 
     const editor = useEditor({
         extensions: [
@@ -100,7 +97,7 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
         ],
         editorProps: {
             attributes: {
-                class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none h-full p-4 min-h-[500px]',
+                class: 'prose prose-slate dark:prose-invert sm:prose-base lg:prose-lg max-w-[850px] mx-auto focus:outline-none min-h-[1056px] bg-white dark:bg-gray-900 shadow-premium ring-1 ring-gray-200/50 dark:ring-gray-800/50 p-12 sm:p-16 md:p-24 rounded-sm my-8 transition-colors',
             },
         },
     }, [ydoc, provider]);
@@ -294,12 +291,12 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
     }
 
     return (
-        <div className={`flex flex-col h-full bg-white dark:bg-gray-900 border rounded-lg overflow-hidden ${className}`}>
-            {/* Toolbar */}
-            <div className="border-b border-gray-200 dark:border-gray-800 p-2 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
-                <div className="flex gap-2 items-center">
-                    <span className={`w-2 h-2 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                    <span className="text-xs text-gray-500 uppercase font-medium">{status}</span>
+        <div className={`flex flex-col h-full bg-gray-50/50 dark:bg-[#0a0a0a] overflow-hidden ${className}`}>
+            {/* Toolbar Ribbon */}
+            <div className="sticky top-0 z-20 border-b border-gray-200/60 dark:border-gray-800/60 p-2.5 px-6 flex items-center justify-between bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl shadow-sm">
+                <div className="flex gap-3 items-center">
+                    <span className={`w-2 h-2 rounded-full shadow-sm ${status === 'connected' ? 'bg-green-500 shadow-green-500/50' : 'bg-red-500 shadow-red-500/50'}`}></span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-widest">{status}</span>
                     {isStreaming && (
                         <span className="flex items-center gap-1 text-xs text-purple-600 animate-pulse">
                             <Loader2 className="w-3 h-3 animate-spin" />
@@ -307,33 +304,33 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
                         </span>
                     )}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1.5 p-1 bg-gray-100/50 dark:bg-gray-900/50 rounded-lg border border-gray-200/50 dark:border-gray-800/50">
                     <button
                         onClick={() => editor.chain().focus().toggleBold().run()}
                         disabled={!editor.can().chain().focus().toggleBold().run()}
-                        className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 ${editor.isActive('bold') ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+                        className={`p-1.5 min-w-[32px] rounded-md transition-all font-serif font-bold ${editor.isActive('bold') ? 'bg-white dark:bg-gray-800 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/50 dark:hover:bg-gray-800/50'}`}
                     >
                         B
                     </button>
                     <button
                         onClick={() => editor.chain().focus().toggleItalic().run()}
                         disabled={!editor.can().chain().focus().toggleItalic().run()}
-                        className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 ${editor.isActive('italic') ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+                        className={`p-1.5 min-w-[32px] rounded-md transition-all font-serif italic ${editor.isActive('italic') ? 'bg-white dark:bg-gray-800 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/50 dark:hover:bg-gray-800/50'}`}
                     >
                         I
                     </button>
                     <button
                         onClick={() => editor.chain().focus().toggleStrike().run()}
                         disabled={!editor.can().chain().focus().toggleStrike().run()}
-                        className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 ${editor.isActive('strike') ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+                        className={`p-1.5 min-w-[32px] rounded-md transition-all font-serif line-through ${editor.isActive('strike') ? 'bg-white dark:bg-gray-800 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200/50 dark:hover:bg-gray-800/50'}`}
                     >
                         S
                     </button>
-                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 self-center" />
+                    <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1.5 self-center" />
                     {isStreaming ? (
                         <button
                             onClick={stop}
-                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-500 transition-colors"
+                            className="p-1.5 min-w-[32px] rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors flex items-center justify-center"
                             title="Stop AI"
                         >
                             <Square className="w-4 h-4" />
@@ -342,22 +339,23 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
                         <button
                             onClick={handleSummarize}
                             disabled={isStreaming}
-                            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 hover:text-purple-600 transition-colors"
+                            className="p-1.5 px-3 rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-400 transition-colors flex items-center gap-1.5 font-medium text-[13px]"
                             title="Summarize Document"
                         >
                             <FileText className="w-4 h-4" />
+                            Summarize
                         </button>
                     )}
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-950 relative">
+            <div className="flex-1 overflow-y-auto w-full relative pt-4 pb-16 custom-scrollbar">
                 {/* BubbleMenu - AI actions on selected text */}
                 {editor && (
                     <BubbleMenu
                         editor={editor}
-                        tippyOptions={{ duration: 100 }}
-                        className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex divide-x divide-gray-200 dark:divide-gray-700 h-9"
+                        tippyOptions={{ duration: 150, animation: 'fade' }}
+                        className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-xl border border-gray-200/50 dark:border-gray-700/50 rounded-xl overflow-hidden flex divide-x divide-gray-100 dark:divide-gray-800 p-0.5"
                     >
                         <button
                             onClick={() => handleAiAction('improve')}
@@ -391,14 +389,15 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
                     <FloatingMenu
                         editor={editor}
                         tippyOptions={{
-                            duration: 100,
+                            duration: 150,
+                            animation: 'shift-toward',
                             placement: 'bottom-start',
                             onHide: () => {
                                 setFloatingMode('menu');
                                 setPromptValue('');
                             },
                         }}
-                        className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                        className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-xl shadow-purple-900/5 border border-purple-100 dark:border-purple-900/30 rounded-xl overflow-hidden min-w-[220px]"
                     >
                         {floatingMode === 'menu' && (
                             <div className="flex flex-col py-1 min-w-[200px]">
@@ -491,7 +490,7 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
                     </FloatingMenu>
                 )}
 
-                <EditorContent editor={editor} className="h-full min-h-[500px]" />
+                <EditorContent editor={editor} />
             </div>
         </div>
     );

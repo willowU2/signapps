@@ -1,5 +1,5 @@
-pub mod session;
 pub mod document;
+pub mod session;
 
-pub use session::ClientSession;
 pub use document::DocumentMetadata;
+pub use session::{BroadcastMessage, ClientSession};
