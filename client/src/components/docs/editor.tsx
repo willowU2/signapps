@@ -1,18 +1,28 @@
 'use client';
 
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { useEffect, useState } from 'react';
-import { Sparkles, Wand2, CheckCheck, FileText } from 'lucide-react';
-import { aiApi } from '@/lib/api';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import {
+    Sparkles,
+    Wand2,
+    CheckCheck,
+    FileText,
+    Loader2,
+    Pencil,
+    ArrowRight,
+    Languages,
+    X,
+    Square,
+} from 'lucide-react';
+import { useAiStream } from '@/hooks/use-ai-stream';
 import { toast } from 'sonner';
 
-
-// Define the random color for the cursor
 const getRandomColor = () => {
     const colors = ['#958DF1', '#F98181', '#FBBC88', '#FAF594', '#70CFF8', '#94FADB', '#B9F18D'];
     return colors[Math.floor(Math.random() * colors.length)];
@@ -24,30 +34,40 @@ interface EditorProps {
     userName?: string;
 }
 
+type FloatingMode = 'menu' | 'prompt' | 'translate';
+
+const LANGUAGES = [
+    { code: 'en', label: 'English' },
+    { code: 'fr', label: 'Fran\u00e7ais' },
+    { code: 'es', label: 'Espa\u00f1ol' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'it', label: 'Italiano' },
+    { code: 'pt', label: 'Portugu\u00eas' },
+];
+
 const Editor = ({ documentId, className, userName }: EditorProps) => {
     const [status, setStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
     const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
-    const [isAiLoading, setIsAiLoading] = useState(false);
+
+    // AI state
+    const { stream, stop, isStreaming } = useAiStream();
+    const [aiAction, setAiAction] = useState<string | null>(null);
+
+    // FloatingMenu state
+    const [floatingMode, setFloatingMode] = useState<FloatingMode>('menu');
+    const [promptValue, setPromptValue] = useState('');
+    const promptInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        // Initialize Yjs document
         const doc = new Y.Doc();
         setYdoc(doc);
 
         const baseUrl = process.env.NEXT_PUBLIC_DOCS_WS_URL || 'ws://localhost:3010/api/v1/docs/text';
 
-        // Connect to WebSocket
-        // WebsocketProvider appends `/${roomName}` to the serverUrl internally,
-        // so we pass the base URL and the documentId as the room name.
-        const wsProvider = new WebsocketProvider(
-            baseUrl,
-            documentId,
-            doc
-        );
+        const wsProvider = new WebsocketProvider(baseUrl, documentId, doc);
 
         wsProvider.on('status', (event: { status: 'connected' | 'disconnected' }) => {
-            console.log(`Websocket status: ${event.status}`);
             setStatus(event.status);
         });
 
@@ -57,13 +77,15 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
             wsProvider.destroy();
             doc.destroy();
         };
-
     }, [documentId]);
 
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
-                history: false, // Disabling history because Yjs handles it
+                history: false,
+            }),
+            Placeholder.configure({
+                placeholder: 'Start writing or press / for AI help...',
             }),
             Collaboration.configure({
                 document: ydoc || undefined,
@@ -83,39 +105,189 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
         },
     }, [ydoc, provider]);
 
-    const handleAiAction = async (action: 'improve' | 'fix' | 'shorten') => {
-        if (!editor) return;
+    // Streaming AI action for BubbleMenu (improve/fix/shorten)
+    const handleAiAction = useCallback(async (action: 'improve' | 'fix' | 'shorten') => {
+        if (!editor || isStreaming) return;
         const { from, to } = editor.state.selection;
         const text = editor.state.doc.textBetween(from, to);
         if (!text) return;
 
-        setIsAiLoading(true);
-        const toastId = toast.loading("AI working...");
+        setAiAction(action);
 
-        try {
-            let systemPrompt = "You are a helpful writing assistant. Output ONLY the rewritten text, no explanations.";
-            let userPrompt = "";
+        const systemPrompts: Record<string, string> = {
+            improve: 'You are a professional editor. Rewrite the text to improve clarity, flow, and style. Output ONLY the rewritten text.',
+            fix: 'You are a meticulous proofreader. Fix all grammar, spelling, and punctuation errors. Output ONLY the corrected text.',
+            shorten: 'You are a concise writer. Shorten the text while preserving all key information. Output ONLY the shortened text.',
+        };
 
-            if (action === 'improve') userPrompt = `Improve the writing of the following text:\n\n${text}`;
-            if (action === 'fix') userPrompt = `Fix grammar and spelling errors in the following text:\n\n${text}`;
-            if (action === 'shorten') userPrompt = `Shorten the following text while keeping key information:\n\n${text}`;
+        // Delete selected text first
+        editor.chain().focus().deleteSelection().run();
 
-            const response = await aiApi.chat(userPrompt, {
-                systemPrompt
-            });
+        await stream(
+            `${action === 'improve' ? 'Improve' : action === 'fix' ? 'Fix grammar and spelling in' : 'Shorten'} the following text:\n\n${text}`,
+            {
+                onToken: (token) => {
+                    editor.chain().focus().insertContent(token).run();
+                },
+                onDone: () => {
+                    setAiAction(null);
+                    toast.success('Text updated');
+                },
+                onError: (err) => {
+                    setAiAction(null);
+                    toast.error(`AI error: ${err}`);
+                },
+            },
+            { systemPrompt: systemPrompts[action], language: 'en' },
+        );
+    }, [editor, isStreaming, stream]);
 
-            if (response.data.answer) {
-                editor.chain().focus().insertContent(response.data.answer).run();
-                toast.success("Text updated!");
-            }
-        } catch (e) {
-            toast.error("AI request failed");
-            console.error(e);
-        } finally {
-            setIsAiLoading(false);
-            toast.dismiss(toastId);
+    // Streaming summarize
+    const handleSummarize = useCallback(async () => {
+        if (!editor || isStreaming) return;
+        const text = editor.getText();
+        if (!text) return;
+
+        setAiAction('summarize');
+        let summary = '';
+        const toastId = toast.loading('Generating summary...');
+
+        await stream(
+            `Summarize the following document in 3-5 bullet points:\n\n${text}`,
+            {
+                onToken: (token) => {
+                    summary += token;
+                    toast.loading(summary.slice(0, 200) + (summary.length > 200 ? '...' : ''), { id: toastId });
+                },
+                onDone: (full) => {
+                    setAiAction(null);
+                    toast.success('Summary', { id: toastId, description: full, duration: 15000 });
+                },
+                onError: (err) => {
+                    setAiAction(null);
+                    toast.error(`Summarization failed: ${err}`, { id: toastId });
+                },
+            },
+            { systemPrompt: 'You are a helpful assistant. Output a concise summary.', language: 'en' },
+        );
+    }, [editor, isStreaming, stream]);
+
+    // FloatingMenu: Help me write
+    const handleHelpMeWrite = useCallback(async () => {
+        if (!editor || isStreaming || !promptValue.trim()) return;
+        const prompt = promptValue.trim();
+        setPromptValue('');
+        setFloatingMode('menu');
+        setAiAction('write');
+
+        await stream(
+            prompt,
+            {
+                onToken: (token) => {
+                    editor.chain().focus().insertContent(token).run();
+                },
+                onDone: () => {
+                    setAiAction(null);
+                },
+                onError: (err) => {
+                    setAiAction(null);
+                    toast.error(`AI error: ${err}`);
+                },
+            },
+            {
+                systemPrompt: 'You are a professional writer. Write clear, well-structured content based on the user\'s instruction. Output ONLY the content, no explanations or meta-text.',
+                language: 'en',
+            },
+        );
+    }, [editor, isStreaming, promptValue, stream]);
+
+    // FloatingMenu: Continue writing
+    const handleContinueWriting = useCallback(async () => {
+        if (!editor || isStreaming) return;
+        setFloatingMode('menu');
+        setAiAction('continue');
+
+        // Grab last ~1000 characters before cursor as context
+        const { from } = editor.state.selection;
+        const start = Math.max(0, from - 1000);
+        const context = editor.state.doc.textBetween(start, from);
+
+        if (!context.trim()) {
+            toast.error('No preceding text to continue from');
+            setAiAction(null);
+            return;
         }
-    };
+
+        await stream(
+            `Continue writing naturally from where this text leaves off:\n\n${context}`,
+            {
+                onToken: (token) => {
+                    editor.chain().focus().insertContent(token).run();
+                },
+                onDone: () => {
+                    setAiAction(null);
+                },
+                onError: (err) => {
+                    setAiAction(null);
+                    toast.error(`AI error: ${err}`);
+                },
+            },
+            {
+                systemPrompt: 'You are a professional writer. Continue the text seamlessly, matching the tone, style, and topic. Output ONLY the continuation, no explanations.',
+                language: 'en',
+            },
+        );
+    }, [editor, isStreaming, stream]);
+
+    // FloatingMenu: Translate
+    const handleTranslate = useCallback(async (langCode: string, langLabel: string) => {
+        if (!editor || isStreaming) return;
+        setFloatingMode('menu');
+
+        const { from, to } = editor.state.selection;
+        const hasSelection = from !== to;
+        const text = hasSelection
+            ? editor.state.doc.textBetween(from, to)
+            : editor.getText();
+
+        if (!text.trim()) return;
+
+        setAiAction('translate');
+
+        if (hasSelection) {
+            editor.chain().focus().deleteSelection().run();
+        } else {
+            editor.chain().focus().selectAll().deleteSelection().run();
+        }
+
+        await stream(
+            `Translate the following text to ${langLabel}:\n\n${text}`,
+            {
+                onToken: (token) => {
+                    editor.chain().focus().insertContent(token).run();
+                },
+                onDone: () => {
+                    setAiAction(null);
+                    toast.success(`Translated to ${langLabel}`);
+                },
+                onError: (err) => {
+                    setAiAction(null);
+                    toast.error(`Translation failed: ${err}`);
+                },
+            },
+            {
+                systemPrompt: `You are a professional translator. Translate the text to ${langLabel}. Output ONLY the translation.`,
+                language: langCode,
+            },
+        );
+    }, [editor, isStreaming, stream]);
+
+    // Reset floating mode when menu hides
+    useEffect(() => {
+        if (floatingMode === 'prompt' && promptInputRef.current) {
+            promptInputRef.current.focus();
+        }
+    }, [floatingMode]);
 
     if (!editor || !ydoc || !provider) {
         return <div className="flex items-center justify-center p-8 text-gray-500">Initializing editor...</div>;
@@ -123,12 +295,18 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
 
     return (
         <div className={`flex flex-col h-full bg-white dark:bg-gray-900 border rounded-lg overflow-hidden ${className}`}>
+            {/* Toolbar */}
             <div className="border-b border-gray-200 dark:border-gray-800 p-2 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
                 <div className="flex gap-2 items-center">
                     <span className={`w-2 h-2 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-red-500'}`}></span>
                     <span className="text-xs text-gray-500 uppercase font-medium">{status}</span>
+                    {isStreaming && (
+                        <span className="flex items-center gap-1 text-xs text-purple-600 animate-pulse">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            AI writing...
+                        </span>
+                    )}
                 </div>
-                {/* Toolbar placeholders */}
                 <div className="flex gap-1">
                     <button
                         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -152,42 +330,29 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
                         S
                     </button>
                     <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 self-center" />
-                    <button
-                        onClick={async () => {
-                            if (!editor) return;
-                            const text = editor.getText();
-                            if (!text) return;
-
-                            setIsAiLoading(true);
-                            const toastId = toast.loading("Summarizing document...");
-
-                            try {
-                                const response = await aiApi.chat(`Summarize the following document in 3-5 bullet points:\n\n${text}`, {
-                                    systemPrompt: "You are a helpful assistant. Output a concise summary."
-                                });
-
-                                if (response.data.answer) {
-                                    toast.success("Summary generated", {
-                                        description: response.data.answer,
-                                        duration: 10000,
-                                    });
-                                }
-                            } catch (e) {
-                                toast.error("Summarization failed");
-                            } finally {
-                                setIsAiLoading(false);
-                                toast.dismiss(toastId);
-                            }
-                        }}
-                        disabled={isAiLoading}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 hover:text-purple-600 transition-colors"
-                        title="Summarize Document"
-                    >
-                        <FileText className="w-4 h-4" />
-                    </button>
+                    {isStreaming ? (
+                        <button
+                            onClick={stop}
+                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-500 transition-colors"
+                            title="Stop AI"
+                        >
+                            <Square className="w-4 h-4" />
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleSummarize}
+                            disabled={isStreaming}
+                            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 hover:text-purple-600 transition-colors"
+                            title="Summarize Document"
+                        >
+                            <FileText className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
             </div>
+
             <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-950 relative">
+                {/* BubbleMenu - AI actions on selected text */}
                 {editor && (
                     <BubbleMenu
                         editor={editor}
@@ -196,30 +361,136 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
                     >
                         <button
                             onClick={() => handleAiAction('improve')}
-                            disabled={isAiLoading}
+                            disabled={isStreaming}
                             className="flex items-center gap-2 px-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-xs font-medium text-purple-600 dark:text-purple-400 transition-colors"
                         >
-                            <Sparkles className="w-3 h-3" />
+                            {aiAction === 'improve' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                             Improve
                         </button>
                         <button
                             onClick={() => handleAiAction('fix')}
-                            disabled={isAiLoading}
+                            disabled={isStreaming}
                             className="flex items-center gap-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 transition-colors"
                         >
-                            <CheckCheck className="w-3 h-3" />
+                            {aiAction === 'fix' ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCheck className="w-3 h-3" />}
                             Fix
                         </button>
                         <button
                             onClick={() => handleAiAction('shorten')}
-                            disabled={isAiLoading}
+                            disabled={isStreaming}
                             className="flex items-center gap-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 transition-colors"
                         >
-                            <Wand2 className="w-3 h-3" />
+                            {aiAction === 'shorten' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
                             Shorten
                         </button>
                     </BubbleMenu>
                 )}
+
+                {/* FloatingMenu - AI actions on empty lines */}
+                {editor && (
+                    <FloatingMenu
+                        editor={editor}
+                        tippyOptions={{
+                            duration: 100,
+                            placement: 'bottom-start',
+                            onHide: () => {
+                                setFloatingMode('menu');
+                                setPromptValue('');
+                            },
+                        }}
+                        className="bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                    >
+                        {floatingMode === 'menu' && (
+                            <div className="flex flex-col py-1 min-w-[200px]">
+                                <button
+                                    onClick={() => setFloatingMode('prompt')}
+                                    disabled={isStreaming}
+                                    className="flex items-center gap-2 px-3 py-2 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-xs font-medium text-purple-600 dark:text-purple-400 transition-colors text-left"
+                                >
+                                    <Pencil className="w-3 h-3" />
+                                    Help me write...
+                                </button>
+                                <button
+                                    onClick={handleContinueWriting}
+                                    disabled={isStreaming}
+                                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 transition-colors text-left"
+                                >
+                                    {aiAction === 'continue' ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRight className="w-3 h-3" />}
+                                    Continue writing
+                                </button>
+                                <button
+                                    onClick={() => setFloatingMode('translate')}
+                                    disabled={isStreaming}
+                                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 transition-colors text-left"
+                                >
+                                    <Languages className="w-3 h-3" />
+                                    Translate...
+                                </button>
+                            </div>
+                        )}
+
+                        {floatingMode === 'prompt' && (
+                            <div className="flex items-center gap-1 p-1 min-w-[300px]">
+                                <Sparkles className="w-3 h-3 text-purple-500 ml-2 shrink-0" />
+                                <input
+                                    ref={promptInputRef}
+                                    type="text"
+                                    value={promptValue}
+                                    onChange={(e) => setPromptValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleHelpMeWrite();
+                                        }
+                                        if (e.key === 'Escape') {
+                                            setFloatingMode('menu');
+                                            setPromptValue('');
+                                        }
+                                    }}
+                                    placeholder="Describe what to write..."
+                                    className="flex-1 border-none bg-transparent text-xs focus:outline-none px-1 py-1.5"
+                                />
+                                <button
+                                    onClick={handleHelpMeWrite}
+                                    disabled={!promptValue.trim() || isStreaming}
+                                    className="p-1 rounded text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 disabled:opacity-30 transition-colors"
+                                >
+                                    {isStreaming ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRight className="w-3 h-3" />}
+                                </button>
+                                <button
+                                    onClick={() => { setFloatingMode('menu'); setPromptValue(''); }}
+                                    className="p-1 rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </div>
+                        )}
+
+                        {floatingMode === 'translate' && (
+                            <div className="flex flex-col py-1 min-w-[160px]">
+                                <div className="px-3 py-1 text-[10px] uppercase text-gray-400 font-semibold">Translate to</div>
+                                {LANGUAGES.map((lang) => (
+                                    <button
+                                        key={lang.code}
+                                        onClick={() => handleTranslate(lang.code, lang.label)}
+                                        disabled={isStreaming}
+                                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-700 dark:text-gray-300 transition-colors text-left"
+                                    >
+                                        {lang.label}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => setFloatingMode('menu')}
+                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs text-gray-400 transition-colors text-left border-t border-gray-100 dark:border-gray-700 mt-1"
+                                >
+                                    <X className="w-3 h-3" />
+                                    Back
+                                </button>
+                            </div>
+                        )}
+                    </FloatingMenu>
+                )}
+
                 <EditorContent editor={editor} className="h-full min-h-[500px]" />
             </div>
         </div>

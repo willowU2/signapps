@@ -9,14 +9,17 @@ import {
     Send,
     Archive,
     Trash2,
+    Bot,
 } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AppLayout } from "@/components/layout/app-layout"
 import { MailDisplay } from "@/components/mail/mail-display"
 import { MailList } from "@/components/mail/mail-list"
 import { MailNav } from "@/components/mail/mail-nav"
+import { ComposeAiDialog } from "@/components/mail/compose-ai-dialog"
 import { Mail } from "@/lib/data/mail"
 import { useMail } from "@/app/mail/use-mail"
 import { mailApi } from "@/lib/api-mail"
@@ -27,6 +30,7 @@ import { mails } from "@/lib/data/mail"
 export default function MailPage() {
     const [mailState, setMailState] = useMail() // useMail returns [state, setState]
     const [mailList, setMailList] = useState<Mail[]>(mails)
+    const [composeAiOpen, setComposeAiOpen] = useState(false)
 
     useEffect(() => {
         mailApi.list().then(apiMails => {
@@ -61,6 +65,15 @@ export default function MailPage() {
                     <div className="flex items-center p-4 border-b">
                         <h1 className="text-xl font-bold">Inbox</h1>
                         <div className="ml-auto flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-purple-600 border-purple-200 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                                onClick={() => setComposeAiOpen(true)}
+                            >
+                                <Bot className="h-3.5 w-3.5 mr-2" />
+                                Compose with AI
+                            </Button>
                             <div className="relative">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input placeholder="Search" className="pl-8 w-[250px]" />
@@ -126,6 +139,7 @@ export default function MailPage() {
                         </div>
                     </div>
                 </div>
+                <ComposeAiDialog open={composeAiOpen} onOpenChange={setComposeAiOpen} />
             </AppLayout>
         </TooltipProvider>
     )
