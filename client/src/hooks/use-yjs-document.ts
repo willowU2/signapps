@@ -49,9 +49,15 @@ export function useYjsDocument(
                     // @ts-expect-error y-websocket accepts boolean for awareness
                     awareness: enableAwareness,
                     resyncInterval: 5000,
-                    connect: true,
+                    connect: false, // Don't connect immediately to avoid console spam if offline
                 }
             );
+
+            // Check if server is reachable before connecting
+            const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+            fetch(httpUrl, { method: 'HEAD' })
+                .then(() => wsProvider.connect())
+                .catch(() => console.warn(`[useYjsDocument] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
 
             // Listen for sync events
             wsProvider.on('sync', (isSynced: boolean) => {

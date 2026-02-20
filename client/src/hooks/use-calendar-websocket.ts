@@ -68,12 +68,18 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
         `calendar-${calendar_id}`,
         ydoc,
         {
-          connect: true,
+          connect: false,
           // @ts-expect-error y-websocket accepts boolean for awareness
           awareness: true,
           resyncInterval: 5000, // Resync every 5 seconds
         }
       );
+
+      // Check if server is reachable before connecting
+      const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+      fetch(httpUrl, { method: 'HEAD' })
+        .then(() => provider.connect())
+        .catch(() => console.warn(`[useCalendarWebSocket] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
 
       providerRef.current = provider;
 

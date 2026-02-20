@@ -34,8 +34,14 @@ export function useSpreadsheet(docId: string = 'default-sheet') {
 
     useEffect(() => {
         const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/sheet'
-        const wsProvider = new WebsocketProvider(wsUrl, docId, doc)
+        const wsProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
         const idbProvider = new IndexeddbPersistence(docId, doc)
+
+        // Prevent WebSocket console error spam by checking if server is reachable first
+        const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://')
+        fetch(httpUrl, { method: 'HEAD' })
+            .then(() => wsProvider.connect())
+            .catch(() => console.warn(`[useSpreadsheet] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`))
 
         wsProvider.on('status', (event: any) => {
             setIsConnected(event.status === 'connected')

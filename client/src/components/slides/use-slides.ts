@@ -10,7 +10,13 @@ export function useSlides(docId: string = 'slides-demo') {
 
     useEffect(() => {
         const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/slide'
-        const webrtcProvider = new WebsocketProvider(wsUrl, docId, doc)
+        const webrtcProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
+
+        // Check if server is reachable before connecting
+        const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://')
+        fetch(httpUrl, { method: 'HEAD' })
+            .then(() => webrtcProvider.connect())
+            .catch(() => console.warn(`[useSlides] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`))
 
         setProvider(webrtcProvider)
 
