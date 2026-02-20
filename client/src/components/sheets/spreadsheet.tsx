@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { useSpreadsheet } from "./use-spreadsheet"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
 import {
-    Bold, Italic, AlignLeft, AlignCenter, AlignRight, Bot,
+    Bold, Italic, AlignLeft, AlignCenter, AlignRight, Bot, Sparkles,
     TextSelect, PaintBucket, Plus, Undo, Redo, Type, FileUp, List, Link, Strikethrough, Loader2
 } from "lucide-react"
 

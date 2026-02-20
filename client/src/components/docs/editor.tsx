@@ -164,13 +164,15 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
             Collaboration.configure({
                 document: ydoc || undefined,
             }),
-            CollaborationCursor.configure({
-                provider: provider,
-                user: {
-                    name: userName || 'Anonymous',
-                    color: getRandomColor(),
-                },
-            }),
+            ...(provider ? [
+                CollaborationCursor.configure({
+                    provider: provider,
+                    user: {
+                        name: userName || 'Anonymous',
+                        color: getRandomColor(),
+                    },
+                })
+            ] : []),
         ],
         editorProps: {
             attributes: {
