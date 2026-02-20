@@ -160,7 +160,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="mr-2 text-purple-600 border-purple-200 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                            className="mr-2 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60 bg-purple-50/50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 shadow-sm transition-all"
                             onClick={handleSummarize}
                             disabled={isStreaming}
                         >
@@ -248,32 +248,37 @@ export function MailDisplay({ mail }: MailDisplayProps) {
 
                     {/* AI Summary Panel */}
                     {showSummary && (
-                        <div className="mx-4 mt-3 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20 p-3">
-                            <div className="flex items-center justify-between mb-2">
+                        <div className="mx-4 mt-4 rounded-2xl border border-purple-200/60 dark:border-purple-800/60 bg-gradient-to-br from-purple-50/90 to-indigo-50/90 dark:from-purple-950/40 dark:to-indigo-950/40 p-5 shadow-premium backdrop-blur-xl transition-all duration-300 overflow-hidden relative">
+                            {/* Decorative blur in background */}
+                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-400/20 dark:bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+
+                            <div className="flex items-center justify-between mb-3 relative z-10">
                                 <div className="flex items-center gap-2">
-                                    <Sparkles className="h-3.5 w-3.5 text-purple-600" />
-                                    <span className="text-xs font-semibold text-purple-700 dark:text-purple-400">AI Summary</span>
+                                    <div className="p-1.5 bg-purple-100 dark:bg-purple-900/50 rounded-md">
+                                        <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                    </div>
+                                    <span className="text-sm font-semibold text-purple-800 dark:text-purple-300 tracking-tight">AI Summary</span>
                                     {isStreaming && (
-                                        <span className="text-[10px] text-purple-500 animate-pulse">streaming...</span>
+                                        <span className="text-[10px] uppercase tracking-wider font-bold text-purple-500 animate-pulse ml-2 bg-purple-100 dark:bg-purple-900/50 px-2 py-0.5 rounded-full">generating</span>
                                     )}
                                 </div>
                                 <button
                                     onClick={closeSummary}
-                                    className="rounded p-0.5 text-purple-400 hover:text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                                    className="rounded-full p-1.5 text-purple-400 hover:text-purple-700 hover:bg-purple-200/50 dark:hover:bg-purple-900/50 transition-colors"
                                 >
-                                    <X className="h-3.5 w-3.5" />
+                                    <X className="h-4 w-4" />
                                 </button>
                             </div>
                             {summaryLoading ? (
-                                <div className="space-y-2">
-                                    <Skeleton className="h-3 w-full" />
-                                    <Skeleton className="h-3 w-4/5" />
-                                    <Skeleton className="h-3 w-3/5" />
+                                <div className="space-y-3 relative z-10">
+                                    <Skeleton className="h-4 w-full bg-purple-200/50 dark:bg-purple-800/50 rounded" />
+                                    <Skeleton className="h-4 w-5/6 bg-purple-200/50 dark:bg-purple-800/50 rounded" />
+                                    <Skeleton className="h-4 w-4/6 bg-purple-200/50 dark:bg-purple-800/50 rounded" />
                                 </div>
                             ) : (
-                                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed relative z-10">
                                     {summaryText}
-                                    {isStreaming && <span className="inline-block w-1.5 h-4 bg-purple-500 animate-pulse ml-0.5 align-text-bottom" />}
+                                    {isStreaming && <span className="inline-block w-2 h-4 bg-purple-500 animate-pulse ml-1 align-middle rounded-sm" />}
                                 </p>
                             )}
                         </div>
@@ -287,16 +292,16 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                         <div className="mb-2 flex gap-2 overflow-x-auto pb-2">
                             {smartReplies.length === 0 ? (
                                 <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
-                                    className="text-xs text-purple-600 hover:text-purple-700"
+                                    className="text-xs text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/60 bg-purple-50/50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 rounded-full shadow-sm"
                                     onClick={generateSmartReplies}
                                     disabled={isRepliesLoading}
                                 >
                                     {isRepliesLoading ? (
-                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
                                     ) : (
-                                        <Bot className="h-3 w-3 mr-1" />
+                                        <Bot className="h-3.5 w-3.5 mr-1.5" />
                                     )}
                                     Generate Smart Replies
                                 </Button>
@@ -305,7 +310,7 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                                     <button
                                         key={i}
                                         onClick={() => setReplyText(reply)}
-                                        className="whitespace-nowrap rounded-full border bg-white px-3 py-1 text-xs font-medium hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                                        className="whitespace-nowrap rounded-full border border-purple-100 dark:border-purple-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm px-4 py-1.5 text-xs font-medium text-foreground hover:bg-purple-50 dark:hover:bg-purple-900/40 hover:border-purple-300 dark:hover:border-purple-700 transition-all duration-200 hover:-translate-y-0.5"
                                     >
                                         {reply}
                                     </button>
