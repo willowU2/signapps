@@ -117,7 +117,10 @@ fn build_router(state: AppState) -> Router {
     // Public routes (no auth required)
     let public_routes = Router::new()
         .route("/health", get(health_check))
-        .route("/api/v1/notifications/push/vapid-key", get(push::get_vapid_key))
+        .route(
+            "/api/v1/notifications/push/vapid-key",
+            get(push::get_vapid_key),
+        )
         .route("/api/v1/timezones", get(timezones::list_timezones));
 
     // Protected routes (auth required)
@@ -202,10 +205,18 @@ fn build_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    use tower_http::cors::{Any, CorsLayer};
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any)
+        .expose_headers(Any);
+
     public_routes
         .merge(protected_routes)
         .layer(DefaultBodyLimit::max(100 * 1024 * 1024))  // 100MB
         .layer(TraceLayer::new_for_http())
+        .layer(cors)
         .with_state(state)
 }
 

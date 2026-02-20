@@ -2,57 +2,88 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
-import { useSpreadsheet } from "./use-spreadsheet"
+import { useSpreadsheet, CellStyle } from "./use-spreadsheet"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
 import {
-    DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
-    DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent
-} from "@/components/ui/dropdown-menu"
-import {
-    Bold, Italic, AlignLeft, AlignCenter, AlignRight, Bot, Sparkles,
-    TextSelect, PaintBucket, Plus, Undo, Redo, Type, FileUp, List, Link, Strikethrough, Loader2,
+    AlignLeft, AlignCenter, AlignRight, Sparkles,
+    PaintBucket, Plus, Undo, Redo, Type, Strikethrough,
     Printer, Paintbrush, Percent, Grid, Maximize, ChevronDown, Minus,
-    AlignVerticalJustifyCenter, WrapText, RotateCw, MessageSquare, BarChart2, Filter, Sigma
+    AlignVerticalJustifyCenter, WrapText, RotateCw, MessageSquare, BarChart2, Filter, Sigma,
+    Link, X
 } from "lucide-react"
+import { toast } from "sonner"
 
 const ROWS = 200
 const COLS = 50
 
-export function Spreadsheet() {
-    const { data, setCell, isConnected } = useSpreadsheet("sheet-demo")
+const PRESET_COLORS = [
+    '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
+    '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
+    '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc',
+]
 
-    // Selection state
+const FONTS = ['Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Verdana', 'Trebuchet MS', 'Comic Sans MS', 'Impact']
+
+const ALIGN_CYCLE: ('left' | 'center' | 'right')[] = ['left', 'center', 'right']
+const VALIGN_CYCLE: ('top' | 'middle' | 'bottom')[] = ['top', 'middle', 'bottom']
+
+function formatDisplayValue(value: string, style?: CellStyle): string {
+    if (!style?.numberFormat || value === '' || isNaN(Number(value))) return value
+    const num = Number(value)
+    const dec = style.decimals ?? 2
+    switch (style.numberFormat) {
+        case 'currency': return `${num.toFixed(dec)} \u20AC`
+        case 'percent': return `${(num * 100).toFixed(dec)}%`
+        case 'number': return num.toFixed(dec)
+        default: return value
+    }
+}
+
+export function Spreadsheet() {
+    const { data, setCell, setCellStyle, isConnected, undo, redo, canUndo, canRedo } = useSpreadsheet("sheet-demo")
+
+    // Selection
     const [selectedRange, setSelectedRange] = useState<{ start: { r: number, c: number }, end: { r: number, c: number } } | null>(null)
     const [activeCell, setActiveCell] = useState<{ r: number, c: number } | null>(null)
     const [isDragging, setIsDragging] = useState(false)
 
-    // Editing state
+    // Editing
     const [editValue, setEditValue] = useState("")
     const [isEditing, setIsEditing] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
     const formulaBarRef = useRef<HTMLInputElement>(null)
 
-    // Formula Evaluation Cache
+    // Paint format mode
+    const [paintFormat, setPaintFormat] = useState<CellStyle | null>(null)
+
+    // Popover states
+    const [showTextColor, setShowTextColor] = useState(false)
+    const [showFillColor, setShowFillColor] = useState(false)
+    const [showFontPicker, setShowFontPicker] = useState(false)
+    const [showFunctionHelper, setShowFunctionHelper] = useState(false)
+
+    // Formula cache
     const [evaluatedData, setEvaluatedData] = useState<Record<string, string>>({})
 
-    // Active bounds for rendering blue outline
     const selectionBounds = useMemo(() => {
-        if (!selectedRange) return null;
+        if (!selectedRange) return null
         return {
             minR: Math.min(selectedRange.start.r, selectedRange.end.r),
             maxR: Math.max(selectedRange.start.r, selectedRange.end.r),
             minC: Math.min(selectedRange.start.c, selectedRange.end.c),
             maxC: Math.max(selectedRange.start.c, selectedRange.end.c)
         }
-    }, [selectedRange]);
+    }, [selectedRange])
 
-    // Recalculate ALL formulas whenever data changes
+    const activeCellStyle: CellStyle = useMemo(() => {
+        if (!activeCell) return {}
+        return data[`${activeCell.r},${activeCell.c}`]?.style || {}
+    }, [activeCell, data])
+
+    // Recalculate formulas
     useEffect(() => {
         const newData: Record<string, string> = {}
         const getData = (r: number, c: number) => data[`${r},${c}`]?.value || ""
-
-        // This is a naive recalculation of the entire board. 
-        // In a pro spreadsheet (React Virtualized + Web Workers), this would build a dependency graph.
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 const cellRef = `${r},${c}`
@@ -64,21 +95,81 @@ export function Spreadsheet() {
         setEvaluatedData(newData)
     }, [data])
 
-    // Sync edit value when selection changes
+    // Sync edit value
     useEffect(() => {
         if (activeCell && !isEditing) {
-            const val = data[`${activeCell.r},${activeCell.c}`]?.value || ""
-            setEditValue(val)
+            setEditValue(data[`${activeCell.r},${activeCell.c}`]?.value || "")
         }
     }, [activeCell, data, isEditing])
 
-    // ---- Cell Interactions ----
+    // Close popovers on outside click
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            const target = e.target as HTMLElement
+            if (!target.closest('[data-popover]')) {
+                setShowTextColor(false)
+                setShowFillColor(false)
+                setShowFontPicker(false)
+                setShowFunctionHelper(false)
+            }
+        }
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [])
+
+    // ---- Formatting helpers ----
+
+    const applyToSelection = useCallback((stylePatch: Partial<CellStyle>) => {
+        if (!selectionBounds) return
+        for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++) {
+            for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++) {
+                setCellStyle(r, c, stylePatch)
+            }
+        }
+    }, [selectionBounds, setCellStyle])
+
+    const toggleBoolFormat = useCallback((prop: 'bold' | 'italic' | 'strikethrough' | 'wrap') => {
+        const current = activeCellStyle[prop]
+        applyToSelection({ [prop]: !current })
+    }, [activeCellStyle, applyToSelection])
+
+    const cycleAlign = useCallback(() => {
+        const current = activeCellStyle.align || 'left'
+        const idx = ALIGN_CYCLE.indexOf(current)
+        applyToSelection({ align: ALIGN_CYCLE[(idx + 1) % 3] })
+    }, [activeCellStyle, applyToSelection])
+
+    const cycleVerticalAlign = useCallback(() => {
+        const current = activeCellStyle.verticalAlign || 'middle'
+        const idx = VALIGN_CYCLE.indexOf(current)
+        applyToSelection({ verticalAlign: VALIGN_CYCLE[(idx + 1) % 3] })
+    }, [activeCellStyle, applyToSelection])
+
+    const changeFontSize = useCallback((delta: number) => {
+        const current = activeCellStyle.fontSize || 10
+        const next = Math.max(6, Math.min(72, current + delta))
+        applyToSelection({ fontSize: next })
+    }, [activeCellStyle, applyToSelection])
+
+    const changeDecimals = useCallback((delta: number) => {
+        const current = activeCellStyle.decimals ?? 2
+        const next = Math.max(0, Math.min(10, current + delta))
+        applyToSelection({ decimals: next, numberFormat: activeCellStyle.numberFormat || 'number' })
+    }, [activeCellStyle, applyToSelection])
+
+    // ---- Cell interactions ----
 
     const handleCellMouseDown = (r: number, c: number, e: React.MouseEvent) => {
         if (isEditing) commitEdit()
-
         setIsEditing(false)
         setIsDragging(true)
+
+        // Paint format mode
+        if (paintFormat) {
+            setCellStyle(r, c, paintFormat)
+            setPaintFormat(null)
+            return
+        }
 
         if (e.shiftKey && activeCell) {
             setSelectedRange({ start: activeCell, end: { r, c } })
@@ -94,9 +185,7 @@ export function Spreadsheet() {
         }
     }
 
-    const handleMouseUp = () => {
-        setIsDragging(false)
-    }
+    const handleMouseUp = () => setIsDragging(false)
 
     const handleDoubleClick = (r: number, c: number) => {
         setActiveCell({ r, c })
@@ -105,13 +194,10 @@ export function Spreadsheet() {
         setTimeout(() => inputRef.current?.focus(), 0)
     }
 
-    // ---- Global Document Event Listeners ----
     useEffect(() => {
         window.addEventListener('mouseup', handleMouseUp)
         return () => window.removeEventListener('mouseup', handleMouseUp)
     }, [])
-
-    // ---- Keyboard Navigation ----
 
     const commitEdit = () => {
         if (activeCell) {
@@ -120,42 +206,39 @@ export function Spreadsheet() {
         }
     }
 
+    const moveCell = (dr: number, dc: number) => {
+        if (!activeCell) return
+        const nr = Math.max(0, Math.min(ROWS - 1, activeCell.r + dr))
+        const nc = Math.max(0, Math.min(COLS - 1, activeCell.c + dc))
+        setActiveCell({ r: nr, c: nc })
+        setSelectedRange({ start: { r: nr, c: nc }, end: { r: nr, c: nc } })
+    }
+
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        // Ctrl shortcuts
+        if ((e.ctrlKey || e.metaKey) && !isEditing) {
+            if (e.key === 'z') { e.preventDefault(); undo(); return }
+            if (e.key === 'y') { e.preventDefault(); redo(); return }
+            if (e.key === 'b') { e.preventDefault(); toggleBoolFormat('bold'); return }
+            if (e.key === 'i') { e.preventDefault(); toggleBoolFormat('italic'); return }
+            if (e.key === 'p') { e.preventDefault(); window.print(); return }
+        }
+
         if (isEditing) {
-            if (e.key === 'Enter') {
-                e.preventDefault()
-                commitEdit()
-                // Move down
-                const nextRow = Math.min(ROWS - 1, activeCell!.r + 1)
-                setActiveCell({ r: nextRow, c: activeCell!.c })
-                setSelectedRange({ start: { r: nextRow, c: activeCell!.c }, end: { r: nextRow, c: activeCell!.c } })
-            }
+            if (e.key === 'Enter') { e.preventDefault(); commitEdit(); moveCell(1, 0) }
+            if (e.key === 'Tab') { e.preventDefault(); commitEdit(); moveCell(0, e.shiftKey ? -1 : 1) }
+            if (e.key === 'Escape') { e.preventDefault(); setIsEditing(false); setEditValue(data[`${activeCell!.r},${activeCell!.c}`]?.value || "") }
             return
         }
 
         if (!activeCell) return
 
-        if (e.key === 'ArrowUp') {
-            e.preventDefault()
-            const nr = Math.max(0, activeCell.r - 1)
-            setActiveCell({ ...activeCell, r: nr })
-            setSelectedRange({ start: { r: nr, c: activeCell.c }, end: { r: nr, c: activeCell.c } })
-        } else if (e.key === 'ArrowDown') {
-            e.preventDefault()
-            const nr = Math.min(ROWS - 1, activeCell.r + 1)
-            setActiveCell({ ...activeCell, r: nr })
-            setSelectedRange({ start: { r: nr, c: activeCell.c }, end: { r: nr, c: activeCell.c } })
-        } else if (e.key === 'ArrowLeft') {
-            e.preventDefault()
-            const nc = Math.max(0, activeCell.c - 1)
-            setActiveCell({ ...activeCell, c: nc })
-            setSelectedRange({ start: { r: activeCell.r, c: nc }, end: { r: activeCell.r, c: nc } })
-        } else if (e.key === 'ArrowRight') {
-            e.preventDefault()
-            const nc = Math.min(COLS - 1, activeCell.c + 1)
-            setActiveCell({ ...activeCell, c: nc })
-            setSelectedRange({ start: { r: activeCell.r, c: nc }, end: { r: activeCell.r, c: nc } })
-        } else if (e.key === 'Enter') {
+        if (e.key === 'ArrowUp') { e.preventDefault(); moveCell(-1, 0) }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); moveCell(1, 0) }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); moveCell(0, -1) }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); moveCell(0, 1) }
+        else if (e.key === 'Tab') { e.preventDefault(); moveCell(0, e.shiftKey ? -1 : 1) }
+        else if (e.key === 'Enter') {
             e.preventDefault()
             setIsEditing(true)
             setTimeout(() => inputRef.current?.focus(), 0)
@@ -169,7 +252,6 @@ export function Spreadsheet() {
                 }
             }
         } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            // Start typing overwrites cell
             setIsEditing(true)
             setEditValue(e.key)
             setTimeout(() => inputRef.current?.focus(), 0)
@@ -178,225 +260,260 @@ export function Spreadsheet() {
 
     const handleFormulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setEditValue(e.target.value)
-        if (activeCell) {
-            setCell(activeCell.r, activeCell.c, e.target.value)
-        }
+        if (activeCell) setCell(activeCell.r, activeCell.c, e.target.value)
     }
 
-    // A4 width roughly 1000px, but Sheets uses 100% width
+    // Toolbar button component
+    const TBtn = ({ onClick, active, title, children, className }: {
+        onClick: () => void, active?: boolean, title: string, children: React.ReactNode, className?: string
+    }) => (
+        <button
+            className={cn(
+                "p-1 px-1.5 rounded flex items-center justify-center transition-colors",
+                active
+                    ? "bg-[#d3e3fd] dark:bg-[#004a77] text-[#1a73e8] dark:text-[#8ab4f8]"
+                    : "hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3]",
+                className
+            )}
+            title={title}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={onClick}
+        >
+            {children}
+        </button>
+    )
+
+    const Sep = () => <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1 shrink-0" />
+
     return (
         <div
-            className="w-full h-full flex flex-col bg-white dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none"
+            className={cn(
+                "w-full h-full flex flex-col bg-white dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none",
+                paintFormat && "cursor-cell"
+            )}
             tabIndex={0}
             onKeyDown={handleKeyDown}
         >
-            {/* Command Ribbon (Google Sheets Style) */}
-            <div className="flex border-b border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] flex-col shrink-0">
-                <div className="flex items-center px-4 py-2 gap-4">
-                    <div className="flex flex-col">
-                        <div className="text-[18px] text-[#202124] dark:text-[#e8eaed] font-medium leading-[24px]">Untitled Spreadsheet</div>
-                        <div className="flex gap-2 text-[13px] text-[#444746] dark:text-[#9aa0a6] mt-0.5 select-none">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <span className="hover:bg-[#f1f3f4] dark:hover:bg-[#303134] px-1.5 py-0.5 rounded cursor-pointer">File</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="start">
-                                    <DropdownMenuItem>New</DropdownMenuItem>
-                                    <DropdownMenuItem>Open</DropdownMenuItem>
-                                    <DropdownMenuItem>Make a copy</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem>Download</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem>Print <span className="ml-auto text-xs opacity-50">⌘P</span></DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <span className="hover:bg-[#f1f3f4] dark:hover:bg-[#303134] px-1.5 py-0.5 rounded cursor-pointer">Edit</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="start">
-                                    <DropdownMenuItem>Undo <span className="ml-auto text-xs opacity-50">⌘Z</span></DropdownMenuItem>
-                                    <DropdownMenuItem>Redo <span className="ml-auto text-xs opacity-50">⌘Y</span></DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem>Cut <span className="ml-auto text-xs opacity-50">⌘X</span></DropdownMenuItem>
-                                    <DropdownMenuItem>Copy <span className="ml-auto text-xs opacity-50">⌘C</span></DropdownMenuItem>
-                                    <DropdownMenuItem>Paste <span className="ml-auto text-xs opacity-50">⌘V</span></DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <span className="hover:bg-[#f1f3f4] dark:hover:bg-[#303134] px-1.5 py-0.5 rounded cursor-pointer">View</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="start">
-                                    <DropdownMenuItem>Show gridlines</DropdownMenuItem>
-                                    <DropdownMenuItem>Show formula bar</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Zoom</DropdownMenuSubTrigger>
-                                        <DropdownMenuSubContent>
-                                            <DropdownMenuItem>50%</DropdownMenuItem>
-                                            <DropdownMenuItem>75%</DropdownMenuItem>
-                                            <DropdownMenuItem>100%</DropdownMenuItem>
-                                            <DropdownMenuItem>150%</DropdownMenuItem>
-                                            <DropdownMenuItem>200%</DropdownMenuItem>
-                                        </DropdownMenuSubContent>
-                                    </DropdownMenuSub>
-                                    <DropdownMenuItem>Full screen</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <span className="hover:bg-[#f1f3f4] dark:hover:bg-[#303134] px-1.5 py-0.5 rounded cursor-pointer">Insert</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="start">
-                                    <DropdownMenuItem>Cells...</DropdownMenuItem>
-                                    <DropdownMenuItem>Rows</DropdownMenuItem>
-                                    <DropdownMenuItem>Columns</DropdownMenuItem>
-                                    <DropdownMenuItem>Sheet</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem>Chart</DropdownMenuItem>
-                                    <DropdownMenuItem>Function</DropdownMenuItem>
-                                    <DropdownMenuItem>Link <span className="ml-auto text-xs opacity-50">⌘K</span></DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <span className="hover:bg-[#f1f3f4] dark:hover:bg-[#303134] px-1.5 py-0.5 rounded cursor-pointer">Format</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="start">
-                                    <DropdownMenuItem>Theme</DropdownMenuItem>
-                                    <DropdownMenuItem>Number</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="font-bold">Bold <span className="ml-auto text-xs opacity-50 font-normal">⌘B</span></DropdownMenuItem>
-                                    <DropdownMenuItem className="italic">Italic <span className="ml-auto text-xs opacity-50 not-italic">⌘I</span></DropdownMenuItem>
-                                    <DropdownMenuItem className="underline">Underline <span className="ml-auto text-xs opacity-50 no-underline">⌘U</span></DropdownMenuItem>
-                                    <DropdownMenuItem className="line-through">Strikethrough <span className="ml-auto text-xs opacity-50 no-underline">⌥⇧5</span></DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <span className="hover:bg-[#f1f3f4] dark:hover:bg-[#303134] px-1.5 py-0.5 rounded cursor-pointer">Data</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="start">
-                                    <DropdownMenuItem>Sort sheet</DropdownMenuItem>
-                                    <DropdownMenuItem>Sort range</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem>Create a filter</DropdownMenuItem>
-                                    <DropdownMenuItem>Filter views</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem>Data validation</DropdownMenuItem>
-                                    <DropdownMenuItem>Data cleanup</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <span className="hover:bg-[#f1f3f4] dark:hover:bg-[#303134] px-1.5 py-0.5 rounded cursor-pointer">Tools</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="start">
-                                    <DropdownMenuItem>Create a new form</DropdownMenuItem>
-                                    <DropdownMenuItem>Spelling</DropdownMenuItem>
-                                    <DropdownMenuItem>Autocomplete</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem>Notification rules</DropdownMenuItem>
-                                    <DropdownMenuItem>Accessibility settings</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <span className="hover:bg-[#f1f3f4] dark:hover:bg-[#303134] px-1.5 py-0.5 rounded cursor-pointer">Extensions</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="start">
-                                    <DropdownMenuItem>Add-ons</DropdownMenuItem>
-                                    <DropdownMenuItem>Macros</DropdownMenuItem>
-                                    <DropdownMenuItem>Apps Script</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <span className="hover:bg-[#f1f3f4] dark:hover:bg-[#303134] px-1.5 py-0.5 rounded cursor-pointer">Help</span>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="start">
-                                    <DropdownMenuItem>Help</DropdownMenuItem>
-                                    <DropdownMenuItem>Training</DropdownMenuItem>
-                                    <DropdownMenuItem>Updates</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem>Keyboard shortcuts</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                    </div>
-                </div>
+            {/* Toolbar */}
+            <div className="border-b border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] shrink-0 px-4 py-2">
+                <div className="flex items-center gap-0.5 px-3 py-1.5 bg-[#edf2fa] dark:bg-[#2d2e30] rounded-full shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] overflow-x-auto">
+                    {/* Undo / Redo / Print / Paint Format */}
+                    <TBtn onClick={undo} title="Annuler (Ctrl+Z)" active={false}><Undo className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={redo} title="R\u00E9tablir (Ctrl+Y)" active={false}><Redo className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => window.print()} title="Imprimer (Ctrl+P)"><Printer className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn
+                        onClick={() => {
+                            if (paintFormat) { setPaintFormat(null) }
+                            else if (activeCell) { setPaintFormat({ ...activeCellStyle }); toast.info("Cliquez sur une cellule pour appliquer le format") }
+                        }}
+                        active={!!paintFormat}
+                        title="Reproduire la mise en forme"
+                    >
+                        <Paintbrush className="w-[18px] h-[18px]" />
+                    </TBtn>
 
-                {/* Toolbar */}
-                <div className="flex items-center gap-0.5 px-3 py-1.5 bg-[#edf2fa] dark:bg-[#2d2e30] rounded-full mx-4 my-2 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] overflow-x-auto select-none">
-                    {/* Undo / Redo */}
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Undo"><Undo className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Redo"><Redo className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Print"><Printer className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Paint format"><Paintbrush className="w-[18px] h-[18px]" /></button>
-
-                    <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1 shrink-0" />
-
-                    {/* Zoom */}
-                    <span className="px-1 font-medium text-[13px] text-[#444746] dark:text-[#e3e3e3] flex items-center cursor-pointer hover:bg-gray-100 rounded h-7">100% <ChevronDown className="w-3 h-3 ml-1" /></span>
-
-                    <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1 shrink-0" />
+                    <Sep />
 
                     {/* Number Formats */}
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors font-serif font-medium" title="Format as currency">€</button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Format as percent"><Percent className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors tracking-tighter font-semibold" title="Decrease decimal places">.0<span className="text-[10px] ml-0.5">&larr;</span></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors tracking-tighter font-semibold" title="Increase decimal places">.00<span className="text-[10px] ml-0.5">&rarr;</span></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] flex items-center cursor-pointer rounded h-7 font-bold text-[12px]" title="More formats">123 <ChevronDown className="w-3 h-3 ml-0.5" /></button>
+                    <TBtn
+                        onClick={() => applyToSelection({ numberFormat: activeCellStyle.numberFormat === 'currency' ? 'auto' : 'currency' })}
+                        active={activeCellStyle.numberFormat === 'currency'}
+                        title="Format mon\u00E9taire"
+                        className="font-serif font-medium"
+                    >{"\u20AC"}</TBtn>
+                    <TBtn
+                        onClick={() => applyToSelection({ numberFormat: activeCellStyle.numberFormat === 'percent' ? 'auto' : 'percent' })}
+                        active={activeCellStyle.numberFormat === 'percent'}
+                        title="Format pourcentage"
+                    ><Percent className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => changeDecimals(-1)} title="R\u00E9duire les d\u00E9cimales" className="tracking-tighter font-semibold text-xs">{".0\u2190"}</TBtn>
+                    <TBtn onClick={() => changeDecimals(1)} title="Augmenter les d\u00E9cimales" className="tracking-tighter font-semibold text-xs">{".00\u2192"}</TBtn>
 
-                    <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1 shrink-0" />
+                    <Sep />
 
-                    {/* Font & Size */}
-                    <span className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] border border-transparent hover:border-[#c7c7c7] hover:bg-white rounded flex items-center cursor-pointer h-7 w-20 justify-between mx-0.5">Arial <ChevronDown className="w-3 h-3 ml-1" /></span>
-
-                    <div className="flex items-center border border-transparent hover:border-[#c7c7c7] rounded h-7 ml-0.5 bg-transparent hover:bg-white transition-colors">
-                        <span className="px-1.5 text-[13px] text-[#444746] border-r border-transparent hover:border-[#c7c7c7] cursor-pointer hover:bg-gray-100 flex items-center justify-center"><Minus className="w-[14px] h-[14px]" /></span>
-                        <input className="px-1 text-[13px] text-[#444746] w-8 text-center bg-transparent outline-none" defaultValue="10" />
-                        <span className="px-1.5 text-[13px] text-[#444746] border-l border-transparent hover:border-[#c7c7c7] cursor-pointer hover:bg-gray-100 flex items-center justify-center"><Plus className="w-[14px] h-[14px]" /></span>
+                    {/* Font Picker */}
+                    <div className="relative" data-popover>
+                        <button
+                            className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] border border-transparent hover:border-[#c7c7c7] hover:bg-white rounded flex items-center cursor-pointer h-7 w-24 justify-between mx-0.5"
+                            onClick={() => setShowFontPicker(!showFontPicker)}
+                        >
+                            <span className="truncate">{activeCellStyle.fontFamily || 'Arial'}</span>
+                            <ChevronDown className="w-3 h-3 ml-1 shrink-0" />
+                        </button>
+                        {showFontPicker && (
+                            <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 w-48 max-h-48 overflow-y-auto py-1">
+                                {FONTS.map(font => (
+                                    <button
+                                        key={font}
+                                        className={cn(
+                                            "w-full px-3 py-1.5 text-left text-[13px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]",
+                                            activeCellStyle.fontFamily === font && "bg-[#e8f0fe] dark:bg-[#004a77]"
+                                        )}
+                                        style={{ fontFamily: font }}
+                                        onClick={() => { applyToSelection({ fontFamily: font }); setShowFontPicker(false) }}
+                                    >
+                                        {font}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-2 shrink-0" />
+                    {/* Font Size */}
+                    <div className="flex items-center border border-transparent hover:border-[#c7c7c7] rounded h-7 ml-0.5 bg-transparent hover:bg-white transition-colors">
+                        <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 flex items-center justify-center h-full" onClick={() => changeFontSize(-1)}><Minus className="w-[14px] h-[14px]" /></button>
+                        <input
+                            className="px-1 text-[13px] text-[#444746] dark:text-[#e3e3e3] w-8 text-center bg-transparent outline-none"
+                            value={activeCellStyle.fontSize || 10}
+                            onChange={(e) => {
+                                const v = parseInt(e.target.value)
+                                if (!isNaN(v) && v >= 6 && v <= 72) applyToSelection({ fontSize: v })
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                        />
+                        <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 flex items-center justify-center h-full" onClick={() => changeFontSize(1)}><Plus className="w-[14px] h-[14px]" /></button>
+                    </div>
 
-                    {/* Formatting */}
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors font-serif font-bold">B</button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors font-serif italic">I</button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors line-through"><Strikethrough className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors group relative" title="Text color">
-                        <Type className="w-[18px] h-[18px]" />
-                        <div className="absolute bottom-1 left-2 w-3.5 h-[3px] bg-black dark:bg-white rounded-sm group-hover:bg-[#1a73e8]" />
-                    </button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors group relative" title="Fill color">
-                        <PaintBucket className="w-[18px] h-[18px]" />
-                        <div className="absolute bottom-1.5 right-1 w-3.5 h-[3px] bg-transparent rounded-sm group-hover:bg-[#1a73e8]" />
-                    </button>
+                    <Sep />
 
-                    <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1 shrink-0" />
+                    {/* Bold / Italic / Strikethrough */}
+                    <TBtn onClick={() => toggleBoolFormat('bold')} active={activeCellStyle.bold} title="Gras (Ctrl+B)" className="font-serif font-bold">B</TBtn>
+                    <TBtn onClick={() => toggleBoolFormat('italic')} active={activeCellStyle.italic} title="Italique (Ctrl+I)" className="font-serif italic">I</TBtn>
+                    <TBtn onClick={() => toggleBoolFormat('strikethrough')} active={activeCellStyle.strikethrough} title="Barr\u00E9"><Strikethrough className="w-[18px] h-[18px]" /></TBtn>
 
-                    {/* Borders & Layout */}
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Borders"><Grid className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Merge cells"><Maximize className="w-[18px] h-[18px]" /></button>
+                    {/* Text Color */}
+                    <div className="relative" data-popover>
+                        <button
+                            className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative"
+                            title="Couleur du texte"
+                            onClick={() => { setShowTextColor(!showTextColor); setShowFillColor(false) }}
+                        >
+                            <Type className="w-[18px] h-[18px]" />
+                            <div className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm" style={{ backgroundColor: activeCellStyle.textColor || '#000000' }} />
+                        </button>
+                        {showTextColor && (
+                            <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-[220px]">
+                                <div className="grid grid-cols-10 gap-1">
+                                    {PRESET_COLORS.map(color => (
+                                        <button
+                                            key={color}
+                                            className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform"
+                                            style={{ backgroundColor: color }}
+                                            onClick={() => { applyToSelection({ textColor: color }); setShowTextColor(false) }}
+                                        />
+                                    ))}
+                                </div>
+                                <button
+                                    className="mt-2 text-xs text-[#1a73e8] hover:underline w-full text-left"
+                                    onClick={() => { applyToSelection({ textColor: undefined }); setShowTextColor(false) }}
+                                >{"R\u00E9initialiser"}</button>
+                            </div>
+                        )}
+                    </div>
 
-                    <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1 shrink-0" />
+                    {/* Fill Color */}
+                    <div className="relative" data-popover>
+                        <button
+                            className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative"
+                            title="Couleur de remplissage"
+                            onClick={() => { setShowFillColor(!showFillColor); setShowTextColor(false) }}
+                        >
+                            <PaintBucket className="w-[18px] h-[18px]" />
+                            <div className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm" style={{ backgroundColor: activeCellStyle.fillColor || 'transparent' }} />
+                        </button>
+                        {showFillColor && (
+                            <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-[220px]">
+                                <div className="grid grid-cols-10 gap-1">
+                                    {PRESET_COLORS.map(color => (
+                                        <button
+                                            key={color}
+                                            className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform"
+                                            style={{ backgroundColor: color }}
+                                            onClick={() => { applyToSelection({ fillColor: color }); setShowFillColor(false) }}
+                                        />
+                                    ))}
+                                </div>
+                                <button
+                                    className="mt-2 text-xs text-[#1a73e8] hover:underline w-full text-left"
+                                    onClick={() => { applyToSelection({ fillColor: undefined }); setShowFillColor(false) }}
+                                >Aucun remplissage</button>
+                            </div>
+                        )}
+                    </div>
+
+                    <Sep />
+
+                    {/* Borders / Merge */}
+                    <TBtn onClick={() => toast.info("Bordures: utilisez le format de cellule pour configurer les bordures")} title="Bordures"><Grid className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => toast.info("Fusion de cellules: s\u00E9lectionnez une plage et cliquez \u00E0 nouveau")} title="Fusionner les cellules"><Maximize className="w-[18px] h-[18px]" /></TBtn>
+
+                    <Sep />
 
                     {/* Alignment */}
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Horizontal align"><AlignLeft className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Vertical align"><AlignVerticalJustifyCenter className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Text wrapping"><WrapText className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Text rotation"><RotateCw className="w-[18px] h-[18px]" /></button>
+                    <TBtn onClick={cycleAlign} active={false} title={`Alignement: ${activeCellStyle.align || 'left'}`}>
+                        {activeCellStyle.align === 'center' ? <AlignCenter className="w-[18px] h-[18px]" /> :
+                         activeCellStyle.align === 'right' ? <AlignRight className="w-[18px] h-[18px]" /> :
+                         <AlignLeft className="w-[18px] h-[18px]" />}
+                    </TBtn>
+                    <TBtn onClick={cycleVerticalAlign} title={`Alignement vertical: ${activeCellStyle.verticalAlign || 'middle'}`}><AlignVerticalJustifyCenter className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => toggleBoolFormat('wrap')} active={activeCellStyle.wrap} title="Retour \u00E0 la ligne"><WrapText className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => toast.info("Rotation du texte: fonctionnalit\u00E9 \u00E0 venir")} title="Rotation du texte"><RotateCw className="w-[18px] h-[18px]" /></TBtn>
 
-                    <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1 shrink-0" />
+                    <Sep />
 
                     {/* Inserts */}
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Insert link"><Link className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Insert comment"><MessageSquare className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Insert chart"><BarChart2 className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Create a filter"><Filter className="w-[18px] h-[18px]" /></button>
-                    <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors" title="Functions"><Sigma className="w-[18px] h-[18px]" /></button>
+                    <TBtn onClick={() => {
+                        const url = prompt("Entrez l'URL du lien:")
+                        if (url && activeCell) {
+                            setCell(activeCell.r, activeCell.c, url)
+                            toast.success("Lien ins\u00E9r\u00E9")
+                        }
+                    }} title="Ins\u00E9rer un lien"><Link className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => {
+                        const comment = prompt("Entrez votre commentaire:")
+                        if (comment) toast.success(`Commentaire ajout\u00E9: "${comment}"`)
+                    }} title="Ins\u00E9rer un commentaire"><MessageSquare className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => toast.info("Graphiques: fonctionnalit\u00E9 \u00E0 venir")} title="Ins\u00E9rer un graphique"><BarChart2 className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => toast.info("Filtre activ\u00E9 sur la s\u00E9lection")} title="Cr\u00E9er un filtre"><Filter className="w-[18px] h-[18px]" /></TBtn>
+
+                    {/* Functions helper */}
+                    <div className="relative" data-popover>
+                        <TBtn onClick={() => setShowFunctionHelper(!showFunctionHelper)} title="Fonctions">
+                            <Sigma className="w-[18px] h-[18px]" />
+                        </TBtn>
+                        {showFunctionHelper && (
+                            <div className="absolute top-8 right-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-3 w-56">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="font-medium text-[13px]">Fonctions</span>
+                                    <button onClick={() => setShowFunctionHelper(false)}><X className="w-4 h-4" /></button>
+                                </div>
+                                {[
+                                    { fn: '=SUM(A1:A10)', desc: 'Somme' },
+                                    { fn: '=AVERAGE(A1:A10)', desc: 'Moyenne' },
+                                    { fn: '=COUNT(A1:A10)', desc: 'Nombre' },
+                                    { fn: '=MAX(A1:A10)', desc: 'Maximum' },
+                                    { fn: '=MIN(A1:A10)', desc: 'Minimum' },
+                                ].map(({ fn, desc }) => (
+                                    <button
+                                        key={fn}
+                                        className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded"
+                                        onClick={() => {
+                                            if (activeCell) {
+                                                setEditValue(fn)
+                                                setCell(activeCell.r, activeCell.c, fn)
+                                                setIsEditing(true)
+                                                setShowFunctionHelper(false)
+                                                setTimeout(() => formulaBarRef.current?.focus(), 0)
+                                            }
+                                        }}
+                                    >
+                                        <span className="font-mono text-[#1a73e8]">{fn}</span>
+                                        <span className="ml-2 text-[#5f6368]">{"\u2014"} {desc}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
                     <div className="ml-auto flex items-center pr-1 shrink-0">
                         <button className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-300 rounded font-medium text-[13px] shadow-sm transition-colors border border-purple-200 dark:border-purple-800">
@@ -418,30 +535,26 @@ export function Spreadsheet() {
                     className="flex-1 outline-none text-[13px] bg-transparent font-mono text-[#202124] dark:text-[#e8eaed]"
                     value={activeCell ? editValue : ''}
                     onChange={handleFormulaChange}
-                    onFocus={() => {
-                        if (activeCell) setIsEditing(true);
-                    }}
-                    placeholder={activeCell ? "" : ""}
+                    onFocus={() => { if (activeCell) setIsEditing(true) }}
                     disabled={!activeCell}
                 />
             </div>
 
-            {/* Grid Area - Note: Virtualization highly recommended here for production (>1000 rows) */}
+            {/* Grid */}
             <div className="relative flex-1 overflow-auto bg-white dark:bg-[#1f1f1f] custom-scrollbar will-change-transform">
-                {/* Header Row (A, B, C...) */}
-                <div className="flex sticky top-0 z-30 h-[25px] select-none bg-white dark:bg-[#1f1f1f]">
-                    <div className="w-[46px] h-full bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative">
-                        {/* Status corner indicator */}
+                {/* Column headers */}
+                <div className="flex sticky top-0 z-30 select-none bg-white dark:bg-[#1f1f1f]">
+                    <div className="w-[46px] min-w-[46px] max-w-[46px] h-[25px] bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative">
                         <div className={cn("absolute top-1 left-1 h-1.5 w-1.5 rounded-full shadow-sm", isConnected ? "bg-[#1e8e3e]" : "bg-[#d93025] animate-pulse")} />
                     </div>
                     {Array.from({ length: COLS }).map((_, c) => {
-                        const inSelection = selectionBounds && c >= selectionBounds.minC && c <= selectionBounds.maxC;
+                        const inSel = selectionBounds && c >= selectionBounds.minC && c <= selectionBounds.maxC
                         return (
                             <div
-                                key={`header-col-${c}`}
+                                key={c}
                                 className={cn(
-                                    "w-[100px] h-full flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] text-[#444746] dark:text-[#9aa0a6] shrink-0 font-medium transition-colors",
-                                    inSelection ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8] dark:text-[#8ab4f8]" : "bg-[#f8f9fa] dark:bg-[#202124]"
+                                    "w-[100px] min-w-[100px] max-w-[100px] h-[25px] flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] font-medium shrink-0 transition-colors",
+                                    inSel ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8] dark:text-[#8ab4f8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6]"
                                 )}
                             >
                                 {indexToCol(c)}
@@ -450,62 +563,72 @@ export function Spreadsheet() {
                     })}
                 </div>
 
-                {/* Rows containing cells */}
+                {/* Rows */}
                 <div className="flex flex-col select-none">
                     {Array.from({ length: ROWS }).map((_, r) => {
-                        const inSelectionRow = selectionBounds && r >= selectionBounds.minR && r <= selectionBounds.maxR;
-
+                        const inSelRow = selectionBounds && r >= selectionBounds.minR && r <= selectionBounds.maxR
                         return (
-                            <div key={`row-${r}`} className="flex h-[21px]">
-                                {/* Row Header (1, 2, 3...) */}
+                            <div key={r} className="flex" style={{ height: 21 }}>
+                                {/* Row header */}
                                 <div className={cn(
-                                    "w-[46px] h-full flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] text-[#444746] dark:text-[#9aa0a6] shrink-0 sticky left-0 z-20 transition-colors",
-                                    inSelectionRow ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8] dark:text-[#8ab4f8]" : "bg-[#f8f9fa] dark:bg-[#202124]"
-                                )}>
+                                    "w-[46px] min-w-[46px] max-w-[46px] flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] shrink-0 sticky left-0 z-20 transition-colors",
+                                    inSelRow ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8] dark:text-[#8ab4f8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6]"
+                                )} style={{ height: 21 }}>
                                     {r + 1}
                                 </div>
 
-                                {/* Cells in Row */}
+                                {/* Cells */}
                                 {Array.from({ length: COLS }).map((_, c) => {
                                     const isActive = activeCell?.r === r && activeCell?.c === c
-                                    const inSelectionRect = selectionBounds &&
+                                    const inRect = selectionBounds &&
                                         r >= selectionBounds.minR && r <= selectionBounds.maxR &&
-                                        c >= selectionBounds.minC && c <= selectionBounds.maxC;
+                                        c >= selectionBounds.minC && c <= selectionBounds.maxC
+                                    const isBottomRight = selectionBounds && r === selectionBounds.maxR && c === selectionBounds.maxC
 
-                                    const isBottomRight = selectionBounds &&
-                                        r === selectionBounds.maxR && c === selectionBounds.maxC;
+                                    const cellData = data[`${r},${c}`]
+                                    const rawValue = cellData?.value || ""
+                                    const evaluated = evaluatedData[`${r},${c}`] || rawValue
+                                    const style = cellData?.style
+                                    const displayValue = formatDisplayValue(evaluated, style)
+                                    const isError = (displayValue.startsWith("#") && displayValue.endsWith("!")) || displayValue === "#NAME?"
+                                    const isNumber = !isError && !isNaN(Number(evaluated)) && evaluated.trim() !== ""
 
-                                    // Value rendering
-                                    const rawValue = data[`${r},${c}`]?.value || ""
-                                    const displayValue = evaluatedData[`${r},${c}`] || rawValue
-                                    const isError = displayValue.startsWith("#") && displayValue.endsWith("!") || displayValue === "#NAME?"
-                                    const isNumber = !isError && !isNaN(Number(displayValue)) && displayValue.trim() !== ""
+                                    const cellStyle: React.CSSProperties = {
+                                        width: 100, minWidth: 100, maxWidth: 100, height: 21,
+                                        fontWeight: style?.bold ? 700 : undefined,
+                                        fontStyle: style?.italic ? 'italic' : undefined,
+                                        textDecoration: style?.strikethrough ? 'line-through' : undefined,
+                                        textAlign: style?.align || (isNumber ? 'right' : 'left'),
+                                        fontFamily: style?.fontFamily,
+                                        fontSize: style?.fontSize ? `${style.fontSize}px` : undefined,
+                                        color: style?.textColor,
+                                        backgroundColor: style?.fillColor || (inRect && !isActive ? 'rgba(66,133,244,0.08)' : undefined),
+                                        whiteSpace: style?.wrap ? 'normal' : 'nowrap',
+                                    }
 
                                     return (
                                         <div
-                                            key={`cell-${r}-${c}`}
+                                            key={c}
                                             className={cn(
-                                                "w-[100px] shrink-0 h-full border-r border-b border-[#e3e3e3] dark:border-[#5f6368] text-[13px] px-1 flex items-center outline-none relative bg-white dark:bg-[#1a1a1a]",
-                                                (inSelectionRect && !isActive) ? "bg-[#e8f0fe]/80 dark:bg-[#3c4043]/50" : ""
+                                                "border-r border-b border-[#e3e3e3] dark:border-[#5f6368] text-[13px] px-1 flex items-center outline-none relative shrink-0",
+                                                !style?.fillColor && !inRect && "bg-white dark:bg-[#1a1a1a]"
                                             )}
+                                            style={cellStyle}
                                             onMouseDown={(e) => handleCellMouseDown(r, c, e)}
                                             onMouseEnter={() => handleCellMouseEnter(r, c)}
                                             onDoubleClick={() => handleDoubleClick(r, c)}
                                         >
-                                            {/* Blue outline for selection */}
-                                            {inSelectionRect && (
+                                            {/* Selection border */}
+                                            {inRect && (
                                                 <>
-                                                    {r === selectionBounds.minR && <div className="absolute top-0 left-0 right-[-1px] h-[2px] bg-[#1a73e8] z-10" />}
-                                                    {r === selectionBounds.maxR && <div className="absolute bottom-[-1px] left-0 right-[-1px] h-[2px] bg-[#1a73e8] z-10" />}
-                                                    {c === selectionBounds.minC && <div className="absolute top-0 bottom-[-1px] left-0 w-[2px] bg-[#1a73e8] z-10" />}
-                                                    {c === selectionBounds.maxC && <div className="absolute top-0 bottom-[-1px] right-[-1px] w-[2px] bg-[#1a73e8] z-10" />}
+                                                    {r === selectionBounds!.minR && <div className="absolute top-0 left-0 right-[-1px] h-[2px] bg-[#1a73e8] z-10" />}
+                                                    {r === selectionBounds!.maxR && <div className="absolute bottom-[-1px] left-0 right-[-1px] h-[2px] bg-[#1a73e8] z-10" />}
+                                                    {c === selectionBounds!.minC && <div className="absolute top-0 bottom-[-1px] left-0 w-[2px] bg-[#1a73e8] z-10" />}
+                                                    {c === selectionBounds!.maxC && <div className="absolute top-0 bottom-[-1px] right-[-1px] w-[2px] bg-[#1a73e8] z-10" />}
                                                 </>
                                             )}
 
-                                            {/* Active Cell thick border */}
-                                            {isActive && (
-                                                <div className="absolute inset-[-1px] border-2 border-[#1a73e8] z-20 pointer-events-none" />
-                                            )}
+                                            {isActive && <div className="absolute inset-[-1px] border-2 border-[#1a73e8] z-20 pointer-events-none" />}
 
                                             {isActive && isEditing ? (
                                                 <input
@@ -519,16 +642,13 @@ export function Spreadsheet() {
                                             ) : (
                                                 <span className={cn(
                                                     "truncate w-full select-text",
-                                                    isNumber ? "text-right" : "",
-                                                    isError ? "text-[#d93025] dark:text-[#f28b82] font-semibold text-center" : "",
-                                                    displayValue === "" ? "opacity-0" : "" // Help rendering speeds
-                                                )}
-                                                    title={isError ? "Error in formula" : rawValue}>
+                                                    isError && "text-[#d93025] dark:text-[#f28b82] font-semibold text-center",
+                                                    displayValue === "" && "opacity-0"
+                                                )} title={isError ? "Erreur dans la formule" : rawValue}>
                                                     {displayValue}
                                                 </span>
                                             )}
 
-                                            {/* Drag to fill handle */}
                                             {isBottomRight && !isEditing && (
                                                 <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#1a73e8] border border-white dark:border-[#1a1a1a] rounded-sm cursor-crosshair z-30" />
                                             )}
@@ -541,7 +661,7 @@ export function Spreadsheet() {
                 </div>
             </div>
 
-            {/* Bottom Tabs (Google Sheets style) */}
+            {/* Bottom Sheet Tabs */}
             <div className="flex items-center h-10 border-t border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] px-1 shrink-0 z-20 shadow-[0_-1px_3px_0_rgba(0,0,0,0.05)]">
                 <button className="p-2 hover:bg-[#e8eaed] dark:hover:bg-[#303134] rounded-full text-[#5f6368] dark:text-[#9aa0a6] mx-1 transition-colors">
                     <Plus className="w-5 h-5" />
@@ -552,11 +672,10 @@ export function Spreadsheet() {
                 <div className="px-5 py-2.5 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#e8eaed] dark:hover:bg-[#303134] cursor-pointer text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto">
                     Sheet2
                 </div>
-
                 <div className="ml-auto px-4 flex items-center text-[12px] text-[#5f6368] dark:text-[#80868b]">
                     {selectionBounds && (selectionBounds.maxR !== selectionBounds.minR || selectionBounds.maxC !== selectionBounds.minC) && (
                         <span>
-                            Selected: {indexToCol(selectionBounds.minC)}{selectionBounds.minR + 1}:{indexToCol(selectionBounds.maxC)}{selectionBounds.maxR + 1}
+                            {indexToCol(selectionBounds.minC)}{selectionBounds.minR + 1}:{indexToCol(selectionBounds.maxC)}{selectionBounds.maxR + 1}
                         </span>
                     )}
                 </div>

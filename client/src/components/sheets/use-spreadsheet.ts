@@ -1,61 +1,85 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
 
+export interface CellStyle {
+    bold?: boolean
+    italic?: boolean
+    strikethrough?: boolean
+    align?: 'left' | 'center' | 'right'
+    verticalAlign?: 'top' | 'middle' | 'bottom'
+    wrap?: boolean
+    textColor?: string
+    fillColor?: string
+    fontFamily?: string
+    fontSize?: number
+    numberFormat?: 'auto' | 'currency' | 'percent' | 'number'
+    decimals?: number
+}
+
 export interface CellData {
     value: string
     formula?: string
-    style?: any
+    style?: CellStyle
 }
 
 export function useSpreadsheet(docId: string = 'default-sheet') {
     const [doc] = useState(() => new Y.Doc())
-    const [provider, setProvider] = useState<WebsocketProvider | null>(null)
     const [data, setData] = useState<Record<string, CellData>>({})
     const [isConnected, setIsConnected] = useState(false)
+    const undoManagerRef = useRef<Y.UndoManager | null>(null)
+    const [canUndo, setCanUndo] = useState(false)
+    const [canRedo, setCanRedo] = useState(false)
 
     useEffect(() => {
-        // Connect to websocket
-        // Use the same ws url as chat/collab service
         const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/sheet'
-        const webrtcProvider = new WebsocketProvider(wsUrl, docId, doc)
+        const wsProvider = new WebsocketProvider(wsUrl, docId, doc)
+        const idbProvider = new IndexeddbPersistence(docId, doc)
 
-        // Persistence
-        const indexeddbProvider = new IndexeddbPersistence(docId, doc)
-
-        setProvider(webrtcProvider)
-
-        webrtcProvider.on('status', (event: any) => {
+        wsProvider.on('status', (event: any) => {
             setIsConnected(event.status === 'connected')
         })
 
-        // Y.Map for grid data: key "row,col" -> value { value: string, ... }
         const gridMap = doc.getMap<CellData>('grid')
 
-        const updateHandler = () => {
-            setData(gridMap.toJSON())
-        }
+        // Undo/Redo via Yjs
+        const um = new Y.UndoManager(gridMap)
+        undoManagerRef.current = um
 
-        gridMap.observe(updateHandler)
-        updateHandler() // Initial sync
+        const updateUndoState = () => {
+            setCanUndo(um.undoStack.length > 0)
+            setCanRedo(um.redoStack.length > 0)
+        }
+        um.on('stack-item-added', updateUndoState)
+        um.on('stack-item-popped', updateUndoState)
+
+        const sync = () => setData(gridMap.toJSON())
+        gridMap.observe(sync)
+        sync()
 
         return () => {
-            webrtcProvider.destroy()
-            indexeddbProvider.destroy()
+            wsProvider.destroy()
+            idbProvider.destroy()
         }
     }, [docId, doc])
 
-    const setCell = (r: number, c: number, value: string) => {
+    const setCell = useCallback((r: number, c: number, value: string) => {
         const gridMap = doc.getMap<CellData>('grid')
-        // Simple value set for now
-        // In real app, we'd parse formula here or storing metadata
-        gridMap.set(`${r},${c}`, { value })
-    }
+        const key = `${r},${c}`
+        const existing = gridMap.get(key)
+        gridMap.set(key, { value, style: existing?.style })
+    }, [doc])
 
-    return {
-        data,
-        setCell,
-        isConnected
-    }
+    const setCellStyle = useCallback((r: number, c: number, style: Partial<CellStyle>) => {
+        const gridMap = doc.getMap<CellData>('grid')
+        const key = `${r},${c}`
+        const existing = gridMap.get(key) || { value: '' }
+        gridMap.set(key, { ...existing, style: { ...(existing.style || {}), ...style } })
+    }, [doc])
+
+    const undo = useCallback(() => { undoManagerRef.current?.undo() }, [])
+    const redo = useCallback(() => { undoManagerRef.current?.redo() }, [])
+
+    return { data, setCell, setCellStyle, isConnected, undo, redo, canUndo, canRedo }
 }
