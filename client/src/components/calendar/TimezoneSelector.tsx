@@ -74,11 +74,10 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
   );
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="timezone">Timezone</Label>
+    <div className="space-y-0 text-sm">
       <div className="relative">
         <Select value={value} onValueChange={onChange}>
-          <SelectTrigger id="timezone">
+          <SelectTrigger id="timezone" className="h-8 text-xs border-transparent bg-muted/40 hover:bg-muted/80 transition-colors">
             <SelectValue placeholder="Select timezone" />
           </SelectTrigger>
           <SelectContent>
@@ -88,32 +87,20 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
             </div>
             {COMMON_TIMEZONES.map((tz) => (
               <SelectItem key={tz} value={tz}>
-                {tz}
+                {tz.split('/').pop()?.replace('_', ' ') || tz}
               </SelectItem>
             ))}
 
-            <div className="text-xs font-semibold text-muted-foreground px-2 py-1 mt-2">
+            <div className="text-xs font-semibold text-muted-foreground px-2 py-1 mt-2 border-t">
               All Timezones
             </div>
             {ALL_TIMEZONES.map((tz) => (
               <SelectItem key={tz} value={tz}>
-                {tz}
+                {tz.replace('_', ' ')}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-
-        {/* Timezone info */}
-        {value && (
-          <div className="mt-2 text-xs text-muted-foreground">
-            <p className="break-words">{value}</p>
-            {value !== "UTC" && (
-              <p className="text-xs mt-1">
-                Format: Region/City
-              </p>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

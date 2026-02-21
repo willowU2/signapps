@@ -2,30 +2,24 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
-import { useSpreadsheet, CellStyle } from "./use-spreadsheet"
+import { useSpreadsheet } from "./use-spreadsheet"
+import { CellStyle, CellData, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
 import {
     AlignLeft, AlignCenter, AlignRight, Sparkles,
     PaintBucket, Plus, Undo, Redo, Type, Strikethrough,
-    Printer, Paintbrush, Percent, Grid, Maximize, ChevronDown, Minus,
+    Printer, Paintbrush, Percent, Maximize, ChevronDown, Minus,
     AlignVerticalJustifyCenter, WrapText, RotateCw, MessageSquare, BarChart2, Filter, Sigma,
-    Link, X
+    Link, X, Scissors, Copy, ClipboardPaste, ArrowUp, ArrowDown,
+    Trash2, ChevronRight, Grid3X3, Download,
+    BoxSelect, Square, Columns, Rows, Search, Replace, Snowflake,
+    ChevronLeft, ChevronsRight, ChevronsLeft, Palette
 } from "lucide-react"
 import { toast } from "sonner"
 
-const ROWS = 200
-const COLS = 50
-
-const PRESET_COLORS = [
-    '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
-    '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
-    '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc',
-]
-
-const FONTS = ['Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Verdana', 'Trebuchet MS', 'Comic Sans MS', 'Impact']
-
 const ALIGN_CYCLE: ('left' | 'center' | 'right')[] = ['left', 'center', 'right']
 const VALIGN_CYCLE: ('top' | 'middle' | 'bottom')[] = ['top', 'middle', 'bottom']
+const VIRT_BUFFER = 8 // extra rows/cols rendered outside viewport
 
 function formatDisplayValue(value: string, style?: CellStyle): string {
     if (!style?.numberFormat || value === '' || isNaN(Number(value))) return value
@@ -39,8 +33,270 @@ function formatDisplayValue(value: string, style?: CellStyle): string {
     }
 }
 
+// ---- Toolbar Button ----
+function TBtn({ onClick, active, title, children, className }: {
+    onClick: () => void, active?: boolean, title: string, children: React.ReactNode, className?: string
+}) {
+    return (
+        <button
+            className={cn(
+                "p-1 px-1.5 rounded flex items-center justify-center transition-colors shrink-0",
+                active
+                    ? "bg-[#d3e3fd] dark:bg-[#004a77] text-[#1a73e8] dark:text-[#8ab4f8]"
+                    : "hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3]",
+                className
+            )}
+            title={title}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={onClick}
+        >{children}</button>
+    )
+}
+
+const Sep = () => <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1 shrink-0" />
+
+// ---- Context Menu ----
+function ContextMenu({ x, y, onAction, onClose }: {
+    x: number, y: number, onAction: (action: string) => void, onClose: () => void
+}) {
+    useEffect(() => {
+        const handler = () => onClose()
+        document.addEventListener('click', handler)
+        document.addEventListener('contextmenu', handler)
+        return () => { document.removeEventListener('click', handler); document.removeEventListener('contextmenu', handler) }
+    }, [onClose])
+
+    const items: { label: string, icon: React.ReactNode, action: string, sep?: boolean }[] = [
+        { label: 'Couper', icon: <Scissors className="w-4 h-4" />, action: 'cut' },
+        { label: 'Copier', icon: <Copy className="w-4 h-4" />, action: 'copy' },
+        { label: 'Coller', icon: <ClipboardPaste className="w-4 h-4" />, action: 'paste', sep: true },
+        { label: 'Ins\u00E9rer ligne au-dessus', icon: <ArrowUp className="w-4 h-4" />, action: 'insertRowAbove' },
+        { label: 'Ins\u00E9rer ligne en-dessous', icon: <ArrowDown className="w-4 h-4" />, action: 'insertRowBelow' },
+        { label: 'Ins\u00E9rer colonne \u00E0 gauche', icon: <Columns className="w-4 h-4" />, action: 'insertColLeft' },
+        { label: 'Ins\u00E9rer colonne \u00E0 droite', icon: <ChevronRight className="w-4 h-4" />, action: 'insertColRight', sep: true },
+        { label: 'Supprimer la ligne', icon: <Trash2 className="w-4 h-4 text-red-500" />, action: 'deleteRow' },
+        { label: 'Supprimer la colonne', icon: <Trash2 className="w-4 h-4 text-red-500" />, action: 'deleteCol', sep: true },
+        { label: 'Trier A \u2192 Z', icon: <ArrowUp className="w-4 h-4" />, action: 'sortAsc' },
+        { label: 'Trier Z \u2192 A', icon: <ArrowDown className="w-4 h-4" />, action: 'sortDesc' },
+    ]
+
+    return (
+        <div className="fixed bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl z-[100] py-1 min-w-[220px] text-[13px]" style={{ left: x, top: y }} onMouseDown={(e) => e.stopPropagation()}>
+            {items.map((item, i) => (
+                <div key={item.action}>
+                    {item.sep && i > 0 && <div className="h-px bg-[#e3e3e3] dark:bg-[#5f6368] my-1" />}
+                    <button className="w-full flex items-center gap-3 px-4 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] text-left text-[#202124] dark:text-[#e8eaed]" onClick={() => onAction(item.action)}>
+                        {item.icon}{item.label}
+                    </button>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+// ---- Border Picker ----
+function BorderPicker({ onSelect, onClose }: { onSelect: (type: string) => void, onClose: () => void }) {
+    const options = [
+        { type: 'all', label: 'Toutes', icon: <Grid3X3 className="w-4 h-4" /> },
+        { type: 'outer', label: 'Ext\u00E9rieures', icon: <Square className="w-4 h-4" /> },
+        { type: 'none', label: 'Aucune', icon: <BoxSelect className="w-4 h-4" /> },
+        { type: 'bottom', label: 'Bas', icon: <Rows className="w-4 h-4" /> },
+        { type: 'top', label: 'Haut', icon: <Rows className="w-4 h-4 rotate-180" /> },
+        { type: 'left', label: 'Gauche', icon: <Columns className="w-4 h-4" /> },
+        { type: 'right', label: 'Droite', icon: <Columns className="w-4 h-4 rotate-180" /> },
+    ]
+    return (
+        <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-48">
+            <div className="flex items-center justify-between mb-1 px-1">
+                <span className="font-medium text-[12px]">Bordures</span>
+                <button onClick={onClose}><X className="w-3 h-3" /></button>
+            </div>
+            <div className="grid grid-cols-4 gap-1">
+                {options.map(opt => (
+                    <button key={opt.type} className="flex flex-col items-center gap-0.5 p-1.5 rounded hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] text-[10px]" title={opt.label} onClick={() => { onSelect(opt.type); onClose() }}>
+                        {opt.icon}
+                    </button>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+// ---- Mini Chart ----
+function MiniChart({ type, values, onClose }: { type: 'bar' | 'line' | 'pie', values: number[], onClose: () => void }) {
+    const w = 300, h = 200, pad = 30
+    const max = Math.max(...values, 1)
+    const colors = ['#4a86e8', '#ea4335', '#fbbc04', '#34a853', '#ff6d01', '#46bdc6', '#7baaf7', '#f07b72']
+
+    return (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[200]" onClick={onClose}>
+            <div className="bg-white dark:bg-[#2d2e30] rounded-xl shadow-2xl p-4" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm">{type === 'bar' ? 'Graphique en barres' : type === 'line' ? 'Graphique en ligne' : 'Graphique circulaire'}</span>
+                    <button onClick={onClose}><X className="w-4 h-4" /></button>
+                </div>
+                <svg width={w} height={h} viewBox={type === 'pie' ? "-1 -1 2 2" : undefined}>
+                    {type === 'bar' && (() => {
+                        const barW = (w - pad * 2) / values.length - 4
+                        return <>
+                            <line x1={pad} y1={h - pad} x2={w - pad} y2={h - pad} stroke="#ccc" />
+                            <line x1={pad} y1={pad} x2={pad} y2={h - pad} stroke="#ccc" />
+                            {values.map((v, i) => {
+                                const bh = ((h - pad * 2) * v) / max
+                                return <rect key={i} x={pad + i * (barW + 4) + 2} y={h - pad - bh} width={barW} height={bh} fill="#4a86e8" rx={2} />
+                            })}
+                        </>
+                    })()}
+                    {type === 'line' && (() => {
+                        const stepX = (w - pad * 2) / Math.max(values.length - 1, 1)
+                        const points = values.map((v, i) => `${pad + i * stepX},${h - pad - ((h - pad * 2) * v) / max}`).join(' ')
+                        return <>
+                            <line x1={pad} y1={h - pad} x2={w - pad} y2={h - pad} stroke="#ccc" />
+                            <line x1={pad} y1={pad} x2={pad} y2={h - pad} stroke="#ccc" />
+                            <polyline points={points} fill="none" stroke="#4a86e8" strokeWidth={2} />
+                            {values.map((v, i) => <circle key={i} cx={pad + i * stepX} cy={h - pad - ((h - pad * 2) * v) / max} r={3} fill="#4a86e8" />)}
+                        </>
+                    })()}
+                    {type === 'pie' && (() => {
+                        const total = values.reduce((a, b) => a + b, 0) || 1
+                        let angle = 0
+                        return values.map((v, i) => {
+                            const slice = (v / total) * Math.PI * 2
+                            const x1 = Math.cos(angle), y1 = Math.sin(angle)
+                            angle += slice
+                            const x2 = Math.cos(angle), y2 = Math.sin(angle)
+                            return <path key={i} d={`M0 0 L${x1} ${y1} A1 1 0 ${slice > Math.PI ? 1 : 0} 1 ${x2} ${y2}Z`} fill={colors[i % colors.length]} />
+                        })
+                    })()}
+                </svg>
+            </div>
+        </div>
+    )
+}
+
+// ---- Find & Replace Bar ----
+function FindReplaceBar({ findText, replaceText, matchCount, currentMatch, showReplace, onFindChange, onReplaceChange, onNext, onPrev, onReplace, onReplaceAll, onToggleReplace, onClose }: {
+    findText: string, replaceText: string, matchCount: number, currentMatch: number, showReplace: boolean,
+    onFindChange: (v: string) => void, onReplaceChange: (v: string) => void,
+    onNext: () => void, onPrev: () => void, onReplace: () => void, onReplaceAll: () => void,
+    onToggleReplace: () => void, onClose: () => void
+}) {
+    return (
+        <div className="absolute top-0 right-4 z-50 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-b-lg shadow-lg p-2 flex flex-col gap-1.5 w-[340px]">
+            <div className="flex items-center gap-1.5">
+                <button onClick={onToggleReplace} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded shrink-0" title={showReplace ? "Masquer remplacer" : "Afficher remplacer"}>
+                    {showReplace ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                </button>
+                <div className="flex-1 flex items-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded px-2 h-7">
+                    <Search className="w-3.5 h-3.5 text-[#5f6368] shrink-0" />
+                    <input className="flex-1 bg-transparent outline-none text-[13px] px-1.5" placeholder="Rechercher..." value={findText} onChange={e => onFindChange(e.target.value)} autoFocus onKeyDown={e => { if (e.key === 'Enter') onNext(); if (e.key === 'Escape') onClose() }} />
+                    <span className="text-[11px] text-[#5f6368] shrink-0">{matchCount > 0 ? `${currentMatch + 1}/${matchCount}` : findText ? '0' : ''}</span>
+                </div>
+                <button onClick={onPrev} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded" title="Pr\u00E9c\u00E9dent"><ChevronLeft className="w-3.5 h-3.5" /></button>
+                <button onClick={onNext} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded" title="Suivant"><ChevronRight className="w-3.5 h-3.5" /></button>
+                <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded" title="Fermer"><X className="w-3.5 h-3.5" /></button>
+            </div>
+            {showReplace && (
+                <div className="flex items-center gap-1.5 ml-6">
+                    <div className="flex-1 flex items-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded px-2 h-7">
+                        <Replace className="w-3.5 h-3.5 text-[#5f6368] shrink-0" />
+                        <input className="flex-1 bg-transparent outline-none text-[13px] px-1.5" placeholder="Remplacer par..." value={replaceText} onChange={e => onReplaceChange(e.target.value)} onKeyDown={e => { if (e.key === 'Escape') onClose() }} />
+                    </div>
+                    <button onClick={onReplace} className="px-2 h-7 text-[12px] hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded border border-[#dadce0] dark:border-[#5f6368]">Remplacer</button>
+                    <button onClick={onReplaceAll} className="px-2 h-7 text-[12px] hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded border border-[#dadce0] dark:border-[#5f6368]">Tout</button>
+                </div>
+            )}
+        </div>
+    )
+}
+
+// ---- Conditional Formatting Dialog ----
+interface CondRule { type: 'gt' | 'lt' | 'eq' | 'between' | 'text' | 'empty' | 'notEmpty'; value: string; value2?: string; color: string; range?: string }
+
+function CondFormatDialog({ rules, onAdd, onRemove, onClose }: {
+    rules: CondRule[], onAdd: (rule: CondRule) => void, onRemove: (i: number) => void, onClose: () => void
+}) {
+    const [type, setType] = useState<CondRule['type']>('gt')
+    const [value, setValue] = useState('')
+    const [value2, setValue2] = useState('')
+    const [color, setColor] = useState('#34a853')
+
+    return (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[200]" onClick={onClose}>
+            <div className="bg-white dark:bg-[#2d2e30] rounded-xl shadow-2xl p-4 w-[380px] max-h-[70vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-3">
+                    <span className="font-medium text-sm">Mise en forme conditionnelle</span>
+                    <button onClick={onClose}><X className="w-4 h-4" /></button>
+                </div>
+                {/* Existing rules */}
+                {rules.length > 0 && (
+                    <div className="mb-3 space-y-1">
+                        {rules.map((rule, i) => (
+                            <div key={i} className="flex items-center gap-2 px-2 py-1 bg-[#f8f9fa] dark:bg-[#3c4043] rounded text-[12px]">
+                                <div className="w-4 h-4 rounded-sm shrink-0" style={{ backgroundColor: rule.color }} />
+                                <span className="flex-1 truncate">
+                                    {rule.type === 'gt' && `> ${rule.value}`}
+                                    {rule.type === 'lt' && `< ${rule.value}`}
+                                    {rule.type === 'eq' && `= ${rule.value}`}
+                                    {rule.type === 'between' && `${rule.value} \u2013 ${rule.value2}`}
+                                    {rule.type === 'text' && `Contient "${rule.value}"`}
+                                    {rule.type === 'empty' && 'Est vide'}
+                                    {rule.type === 'notEmpty' && "N'est pas vide"}
+                                </span>
+                                <button onClick={() => onRemove(i)} className="text-red-400 hover:text-red-600"><X className="w-3 h-3" /></button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {/* New rule */}
+                <div className="space-y-2">
+                    <select className="w-full h-7 bg-[#f1f3f4] dark:bg-[#3c4043] rounded px-2 text-[12px] outline-none border-none" value={type} onChange={e => setType(e.target.value as CondRule['type'])}>
+                        <option value="gt">Sup\u00E9rieur \u00E0</option>
+                        <option value="lt">Inf\u00E9rieur \u00E0</option>
+                        <option value="eq">\u00C9gal \u00E0</option>
+                        <option value="between">Entre</option>
+                        <option value="text">Contient le texte</option>
+                        <option value="empty">Est vide</option>
+                        <option value="notEmpty">N'est pas vide</option>
+                    </select>
+                    {type !== 'empty' && type !== 'notEmpty' && (
+                        <div className="flex gap-2">
+                            <input className="flex-1 h-7 bg-[#f1f3f4] dark:bg-[#3c4043] rounded px-2 text-[12px] outline-none" placeholder="Valeur" value={value} onChange={e => setValue(e.target.value)} />
+                            {type === 'between' && <input className="flex-1 h-7 bg-[#f1f3f4] dark:bg-[#3c4043] rounded px-2 text-[12px] outline-none" placeholder="Valeur 2" value={value2} onChange={e => setValue2(e.target.value)} />}
+                        </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                        <span className="text-[12px]">Couleur :</span>
+                        <div className="flex gap-1">
+                            {['#34a853', '#ea4335', '#fbbc04', '#4a86e8', '#ff6d01', '#9334e6'].map(c => (
+                                <button key={c} className={cn("w-5 h-5 rounded-sm border", color === c ? 'border-[#202124] scale-110' : 'border-gray-300')} style={{ backgroundColor: c }} onClick={() => setColor(c)} />
+                            ))}
+                        </div>
+                    </div>
+                    <button className="w-full h-8 bg-[#1a73e8] text-white rounded text-[13px] font-medium hover:bg-[#1557b0] transition-colors" onClick={() => { onAdd({ type, value, value2, color }); setValue(''); setValue2('') }}>
+                        Ajouter la r\u00E8gle
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+
+// ============================================================
+// MAIN SPREADSHEET COMPONENT
+// ============================================================
 export function Spreadsheet() {
-    const { data, setCell, setCellStyle, isConnected, undo, redo, canUndo, canRedo } = useSpreadsheet("sheet-demo")
+    const ss = useSpreadsheet("sheet-demo")
+    const {
+        data, setCell, setCellStyle, setCellFull, deleteCell, deleteCellRange,
+        getCellRange, setCellRange,
+        insertRow, deleteRow, insertColumn, deleteColumn,
+        sortColumn, mergeCells, unmergeCells,
+        isConnected, undo, redo, canUndo, canRedo,
+        sheets, activeSheetIndex, setActiveSheetIndex,
+        addSheet, removeSheet, renameSheet,
+    } = ss
 
     // Selection
     const [selectedRange, setSelectedRange] = useState<{ start: { r: number, c: number }, end: { r: number, c: number } } | null>(null)
@@ -53,19 +309,115 @@ export function Spreadsheet() {
     const inputRef = useRef<HTMLInputElement>(null)
     const formulaBarRef = useRef<HTMLInputElement>(null)
 
-    // Paint format mode
+    // Paint format
     const [paintFormat, setPaintFormat] = useState<CellStyle | null>(null)
 
-    // Popover states
+    // Popovers
     const [showTextColor, setShowTextColor] = useState(false)
     const [showFillColor, setShowFillColor] = useState(false)
     const [showFontPicker, setShowFontPicker] = useState(false)
     const [showFunctionHelper, setShowFunctionHelper] = useState(false)
+    const [showBorderPicker, setShowBorderPicker] = useState(false)
+    const [showChartPicker, setShowChartPicker] = useState(false)
+
+    // Column/Row resize
+    const [colWidths, setColWidths] = useState<Record<number, number>>({})
+    const [rowHeights, setRowHeights] = useState<Record<number, number>>({})
+    const resizeRef = useRef<{ type: 'col' | 'row', index: number, startPos: number, startSize: number } | null>(null)
+
+    // Context menu
+    const [contextMenu, setContextMenu] = useState<{ x: number, y: number, r: number, c: number } | null>(null)
+
+    // Clipboard
+    const clipboardRef = useRef<{ data: (CellData | undefined)[][], bounds: SelectionBounds } | null>(null)
+    const [isCut, setIsCut] = useState(false)
+
+    // Drag fill
+    const [isDragFilling, setIsDragFilling] = useState(false)
+    const [dragFillEnd, setDragFillEnd] = useState<{ r: number, c: number } | null>(null)
+
+    // Sheet tabs
+    const [editingTabIndex, setEditingTabIndex] = useState<number | null>(null)
+    const [editingTabName, setEditingTabName] = useState("")
+
+    // Chart
+    const [chart, setChart] = useState<{ type: 'bar' | 'line' | 'pie', values: number[] } | null>(null)
+
+    // Filter
+    const [filterCol, setFilterCol] = useState<number | null>(null)
+    const [filterValues, setFilterValues] = useState<Set<string> | null>(null)
+
+    // Freeze
+    const [freezeRows, setFreezeRows] = useState(0)
+    const [freezeCols, setFreezeCols] = useState(0)
+
+    // Find & Replace
+    const [showFind, setShowFind] = useState(false)
+    const [showReplaceToggle, setShowReplaceToggle] = useState(false)
+    const [findText, setFindText] = useState("")
+    const [replaceText, setReplaceText] = useState("")
+    const [findMatches, setFindMatches] = useState<{ r: number, c: number }[]>([])
+    const [currentFindIdx, setCurrentFindIdx] = useState(0)
+
+    // Conditional formatting
+    const [condRules, setCondRules] = useState<CondRule[]>([])
+    const [showCondFormat, setShowCondFormat] = useState(false)
+
+    // Virtualization
+    const gridRef = useRef<HTMLDivElement>(null)
+    const [scrollTop, setScrollTop] = useState(0)
+    const [scrollLeft, setScrollLeft] = useState(0)
+    const [viewportW, setViewportW] = useState(1200)
+    const [viewportH, setViewportH] = useState(600)
 
     // Formula cache
     const [evaluatedData, setEvaluatedData] = useState<Record<string, string>>({})
 
-    const selectionBounds = useMemo(() => {
+    const getColWidth = (c: number) => colWidths[c] ?? DEFAULT_COL_WIDTH
+    const getRowHeight = (r: number) => rowHeights[r] ?? DEFAULT_ROW_HEIGHT
+
+    // ---- Precompute cumulative offsets for virtualization ----
+    const colOffsets = useMemo(() => {
+        const offsets = new Float64Array(COLS + 1)
+        for (let c = 0; c < COLS; c++) offsets[c + 1] = offsets[c] + getColWidth(c)
+        return offsets
+    }, [colWidths])
+
+    const rowOffsets = useMemo(() => {
+        const offsets = new Float64Array(ROWS + 1)
+        for (let r = 0; r < ROWS; r++) offsets[r + 1] = offsets[r] + getRowHeight(r)
+        return offsets
+    }, [rowHeights])
+
+    const totalWidth = colOffsets[COLS]
+    const totalHeight = rowOffsets[ROWS]
+
+    // Binary search for first visible row/col
+    const findFirst = (offsets: Float64Array, scroll: number): number => {
+        let lo = 0, hi = offsets.length - 2
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (offsets[mid + 1] <= scroll) lo = mid + 1; else hi = mid }
+        return lo
+    }
+
+    const visibleRows = useMemo(() => {
+        const first = findFirst(rowOffsets, scrollTop)
+        const startR = Math.max(0, first - VIRT_BUFFER)
+        let endR = first
+        while (endR < ROWS && rowOffsets[endR] < scrollTop + viewportH) endR++
+        endR = Math.min(ROWS - 1, endR + VIRT_BUFFER)
+        return { startR, endR }
+    }, [scrollTop, viewportH, rowOffsets])
+
+    const visibleCols = useMemo(() => {
+        const first = findFirst(colOffsets, scrollLeft)
+        const startC = Math.max(0, first - VIRT_BUFFER)
+        let endC = first
+        while (endC < COLS && colOffsets[endC] < scrollLeft + viewportW) endC++
+        endC = Math.min(COLS - 1, endC + VIRT_BUFFER)
+        return { startC, endC }
+    }, [scrollLeft, viewportW, colOffsets])
+
+    const selectionBounds: SelectionBounds | null = useMemo(() => {
         if (!selectedRange) return null
         return {
             minR: Math.min(selectedRange.start.r, selectedRange.end.r),
@@ -80,148 +432,418 @@ export function Spreadsheet() {
         return data[`${activeCell.r},${activeCell.c}`]?.style || {}
     }, [activeCell, data])
 
-    // Recalculate formulas
+    // ---- Status bar stats ----
+    const selectionStats = useMemo(() => {
+        if (!selectionBounds) return null
+        const { minR, maxR, minC, maxC } = selectionBounds
+        if (minR === maxR && minC === maxC) return null
+        const values: number[] = []
+        let count = 0
+        for (let r = minR; r <= maxR; r++) {
+            for (let c = minC; c <= maxC; c++) {
+                const key = `${r},${c}`
+                const val = evaluatedData[key] || data[key]?.value || ''
+                if (val.trim() !== '') { count++; const n = Number(val); if (!isNaN(n)) values.push(n) }
+            }
+        }
+        if (values.length === 0) return { count }
+        const sum = values.reduce((a, b) => a + b, 0)
+        return { count, sum, avg: sum / values.length, min: Math.min(...values), max: Math.max(...values) }
+    }, [selectionBounds, evaluatedData, data])
+
+    // ---- Formula recalculation (optimized: only cells with data) ----
     useEffect(() => {
         const newData: Record<string, string> = {}
         const getData = (r: number, c: number) => data[`${r},${c}`]?.value || ""
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                const cellRef = `${r},${c}`
-                if (data[cellRef]) {
-                    newData[cellRef] = evaluateFormula(data[cellRef].value, getData, { r, c }, new Set())
-                }
-            }
+        const keys = Object.keys(data)
+        for (const key of keys) {
+            newData[key] = evaluateFormula(data[key].value, getData, { r: parseInt(key), c: parseInt(key.split(',')[1]) }, new Set())
         }
         setEvaluatedData(newData)
     }, [data])
 
     // Sync edit value
     useEffect(() => {
-        if (activeCell && !isEditing) {
-            setEditValue(data[`${activeCell.r},${activeCell.c}`]?.value || "")
-        }
+        if (activeCell && !isEditing) setEditValue(data[`${activeCell.r},${activeCell.c}`]?.value || "")
     }, [activeCell, data, isEditing])
 
-    // Close popovers on outside click
+    // Close popovers
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             const target = e.target as HTMLElement
             if (!target.closest('[data-popover]')) {
-                setShowTextColor(false)
-                setShowFillColor(false)
-                setShowFontPicker(false)
-                setShowFunctionHelper(false)
+                setShowTextColor(false); setShowFillColor(false); setShowFontPicker(false)
+                setShowFunctionHelper(false); setShowBorderPicker(false); setShowChartPicker(false)
             }
         }
         document.addEventListener('mousedown', handler)
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
-    // ---- Formatting helpers ----
+    // Track viewport size
+    useEffect(() => {
+        const el = gridRef.current
+        if (!el) return
+        const obs = new ResizeObserver(entries => {
+            const e = entries[0]
+            if (e) { setViewportW(e.contentRect.width); setViewportH(e.contentRect.height) }
+        })
+        obs.observe(el)
+        return () => obs.disconnect()
+    }, [])
 
-    const applyToSelection = useCallback((stylePatch: Partial<CellStyle>) => {
-        if (!selectionBounds) return
-        for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++) {
-            for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++) {
-                setCellStyle(r, c, stylePatch)
+    // Find matches
+    useEffect(() => {
+        if (!findText) { setFindMatches([]); return }
+        const matches: { r: number, c: number }[] = []
+        const lower = findText.toLowerCase()
+        for (const key of Object.keys(data)) {
+            const val = data[key]?.value || ''
+            if (val.toLowerCase().includes(lower)) {
+                const [r, c] = key.split(',').map(Number)
+                matches.push({ r, c })
             }
         }
+        setFindMatches(matches)
+        setCurrentFindIdx(0)
+    }, [findText, data])
+
+    // Resize mouse handlers
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (resizeRef.current) {
+                const { type, index, startPos, startSize } = resizeRef.current
+                const delta = type === 'col' ? e.clientX - startPos : e.clientY - startPos
+                const newSize = Math.max(30, startSize + delta)
+                if (type === 'col') setColWidths(prev => ({ ...prev, [index]: newSize }))
+                else setRowHeights(prev => ({ ...prev, [index]: newSize }))
+            }
+            if (isDragFilling && selectionBounds && gridRef.current) {
+                const rect = gridRef.current.getBoundingClientRect()
+                const sl = gridRef.current.scrollLeft, st = gridRef.current.scrollTop
+                const x = e.clientX - rect.left + sl - ROW_HEADER_WIDTH
+                const y = e.clientY - rect.top + st - COL_HEADER_HEIGHT
+                let col = findFirst(colOffsets, Math.max(0, x))
+                let row = findFirst(rowOffsets, Math.max(0, y))
+                col = Math.min(COLS - 1, col); row = Math.min(ROWS - 1, row)
+                setDragFillEnd({ r: row, c: col })
+            }
+        }
+        const handleMouseUp = () => {
+            if (resizeRef.current) resizeRef.current = null
+            setIsDragging(false)
+            if (isDragFilling && dragFillEnd && selectionBounds) { performDragFill(); setIsDragFilling(false); setDragFillEnd(null) }
+        }
+        window.addEventListener('mousemove', handleMouseMove)
+        window.addEventListener('mouseup', handleMouseUp)
+        return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp) }
+    })
+
+    // ---- Conditional formatting evaluation ----
+    const condFormatColor = useCallback((r: number, c: number): string | undefined => {
+        if (condRules.length === 0) return undefined
+        const key = `${r},${c}`
+        const rawVal = evaluatedData[key] || data[key]?.value || ''
+        for (const rule of condRules) {
+            const num = Number(rawVal)
+            switch (rule.type) {
+                case 'gt': if (!isNaN(num) && num > Number(rule.value)) return rule.color; break
+                case 'lt': if (!isNaN(num) && num < Number(rule.value)) return rule.color; break
+                case 'eq': if (rawVal === rule.value || (!isNaN(num) && num === Number(rule.value))) return rule.color; break
+                case 'between': if (!isNaN(num) && num >= Number(rule.value) && num <= Number(rule.value2)) return rule.color; break
+                case 'text': if (rawVal.toLowerCase().includes(rule.value.toLowerCase())) return rule.color; break
+                case 'empty': if (rawVal.trim() === '') return rule.color; break
+                case 'notEmpty': if (rawVal.trim() !== '') return rule.color; break
+            }
+        }
+        return undefined
+    }, [condRules, evaluatedData, data])
+
+    // ---- Formatting helpers ----
+    const applyToSelection = useCallback((stylePatch: Partial<CellStyle>) => {
+        if (!selectionBounds) return
+        for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++)
+            for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++)
+                setCellStyle(r, c, stylePatch)
     }, [selectionBounds, setCellStyle])
 
     const toggleBoolFormat = useCallback((prop: 'bold' | 'italic' | 'strikethrough' | 'wrap') => {
-        const current = activeCellStyle[prop]
-        applyToSelection({ [prop]: !current })
+        applyToSelection({ [prop]: !activeCellStyle[prop] })
     }, [activeCellStyle, applyToSelection])
 
     const cycleAlign = useCallback(() => {
-        const current = activeCellStyle.align || 'left'
-        const idx = ALIGN_CYCLE.indexOf(current)
+        const idx = ALIGN_CYCLE.indexOf(activeCellStyle.align || 'left')
         applyToSelection({ align: ALIGN_CYCLE[(idx + 1) % 3] })
     }, [activeCellStyle, applyToSelection])
 
     const cycleVerticalAlign = useCallback(() => {
-        const current = activeCellStyle.verticalAlign || 'middle'
-        const idx = VALIGN_CYCLE.indexOf(current)
+        const idx = VALIGN_CYCLE.indexOf(activeCellStyle.verticalAlign || 'middle')
         applyToSelection({ verticalAlign: VALIGN_CYCLE[(idx + 1) % 3] })
     }, [activeCellStyle, applyToSelection])
 
     const changeFontSize = useCallback((delta: number) => {
-        const current = activeCellStyle.fontSize || 10
-        const next = Math.max(6, Math.min(72, current + delta))
-        applyToSelection({ fontSize: next })
+        applyToSelection({ fontSize: Math.max(6, Math.min(72, (activeCellStyle.fontSize || 10) + delta)) })
     }, [activeCellStyle, applyToSelection])
 
     const changeDecimals = useCallback((delta: number) => {
-        const current = activeCellStyle.decimals ?? 2
-        const next = Math.max(0, Math.min(10, current + delta))
+        const next = Math.max(0, Math.min(10, (activeCellStyle.decimals ?? 2) + delta))
         applyToSelection({ decimals: next, numberFormat: activeCellStyle.numberFormat || 'number' })
     }, [activeCellStyle, applyToSelection])
 
+    const applyBorders = useCallback((type: string) => {
+        if (!selectionBounds) return
+        const { minR, maxR, minC, maxC } = selectionBounds
+        for (let r = minR; r <= maxR; r++) {
+            for (let c = minC; c <= maxC; c++) {
+                let patch: Partial<CellStyle> = {}
+                if (type === 'none') patch = { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false }
+                else if (type === 'all') patch = { borderTop: true, borderRight: true, borderBottom: true, borderLeft: true }
+                else if (type === 'outer') patch = { borderTop: r === minR, borderBottom: r === maxR, borderLeft: c === minC, borderRight: c === maxC }
+                else if (type === 'top') patch = { borderTop: r === minR }
+                else if (type === 'bottom') patch = { borderBottom: r === maxR }
+                else if (type === 'left') patch = { borderLeft: c === minC }
+                else if (type === 'right') patch = { borderRight: c === maxC }
+                setCellStyle(r, c, patch)
+            }
+        }
+    }, [selectionBounds, setCellStyle])
+
+    // ---- Clipboard ----
+    const doCopy = useCallback(() => {
+        if (!selectionBounds) return
+        const range = getCellRange(selectionBounds.minR, selectionBounds.maxR, selectionBounds.minC, selectionBounds.maxC)
+        clipboardRef.current = { data: range, bounds: selectionBounds }
+        setIsCut(false)
+        const text = range.map(row => row.map(c => c?.value || '').join('\t')).join('\n')
+        navigator.clipboard?.writeText(text).catch(() => {})
+        toast.success('Copi\u00E9')
+    }, [selectionBounds, getCellRange])
+
+    const doCut = useCallback(() => {
+        if (!selectionBounds) return
+        doCopy(); setIsCut(true); toast.success('Coup\u00E9')
+    }, [selectionBounds, doCopy])
+
+    const doPaste = useCallback(async () => {
+        if (!activeCell) return
+        try {
+            const text = await navigator.clipboard?.readText()
+            if (text) {
+                const rows = text.split('\n').map(row => row.split('\t'))
+                rows.forEach((row, dr) => row.forEach((val, dc) => setCell(activeCell.r + dr, activeCell.c + dc, val)))
+                if (isCut && clipboardRef.current) { deleteCellRange(clipboardRef.current.bounds.minR, clipboardRef.current.bounds.maxR, clipboardRef.current.bounds.minC, clipboardRef.current.bounds.maxC); setIsCut(false) }
+                toast.success('Coll\u00E9'); return
+            }
+        } catch {}
+        if (clipboardRef.current) {
+            setCellRange(activeCell.r, activeCell.c, clipboardRef.current.data)
+            if (isCut) { deleteCellRange(clipboardRef.current.bounds.minR, clipboardRef.current.bounds.maxR, clipboardRef.current.bounds.minC, clipboardRef.current.bounds.maxC); setIsCut(false) }
+            toast.success('Coll\u00E9')
+        }
+    }, [activeCell, isCut, setCell, setCellRange, deleteCellRange])
+
+    // ---- Drag Fill ----
+    const performDragFill = useCallback(() => {
+        if (!selectionBounds || !dragFillEnd) return
+        const { minR, maxR, minC, maxC } = selectionBounds
+        const srcRows = maxR - minR + 1, srcCols = maxC - minC + 1
+
+        if (dragFillEnd.r > maxR) {
+            for (let r = maxR + 1; r <= dragFillEnd.r; r++)
+                for (let c = minC; c <= maxC; c++) { const src = data[`${minR + ((r - minR) % srcRows)},${c}`]; if (src) setCellFull(r, c, { ...src }); else deleteCell(r, c) }
+            setSelectedRange({ start: { r: minR, c: minC }, end: { r: dragFillEnd.r, c: maxC } })
+        } else if (dragFillEnd.c > maxC) {
+            for (let r = minR; r <= maxR; r++)
+                for (let c = maxC + 1; c <= dragFillEnd.c; c++) { const src = data[`${r},${minC + ((c - minC) % srcCols)}`]; if (src) setCellFull(r, c, { ...src }); else deleteCell(r, c) }
+            setSelectedRange({ start: { r: minR, c: minC }, end: { r: maxR, c: dragFillEnd.c } })
+        }
+    }, [selectionBounds, dragFillEnd, data, setCellFull, deleteCell])
+
+    // ---- Context Menu Action ----
+    const handleContextAction = useCallback((action: string) => {
+        const r = contextMenu?.r ?? 0, c = contextMenu?.c ?? 0
+        setContextMenu(null)
+        switch (action) {
+            case 'cut': doCut(); break; case 'copy': doCopy(); break; case 'paste': doPaste(); break
+            case 'insertRowAbove': insertRow(r); break; case 'insertRowBelow': insertRow(r + 1); break
+            case 'insertColLeft': insertColumn(c); break; case 'insertColRight': insertColumn(c + 1); break
+            case 'deleteRow': deleteRow(r); break; case 'deleteCol': deleteColumn(c); break
+            case 'sortAsc': sortColumn(c, true); break; case 'sortDesc': sortColumn(c, false); break
+        }
+    }, [contextMenu, doCut, doCopy, doPaste, insertRow, insertColumn, deleteRow, deleteColumn, sortColumn])
+
+    // ---- Charts ----
+    const openChart = useCallback((type: 'bar' | 'line' | 'pie') => {
+        if (!selectionBounds) { toast.info('S\u00E9lectionnez des donn\u00E9es'); return }
+        const values: number[] = []
+        for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++)
+            for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++) {
+                const ev = evaluatedData[`${r},${c}`] || data[`${r},${c}`]?.value || ''
+                const n = Number(ev); if (!isNaN(n) && ev.trim() !== '') values.push(n)
+            }
+        if (values.length === 0) { toast.info('Aucune donn\u00E9e num\u00E9rique'); return }
+        setChart({ type, values }); setShowChartPicker(false)
+    }, [selectionBounds, evaluatedData, data])
+
+    // ---- Find & Replace ----
+    const navigateToFind = useCallback((idx: number) => {
+        if (findMatches.length === 0) return
+        const i = ((idx % findMatches.length) + findMatches.length) % findMatches.length
+        setCurrentFindIdx(i)
+        const m = findMatches[i]
+        setActiveCell(m); setSelectedRange({ start: m, end: m })
+        // Scroll into view
+        if (gridRef.current) {
+            gridRef.current.scrollTop = Math.max(0, rowOffsets[m.r] - viewportH / 3)
+            gridRef.current.scrollLeft = Math.max(0, colOffsets[m.c] - viewportW / 3)
+        }
+    }, [findMatches, rowOffsets, colOffsets, viewportH, viewportW])
+
+    const doReplace = useCallback(() => {
+        if (findMatches.length === 0) return
+        const m = findMatches[currentFindIdx]
+        const val = data[`${m.r},${m.c}`]?.value || ''
+        setCell(m.r, m.c, val.replace(new RegExp(findText, 'i'), replaceText))
+    }, [findMatches, currentFindIdx, data, findText, replaceText, setCell])
+
+    const doReplaceAll = useCallback(() => {
+        let count = 0
+        for (const m of findMatches) {
+            const val = data[`${m.r},${m.c}`]?.value || ''
+            setCell(m.r, m.c, val.replace(new RegExp(findText, 'gi'), replaceText))
+            count++
+        }
+        toast.success(`${count} remplacement(s)`)
+    }, [findMatches, data, findText, replaceText, setCell])
+
+    // ---- CSV Export ----
+    const exportCSV = useCallback(() => {
+        const rows: string[] = []
+        for (let r = 0; r < ROWS; r++) {
+            const cols: string[] = []
+            let hasData = false
+            for (let c = 0; c < COLS; c++) {
+                const val = data[`${r},${c}`]?.value || ''
+                cols.push(val.includes(',') || val.includes('"') || val.includes('\n') ? `"${val.replace(/"/g, '""')}"` : val)
+                if (val) hasData = true
+            }
+            if (hasData || r === 0) rows.push(cols.join(','))
+            else if (rows.length > 0 && !rows[rows.length - 1]) break
+        }
+        // Trim trailing empty columns
+        const maxCol = rows.reduce((m, row) => {
+            const cols = row.split(',')
+            let last = cols.length - 1
+            while (last >= 0 && !cols[last]) last--
+            return Math.max(m, last + 1)
+        }, 0)
+        const trimmed = rows.map(row => row.split(',').slice(0, maxCol).join(','))
+
+        const blob = new Blob([trimmed.join('\n')], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url; a.download = `${sheets[activeSheetIndex]?.name || 'sheet'}.csv`
+        a.click(); URL.revokeObjectURL(url)
+        toast.success('Export\u00E9 en CSV')
+    }, [data, sheets, activeSheetIndex])
+
     // ---- Cell interactions ----
-
-    const handleCellMouseDown = (r: number, c: number, e: React.MouseEvent) => {
-        if (isEditing) commitEdit()
-        setIsEditing(false)
-        setIsDragging(true)
-
-        // Paint format mode
-        if (paintFormat) {
-            setCellStyle(r, c, paintFormat)
-            setPaintFormat(null)
-            return
-        }
-
-        if (e.shiftKey && activeCell) {
-            setSelectedRange({ start: activeCell, end: { r, c } })
-        } else {
-            setActiveCell({ r, c })
-            setSelectedRange({ start: { r, c }, end: { r, c } })
-        }
-    }
-
-    const handleCellMouseEnter = (r: number, c: number) => {
-        if (isDragging && selectedRange) {
-            setSelectedRange({ ...selectedRange, end: { r, c } })
-        }
-    }
-
-    const handleMouseUp = () => setIsDragging(false)
-
-    const handleDoubleClick = (r: number, c: number) => {
-        setActiveCell({ r, c })
-        setSelectedRange({ start: { r, c }, end: { r, c } })
-        setIsEditing(true)
-        setTimeout(() => inputRef.current?.focus(), 0)
-    }
-
-    useEffect(() => {
-        window.addEventListener('mouseup', handleMouseUp)
-        return () => window.removeEventListener('mouseup', handleMouseUp)
-    }, [])
-
     const commitEdit = () => {
-        if (activeCell) {
-            setCell(activeCell.r, activeCell.c, editValue)
-            setIsEditing(false)
-        }
+        if (activeCell) { setCell(activeCell.r, activeCell.c, editValue); setIsEditing(false) }
     }
 
-    const moveCell = (dr: number, dc: number) => {
+    const scrollToCell = useCallback((r: number, c: number) => {
+        if (!gridRef.current) return
+        const top = rowOffsets[r], left = colOffsets[c]
+        const h = getRowHeight(r), w = getColWidth(c)
+        const g = gridRef.current
+        if (top < g.scrollTop + (freezeRows > 0 ? rowOffsets[freezeRows] : 0)) g.scrollTop = Math.max(0, top - (freezeRows > 0 ? rowOffsets[freezeRows] : 0))
+        else if (top + h > g.scrollTop + viewportH) g.scrollTop = top + h - viewportH + 4
+        if (left < g.scrollLeft + (freezeCols > 0 ? colOffsets[freezeCols] : 0)) g.scrollLeft = Math.max(0, left - (freezeCols > 0 ? colOffsets[freezeCols] : 0))
+        else if (left + w > g.scrollLeft + viewportW) g.scrollLeft = left + w - viewportW + 4
+    }, [rowOffsets, colOffsets, viewportH, viewportW, freezeRows, freezeCols])
+
+    const moveCell = useCallback((dr: number, dc: number) => {
         if (!activeCell) return
         const nr = Math.max(0, Math.min(ROWS - 1, activeCell.r + dr))
         const nc = Math.max(0, Math.min(COLS - 1, activeCell.c + dc))
         setActiveCell({ r: nr, c: nc })
         setSelectedRange({ start: { r: nr, c: nc }, end: { r: nr, c: nc } })
+        scrollToCell(nr, nc)
+    }, [activeCell, scrollToCell])
+
+    // Ctrl+Arrow: jump to next non-empty / empty boundary
+    const jumpCell = useCallback((dr: number, dc: number) => {
+        if (!activeCell) return
+        let { r, c } = activeCell
+        const currentHasData = !!data[`${r},${c}`]?.value
+        for (let i = 0; i < 200; i++) {
+            const nr = r + dr, nc = c + dc
+            if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) break
+            r = nr; c = nc
+            const hasData = !!data[`${r},${c}`]?.value
+            if (currentHasData && !hasData) break
+            if (!currentHasData && hasData) break
+        }
+        setActiveCell({ r, c })
+        setSelectedRange({ start: { r, c }, end: { r, c } })
+        scrollToCell(r, c)
+    }, [activeCell, data, scrollToCell])
+
+    // Find last cell with data
+    const findLastDataCell = useCallback((): { r: number, c: number } => {
+        let maxR = 0, maxC = 0
+        for (const key of Object.keys(data)) {
+            const [r, c] = key.split(',').map(Number)
+            if (r > maxR) maxR = r; if (c > maxC) maxC = c
+        }
+        return { r: maxR, c: maxC }
+    }, [data])
+
+    const handleCellMouseDown = (r: number, c: number, e: React.MouseEvent) => {
+        if (isEditing) commitEdit()
+        setIsEditing(false); setIsDragging(true)
+        if (paintFormat) { setCellStyle(r, c, paintFormat); setPaintFormat(null); return }
+        if (e.shiftKey && activeCell) setSelectedRange({ start: activeCell, end: { r, c } })
+        else { setActiveCell({ r, c }); setSelectedRange({ start: { r, c }, end: { r, c } }) }
+    }
+
+    const handleCellMouseEnter = (r: number, c: number) => {
+        if (isDragging && selectedRange) setSelectedRange({ ...selectedRange, end: { r, c } })
+    }
+
+    const handleDoubleClick = (r: number, c: number) => {
+        setActiveCell({ r, c }); setSelectedRange({ start: { r, c }, end: { r, c } })
+        setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0)
+    }
+
+    const handleContextMenu = (r: number, c: number, e: React.MouseEvent) => {
+        e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, r, c })
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        // Ctrl shortcuts
-        if ((e.ctrlKey || e.metaKey) && !isEditing) {
+        if ((e.ctrlKey || e.metaKey)) {
             if (e.key === 'z') { e.preventDefault(); undo(); return }
             if (e.key === 'y') { e.preventDefault(); redo(); return }
-            if (e.key === 'b') { e.preventDefault(); toggleBoolFormat('bold'); return }
-            if (e.key === 'i') { e.preventDefault(); toggleBoolFormat('italic'); return }
-            if (e.key === 'p') { e.preventDefault(); window.print(); return }
+            if (e.key === 'c') { e.preventDefault(); doCopy(); return }
+            if (e.key === 'x') { e.preventDefault(); doCut(); return }
+            if (e.key === 'v') { e.preventDefault(); doPaste(); return }
+            if (e.key === 'f') { e.preventDefault(); setShowFind(true); setShowReplaceToggle(false); return }
+            if (e.key === 'h') { e.preventDefault(); setShowFind(true); setShowReplaceToggle(true); return }
+            if (!isEditing) {
+                if (e.key === 'b') { e.preventDefault(); toggleBoolFormat('bold'); return }
+                if (e.key === 'i') { e.preventDefault(); toggleBoolFormat('italic'); return }
+                if (e.key === 'p') { e.preventDefault(); window.print(); return }
+                // Ctrl+Home → A1
+                if (e.key === 'Home') { e.preventDefault(); setActiveCell({ r: 0, c: 0 }); setSelectedRange({ start: { r: 0, c: 0 }, end: { r: 0, c: 0 } }); scrollToCell(0, 0); return }
+                // Ctrl+End → last data cell
+                if (e.key === 'End') { e.preventDefault(); const last = findLastDataCell(); setActiveCell(last); setSelectedRange({ start: last, end: last }); scrollToCell(last.r, last.c); return }
+                // Ctrl+Arrows → jump to data boundary
+                if (e.key === 'ArrowUp') { e.preventDefault(); jumpCell(-1, 0); return }
+                if (e.key === 'ArrowDown') { e.preventDefault(); jumpCell(1, 0); return }
+                if (e.key === 'ArrowLeft') { e.preventDefault(); jumpCell(0, -1); return }
+                if (e.key === 'ArrowRight') { e.preventDefault(); jumpCell(0, 1); return }
+            }
         }
 
         if (isEditing) {
@@ -232,257 +854,178 @@ export function Spreadsheet() {
         }
 
         if (!activeCell) return
-
         if (e.key === 'ArrowUp') { e.preventDefault(); moveCell(-1, 0) }
         else if (e.key === 'ArrowDown') { e.preventDefault(); moveCell(1, 0) }
         else if (e.key === 'ArrowLeft') { e.preventDefault(); moveCell(0, -1) }
         else if (e.key === 'ArrowRight') { e.preventDefault(); moveCell(0, 1) }
         else if (e.key === 'Tab') { e.preventDefault(); moveCell(0, e.shiftKey ? -1 : 1) }
-        else if (e.key === 'Enter') {
+        else if (e.key === 'Enter') { e.preventDefault(); setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0) }
+        else if (e.key === 'Home') { e.preventDefault(); const r = activeCell.r; setActiveCell({ r, c: 0 }); setSelectedRange({ start: { r, c: 0 }, end: { r, c: 0 } }); scrollToCell(r, 0) }
+        else if (e.key === 'End') { e.preventDefault(); const r = activeCell.r; let lastC = COLS - 1; while (lastC > 0 && !data[`${r},${lastC}`]?.value) lastC--; setActiveCell({ r, c: lastC }); setSelectedRange({ start: { r, c: lastC }, end: { r, c: lastC } }); scrollToCell(r, lastC) }
+        else if (e.key === 'PageDown') { e.preventDefault(); const rows = Math.floor(viewportH / DEFAULT_ROW_HEIGHT); moveCell(rows, 0) }
+        else if (e.key === 'PageUp') { e.preventDefault(); const rows = Math.floor(viewportH / DEFAULT_ROW_HEIGHT); moveCell(-rows, 0) }
+        else if (e.key === 'Backspace' || e.key === 'Delete') {
             e.preventDefault()
-            setIsEditing(true)
-            setTimeout(() => inputRef.current?.focus(), 0)
-        } else if (e.key === 'Backspace' || e.key === 'Delete') {
-            e.preventDefault()
-            if (selectionBounds) {
-                for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++) {
-                    for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++) {
-                        setCell(r, c, "")
-                    }
-                }
-            }
-        } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            setIsEditing(true)
-            setEditValue(e.key)
-            setTimeout(() => inputRef.current?.focus(), 0)
+            if (selectionBounds) deleteCellRange(selectionBounds.minR, selectionBounds.maxR, selectionBounds.minC, selectionBounds.maxC)
+        } else if (e.key === 'F2') { e.preventDefault(); setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0) }
+        else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            setIsEditing(true); setEditValue(e.key); setTimeout(() => inputRef.current?.focus(), 0)
         }
     }
 
-    const handleFormulaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setEditValue(e.target.value)
-        if (activeCell) setCell(activeCell.r, activeCell.c, e.target.value)
+    // ---- Filter helpers ----
+    const isRowVisible = (r: number): boolean => {
+        if (filterCol === null || !filterValues) return true
+        return filterValues.has(data[`${r},${filterCol}`]?.value || '')
     }
 
-    // Toolbar button component
-    const TBtn = ({ onClick, active, title, children, className }: {
-        onClick: () => void, active?: boolean, title: string, children: React.ReactNode, className?: string
-    }) => (
-        <button
-            className={cn(
-                "p-1 px-1.5 rounded flex items-center justify-center transition-colors",
-                active
-                    ? "bg-[#d3e3fd] dark:bg-[#004a77] text-[#1a73e8] dark:text-[#8ab4f8]"
-                    : "hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3]",
-                className
-            )}
-            title={title}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={onClick}
-        >
-            {children}
-        </button>
-    )
+    const toggleFilter = useCallback(() => {
+        if (filterCol !== null) { setFilterCol(null); setFilterValues(null); toast.info('Filtre d\u00E9sactiv\u00E9'); return }
+        if (!activeCell) return
+        const col = activeCell.c
+        const uniqueValues = new Set<string>()
+        for (let r = 0; r < ROWS; r++) { const v = data[`${r},${col}`]?.value; if (v) uniqueValues.add(v) }
+        setFilterCol(col); setFilterValues(uniqueValues)
+        toast.success(`Filtre sur ${indexToCol(col)}`)
+    }, [activeCell, data, filterCol])
 
-    const Sep = () => <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1 shrink-0" />
+    // ---- Merge helper ----
+    const handleMerge = useCallback(() => {
+        if (!selectionBounds) return
+        const { minR, maxR, minC, maxC } = selectionBounds
+        const topLeft = data[`${minR},${minC}`]
+        if (topLeft?.style?.mergeRows) { unmergeCells(minR, minC); toast.info('D\u00E9fusionn\u00E9') }
+        else { mergeCells(minR, maxR, minC, maxC); toast.success('Fusionn\u00E9') }
+    }, [selectionBounds, data, mergeCells, unmergeCells])
+
+    // ---- Freeze toggle ----
+    const toggleFreeze = useCallback(() => {
+        if (freezeRows > 0 || freezeCols > 0) { setFreezeRows(0); setFreezeCols(0); toast.info('Figer d\u00E9sactiv\u00E9'); return }
+        if (!activeCell) return
+        setFreezeRows(activeCell.r); setFreezeCols(activeCell.c)
+        toast.success(`Fig\u00E9: ${activeCell.r} ligne(s), ${activeCell.c} colonne(s)`)
+    }, [activeCell, freezeRows, freezeCols])
+
+    // ---- Scroll handler ----
+    const handleScroll = useCallback(() => {
+        if (!gridRef.current) return
+        setScrollTop(gridRef.current.scrollTop)
+        setScrollLeft(gridRef.current.scrollLeft)
+    }, [])
+
+    // ============================================================
+    // RENDER
+    // ============================================================
+    const { startR, endR } = visibleRows
+    const { startC, endC } = visibleCols
 
     return (
-        <div
-            className={cn(
-                "w-full h-full flex flex-col bg-white dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none",
-                paintFormat && "cursor-cell"
-            )}
-            tabIndex={0}
-            onKeyDown={handleKeyDown}
-        >
-            {/* Toolbar */}
+        <div className={cn("w-full h-full flex flex-col bg-white dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none", paintFormat && "cursor-cell")} tabIndex={0} onKeyDown={handleKeyDown}>
+
+            {/* ===== TOOLBAR ===== */}
             <div className="border-b border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] shrink-0 px-4 py-2">
                 <div className="flex items-center gap-0.5 px-3 py-1.5 bg-[#edf2fa] dark:bg-[#2d2e30] rounded-full shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] overflow-x-auto">
-                    {/* Undo / Redo / Print / Paint Format */}
-                    <TBtn onClick={undo} title="Annuler (Ctrl+Z)" active={false}><Undo className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={redo} title="R\u00E9tablir (Ctrl+Y)" active={false}><Redo className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={undo} title="Annuler (Ctrl+Z)"><Undo className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={redo} title="R\u00E9tablir (Ctrl+Y)"><Redo className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => window.print()} title="Imprimer (Ctrl+P)"><Printer className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn
-                        onClick={() => {
-                            if (paintFormat) { setPaintFormat(null) }
-                            else if (activeCell) { setPaintFormat({ ...activeCellStyle }); toast.info("Cliquez sur une cellule pour appliquer le format") }
-                        }}
-                        active={!!paintFormat}
-                        title="Reproduire la mise en forme"
-                    >
-                        <Paintbrush className="w-[18px] h-[18px]" />
-                    </TBtn>
-
+                    <TBtn onClick={() => { if (paintFormat) setPaintFormat(null); else if (activeCell) { setPaintFormat({ ...activeCellStyle }); toast.info("Cliquez sur une cellule") } }} active={!!paintFormat} title="Reproduire la mise en forme"><Paintbrush className="w-[18px] h-[18px]" /></TBtn>
                     <Sep />
-
-                    {/* Number Formats */}
-                    <TBtn
-                        onClick={() => applyToSelection({ numberFormat: activeCellStyle.numberFormat === 'currency' ? 'auto' : 'currency' })}
-                        active={activeCellStyle.numberFormat === 'currency'}
-                        title="Format mon\u00E9taire"
-                        className="font-serif font-medium"
-                    >{"\u20AC"}</TBtn>
-                    <TBtn
-                        onClick={() => applyToSelection({ numberFormat: activeCellStyle.numberFormat === 'percent' ? 'auto' : 'percent' })}
-                        active={activeCellStyle.numberFormat === 'percent'}
-                        title="Format pourcentage"
-                    ><Percent className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => changeDecimals(-1)} title="R\u00E9duire les d\u00E9cimales" className="tracking-tighter font-semibold text-xs">{".0\u2190"}</TBtn>
-                    <TBtn onClick={() => changeDecimals(1)} title="Augmenter les d\u00E9cimales" className="tracking-tighter font-semibold text-xs">{".00\u2192"}</TBtn>
-
+                    <TBtn onClick={() => applyToSelection({ numberFormat: activeCellStyle.numberFormat === 'currency' ? 'auto' : 'currency' })} active={activeCellStyle.numberFormat === 'currency'} title="Format mon\u00E9taire" className="font-serif font-medium">{"\u20AC"}</TBtn>
+                    <TBtn onClick={() => applyToSelection({ numberFormat: activeCellStyle.numberFormat === 'percent' ? 'auto' : 'percent' })} active={activeCellStyle.numberFormat === 'percent'} title="Format pourcentage"><Percent className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => changeDecimals(-1)} title="R\u00E9duire d\u00E9cimales" className="tracking-tighter font-semibold text-xs">{".0\u2190"}</TBtn>
+                    <TBtn onClick={() => changeDecimals(1)} title="Augmenter d\u00E9cimales" className="tracking-tighter font-semibold text-xs">{".00\u2192"}</TBtn>
                     <Sep />
-
                     {/* Font Picker */}
                     <div className="relative" data-popover>
-                        <button
-                            className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] border border-transparent hover:border-[#c7c7c7] hover:bg-white rounded flex items-center cursor-pointer h-7 w-24 justify-between mx-0.5"
-                            onClick={() => setShowFontPicker(!showFontPicker)}
-                        >
+                        <button className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] border border-transparent hover:border-[#c7c7c7] hover:bg-white rounded flex items-center cursor-pointer h-7 w-24 justify-between mx-0.5" onClick={() => setShowFontPicker(!showFontPicker)}>
                             <span className="truncate">{activeCellStyle.fontFamily || 'Arial'}</span>
                             <ChevronDown className="w-3 h-3 ml-1 shrink-0" />
                         </button>
                         {showFontPicker && (
                             <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 w-48 max-h-48 overflow-y-auto py-1">
                                 {FONTS.map(font => (
-                                    <button
-                                        key={font}
-                                        className={cn(
-                                            "w-full px-3 py-1.5 text-left text-[13px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]",
-                                            activeCellStyle.fontFamily === font && "bg-[#e8f0fe] dark:bg-[#004a77]"
-                                        )}
-                                        style={{ fontFamily: font }}
-                                        onClick={() => { applyToSelection({ fontFamily: font }); setShowFontPicker(false) }}
-                                    >
-                                        {font}
-                                    </button>
+                                    <button key={font} className={cn("w-full px-3 py-1.5 text-left text-[13px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]", activeCellStyle.fontFamily === font && "bg-[#e8f0fe]")} style={{ fontFamily: font }} onClick={() => { applyToSelection({ fontFamily: font }); setShowFontPicker(false) }}>{font}</button>
                                 ))}
                             </div>
                         )}
                     </div>
-
                     {/* Font Size */}
                     <div className="flex items-center border border-transparent hover:border-[#c7c7c7] rounded h-7 ml-0.5 bg-transparent hover:bg-white transition-colors">
-                        <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 flex items-center justify-center h-full" onClick={() => changeFontSize(-1)}><Minus className="w-[14px] h-[14px]" /></button>
-                        <input
-                            className="px-1 text-[13px] text-[#444746] dark:text-[#e3e3e3] w-8 text-center bg-transparent outline-none"
-                            value={activeCellStyle.fontSize || 10}
-                            onChange={(e) => {
-                                const v = parseInt(e.target.value)
-                                if (!isNaN(v) && v >= 6 && v <= 72) applyToSelection({ fontSize: v })
-                            }}
-                            onMouseDown={(e) => e.stopPropagation()}
-                        />
-                        <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 flex items-center justify-center h-full" onClick={() => changeFontSize(1)}><Plus className="w-[14px] h-[14px]" /></button>
+                        <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 h-full flex items-center" onClick={() => changeFontSize(-1)}><Minus className="w-[14px] h-[14px]" /></button>
+                        <input className="px-1 text-[13px] text-[#444746] dark:text-[#e3e3e3] w-8 text-center bg-transparent outline-none" value={activeCellStyle.fontSize || 10} onChange={(e) => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 6 && v <= 72) applyToSelection({ fontSize: v }) }} onMouseDown={(e) => e.stopPropagation()} />
+                        <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 h-full flex items-center" onClick={() => changeFontSize(1)}><Plus className="w-[14px] h-[14px]" /></button>
                     </div>
-
                     <Sep />
-
-                    {/* Bold / Italic / Strikethrough */}
                     <TBtn onClick={() => toggleBoolFormat('bold')} active={activeCellStyle.bold} title="Gras (Ctrl+B)" className="font-serif font-bold">B</TBtn>
                     <TBtn onClick={() => toggleBoolFormat('italic')} active={activeCellStyle.italic} title="Italique (Ctrl+I)" className="font-serif italic">I</TBtn>
                     <TBtn onClick={() => toggleBoolFormat('strikethrough')} active={activeCellStyle.strikethrough} title="Barr\u00E9"><Strikethrough className="w-[18px] h-[18px]" /></TBtn>
-
                     {/* Text Color */}
                     <div className="relative" data-popover>
-                        <button
-                            className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative"
-                            title="Couleur du texte"
-                            onClick={() => { setShowTextColor(!showTextColor); setShowFillColor(false) }}
-                        >
+                        <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative" title="Couleur du texte" onClick={() => { setShowTextColor(!showTextColor); setShowFillColor(false) }}>
                             <Type className="w-[18px] h-[18px]" />
                             <div className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm" style={{ backgroundColor: activeCellStyle.textColor || '#000000' }} />
                         </button>
                         {showTextColor && (
                             <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-[220px]">
                                 <div className="grid grid-cols-10 gap-1">
-                                    {PRESET_COLORS.map(color => (
-                                        <button
-                                            key={color}
-                                            className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform"
-                                            style={{ backgroundColor: color }}
-                                            onClick={() => { applyToSelection({ textColor: color }); setShowTextColor(false) }}
-                                        />
-                                    ))}
+                                    {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ textColor: color }); setShowTextColor(false) }} />))}
                                 </div>
-                                <button
-                                    className="mt-2 text-xs text-[#1a73e8] hover:underline w-full text-left"
-                                    onClick={() => { applyToSelection({ textColor: undefined }); setShowTextColor(false) }}
-                                >{"R\u00E9initialiser"}</button>
+                                <button className="mt-2 text-xs text-[#1a73e8] hover:underline" onClick={() => { applyToSelection({ textColor: undefined }); setShowTextColor(false) }}>R\u00E9initialiser</button>
                             </div>
                         )}
                     </div>
-
                     {/* Fill Color */}
                     <div className="relative" data-popover>
-                        <button
-                            className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative"
-                            title="Couleur de remplissage"
-                            onClick={() => { setShowFillColor(!showFillColor); setShowTextColor(false) }}
-                        >
+                        <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative" title="Couleur de remplissage" onClick={() => { setShowFillColor(!showFillColor); setShowTextColor(false) }}>
                             <PaintBucket className="w-[18px] h-[18px]" />
                             <div className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm" style={{ backgroundColor: activeCellStyle.fillColor || 'transparent' }} />
                         </button>
                         {showFillColor && (
                             <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-[220px]">
                                 <div className="grid grid-cols-10 gap-1">
-                                    {PRESET_COLORS.map(color => (
-                                        <button
-                                            key={color}
-                                            className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform"
-                                            style={{ backgroundColor: color }}
-                                            onClick={() => { applyToSelection({ fillColor: color }); setShowFillColor(false) }}
-                                        />
-                                    ))}
+                                    {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ fillColor: color }); setShowFillColor(false) }} />))}
                                 </div>
-                                <button
-                                    className="mt-2 text-xs text-[#1a73e8] hover:underline w-full text-left"
-                                    onClick={() => { applyToSelection({ fillColor: undefined }); setShowFillColor(false) }}
-                                >Aucun remplissage</button>
+                                <button className="mt-2 text-xs text-[#1a73e8] hover:underline" onClick={() => { applyToSelection({ fillColor: undefined }); setShowFillColor(false) }}>Aucun</button>
                             </div>
                         )}
                     </div>
-
                     <Sep />
-
-                    {/* Borders / Merge */}
-                    <TBtn onClick={() => toast.info("Bordures: utilisez le format de cellule pour configurer les bordures")} title="Bordures"><Grid className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => toast.info("Fusion de cellules: s\u00E9lectionnez une plage et cliquez \u00E0 nouveau")} title="Fusionner les cellules"><Maximize className="w-[18px] h-[18px]" /></TBtn>
-
+                    {/* Borders */}
+                    <div className="relative" data-popover>
+                        <TBtn onClick={() => setShowBorderPicker(!showBorderPicker)} title="Bordures"><Grid3X3 className="w-[18px] h-[18px]" /></TBtn>
+                        {showBorderPicker && <BorderPicker onSelect={applyBorders} onClose={() => setShowBorderPicker(false)} />}
+                    </div>
+                    <TBtn onClick={handleMerge} active={!!activeCellStyle.mergeRows} title="Fusionner"><Maximize className="w-[18px] h-[18px]" /></TBtn>
                     <Sep />
-
-                    {/* Alignment */}
-                    <TBtn onClick={cycleAlign} active={false} title={`Alignement: ${activeCellStyle.align || 'left'}`}>
-                        {activeCellStyle.align === 'center' ? <AlignCenter className="w-[18px] h-[18px]" /> :
-                         activeCellStyle.align === 'right' ? <AlignRight className="w-[18px] h-[18px]" /> :
-                         <AlignLeft className="w-[18px] h-[18px]" />}
+                    <TBtn onClick={cycleAlign} title={`Alignement: ${activeCellStyle.align || 'left'}`}>
+                        {activeCellStyle.align === 'center' ? <AlignCenter className="w-[18px] h-[18px]" /> : activeCellStyle.align === 'right' ? <AlignRight className="w-[18px] h-[18px]" /> : <AlignLeft className="w-[18px] h-[18px]" />}
                     </TBtn>
-                    <TBtn onClick={cycleVerticalAlign} title={`Alignement vertical: ${activeCellStyle.verticalAlign || 'middle'}`}><AlignVerticalJustifyCenter className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={cycleVerticalAlign} title={`V-Align: ${activeCellStyle.verticalAlign || 'middle'}`}><AlignVerticalJustifyCenter className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => toggleBoolFormat('wrap')} active={activeCellStyle.wrap} title="Retour \u00E0 la ligne"><WrapText className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => toast.info("Rotation du texte: fonctionnalit\u00E9 \u00E0 venir")} title="Rotation du texte"><RotateCw className="w-[18px] h-[18px]" /></TBtn>
-
+                    <TBtn onClick={() => toast.info("Rotation: \u00E0 venir")} title="Rotation du texte"><RotateCw className="w-[18px] h-[18px]" /></TBtn>
                     <Sep />
-
-                    {/* Inserts */}
-                    <TBtn onClick={() => {
-                        const url = prompt("Entrez l'URL du lien:")
-                        if (url && activeCell) {
-                            setCell(activeCell.r, activeCell.c, url)
-                            toast.success("Lien ins\u00E9r\u00E9")
-                        }
-                    }} title="Ins\u00E9rer un lien"><Link className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => {
-                        const comment = prompt("Entrez votre commentaire:")
-                        if (comment) toast.success(`Commentaire ajout\u00E9: "${comment}"`)
-                    }} title="Ins\u00E9rer un commentaire"><MessageSquare className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => toast.info("Graphiques: fonctionnalit\u00E9 \u00E0 venir")} title="Ins\u00E9rer un graphique"><BarChart2 className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => toast.info("Filtre activ\u00E9 sur la s\u00E9lection")} title="Cr\u00E9er un filtre"><Filter className="w-[18px] h-[18px]" /></TBtn>
-
+                    <TBtn onClick={() => { const url = prompt("URL:"); if (url && activeCell) { setCell(activeCell.r, activeCell.c, url); toast.success("Lien ins\u00E9r\u00E9") } }} title="Lien"><Link className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => { const c = prompt("Commentaire:"); if (c) toast.success(`"${c}"`) }} title="Commentaire"><MessageSquare className="w-[18px] h-[18px]" /></TBtn>
+                    {/* Chart picker */}
+                    <div className="relative" data-popover>
+                        <TBtn onClick={() => setShowChartPicker(!showChartPicker)} title="Graphique"><BarChart2 className="w-[18px] h-[18px]" /></TBtn>
+                        {showChartPicker && (
+                            <div className="absolute top-8 right-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36">
+                                <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => openChart('bar')}>Barres</button>
+                                <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => openChart('line')}>Ligne</button>
+                                <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => openChart('pie')}>Circulaire</button>
+                            </div>
+                        )}
+                    </div>
+                    <TBtn onClick={toggleFilter} active={filterCol !== null} title="Filtre"><Filter className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={toggleFreeze} active={freezeRows > 0 || freezeCols > 0} title="Figer lignes/colonnes"><Snowflake className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => setShowCondFormat(true)} active={condRules.length > 0} title="Mise en forme conditionnelle"><Palette className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={exportCSV} title="Exporter CSV"><Download className="w-[18px] h-[18px]" /></TBtn>
                     {/* Functions helper */}
                     <div className="relative" data-popover>
-                        <TBtn onClick={() => setShowFunctionHelper(!showFunctionHelper)} title="Fonctions">
-                            <Sigma className="w-[18px] h-[18px]" />
-                        </TBtn>
+                        <TBtn onClick={() => setShowFunctionHelper(!showFunctionHelper)} title="Fonctions"><Sigma className="w-[18px] h-[18px]" /></TBtn>
                         {showFunctionHelper && (
-                            <div className="absolute top-8 right-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-3 w-56">
+                            <div className="absolute top-8 right-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-3 w-64 max-h-72 overflow-y-auto">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="font-medium text-[13px]">Fonctions</span>
                                     <button onClick={() => setShowFunctionHelper(false)}><X className="w-4 h-4" /></button>
@@ -493,28 +1036,25 @@ export function Spreadsheet() {
                                     { fn: '=COUNT(A1:A10)', desc: 'Nombre' },
                                     { fn: '=MAX(A1:A10)', desc: 'Maximum' },
                                     { fn: '=MIN(A1:A10)', desc: 'Minimum' },
+                                    { fn: '=IF(A1>5,"Oui","Non")', desc: 'Condition' },
+                                    { fn: '=VLOOKUP(A1,B1:C10,2)', desc: 'Recherche V' },
+                                    { fn: '=CONCATENATE(A1,B1)', desc: 'Concat\u00E9ner' },
+                                    { fn: '=ROUND(A1,2)', desc: 'Arrondir' },
+                                    { fn: '=COUNTIF(A1:A10,">5")', desc: 'NB.SI' },
+                                    { fn: '=SUMIF(A1:A10,">5")', desc: 'SOMME.SI' },
+                                    { fn: '=TODAY()', desc: "Date du jour" },
+                                    { fn: '=LEN(A1)', desc: 'Longueur' },
+                                    { fn: '=UPPER(A1)', desc: 'Majuscules' },
+                                    { fn: '=IFERROR(A1/B1,0)', desc: 'Si erreur' },
                                 ].map(({ fn, desc }) => (
-                                    <button
-                                        key={fn}
-                                        className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded"
-                                        onClick={() => {
-                                            if (activeCell) {
-                                                setEditValue(fn)
-                                                setCell(activeCell.r, activeCell.c, fn)
-                                                setIsEditing(true)
-                                                setShowFunctionHelper(false)
-                                                setTimeout(() => formulaBarRef.current?.focus(), 0)
-                                            }
-                                        }}
-                                    >
+                                    <button key={fn} className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded" onClick={() => { if (activeCell) { setEditValue(fn); setCell(activeCell.r, activeCell.c, fn); setIsEditing(true); setShowFunctionHelper(false); setTimeout(() => formulaBarRef.current?.focus(), 0) } }}>
                                         <span className="font-mono text-[#1a73e8]">{fn}</span>
-                                        <span className="ml-2 text-[#5f6368]">{"\u2014"} {desc}</span>
+                                        <span className="ml-2 text-[#5f6368]">{desc}</span>
                                     </button>
                                 ))}
                             </div>
                         )}
                     </div>
-
                     <div className="ml-auto flex items-center pr-1 shrink-0">
                         <button className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-300 rounded font-medium text-[13px] shadow-sm transition-colors border border-purple-200 dark:border-purple-800">
                             <Sparkles className="w-3.5 h-3.5" /> AI Tools
@@ -523,78 +1063,108 @@ export function Spreadsheet() {
                 </div>
             </div>
 
-            {/* Formula Bar */}
+            {/* ===== FORMULA BAR ===== */}
             <div className="flex items-center gap-2 px-4 py-1.5 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-white dark:bg-[#1a1a1a] shrink-0 h-9">
-                <div className="w-12 font-medium text-[13px] text-[#202124] dark:text-[#e8eaed] text-center shrink-0 tracking-wide select-text">
+                <div className="w-14 font-medium text-[13px] text-center shrink-0 tracking-wide select-text">
                     {activeCell ? `${indexToCol(activeCell.c)}${activeCell.r + 1}` : ''}
                 </div>
                 <div className="w-px h-5 bg-[#e3e3e3] dark:bg-[#5f6368] shrink-0" />
-                <div className="text-[#5f6368] dark:text-[#9aa0a6] font-serif italic font-bold shrink-0 text-lg px-2 opacity-50 select-none">fx</div>
-                <input
-                    ref={formulaBarRef}
-                    className="flex-1 outline-none text-[13px] bg-transparent font-mono text-[#202124] dark:text-[#e8eaed]"
-                    value={activeCell ? editValue : ''}
-                    onChange={handleFormulaChange}
-                    onFocus={() => { if (activeCell) setIsEditing(true) }}
-                    disabled={!activeCell}
-                />
+                <div className="text-[#5f6368] font-serif italic font-bold shrink-0 text-lg px-2 opacity-50 select-none">fx</div>
+                <input ref={formulaBarRef} className="flex-1 outline-none text-[13px] bg-transparent font-mono text-[#202124] dark:text-[#e8eaed]" value={activeCell ? editValue : ''} onChange={(e) => { setEditValue(e.target.value); if (activeCell) setCell(activeCell.r, activeCell.c, e.target.value) }} onFocus={() => { if (activeCell) setIsEditing(true) }} disabled={!activeCell} />
             </div>
 
-            {/* Grid */}
-            <div className="relative flex-1 overflow-auto bg-white dark:bg-[#1f1f1f] custom-scrollbar will-change-transform">
-                {/* Column headers */}
-                <div className="flex sticky top-0 z-30 select-none bg-white dark:bg-[#1f1f1f]">
-                    <div className="w-[46px] min-w-[46px] max-w-[46px] h-[25px] bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative">
-                        <div className={cn("absolute top-1 left-1 h-1.5 w-1.5 rounded-full shadow-sm", isConnected ? "bg-[#1e8e3e]" : "bg-[#d93025] animate-pulse")} />
-                    </div>
-                    {Array.from({ length: COLS }).map((_, c) => {
-                        const inSel = selectionBounds && c >= selectionBounds.minC && c <= selectionBounds.maxC
-                        return (
-                            <div
-                                key={c}
-                                className={cn(
-                                    "w-[100px] min-w-[100px] max-w-[100px] h-[25px] flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] font-medium shrink-0 transition-colors",
-                                    inSel ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8] dark:text-[#8ab4f8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6]"
-                                )}
-                            >
-                                {indexToCol(c)}
-                            </div>
-                        )
-                    })}
-                </div>
+            {/* ===== GRID (Virtualized) ===== */}
+            <div ref={gridRef} className="relative flex-1 overflow-auto bg-white dark:bg-[#1f1f1f] will-change-transform" onScroll={handleScroll}>
 
-                {/* Rows */}
-                <div className="flex flex-col select-none">
-                    {Array.from({ length: ROWS }).map((_, r) => {
+                {/* Find & Replace */}
+                {showFind && (
+                    <FindReplaceBar
+                        findText={findText} replaceText={replaceText}
+                        matchCount={findMatches.length} currentMatch={currentFindIdx}
+                        showReplace={showReplaceToggle}
+                        onFindChange={setFindText} onReplaceChange={setReplaceText}
+                        onNext={() => navigateToFind(currentFindIdx + 1)}
+                        onPrev={() => navigateToFind(currentFindIdx - 1)}
+                        onReplace={doReplace} onReplaceAll={doReplaceAll}
+                        onToggleReplace={() => setShowReplaceToggle(!showReplaceToggle)}
+                        onClose={() => { setShowFind(false); setFindText('') }}
+                    />
+                )}
+
+                {/* Total grid size (for scrollbar) */}
+                <div style={{ width: totalWidth + ROW_HEADER_WIDTH, height: totalHeight + COL_HEADER_HEIGHT, position: 'relative' }}>
+
+                    {/* Column headers */}
+                    <div className="flex sticky top-0 z-30 select-none" style={{ height: COL_HEADER_HEIGHT }}>
+                        <div className="bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative" style={{ width: ROW_HEADER_WIDTH, minWidth: ROW_HEADER_WIDTH, height: COL_HEADER_HEIGHT }}>
+                            <div className={cn("absolute top-1 left-1 h-1.5 w-1.5 rounded-full shadow-sm", isConnected ? "bg-[#1e8e3e]" : "bg-[#d93025] animate-pulse")} />
+                        </div>
+                        {/* Spacer for cols before visible range */}
+                        {startC > 0 && <div style={{ width: colOffsets[startC], minWidth: colOffsets[startC] }} />}
+                        {Array.from({ length: endC - startC + 1 }).map((_, i) => {
+                            const c = startC + i
+                            const inSel = selectionBounds && c >= selectionBounds.minC && c <= selectionBounds.maxC
+                            const w = getColWidth(c)
+                            const isFrozen = c < freezeCols
+                            return (
+                                <div key={c} className={cn("flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] font-medium shrink-0 transition-colors relative group", inSel ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6]", isFrozen && "bg-[#e8f0fe]/50")} style={{ width: w, minWidth: w, maxWidth: w, height: COL_HEADER_HEIGHT, ...(isFrozen ? { position: 'sticky', left: ROW_HEADER_WIDTH + colOffsets[c], zIndex: 41 } : {}) }}>
+                                    {indexToCol(c)}
+                                    <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); resizeRef.current = { type: 'col', index: c, startPos: e.clientX, startSize: w } }} />
+                                </div>
+                            )
+                        })}
+                    </div>
+
+                    {/* Rows (virtualized) */}
+                    {/* Spacer for rows before visible range */}
+                    {startR > 0 && <div style={{ height: rowOffsets[startR] }} />}
+                    {Array.from({ length: endR - startR + 1 }).map((_, ri) => {
+                        const r = startR + ri
+                        if (!isRowVisible(r)) return null
                         const inSelRow = selectionBounds && r >= selectionBounds.minR && r <= selectionBounds.maxR
+                        const rh = getRowHeight(r)
+                        const isFrozenRow = r < freezeRows
+
                         return (
-                            <div key={r} className="flex" style={{ height: 21 }}>
+                            <div key={r} className="flex" style={{ height: rh, position: 'absolute', top: COL_HEADER_HEIGHT + rowOffsets[r], left: 0, width: totalWidth + ROW_HEADER_WIDTH, ...(isFrozenRow ? { position: 'sticky', top: COL_HEADER_HEIGHT + rowOffsets[r], zIndex: 25 } : {}) }}>
                                 {/* Row header */}
-                                <div className={cn(
-                                    "w-[46px] min-w-[46px] max-w-[46px] flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] shrink-0 sticky left-0 z-20 transition-colors",
-                                    inSelRow ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8] dark:text-[#8ab4f8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6]"
-                                )} style={{ height: 21 }}>
+                                <div className={cn("flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] shrink-0 sticky left-0 z-20 transition-colors relative group", inSelRow ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6]")} style={{ width: ROW_HEADER_WIDTH, minWidth: ROW_HEADER_WIDTH, height: rh }}>
                                     {r + 1}
+                                    <div className="absolute left-0 right-0 bottom-0 h-1.5 cursor-row-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); resizeRef.current = { type: 'row', index: r, startPos: e.clientY, startSize: rh } }} />
                                 </div>
 
-                                {/* Cells */}
-                                {Array.from({ length: COLS }).map((_, c) => {
-                                    const isActive = activeCell?.r === r && activeCell?.c === c
-                                    const inRect = selectionBounds &&
-                                        r >= selectionBounds.minR && r <= selectionBounds.maxR &&
-                                        c >= selectionBounds.minC && c <= selectionBounds.maxC
-                                    const isBottomRight = selectionBounds && r === selectionBounds.maxR && c === selectionBounds.maxC
+                                {/* Spacer for cols before visible range */}
+                                {startC > 0 && <div style={{ width: colOffsets[startC], minWidth: colOffsets[startC] }} />}
 
+                                {/* Cells */}
+                                {Array.from({ length: endC - startC + 1 }).map((_, ci) => {
+                                    const c = startC + ci
                                     const cellData = data[`${r},${c}`]
+                                    const style = cellData?.style
+                                    if (style?.mergedInto) return null
+
+                                    const isActive = activeCell?.r === r && activeCell?.c === c
+                                    const inRect = selectionBounds && r >= selectionBounds.minR && r <= selectionBounds.maxR && c >= selectionBounds.minC && c <= selectionBounds.maxC
+                                    const isBottomRight = selectionBounds && r === selectionBounds.maxR && c === selectionBounds.maxC
+                                    const isFindMatch = findMatches.some(m => m.r === r && m.c === c)
+                                    const isCurrentFind = findMatches.length > 0 && findMatches[currentFindIdx]?.r === r && findMatches[currentFindIdx]?.c === c
+
                                     const rawValue = cellData?.value || ""
                                     const evaluated = evaluatedData[`${r},${c}`] || rawValue
-                                    const style = cellData?.style
                                     const displayValue = formatDisplayValue(evaluated, style)
-                                    const isError = (displayValue.startsWith("#") && displayValue.endsWith("!")) || displayValue === "#NAME?"
-                                    const isNumber = !isError && !isNaN(Number(evaluated)) && evaluated.trim() !== ""
+                                    const isErrorVal = (displayValue.startsWith("#") && displayValue.endsWith("!")) || displayValue === "#NAME?" || displayValue === "#N/A"
+                                    const isNumber = !isErrorVal && !isNaN(Number(evaluated)) && evaluated.trim() !== ""
+
+                                    const mergeRows = style?.mergeRows || 1
+                                    const mergeCols2 = style?.mergeCols || 1
+                                    let cellW = 0; for (let mc = 0; mc < mergeCols2; mc++) cellW += getColWidth(c + mc)
+                                    let cellH = 0; for (let mr = 0; mr < mergeRows; mr++) cellH += getRowHeight(r + mr)
+
+                                    const condColor = condFormatColor(r, c)
+                                    const isFrozenCell = c < freezeCols
 
                                     const cellStyle: React.CSSProperties = {
-                                        width: 100, minWidth: 100, maxWidth: 100, height: 21,
+                                        width: cellW, minWidth: cellW, maxWidth: cellW, height: cellH,
                                         fontWeight: style?.bold ? 700 : undefined,
                                         fontStyle: style?.italic ? 'italic' : undefined,
                                         textDecoration: style?.strikethrough ? 'line-through' : undefined,
@@ -602,23 +1172,41 @@ export function Spreadsheet() {
                                         fontFamily: style?.fontFamily,
                                         fontSize: style?.fontSize ? `${style.fontSize}px` : undefined,
                                         color: style?.textColor,
-                                        backgroundColor: style?.fillColor || (inRect && !isActive ? 'rgba(66,133,244,0.08)' : undefined),
+                                        backgroundColor: condColor
+                                            ? `${condColor}22`
+                                            : style?.fillColor || (inRect && !isActive ? 'rgba(66,133,244,0.08)' : undefined),
                                         whiteSpace: style?.wrap ? 'normal' : 'nowrap',
+                                        borderTopWidth: style?.borderTop ? 2 : undefined,
+                                        borderRightWidth: style?.borderRight ? 2 : undefined,
+                                        borderBottomWidth: style?.borderBottom ? 2 : undefined,
+                                        borderLeftWidth: style?.borderLeft ? 2 : undefined,
+                                        borderColor: (style?.borderTop || style?.borderRight || style?.borderBottom || style?.borderLeft) ? '#202124' : undefined,
+                                        borderStyle: 'solid',
+                                        ...(isFrozenCell ? { position: 'sticky', left: ROW_HEADER_WIDTH + colOffsets[c], zIndex: 21 } : {}),
                                     }
+
+                                    const inDragFill = isDragFilling && dragFillEnd && selectionBounds && (
+                                        (dragFillEnd.r > selectionBounds.maxR && r > selectionBounds.maxR && r <= dragFillEnd.r && c >= selectionBounds.minC && c <= selectionBounds.maxC) ||
+                                        (dragFillEnd.c > selectionBounds.maxC && c > selectionBounds.maxC && c <= dragFillEnd.c && r >= selectionBounds.minR && r <= selectionBounds.maxR)
+                                    )
 
                                     return (
                                         <div
                                             key={c}
                                             className={cn(
                                                 "border-r border-b border-[#e3e3e3] dark:border-[#5f6368] text-[13px] px-1 flex items-center outline-none relative shrink-0",
-                                                !style?.fillColor && !inRect && "bg-white dark:bg-[#1a1a1a]"
+                                                !style?.fillColor && !condColor && !inRect && !inDragFill && "bg-white dark:bg-[#1a1a1a]",
+                                                inDragFill && "bg-[#e8f0fe]/40",
+                                                isFindMatch && !isCurrentFind && "ring-1 ring-inset ring-yellow-400",
+                                                isCurrentFind && "ring-2 ring-inset ring-orange-500"
                                             )}
                                             style={cellStyle}
                                             onMouseDown={(e) => handleCellMouseDown(r, c, e)}
                                             onMouseEnter={() => handleCellMouseEnter(r, c)}
                                             onDoubleClick={() => handleDoubleClick(r, c)}
+                                            onContextMenu={(e) => handleContextMenu(r, c, e)}
                                         >
-                                            {/* Selection border */}
+                                            {condColor && <div className="absolute inset-0 border-l-[3px] pointer-events-none z-[5]" style={{ borderColor: condColor }} />}
                                             {inRect && (
                                                 <>
                                                     {r === selectionBounds!.minR && <div className="absolute top-0 left-0 right-[-1px] h-[2px] bg-[#1a73e8] z-10" />}
@@ -627,30 +1215,16 @@ export function Spreadsheet() {
                                                     {c === selectionBounds!.maxC && <div className="absolute top-0 bottom-[-1px] right-[-1px] w-[2px] bg-[#1a73e8] z-10" />}
                                                 </>
                                             )}
-
                                             {isActive && <div className="absolute inset-[-1px] border-2 border-[#1a73e8] z-20 pointer-events-none" />}
-
                                             {isActive && isEditing ? (
-                                                <input
-                                                    ref={inputRef}
-                                                    className="w-full h-full border-none outline-none bg-white dark:bg-[#2d2e30] px-0.5 m-0 text-[13px] z-30 relative text-[#202124] dark:text-white"
-                                                    value={editValue}
-                                                    onChange={(e) => setEditValue(e.target.value)}
-                                                    onBlur={commitEdit}
-                                                    spellCheck={false}
-                                                />
+                                                <input ref={inputRef} className="w-full h-full border-none outline-none bg-white dark:bg-[#2d2e30] px-0.5 m-0 text-[13px] z-30 relative text-[#202124] dark:text-white" value={editValue} onChange={(e) => setEditValue(e.target.value)} onBlur={commitEdit} spellCheck={false} />
                                             ) : (
-                                                <span className={cn(
-                                                    "truncate w-full select-text",
-                                                    isError && "text-[#d93025] dark:text-[#f28b82] font-semibold text-center",
-                                                    displayValue === "" && "opacity-0"
-                                                )} title={isError ? "Erreur dans la formule" : rawValue}>
+                                                <span className={cn("truncate w-full select-text", isErrorVal && "text-[#d93025] font-semibold text-center", displayValue === "" && "opacity-0")} title={isErrorVal ? "Erreur" : rawValue}>
                                                     {displayValue}
                                                 </span>
                                             )}
-
                                             {isBottomRight && !isEditing && (
-                                                <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#1a73e8] border border-white dark:border-[#1a1a1a] rounded-sm cursor-crosshair z-30" />
+                                                <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#1a73e8] border border-white dark:border-[#1a1a1a] rounded-sm cursor-crosshair z-30" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragFilling(true) }} />
                                             )}
                                         </div>
                                     )
@@ -661,25 +1235,46 @@ export function Spreadsheet() {
                 </div>
             </div>
 
-            {/* Bottom Sheet Tabs */}
+            {/* ===== SHEET TABS + STATUS BAR ===== */}
             <div className="flex items-center h-10 border-t border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] px-1 shrink-0 z-20 shadow-[0_-1px_3px_0_rgba(0,0,0,0.05)]">
-                <button className="p-2 hover:bg-[#e8eaed] dark:hover:bg-[#303134] rounded-full text-[#5f6368] dark:text-[#9aa0a6] mx-1 transition-colors">
+                <button className="p-2 hover:bg-[#e8eaed] dark:hover:bg-[#303134] rounded-full text-[#5f6368] mx-1 transition-colors" onClick={() => addSheet(`Sheet${sheets.length + 1}`)}>
                     <Plus className="w-5 h-5" />
                 </button>
-                <div className="px-5 py-2.5 bg-white dark:bg-[#1f1f1f] text-[#1a73e8] dark:text-[#8ab4f8] text-[13px] font-medium border-x border-t border-[#e3e3e3] dark:border-[#3c4043] shadow-[0_-1px_3px_rgba(0,0,0,0.05)] h-10 flex items-center mb-0 mt-auto rounded-t-sm">
-                    Sheet1
-                </div>
-                <div className="px-5 py-2.5 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#e8eaed] dark:hover:bg-[#303134] cursor-pointer text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto">
-                    Sheet2
-                </div>
-                <div className="ml-auto px-4 flex items-center text-[12px] text-[#5f6368] dark:text-[#80868b]">
-                    {selectionBounds && (selectionBounds.maxR !== selectionBounds.minR || selectionBounds.maxC !== selectionBounds.minC) && (
-                        <span>
-                            {indexToCol(selectionBounds.minC)}{selectionBounds.minR + 1}:{indexToCol(selectionBounds.maxC)}{selectionBounds.maxR + 1}
-                        </span>
+                {sheets.map((sheet, i) => (
+                    <div key={i} className={cn("px-5 py-2.5 text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto relative group", i === activeSheetIndex ? "bg-white dark:bg-[#1f1f1f] text-[#1a73e8] dark:text-[#8ab4f8] border-x border-t border-[#e3e3e3] dark:border-[#3c4043] shadow-[0_-1px_3px_rgba(0,0,0,0.05)] rounded-t-sm" : "text-[#5f6368] hover:bg-[#e8eaed] dark:hover:bg-[#303134] cursor-pointer")} onClick={() => setActiveSheetIndex(i)} onDoubleClick={() => { setEditingTabIndex(i); setEditingTabName(sheet.name) }}>
+                        {editingTabIndex === i ? (
+                            <input className="bg-transparent outline-none text-[13px] w-20 text-center" value={editingTabName} onChange={(e) => setEditingTabName(e.target.value)} onBlur={() => { renameSheet(i, editingTabName); setEditingTabIndex(null) }} onKeyDown={(e) => { if (e.key === 'Enter') { renameSheet(i, editingTabName); setEditingTabIndex(null) } }} autoFocus />
+                        ) : sheet.name}
+                        {sheets.length > 1 && i === activeSheetIndex && (
+                            <button className="ml-2 opacity-0 group-hover:opacity-100 text-[#5f6368] hover:text-red-500 transition-all" onClick={(e) => { e.stopPropagation(); removeSheet(i) }}><X className="w-3 h-3" /></button>
+                        )}
+                    </div>
+                ))}
+                {/* Status bar */}
+                <div className="ml-auto px-4 flex items-center gap-4 text-[12px] text-[#5f6368] dark:text-[#9aa0a6]">
+                    {selectionStats && (
+                        <>
+                            {selectionStats.sum !== undefined && (
+                                <>
+                                    <span>Somme: <strong className="text-[#202124] dark:text-[#e8eaed]">{Math.round(selectionStats.sum * 100) / 100}</strong></span>
+                                    <span>Moy: <strong className="text-[#202124] dark:text-[#e8eaed]">{Math.round(selectionStats.avg! * 100) / 100}</strong></span>
+                                    <span>Min: <strong className="text-[#202124] dark:text-[#e8eaed]">{selectionStats.min}</strong></span>
+                                    <span>Max: <strong className="text-[#202124] dark:text-[#e8eaed]">{selectionStats.max}</strong></span>
+                                </>
+                            )}
+                            <span>Nb: <strong className="text-[#202124] dark:text-[#e8eaed]">{selectionStats.count}</strong></span>
+                        </>
+                    )}
+                    {!selectionStats && selectionBounds && (
+                        <span>{indexToCol(selectionBounds.minC)}{selectionBounds.minR + 1}{selectionBounds.minR !== selectionBounds.maxR || selectionBounds.minC !== selectionBounds.maxC ? `:${indexToCol(selectionBounds.maxC)}${selectionBounds.maxR + 1}` : ''}</span>
                     )}
                 </div>
             </div>
+
+            {/* ===== OVERLAYS ===== */}
+            {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} onAction={handleContextAction} onClose={() => setContextMenu(null)} />}
+            {chart && <MiniChart type={chart.type} values={chart.values} onClose={() => setChart(null)} />}
+            {showCondFormat && <CondFormatDialog rules={condRules} onAdd={(rule) => setCondRules(prev => [...prev, rule])} onRemove={(i) => setCondRules(prev => prev.filter((_, idx) => idx !== i))} onClose={() => setShowCondFormat(false)} />}
         </div>
     )
 }

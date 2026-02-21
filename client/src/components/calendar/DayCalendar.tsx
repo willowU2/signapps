@@ -70,26 +70,54 @@ export function DayCalendar({ selectedCalendarId }: DayCalendarProps) {
             </div>
 
             {/* Grid Header (Current Day) */}
-            <div className="grid grid-cols-1 pl-16 border-b">
-                <div className={`text-center py-2 font-semibold ${isToday(currentDate) ? "text-blue-600" : ""}`}>
+            <div className="flex border-b">
+                {/* Timezone Headers */}
+                <div className="flex min-w-max border-r bg-muted/50">
+                    {useCalendarStore.getState().timezones.map((tz, i) => (
+                        <div key={tz} className={`w-16 text-center py-2 text-xs font-medium text-muted-foreground ${i > 0 ? 'border-l' : ''}`}>
+                            <span className="truncate block px-1" title={tz}>{tz.split('/').pop()?.replace('_', ' ') || tz}</span>
+                        </div>
+                    ))}
+                </div>
+                {/* Day Header */}
+                <div className={`flex-1 text-center py-2 border-r font-semibold min-w-[100px] ${isToday(currentDate) ? "text-blue-600" : ""}`}>
                     <div>{format(currentDate, "EEEE")}</div>
                 </div>
             </div>
 
             {/* Time Grid */}
             <div className="flex-1 overflow-y-auto relative">
-                <div className="grid grid-cols-1 min-h-[1440px] pl-16 relative">
-                    {/* Time Axis */}
-                    <div className="absolute left-0 top-0 bottom-0 w-16 bg-muted/30 border-r z-10">
-                        {hours.map((hour) => (
-                            <div key={hour} className="h-[60px] text-right pr-2 text-xs text-muted-foreground -mt-2">
-                                {hour === 0 ? "" : format(new Date().setHours(hour, 0, 0, 0), "h a")}
+                <div className="flex min-h-[1440px]">
+                    {/* Time Axes */}
+                    <div className="flex min-w-max border-r bg-muted/30 z-10 bg-white dark:bg-gray-950">
+                        {useCalendarStore.getState().timezones.map((tz, i) => (
+                            <div key={tz} className={`w-16 ${i > 0 ? 'border-l border-gray-200/50 dark:border-gray-800/50' : ''}`}>
+                                {hours.map((hour) => {
+                                    const date = new Date();
+                                    date.setHours(hour, 0, 0, 0);
+                                    let timeStr = "";
+                                    if (hour !== 0) {
+                                        try {
+                                            timeStr = new Intl.DateTimeFormat('en-US', {
+                                                hour: 'numeric',
+                                                timeZone: tz,
+                                            }).format(date);
+                                        } catch (e) {
+                                            timeStr = format(date, "h a");
+                                        }
+                                    }
+                                    return (
+                                        <div key={hour} className="h-[60px] text-center px-1 text-[11px] text-muted-foreground -mt-2 truncate" title={timeStr}>
+                                            {timeStr}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         ))}
                     </div>
 
                     {/* Day Column */}
-                    <div className="relative h-[1440px] border-r">
+                    <div className="flex-1 relative h-[1440px] border-r">
                         {/* Hour lines */}
                         {hours.map((hour) => (
                             <div key={hour} className="h-[60px] border-b border-dashed border-gray-100 dark:border-gray-800"></div>
@@ -101,8 +129,8 @@ export function DayCalendar({ selectedCalendarId }: DayCalendarProps) {
                                 key={event.id}
                                 onClick={() => selectEvent(event.id)}
                                 className={`absolute left-2 right-2 rounded px-3 py-2 text-sm cursor-pointer border overflow-hidden ${selectedEventId === event.id
-                                        ? "bg-blue-600 text-white z-20 shadow-lg"
-                                        : "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-100 hover:bg-blue-200 z-10"
+                                    ? "bg-blue-600 text-white z-20 shadow-lg"
+                                    : "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-100 hover:bg-blue-200 z-10"
                                     }`}
                                 style={getEventStyle(event)}
                             >

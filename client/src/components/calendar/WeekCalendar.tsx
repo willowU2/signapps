@@ -93,11 +93,19 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
                 </div>
             </div>
 
-            {/* Grid Header (Days) */}
-            <div className="grid grid-cols-8 border-b">
-                <div className="w-16 border-r bg-muted/50"></div> {/* Time column header */}
+            {/* Grid Header */}
+            <div className="flex border-b">
+                {/* Timezone Headers */}
+                <div className="flex min-w-max border-r bg-muted/50">
+                    {useCalendarStore.getState().timezones.map((tz, i) => (
+                        <div key={tz} className={`w-16 text-center py-2 text-xs font-medium text-muted-foreground ${i > 0 ? 'border-l' : ''}`}>
+                            <span className="truncate block px-1" title={tz}>{tz.split('/').pop()?.replace('_', ' ') || tz}</span>
+                        </div>
+                    ))}
+                </div>
+                {/* Days Headers */}
                 {weekDays.map((day) => (
-                    <div key={day.toString()} className={`text-center py-2 border-r font-semibold ${isToday(day) ? "text-blue-600" : ""}`}>
+                    <div key={day.toString()} className={`flex-1 text-center py-2 border-r font-semibold min-w-[100px] ${isToday(day) ? "text-blue-600" : ""}`}>
                         <div>{format(day, "EEE")}</div>
                         <div className={`text-lg ${isToday(day) ? "bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto mt-1" : ""}`}>
                             {format(day, "d")}
@@ -108,12 +116,32 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
 
             {/* Time Grid */}
             <div className="flex-1 overflow-y-auto relative">
-                <div className="grid grid-cols-8 min-h-[1440px]"> {/* 60px * 24 = 1440px height */}
-                    {/* Time Axis */}
-                    <div className="w-16 border-r bg-muted/30">
-                        {hours.map((hour) => (
-                            <div key={hour} className="h-[60px] text-right pr-2 text-xs text-muted-foreground -mt-2">
-                                {hour === 0 ? "" : format(new Date().setHours(hour, 0, 0, 0), "h a")}
+                <div className="flex min-h-[1440px]"> {/* 60px * 24 = 1440px height */}
+                    {/* Time Axes */}
+                    <div className="flex min-w-max border-r bg-muted/30">
+                        {useCalendarStore.getState().timezones.map((tz, i) => (
+                            <div key={tz} className={`w-16 ${i > 0 ? 'border-l border-gray-200/50 dark:border-gray-800/50' : ''}`}>
+                                {hours.map((hour) => {
+                                    const date = new Date();
+                                    date.setHours(hour, 0, 0, 0);
+                                    let timeStr = "";
+                                    if (hour !== 0) {
+                                        try {
+                                            timeStr = new Intl.DateTimeFormat('en-US', {
+                                                hour: 'numeric',
+                                                timeZone: tz,
+                                            }).format(date);
+                                        } catch (e) {
+                                            // Fallback if tz is invalid
+                                            timeStr = format(date, "h a");
+                                        }
+                                    }
+                                    return (
+                                        <div key={hour} className="h-[60px] text-center px-1 text-[11px] text-muted-foreground -mt-2 truncate" title={timeStr}>
+                                            {timeStr}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         ))}
                     </div>
@@ -132,8 +160,8 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
                                     key={event.id}
                                     onClick={() => selectEvent(event.id)}
                                     className={`absolute left-0.5 right-0.5 rounded px-2 py-1 text-xs cursor-pointer border overflow-hidden ${selectedEventId === event.id
-                                            ? "bg-blue-600 text-white z-20 shadow-lg"
-                                            : "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-100 hover:bg-blue-200 z-10"
+                                        ? "bg-blue-600 text-white z-20 shadow-lg"
+                                        : "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-100 hover:bg-blue-200 z-10"
                                         }`}
                                     style={getEventStyle(event)}
                                 >

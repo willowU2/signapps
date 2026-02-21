@@ -11,6 +11,7 @@ import {
     Trash2,
     Bot,
 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -57,6 +58,14 @@ export default function MailPage() {
     // NOTE: This logic mimics the original scaffold but integrates the list
     // The original scaffold used 'mails' from data/mail directly in MailList props or state
     // We are now keeping 'mailList' in state
+
+    const handleSnooze = (id: string, time: string) => {
+        setMailList(prev => prev.filter(m => m.id !== id))
+        if (mailState.selected === id) {
+            setMailState({ ...mailState, selected: null })
+        }
+        toast.success(`Conversation snoozed until ${time}.`)
+    }
 
     return (
         <TooltipProvider delayDuration={0}>
@@ -133,6 +142,7 @@ export default function MailPage() {
                                 items={mailList}
                                 selectedId={mailState.selected}
                                 onSelect={(id) => setMailState({ ...mailState, selected: id })}
+                                onSnooze={handleSnooze}
                             />
                         </div>
 
@@ -140,7 +150,10 @@ export default function MailPage() {
                         <div className="overflow-hidden bg-white dark:bg-gray-950 relative">
                             {/* Inner container to allow MailDisplay to fill space properly */}
                             <div className="absolute inset-0 m-4 border border-gray-200/50 dark:border-gray-800/50 rounded-2xl overflow-hidden shadow-sm bg-gray-50/30 dark:bg-gray-900/20 flex flex-col">
-                                <MailDisplay mail={mailList.find(m => m.id === mailState.selected) || null} />
+                                <MailDisplay
+                                    mail={mailList.find(m => m.id === mailState.selected) || null}
+                                    onSnooze={handleSnooze}
+                                />
                             </div>
                         </div>
                     </div>

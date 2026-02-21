@@ -9,8 +9,10 @@ import { EventForm } from "@/components/calendar/EventForm";
 import { ExportDialog } from "@/components/calendar/ExportDialog";
 import { ImportDialog } from "@/components/calendar/ImportDialog";
 import { ShareDialog } from "@/components/calendar/ShareDialog";
+import { TimezoneSelector } from "@/components/calendar/TimezoneSelector";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, Upload, MoreVertical, Share2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, Download, Upload, MoreVertical, Share2, Zap } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
 import {
   DropdownMenu,
@@ -30,6 +32,8 @@ export default function CalendarPage() {
     setSelectedCalendars,
     viewMode,
     setViewMode,
+    timezones,
+    setTimezones,
   } = useCalendarStore();
 
   const selectedEvent = useMemo(() =>
@@ -50,6 +54,10 @@ export default function CalendarPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null);
 
+  // Quick Add State
+  const [quickAddText, setQuickAddText] = useState("");
+  const [quickAddDefaultStart, setQuickAddDefaultStart] = useState<Date | undefined>(undefined);
+
   // Load calendars on mount
   useEffect(() => {
     const loadCalendars = async () => {
@@ -62,6 +70,24 @@ export default function CalendarPage() {
         if (response.data.length > 0) {
           setSelectedCalendarId(response.data[0].id);
           setSelectedCalendars([response.data[0]]);
+        } else {
+          // Mock data for UI demonstration purposes
+          const mockCalendar = {
+            id: "cal_1",
+            name: "My Calendar",
+            color: "#3b82f6",
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            is_default: true,
+            user_id: "user_1",
+            owner_id: "user_1",
+            is_shared: false,
+            is_public: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          setCalendars([mockCalendar]);
+          setSelectedCalendarId(mockCalendar.id);
+          setSelectedCalendars([mockCalendar]);
         }
       } catch {
         // ignore
@@ -116,6 +142,40 @@ export default function CalendarPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
+
+            {/* Quick Add Input */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!quickAddText.trim()) return;
+
+                // Super basic NLP for demo:
+                let defaultStart = new Date();
+                const lowerText = quickAddText.toLowerCase();
+
+                if (lowerText.includes("tomorrow")) {
+                  defaultStart.setDate(defaultStart.getDate() + 1);
+                } else if (lowerText.includes("next week")) {
+                  defaultStart.setDate(defaultStart.getDate() + 7);
+                }
+
+                setQuickAddDefaultStart(defaultStart);
+                setEventFormOpen(true);
+                setQuickAddText("");
+              }}
+              className="relative hidden sm:block w-[280px]"
+            >
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Zap className="h-4 w-4 text-purple-500" />
+              </div>
+              <Input
+                type="text"
+                placeholder="Lunch with Sarah tomorrow..."
+                value={quickAddText}
+                onChange={(e) => setQuickAddText(e.target.value)}
+                className="pl-9 bg-muted/20 border-border/50 focus-visible:ring-purple-500/30 transition-all rounded-full h-9 text-sm"
+              />
+            </form>
 
             {/* View Switcher */}
             <div className="flex bg-muted/20 p-1 rounded-md border text-sm items-center">
@@ -192,6 +252,69 @@ export default function CalendarPage() {
                     </p>
                   </div>
                 ))}
+
+                {/* Timezones (Cron Style) */}
+                <div className="pt-4 mt-6 border-t border-border/50 hidden lg:block">
+                  <div className="flex items-center justify-between mb-4 px-1">
+                    <h3 className="font-semibold text-sm">Timezones</h3>
+                  </div>
+                  <div className="space-y-4">
+                    {timezones.map((tz, index) => (
+                      <div key={index} className="flex gap-2 items-start relative">
+                        <div className="flex-1">
+                          <TimezoneSelector
+                            value={tz}
+                            onChange={(newTz) => {
+                              const newTimezones = [...timezones];
+                              newTimezones[index] = newTz;
+                              setTimezones(newTimezones);
+                            }}
+                          />
+                        </div>
+                        {index > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 absolute top-7 right-0"
+                            onClick={() => {
+                              const newTimezones = timezones.filter((_, i) => i !== index);
+                              setTimezones(newTimezones);
+                            }}
+                          >
+                            <Plus className="h-4 w-4 rotate-45" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    {timezones.length < 3 && (
+                      <Button variant="outline" size="sm" className="w-full text-xs shadow-sm" onClick={() => {
+                        setTimezones([...timezones, "UTC"]);
+                      }}>
+                        <Plus className="w-3 h-3 mr-2" /> Add Timezone
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Notion/Cron Style Mini Calendar Placeholder */}
+                <div className="pt-4 mt-6 border-t border-border/50 hidden lg:block">
+                  <div className="flex items-center justify-between mb-4 px-1">
+                    <h3 className="font-semibold text-sm">Mini Calendar</h3>
+                  </div>
+                  <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
+                    <div className="grid grid-cols-7 text-center text-xs font-semibold text-muted-foreground mb-2">
+                      <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
+                    </div>
+                    <div className="grid grid-cols-7 text-center text-xs gap-y-2">
+                      {/* Mock days for visual effect */}
+                      {[...Array(31)].map((_, i) => (
+                        <div key={i} className={`p-1 w-6 h-6 mx-auto flex items-center justify-center rounded-full hover:bg-muted cursor-pointer ${i === 14 ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}`}>
+                          {i + 1}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -209,10 +332,14 @@ export default function CalendarPage() {
           open={eventFormOpen}
           onOpenChange={(open) => {
             setEventFormOpen(open);
-            if (!open) selectEvent(null);
+            if (!open) {
+              selectEvent(null);
+              setQuickAddDefaultStart(undefined);
+            }
           }}
           initialEvent={selectedEvent}
           calendarId={selectedCalendarId || calendars[0]?.id || ""}
+          defaultStartDate={quickAddDefaultStart}
         />
 
         {/* Export dialog */}

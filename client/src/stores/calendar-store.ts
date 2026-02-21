@@ -24,6 +24,10 @@ interface CalendarState {
   isLoading: boolean;
   error: string | null;
 
+  // Timezones
+  timezones: string[];
+  setTimezones: (timezones: string[]) => void;
+
   // Actions
   setViewMode: (mode: ViewMode) => void;
   setCurrentDate: (date: Date) => void;
@@ -52,10 +56,12 @@ export const useCalendarStore = create<CalendarState>((set) => ({
   filterText: "",
   events: [],
   calendars: [],
+  timezones: [Intl.DateTimeFormat().resolvedOptions().timeZone, "UTC"], // Default to local and UTC
   isLoading: false,
   error: null,
 
   // Actions
+  setTimezones: (timezones) => set({ timezones }),
   setViewMode: (mode) => set({ viewMode: mode }),
   setCurrentDate: (date) => set({ currentDate: date }),
   toggleCalendar: (calendarId) =>

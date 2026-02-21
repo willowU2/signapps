@@ -13,6 +13,7 @@ import {
     X,
     Loader2,
     Send,
+    FileText,
 } from "lucide-react"
 
 import {
@@ -34,14 +35,15 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Mail } from "@/lib/data/mail"
 import { aiApi } from "@/lib/api"
 import { toast } from "sonner"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useAiStream } from "@/hooks/use-ai-stream"
 
 interface MailDisplayProps {
     mail: Mail | null
+    onSnooze?: (id: string, time: string) => void
 }
 
-export function MailDisplay({ mail }: MailDisplayProps) {
+export function MailDisplay({ mail, onSnooze }: MailDisplayProps) {
     const [replyText, setReplyText] = useState("")
     const [smartReplies, setSmartReplies] = useState<string[]>([])
     const [isRepliesLoading, setIsRepliesLoading] = useState(false)
@@ -51,6 +53,36 @@ export function MailDisplay({ mail }: MailDisplayProps) {
     const [summaryText, setSummaryText] = useState("")
     const [showSummary, setShowSummary] = useState(false)
     const [summaryLoading, setSummaryLoading] = useState(false)
+
+    // Undo Send State
+    const [sending, setSending] = useState(false)
+    const [countdown, setCountdown] = useState(5)
+
+    // Handle Undo Send Timer
+    useEffect(() => {
+        let timer: NodeJS.Timeout
+        if (sending && countdown > 0) {
+            timer = setTimeout(() => setCountdown(c => c - 1), 1000)
+        } else if (sending && countdown === 0) {
+            toast.success("Reply sent!")
+            setSending(false)
+            setReplyText("")
+            setSmartReplies([])
+        }
+        return () => clearTimeout(timer)
+    }, [sending, countdown])
+
+    const handleSend = (e: React.MouseEvent) => {
+        e.preventDefault()
+        if (!replyText.trim()) return
+        setSending(true)
+        setCountdown(5)
+    }
+
+    const handleUndo = () => {
+        setSending(false)
+        toast("Sending cancelled.")
+    }
 
     const handleSummarize = useCallback(async () => {
         if (!mail || isStreaming) return
@@ -146,15 +178,28 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                         <TooltipContent>Move to trash</TooltipContent>
                     </Tooltip>
                     <Separator orientation="vertical" className="mx-2 h-5 bg-gray-200 dark:bg-gray-800" />
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-8 w-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-gray-800 transition-colors">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                                 <Clock className="h-4 w-4" />
                                 <span className="sr-only">Snooze</span>
                             </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Snooze</TooltipContent>
-                    </Tooltip>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[160px] rounded-xl shadow-lg border-gray-100 dark:border-gray-800">
+                            <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => mail && onSnooze?.(mail.id, "Later today")}>
+                                Later today
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => mail && onSnooze?.(mail.id, "Tomorrow")}>
+                                Tomorrow
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => mail && onSnooze?.(mail.id, "This weekend")}>
+                                This weekend
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => mail && onSnooze?.(mail.id, "Next week")}>
+                                Next week
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
                 <div className="ml-auto flex items-center gap-1.5">
                     {mail && (
@@ -331,21 +376,57 @@ export function MailDisplay({ mail }: MailDisplayProps) {
                                         <Bot className="w-3 h-3" />
                                         <span>AI tools available via '/' or smart suggestions</span>
                                     </div>
-                                    <Button
-                                        onClick={(e) => {
-                                            e.preventDefault()
-                                            if (!replyText.trim()) return;
-                                            toast.success("Reply sent!")
-                                            setReplyText("")
-                                            setSmartReplies([])
-                                        }}
-                                        size="sm"
-                                        disabled={!replyText.trim()}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-5 py-2 shadow-sm transition-all"
-                                    >
-                                        <Send className="w-3.5 h-3.5 mr-2" />
-                                        Send
-                                    </Button>
+                                    {sending ? (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                                Sending in {countdown}s...
+                                            </span>
+                                            <Button
+                                                onClick={(e) => { e.preventDefault(); handleUndo(); }}
+                                                size="sm"
+                                                variant="outline"
+                                                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/30 rounded-full"
+                                            >
+                                                Undo
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 rounded-full"
+                                                    >
+                                                        <FileText className="w-4 h-4 mr-2" />
+                                                        Templates
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-[200px] rounded-xl shadow-lg border-gray-100 dark:border-gray-800">
+                                                    <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => setReplyText("Thanks, I'll take a look at this asap.")}>
+                                                        "Thanks, I'll look into it"
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => setReplyText("Sounds good to me, please proceed.")}>
+                                                        "Sounds good to me"
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => setReplyText("Can we schedule a quick call to discuss this?")}>
+                                                        "Can we schedule a call?"
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                            <Button
+                                                onClick={handleSend}
+                                                size="sm"
+                                                disabled={!replyText.trim()}
+                                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-5 py-2 shadow-sm transition-all"
+                                            >
+                                                <Send className="w-3.5 h-3.5 mr-2" />
+                                                Send
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </form>

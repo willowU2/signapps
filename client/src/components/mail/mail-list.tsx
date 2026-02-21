@@ -5,15 +5,22 @@ import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Archive, Clock, Trash2 } from "lucide-react"
 import { Mail } from "@/lib/data/mail"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 // import { useMail } from "@/app/mail/use-mail"
 
 interface MailListProps {
     items: Mail[]
     selectedId: string | null
     onSelect: (id: string) => void
+    onSnooze?: (id: string, time: string) => void
 }
 
-export function MailList({ items, selectedId, onSelect }: MailListProps) {
+export function MailList({ items, selectedId, onSelect, onSnooze }: MailListProps) {
     return (
         <ScrollArea className="h-screen">
             <div className="flex flex-col p-3 pt-0 gap-1.5">
@@ -71,12 +78,30 @@ export function MailList({ items, selectedId, onSelect }: MailListProps) {
                             <div className="p-1.5 rounded text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Archive" onClick={(e) => e.stopPropagation()}>
                                 <Archive className="w-4 h-4" />
                             </div>
-                            <div className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Delete" onClick={(e) => e.stopPropagation()}>
+                            <div className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Delete" onClick={(e) => { e.stopPropagation(); }}>
                                 <Trash2 className="w-4 h-4" />
                             </div>
-                            <div className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Snooze" onClick={(e) => e.stopPropagation()}>
-                                <Clock className="w-4 h-4" />
-                            </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <div className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer" title="Snooze" onClick={(e) => e.stopPropagation()}>
+                                        <Clock className="w-4 h-4" />
+                                    </div>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-[160px] rounded-xl shadow-lg border-gray-100 dark:border-gray-800" onClick={(e) => e.stopPropagation()}>
+                                    <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={(e) => { e.stopPropagation(); onSnooze?.(item.id, "Later today"); }}>
+                                        Later today
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={(e) => { e.stopPropagation(); onSnooze?.(item.id, "Tomorrow"); }}>
+                                        Tomorrow
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={(e) => { e.stopPropagation(); onSnooze?.(item.id, "This weekend"); }}>
+                                        This weekend
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={(e) => { e.stopPropagation(); onSnooze?.(item.id, "Next week"); }}>
+                                        Next week
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </button>
                 ))}
