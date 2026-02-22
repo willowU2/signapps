@@ -76,6 +76,7 @@ const WEBHOOK_EVENTS = [
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
+import { AiRoutingSettings } from '@/components/settings/ai-routing-settings';
 
 export default function SettingsPage() {
   // General tab state
@@ -352,6 +353,7 @@ export default function SettingsPage() {
             <TabsTrigger value="groups">Groups</TabsTrigger>
             <TabsTrigger value="ldap">LDAP</TabsTrigger>
             <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+            <TabsTrigger value="ai-routing">AI Routing</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
@@ -666,11 +668,10 @@ export default function SettingsPage() {
                             {webhook.last_status && (
                               <Badge
                                 variant="outline"
-                                className={`ml-2 ${
-                                  webhook.last_status >= 200 && webhook.last_status < 300
+                                className={`ml-2 ${webhook.last_status >= 200 && webhook.last_status < 300
                                     ? 'text-green-600'
                                     : 'text-red-600'
-                                }`}
+                                  }`}
                               >
                                 {webhook.last_status}
                               </Badge>
@@ -747,6 +748,10 @@ export default function SettingsPage() {
                 </p>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="ai-routing" className="space-y-6">
+            <AiRoutingSettings />
           </TabsContent>
         </Tabs>
       </div>

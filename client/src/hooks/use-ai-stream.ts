@@ -14,6 +14,8 @@ interface StreamConfig {
   language?: string;
   includeSources?: boolean;
   enableTools?: boolean;
+  provider?: string;
+  model?: string;
 }
 
 export function useAiStream() {
@@ -48,6 +50,8 @@ export function useAiStream() {
       include_sources: config.includeSources ?? false,
       enable_tools: config.enableTools ?? false,
       system_prompt: config.systemPrompt,
+      provider: config.provider,
+      model: config.model,
     };
 
     try {

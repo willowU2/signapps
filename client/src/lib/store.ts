@@ -63,13 +63,20 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // UI State
+export type RightWidgetType = 'chat' | 'calendar' | 'tasks' | 'notes' | 'details' | null;
+
 interface UIState {
   sidebarOpen: boolean;
   sidebarCollapsed: boolean;
   theme: 'light' | 'dark' | 'system';
+  rightSidebarOpen: boolean;
+  activeRightWidget: RightWidgetType;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  toggleRightSidebar: () => void;
+  setRightSidebarOpen: (isOpen: boolean) => void;
+  setActiveRightWidget: (widget: RightWidgetType) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -78,9 +85,14 @@ export const useUIStore = create<UIState>()(
       sidebarOpen: true,
       sidebarCollapsed: false,
       theme: 'system',
+      rightSidebarOpen: false,
+      activeRightWidget: null,
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       setTheme: (theme) => set({ theme }),
+      toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
+      setRightSidebarOpen: (isOpen) => set({ rightSidebarOpen: isOpen }),
+      setActiveRightWidget: (widget) => set({ activeRightWidget: widget, rightSidebarOpen: true }),
     }),
     {
       name: 'ui-storage',
