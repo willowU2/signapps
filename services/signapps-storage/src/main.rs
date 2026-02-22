@@ -247,9 +247,45 @@ fn create_router(state: AppState) -> Router {
 
     // Permissions routes
     let permissions_routes = Router::new()
-        .route("/permissions/:bucket/*key", get(permissions::get_permissions))
-        .route("/permissions/:bucket/*key", put(permissions::set_permissions))
-        .route("/permissions/:bucket/*key", delete(permissions::reset_permissions));
+        .route(
+            "/permissions/:bucket/*key",
+            get(permissions::get_permissions),
+        )
+        .route(
+            "/permissions/:bucket/*key",
+            put(permissions::set_permissions),
+        )
+        .route(
+            "/permissions/:bucket/*key",
+            delete(permissions::reset_permissions),
+        );
+
+    // Tags routes
+    let tags_routes = Router::new()
+        .route("/tags", get(handlers::tags::list_tags))
+        .route("/tags", post(handlers::tags::create_tag))
+        .route("/tags/:tag_id", put(handlers::tags::update_tag))
+        .route("/tags/:tag_id", delete(handlers::tags::delete_tag))
+        .route("/files/:file_id/tags", get(handlers::tags::list_file_tags))
+        .route(
+            "/files/:file_id/tags/:tag_id",
+            post(handlers::tags::add_file_tag),
+        )
+        .route(
+            "/files/:file_id/tags/:tag_id",
+            delete(handlers::tags::remove_file_tag),
+        );
+
+    // Versions routes
+    let versions_routes = Router::new()
+        .route(
+            "/files/:file_id/versions",
+            get(handlers::versions::list_versions),
+        )
+        .route(
+            "/files/:file_id/versions/:version_id/restore",
+            post(handlers::versions::restore_version),
+        );
 
     // Mount management routes
     let mount_routes = Router::new()
@@ -283,6 +319,8 @@ fn create_router(state: AppState) -> Router {
         .merge(mount_routes)
         .merge(external_routes)
         .merge(stats_routes)
+        .merge(tags_routes)
+        .merge(versions_routes)
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

@@ -151,6 +151,15 @@ export function FileListItem({
                                 <DropdownMenuItem onClick={() => onAction?.('move', item)}>
                                     Move to...
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onAction?.('permissions', item)}>
+                                    Permissions
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onAction?.('manage-tags', item)}>
+                                    Manage Tags
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onAction?.('version-history', item)}>
+                                    Version History
+                                </DropdownMenuItem>
                                 {viewMode === 'starred' ? (
                                     <DropdownMenuItem onClick={() => onAction?.('unstar', item)}>
                                         Remove from Starred

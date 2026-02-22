@@ -14,4 +14,6 @@ pub mod raid;
 pub mod search;
 pub mod shares;
 pub mod stats;
+pub mod tags;
 pub mod trash;
+pub mod versions;

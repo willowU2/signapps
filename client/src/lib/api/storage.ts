@@ -81,6 +81,21 @@ export const storageApi = {
 
     setPermissions: (bucket: string, key: string, data: { mode: number }) =>
         storageApiClient.put(`/permissions/${bucket}/${encodeURIComponent(key)}`, data),
+
+    // Tags
+    getTags: () => storageApiClient.get<any[]>('/tags'),
+    createTag: (data: any) => storageApiClient.post('/tags', data),
+    updateTag: (id: string, data: any) => storageApiClient.put(`/tags/${id}`, data),
+    deleteTag: (id: string) => storageApiClient.delete(`/tags/${id}`),
+
+    // File Tags
+    getFileTags: (fileId: string) => storageApiClient.get<any[]>(`/files/${fileId}/tags`),
+    addFileTag: (fileId: string, tagId: string) => storageApiClient.post(`/files/${fileId}/tags/${tagId}`),
+    removeFileTag: (fileId: string, tagId: string) => storageApiClient.delete(`/files/${fileId}/tags/${tagId}`),
+
+    // Versions
+    getFileVersions: (fileId: string) => storageApiClient.get<any[]>(`/files/${fileId}/versions`),
+    restoreFileVersion: (fileId: string, versionId: string) => storageApiClient.post(`/files/${fileId}/versions/${versionId}/restore`),
 };
 
 export interface Bucket {

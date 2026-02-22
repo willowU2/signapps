@@ -31,6 +31,7 @@ import { storageApi } from '@/lib/api';
 import { VideoPreview } from './previews/video-preview';
 import { ArchivePreview } from './previews/archive-preview';
 import { DocumentPreview } from './previews/document-preview';
+import { CodePreview } from './previews/code-preview';
 
 interface FileItem {
   key: string;
@@ -195,7 +196,7 @@ export function FilePreviewDialog({
       const response = await storageApi.download(bucket, key);
       const blob = new Blob([response.data]);
 
-      if (type === 'image' || type === 'pdf' || type === 'video' || type === 'audio') {
+      if (type === 'image' || type === 'pdf' || type === 'video' || type === 'audio' || type === 'code') {
         const url = URL.createObjectURL(blob);
         setBlobUrl(url);
       } else {
@@ -340,12 +341,18 @@ export function FilePreviewDialog({
         ) : null;
 
       case 'text':
-      case 'code':
         return content !== null ? (
           <div className="max-h-[70vh] overflow-auto">
             <pre className="p-4 bg-muted rounded-lg text-sm font-mono whitespace-pre-wrap break-words">
               {content}
             </pre>
+          </div>
+        ) : null;
+
+      case 'code':
+        return blobUrl ? (
+          <div className="max-h-[70vh] overflow-auto">
+            <CodePreview src={blobUrl} fileName={file.name} fileType={file.contentType} />
           </div>
         ) : null;
 

@@ -66,6 +66,9 @@ import { FolderTree } from '@/components/storage/folder-tree';
 import { PermissionsDialog } from '@/components/storage/permissions-dialog';
 import { DropZone } from '@/components/storage/drop-zone';
 import { FavoritesBar } from '@/components/storage/favorites-bar';
+import { ManageTagsDialog } from '@/components/storage/manage-tags-dialog';
+import { FileTagsDialog } from '@/components/storage/file-tags-dialog';
+import { VersionHistoryDialog } from '@/components/storage/version-history-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
 
@@ -131,6 +134,15 @@ export default function StoragePage() {
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [permissionsFile, setPermissionsFile] = useState<FileItem | null>(null);
 
+  // Tags dialog state
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
+  const [fileTagsOpen, setFileTagsOpen] = useState(false);
+  const [tagFile, setTagFile] = useState<FileItem | null>(null);
+
+  // Version History dialog state
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyFile, setHistoryFile] = useState<FileItem | null>(null);
+
   // Dialog state for Rename/Move
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameItem, setRenameItem] = useState<FileItem | null>(null);
@@ -151,6 +163,23 @@ export default function StoragePage() {
     } else if (action === 'move') {
       setMoveItem(item);
       setMoveDialogOpen(true);
+    } else if (action === 'permissions') {
+      setPermissionsFile(item);
+      setPermissionsDialogOpen(true);
+    } else if (action === 'manage-tags') {
+      if (item.id) {
+        setTagFile(item);
+        setFileTagsOpen(true);
+      } else {
+        toast.error("Cannot manage tags: file ID is missing");
+      }
+    } else if (action === 'version-history') {
+      if (item.id) {
+        setHistoryFile(item);
+        setHistoryOpen(true);
+      } else {
+        toast.error("Cannot view history: file ID is missing");
+      }
     } else if (action === 'share') {
       toast.info("Sharing not yet implemented");
     } else if (action === 'restore' && item.id) {
@@ -722,6 +751,11 @@ export default function StoragePage() {
                             <Upload className="mr-2 h-4 w-4" />
                             File Upload
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setManageTagsOpen(true)}>
+                            <Star className="mr-2 h-4 w-4" />
+                            Manage Tags
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
@@ -853,6 +887,32 @@ export default function StoragePage() {
             />
           </TabsContent>
         </Tabs>
+
+        <ManageTagsDialog
+          open={manageTagsOpen}
+          onOpenChange={setManageTagsOpen}
+          onTagsUpdated={fetchFiles}
+        />
+
+        {tagFile && tagFile.id && (
+          <FileTagsDialog
+            open={fileTagsOpen}
+            onOpenChange={setFileTagsOpen}
+            fileId={tagFile.id}
+            fileName={tagFile.name}
+            onTagsUpdated={fetchFiles}
+          />
+        )}
+
+        {historyFile && historyFile.id && (
+          <VersionHistoryDialog
+            open={historyOpen}
+            onOpenChange={setHistoryOpen}
+            fileId={historyFile.id}
+            fileName={historyFile.name}
+            onVersionRestored={fetchFiles}
+          />
+        )}
 
         {/* Dialogs */}
         <UploadDialog

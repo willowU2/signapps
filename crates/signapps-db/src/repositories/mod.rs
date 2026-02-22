@@ -31,19 +31,15 @@ pub use vector_repository::VectorRepository;
 
 pub mod calendar_repository;
 pub use calendar_repository::{
-    CalendarRepository,
-    CalendarMemberRepository,
-    EventRepository,
-    EventAttendeeRepository,
-    TaskRepository,
-    ResourceRepository,
+    CalendarMemberRepository, CalendarRepository, EventAttendeeRepository, EventRepository,
+    ResourceRepository, TaskRepository,
 };
 
 pub mod notification_repository;
 pub use notification_repository::{
-    NotificationPreferencesRepository,
-    PushSubscriptionRepository,
-    NotificationSentRepository,
-    NotificationTemplateRepository,
-    NotificationDigestRepository,
+    NotificationDigestRepository, NotificationPreferencesRepository, NotificationSentRepository,
+    NotificationTemplateRepository, PushSubscriptionRepository,
 };
+
+pub mod storage_tier2_repository;
+pub use storage_tier2_repository::StorageTier2Repository;

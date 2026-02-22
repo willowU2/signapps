@@ -12,6 +12,7 @@ pub mod ldap;
 pub mod notification;
 pub mod raid;
 pub mod route;
+pub mod storage_tier2;
 pub mod user;
 
 pub use backup::*;
