@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 
@@ -24,6 +24,13 @@ export function useSlides(docId: string = 'slides-demo') {
 
     // Multiplayer Awareness Map (clientId -> state)
     const [collaborators, setCollaborators] = useState<Record<number, any>>({})
+
+    // Use a ref to track activeSlideId inside closures without adding it to deps
+    const activeSlideIdRef = useRef(activeSlideId)
+    activeSlideIdRef.current = activeSlideId
+
+    // Track whether default slide initialization has already happened
+    const initializedRef = useRef(false)
 
     useEffect(() => {
         const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/slide'
@@ -69,27 +76,48 @@ export function useSlides(docId: string = 'slides-demo') {
 
         const updateSlidesHandler = () => {
             const currentSlides = ySlideList.toArray()
-            setSlides(currentSlides)
+            // Deduplicate by slide id to prevent "same key" React errors
+            const seen = new Set<string>()
+            const uniqueSlides = currentSlides.filter(s => {
+                if (seen.has(s.id)) return false
+                seen.add(s.id)
+                return true
+            })
+            setSlides(uniqueSlides)
 
             // Auto-select first slide if none selected and slides exist
-            if (currentSlides.length > 0 && !activeSlideId) {
-                setActiveSlideId(currentSlides[0].id)
+            if (uniqueSlides.length > 0 && !activeSlideIdRef.current) {
+                setActiveSlideId(uniqueSlides[0].id)
             }
         }
 
         ySlideList.observe(updateSlidesHandler)
 
-        // Init default slide if document is completely empty
-        if (ySlideList.length === 0) {
-            ySlideList.push([{ id: 'slide-01', title: 'Slide 1' }])
-        } else {
+        // Wait for sync before initializing default slides to avoid duplicates
+        // with state that already exists on the server
+        const initDefaultSlide = () => {
+            if (initializedRef.current) return
+            initializedRef.current = true
+            if (ySlideList.length === 0) {
+                ySlideList.push([{ id: 'slide-01', title: 'Slide 1' }])
+            }
             updateSlidesHandler()
         }
 
+        webrtcProvider.on('sync', (isSynced: boolean) => {
+            if (isSynced) initDefaultSlide()
+        })
+
+        // Also initialize after a short timeout for offline/local-only mode
+        const fallbackTimer = setTimeout(() => {
+            initDefaultSlide()
+        }, 1000)
+
         return () => {
+            clearTimeout(fallbackTimer)
             webrtcProvider.destroy()
         }
-    }, [docId, doc, activeSlideId])
+    }, [docId, doc])
 
     // -- 2. Active Slide Objects Management --
     useEffect(() => {

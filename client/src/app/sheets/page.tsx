@@ -1,7 +1,12 @@
 "use client"
 
+import dynamic from "next/dynamic"
 import { AppLayout } from "@/components/layout/app-layout"
-import { Spreadsheet } from "@/components/sheets/spreadsheet"
+
+const Spreadsheet = dynamic(
+    () => import("@/components/sheets/spreadsheet").then(m => ({ default: m.Spreadsheet })),
+    { ssr: false }
+)
 
 export default function SheetsPage() {
     return (
