@@ -534,6 +534,41 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
         }
     }, [floatingMode]);
 
+    // --- Global Command Bar AI Integration ---
+    useEffect(() => {
+        const handleGlobalAiAction = (e: CustomEvent) => {
+            const { action } = e.detail;
+            if (action === 'summarize') {
+                handleSummarize();
+            } else if (action === 'draft') {
+                // Open the floating AI prompt menu
+                setFloatingMode('prompt');
+                setTimeout(() => {
+                    promptInputRef.current?.focus();
+                }, 100);
+            }
+        };
+
+        const handleEditorAction = (e: CustomEvent) => {
+            const { action } = e.detail;
+            if (action === 'format-fix') {
+                // To fix the whole document if nothing is selected, select all first.
+                if (editor?.state.selection.empty) {
+                    editor.chain().focus().selectAll().run();
+                }
+                handleAiAction('fix');
+            }
+        };
+
+        window.addEventListener('app:ai-action', handleGlobalAiAction as EventListener);
+        window.addEventListener('app:editor-action', handleEditorAction as EventListener);
+
+        return () => {
+            window.removeEventListener('app:ai-action', handleGlobalAiAction as EventListener);
+            window.removeEventListener('app:editor-action', handleEditorAction as EventListener);
+        }
+    }, [handleSummarize, handleAiAction, editor]);
+
     if (!editor || !ydoc || !provider) {
         return <div className="flex items-center justify-center p-8 text-gray-500">Initializing editor...</div>;
     }
@@ -597,7 +632,7 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
                     </div>
                 </div>
 
-                {/* Google Docs Style Ribbon */}
+                {/* Formatting Ribbon */}
                 <div className="flex items-center gap-0.5 px-3 py-1.5 bg-[#edf2fa] dark:bg-[#2d2e30] rounded-full mx-4 my-2 mb-3 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] overflow-x-auto">
                     {/* Undo/Redo */}
                     <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo (Ctrl+Z)">

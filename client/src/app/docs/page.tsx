@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import DocsDashboard from '@/components/docs/dashboard';
 
 export const metadata: Metadata = {
-    title: 'Google Docs Clone - SignApps',
     description: 'Collaborative documents, sheets, slides, and boards',
 };
 

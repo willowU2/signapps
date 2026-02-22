@@ -4,7 +4,7 @@
 CREATE TABLE documents (
     id UUID PRIMARY KEY,
     name TEXT NOT NULL DEFAULT 'Untitled',
-    doc_type TEXT NOT NULL DEFAULT 'text' CHECK (doc_type IN ('text', 'sheet', 'slide', 'board')),
+    doc_type TEXT NOT NULL DEFAULT 'text' CHECK (doc_type IN ('text', 'sheet', 'slide', 'board', 'chat')),
     doc_binary BYTEA NOT NULL,
     version INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
