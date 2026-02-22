@@ -112,13 +112,28 @@ pub async fn get_channels(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<ChannelResponse>>, (StatusCode, String)> {
     let channels = sqlx::query_as::<_, ChannelRow>(
-        "SELECT id, name, topic, is_private, created_at, created_by FROM channels ORDER BY created_at DESC"
+        r#"
+        SELECT 
+            d.id, 
+            d.name, 
+            (m.metadata->>'topic') as topic,
+            COALESCE((m.metadata->>'is_private')::boolean, false) as is_private,
+            d.created_at, 
+            d.created_by 
+        FROM documents d
+        LEFT JOIN document_metadata m ON d.id = m.doc_id
+        WHERE d.doc_type = 'chat'
+        ORDER BY d.created_at DESC
+        "#,
     )
     .fetch_all(state.pool.inner())
     .await
     .map_err(|e| {
         error!("Failed to fetch channels: {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch channels".to_string())
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to fetch channels".to_string(),
+        )
     })?;
 
     let response = channels

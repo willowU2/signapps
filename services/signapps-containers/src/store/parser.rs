@@ -46,7 +46,8 @@ pub fn resolve_store_templates(value: &str, service_name: &str) -> String {
     let mut result = value.to_string();
 
     // Replace {Passwords.*} patterns with random passwords
-    let password_re = regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
+    let password_re =
+        regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}").unwrap();
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
@@ -74,7 +75,8 @@ fn resolve_for_display(value: &str) -> String {
     let mut result = value.to_string();
 
     // Replace {Passwords.*} patterns with random passwords (external format)
-    let password_re = regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
+    let password_re =
+        regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}").unwrap();
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
@@ -99,7 +101,8 @@ fn resolve_volume_for_display(source: &str) -> String {
     let mut result = source.to_string();
 
     // Replace {Passwords.*} patterns with random passwords (external format)
-    let password_re = regex::Regex::new(r"\{Passwords\.CosmosString\.[^}]+\}").unwrap();
+    let password_re =
+        regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}").unwrap();
     result = password_re
         .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
         .to_string();
