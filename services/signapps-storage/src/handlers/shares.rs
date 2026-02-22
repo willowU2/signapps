@@ -9,9 +9,8 @@ use axum::{
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
+use signapps_db::repositories::StorageTier3Repository;
 use uuid::Uuid;
-
-use crate::AppState;
 
 /// Share link information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,6 +37,28 @@ pub enum ShareAccessType {
     #[default]
     Download, // Can download
     Edit, // Can edit (for collaborative editing)
+}
+
+impl std::str::FromStr for ShareAccessType {
+    type Err = ();
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "view" => Ok(ShareAccessType::View),
+            "edit" => Ok(ShareAccessType::Edit),
+            _ => Ok(ShareAccessType::Download),
+        }
+    }
+}
+
+impl ToString for ShareAccessType {
+    fn to_string(&self) -> String {
+        match self {
+            ShareAccessType::View => "view".to_string(),
+            ShareAccessType::Download => "download".to_string(),
+            ShareAccessType::Edit => "edit".to_string(),
+        }
+    }
 }
 
 /// Create share request.
@@ -112,11 +133,10 @@ pub struct AccessShareResponse {
 }
 
 /// Create a new share link.
-#[tracing::instrument(skip(state, _user_id))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn create_share(
     State(state): State<AppState>,
-    // TODO: Extract from JWT claims
-    axum::Extension(_user_id): axum::Extension<Uuid>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Json(request): Json<CreateShareRequest>,
 ) -> Result<Json<CreateShareResponse>> {
     // Verify file exists
@@ -125,28 +145,52 @@ pub async fn create_share(
         .get_object_info(&request.bucket, &request.key)
         .await?;
 
-    let id = Uuid::new_v4();
     let token = generate_share_token();
 
     let expires_at = request
         .expires_in_hours
         .map(|hours| Utc::now() + Duration::hours(hours));
 
-    // TODO: Store share in database
-    // For now, return mock response
+    let password_hash = if let Some(pwd) = &request.password {
+        if pwd.is_empty() {
+            None
+        } else {
+            Some(
+                bcrypt::hash(pwd, bcrypt::DEFAULT_COST)
+                    .map_err(|_| Error::Internal("Failed to hash password".into()))?,
+            )
+        }
+    } else {
+        None
+    };
 
-    let base_url = std::env::var("PUBLIC_URL").unwrap_or_else(|_| "http://localhost:3004".into());
-    let url = format!("{}/api/v1/shares/{}/access", base_url, token);
+    let share = StorageTier3Repository::create_share(
+        state.pool.inner(),
+        user_id,
+        &request.bucket,
+        &request.key,
+        &token,
+        expires_at,
+        password_hash,
+        request.max_downloads,
+        &request.access_type.to_string(),
+    )
+    .await
+    .map_err(|e| Error::Internal(format!("Failed to create share: {}", e)))?;
+
+    let base_url = std::env::var("NEXT_PUBLIC_STORAGE_URL")
+        .unwrap_or_else(|_| "http://localhost:3000/api/v1".into());
+    let url = format!("{}/shares/{}/access", base_url, token);
 
     tracing::info!(
-        id = %id,
+        id = %share.id,
         bucket = %request.bucket,
         key = %request.key,
         "Share link created"
     );
 
     Ok(Json(CreateShareResponse {
-        id,
+        id: share.id,
         token,
         url,
         expires_at,
@@ -156,79 +200,212 @@ pub async fn create_share(
 /// List shares for the current user.
 #[tracing::instrument(skip(_state))]
 pub async fn list_shares(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Query(query): Query<ListSharesQuery>,
 ) -> Result<Json<ListSharesResponse>> {
-    // TODO: Query shares from database with filters
-    let _limit = query.limit.unwrap_or(50);
-    let _offset = query.offset.unwrap_or(0);
+    let active_only = query.active_only.unwrap_or(false);
+
+    let shares = StorageTier3Repository::list_shares(
+        state.pool.inner(),
+        user_id,
+        query.bucket.clone(),
+        query.key.clone(),
+        active_only,
+    )
+    .await
+    .map_err(|_| Error::Internal("Failed to list shares".into()))?;
+
+    let count = shares.len() as i64;
+
+    let mapped = shares.into_iter().map(map_share_to_api).collect();
 
     Ok(Json(ListSharesResponse {
-        shares: vec![],
-        total: 0,
+        shares: mapped,
+        total: count,
     }))
 }
 
 /// Get share details.
 #[tracing::instrument(skip(_state))]
 pub async fn get_share(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ShareLink>> {
-    // TODO: Fetch from database
-    Err(Error::NotFound(format!("Share {} not found", id)))
+    let share = StorageTier3Repository::get_share_by_id(state.pool.inner(), id)
+        .await
+        .map_err(|_| Error::NotFound(format!("Share {} not found", id)))?;
+
+    if share.created_by != user_id {
+        return Err(Error::Unauthorized("Cannot access this share".into()));
+    }
+
+    Ok(Json(map_share_to_api(share)))
 }
 
 /// Update share settings.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn update_share(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path(id): Path<Uuid>,
-    Json(_request): Json<UpdateShareRequest>,
+    Json(request): Json<UpdateShareRequest>,
 ) -> Result<Json<ShareLink>> {
-    // TODO: Update in database
-    Err(Error::NotFound(format!("Share {} not found", id)))
+    let expires_at = request
+        .expires_in_hours
+        .map(|hours| Utc::now() + Duration::hours(hours));
+
+    let password_hash = if let Some(pwd) = &request.password {
+        if pwd.is_empty() {
+            Some("".to_string()) // Marker to clear it? No, we will just say Empty=Clear
+        } else {
+            Some(
+                bcrypt::hash(pwd, bcrypt::DEFAULT_COST)
+                    .map_err(|_| Error::Internal("Failed to hash pwd".into()))?,
+            )
+        }
+    } else {
+        None
+    };
+
+    let share = StorageTier3Repository::update_share(
+        state.pool.inner(),
+        id,
+        user_id,
+        expires_at,
+        password_hash,
+        request.max_downloads,
+        request.access_type.map(|a| a.to_string()),
+        request.is_active,
+    )
+    .await
+    .map_err(|_| Error::NotFound("Failed to update share".into()))?;
+
+    Ok(Json(map_share_to_api(share)))
 }
 
 /// Delete/revoke a share.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn delete_share(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    // TODO: Delete from database
+    StorageTier3Repository::delete_share(state.pool.inner(), id, user_id)
+        .await
+        .map_err(|_| Error::Internal("Failed to delete share".into()))?;
+
     tracing::info!(id = %id, "Share link revoked");
     Ok(StatusCode::NO_CONTENT)
 }
 
+fn validate_public_share(
+    share: &signapps_db::models::storage_tier3::Share,
+    password: Option<&String>,
+) -> Result<()> {
+    if !share.is_active {
+        return Err(Error::NotFound("Share is not active".into()));
+    }
+
+    if let Some(exp) = share.expires_at {
+        if exp < Utc::now() {
+            return Err(Error::NotFound("Share link has expired".into()));
+        }
+    }
+
+    if let Some(max) = share.max_downloads {
+        if share.download_count >= max {
+            return Err(Error::NotFound(
+                "Share link has reached its maximum access limit".into(),
+            ));
+        }
+    }
+
+    if let Some(hash) = &share.password_hash {
+        if !hash.is_empty() {
+            let pwd = password.ok_or_else(|| Error::Unauthorized("Password required".into()))?;
+            if !bcrypt::verify(pwd, hash).unwrap_or(false) {
+                return Err(Error::Unauthorized("Invalid password".into()));
+            }
+        }
+    }
+
+    Ok(())
+}
+
 /// Access a shared file (public endpoint).
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state))]
 pub async fn access_share(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(token): Path<String>,
     Json(request): Json<AccessShareRequest>,
 ) -> Result<Json<AccessShareResponse>> {
-    // TODO: Fetch share from database by token
-    // TODO: Validate password if protected
-    // TODO: Check expiration
-    // TODO: Check download count
-    // TODO: Increment download count
+    let share = StorageTier3Repository::get_share_by_token(state.pool.inner(), &token)
+        .await
+        .map_err(|_| Error::NotFound("Share not found".into()))?;
 
-    // For now, return error since shares aren't stored yet
-    Err(Error::NotFound("Share not found or expired".to_string()))
+    validate_public_share(&share, request.password.as_ref())?;
+
+    let stat = state
+        .storage
+        .get_object_info(&share.bucket, &share.key)
+        .await?;
+
+    let filename = share
+        .key
+        .split('/')
+        .last()
+        .unwrap_or(&share.key)
+        .to_string();
+
+    let download_url = format!(
+        "/api/v1/shares/{}/download?password={}",
+        token,
+        request.password.unwrap_or_default()
+    );
+
+    Ok(Json(AccessShareResponse {
+        bucket: share.bucket,
+        key: share.key,
+        filename,
+        size: stat.size as i64,
+        content_type: stat
+            .content_type
+            .unwrap_or_else(|| "application/octet-stream".into()),
+        access_type: share
+            .access_type
+            .parse()
+            .unwrap_or(ShareAccessType::Download),
+        download_url: Some(download_url),
+    }))
 }
 
 /// Download shared file directly.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state))]
 pub async fn download_shared(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(token): Path<String>,
     Query(password): Query<Option<String>>,
 ) -> Result<axum::response::Response> {
-    // TODO: Same validation as access_share
-    // TODO: Stream file directly
+    let share = StorageTier3Repository::get_share_by_token(state.pool.inner(), &token)
+        .await
+        .map_err(|_| Error::NotFound("Share not found".into()))?;
 
-    Err(Error::NotFound("Share not found or expired".to_string()))
+    validate_public_share(&share, password.as_ref())?;
+
+    // Increment download count
+    let _ = StorageTier3Repository::increment_download_count(state.pool.inner(), share.id).await;
+
+    let filename = share
+        .key
+        .split('/')
+        .last()
+        .unwrap_or(&share.key)
+        .to_string();
+
+    crate::handlers::files::serve_file(&state.storage, &share.bucket, &share.key, Some(filename))
+        .await
 }
 
 /// Generate a secure random token for sharing.

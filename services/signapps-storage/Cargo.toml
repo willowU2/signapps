@@ -35,3 +35,4 @@ base64 = { workspace = true }
 rand = { workspace = true }
 urlencoding = "2"
 once_cell = { workspace = true }
+bcrypt = "0.18.0"
