@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAiStream } from "@/hooks/use-ai-stream"
 import { mailApi } from "@/lib/api-mail"
 import { toast } from "sonner"
+import { useAiRouting } from "@/hooks/use-ai-routing"
 
 interface ComposeAiDialogProps {
     open: boolean
@@ -38,6 +39,7 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
     const [generating, setGenerating] = useState(false)
 
     const { stream, stop, isStreaming } = useAiStream()
+    const { getRouteConfig } = useAiRouting()
 
     const handleGenerate = useCallback(async () => {
         if (!description.trim() || isStreaming) return
@@ -105,9 +107,11 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
                     "Output format: First line MUST be 'SUBJECT: <email subject>', then a blank line, then the email body. " +
                     "Do not include any other meta-text or explanations. Use an appropriate greeting and sign-off.",
                 language: "en",
+                provider: getRouteConfig('mail').providerId || undefined,
+                model: getRouteConfig('mail').modelId || undefined,
             },
         )
-    }, [description, recipient, isStreaming, stream])
+    }, [description, recipient, isStreaming, stream, getRouteConfig])
 
     const handleSend = async () => {
         if (!recipient.trim() || !subject.trim() || !body.trim()) {

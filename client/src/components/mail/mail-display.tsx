@@ -146,6 +146,31 @@ export function MailDisplay({ mail, onSnooze }: MailDisplayProps) {
         }
     }
 
+    // --- Global Command Bar AI Integration ---
+    useEffect(() => {
+        const handleGlobalAiAction = (e: CustomEvent) => {
+            const { action } = e.detail;
+            if (action === 'summarize-thread') {
+                if (!mail) {
+                    toast.error("Please select an email thread first.");
+                    return;
+                }
+                handleSummarize();
+            } else if (action === 'draft-reply') {
+                if (!mail) {
+                    toast.error("Please select an email to reply to.");
+                    return;
+                }
+                generateSmartReplies();
+                // Optionally scroll to reply box
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }
+        };
+
+        window.addEventListener('app:ai-action', handleGlobalAiAction as EventListener);
+        return () => window.removeEventListener('app:ai-action', handleGlobalAiAction as EventListener);
+    }, [mail, handleSummarize, generateSmartReplies]);
+
     return (
         <div className="flex h-full flex-col bg-white dark:bg-gray-950">
             <div className="flex items-center p-3 border-b border-gray-100 dark:border-gray-800/60 bg-gray-50/50 dark:bg-gray-900/30">
