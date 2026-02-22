@@ -1,225 +1,114 @@
-/**
- * Push Subscription Manager
- * Displays and manages push notification subscriptions
- */
-
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Trash2, AlertCircle, Loader } from 'lucide-react';
+import { Trash2, Loader2, MonitorSmartphone } from 'lucide-react';
 import { calendarApi } from '@/lib/api';
-import { usePushNotifications } from '@/hooks/use-push-notifications';
+import { formatDistanceToNow } from 'date-fns';
 
-export interface PushSubscription {
+interface PushSubscription {
   id: string;
-  browser_name?: string;
+  user_agent: string | null;
+  browser_name: string | null;
   created_at: string;
 }
 
-export interface PushSubscriptionManagerProps {
-  onSubscriptionChange?: (count: number) => void;
-}
-
-/**
- * Component to manage push notification subscriptions
- */
-export function PushSubscriptionManager({
-  onSubscriptionChange,
-}: PushSubscriptionManagerProps) {
+export function PushSubscriptionManager() {
   const [subscriptions, setSubscriptions] = useState<PushSubscription[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const { isSupported, isSubscribed, subscribe, unsubscribe } =
-    usePushNotifications();
 
-  // Load subscriptions on mount
   useEffect(() => {
     loadSubscriptions();
   }, []);
 
-  // Notify parent of subscription changes
-  useEffect(() => {
-    onSubscriptionChange?.(subscriptions.length);
-  }, [subscriptions.length, onSubscriptionChange]);
-
   const loadSubscriptions = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const response = await calendarApi.get(
-        '/notifications/subscriptions/push'
-      );
-
-      setSubscriptions(response.data || []);
+      const response = await calendarApi.get('/notifications/subscriptions/push');
+      setSubscriptions(response.data);
     } catch {
-      setError('Failed to load subscriptions');
+      // Ignore errors silently for now
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (subscriptionId: string) => {
+  const handleDelete = async (id: string) => {
     try {
-      setDeletingId(subscriptionId);
-      setError(null);
-
-      await calendarApi.delete(
-        `/notifications/subscriptions/push/${subscriptionId}`
-      );
-
-      setSubscriptions((prev) =>
-        prev.filter((sub) => sub.id !== subscriptionId)
-      );
-
-      // Also unsubscribe locally if this is the only subscription
-      if (subscriptions.length === 1 && isSubscribed) {
-        await unsubscribe();
-      }
+      setDeletingId(id);
+      await calendarApi.delete(`/notifications/subscriptions/push/${id}`);
+      setSubscriptions(subscriptions.filter(s => s.id !== id));
     } catch {
-      setError('Failed to delete subscription');
+      // Ignore errors silently for now
     } finally {
       setDeletingId(null);
     }
   };
 
-  const handleSubscribe = async () => {
-    try {
-      setError(null);
-      await subscribe();
-      // Reload subscriptions to show the new one
-      await loadSubscriptions();
-    } catch {
-      setError('Failed to subscribe to notifications');
-    }
-  };
-
-  if (!isSupported) {
+  if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Push Notifications
-          </CardTitle>
-          <CardDescription>
-            Push notifications are not supported in your browser
-          </CardDescription>
+          <CardTitle>Registered Devices</CardTitle>
         </CardHeader>
+        <CardContent className="flex justify-center py-4">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
       </Card>
     );
+  }
+
+  if (subscriptions.length === 0) {
+    return null; // Don't show if no subscriptions
   }
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Push Notifications
-            </CardTitle>
-            <CardDescription>
-              Manage your push notification subscriptions
-            </CardDescription>
-          </div>
-          {subscriptions.length > 0 && (
-            <Badge variant="secondary">{subscriptions.length} active</Badge>
-          )}
-        </div>
+        <CardTitle>Registered Devices</CardTitle>
+        <CardDescription>
+          These devices are currently receiving push notifications
+        </CardDescription>
       </CardHeader>
-
-      <CardContent className="space-y-4">
-        {error && (
-          <div className="flex items-start gap-2 rounded-md bg-red-50 p-3 text-sm text-red-700">
-            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <p>{error}</p>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader className="h-5 w-5 animate-spin text-gray-400" />
-          </div>
-        ) : subscriptions.length === 0 ? (
-          <div className="text-center py-8">
-            <Bell className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-            <p className="text-sm text-gray-600 mb-4">
-              No active subscriptions
-            </p>
-            <Button onClick={handleSubscribe} variant="outline">
-              Subscribe Now
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {subscriptions.map((sub) => (
-              <div
-                key={sub.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <Bell className="h-4 w-4 text-blue-600" />
-                    <p className="text-sm font-medium">
-                      {sub.browser_name || 'Browser'}
-                    </p>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Subscribed {new Date(sub.created_at).toLocaleDateString()}
-                  </p>
+      <CardContent>
+        <div className="space-y-4">
+          {subscriptions.map((sub) => (
+            <div key={sub.id} className="flex items-center justify-between p-3 border rounded-lg bg-card">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-muted rounded-full">
+                  <MonitorSmartphone className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(sub.id)}
-                  disabled={deletingId === sub.id}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  {deletingId === sub.id ? (
-                    <Loader className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                </Button>
+                <div>
+                  <div className="font-medium text-sm flex items-center gap-2">
+                    {sub.browser_name || 'Unknown Browser'}
+                    <span className="text-xs text-muted-foreground">
+                      (Added {formatDistanceToNow(new Date(sub.created_at))} ago)
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground max-w-sm truncate mt-0.5" title={sub.user_agent || ''}>
+                    {sub.user_agent || 'Unknown device'}
+                  </div>
+                </div>
               </div>
-            ))}
-
-            <Button
-              onClick={handleSubscribe}
-              variant="outline"
-              className="w-full"
-            >
-              <Bell className="h-4 w-4 mr-2" />
-              Add Another Device
-            </Button>
-          </div>
-        )}
-
-        <div className="border-t pt-4 text-xs text-gray-600">
-          <p className="font-medium text-gray-700 mb-2">About Push Notifications:</p>
-          <ul className="space-y-1">
-            <li>• You'll receive notifications even when the app is closed</li>
-            <li>• Notifications are sent to all your subscribed devices</li>
-            <li>• You can subscribe from multiple browsers and devices</li>
-            <li>
-              • Unsubscribe anytime to stop receiving notifications on a device
-            </li>
-          </ul>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(sub.id)}
+                disabled={deletingId === sub.id}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                {deletingId === sub.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
   );
 }
-
-export default PushSubscriptionManager;

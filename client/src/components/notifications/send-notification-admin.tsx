@@ -1,197 +1,118 @@
-/**
- * Send Notification Admin Component
- * Admin-only tool to send test notifications
- */
-
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle, Loader, Send } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import { Loader2, Send } from 'lucide-react';
 import { calendarApi } from '@/lib/api';
 
-/**
- * Admin component to send notifications for testing
- */
 export function SendNotificationAdmin() {
+  const [loading, setLoading] = useState(false);
+  const [channel, setChannel] = useState('push');
+  const [type, setType] = useState('event_reminder');
   const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [notificationType, setNotificationType] = useState('event_reminder');
-  const [sendToAll, setSendToAll] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!title.trim() || !body.trim()) {
-      setError('Title and body are required');
+  const handleSendTest = async () => {
+    if (!title || !message) {
+      toast.error('Please enter a title and message');
       return;
     }
 
+    setLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
-      setSuccess(false);
-
-      const response = await calendarApi.post(
-        '/notifications/push/send',
-        {
-          title: title.trim(),
-          body: body.trim(),
-          notification_type: notificationType,
-          send_to_all: sendToAll,
-          data: {
-            test: true,
-            timestamp: new Date().toISOString(),
-          },
-        }
-      );
-
-      setSuccess(true);
+      await calendarApi.post('/notifications/push/send', {
+        channel,
+        type,
+        title,
+        message,
+        recipient: 'self', // Send to current user
+      });
+      toast.success('Test notification queued successfully');
       setTitle('');
-      setBody('');
-
-      // Show result
-      const result = response.data;
-      if (result.failed > 0) {
-        setError(`Sent: ${result.successful}/${result.total} (Failed: ${result.failed})`);
-      } else {
-        setError(`✅ Successfully sent to ${result.successful} subscriptions`);
-      }
-
-      // Clear success message after 5 seconds
-      setTimeout(() => setSuccess(false), 5000);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send notification';
-      setError(errorMessage);
+      setMessage('');
+    } catch {
+      toast.error('Failed to send test notification or endpoint not implemented');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <Card className="border-amber-200 bg-amber-50">
+    <Card className="border-dashed bg-muted/30">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-amber-600" />
-          Send Test Notification (Admin Only)
-        </CardTitle>
+        <CardTitle className="text-lg">Admin / Developer Testing</CardTitle>
         <CardDescription>
-          Send a notification to all subscribed devices for testing
+          Send a test notification to yourself to verify delivery
         </CardDescription>
       </CardHeader>
-
-      <CardContent>
-        <form onSubmit={handleSend} className="space-y-4">
-          {error && (
-            <div className={`flex items-start gap-2 rounded-md p-3 ${
-              success ? 'bg-green-50' : 'bg-red-50'
-            }`}>
-              {success ? (
-                <CheckCircle className={`h-5 w-5 mt-0.5 flex-shrink-0 ${success ? 'text-green-600' : 'text-red-600'}`} />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-              )}
-              <p className={`text-sm ${success ? 'text-green-700' : 'text-red-700'}`}>
-                {error}
-              </p>
-            </div>
-          )}
-
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              placeholder="Notification title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={isLoading}
-              maxLength={100}
-            />
+            <Label>Channel</Label>
+            <Select value={channel} onValueChange={setChannel}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select channel" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="push">Browser Push</SelectItem>
+                <SelectItem value="sms">SMS</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="body">Message</Label>
-            <Textarea
-              id="body"
-              placeholder="Notification message body"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              disabled={isLoading}
-              maxLength={500}
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="type">Type</Label>
-            <Select value={notificationType} onValueChange={setNotificationType} disabled={isLoading}>
-              <SelectTrigger id="type">
-                <SelectValue />
+            <Label>Type</Label>
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="event_reminder">Event Reminder</SelectItem>
-                <SelectItem value="task_due">Task Due</SelectItem>
-                <SelectItem value="attendee_response">Attendee Response</SelectItem>
-                <SelectItem value="calendar_invite">Calendar Invite</SelectItem>
-                <SelectItem value="test">Test Notification</SelectItem>
+                <SelectItem value="task_assignment">Task Assignment</SelectItem>
+                <SelectItem value="daily_digest">Daily Digest</SelectItem>
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="recipient">Send To</Label>
-            <Select value={sendToAll ? 'all' : 'specific'} onValueChange={(v) => setSendToAll(v === 'all')} disabled={isLoading}>
-              <SelectTrigger id="recipient">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Subscriptions</SelectItem>
-                <SelectItem value="specific">Specific Device (Coming Soon)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-2">
+          <Label>Title / Subject</Label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="E.g., Reminder: Project Sync"
+          />
+        </div>
 
-          <Button
-            type="submit"
-            disabled={isLoading || !title.trim() || !body.trim()}
-            className="w-full"
-          >
-            {isLoading ? (
-              <>
-                <Loader className="h-4 w-4 mr-2 animate-spin" />
-                Sending...
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4 mr-2" />
-                Send Test Notification
-              </>
-            )}
-          </Button>
-        </form>
+        <div className="space-y-2">
+          <Label>Message Body</Label>
+          <Textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Notification content..."
+            rows={3}
+          />
+        </div>
+
+        <Button
+          onClick={handleSendTest}
+          disabled={loading || !title || !message}
+          className="w-full"
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4 mr-2" />
+          )}
+          Send Test Notification
+        </Button>
       </CardContent>
     </Card>
   );
 }
-
-export default SendNotificationAdmin;
