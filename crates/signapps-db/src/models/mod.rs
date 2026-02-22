@@ -13,6 +13,7 @@ pub mod notification;
 pub mod raid;
 pub mod route;
 pub mod storage_tier2;
+pub mod storage_tier3;
 pub mod user;
 
 pub use backup::*;
@@ -27,4 +28,5 @@ pub use ldap::*;
 pub use notification::*;
 pub use raid::*;
 pub use route::*;
+pub use storage_tier3::*;
 pub use user::*;

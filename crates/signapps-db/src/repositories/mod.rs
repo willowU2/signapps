@@ -43,3 +43,6 @@ pub use notification_repository::{
 
 pub mod storage_tier2_repository;
 pub use storage_tier2_repository::StorageTier2Repository;
+
+pub mod storage_tier3_repository;
+pub use storage_tier3_repository::StorageTier3Repository;
