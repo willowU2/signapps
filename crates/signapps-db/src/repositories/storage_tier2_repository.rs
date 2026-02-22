@@ -243,4 +243,49 @@ impl StorageTier2Repository {
         .fetch_one(pool)
         .await
     }
+
+    // ==========================================
+    // METADATA HELPERS FOR VERSION RESTORATION
+    // ==========================================
+
+    /// Get current metadata for a file
+    pub async fn get_file_info(
+        pool: &PgPool,
+        file_id: Uuid,
+    ) -> Result<(String, String, i64, Option<String>), sqlx::Error> {
+        let row = sqlx::query!(
+            r#"
+            SELECT bucket, key, size, content_type
+            FROM storage.files
+            WHERE id = $1
+            "#,
+            file_id
+        )
+        .fetch_one(pool)
+        .await?;
+
+        Ok((row.bucket, row.key, row.size, row.content_type))
+    }
+
+    /// Update file size and content type after restoration
+    pub async fn update_file_metadata(
+        pool: &PgPool,
+        file_id: Uuid,
+        size: i64,
+        content_type: Option<String>,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE storage.files
+            SET size = $1, content_type = $2, updated_at = NOW()
+            WHERE id = $3
+            "#,
+            size,
+            content_type,
+            file_id
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
 }

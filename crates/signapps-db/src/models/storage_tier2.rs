@@ -10,8 +10,8 @@ pub struct Tag {
     pub user_id: Uuid,
     pub name: String,
     pub color: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 /// Request to create a new tag
@@ -33,7 +33,7 @@ pub struct UpdateTagRequest {
 pub struct FileTag {
     pub file_id: Uuid,
     pub tag_id: Uuid,
-    pub created_at: DateTime<Utc>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 /// Represents a specific version of a file in storage
@@ -45,7 +45,7 @@ pub struct FileVersion {
     pub size: i64,
     pub content_type: Option<String>,
     pub storage_key: String,
-    pub created_at: DateTime<Utc>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 /// Response returned when fetching tags for a file

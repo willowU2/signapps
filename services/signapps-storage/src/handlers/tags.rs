@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use signapps_common::middleware::Claims;
+
 use signapps_db::models::storage_tier2::{CreateTagRequest, UpdateTagRequest};
 use signapps_db::repositories::storage_tier2_repository::StorageTier2Repository;
 use tracing::error;
@@ -25,9 +25,9 @@ where
 
 pub async fn list_tags(
     State(state): State<AppState>,
-    claims: Claims,
+    axum::Extension(user_id): axum::Extension<Uuid>,
 ) -> Result<Json<Vec<signapps_db::models::storage_tier2::Tag>>, (StatusCode, String)> {
-    let tags = StorageTier2Repository::get_user_tags(state.pool.inner(), claims.sub)
+    let tags = StorageTier2Repository::get_user_tags(state.pool.inner(), user_id)
         .await
         .map_err(internal_error)?;
 
@@ -36,10 +36,10 @@ pub async fn list_tags(
 
 pub async fn create_tag(
     State(state): State<AppState>,
-    claims: Claims,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Json(payload): Json<CreateTagRequest>,
 ) -> Result<(StatusCode, Json<signapps_db::models::storage_tier2::Tag>), (StatusCode, String)> {
-    let tag = StorageTier2Repository::create_tag(state.pool.inner(), claims.sub, &payload)
+    let tag = StorageTier2Repository::create_tag(state.pool.inner(), user_id, &payload)
         .await
         .map_err(internal_error)?;
 
@@ -48,11 +48,11 @@ pub async fn create_tag(
 
 pub async fn update_tag(
     State(state): State<AppState>,
-    claims: Claims,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path(tag_id): Path<Uuid>,
     Json(payload): Json<UpdateTagRequest>,
 ) -> Result<Json<signapps_db::models::storage_tier2::Tag>, (StatusCode, String)> {
-    let tag = StorageTier2Repository::update_tag(state.pool.inner(), tag_id, claims.sub, &payload)
+    let tag = StorageTier2Repository::update_tag(state.pool.inner(), tag_id, user_id, &payload)
         .await
         .map_err(internal_error)?;
 
@@ -61,10 +61,10 @@ pub async fn update_tag(
 
 pub async fn delete_tag(
     State(state): State<AppState>,
-    claims: Claims,
+    axum::Extension(user_id): axum::Extension<Uuid>,
     Path(tag_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let affected = StorageTier2Repository::delete_tag(state.pool.inner(), tag_id, claims.sub)
+    let affected = StorageTier2Repository::delete_tag(state.pool.inner(), tag_id, user_id)
         .await
         .map_err(internal_error)?;
 

@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use signapps_common::middleware::Claims;
+
 use signapps_db::repositories::storage_tier2_repository::StorageTier2Repository;
 use tracing::error;
 use uuid::Uuid;
@@ -31,7 +31,7 @@ pub async fn list_versions(
 
 pub async fn restore_version(
     State(state): State<AppState>,
-    claims: Claims,
+    axum::Extension(_user_id): axum::Extension<Uuid>,
     Path((file_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
     // 1. Validate the version exists
@@ -39,12 +39,60 @@ pub async fn restore_version(
         .await
         .map_err(|_| (StatusCode::NOT_FOUND, "Version not found".into()))?;
 
-    // In a real implementation:
-    // 2. We would copy the file content from `version.storage_key` to the current file's key
-    // 3. Or update the pointers in `storage.files` to point to the older data
+    // 2. Need to ensure the version belongs to the actual file being requested
+    if version.file_id != file_id {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Version does not belong to this file".into(),
+        ));
+    }
 
-    // For now, we return 501 Not Implemented since the OpenDAL copy logic
-    // would belong here but requires the storage `operator`.
+    // 3. Get the current active file info
+    let (bucket, key, active_size, active_content_type) =
+        StorageTier2Repository::get_file_info(state.pool.inner(), file_id)
+            .await
+            .map_err(|_| (StatusCode::NOT_FOUND, "Active file not found".into()))?;
 
-    Ok(StatusCode::NOT_IMPLEMENTED)
+    // 4. Archive the current active file before overwriting it (safety measure)
+    // We create a new version record for the active blob so it's not lost
+    let archive_key = format!("versions/{}/{}", file_id, Uuid::new_v4());
+
+    // Copy the active blob to a new archive location
+    state
+        .storage
+        .copy_object(&bucket, &key, &bucket, &archive_key)
+        .await
+        .map_err(internal_error)?;
+
+    // Insert the new version record for the active state
+    StorageTier2Repository::add_file_version(
+        state.pool.inner(),
+        file_id,
+        active_size,
+        active_content_type.clone(),
+        archive_key,
+    )
+    .await
+    .map_err(internal_error)?;
+
+    // 5. Restore the requested version's payload over the active file key
+    state
+        .storage
+        .copy_object(&bucket, &version.storage_key, &bucket, &key)
+        .await
+        .map_err(internal_error)?;
+
+    // 6. Update the active file metadata reflecting the restored version
+    StorageTier2Repository::update_file_metadata(
+        state.pool.inner(),
+        file_id,
+        version.size,
+        version.content_type.clone(),
+    )
+    .await
+    .map_err(internal_error)?;
+
+    // Note: Quotas logic shouldn't strictly require recalculation here because we just overwrote bytes, but storage quotas for the new archive version should ideally be incremented in a full prod app.
+
+    Ok(StatusCode::OK)
 }
