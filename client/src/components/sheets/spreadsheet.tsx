@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { useSpreadsheet } from "./use-spreadsheet"
-import { CellStyle, CellData, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS } from "./types"
+import { AiSheetsDialog } from "./ai-sheets-dialog"
+import { CellStyle, CellData, CellValidation, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
 import {
     AlignLeft, AlignCenter, AlignRight, Sparkles,
@@ -11,9 +12,10 @@ import {
     Printer, Paintbrush, Percent, Maximize, ChevronDown, Minus,
     AlignVerticalJustifyCenter, WrapText, RotateCw, MessageSquare, BarChart2, Filter, Sigma,
     Link, X, Scissors, Copy, ClipboardPaste, ArrowUp, ArrowDown,
-    Trash2, ChevronRight, Grid3X3, Download,
+    Trash2, ChevronRight, Grid3X3, Download, Upload,
     BoxSelect, Square, Columns, Rows, Search, Replace, Snowflake,
-    ChevronLeft, ChevronsRight, ChevronsLeft, Palette
+    ChevronLeft, ChevronsRight, ChevronsLeft, Palette,
+    ListChecks, ExternalLink, StretchHorizontal, Lock, Unlock, Hash
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -21,14 +23,96 @@ const ALIGN_CYCLE: ('left' | 'center' | 'right')[] = ['left', 'center', 'right']
 const VALIGN_CYCLE: ('top' | 'middle' | 'bottom')[] = ['top', 'middle', 'bottom']
 const VIRT_BUFFER = 8 // extra rows/cols rendered outside viewport
 
+const ALL_FUNCTIONS = [
+    { name: 'SUM', desc: 'Somme d\'une plage', syntax: 'SUM(plage)' },
+    { name: 'AVERAGE', desc: 'Moyenne', syntax: 'AVERAGE(plage)' },
+    { name: 'COUNT', desc: 'Nombre de valeurs numériques', syntax: 'COUNT(plage)' },
+    { name: 'COUNTA', desc: 'Nombre de valeurs non vides', syntax: 'COUNTA(plage)' },
+    { name: 'MAX', desc: 'Maximum', syntax: 'MAX(plage)' },
+    { name: 'MIN', desc: 'Minimum', syntax: 'MIN(plage)' },
+    { name: 'MEDIAN', desc: 'Médiane', syntax: 'MEDIAN(plage)' },
+    { name: 'STDEV', desc: 'Écart type', syntax: 'STDEV(plage)' },
+    { name: 'IF', desc: 'Condition', syntax: 'IF(test, si_vrai, si_faux)' },
+    { name: 'IFERROR', desc: 'Si erreur', syntax: 'IFERROR(valeur, si_erreur)' },
+    { name: 'AND', desc: 'ET logique', syntax: 'AND(val1, val2, ...)' },
+    { name: 'OR', desc: 'OU logique', syntax: 'OR(val1, val2, ...)' },
+    { name: 'NOT', desc: 'NON logique', syntax: 'NOT(valeur)' },
+    { name: 'VLOOKUP', desc: 'Recherche verticale', syntax: 'VLOOKUP(clé, plage, col, [approx])' },
+    { name: 'HLOOKUP', desc: 'Recherche horizontale', syntax: 'HLOOKUP(clé, plage, ligne, [approx])' },
+    { name: 'INDEX', desc: 'Valeur à position', syntax: 'INDEX(plage, ligne, col)' },
+    { name: 'MATCH', desc: 'Position d\'une valeur', syntax: 'MATCH(clé, plage)' },
+    { name: 'CONCATENATE', desc: 'Concaténer', syntax: 'CONCATENATE(texte1, texte2, ...)' },
+    { name: 'ROUND', desc: 'Arrondir', syntax: 'ROUND(nombre, décimales)' },
+    { name: 'ROUNDUP', desc: 'Arrondir au supérieur', syntax: 'ROUNDUP(nombre, décimales)' },
+    { name: 'ROUNDDOWN', desc: 'Arrondir à l\'inférieur', syntax: 'ROUNDDOWN(nombre, décimales)' },
+    { name: 'ABS', desc: 'Valeur absolue', syntax: 'ABS(nombre)' },
+    { name: 'SQRT', desc: 'Racine carrée', syntax: 'SQRT(nombre)' },
+    { name: 'POWER', desc: 'Puissance', syntax: 'POWER(base, exposant)' },
+    { name: 'MOD', desc: 'Modulo', syntax: 'MOD(nombre, diviseur)' },
+    { name: 'INT', desc: 'Entier', syntax: 'INT(nombre)' },
+    { name: 'LEN', desc: 'Longueur', syntax: 'LEN(texte)' },
+    { name: 'UPPER', desc: 'Majuscules', syntax: 'UPPER(texte)' },
+    { name: 'LOWER', desc: 'Minuscules', syntax: 'LOWER(texte)' },
+    { name: 'TRIM', desc: 'Supprimer espaces', syntax: 'TRIM(texte)' },
+    { name: 'LEFT', desc: 'Caractères à gauche', syntax: 'LEFT(texte, nb)' },
+    { name: 'RIGHT', desc: 'Caractères à droite', syntax: 'RIGHT(texte, nb)' },
+    { name: 'MID', desc: 'Sous-chaîne', syntax: 'MID(texte, début, longueur)' },
+    { name: 'SUBSTITUTE', desc: 'Remplacer texte', syntax: 'SUBSTITUTE(texte, ancien, nouveau)' },
+    { name: 'FIND', desc: 'Trouver (sensible casse)', syntax: 'FIND(chercher, texte)' },
+    { name: 'SEARCH', desc: 'Chercher (insensible casse)', syntax: 'SEARCH(chercher, texte)' },
+    { name: 'PROPER', desc: 'Première lettre majuscule', syntax: 'PROPER(texte)' },
+    { name: 'EXACT', desc: 'Comparaison exacte', syntax: 'EXACT(texte1, texte2)' },
+    { name: 'TEXT', desc: 'Formater nombre en texte', syntax: 'TEXT(nombre, format)' },
+    { name: 'VALUE', desc: 'Texte en nombre', syntax: 'VALUE(texte)' },
+    { name: 'TODAY', desc: 'Date du jour', syntax: 'TODAY()' },
+    { name: 'NOW', desc: 'Date et heure actuelles', syntax: 'NOW()' },
+    { name: 'DATE', desc: 'Créer une date', syntax: 'DATE(année, mois, jour)' },
+    { name: 'YEAR', desc: 'Année d\'une date', syntax: 'YEAR(date)' },
+    { name: 'MONTH', desc: 'Mois d\'une date', syntax: 'MONTH(date)' },
+    { name: 'DAY', desc: 'Jour d\'une date', syntax: 'DAY(date)' },
+    { name: 'COUNTIF', desc: 'Compter si condition', syntax: 'COUNTIF(plage, critère)' },
+    { name: 'COUNTIFS', desc: 'Compter si multi-conditions', syntax: 'COUNTIFS(plage1, crit1, ...)' },
+    { name: 'SUMIF', desc: 'Somme si condition', syntax: 'SUMIF(plage, critère, [somme_plage])' },
+    { name: 'SUMIFS', desc: 'Somme si multi-conditions', syntax: 'SUMIFS(somme, plage1, crit1, ...)' },
+    { name: 'AVERAGEIF', desc: 'Moyenne si condition', syntax: 'AVERAGEIF(plage, critère, [moy_plage])' },
+    { name: 'LARGE', desc: 'K-ième plus grand', syntax: 'LARGE(plage, k)' },
+    { name: 'SMALL', desc: 'K-ième plus petit', syntax: 'SMALL(plage, k)' },
+    { name: 'RANK', desc: 'Rang', syntax: 'RANK(nombre, plage, [ordre])' },
+    { name: 'CHOOSE', desc: 'Choisir par index', syntax: 'CHOOSE(index, val1, val2, ...)' },
+    { name: 'REPT', desc: 'Répéter texte', syntax: 'REPT(texte, nb)' },
+    { name: 'LOG', desc: 'Logarithme', syntax: 'LOG(nombre, [base])' },
+    { name: 'LN', desc: 'Logarithme naturel', syntax: 'LN(nombre)' },
+    { name: 'EXP', desc: 'Exponentielle', syntax: 'EXP(nombre)' },
+    { name: 'PI', desc: 'Pi', syntax: 'PI()' },
+    { name: 'RAND', desc: 'Nombre aléatoire', syntax: 'RAND()' },
+    { name: 'RANDBETWEEN', desc: 'Aléatoire entre bornes', syntax: 'RANDBETWEEN(min, max)' },
+    { name: 'CEILING', desc: 'Plafond', syntax: 'CEILING(nombre, [signif])' },
+    { name: 'FLOOR', desc: 'Plancher', syntax: 'FLOOR(nombre, [signif])' },
+    { name: 'SPARKLINE', desc: 'Mini-graphique dans la cellule', syntax: 'SPARKLINE(plage, [type])' },
+]
+
 function formatDisplayValue(value: string, style?: CellStyle): string {
-    if (!style?.numberFormat || value === '' || isNaN(Number(value))) return value
+    if (!style?.numberFormat || style.numberFormat === 'auto' || value === '' || isNaN(Number(value))) return value
     const num = Number(value)
     const dec = style.decimals ?? 2
     switch (style.numberFormat) {
         case 'currency': return `${num.toFixed(dec)} \u20AC`
         case 'percent': return `${(num * 100).toFixed(dec)}%`
         case 'number': return num.toFixed(dec)
+        case 'accounting': return num < 0 ? `(${Math.abs(num).toFixed(dec)} \u20AC)` : `${num.toFixed(dec)} \u20AC`
+        case 'scientific': return num.toExponential(dec)
+        case 'date': {
+            const d = new Date(1900, 0, num - 1)
+            if (isNaN(d.getTime())) return value
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        }
+        case 'time': {
+            const totalSeconds = Math.round(num * 86400)
+            const h = Math.floor(totalSeconds / 3600)
+            const m = Math.floor((totalSeconds % 3600) / 60)
+            const s = totalSeconds % 60
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+        }
         default: return value
     }
 }
@@ -283,19 +367,101 @@ function CondFormatDialog({ rules, onAdd, onRemove, onClose }: {
 }
 
 
+// ---- Sparkline Cell ----
+function SparklineCell({ value, width, height }: { value: string, width: number, height: number }) {
+    const parts = value.replace('__SPARKLINE__:', '').split(':')
+    const type = parts[0]
+    const values = parts[1].split(',').map(Number)
+    const max = Math.max(...values, 1)
+    const min = Math.min(...values, 0)
+    const range = max - min || 1
+    const w = Math.max(width - 4, 20)
+    const h = Math.max(height - 4, 10)
+
+    if (type === 'bar' || type === 'column') {
+        const barW = w / values.length - 1
+        return (
+            <svg width={w} height={h} className="mx-auto">
+                {values.map((v, i) => {
+                    const barH = ((v - min) / range) * h
+                    return <rect key={i} x={i * (barW + 1)} y={h - barH} width={barW} height={barH} fill="#4a86e8" />
+                })}
+            </svg>
+        )
+    }
+    const points = values.map((v, i) => {
+        const x = (i / Math.max(values.length - 1, 1)) * w
+        const y = h - ((v - min) / range) * h
+        return `${x},${y}`
+    }).join(' ')
+    return (
+        <svg width={w} height={h} className="mx-auto">
+            <polyline points={points} fill="none" stroke="#4a86e8" strokeWidth={1.5} />
+        </svg>
+    )
+}
+
+// ---- Filter Dialog ----
+function FilterDialog({ col, data, onApply, onClose }: {
+    col: number, data: Record<string, CellData>, onApply: (values: Set<string>) => void, onClose: () => void
+}) {
+    const uniqueValues = useMemo(() => {
+        const values: string[] = []
+        for (let r = 0; r < ROWS; r++) {
+            const v = data[`${r},${col}`]?.value
+            if (v && !values.includes(v)) values.push(v)
+        }
+        return values.sort()
+    }, [col, data])
+
+    const [checked, setChecked] = useState<Set<string>>(new Set(uniqueValues))
+    const [search, setSearch] = useState('')
+    const filtered = search ? uniqueValues.filter(v => v.toLowerCase().includes(search.toLowerCase())) : uniqueValues
+
+    return (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[200]" onClick={onClose}>
+            <div className="bg-white dark:bg-[#2d2e30] rounded-xl shadow-2xl p-4 w-[300px] max-h-[60vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-3">
+                    <span className="font-medium text-sm">Filtrer colonne {indexToCol(col)}</span>
+                    <button onClick={onClose}><X className="w-4 h-4" /></button>
+                </div>
+                <input className="h-7 bg-[#f1f3f4] dark:bg-[#3c4043] rounded px-2 text-[12px] outline-none mb-2" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} />
+                <div className="flex gap-2 mb-2 text-[11px]">
+                    <button className="text-[#1a73e8] hover:underline" onClick={() => setChecked(new Set(uniqueValues))}>Tout</button>
+                    <button className="text-[#1a73e8] hover:underline" onClick={() => setChecked(new Set())}>Aucun</button>
+                </div>
+                <div className="flex-1 overflow-y-auto space-y-0.5 mb-3 max-h-[200px]">
+                    {filtered.map(val => (
+                        <label key={val} className="flex items-center gap-2 px-2 py-1 hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded text-[12px] cursor-pointer">
+                            <input type="checkbox" checked={checked.has(val)} onChange={() => { const next = new Set(checked); if (next.has(val)) next.delete(val); else next.add(val); setChecked(next) }} className="accent-[#1a73e8]" />
+                            <span className="truncate">{val}</span>
+                        </label>
+                    ))}
+                    {filtered.length === 0 && <span className="text-[12px] text-[#5f6368] px-2">Aucune valeur</span>}
+                </div>
+                <div className="flex gap-2">
+                    <button className="flex-1 h-8 border border-[#dadce0] rounded text-[13px] hover:bg-[#f1f3f4]" onClick={onClose}>Annuler</button>
+                    <button className="flex-1 h-8 bg-[#1a73e8] text-white rounded text-[13px] hover:bg-[#1557b0]" onClick={() => { onApply(checked); onClose() }}>Appliquer</button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 // ============================================================
 // MAIN SPREADSHEET COMPONENT
 // ============================================================
 export function Spreadsheet() {
     const ss = useSpreadsheet("sheet-demo")
     const {
-        data, setCell, setCellStyle, setCellFull, deleteCell, deleteCellRange,
-        getCellRange, setCellRange,
+        data, setCell, setCellStyle, setCellFull, setCellComment, setCellValidation,
+        deleteCell, deleteCellRange, getCellRange, setCellRange,
         insertRow, deleteRow, insertColumn, deleteColumn,
         sortColumn, mergeCells, unmergeCells,
         isConnected, undo, redo, canUndo, canRedo,
         sheets, activeSheetIndex, setActiveSheetIndex,
-        addSheet, removeSheet, renameSheet,
+        addSheet, removeSheet, renameSheet, setSheetColor,
+        getCrossSheetValue,
     } = ss
 
     // Selection
@@ -363,12 +529,43 @@ export function Spreadsheet() {
     const [condRules, setCondRules] = useState<CondRule[]>([])
     const [showCondFormat, setShowCondFormat] = useState(false)
 
+    // Comments
+    const [hoveredComment, setHoveredComment] = useState<{ r: number, c: number, x: number, y: number } | null>(null)
+
+    // Data validation dropdown
+    const [validationDropdown, setValidationDropdown] = useState<{ r: number, c: number } | null>(null)
+
+    // Tab color picker
+    const [showTabColorPicker, setShowTabColorPicker] = useState<number | null>(null)
+
+    // Alternating row colors
+    const [bandedRows, setBandedRows] = useState(false)
+
+    // Rotation input
+    const [showRotationInput, setShowRotationInput] = useState(false)
+
+    // Advanced filter dialog
+    const [showFilterDialog, setShowFilterDialog] = useState(false)
+
+    // Number format dropdown
+    const [showNumberFormat, setShowNumberFormat] = useState(false)
+
     // Virtualization
     const gridRef = useRef<HTMLDivElement>(null)
     const [scrollTop, setScrollTop] = useState(0)
     const [scrollLeft, setScrollLeft] = useState(0)
     const [viewportW, setViewportW] = useState(1200)
     const [viewportH, setViewportH] = useState(600)
+
+    // Formula autocomplete
+    const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([])
+    const [autocompleteIdx, setAutocompleteIdx] = useState(0)
+
+    // AI Sheets Dialog
+    const [showAiDialog, setShowAiDialog] = useState(false)
+
+    // CSV import ref
+    const csvInputRef = useRef<HTMLInputElement>(null)
 
     // Formula cache
     const [evaluatedData, setEvaluatedData] = useState<Record<string, string>>({})
@@ -454,18 +651,36 @@ export function Spreadsheet() {
     // ---- Formula recalculation (optimized: only cells with data) ----
     useEffect(() => {
         const newData: Record<string, string> = {}
-        const getData = (r: number, c: number) => data[`${r},${c}`]?.value || ""
+        const getData = (r: number, c: number, sheet?: string) => {
+            if (sheet) return getCrossSheetValue(sheet, r, c)
+            return data[`${r},${c}`]?.value || ""
+        }
         const keys = Object.keys(data)
         for (const key of keys) {
             newData[key] = evaluateFormula(data[key].value, getData, { r: parseInt(key), c: parseInt(key.split(',')[1]) }, new Set())
         }
         setEvaluatedData(newData)
-    }, [data])
+    }, [data, getCrossSheetValue])
 
     // Sync edit value
     useEffect(() => {
         if (activeCell && !isEditing) setEditValue(data[`${activeCell.r},${activeCell.c}`]?.value || "")
     }, [activeCell, data, isEditing])
+
+    // Formula autocomplete suggestions
+    useEffect(() => {
+        if (!isEditing || !editValue.startsWith('=')) { setAutocompleteSuggestions([]); return }
+        // Extract the last function-like token being typed
+        const match = editValue.toUpperCase().match(/(?:^=|[(,+\-*/])([A-Z]{1,15})$/)
+        if (match) {
+            const partial = match[1]
+            const filtered = ALL_FUNCTIONS.filter(f => f.name.startsWith(partial)).slice(0, 8)
+            setAutocompleteSuggestions(filtered.map(f => f.name))
+            setAutocompleteIdx(0)
+        } else {
+            setAutocompleteSuggestions([])
+        }
+    }, [editValue, isEditing])
 
     // Close popovers
     useEffect(() => {
@@ -474,6 +689,7 @@ export function Spreadsheet() {
             if (!target.closest('[data-popover]')) {
                 setShowTextColor(false); setShowFillColor(false); setShowFontPicker(false)
                 setShowFunctionHelper(false); setShowBorderPicker(false); setShowChartPicker(false)
+                setShowNumberFormat(false)
             }
         }
         document.addEventListener('mousedown', handler)
@@ -615,7 +831,7 @@ export function Spreadsheet() {
         clipboardRef.current = { data: range, bounds: selectionBounds }
         setIsCut(false)
         const text = range.map(row => row.map(c => c?.value || '').join('\t')).join('\n')
-        navigator.clipboard?.writeText(text).catch(() => {})
+        navigator.clipboard?.writeText(text).catch(() => { })
         toast.success('Copi\u00E9')
     }, [selectionBounds, getCellRange])
 
@@ -634,13 +850,59 @@ export function Spreadsheet() {
                 if (isCut && clipboardRef.current) { deleteCellRange(clipboardRef.current.bounds.minR, clipboardRef.current.bounds.maxR, clipboardRef.current.bounds.minC, clipboardRef.current.bounds.maxC); setIsCut(false) }
                 toast.success('Coll\u00E9'); return
             }
-        } catch {}
+        } catch { }
         if (clipboardRef.current) {
             setCellRange(activeCell.r, activeCell.c, clipboardRef.current.data)
             if (isCut) { deleteCellRange(clipboardRef.current.bounds.minR, clipboardRef.current.bounds.maxR, clipboardRef.current.bounds.minC, clipboardRef.current.bounds.maxC); setIsCut(false) }
             toast.success('Coll\u00E9')
         }
     }, [activeCell, isCut, setCell, setCellRange, deleteCellRange])
+
+    // ---- Smart Auto-fill helpers ----
+    const DAYS_FR = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
+    const DAYS_EN = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    const DAYS_SHORT_FR = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim']
+    const DAYS_SHORT_EN = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+    const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+    const MONTHS_EN = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+    const MONTHS_SHORT_FR = ['jan', 'fév', 'mar', 'avr', 'mai', 'jun', 'jul', 'aoû', 'sep', 'oct', 'nov', 'déc']
+    const MONTHS_SHORT_EN = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+
+    const detectSequence = useCallback((values: string[]): ((index: number) => string) | null => {
+        if (values.length === 0) return null
+        // Check cyclic patterns (days, months)
+        const cyclicLists = [DAYS_FR, DAYS_EN, DAYS_SHORT_FR, DAYS_SHORT_EN, MONTHS_FR, MONTHS_EN, MONTHS_SHORT_FR, MONTHS_SHORT_EN]
+        for (const list of cyclicLists) {
+            const lower0 = values[0].toLowerCase()
+            const startIdx = list.indexOf(lower0)
+            if (startIdx === -1) continue
+            const isCapitalized = values[0][0] === values[0][0].toUpperCase()
+            const allMatch = values.every((v, i) => v.toLowerCase() === list[(startIdx + i) % list.length])
+            if (allMatch) {
+                return (idx: number) => {
+                    const val = list[(startIdx + idx) % list.length]
+                    return isCapitalized ? val.charAt(0).toUpperCase() + val.slice(1) : val
+                }
+            }
+        }
+        // Check number sequence (linear: detect step)
+        const nums = values.map(Number)
+        if (nums.every(n => !isNaN(n))) {
+            if (nums.length === 1) {
+                // Single number: increment by 1
+                return (idx: number) => (nums[0] + idx).toString()
+            }
+            const step = nums[1] - nums[0]
+            const isLinear = nums.every((n, i) => i === 0 || Math.abs(n - (nums[0] + step * i)) < 1e-10)
+            if (isLinear) {
+                return (idx: number) => {
+                    const v = nums[0] + step * idx
+                    return Number.isInteger(step) && Number.isInteger(nums[0]) ? v.toString() : (Math.round(v * 10000000000) / 10000000000).toString()
+                }
+            }
+        }
+        return null
+    }, [])
 
     // ---- Drag Fill ----
     const performDragFill = useCallback(() => {
@@ -649,15 +911,39 @@ export function Spreadsheet() {
         const srcRows = maxR - minR + 1, srcCols = maxC - minC + 1
 
         if (dragFillEnd.r > maxR) {
-            for (let r = maxR + 1; r <= dragFillEnd.r; r++)
-                for (let c = minC; c <= maxC; c++) { const src = data[`${minR + ((r - minR) % srcRows)},${c}`]; if (src) setCellFull(r, c, { ...src }); else deleteCell(r, c) }
+            // Fill down: for each column, detect pattern in source cells
+            for (let c = minC; c <= maxC; c++) {
+                const srcValues = Array.from({ length: srcRows }, (_, i) => data[`${minR + i},${c}`]?.value || '')
+                const seqFn = detectSequence(srcValues)
+                for (let r = maxR + 1; r <= dragFillEnd.r; r++) {
+                    if (seqFn) {
+                        const src = data[`${minR + ((r - minR) % srcRows)},${c}`]
+                        setCellFull(r, c, { value: seqFn(r - minR), style: src?.style })
+                    } else {
+                        const src = data[`${minR + ((r - minR) % srcRows)},${c}`]
+                        if (src) setCellFull(r, c, { ...src }); else deleteCell(r, c)
+                    }
+                }
+            }
             setSelectedRange({ start: { r: minR, c: minC }, end: { r: dragFillEnd.r, c: maxC } })
         } else if (dragFillEnd.c > maxC) {
-            for (let r = minR; r <= maxR; r++)
-                for (let c = maxC + 1; c <= dragFillEnd.c; c++) { const src = data[`${r},${minC + ((c - minC) % srcCols)}`]; if (src) setCellFull(r, c, { ...src }); else deleteCell(r, c) }
+            // Fill right: for each row, detect pattern in source cells
+            for (let r = minR; r <= maxR; r++) {
+                const srcValues = Array.from({ length: srcCols }, (_, i) => data[`${r},${minC + i}`]?.value || '')
+                const seqFn = detectSequence(srcValues)
+                for (let c = maxC + 1; c <= dragFillEnd.c; c++) {
+                    if (seqFn) {
+                        const src = data[`${r},${minC + ((c - minC) % srcCols)}`]
+                        setCellFull(r, c, { value: seqFn(c - minC), style: src?.style })
+                    } else {
+                        const src = data[`${r},${minC + ((c - minC) % srcCols)}`]
+                        if (src) setCellFull(r, c, { ...src }); else deleteCell(r, c)
+                    }
+                }
+            }
             setSelectedRange({ start: { r: minR, c: minC }, end: { r: maxR, c: dragFillEnd.c } })
         }
-    }, [selectionBounds, dragFillEnd, data, setCellFull, deleteCell])
+    }, [selectionBounds, dragFillEnd, data, setCellFull, deleteCell, detectSequence])
 
     // ---- Context Menu Action ----
     const handleContextAction = useCallback((action: string) => {
@@ -715,6 +1001,60 @@ export function Spreadsheet() {
         }
         toast.success(`${count} remplacement(s)`)
     }, [findMatches, data, findText, replaceText, setCell])
+
+    // ---- Autocomplete insert ----
+    const insertAutocomplete = useCallback((fnName: string) => {
+        const match = editValue.toUpperCase().match(/(?:^=|[(,+\-*/])([A-Z]{1,15})$/)
+        if (match) {
+            const partialLen = match[1].length
+            const newValue = editValue.slice(0, editValue.length - partialLen) + fnName + '('
+            setEditValue(newValue)
+            if (activeCell) setCell(activeCell.r, activeCell.c, newValue)
+        }
+        setAutocompleteSuggestions([])
+    }, [editValue, activeCell, setCell])
+
+    // ---- CSV Import ----
+    const importCSV = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+            const text = ev.target?.result as string
+            if (!text) return
+            // Parse CSV (handles quoted fields with commas/newlines)
+            const rows: string[][] = []
+            let row: string[] = [], field = '', inQuotes = false
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i]
+                if (inQuotes) {
+                    if (ch === '"' && text[i + 1] === '"') { field += '"'; i++ }
+                    else if (ch === '"') inQuotes = false
+                    else field += ch
+                } else {
+                    if (ch === '"') inQuotes = true
+                    else if (ch === ',') { row.push(field); field = '' }
+                    else if (ch === '\n' || (ch === '\r' && text[i + 1] === '\n')) {
+                        row.push(field); field = ''; rows.push(row); row = []
+                        if (ch === '\r') i++
+                    } else field += ch
+                }
+            }
+            if (field || row.length > 0) { row.push(field); rows.push(row) }
+            // Fill grid
+            let count = 0
+            for (let r = 0; r < rows.length && r < ROWS; r++) {
+                for (let c = 0; c < rows[r].length && c < COLS; c++) {
+                    const val = rows[r][c]
+                    if (val) { setCell(r, c, val); count++ }
+                }
+            }
+            toast.success(`${count} cellules importées depuis ${file.name}`)
+        }
+        reader.readAsText(file)
+        // Reset input so same file can be re-selected
+        e.target.value = ''
+    }, [setCell])
 
     // ---- CSV Export ----
     const exportCSV = useCallback(() => {
@@ -813,6 +1153,7 @@ export function Spreadsheet() {
     }
 
     const handleDoubleClick = (r: number, c: number) => {
+        if (data[`${r},${c}`]?.style?.locked) { toast.info('Cellule verrouill\u00E9e'); return }
         setActiveCell({ r, c }); setSelectedRange({ start: { r, c }, end: { r, c } })
         setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0)
     }
@@ -847,9 +1188,43 @@ export function Spreadsheet() {
         }
 
         if (isEditing) {
+            // F4: toggle absolute reference ($A$1 cycle)
+            if (e.key === 'F4') {
+                e.preventDefault()
+                const input = inputRef.current || formulaBarRef.current
+                if (!input) return
+                const pos = input.selectionStart || 0
+                const refRegex = /(\$?)([A-Z]+)(\$?)(\d+)/g
+                let match
+                while ((match = refRegex.exec(editValue)) !== null) {
+                    if (match.index <= pos && match.index + match[0].length >= pos) {
+                        const [, d1, col, d2, row] = match
+                        let newRef: string
+                        if (!d1 && !d2) newRef = `$${col}$${row}`
+                        else if (d1 && d2) newRef = `${col}$${row}`
+                        else if (!d1 && d2) newRef = `$${col}${row}`
+                        else newRef = `${col}${row}`
+                        const newValue = editValue.substring(0, match.index) + newRef + editValue.substring(match.index + match[0].length)
+                        setEditValue(newValue)
+                        const newPos = match.index + newRef.length
+                        setTimeout(() => input.setSelectionRange(newPos, newPos), 0)
+                        break
+                    }
+                }
+                return
+            }
+            // Autocomplete navigation
+            if (autocompleteSuggestions.length > 0) {
+                if (e.key === 'Tab' || (e.key === 'Enter' && autocompleteSuggestions.length > 0)) {
+                    e.preventDefault(); insertAutocomplete(autocompleteSuggestions[autocompleteIdx]); return
+                }
+                if (e.key === 'ArrowDown') { e.preventDefault(); setAutocompleteIdx(i => Math.min(i + 1, autocompleteSuggestions.length - 1)); return }
+                if (e.key === 'ArrowUp') { e.preventDefault(); setAutocompleteIdx(i => Math.max(i - 1, 0)); return }
+                if (e.key === 'Escape') { e.preventDefault(); setAutocompleteSuggestions([]); return }
+            }
             if (e.key === 'Enter') { e.preventDefault(); commitEdit(); moveCell(1, 0) }
             if (e.key === 'Tab') { e.preventDefault(); commitEdit(); moveCell(0, e.shiftKey ? -1 : 1) }
-            if (e.key === 'Escape') { e.preventDefault(); setIsEditing(false); setEditValue(data[`${activeCell!.r},${activeCell!.c}`]?.value || "") }
+            if (e.key === 'Escape') { e.preventDefault(); setIsEditing(false); setEditValue(data[`${activeCell!.r},${activeCell!.c}`]?.value || ""); setAutocompleteSuggestions([]) }
             return
         }
 
@@ -859,7 +1234,11 @@ export function Spreadsheet() {
         else if (e.key === 'ArrowLeft') { e.preventDefault(); moveCell(0, -1) }
         else if (e.key === 'ArrowRight') { e.preventDefault(); moveCell(0, 1) }
         else if (e.key === 'Tab') { e.preventDefault(); moveCell(0, e.shiftKey ? -1 : 1) }
-        else if (e.key === 'Enter') { e.preventDefault(); setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0) }
+        else if (e.key === 'Enter') {
+            e.preventDefault()
+            if (data[`${activeCell.r},${activeCell.c}`]?.style?.locked) { toast.info('Cellule verrouill\u00E9e'); return }
+            setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0)
+        }
         else if (e.key === 'Home') { e.preventDefault(); const r = activeCell.r; setActiveCell({ r, c: 0 }); setSelectedRange({ start: { r, c: 0 }, end: { r, c: 0 } }); scrollToCell(r, 0) }
         else if (e.key === 'End') { e.preventDefault(); const r = activeCell.r; let lastC = COLS - 1; while (lastC > 0 && !data[`${r},${lastC}`]?.value) lastC--; setActiveCell({ r, c: lastC }); setSelectedRange({ start: { r, c: lastC }, end: { r, c: lastC } }); scrollToCell(r, lastC) }
         else if (e.key === 'PageDown') { e.preventDefault(); const rows = Math.floor(viewportH / DEFAULT_ROW_HEIGHT); moveCell(rows, 0) }
@@ -867,8 +1246,12 @@ export function Spreadsheet() {
         else if (e.key === 'Backspace' || e.key === 'Delete') {
             e.preventDefault()
             if (selectionBounds) deleteCellRange(selectionBounds.minR, selectionBounds.maxR, selectionBounds.minC, selectionBounds.maxC)
-        } else if (e.key === 'F2') { e.preventDefault(); setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0) }
-        else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        } else if (e.key === 'F2') {
+            e.preventDefault()
+            if (data[`${activeCell.r},${activeCell.c}`]?.style?.locked) { toast.info('Cellule verrouill\u00E9e'); return }
+            setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0)
+        } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            if (data[`${activeCell.r},${activeCell.c}`]?.style?.locked) { toast.info('Cellule verrouill\u00E9e'); return }
             setIsEditing(true); setEditValue(e.key); setTimeout(() => inputRef.current?.focus(), 0)
         }
     }
@@ -882,12 +1265,9 @@ export function Spreadsheet() {
     const toggleFilter = useCallback(() => {
         if (filterCol !== null) { setFilterCol(null); setFilterValues(null); toast.info('Filtre d\u00E9sactiv\u00E9'); return }
         if (!activeCell) return
-        const col = activeCell.c
-        const uniqueValues = new Set<string>()
-        for (let r = 0; r < ROWS; r++) { const v = data[`${r},${col}`]?.value; if (v) uniqueValues.add(v) }
-        setFilterCol(col); setFilterValues(uniqueValues)
-        toast.success(`Filtre sur ${indexToCol(col)}`)
-    }, [activeCell, data, filterCol])
+        setFilterCol(activeCell.c)
+        setShowFilterDialog(true)
+    }, [activeCell, filterCol])
 
     // ---- Merge helper ----
     const handleMerge = useCallback(() => {
@@ -897,6 +1277,24 @@ export function Spreadsheet() {
         if (topLeft?.style?.mergeRows) { unmergeCells(minR, minC); toast.info('D\u00E9fusionn\u00E9') }
         else { mergeCells(minR, maxR, minC, maxC); toast.success('Fusionn\u00E9') }
     }, [selectionBounds, data, mergeCells, unmergeCells])
+
+    // ---- Column auto-fit ----
+    const autoFitColumn = useCallback((col: number) => {
+        let maxWidth = 40 // minimum width
+        for (let r = 0; r < ROWS; r++) {
+            const cellVal = evaluatedData[`${r},${col}`] || data[`${r},${col}`]?.value || ''
+            if (cellVal) {
+                // Estimate character width (~7.5px per char at 13px font, plus 16px padding)
+                const fontSize = data[`${r},${col}`]?.style?.fontSize || 13
+                const charWidth = fontSize * 0.6
+                const width = cellVal.length * charWidth + 16
+                if (width > maxWidth) maxWidth = width
+            }
+        }
+        maxWidth = Math.min(maxWidth, 400) // cap at 400px
+        setColWidths(prev => ({ ...prev, [col]: Math.ceil(maxWidth) }))
+        toast.success(`Colonne ${indexToCol(col)} ajustée`)
+    }, [data, evaluatedData])
 
     // ---- Freeze toggle ----
     const toggleFreeze = useCallback(() => {
@@ -934,6 +1332,26 @@ export function Spreadsheet() {
                     <TBtn onClick={() => applyToSelection({ numberFormat: activeCellStyle.numberFormat === 'percent' ? 'auto' : 'percent' })} active={activeCellStyle.numberFormat === 'percent'} title="Format pourcentage"><Percent className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => changeDecimals(-1)} title="R\u00E9duire d\u00E9cimales" className="tracking-tighter font-semibold text-xs">{".0\u2190"}</TBtn>
                     <TBtn onClick={() => changeDecimals(1)} title="Augmenter d\u00E9cimales" className="tracking-tighter font-semibold text-xs">{".00\u2192"}</TBtn>
+                    {/* Number Format Dropdown */}
+                    <div className="relative" data-popover>
+                        <TBtn onClick={() => setShowNumberFormat(!showNumberFormat)} title="Format num\u00E9rique"><Hash className="w-[18px] h-[18px]" /></TBtn>
+                        {showNumberFormat && (
+                            <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 py-1 w-44">
+                                {([
+                                    { fmt: 'auto', label: 'Automatique' },
+                                    { fmt: 'number', label: 'Nombre (1 000,00)' },
+                                    { fmt: 'currency', label: 'Mon\u00E9taire (\u20AC)' },
+                                    { fmt: 'accounting', label: 'Comptabilit\u00E9' },
+                                    { fmt: 'percent', label: 'Pourcentage (%)' },
+                                    { fmt: 'scientific', label: 'Scientifique (1E+3)' },
+                                    { fmt: 'date', label: 'Date (AAAA-MM-JJ)' },
+                                    { fmt: 'time', label: 'Heure (HH:MM:SS)' },
+                                ] as { fmt: CellStyle['numberFormat'], label: string }[]).map(({ fmt, label }) => (
+                                    <button key={fmt} className={cn("w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]", activeCellStyle.numberFormat === fmt && "bg-[#e8f0fe] font-medium")} onClick={() => { applyToSelection({ numberFormat: fmt }); setShowNumberFormat(false) }}>{label}</button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                     <Sep />
                     {/* Font Picker */}
                     <div className="relative" data-popover>
@@ -1002,10 +1420,26 @@ export function Spreadsheet() {
                     </TBtn>
                     <TBtn onClick={cycleVerticalAlign} title={`V-Align: ${activeCellStyle.verticalAlign || 'middle'}`}><AlignVerticalJustifyCenter className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => toggleBoolFormat('wrap')} active={activeCellStyle.wrap} title="Retour \u00E0 la ligne"><WrapText className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => toast.info("Rotation: \u00E0 venir")} title="Rotation du texte"><RotateCw className="w-[18px] h-[18px]" /></TBtn>
+                    <div className="relative" data-popover>
+                        <TBtn onClick={() => setShowRotationInput(!showRotationInput)} active={!!activeCellStyle.rotation} title="Rotation du texte"><RotateCw className="w-[18px] h-[18px]" /></TBtn>
+                        {showRotationInput && (
+                            <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-3 w-48">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-[12px] font-medium">Angle</span>
+                                    <button onClick={() => setShowRotationInput(false)}><X className="w-3 h-3" /></button>
+                                </div>
+                                <div className="flex gap-1 mb-2">
+                                    {[0, 45, 90, -45, -90, 180].map(deg => (
+                                        <button key={deg} className={cn("px-2 py-1 text-[11px] rounded border", activeCellStyle.rotation === deg ? "bg-[#e8f0fe] border-[#1a73e8]" : "border-gray-200 hover:bg-gray-100")} onClick={() => { applyToSelection({ rotation: deg === 0 ? undefined : deg }); setShowRotationInput(false) }}>{deg}°</button>
+                                    ))}
+                                </div>
+                                <input type="range" min={-90} max={90} value={activeCellStyle.rotation || 0} className="w-full" onChange={(e) => applyToSelection({ rotation: Number(e.target.value) || undefined })} />
+                            </div>
+                        )}
+                    </div>
                     <Sep />
                     <TBtn onClick={() => { const url = prompt("URL:"); if (url && activeCell) { setCell(activeCell.r, activeCell.c, url); toast.success("Lien ins\u00E9r\u00E9") } }} title="Lien"><Link className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => { const c = prompt("Commentaire:"); if (c) toast.success(`"${c}"`) }} title="Commentaire"><MessageSquare className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => { if (!activeCell) return; const existing = data[`${activeCell.r},${activeCell.c}`]?.comment || ''; const c = prompt("Commentaire:", existing); if (c !== null) { setCellComment(activeCell.r, activeCell.c, c || undefined); toast.success(c ? 'Commentaire ajouté' : 'Commentaire supprimé') } }} title="Commentaire"><MessageSquare className="w-[18px] h-[18px]" /></TBtn>
                     {/* Chart picker */}
                     <div className="relative" data-popover>
                         <TBtn onClick={() => setShowChartPicker(!showChartPicker)} title="Graphique"><BarChart2 className="w-[18px] h-[18px]" /></TBtn>
@@ -1021,6 +1455,10 @@ export function Spreadsheet() {
                     <TBtn onClick={toggleFreeze} active={freezeRows > 0 || freezeCols > 0} title="Figer lignes/colonnes"><Snowflake className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => setShowCondFormat(true)} active={condRules.length > 0} title="Mise en forme conditionnelle"><Palette className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={exportCSV} title="Exporter CSV"><Download className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => csvInputRef.current?.click()} title="Importer CSV"><Upload className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => { if (!activeCell) return; const vals = prompt("Valeurs de la liste (séparées par des virgules):"); if (vals) { setCellValidation(activeCell.r, activeCell.c, { type: 'list', values: vals.split(',').map(v => v.trim()) }); toast.success('Validation ajoutée') } }} title="Validation des données"><ListChecks className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => setBandedRows(!bandedRows)} active={bandedRows} title="Couleurs alternées"><StretchHorizontal className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => { if (!selectionBounds) return; const isLocked = activeCellStyle.locked; applyToSelection({ locked: !isLocked }); toast.success(isLocked ? 'Cellules d\u00E9verrouill\u00E9es' : 'Cellules verrouill\u00E9es') }} active={!!activeCellStyle.locked} title={activeCellStyle.locked ? "D\u00E9verrouiller" : "Verrouiller"}>{activeCellStyle.locked ? <Lock className="w-[18px] h-[18px]" /> : <Unlock className="w-[18px] h-[18px]" />}</TBtn>
                     {/* Functions helper */}
                     <div className="relative" data-popover>
                         <TBtn onClick={() => setShowFunctionHelper(!showFunctionHelper)} title="Fonctions"><Sigma className="w-[18px] h-[18px]" /></TBtn>
@@ -1055,22 +1493,32 @@ export function Spreadsheet() {
                             </div>
                         )}
                     </div>
-                    <div className="ml-auto flex items-center pr-1 shrink-0">
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-300 rounded font-medium text-[13px] shadow-sm transition-colors border border-purple-200 dark:border-purple-800">
-                            <Sparkles className="w-3.5 h-3.5" /> AI Tools
+                    <div className="ml-auto flex items-center pr-1 shrink-0 relative">
+                        <button
+                            className={cn(
+                                "flex items-center gap-1.5 px-3 py-1.5 rounded font-medium text-[13px] shadow-sm transition-all border",
+                                showAiDialog
+                                    ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent scale-95"
+                                    : "bg-gradient-to-r from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 text-purple-700 dark:from-purple-900/30 dark:to-indigo-900/30 dark:hover:from-purple-900/50 dark:hover:to-indigo-900/50 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+                            )}
+                            onClick={() => setShowAiDialog(!showAiDialog)}
+                        >
+                            <Sparkles className={cn("w-3.5 h-3.5", showAiDialog ? "animate-pulse" : "")} /> Tools IA
                         </button>
                     </div>
                 </div>
             </div>
 
             {/* ===== FORMULA BAR ===== */}
-            <div className="flex items-center gap-2 px-4 py-1.5 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-white dark:bg-[#1a1a1a] shrink-0 h-9">
-                <div className="w-14 font-medium text-[13px] text-center shrink-0 tracking-wide select-text">
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-white dark:bg-[#1a1a1a] shrink-0 h-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10">
+                <div className="w-12 h-6 flex items-center justify-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded font-medium text-[12px] shrink-0 tracking-wide select-text border border-[#e3e3e3] dark:border-[#5f6368]">
                     {activeCell ? `${indexToCol(activeCell.c)}${activeCell.r + 1}` : ''}
                 </div>
-                <div className="w-px h-5 bg-[#e3e3e3] dark:bg-[#5f6368] shrink-0" />
-                <div className="text-[#5f6368] font-serif italic font-bold shrink-0 text-lg px-2 opacity-50 select-none">fx</div>
-                <input ref={formulaBarRef} className="flex-1 outline-none text-[13px] bg-transparent font-mono text-[#202124] dark:text-[#e8eaed]" value={activeCell ? editValue : ''} onChange={(e) => { setEditValue(e.target.value); if (activeCell) setCell(activeCell.r, activeCell.c, e.target.value) }} onFocus={() => { if (activeCell) setIsEditing(true) }} disabled={!activeCell} />
+                <div className="w-px h-5 bg-[#e3e3e3] dark:bg-[#5f6368] shrink-0 mx-1" />
+                <div className="text-[#9aa0a6] font-serif italic shrink-0 text-base px-1 pointer-events-none select-none">
+                    ƒ<span className="text-[12px] font-sans italic relative -top-0.5 -left-0.5">x</span>
+                </div>
+                <input ref={formulaBarRef} className="flex-1 outline-none text-[13px] bg-transparent font-mono text-[#202124] dark:text-[#e8eaed] placeholder:text-[#9aa0a6] placeholder:font-sans" placeholder={activeCell ? "Saisir une formule ou un texte..." : ""} value={activeCell ? editValue : ''} onChange={(e) => { setEditValue(e.target.value); if (activeCell) setCell(activeCell.r, activeCell.c, e.target.value) }} onFocus={() => { if (activeCell) setIsEditing(true) }} disabled={!activeCell} />
             </div>
 
             {/* ===== GRID (Virtualized) ===== */}
@@ -1096,7 +1544,7 @@ export function Spreadsheet() {
 
                     {/* Column headers */}
                     <div className="flex sticky top-0 z-30 select-none" style={{ height: COL_HEADER_HEIGHT }}>
-                        <div className="bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative" style={{ width: ROW_HEADER_WIDTH, minWidth: ROW_HEADER_WIDTH, height: COL_HEADER_HEIGHT }}>
+                        <div className="bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative cursor-pointer hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] transition-colors" style={{ width: ROW_HEADER_WIDTH, minWidth: ROW_HEADER_WIDTH, height: COL_HEADER_HEIGHT }} onClick={() => { setSelectedRange({ start: { r: 0, c: 0 }, end: { r: ROWS - 1, c: COLS - 1 } }); setActiveCell({ r: 0, c: 0 }) }} title="Tout sélectionner">
                             <div className={cn("absolute top-1 left-1 h-1.5 w-1.5 rounded-full shadow-sm", isConnected ? "bg-[#1e8e3e]" : "bg-[#d93025] animate-pulse")} />
                         </div>
                         {/* Spacer for cols before visible range */}
@@ -1107,9 +1555,9 @@ export function Spreadsheet() {
                             const w = getColWidth(c)
                             const isFrozen = c < freezeCols
                             return (
-                                <div key={c} className={cn("flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] font-medium shrink-0 transition-colors relative group", inSel ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6]", isFrozen && "bg-[#e8f0fe]/50")} style={{ width: w, minWidth: w, maxWidth: w, height: COL_HEADER_HEIGHT, ...(isFrozen ? { position: 'sticky', left: ROW_HEADER_WIDTH + colOffsets[c], zIndex: 41 } : {}) }}>
+                                <div key={c} className={cn("flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] font-medium shrink-0 transition-colors relative group cursor-pointer", inSel ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6] hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043]", isFrozen && "bg-[#e8f0fe]/50")} style={{ width: w, minWidth: w, maxWidth: w, height: COL_HEADER_HEIGHT, ...(isFrozen ? { position: 'sticky', left: ROW_HEADER_WIDTH + colOffsets[c], zIndex: 41 } : {}) }} onClick={(e) => { if (e.shiftKey && activeCell) { setSelectedRange({ start: { r: 0, c: activeCell.c }, end: { r: ROWS - 1, c } }) } else { setSelectedRange({ start: { r: 0, c }, end: { r: ROWS - 1, c } }); setActiveCell({ r: 0, c }) } }}>
                                     {indexToCol(c)}
-                                    <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); resizeRef.current = { type: 'col', index: c, startPos: e.clientX, startSize: w } }} />
+                                    <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); resizeRef.current = { type: 'col', index: c, startPos: e.clientX, startSize: w } }} onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); autoFitColumn(c) }} />
                                 </div>
                             )
                         })}
@@ -1128,7 +1576,7 @@ export function Spreadsheet() {
                         return (
                             <div key={r} className="flex" style={{ height: rh, position: 'absolute', top: COL_HEADER_HEIGHT + rowOffsets[r], left: 0, width: totalWidth + ROW_HEADER_WIDTH, ...(isFrozenRow ? { position: 'sticky', top: COL_HEADER_HEIGHT + rowOffsets[r], zIndex: 25 } : {}) }}>
                                 {/* Row header */}
-                                <div className={cn("flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] shrink-0 sticky left-0 z-20 transition-colors relative group", inSelRow ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6]")} style={{ width: ROW_HEADER_WIDTH, minWidth: ROW_HEADER_WIDTH, height: rh }}>
+                                <div className={cn("flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] shrink-0 sticky left-0 z-20 transition-colors relative group cursor-pointer", inSelRow ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6] hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043]")} style={{ width: ROW_HEADER_WIDTH, minWidth: ROW_HEADER_WIDTH, height: rh }} onClick={(e) => { if (e.shiftKey && activeCell) { setSelectedRange({ start: { r: activeCell.r, c: 0 }, end: { r, c: COLS - 1 } }) } else { setSelectedRange({ start: { r, c: 0 }, end: { r, c: COLS - 1 } }); setActiveCell({ r, c: 0 }) } }}>
                                     {r + 1}
                                     <div className="absolute left-0 right-0 bottom-0 h-1.5 cursor-row-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); resizeRef.current = { type: 'row', index: r, startPos: e.clientY, startSize: rh } }} />
                                 </div>
@@ -1163,18 +1611,25 @@ export function Spreadsheet() {
                                     const condColor = condFormatColor(r, c)
                                     const isFrozenCell = c < freezeCols
 
+                                    const bandedBg = bandedRows && !style?.fillColor && !condColor && !inRect && !isActive && r % 2 === 0 ? '#f8f9fa' : undefined
+                                    const isUrl = !isErrorVal && /^https?:\/\/\S+/.test(evaluated)
+                                    const isSparkline = evaluated.startsWith('__SPARKLINE__:')
+                                    const isLocked = !!style?.locked
+                                    const hasComment = !!cellData?.comment
+                                    const hasValidation = !!cellData?.validation
+
                                     const cellStyle: React.CSSProperties = {
                                         width: cellW, minWidth: cellW, maxWidth: cellW, height: cellH,
                                         fontWeight: style?.bold ? 700 : undefined,
                                         fontStyle: style?.italic ? 'italic' : undefined,
-                                        textDecoration: style?.strikethrough ? 'line-through' : undefined,
+                                        textDecoration: style?.strikethrough ? 'line-through' : (isUrl ? 'underline' : undefined),
                                         textAlign: style?.align || (isNumber ? 'right' : 'left'),
                                         fontFamily: style?.fontFamily,
                                         fontSize: style?.fontSize ? `${style.fontSize}px` : undefined,
-                                        color: style?.textColor,
+                                        color: isUrl ? '#1a73e8' : style?.textColor,
                                         backgroundColor: condColor
                                             ? `${condColor}22`
-                                            : style?.fillColor || (inRect && !isActive ? 'rgba(66,133,244,0.08)' : undefined),
+                                            : style?.fillColor || (inRect && !isActive ? 'rgba(66,133,244,0.08)' : bandedBg),
                                         whiteSpace: style?.wrap ? 'normal' : 'nowrap',
                                         borderTopWidth: style?.borderTop ? 2 : undefined,
                                         borderRightWidth: style?.borderRight ? 2 : undefined,
@@ -1194,18 +1649,29 @@ export function Spreadsheet() {
                                         <div
                                             key={c}
                                             className={cn(
-                                                "border-r border-b border-[#e3e3e3] dark:border-[#5f6368] text-[13px] px-1 flex items-center outline-none relative shrink-0",
-                                                !style?.fillColor && !condColor && !inRect && !inDragFill && "bg-white dark:bg-[#1a1a1a]",
+                                                "border-r border-b border-[#e3e3e3] dark:border-[#5f6368] text-[13px] px-1 flex items-center outline-none relative shrink-0 overflow-hidden",
+                                                !style?.fillColor && !condColor && !inRect && !inDragFill && !bandedBg && "bg-white dark:bg-[#1a1a1a]",
                                                 inDragFill && "bg-[#e8f0fe]/40",
                                                 isFindMatch && !isCurrentFind && "ring-1 ring-inset ring-yellow-400",
                                                 isCurrentFind && "ring-2 ring-inset ring-orange-500"
                                             )}
                                             style={cellStyle}
                                             onMouseDown={(e) => handleCellMouseDown(r, c, e)}
-                                            onMouseEnter={() => handleCellMouseEnter(r, c)}
+                                            onMouseEnter={() => { handleCellMouseEnter(r, c); if (hasComment) setHoveredComment({ r, c, x: ROW_HEADER_WIDTH + colOffsets[c] + cellW, y: COL_HEADER_HEIGHT + rowOffsets[r] }) }}
+                                            onMouseLeave={() => { if (hoveredComment?.r === r && hoveredComment?.c === c) setHoveredComment(null) }}
                                             onDoubleClick={() => handleDoubleClick(r, c)}
                                             onContextMenu={(e) => handleContextMenu(r, c, e)}
                                         >
+                                            {/* Comment indicator triangle */}
+                                            {hasComment && <div className="absolute top-0 right-0 w-0 h-0 z-[6]" style={{ borderLeft: '6px solid transparent', borderTop: '6px solid #ff9900' }} />}
+                                            {/* Lock indicator */}
+                                            {isLocked && <div className="absolute bottom-0 left-0 z-[6] opacity-30 pointer-events-none"><Lock className="w-2.5 h-2.5" /></div>}
+                                            {/* Validation dropdown arrow */}
+                                            {hasValidation && !isEditing && (
+                                                <button className="absolute right-0.5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center text-[#5f6368] hover:text-[#202124] z-[6] opacity-0 hover:opacity-100 group-hover:opacity-100" style={{ opacity: (isActive || validationDropdown?.r === r && validationDropdown?.c === c) ? 1 : undefined }} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); setValidationDropdown(validationDropdown?.r === r && validationDropdown?.c === c ? null : { r, c }) }}>
+                                                    <ChevronDown className="w-3 h-3" />
+                                                </button>
+                                            )}
                                             {condColor && <div className="absolute inset-0 border-l-[3px] pointer-events-none z-[5]" style={{ borderColor: condColor }} />}
                                             {inRect && (
                                                 <>
@@ -1218,8 +1684,14 @@ export function Spreadsheet() {
                                             {isActive && <div className="absolute inset-[-1px] border-2 border-[#1a73e8] z-20 pointer-events-none" />}
                                             {isActive && isEditing ? (
                                                 <input ref={inputRef} className="w-full h-full border-none outline-none bg-white dark:bg-[#2d2e30] px-0.5 m-0 text-[13px] z-30 relative text-[#202124] dark:text-white" value={editValue} onChange={(e) => setEditValue(e.target.value)} onBlur={commitEdit} spellCheck={false} />
+                                            ) : isSparkline ? (
+                                                <SparklineCell value={evaluated} width={cellW - 4} height={cellH - 4} />
+                                            ) : isUrl ? (
+                                                <a href={evaluated} target="_blank" rel="noopener noreferrer" className="truncate w-full cursor-pointer hover:underline" onClick={(e) => e.stopPropagation()} style={style?.rotation ? { transform: `rotate(${style.rotation}deg)`, display: 'inline-block' } : undefined}>
+                                                    <ExternalLink className="w-3 h-3 inline mr-1 opacity-60" />{displayValue}
+                                                </a>
                                             ) : (
-                                                <span className={cn("truncate w-full select-text", isErrorVal && "text-[#d93025] font-semibold text-center", displayValue === "" && "opacity-0")} title={isErrorVal ? "Erreur" : rawValue}>
+                                                <span className={cn("truncate w-full select-text", isErrorVal && "text-[#d93025] font-semibold text-center", displayValue === "" && "opacity-0")} title={hasComment ? `💬 ${cellData!.comment}\n${rawValue}` : (isErrorVal ? "Erreur" : rawValue)} style={style?.rotation ? { transform: `rotate(${style.rotation}deg)`, display: 'inline-block', transformOrigin: 'left center' } : undefined}>
                                                     {displayValue}
                                                 </span>
                                             )}
@@ -1241,12 +1713,23 @@ export function Spreadsheet() {
                     <Plus className="w-5 h-5" />
                 </button>
                 {sheets.map((sheet, i) => (
-                    <div key={i} className={cn("px-5 py-2.5 text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto relative group", i === activeSheetIndex ? "bg-white dark:bg-[#1f1f1f] text-[#1a73e8] dark:text-[#8ab4f8] border-x border-t border-[#e3e3e3] dark:border-[#3c4043] shadow-[0_-1px_3px_rgba(0,0,0,0.05)] rounded-t-sm" : "text-[#5f6368] hover:bg-[#e8eaed] dark:hover:bg-[#303134] cursor-pointer")} onClick={() => setActiveSheetIndex(i)} onDoubleClick={() => { setEditingTabIndex(i); setEditingTabName(sheet.name) }}>
+                    <div key={i} className={cn("px-5 py-2.5 text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto relative group", i === activeSheetIndex ? "bg-white dark:bg-[#1f1f1f] text-[#1a73e8] dark:text-[#8ab4f8] border-x border-t border-[#e3e3e3] dark:border-[#3c4043] shadow-[0_-1px_3px_rgba(0,0,0,0.05)] rounded-t-sm" : "text-[#5f6368] hover:bg-[#e8eaed] dark:hover:bg-[#303134] cursor-pointer")} style={sheet.color ? { borderBottom: `3px solid ${sheet.color}` } : undefined} onClick={() => setActiveSheetIndex(i)} onDoubleClick={() => { setEditingTabIndex(i); setEditingTabName(sheet.name) }} onContextMenu={(e) => { e.preventDefault(); setShowTabColorPicker(showTabColorPicker === i ? null : i) }}>
                         {editingTabIndex === i ? (
                             <input className="bg-transparent outline-none text-[13px] w-20 text-center" value={editingTabName} onChange={(e) => setEditingTabName(e.target.value)} onBlur={() => { renameSheet(i, editingTabName); setEditingTabIndex(null) }} onKeyDown={(e) => { if (e.key === 'Enter') { renameSheet(i, editingTabName); setEditingTabIndex(null) } }} autoFocus />
                         ) : sheet.name}
                         {sheets.length > 1 && i === activeSheetIndex && (
                             <button className="ml-2 opacity-0 group-hover:opacity-100 text-[#5f6368] hover:text-red-500 transition-all" onClick={(e) => { e.stopPropagation(); removeSheet(i) }}><X className="w-3 h-3" /></button>
+                        )}
+                        {/* Tab color picker */}
+                        {showTabColorPicker === i && (
+                            <div className="absolute bottom-10 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36" onClick={(e) => e.stopPropagation()}>
+                                <div className="grid grid-cols-5 gap-1 mb-1">
+                                    {TAB_COLORS.map(color => (
+                                        <button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { setSheetColor(i, color); setShowTabColorPicker(null) }} />
+                                    ))}
+                                </div>
+                                <button className="text-[10px] text-[#1a73e8] hover:underline" onClick={() => { setSheetColor(i, undefined); setShowTabColorPicker(null) }}>Aucune</button>
+                            </div>
                         )}
                     </div>
                 ))}
@@ -1275,6 +1758,67 @@ export function Spreadsheet() {
             {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} onAction={handleContextAction} onClose={() => setContextMenu(null)} />}
             {chart && <MiniChart type={chart.type} values={chart.values} onClose={() => setChart(null)} />}
             {showCondFormat && <CondFormatDialog rules={condRules} onAdd={(rule) => setCondRules(prev => [...prev, rule])} onRemove={(i) => setCondRules(prev => prev.filter((_, idx) => idx !== i))} onClose={() => setShowCondFormat(false)} />}
+            {showFilterDialog && filterCol !== null && <FilterDialog col={filterCol} data={data} onApply={(values) => { setFilterValues(values); toast.success(`Filtre appliqu\u00E9 sur ${indexToCol(filterCol)}`) }} onClose={() => setShowFilterDialog(false)} />}
+
+            {/* AI Dialog */}
+            {showAiDialog && (
+                <AiSheetsDialog
+                    onClose={() => setShowAiDialog(false)}
+                    selectionBounds={selectionBounds}
+                    data={data}
+                    onApplyResult={(val, r, c) => { setEditValue(val); setCell(r, c, val) }}
+                    activeCell={activeCell}
+                />
+            )}
+
+            {/* Comment tooltip */}
+            {hoveredComment && gridRef.current && (() => {
+                const cellData = data[`${hoveredComment.r},${hoveredComment.c}`]
+                if (!cellData?.comment) return null
+                const rect = gridRef.current!.getBoundingClientRect()
+                return (
+                    <div className="fixed z-[250] bg-[#fff9c4] dark:bg-[#554800] border border-[#fbc02d] rounded shadow-lg px-3 py-2 max-w-[250px] text-[12px] text-[#202124] dark:text-[#e8eaed] pointer-events-none" style={{ left: rect.left + hoveredComment.x - gridRef.current!.scrollLeft, top: rect.top + hoveredComment.y - gridRef.current!.scrollTop }}>
+                        {cellData.comment}
+                    </div>
+                )
+            })()}
+
+            {/* Validation dropdown */}
+            {validationDropdown && gridRef.current && (() => {
+                const cellData = data[`${validationDropdown.r},${validationDropdown.c}`]
+                if (!cellData?.validation) return null
+                const rect = gridRef.current!.getBoundingClientRect()
+                const x = rect.left + ROW_HEADER_WIDTH + colOffsets[validationDropdown.c] - gridRef.current!.scrollLeft
+                const y = rect.top + COL_HEADER_HEIGHT + rowOffsets[validationDropdown.r] + getRowHeight(validationDropdown.r) - gridRef.current!.scrollTop
+                return (
+                    <div className="fixed z-[250] bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[140px] text-[13px]" style={{ left: x, top: y }}>
+                        {cellData.validation.values.map((val) => (
+                            <button key={val} className={cn("w-full text-left px-3 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]", cellData.value === val && "bg-[#e8f0fe] dark:bg-[#3c4043] font-medium")} onClick={() => { setCell(validationDropdown.r, validationDropdown.c, val); setValidationDropdown(null) }}>
+                                {val}
+                            </button>
+                        ))}
+                    </div>
+                )
+            })()}
+
+            {/* Formula Autocomplete Dropdown */}
+            {isEditing && autocompleteSuggestions.length > 0 && activeCell && (
+                <div className="fixed z-[300] bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[280px] text-[13px]" style={{ left: (() => { if (!gridRef.current) return 100; const rect = gridRef.current.getBoundingClientRect(); return rect.left + ROW_HEADER_WIDTH + colOffsets[activeCell.c] - gridRef.current.scrollLeft })(), top: (() => { if (!gridRef.current) return 100; const rect = gridRef.current.getBoundingClientRect(); return rect.top + COL_HEADER_HEIGHT + rowOffsets[activeCell.r] + getRowHeight(activeCell.r) - gridRef.current.scrollTop })() }}>
+                    {autocompleteSuggestions.map((fn, i) => {
+                        const fnInfo = ALL_FUNCTIONS.find(f => f.name === fn)
+                        return (
+                            <button key={fn} className={cn("w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]", i === autocompleteIdx && "bg-[#e8f0fe] dark:bg-[#3c4043]")} onMouseDown={(e) => { e.preventDefault(); insertAutocomplete(fn) }}>
+                                <span className="font-mono text-[#1a73e8] font-medium">{fn}</span>
+                                <span className="text-[#5f6368] dark:text-[#9aa0a6] text-[11px] truncate">{fnInfo?.desc}</span>
+                            </button>
+                        )
+                    })}
+                    <div className="px-3 py-1 text-[10px] text-[#9aa0a6] border-t border-[#e3e3e3] dark:border-[#5f6368] mt-0.5">Tab pour insérer</div>
+                </div>
+            )}
+
+            {/* Hidden CSV import input */}
+            <input ref={csvInputRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={importCSV} />
         </div>
     )
 }

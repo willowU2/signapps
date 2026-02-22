@@ -1,7 +1,7 @@
 // Advanced formula evaluation engine for Spreadsheets
 // Supports math, cell references, ranges, and 30+ standard functions
 
-type CellValueGetter = (r: number, c: number) => string;
+type CellValueGetter = (r: number, c: number, sheet?: string) => string;
 
 export const SHEET_ERRORS = {
     REF: '#REF!',
@@ -72,13 +72,21 @@ export function indexToCol(index: number): string {
 }
 
 function parseCellRef(ref: string): CellRef | null {
-    const match = ref.match(/^([A-Z]+)([0-9]+)$/);
+    const clean = ref.replace(/\$/g, '');
+    const match = clean.match(/^([A-Z]+)([0-9]+)$/);
     if (!match) return null;
     return { col: colToIndex(match[1]), row: parseInt(match[2]) - 1 };
 }
 
+function extractSheetPrefix(ref: string): { sheet?: string, rest: string } {
+    const m = ref.match(/^(?:'([^']+)'|([A-Z][A-Z0-9_]*))!(.+)$/i);
+    if (m) return { sheet: m[1] || m[2], rest: m[3] };
+    return { rest: ref };
+}
+
 function resolveRange(rangeStr: string, getData: CellValueGetter, visited: Set<string>): number[] {
-    const parts = rangeStr.split(':');
+    const { sheet, rest } = extractSheetPrefix(rangeStr);
+    const parts = rest.replace(/\$/g, '').split(':');
     if (parts.length !== 2) return [];
     const start = parseCellRef(parts[0]);
     const end = parseCellRef(parts[1]);
@@ -90,7 +98,7 @@ function resolveRange(rangeStr: string, getData: CellValueGetter, visited: Set<s
 
     for (let r = minRow; r <= maxRow; r++) {
         for (let c = minCol; c <= maxCol; c++) {
-            const rawVal = getData(r, c);
+            const rawVal = getData(r, c, sheet);
             if (rawVal) {
                 const evaluated = rawVal.startsWith('=')
                     ? evaluateFormula(rawVal, getData, { r, c }, visited)
@@ -104,7 +112,8 @@ function resolveRange(rangeStr: string, getData: CellValueGetter, visited: Set<s
 }
 
 function resolveRangeStrings(rangeStr: string, getData: CellValueGetter, visited: Set<string>): string[] {
-    const parts = rangeStr.split(':');
+    const { sheet, rest } = extractSheetPrefix(rangeStr);
+    const parts = rest.replace(/\$/g, '').split(':');
     if (parts.length !== 2) return [];
     const start = parseCellRef(parts[0]);
     const end = parseCellRef(parts[1]);
@@ -116,7 +125,7 @@ function resolveRangeStrings(rangeStr: string, getData: CellValueGetter, visited
 
     for (let r = minRow; r <= maxRow; r++) {
         for (let c = minCol; c <= maxCol; c++) {
-            const rawVal = getData(r, c) || '';
+            const rawVal = getData(r, c, sheet) || '';
             const evaluated = rawVal.startsWith('=')
                 ? evaluateFormula(rawVal, getData, { r, c }, visited)
                 : rawVal;
@@ -127,9 +136,10 @@ function resolveRangeStrings(rangeStr: string, getData: CellValueGetter, visited
 }
 
 function getCellValue(ref: string, getData: CellValueGetter, visited: Set<string>): string {
-    const parsed = parseCellRef(ref);
+    const { sheet, rest } = extractSheetPrefix(ref);
+    const parsed = parseCellRef(rest);
     if (!parsed) return ref;
-    const rawVal = getData(parsed.row, parsed.col) || '';
+    const rawVal = getData(parsed.row, parsed.col, sheet) || '';
     return rawVal.startsWith('=')
         ? evaluateFormula(rawVal, getData, { r: parsed.row, c: parsed.col }, visited)
         : rawVal;
@@ -175,7 +185,7 @@ function findClosingParen(expr: string, start: number): number {
 
 function processExpression(upperExpr: string, originalExpr: string, getData: CellValueGetter, visited: Set<string>): string {
     // Match function calls from innermost out
-    const fnRegex = /\b(SUM|AVERAGE|AVG|COUNT|COUNTA|MAX|MIN|IF|IFERROR|VLOOKUP|HLOOKUP|CONCATENATE|CONCAT|ROUND|ROUNDUP|ROUNDDOWN|ABS|CEILING|FLOOR|SQRT|POWER|MOD|LEN|UPPER|LOWER|TRIM|LEFT|RIGHT|MID|SUBSTITUTE|FIND|SEARCH|TEXT|VALUE|TODAY|NOW|DATE|YEAR|MONTH|DAY|COUNTIF|COUNTIFS|SUMIF|SUMIFS|AVERAGEIF|AND|OR|NOT|EXACT|PROPER|REPT|INDEX|MATCH|CHOOSE|LARGE|SMALL|RANK|MEDIAN|STDEV|INT|SIGN|LOG|LOG10|LN|EXP|PI|RAND|RANDBETWEEN)\(/;
+    const fnRegex = /\b(SUM|AVERAGE|AVG|COUNT|COUNTA|MAX|MIN|IF|IFERROR|VLOOKUP|HLOOKUP|CONCATENATE|CONCAT|ROUND|ROUNDUP|ROUNDDOWN|ABS|CEILING|FLOOR|SQRT|POWER|MOD|LEN|UPPER|LOWER|TRIM|LEFT|RIGHT|MID|SUBSTITUTE|FIND|SEARCH|TEXT|VALUE|TODAY|NOW|DATE|YEAR|MONTH|DAY|COUNTIF|COUNTIFS|SUMIF|SUMIFS|AVERAGEIF|AND|OR|NOT|EXACT|PROPER|REPT|INDEX|MATCH|CHOOSE|LARGE|SMALL|RANK|MEDIAN|STDEV|INT|SIGN|LOG|LOG10|LN|EXP|PI|RAND|RANDBETWEEN|SPARKLINE)\(/;
 
     let expr = upperExpr;
 
@@ -196,15 +206,12 @@ function processExpression(upperExpr: string, originalExpr: string, getData: Cel
         // Evaluate each arg that contains cell refs
         const evalArg = (a: string): string => {
             a = a.trim();
-            // Remove quotes from strings
             if ((a.startsWith('"') && a.endsWith('"')) || (a.startsWith("'") && a.endsWith("'")))
                 return a.slice(1, -1);
-            // If it's a range, don't evaluate as single cell
-            if (a.includes(':')) return a;
-            // Cell reference
-            const cellRef = parseCellRef(a);
+            const { rest } = extractSheetPrefix(a);
+            if (rest.includes(':')) return a;
+            const cellRef = parseCellRef(rest);
             if (cellRef) return getCellValue(a, getData, visited);
-            // If it's another expression (number, already resolved)
             return a;
         };
 
@@ -224,11 +231,13 @@ function processExpression(upperExpr: string, originalExpr: string, getData: Cel
         expr = expr.substring(0, match.index) + result + expr.substring(argsEnd + 1);
     }
 
-    // Process remaining cell references
-    expr = expr.replace(/([A-Z]+)([0-9]+)/g, (match) => {
-        const ref = parseCellRef(match);
-        if (!ref) return match;
-        const val = getCellValue(match, getData, visited);
+    // Process remaining cell references (handles $A$1, Sheet!Ref)
+    expr = expr.replace(/(?:(?:'[^']+'|[A-Z][A-Z0-9_]*)!)?\$?([A-Z]+)\$?(\d+)/g, (fullMatch) => {
+        const { sheet, rest } = extractSheetPrefix(fullMatch);
+        const ref = parseCellRef(rest);
+        if (!ref) return fullMatch;
+        const rawVal = getData(ref.row, ref.col, sheet) || '';
+        const val = rawVal.startsWith('=') ? evaluateFormula(rawVal, getData, { r: ref.row, c: ref.col }, visited) : rawVal;
         if (isError(val)) return val;
         const num = Number(val);
         return isNaN(num) ? '0' : num.toString();
@@ -726,6 +735,16 @@ function executeFunction(
             const sorted = order === 0 ? vals.sort((a, b) => b - a) : vals.sort((a, b) => a - b);
             const idx = sorted.indexOf(val);
             return idx === -1 ? SHEET_ERRORS.NA : (idx + 1).toString();
+        }
+        case 'SPARKLINE': {
+            if (args.length < 1) return SHEET_ERRORS.ERROR;
+            const rangeStr = args[0].trim();
+            const type = args.length >= 2 ? evalArg(args[1]).toLowerCase() : 'line';
+            const validTypes = ['line', 'bar', 'column'];
+            const sparkType = validTypes.includes(type) ? type : 'line';
+            const vals = resolveRange(rangeStr, getData, visited);
+            if (vals.length === 0) return '';
+            return `__SPARKLINE__:${sparkType}:${vals.join(',')}`;
         }
         default:
             return SHEET_ERRORS.NAME;

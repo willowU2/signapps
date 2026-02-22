@@ -9,7 +9,7 @@ export interface CellStyle {
     fillColor?: string
     fontFamily?: string
     fontSize?: number
-    numberFormat?: 'auto' | 'currency' | 'percent' | 'number'
+    numberFormat?: 'auto' | 'currency' | 'percent' | 'number' | 'date' | 'time' | 'scientific' | 'accounting'
     decimals?: number
     borderTop?: boolean
     borderRight?: boolean
@@ -18,12 +18,21 @@ export interface CellStyle {
     mergeRows?: number
     mergeCols?: number
     mergedInto?: string
+    locked?: boolean
+    rotation?: number
+}
+
+export interface CellValidation {
+    type: 'list'
+    values: string[]
 }
 
 export interface CellData {
     value: string
     formula?: string
     style?: CellStyle
+    comment?: string
+    validation?: CellValidation
 }
 
 export interface SelectionBounds {
@@ -35,7 +44,13 @@ export interface SelectionBounds {
 
 export interface SheetInfo {
     name: string
+    color?: string
 }
+
+export const TAB_COLORS = [
+    '#ea4335', '#fbbc04', '#34a853', '#4a86e8', '#ff6d01',
+    '#46bdc6', '#9334e6', '#d81b60', '#795548', '#607d8b',
+]
 
 export const ROWS = 200
 export const COLS = 50
