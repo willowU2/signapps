@@ -68,6 +68,8 @@ async fn main() -> anyhow::Result<()> {
 
         // WebSocket endpoint for real-time collaboration
         .route("/api/v1/docs/:doc_type/:doc_id/ws", get(websocket_handler))
+        // y-websocket sends connections to /{base}/{roomname} without /ws suffix
+        .route("/api/v1/docs/:doc_type/:doc_id", get(websocket_handler))
 
         // Document creation endpoints
         .route("/api/v1/docs/text", post(text::create_document))

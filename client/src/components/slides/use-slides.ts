@@ -2,19 +2,35 @@ import { useEffect, useState } from 'react'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 
+export interface SlideData {
+    id: string
+    title: string
+}
+
 export function useSlides(docId: string = 'slides-demo') {
     const [doc] = useState(() => new Y.Doc())
     const [provider, setProvider] = useState<WebsocketProvider | null>(null)
-    const [objects, setObjects] = useState<Record<string, any>>({})
+
+    // Core state
+    const [slides, setSlides] = useState<SlideData[]>([])
+    const [activeSlideId, setActiveSlideId] = useState<string | null>(null)
+    const [activeObjects, setActiveObjects] = useState<Record<string, any>>({})
     const [isConnected, setIsConnected] = useState(false)
+
+    // History State
+    const [canUndo, setCanUndo] = useState(false)
+    const [canRedo, setCanRedo] = useState(false)
+    const [undoManager, setUndoManager] = useState<Y.UndoManager | null>(null)
+
+    // Multiplayer Awareness Map (clientId -> state)
+    const [collaborators, setCollaborators] = useState<Record<number, any>>({})
 
     useEffect(() => {
         const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/slide'
         const webrtcProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
 
-        // Check if server is reachable before connecting
-        const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://')
-        fetch(httpUrl, { method: 'HEAD' })
+        // Check health endpoint before connecting (WS paths don't support HTTP methods)
+        fetch('http://localhost:3010/health', { method: 'GET', mode: 'no-cors' })
             .then(() => webrtcProvider.connect())
             .catch(() => console.warn(`[useSlides] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`))
 
@@ -24,42 +40,185 @@ export function useSlides(docId: string = 'slides-demo') {
             setIsConnected(event.status === 'connected')
         })
 
-        const slideObjects = doc.getMap<string>('slide-objects')
+        // -- 0. Setup Awareness (User identity & tracking) --
+        const awareness = webrtcProvider.awareness
+        const colors = ['#f87171', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa', '#f472b6', '#38bdf8']
+        const myColor = colors[Math.floor(Math.random() * colors.length)]
 
-        const updateHandler = () => {
+        awareness.setLocalStateField('user', {
+            name: `Guest ${Math.floor(Math.random() * 1000)}`,
+            color: myColor
+        })
+
+        const handleAwarenessUpdate = () => {
+            const states = Array.from(awareness.getStates().entries())
+            const remoteCollaborators: Record<number, any> = {}
+
+            states.forEach(([clientId, state]) => {
+                if (clientId !== awareness.clientID) {
+                    remoteCollaborators[clientId] = state
+                }
+            })
+            setCollaborators(remoteCollaborators)
+        }
+
+        awareness.on('change', handleAwarenessUpdate)
+
+        // -- 1. Slide List Management --
+        const ySlideList = doc.getArray<SlideData>('slide-list')
+
+        const updateSlidesHandler = () => {
+            const currentSlides = ySlideList.toArray()
+            setSlides(currentSlides)
+
+            // Auto-select first slide if none selected and slides exist
+            if (currentSlides.length > 0 && !activeSlideId) {
+                setActiveSlideId(currentSlides[0].id)
+            }
+        }
+
+        ySlideList.observe(updateSlidesHandler)
+
+        // Init default slide if document is completely empty
+        if (ySlideList.length === 0) {
+            ySlideList.push([{ id: 'slide-01', title: 'Slide 1' }])
+        } else {
+            updateSlidesHandler()
+        }
+
+        return () => {
+            webrtcProvider.destroy()
+        }
+    }, [docId, doc, activeSlideId])
+
+    // -- 2. Active Slide Objects Management --
+    useEffect(() => {
+        if (!activeSlideId) return
+
+        // We use a Map named after the slide's ID to store its specific objects
+        const slideObjectsMap = doc.getMap<string>(`objects-${activeSlideId}`)
+
+        // Initialize intelligent UndoManager for this specific slide map
+        const um = new Y.UndoManager(slideObjectsMap)
+
+        // Listeners for UI state (disabling arrows if stack is empty)
+        um.on('stack-item-added', () => {
+            setCanUndo(um.undoStack.length > 0)
+            setCanRedo(um.redoStack.length > 0)
+        })
+        um.on('stack-item-popped', () => {
+            setCanUndo(um.undoStack.length > 0)
+            setCanRedo(um.redoStack.length > 0)
+        })
+
+        setUndoManager(um)
+
+        // Initial state
+        setCanUndo(um.undoStack.length > 0)
+        setCanRedo(um.redoStack.length > 0)
+
+        const updateObjectsHandler = () => {
             const newObj: Record<string, any> = {}
-            slideObjects.forEach((json, key) => {
+            slideObjectsMap.forEach((json, key) => {
                 try {
                     newObj[key] = JSON.parse(json)
                 } catch (e) {
                     console.error("Failed to parse object", e)
                 }
             })
-            setObjects(newObj)
+            setActiveObjects(newObj)
         }
 
-        slideObjects.observe(updateHandler)
-        updateHandler()
+        slideObjectsMap.observe(updateObjectsHandler)
+        updateObjectsHandler() // Initial load
 
         return () => {
-            webrtcProvider.destroy()
+            slideObjectsMap.unobserve(updateObjectsHandler)
+            um.destroy()
+            setUndoManager(null)
+            setCanUndo(false)
+            setCanRedo(false)
         }
-    }, [docId, doc])
+    }, [activeSlideId, doc])
+
+    // --- Actions ---
+
+    const addSlide = () => {
+        const ySlideList = doc.getArray<SlideData>('slide-list')
+        const newSlideId = `slide-${Math.random().toString(36).substr(2, 9)}`
+        ySlideList.push([{ id: newSlideId, title: `Slide ${ySlideList.length + 1}` }])
+        setActiveSlideId(newSlideId) // Optional: auto switch to new slide
+    }
+
+    const removeSlide = (id: string) => {
+        const ySlideList = doc.getArray<SlideData>('slide-list')
+        const index = ySlideList.toArray().findIndex(s => s.id === id)
+        if (index > -1) {
+            ySlideList.delete(index, 1)
+            // If we deleted the active slide, select another one or null
+            if (activeSlideId === id) {
+                const nextSlides = ySlideList.toArray()
+                setActiveSlideId(nextSlides.length > 0 ? nextSlides[Math.max(0, index - 1)].id : null)
+            }
+        }
+    }
 
     const updateObject = (id: string, obj: any) => {
-        const slideObjects = doc.getMap<string>('slide-objects')
-        slideObjects.set(id, JSON.stringify(obj))
+        if (!activeSlideId) return
+        const slideObjectsMap = doc.getMap<string>(`objects-${activeSlideId}`)
+        slideObjectsMap.set(id, JSON.stringify(obj))
     }
 
     const removeObject = (id: string) => {
-        const slideObjects = doc.getMap<string>('slide-objects')
-        slideObjects.delete(id)
+        if (!activeSlideId) return
+        const slideObjectsMap = doc.getMap<string>(`objects-${activeSlideId}`)
+        slideObjectsMap.delete(id)
     }
 
+    const clearSlide = () => {
+        if (!activeSlideId) return
+        const slideObjectsMap = doc.getMap<string>(`objects-${activeSlideId}`)
+        // Wipe all keys
+        doc.transact(() => {
+            Array.from(slideObjectsMap.keys()).forEach(key => {
+                slideObjectsMap.delete(key)
+            })
+        }, 'clear-slide')
+    }
+
+    const updateCursor = (x: number, y: number) => {
+        if (!provider || !activeSlideId) return
+        provider.awareness.setLocalStateField('cursor', {
+            x,
+            y,
+            slideId: activeSlideId
+        })
+    }
+
+    const undo = () => undoManager?.undo()
+    const redo = () => undoManager?.redo()
+
     return {
-        objects,
+        // App Level
+        isConnected,
+        collaborators,
+        slides,
+        activeSlideId,
+        setActiveSlideId,
+        addSlide,
+        removeSlide,
+
+        // Active Slide Level
+        objects: activeObjects,
         updateObject,
         removeObject,
-        isConnected
+        clearSlide,
+        updateCursor,
+
+        // History
+        canUndo,
+        canRedo,
+        undo,
+        redo
     }
 }

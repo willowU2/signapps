@@ -17,14 +17,8 @@ pub async fn websocket_handler(
     ws: WebSocketUpgrade,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    // Validate doc_id is a valid UUID
-    if let Err(_) = Uuid::parse_str(&doc_id) {
-        return (
-            axum::http::StatusCode::BAD_REQUEST,
-            "Invalid document ID format",
-        )
-            .into_response();
-    }
+    // Accept both UUIDs and arbitrary room names (e.g. "default-sheet")
+    // y-websocket clients may use non-UUID identifiers for local rooms
 
     ws.on_upgrade(move |socket| handle_socket(socket, doc_id, doc_type, state))
         .into_response()

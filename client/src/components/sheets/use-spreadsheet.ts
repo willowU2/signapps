@@ -2,9 +2,9 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
-import { CellData, CellStyle, SheetInfo, ROWS, COLS } from './types'
+import { CellData, CellStyle, CellValidation, SheetInfo, ROWS, COLS } from './types'
 
-export type { CellStyle, CellData, SheetInfo }
+export type { CellStyle, CellData, CellValidation, SheetInfo }
 
 export function useSpreadsheet(docId: string = 'default-sheet') {
     const [doc] = useState(() => new Y.Doc())
@@ -24,8 +24,8 @@ export function useSpreadsheet(docId: string = 'default-sheet') {
         const wsProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
         const idbProvider = new IndexeddbPersistence(docId, doc)
 
-        const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://')
-        fetch(httpUrl, { method: 'HEAD' })
+        // Check health endpoint (WS paths don't support HTTP methods)
+        fetch('http://localhost:3010/health', { method: 'GET', mode: 'no-cors' })
             .then(() => wsProvider.connect())
             .catch(() => {})
 
@@ -42,15 +42,17 @@ export function useSpreadsheet(docId: string = 'default-sheet') {
     // Sheets metadata
     useEffect(() => {
         const sheetsMeta = doc.getArray<string>('sheets-meta')
+        const sheetsColors = doc.getMap<string>('sheets-colors')
         if (sheetsMeta.length === 0) {
             sheetsMeta.push(['Sheet1'])
         }
         const syncSheets = () => {
-            setSheets(sheetsMeta.toArray().map(name => ({ name })))
+            setSheets(sheetsMeta.toArray().map((name, i) => ({ name, color: sheetsColors.get(String(i)) })))
         }
         sheetsMeta.observe(syncSheets)
+        sheetsColors.observe(syncSheets)
         syncSheets()
-        return () => sheetsMeta.unobserve(syncSheets)
+        return () => { sheetsMeta.unobserve(syncSheets); sheetsColors.unobserve(syncSheets) }
     }, [doc])
 
     // Watch active sheet's grid map
@@ -95,6 +97,20 @@ export function useSpreadsheet(docId: string = 'default-sheet') {
 
     const setCellFull = useCallback((r: number, c: number, cellData: CellData) => {
         getGridMap().set(`${r},${c}`, cellData)
+    }, [getGridMap])
+
+    const setCellComment = useCallback((r: number, c: number, comment: string | undefined) => {
+        const gridMap = getGridMap()
+        const key = `${r},${c}`
+        const existing = gridMap.get(key) || { value: '' }
+        gridMap.set(key, { ...existing, comment })
+    }, [getGridMap])
+
+    const setCellValidation = useCallback((r: number, c: number, validation: CellValidation | undefined) => {
+        const gridMap = getGridMap()
+        const key = `${r},${c}`
+        const existing = gridMap.get(key) || { value: '' }
+        gridMap.set(key, { ...existing, validation })
     }, [getGridMap])
 
     const deleteCell = useCallback((r: number, c: number) => {
@@ -303,16 +319,32 @@ export function useSpreadsheet(docId: string = 'default-sheet') {
         })
     }, [doc])
 
+    const setSheetColor = useCallback((index: number, color: string | undefined) => {
+        const sheetsColors = doc.getMap<string>('sheets-colors')
+        if (color) sheetsColors.set(String(index), color)
+        else sheetsColors.delete(String(index))
+    }, [doc])
+
+    const getCrossSheetValue = useCallback((sheetName: string, r: number, c: number): string => {
+        const sheetsMeta = doc.getArray<string>('sheets-meta')
+        const names = sheetsMeta.toArray()
+        const idx = names.findIndex(n => n.toUpperCase() === sheetName.toUpperCase())
+        if (idx === -1) return ''
+        const gridMap = doc.getMap<CellData>(`grid-${idx}`)
+        return gridMap.get(`${r},${c}`)?.value || ''
+    }, [doc])
+
     const undo = useCallback(() => { undoManagerRef.current?.undo() }, [])
     const redo = useCallback(() => { undoManagerRef.current?.redo() }, [])
 
     return {
-        data, setCell, setCellStyle, setCellFull, deleteCell, deleteCellRange,
-        getCellRange, setCellRange,
+        data, setCell, setCellStyle, setCellFull, setCellComment, setCellValidation,
+        deleteCell, deleteCellRange, getCellRange, setCellRange,
         insertRow, deleteRow, insertColumn, deleteColumn,
         sortColumn, mergeCells, unmergeCells,
         isConnected, undo, redo, canUndo, canRedo,
         sheets, activeSheetIndex, setActiveSheetIndex,
-        addSheet, removeSheet, renameSheet,
+        addSheet, removeSheet, renameSheet, setSheetColor,
+        getCrossSheetValue,
     }
 }
