@@ -20,9 +20,8 @@ CREATE TABLE IF NOT EXISTS storage.shares (
     access_type VARCHAR(32) NOT NULL DEFAULT 'download',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
-    -- We verify if the file being shared actually exists using a loose foreign key approach since it's S3-based, 
-    -- but we can still index it.
-    CONSTRAINT fk_storage_share_file FOREIGN KEY (bucket, key) REFERENCES storage.files(bucket, key) ON DELETE CASCADE
+    -- We verify if the file being shared actually exists using a compound foreign key approach.
+    CONSTRAINT fk_storage_share_file FOREIGN KEY (created_by, bucket, key) REFERENCES storage.files(user_id, bucket, key) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_storage_shares_token ON storage.shares(token);

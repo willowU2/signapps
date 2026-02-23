@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -24,16 +24,16 @@ impl StorageTier3Repository {
             r#"
             INSERT INTO storage.shares 
             (bucket, key, token, created_by, expires_at, password_hash, max_downloads, access_type)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING id, bucket, key, token, created_by, created_at, expires_at, password_hash, max_downloads, download_count, access_type, is_active
+            VALUES ($1, $2, $3, $4, $5::timestamptz, $6::text, $7::int4, $8)
+            RETURNING id, bucket, key, token, created_by, created_at as "created_at!", expires_at, password_hash, max_downloads, download_count as "download_count!", access_type, is_active as "is_active!"
             "#,
             bucket,
             key,
             token,
             user_id,
-            expires_at,
-            password_hash,
-            max_downloads,
+            expires_at as Option<DateTime<Utc>>,
+            password_hash as Option<String>,
+            max_downloads as Option<i32>,
             access_type
         )
         .fetch_one(pool)
@@ -52,26 +52,27 @@ impl StorageTier3Repository {
         is_active: Option<bool>,
     ) -> Result<Share, sqlx::Error> {
         let update_active = is_active.is_some();
+        let is_active_val = is_active.unwrap_or(true);
 
         sqlx::query_as!(
             Share,
             r#"
             UPDATE storage.shares
             SET
-                expires_at = COALESCE($1, expires_at),
-                password_hash = COALESCE($2, password_hash),
-                max_downloads = COALESCE($3, max_downloads),
-                access_type = COALESCE($4, access_type),
-                is_active = CASE WHEN $5 THEN $6 ELSE is_active END
+                expires_at = COALESCE($1::timestamptz, expires_at),
+                password_hash = COALESCE($2::text, password_hash),
+                max_downloads = COALESCE($3::int4, max_downloads),
+                access_type = COALESCE($4::text, access_type),
+                is_active = CASE WHEN $5::boolean THEN $6::boolean ELSE is_active END
             WHERE id = $7 AND created_by = $8
-            RETURNING id, bucket, key, token, created_by, created_at, expires_at, password_hash, max_downloads, download_count, access_type, is_active
+            RETURNING id, bucket, key, token, created_by, created_at as "created_at!", expires_at, password_hash, max_downloads, download_count as "download_count!", access_type, is_active as "is_active!"
             "#,
-            expires_at,
-            password_hash,
-            max_downloads,
-            access_type,
+            expires_at as Option<DateTime<Utc>>,
+            password_hash as Option<String>,
+            max_downloads as Option<i32>,
+            access_type as Option<String>,
             update_active,
-            is_active.unwrap_or(true), // Only used if update_active is true
+            is_active_val,
             share_id,
             user_id
         )
@@ -93,17 +94,17 @@ impl StorageTier3Repository {
         sqlx::query_as!(
             Share,
             r#"
-            SELECT id, bucket, key, token, created_by, created_at, expires_at, password_hash, max_downloads, download_count, access_type, is_active
+            SELECT id, bucket, key, token, created_by, created_at as "created_at!", expires_at, password_hash, max_downloads, download_count as "download_count!", access_type, is_active as "is_active!"
             FROM storage.shares
             WHERE created_by = $1
               AND ($2::text IS NULL OR bucket = $2)
               AND ($3::text IS NULL OR key = $3)
-              AND ($4 = FALSE OR (is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW())))
+              AND ($4::boolean = FALSE OR (is_active = TRUE AND (expires_at IS NULL OR expires_at > NOW())))
             ORDER BY created_at DESC
             "#,
             user_id,
-            b,
-            k,
+            b as Option<String>,
+            k as Option<String>,
             active_only
         )
         .fetch_all(pool)
@@ -115,7 +116,7 @@ impl StorageTier3Repository {
         sqlx::query_as!(
             Share,
             r#"
-            SELECT id, bucket, key, token, created_by, created_at, expires_at, password_hash, max_downloads, download_count, access_type, is_active
+            SELECT id, bucket, key, token, created_by, created_at as "created_at!", expires_at, password_hash, max_downloads, download_count as "download_count!", access_type, is_active as "is_active!"
             FROM storage.shares
             WHERE id = $1
             "#,
@@ -130,7 +131,7 @@ impl StorageTier3Repository {
         sqlx::query_as!(
             Share,
             r#"
-            SELECT id, bucket, key, token, created_by, created_at, expires_at, password_hash, max_downloads, download_count, access_type, is_active
+            SELECT id, bucket, key, token, created_by, created_at as "created_at!", expires_at, password_hash, max_downloads, download_count as "download_count!", access_type, is_active as "is_active!"
             FROM storage.shares
             WHERE token = $1
             "#,

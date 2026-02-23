@@ -172,150 +172,148 @@ export function MailDisplay({ mail, onSnooze }: MailDisplayProps) {
     }, [mail, handleSummarize, generateSmartReplies]);
 
     return (
-        <div className="flex h-full flex-col bg-white dark:bg-gray-950">
-            <div className="flex items-center p-3 border-b border-gray-100 dark:border-gray-800/60 bg-gray-50/50 dark:bg-gray-900/30">
-                <div className="flex items-center gap-1.5">
+        <div className="flex h-full flex-col bg-white dark:bg-gray-950 relative">
+            {/* Top Action Bar */}
+            <div className="flex items-center p-3 px-4 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/40 dark:bg-gray-950/40 backdrop-blur-xl sticky top-0 z-20">
+                <div className="flex items-center gap-2">
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-8 w-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-gray-800 transition-colors">
-                                <Archive className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                                <Archive className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Archive</span>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Archive</TooltipContent>
+                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Archive</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-8 w-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-gray-800 transition-colors">
-                                <ArchiveX className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                                <ArchiveX className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Move to junk</span>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Move to junk</TooltipContent>
+                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Move to junk</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-8 w-8 text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                                <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all hover:shadow-sm">
+                                <Trash2 className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Move to trash</span>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Move to trash</TooltipContent>
+                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-red-100 dark:border-red-900 text-red-600 dark:text-red-400">Move to trash</TooltipContent>
                     </Tooltip>
-                    <Separator orientation="vertical" className="mx-2 h-5 bg-gray-200 dark:bg-gray-800" />
+                    <Separator orientation="vertical" className="mx-2 h-5 bg-gray-200/60 dark:bg-gray-800/60" />
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                                <Clock className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all hover:shadow-sm">
+                                <Clock className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Snooze</span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[160px] rounded-xl shadow-lg border-gray-100 dark:border-gray-800">
-                            <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => mail && onSnooze?.(mail.id, "Later today")}>
+                        <DropdownMenuContent align="end" className="w-[160px] rounded-xl shadow-xl border-gray-100 dark:border-gray-800 p-1">
+                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Later today")}>
                                 Later today
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => mail && onSnooze?.(mail.id, "Tomorrow")}>
+                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Tomorrow")}>
                                 Tomorrow
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => mail && onSnooze?.(mail.id, "This weekend")}>
+                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "This weekend")}>
                                 This weekend
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => mail && onSnooze?.(mail.id, "Next week")}>
+                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Next week")}>
                                 Next week
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                <div className="ml-auto flex items-center gap-1.5">
+                <div className="ml-auto flex items-center gap-2">
                     {mail && (
                         <Button
                             variant="outline"
                             size="sm"
-                            className="mr-3 h-8 text-purple-600 dark:text-purple-400 border-purple-200/60 dark:border-purple-800/60 bg-purple-50/40 dark:bg-purple-900/20 hover:bg-purple-100/60 dark:hover:bg-purple-900/40 rounded-full shadow-sm transition-all"
+                            className="mr-2 h-9 text-purple-600 dark:text-purple-400 border-purple-200/60 dark:border-purple-800/60 bg-purple-50/60 dark:bg-purple-900/30 hover:bg-purple-100/80 dark:hover:bg-purple-900/50 rounded-xl shadow-sm transition-all font-semibold px-4"
                             onClick={handleSummarize}
                             disabled={isStreaming}
                         >
                             {isStreaming ? (
-                                <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                                <Loader2 className="h-[18px] w-[18px] mr-2 animate-spin text-purple-500" />
                             ) : (
-                                <Sparkles className="h-3.5 w-3.5 mr-2" />
+                                <Sparkles className="h-[18px] w-[18px] mr-2 text-purple-500" />
                             )}
-                            Summarize
+                            Summarize Context
                         </Button>
                     )}
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-8 w-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-gray-800 transition-colors">
-                                <Reply className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                                <Reply className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Reply</span>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Reply</TooltipContent>
+                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Reply</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-8 w-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-gray-800 transition-colors">
-                                <ReplyAll className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                                <ReplyAll className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Reply all</span>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Reply all</TooltipContent>
+                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Reply all</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-8 w-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-gray-800 transition-colors">
-                                <Forward className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                                <Forward className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Forward</span>
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Forward</TooltipContent>
+                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Forward</TooltipContent>
                     </Tooltip>
-                    <Separator orientation="vertical" className="mx-2 h-5 bg-gray-200 dark:bg-gray-800" />
+                    <Separator orientation="vertical" className="mx-2 h-5 bg-gray-200/60 dark:bg-gray-800/60" />
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-8 w-8 text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-gray-800 transition-colors">
-                                <MoreVertical className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                                <MoreVertical className="h-[18px] w-[18px]" />
                                 <span className="sr-only">More</span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-gray-100 dark:border-gray-800">
-                            <DropdownMenuItem className="rounded-lg cursor-pointer">Mark as unread</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer">Star thread</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer">Add label</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20">Mute thread</DropdownMenuItem>
+                        <DropdownMenuContent align="end" className="w-[180px] rounded-xl shadow-xl border-gray-100 dark:border-gray-800 p-1">
+                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium">Mark as unread</DropdownMenuItem>
+                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium">Star thread</DropdownMenuItem>
+                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium">Add label</DropdownMenuItem>
+                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-900/30">Mute thread</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
             </div>
             {mail ? (
                 <div className="flex flex-1 flex-col overflow-y-auto">
-                    <div className="flex items-start p-6 pb-4">
-                        <div className="flex items-start gap-4 text-sm">
-                            <Avatar className="h-10 w-10 border border-gray-100 dark:border-gray-800 shadow-sm">
+                    {/* Email Header */}
+                    <div className="flex items-start p-8 pb-6 bg-white/40 dark:bg-gray-950/40">
+                        <div className="flex items-start gap-5 text-sm w-full">
+                            <Avatar className="h-14 w-14 border border-gray-200/50 dark:border-gray-800/50 shadow-md transform hover:scale-105 transition-transform">
                                 <AvatarImage alt={mail.name} src={`https://avatar.vercel.sh/${mail.email}.png`} />
-                                <AvatarFallback className="bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 dark:from-blue-900/50 dark:to-indigo-900/50 dark:text-blue-300 font-medium">
-                                    {mail.name
-                                        .split(" ")
-                                        .map((chunk) => chunk[0])
-                                        .join("")
-                                        .substring(0, 2)}
+                                <AvatarFallback className="bg-gradient-to-br from-purple-100 to-indigo-100 text-purple-700 dark:from-purple-900/50 dark:to-indigo-900/50 dark:text-purple-300 font-bold text-lg">
+                                    {mail.name.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="grid gap-1.5">
-                                <div className="font-semibold text-lg leading-none mt-0.5 tracking-tight">{mail.subject}</div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium text-gray-900 dark:text-gray-100">{mail.name}</span>
-                                    <span className="text-xs text-muted-foreground">&lt;{mail.email}&gt;</span>
+                            <div className="grid gap-1.5 flex-1 mt-1">
+                                <div className="font-bold text-2xl leading-tight tracking-tight text-gray-900 dark:text-white pr-12">{mail.subject}</div>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{mail.name}</span>
+                                    <span className="text-sm font-medium text-gray-400 dark:text-gray-500">&lt;{mail.email}&gt;</span>
                                 </div>
                             </div>
+                            {mail.date && (
+                                <div className="shrink-0 text-sm text-gray-500 font-medium bg-gray-100/50 dark:bg-gray-800/50 px-3 py-1.5 rounded-xl border border-gray-200/50 dark:border-gray-800 mt-1 shadow-sm">
+                                    {format(new Date(mail.date), "PPpp")}
+                                </div>
+                            )}
                         </div>
-                        {mail.date && (
-                            <div className="ml-auto text-xs text-muted-foreground font-medium bg-gray-50 dark:bg-gray-900/50 px-2 py-1 rounded-md border border-gray-100 dark:border-gray-800">
-                                {format(new Date(mail.date), "PPpp")}
-                            </div>
-                        )}
                     </div>
-                    <Separator className="bg-gray-100 dark:bg-gray-800/60 mx-6 w-auto" />
+                    <Separator className="bg-gray-200/50 dark:bg-gray-800/50 mx-8 w-auto h-px" />
 
                     {/* AI Summary Panel */}
                     {showSummary && (
@@ -355,24 +353,25 @@ export function MailDisplay({ mail, onSnooze }: MailDisplayProps) {
                         </div>
                     )}
 
-                    <div className="flex-1 whitespace-pre-wrap p-6 text-[15px] leading-relaxed text-gray-800 dark:text-gray-200">
+                    <div className="flex-1 whitespace-pre-wrap p-8 text-[16px] leading-relaxed text-gray-800 dark:text-gray-200 font-medium">
                         {mail.text}
                     </div>
-                    <Separator className="mt-auto bg-gray-100 dark:bg-gray-800" />
-                    <div className="p-4 px-6 bg-gray-50/50 dark:bg-gray-900/30">
+
+                    {/* Reply Composer Area */}
+                    <div className="mt-auto px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-white/20 dark:border-white/5 rounded-b-2xl backdrop-blur-sm">
                         <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide shrink-0">
                             {smartReplies.length === 0 ? (
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="text-xs text-purple-700 dark:text-purple-400 border-purple-200/60 dark:border-purple-800/60 bg-white/50 dark:bg-gray-900/50 hover:bg-purple-50 dark:hover:bg-purple-900/40 rounded-full shadow-sm transition-all"
+                                    className="text-sm font-semibold text-purple-700 dark:text-purple-400 border-purple-200/80 dark:border-purple-800/60 bg-white/80 dark:bg-gray-900/80 hover:bg-purple-50 dark:hover:bg-purple-900/40 rounded-xl shadow-sm transition-all h-9 px-4"
                                     onClick={generateSmartReplies}
                                     disabled={isRepliesLoading}
                                 >
                                     {isRepliesLoading ? (
-                                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                                     ) : (
-                                        <Bot className="h-3.5 w-3.5 mr-1.5" />
+                                        <Bot className="h-4 w-4 mr-2" />
                                     )}
                                     Suggest Replies
                                 </Button>
@@ -381,62 +380,62 @@ export function MailDisplay({ mail, onSnooze }: MailDisplayProps) {
                                     <button
                                         key={i}
                                         onClick={() => setReplyText(reply)}
-                                        className="whitespace-nowrap rounded-full border border-purple-200/60 dark:border-purple-800/60 bg-white dark:bg-gray-900 shadow-sm px-4 py-1.5 text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/40 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50"
+                                        className="whitespace-nowrap rounded-xl border border-purple-200/80 dark:border-purple-800/60 bg-white/95 dark:bg-gray-900/95 shadow-sm px-5 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-900/40 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200 transform hover:-translate-y-0.5"
                                     >
                                         {reply}
                                     </button>
                                 ))
                             )}
                         </div>
-                        <form className="mt-1">
-                            <div className="grid gap-3">
+                        <form className="mt-2">
+                            <div className="grid gap-3 relative">
                                 <Textarea
-                                    className="p-4 min-h-[100px] resize-none border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-gray-950 focus-visible:ring-blue-500/30 focus-visible:border-blue-500/50 rounded-xl shadow-sm transition-all text-[15px] leading-relaxed"
-                                    placeholder={`Reply to ${mail.name}...`}
+                                    className="p-4 pt-5 pb-14 min-h-[140px] resize-none border border-gray-200/80 dark:border-gray-800/80 bg-white/80 dark:bg-gray-950/80 focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:border-transparent rounded-2xl shadow-sm transition-all text-[15px] leading-relaxed block w-full placeholder:text-gray-400"
+                                    placeholder={`Write your reply to ${mail.name}...`}
                                     value={replyText}
                                     onChange={(e) => setReplyText(e.target.value)}
                                 />
-                                <div className="flex items-center justify-between">
-                                    <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                        <Bot className="w-3 h-3" />
-                                        <span>AI tools available via '/' or smart suggestions</span>
+                                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                                    <div className="text-[13px] font-medium text-gray-500/80 dark:text-gray-400/80 flex items-center gap-1.5 pl-2 pointer-events-auto">
+                                        <Bot className="w-4 h-4" />
+                                        <span>AI available via '/'</span>
                                     </div>
                                     {sending ? (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                                Sending in {countdown}s...
+                                        <div className="flex items-center gap-3 bg-white/90 dark:bg-gray-900/90 py-1.5 px-2 rounded-xl border border-gray-100 dark:border-gray-800 backdrop-blur-md shadow-sm pointer-events-auto">
+                                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2">
+                                                Sending in {countdown}s
                                             </span>
                                             <Button
                                                 onClick={(e) => { e.preventDefault(); handleUndo(); }}
                                                 size="sm"
                                                 variant="outline"
-                                                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/30 rounded-full"
+                                                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/30 rounded-lg h-8"
                                             >
-                                                Undo
+                                                Undo Action
                                             </Button>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 pointer-events-auto">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 rounded-full"
+                                                        className="text-gray-600 hover:text-gray-900 hover:bg-gray-100/80 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800/80 rounded-xl h-9 px-3 transition-colors"
                                                     >
                                                         <FileText className="w-4 h-4 mr-2" />
                                                         Templates
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-[200px] rounded-xl shadow-lg border-gray-100 dark:border-gray-800">
-                                                    <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => setReplyText("Thanks, I'll take a look at this asap.")}>
+                                                <DropdownMenuContent align="end" className="w-[200px] rounded-xl shadow-xl border-gray-100 dark:border-gray-800">
+                                                    <DropdownMenuItem className="rounded-lg cursor-pointer font-medium py-2" onClick={() => setReplyText("Thanks, I'll take a look at this asap.")}>
                                                         "Thanks, I'll look into it"
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => setReplyText("Sounds good to me, please proceed.")}>
+                                                    <DropdownMenuItem className="rounded-lg cursor-pointer font-medium py-2" onClick={() => setReplyText("Sounds good to me, please proceed.")}>
                                                         "Sounds good to me"
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="rounded-lg cursor-pointer" onClick={() => setReplyText("Can we schedule a quick call to discuss this?")}>
+                                                    <DropdownMenuItem className="rounded-lg cursor-pointer font-medium py-2" onClick={() => setReplyText("Can we schedule a quick call to discuss this?")}>
                                                         "Can we schedule a call?"
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -445,10 +444,10 @@ export function MailDisplay({ mail, onSnooze }: MailDisplayProps) {
                                                 onClick={handleSend}
                                                 size="sm"
                                                 disabled={!replyText.trim()}
-                                                className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-5 py-2 shadow-sm transition-all"
+                                                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 rounded-xl px-5 h-9 shadow-md hover:shadow-lg transition-all"
                                             >
-                                                <Send className="w-3.5 h-3.5 mr-2" />
-                                                Send
+                                                <Send className="w-4 h-4 mr-2 shrink-0" />
+                                                Send Reply
                                             </Button>
                                         </div>
                                     )}

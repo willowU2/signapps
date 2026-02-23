@@ -162,18 +162,61 @@ pub async fn search(
 ) -> Result<Json<SearchResponse>> {
     let start = std::time::Instant::now();
 
-    // TODO: Implement actual search
-    // - Query storage backend for object listing with prefix
-    // - Filter by metadata
-    // - If include_content, query AI service for content search
-    // - Calculate relevance scores
-    // - Build facets
+    let bucket = query
+        .bucket
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
+
+    let list_query = crate::storage::ListObjectsQuery {
+        prefix: query.prefix.clone(),
+        delimiter: None,
+        max_keys: Some(1000),
+        continuation_token: None,
+    };
+
+    let mut results = vec![];
+    let mut total = 0;
+
+    if let Ok(listed) = _state.storage.list_objects(&bucket, list_query).await {
+        let q_lower = query.q.to_lowercase();
+
+        for obj in listed.objects {
+            let filename = obj.key.split('/').last().unwrap_or(&obj.key).to_string();
+
+            if q_lower.is_empty() || filename.to_lowercase().contains(&q_lower) {
+                let modified_at = if let Some(dt_str) = &obj.last_modified {
+                    DateTime::parse_from_rfc3339(dt_str)
+                        .map(|dt| dt.with_timezone(&Utc))
+                        .unwrap_or_else(|_| Utc::now())
+                } else {
+                    Utc::now()
+                };
+
+                results.push(SearchResult {
+                    bucket: bucket.clone(),
+                    key: obj.key.clone(),
+                    filename,
+                    path: obj.key.clone(),
+                    size: obj.size,
+                    content_type: obj
+                        .content_type
+                        .unwrap_or_else(|| "application/octet-stream".to_string()),
+                    modified_at,
+                    score: 1.0,
+                    highlights: vec![],
+                    preview: None,
+                });
+            }
+        }
+        total = results.len() as i64;
+    }
 
     let took_ms = start.elapsed().as_millis() as u64;
 
     Ok(Json(SearchResponse {
-        results: vec![],
-        total: 0,
+        results,
+        total,
+
         query: query.q,
         facets: SearchFacets {
             buckets: vec![],
@@ -215,14 +258,44 @@ pub async fn quick_search(
     State(_state): State<AppState>,
     Query(query): Query<QuickSearchQuery>,
 ) -> Result<Json<QuickSearchResponse>> {
-    let _limit = query.limit.unwrap_or(10);
+    let limit = query.limit.unwrap_or(10) as usize;
 
-    // TODO: Quick search in storage object listing
+    let bucket = "default".to_string();
+    let list_query = crate::storage::ListObjectsQuery {
+        prefix: None,
+        delimiter: None,
+        max_keys: Some(500),
+        continuation_token: None,
+    };
 
-    Ok(Json(QuickSearchResponse {
-        results: vec![],
-        total: 0,
-    }))
+    let mut results = vec![];
+
+    if let Ok(listed) = _state.storage.list_objects(&bucket, list_query).await {
+        let q_lower = query.q.to_lowercase();
+
+        for obj in listed.objects {
+            if results.len() >= limit {
+                break;
+            }
+            let filename = obj.key.split('/').last().unwrap_or(&obj.key).to_string();
+
+            if q_lower.is_empty() || filename.to_lowercase().contains(&q_lower) {
+                results.push(QuickSearchResult {
+                    bucket: bucket.clone(),
+                    key: obj.key.clone(),
+                    filename,
+                    size: obj.size,
+                    content_type: obj
+                        .content_type
+                        .unwrap_or_else(|| "application/octet-stream".to_string()),
+                });
+            }
+        }
+    }
+
+    let total = results.len() as i64;
+
+    Ok(Json(QuickSearchResponse { results, total }))
 }
 
 /// Get recent files for current user.

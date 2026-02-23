@@ -71,6 +71,7 @@ import { FileTagsDialog } from '@/components/storage/file-tags-dialog';
 import { VersionHistoryDialog } from '@/components/storage/version-history-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
+import { ShareDialog } from '@/components/storage/share-dialog';
 
 // Import storage components
 import { OverviewStats, AlertsPanel, HealthGauge, QuotaCard } from './components/dashboard';
@@ -149,6 +150,10 @@ export default function StoragePage() {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [moveItem, setMoveItem] = useState<FileItem | null>(null);
 
+  // Share state
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareItem, setShareItem] = useState<FileItem | null>(null);
+
   const handleAction = async (action: string, item: FileItem) => {
     if (action === 'open') {
       if (item.type === 'folder') handleNavigate(item);
@@ -181,7 +186,8 @@ export default function StoragePage() {
         toast.error("Cannot view history: file ID is missing");
       }
     } else if (action === 'share') {
-      toast.info("Sharing not yet implemented");
+      setShareItem(item);
+      setShareDialogOpen(true);
     } else if (action === 'restore' && item.id) {
       try {
         await trashApi.restore([item.id]);
@@ -387,6 +393,32 @@ export default function StoragePage() {
       fetchFiles();
     }
   }, [activeTab, fetchFiles]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search.trim() && activeTab === 'files') {
+        searchApi.search(search, { bucket: currentBucket }).then(response => {
+          const searchFiles: FileItem[] = response.data.results.map((item: any) => ({
+            key: item.key,
+            name: item.filename,
+            type: 'file',
+            size: item.size,
+            contentType: item.content_type,
+            bucket: item.bucket,
+            lastModified: item.modified_at,
+          }));
+          setFiles(searchFiles);
+        }).catch(err => {
+          console.error("Search failed", err);
+          setFiles([]);
+        });
+      } else if (!search.trim() && activeTab === 'files') {
+        fetchFiles();
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search, currentBucket, fetchFiles, activeTab]);
 
   const handleNavigate = (item: FileItem) => {
     if (item.type === 'folder') {
@@ -597,9 +629,7 @@ export default function StoragePage() {
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   };
 
-  const filteredFiles = files.filter((f) =>
-    f.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const displayFiles = files; // Search filtering is now done via the backend /search API
 
   return (
     <AppLayout>
@@ -777,16 +807,16 @@ export default function StoragePage() {
                             <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
                           ))}
                         </div>
-                      ) : filteredFiles.length === 0 ? (
+                      ) : displayFiles.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
                           <FolderOpen className="h-16 w-16 mb-4" />
-                          <p>Empty folder</p>
+                          <p>{search ? 'No files found matching search' : 'Empty folder'}</p>
                           <p className="text-sm">Drag files here or click New</p>
                         </div>
                       ) : (
                         viewMode === 'grid' ? (
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-                            {filteredFiles.map((file) => (
+                            {displayFiles.map((file) => (
                               <FileGridItem
                                 key={file.key}
                                 item={file}
@@ -805,7 +835,7 @@ export default function StoragePage() {
                               <div className="col-span-2 hidden sm:block text-right">Size</div>
                               <div className="col-span-1"></div>
                             </div>
-                            {filteredFiles.map((file) => (
+                            {displayFiles.map((file) => (
                               <FileListItem
                                 key={file.key}
                                 item={file}
@@ -1064,6 +1094,7 @@ export default function StoragePage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <ShareDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} item={shareItem} />
       </div>
     </AppLayout>
   );

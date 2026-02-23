@@ -70,32 +70,34 @@ export default function MailPage() {
     return (
         <TooltipProvider delayDuration={0}>
             <AppLayout>
-                <div className="flex h-full flex-col">
-                    <div className="flex items-center p-4 border-b bg-white/50 dark:bg-gray-950/50 backdrop-blur-md sticky top-0 z-10">
-                        <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">Inbox</h1>
-                        <div className="ml-auto flex items-center gap-3">
+                <div className="flex h-[calc(100vh-4rem)] flex-col bg-background/50 dark:bg-background/20">
+                    {/* Header */}
+                    <div className="flex items-center px-4 md:px-6 py-4 bg-background/60 backdrop-blur-3xl sticky top-0 z-10 border-b shadow-sm">
+                        <h1 className="text-2xl font-bold tracking-tight">Inbox</h1>
+                        <div className="ml-auto flex items-center gap-4">
                             <Button
-                                variant="outline"
+                                variant="default"
                                 size="sm"
-                                className="text-purple-600 dark:text-purple-400 border-purple-200/60 dark:border-purple-800/60 bg-purple-50/30 dark:bg-purple-900/20 hover:bg-purple-100/50 dark:hover:bg-purple-900/40 rounded-full shadow-sm transition-all"
+                                className="rounded-full shadow-sm transition-all font-medium gap-2"
                                 onClick={() => setComposeAiOpen(true)}
                             >
                                 <Bot className="h-4 w-4 mr-2" />
                                 Compose with AI
                             </Button>
-                            <div className="relative group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-purple-500 transition-colors" />
+                            <div className="relative group shadow-sm rounded-full">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                                 <Input
                                     placeholder="Search emails..."
-                                    className="pl-9 w-[280px] rounded-full bg-gray-100/50 dark:bg-gray-800/50 border-transparent focus-visible:ring-purple-500/30 focus-visible:border-purple-500/50 transition-all"
+                                    className="pl-10 w-[200px] lg:w-[300px] h-9 rounded-full bg-background/80 border-border focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-inner text-sm"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-[200px_350px_1fr] flex-1 overflow-hidden bg-gray-50/30 dark:bg-gray-900/10">
+                    {/* Main Content Area */}
+                    <div className="flex flex-1 overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
                         {/* Sidebar */}
-                        <div className="border-r border-gray-200/60 dark:border-gray-800/60 p-3 flex flex-col gap-2">
+                        <div className="hidden md:flex w-[220px] shrink-0 bg-background/60 backdrop-blur-3xl rounded-2xl border shadow-sm p-3 flex-col gap-2 relative">
                             <MailNav isCollapsed={false} links={[
                                 {
                                     title: "Inbox",
@@ -135,9 +137,8 @@ export default function MailPage() {
                             ]} />
                         </div>
 
-                        {/* List */}
-                        <div className="border-r border-gray-200/60 dark:border-gray-800/60 overflow-hidden bg-white/50 dark:bg-gray-950/20 backdrop-blur-sm">
-                            {/* Accessing items from state */}
+                        {/* Mail List */}
+                        <div className="w-full lg:w-[400px] shrink-0 bg-background/80 backdrop-blur-3xl rounded-2xl border shadow-sm overflow-hidden flex flex-col relative transition-all duration-300">
                             <MailList
                                 items={mailList}
                                 selectedId={mailState.selected}
@@ -146,15 +147,12 @@ export default function MailPage() {
                             />
                         </div>
 
-                        {/* Display */}
-                        <div className="overflow-hidden bg-white dark:bg-gray-950 relative">
-                            {/* Inner container to allow MailDisplay to fill space properly */}
-                            <div className="absolute inset-0 m-4 border border-gray-200/50 dark:border-gray-800/50 rounded-2xl overflow-hidden shadow-sm bg-gray-50/30 dark:bg-gray-900/20 flex flex-col">
-                                <MailDisplay
-                                    mail={mailList.find(m => m.id === mailState.selected) || null}
-                                    onSnooze={handleSnooze}
-                                />
-                            </div>
+                        {/* Mail Display */}
+                        <div className="hidden lg:flex flex-1 overflow-hidden bg-background/95 backdrop-blur-3xl rounded-2xl border shadow-md relative flex-col">
+                            <MailDisplay
+                                mail={mailList.find(m => m.id === mailState.selected) || null}
+                                onSnooze={handleSnooze}
+                            />
                         </div>
                     </div>
                 </div>

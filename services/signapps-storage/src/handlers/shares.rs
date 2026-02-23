@@ -1,6 +1,7 @@
 //! File sharing handlers - Create and manage share links.
 #![allow(dead_code)]
 
+use crate::AppState;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -11,7 +12,6 @@ use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 use signapps_db::repositories::StorageTier3Repository;
 use uuid::Uuid;
-
 /// Share link information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ShareLink {
@@ -198,7 +198,7 @@ pub async fn create_share(
 }
 
 /// List shares for the current user.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn list_shares(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -227,7 +227,7 @@ pub async fn list_shares(
 }
 
 /// Get share details.
-#[tracing::instrument(skip(_state))]
+#[tracing::instrument(skip(state, user_id))]
 pub async fn get_share(
     State(state): State<AppState>,
     axum::Extension(user_id): axum::Extension<Uuid>,
@@ -238,7 +238,7 @@ pub async fn get_share(
         .map_err(|_| Error::NotFound(format!("Share {} not found", id)))?;
 
     if share.created_by != user_id {
-        return Err(Error::Unauthorized("Cannot access this share".into()));
+        return Err(Error::Unauthorized);
     }
 
     Ok(Json(map_share_to_api(share)))
@@ -324,9 +324,9 @@ fn validate_public_share(
 
     if let Some(hash) = &share.password_hash {
         if !hash.is_empty() {
-            let pwd = password.ok_or_else(|| Error::Unauthorized("Password required".into()))?;
+            let pwd = password.ok_or_else(|| Error::Unauthorized)?;
             if !bcrypt::verify(pwd, hash).unwrap_or(false) {
-                return Err(Error::Unauthorized("Invalid password".into()));
+                return Err(Error::Unauthorized);
             }
         }
     }
@@ -404,8 +404,25 @@ pub async fn download_shared(
         .unwrap_or(&share.key)
         .to_string();
 
-    crate::handlers::files::serve_file(&state.storage, &share.bucket, &share.key, Some(filename))
-        .await
+    let object = state.storage.get_object(&share.bucket, &share.key).await?;
+
+    let content_type = object.content_type;
+    let content_length = object.content_length;
+
+    let body = axum::body::Body::from(object.data);
+
+    let response = axum::response::Response::builder()
+        .status(axum::http::StatusCode::OK)
+        .header(axum::http::header::CONTENT_TYPE, content_type)
+        .header(axum::http::header::CONTENT_LENGTH, content_length)
+        .header(
+            axum::http::header::CONTENT_DISPOSITION,
+            format!("attachment; filename=\"{}\"", filename),
+        )
+        .body(body)
+        .map_err(|e| Error::Internal(e.to_string()))?;
+
+    Ok(response)
 }
 
 /// Generate a secure random token for sharing.
@@ -414,6 +431,27 @@ fn generate_share_token() -> String {
     let mut rng = rand::thread_rng();
     let bytes: Vec<u8> = (0..24).map(|_| rng.gen()).collect();
     base64::Engine::encode(&base64::engine::general_purpose::URL_SAFE_NO_PAD, &bytes)
+}
+
+fn map_share_to_api(share: signapps_db::models::storage_tier3::Share) -> ShareLink {
+    ShareLink {
+        id: share.id,
+        bucket: share.bucket,
+        key: share.key,
+        token: share.token,
+        created_by: share.created_by,
+        created_at: share.created_at,
+        expires_at: share.expires_at,
+        password_protected: share.password_hash.is_some()
+            && !share.password_hash.as_ref().unwrap().is_empty(),
+        max_downloads: share.max_downloads,
+        download_count: share.download_count,
+        access_type: share
+            .access_type
+            .parse()
+            .unwrap_or(ShareAccessType::Download),
+        is_active: share.is_active,
+    }
 }
 
 #[cfg(test)]
