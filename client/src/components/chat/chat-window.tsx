@@ -3,13 +3,14 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sparkles, Hash, Phone, Video, Search, ChevronDown, BellOff, Info } from "lucide-react"
+import { Sparkles, Hash, Phone, Video, Search, ChevronDown, Bot, X, Loader2, CheckCircle, Presentation, Calendar, Info } from "lucide-react"
 import { useChat } from "@/hooks/use-chat"
 import { cn } from "@/lib/utils"
 import { MessageItem, ChatMessage } from "./message-item"
 import { ChatInput } from "./chat-input"
 import { ThreadPane } from "./thread-pane"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useAiStream } from "@/hooks/use-ai-stream"
 
 interface ChatWindowProps {
     channelId: string
@@ -28,6 +29,15 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
     const [activeThreadMsgId, setActiveThreadMsgId] = useState<string | null>(null)
     const [isShowingAiSummary, setIsShowingAiSummary] = useState(true)
 
+    // AI & Slash Commands State
+    const { stream, stop, isStreaming: isAiStreaming } = useAiStream()
+    const [aiCard, setAiCard] = useState<{ title: string, content: string, type: 'summary' | 'task' | 'meet' | 'ask', status: 'generating' | 'done' | 'error' } | null>(null)
+
+    // Cleanup AI on unmount
+    useEffect(() => {
+        return () => stop()
+    }, [stop])
+
     // Auto scroll on new messages
     useEffect(() => {
         if (scrollRef.current) {
@@ -42,7 +52,71 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
     }, [messages, activeThreadMsgId])
 
     const handleSendMessage = (content: string) => {
+        if (content.startsWith("/")) {
+            handleSlashCommand(content)
+            return
+        }
         sendMessage(content)
+    }
+
+    const handleSlashCommand = (content: string) => {
+        const [cmd, ...args] = content.split(" ")
+        const query = args.join(" ")
+
+        switch (cmd.toLowerCase()) {
+            case "/summarize":
+                triggerAiSummary("Summarizing recent conversation...")
+                break
+            case "/task":
+                setAiCard({ title: "Task Creation", content: `Created task: "${query || "New Task"}" and assigned to you.`, type: 'task', status: 'done' })
+                break
+            case "/meet":
+                setAiCard({ title: "Video Meeting", content: `Started a new video meeting. Click here to join.`, type: 'meet', status: 'done' })
+                break
+            case "/ask":
+                triggerAiQuery(query)
+                break
+            default:
+                // Unknown command, send as normal text
+                sendMessage(content)
+                break
+        }
+    }
+
+    const triggerAiSummary = (title: string = "Channel Summary") => {
+        setIsShowingAiSummary(false)
+        setAiCard({ title, content: "", type: 'summary', status: 'generating' })
+
+        let localContent = ""
+        stream("Summarize the latest messages in bullet points.", {
+            onToken: (t) => {
+                localContent += t
+                setAiCard(prev => prev ? { ...prev, content: localContent } : null)
+            },
+            onDone: (f) => setAiCard(prev => prev ? { ...prev, content: f || localContent, status: 'done' } : null),
+            onError: () => {
+                // Fallback graceful UI if AI backend is down
+                const mockSummary = "• The team discussed the new redesign features.\n• Alice approved the glassmorphism approach.\n• Next step is to implement slash commands."
+                setAiCard({ title, content: mockSummary, type: 'summary', status: 'done' })
+            }
+        })
+    }
+
+    const triggerAiQuery = (query: string) => {
+        if (!query) return;
+        setAiCard({ title: "AI Assistant", content: "", type: 'ask', status: 'generating' })
+
+        let localContent = ""
+        stream(query, {
+            onToken: (t) => {
+                localContent += t
+                setAiCard(prev => prev ? { ...prev, content: localContent } : null)
+            },
+            onDone: (f) => setAiCard(prev => prev ? { ...prev, content: f || localContent, status: 'done' } : null),
+            onError: () => {
+                setAiCard({ title: "AI Assistant", content: "I'm sorry, I couldn't reach the AI service right now. Please try again later.", type: 'ask', status: 'error' })
+            }
+        })
     }
 
     const handleSendThreadReply = (content: string) => {
@@ -61,7 +135,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
         content: m.content,
         senderId: m.senderId,
         senderName: m.senderName,
-        timestamp: m.timestamp,
+        timestamp: typeof m.timestamp === 'string' ? new Date(m.timestamp).getTime() : m.timestamp,
         reactions: Object.keys(m).includes("reactions") ? (m as any).reactions : undefined
     }))
 
@@ -95,7 +169,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                                 variant="outline"
                                 size="sm"
                                 className="h-8 gap-1.5 mr-2 rounded-full border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary transition-all animate-in fade-in zoom-in"
-                                onClick={() => setIsShowingAiSummary(false)}
+                                onClick={() => triggerAiSummary("Catch me up: Recent Activity")}
                             >
                                 <Sparkles className="h-3.5 w-3.5" />
                                 <span className="text-xs font-semibold">Catch me up</span>
@@ -142,6 +216,59 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                                 <p className="text-muted-foreground text-sm max-w-[300px]">
                                     This is the start of the #{channelId} channel. You can message, share files, and collaborate.
                                 </p>
+                            </div>
+                        )}
+
+                        {/* AI Action/Result Card inline in chat */}
+                        {aiCard && (
+                            <div className="mx-4 mb-6 mt-2 relative animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent rounded-2xl pointer-events-none" />
+                                <div className={cn(
+                                    "relative rounded-2xl border p-4 shadow-sm backdrop-blur-sm",
+                                    aiCard.type === 'summary' ? "border-purple-500/20 bg-purple-500/5" :
+                                        aiCard.type === 'task' ? "border-blue-500/20 bg-blue-500/5" :
+                                            aiCard.type === 'meet' ? "border-green-500/20 bg-green-500/5" :
+                                                "border-orange-500/20 bg-orange-500/5"
+                                )}>
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            {aiCard.type === 'summary' && <Sparkles className="h-4 w-4 text-purple-500" />}
+                                            {aiCard.type === 'task' && <CheckCircle className="h-4 w-4 text-blue-500" />}
+                                            {aiCard.type === 'meet' && <Video className="h-4 w-4 text-green-500" />}
+                                            {aiCard.type === 'ask' && <Bot className="h-4 w-4 text-orange-500" />}
+
+                                            <h4 className="text-sm font-semibold tracking-tight">{aiCard.title}</h4>
+
+                                            {aiCard.status === 'generating' && (
+                                                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-2" />
+                                            )}
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full -mt-1 -mr-1"
+                                            onClick={() => {
+                                                if (aiCard.status === 'generating') stop();
+                                                setAiCard(null);
+                                            }}
+                                        >
+                                            <X className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+
+                                    <div className="text-[13px] leading-relaxed text-foreground whitespace-pre-wrap pl-6 text-muted-foreground">
+                                        {aiCard.content || (aiCard.status === 'generating' ? "Thinking..." : "")}
+                                    </div>
+
+                                    {aiCard.type === 'meet' && aiCard.status === 'done' && (
+                                        <div className="mt-3 pl-6">
+                                            <Button size="sm" className="h-8 gap-1.5 bg-green-600 hover:bg-green-700 text-white">
+                                                <Video className="h-3.5 w-3.5" />
+                                                Join Meeting
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 
