@@ -25,7 +25,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
         name: "User " + Math.floor(Math.random() * 1000)
     }))
 
-    const { messages, sendMessage, isConnected } = useChat(channelId, user.id, user.name)
+    const { messages, sendMessage, addReaction, isConnected } = useChat(channelId, user.id, user.name)
     const [activeThreadMsgId, setActiveThreadMsgId] = useState<string | null>(null)
     const [isShowingAiSummary, setIsShowingAiSummary] = useState(true)
 
@@ -120,17 +120,17 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
     }
 
     const handleSendThreadReply = (content: string) => {
-        // In a real app we'd attach a parentId to sendMessage
-        // For iteration 1, we just mock sending it to the main channel prefixed
-        sendMessage(`[Thread Reply] ${content}`)
+        if (activeThreadMsgId) {
+            sendMessage(content, activeThreadMsgId)
+        }
     }
 
     const threadedMessage = messages.find(m => m.id === activeThreadMsgId) || null
-    // Mock replies finding: any message after it that has "[Thread Reply]"
-    const mockReplies = messages.filter(m => m.timestamp > (threadedMessage?.timestamp || 0) && m.content.includes("[Thread Reply]"));
+    // Actual replies mapped via parentId
+    const threadReplies = messages.filter(m => m.parentId === activeThreadMsgId);
 
-    // Map useChat messages to ChatMessage interface
-    const formattedMessages: ChatMessage[] = messages.filter(m => !m.content.includes("[Thread Reply]")).map(m => ({
+    // Map useChat messages to ChatMessage interface (exclude replies from main feed)
+    const formattedMessages: ChatMessage[] = messages.filter(m => !m.parentId).map(m => ({
         id: m.id,
         content: m.content,
         senderId: m.senderId,
@@ -292,10 +292,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                                             isMe={msg.senderId === user.id}
                                             showAvatar={showAvatar}
                                             onReplyInThread={(id) => setActiveThreadMsgId(id)}
-                                            onAddReaction={(id, emoji) => {
-                                                // mock reaction visual logic
-                                                console.log("Reacting to", id, "with", emoji)
-                                            }}
+                                            onAddReaction={addReaction}
                                         />
                                     </div>
                                 )
@@ -318,7 +315,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
             {activeThreadMsgId && (
                 <ThreadPane
                     parentMessage={threadedMessage as unknown as ChatMessage || null}
-                    replies={mockReplies as unknown as ChatMessage[]}
+                    replies={threadReplies as unknown as ChatMessage[]}
                     onClose={() => setActiveThreadMsgId(null)}
                     onSendReply={handleSendThreadReply}
                     currentUserId={user.id}

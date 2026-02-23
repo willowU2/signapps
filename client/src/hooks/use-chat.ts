@@ -9,6 +9,8 @@ export interface Message {
     senderName: string
     content: string
     timestamp: string // Yjs serializes dates as strings usually
+    parentId?: string
+    reactions?: Record<string, number>
 }
 
 export function useChat(channelId: string, userId: string, userName: string) {
@@ -74,7 +76,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
         }
     }, [channelId])
 
-    const sendMessage = (content: string) => {
+    const sendMessage = (content: string, parentId?: string) => {
         if (!messagesArrayRef.current) return
 
         const newMessage: Message = {
@@ -83,6 +85,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
             senderName: userName,
             content,
             timestamp: new Date().toISOString(),
+            parentId
         }
 
         // Append to Yjs array
@@ -91,9 +94,28 @@ export function useChat(channelId: string, userId: string, userName: string) {
         })
     }
 
+    const addReaction = (msgId: string, emoji: string) => {
+        if (!messagesArrayRef.current) return;
+
+        docRef.current?.transact(() => {
+            const arr = messagesArrayRef.current!;
+            const idx = arr.toArray().findIndex(m => m.id === msgId);
+            if (idx !== -1) {
+                const msg = arr.get(idx);
+                const reactions = { ...(msg.reactions || {}) };
+                reactions[emoji] = (reactions[emoji] || 0) + 1;
+
+                // Replace the item to trigger sync
+                arr.delete(idx, 1);
+                arr.insert(idx, [{ ...msg, reactions }]);
+            }
+        });
+    }
+
     return {
         messages,
         sendMessage,
+        addReaction,
         isConnected
     }
 }
