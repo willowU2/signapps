@@ -2,7 +2,7 @@
 
 import { useUIStore } from '@/lib/store';
 import { Sidebar } from './sidebar';
-import { EditorHeader } from './editor-header';
+import { GlobalHeader } from './global-header';
 import { CommandBar } from './command-bar';
 import { RightSidebar } from './right-sidebar';
 import { cn } from '@/lib/utils';
@@ -29,7 +29,7 @@ export function EditorLayout({ documentId, icon, children }: EditorLayoutProps) 
                     rightSidebarOpen ? 'pr-[24rem]' : 'pr-16'
                 )}
             >
-                <EditorHeader documentId={documentId} icon={icon} />
+                <GlobalHeader />
                 {/* Ensure main area takes up remaining height without scrolling page body */}
                 <main className="flex-1 overflow-hidden relative">
                     <div className="absolute inset-0">

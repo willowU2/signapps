@@ -3,9 +3,11 @@
 import { useUIStore } from '@/lib/store';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
+import { GlobalHeader } from './global-header';
 import { CommandBar } from './command-bar';
 import { RightSidebar } from './right-sidebar';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { sidebarCollapsed, rightSidebarOpen } = useUIStore();
+  const pathname = usePathname();
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,7 +30,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           rightSidebarOpen ? 'pr-[24rem]' : 'pr-16'
         )}
       >
-        <Header />
+        {pathname === '/dashboard' ? <Header /> : <GlobalHeader />}
         <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
