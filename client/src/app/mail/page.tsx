@@ -20,6 +20,7 @@ import { AppLayout } from "@/components/layout/app-layout"
 import { MailDisplay } from "@/components/mail/mail-display"
 import { MailList } from "@/components/mail/mail-list"
 import { MailNav } from "@/components/mail/mail-nav"
+import { AccountSwitcher } from "@/components/mail/account-switcher"
 import { ComposeAiDialog } from "@/components/mail/compose-ai-dialog"
 import { Mail } from "@/lib/data/mail"
 import { useMail } from "@/app/mail/use-mail"
@@ -27,6 +28,21 @@ import { mailApi } from "@/lib/api-mail"
 
 // Mock data (fallback)
 import { mails } from "@/lib/data/mail"
+
+const MOCK_ACCOUNTS = [
+    {
+        name: "Alice Smith",
+        email: "alice@signapps.com",
+        icon: "gmail",
+        provider: "gmail" as const,
+    },
+    {
+        name: "Personal (IMAP)",
+        email: "alice.personal@example.com",
+        icon: "custom",
+        provider: "custom" as const,
+    },
+]
 
 export default function MailPage() {
     const [mailState, setMailState] = useMail() // useMail returns [state, setState]
@@ -97,7 +113,17 @@ export default function MailPage() {
                     {/* Main Content Area */}
                     <div className="flex flex-1 overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
                         {/* Sidebar */}
-                        <div className="hidden md:flex w-[220px] shrink-0 bg-background/60 backdrop-blur-3xl rounded-2xl border shadow-sm p-3 flex-col gap-2 relative">
+                        <div className="hidden md:flex w-[240px] shrink-0 bg-background/60 backdrop-blur-3xl rounded-2xl border shadow-sm p-3 flex-col gap-4 relative">
+                            <AccountSwitcher isCollapsed={false} accounts={MOCK_ACCOUNTS} />
+
+                            <Button
+                                className="w-full gap-2 rounded-xl h-11 shadow-sm font-semibold bg-primary/90 hover:bg-primary text-primary-foreground transition-all"
+                                onClick={() => setComposeAiOpen(true)}
+                            >
+                                <Bot className="h-4 w-4" />
+                                Compose
+                            </Button>
+
                             <MailNav isCollapsed={false} links={[
                                 {
                                     title: "Inbox",
