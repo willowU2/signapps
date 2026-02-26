@@ -65,7 +65,7 @@ import { FilePreviewDialog } from '@/components/storage/file-preview-dialog';
 import { FolderTree } from '@/components/storage/folder-tree';
 import { PermissionsDialog } from '@/components/storage/permissions-dialog';
 import { DropZone } from '@/components/storage/drop-zone';
-import { FavoritesBar } from '@/components/storage/favorites-bar';
+
 import { ManageTagsDialog } from '@/components/storage/manage-tags-dialog';
 import { FileTagsDialog } from '@/components/storage/file-tags-dialog';
 import { VersionHistoryDialog } from '@/components/storage/version-history-dialog';

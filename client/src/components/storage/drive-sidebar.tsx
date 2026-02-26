@@ -81,12 +81,6 @@ export function DriveSidebar({
                         isActive={currentView === 'recent'}
                         onClick={() => onViewChange('recent')}
                     />
-                    <SidebarItem
-                        icon={Star}
-                        label="Starred"
-                        isActive={currentView === 'starred'}
-                        onClick={() => onViewChange('starred')}
-                    />
                 </nav>
 
                 <Separator className="my-4 mx-2" />

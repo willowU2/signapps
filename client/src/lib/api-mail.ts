@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = process.env.NEXT_PUBLIC_MAIL_API_URL || 'http://localhost:3004/api/v1/mail'
+const API_URL = process.env.NEXT_PUBLIC_MAIL_API_URL || 'http://localhost:3012/api/v1/mail'
 
 export interface Email {
     id: string

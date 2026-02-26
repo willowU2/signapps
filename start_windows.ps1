@@ -2,30 +2,30 @@ Write-Host "Compiling all services first to prevent Cargo lock conflicts..."
 $env:SQLX_OFFLINE = "true"
 Start-Process "cargo" -ArgumentList "build", "--workspace" -Wait -NoNewWindow
 
-Write-Host "Starting Identity..."
-$env:SERVER_PORT = "3001"
-Start-Process ".\target\debug\signapps-identity.exe" -WindowStyle Minimized
-Start-Sleep -Seconds 1
+Write-Host "Starting microservices..."
 
-Write-Host "Starting Calendar..."
-$env:SERVER_PORT = "3011"
-Start-Process ".\target\debug\signapps-calendar.exe" -WindowStyle Minimized
-Start-Sleep -Seconds 1
+$services = @{
+    "signapps-identity"   = 3001
+    "signapps-containers" = 3002
+    "signapps-proxy"      = 3003
+    "signapps-storage"    = 3004
+    "signapps-ai"         = 3005
+    "signapps-securelink" = 3006
+    "signapps-scheduler"  = 3007
+    "signapps-metrics"    = 3008
+    "signapps-media"      = 3009
+    "signapps-docs"       = 3010
+    "signapps-calendar"   = 3011
+    "signapps-mail"       = 3012
+    "signapps-collab"     = 3013
+}
 
-Write-Host "Starting Docs..."
-$env:SERVER_PORT = "3010"
-Start-Process ".\target\debug\signapps-docs.exe" -WindowStyle Minimized
-Start-Sleep -Seconds 1
-
-Write-Host "Starting Storage..."
-$env:SERVER_PORT = "3004"
-Start-Process ".\target\debug\signapps-storage.exe" -WindowStyle Minimized
-Start-Sleep -Seconds 1
-
-Write-Host "Starting Mail..."
-$env:SERVER_PORT = "3005"
-Start-Process ".\target\debug\signapps-mail.exe" -WindowStyle Minimized
-Start-Sleep -Seconds 1
+foreach ($service in $services.GetEnumerator()) {
+    Write-Host "Starting $($service.Name) on port $($service.Value)..."
+    $env:SERVER_PORT = $service.Value
+    Start-Process ".\target\debug\$($service.Name).exe" -WindowStyle Minimized
+    Start-Sleep -Milliseconds 500
+}
 
 Write-Host "Starting Next.js..."
 Start-Process "npm.cmd" -ArgumentList "run", "dev" -WorkingDirectory "c:\prog\signapps-platform\client" -WindowStyle Minimized

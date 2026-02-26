@@ -32,8 +32,13 @@ export function NotificationPermissionDialog({
 }: NotificationPermissionDialogProps) {
   const [open, setOpen] = useState(controlledOpen ?? false);
   const [dismissed, setDismissed] = useState(false);
-  const { isSupported, permission, subscribe, loading, error, vapidKey } =
-    usePushNotifications();
+  const [errorStr, setErrorStr] = useState<string | null>(null);
+
+  const { register, loading } = usePushNotifications();
+
+  const isSupported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
+  const permission = typeof window !== 'undefined' ? Notification.permission : 'default';
+  const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
   // Sync controlled open state
   useEffect(() => {
@@ -56,10 +61,10 @@ export function NotificationPermissionDialog({
 
   const handleEnable = async () => {
     try {
-      await subscribe();
+      await register();
       handleClose();
-    } catch {
-      // Error is handled by usePushNotifications state
+    } catch (e: any) {
+      setErrorStr(e?.message || 'Failed to enable notifications');
     }
   };
 
@@ -119,9 +124,9 @@ export function NotificationPermissionDialog({
             </ul>
           </div>
 
-          {error && (
+          {errorStr && (
             <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-              {error}
+              {errorStr}
             </div>
           )}
         </div>
