@@ -2,7 +2,7 @@ use axum::{extract::State, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use uuid::Uuid;
-use yrs::{updates::encoder::Encode, ReadTxn, Transact};
+use yrs::{ReadTxn, Transact};
 
 use crate::AppState;
 

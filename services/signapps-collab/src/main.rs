@@ -1,7 +1,7 @@
 use crate::models::BroadcastMessage;
-use axum::{extract::ConnectInfo, routing::get, Router};
+use axum::{routing::get, Router};
 use signapps_cache::CacheService;
-use signapps_common::middleware::{auth_middleware, logging_middleware, request_id_middleware};
+use signapps_common::middleware::{logging_middleware, request_id_middleware};
 use signapps_common::{auth::JwtConfig, middleware::AuthState};
 use signapps_db::{create_pool, DatabasePool};
 use std::{net::SocketAddr, sync::Arc};

@@ -43,6 +43,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       setError(null);
+
       const response = await authApi.login({
         username: data.username,
         password: data.password,

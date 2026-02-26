@@ -4,11 +4,11 @@ use axum::{
 };
 use futures::{stream::StreamExt, SinkExt};
 use tokio::sync::broadcast;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 use uuid::Uuid;
-use yrs::{Doc, ReadTxn, Transact, updates::decoder::Decode, updates::encoder::Encode};
+use yrs::{Doc, ReadTxn, Transact, updates::decoder::Decode};
 
-use crate::{models::ClientSession, AppState, handlers::persistence};
+use crate::{AppState, handlers::persistence};
 
 /// Generic WebSocket handler for all document types
 /// Endpoint: GET /api/v1/docs/{type}/{doc_id}/ws

@@ -1,5 +1,5 @@
 use sqlx::PgPool;
-use tracing::{error, info};
+use tracing::error;
 use yrs::updates::decoder::Decode;
 use yrs::{Doc, Transact, Update};
 
