@@ -31,20 +31,6 @@ async fn main() {
         .await
         .expect("Failed to connect to Postgres");
 
-    // TEMPORARY: Reset DB state due to version mismatch from previous bug
-    sqlx::query("DROP TABLE IF EXISTS _sqlx_migrations")
-        .execute(&pool)
-        .await
-        .ok();
-    sqlx::query("DROP TABLE IF EXISTS mail_accounts")
-        .execute(&pool)
-        .await
-        .ok();
-    sqlx::query("DROP TABLE IF EXISTS emails")
-        .execute(&pool)
-        .await
-        .ok();
-
     // Run migrations
     sqlx::migrate!("./migrations")
         .run(&pool)
@@ -63,7 +49,11 @@ async fn main() {
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3004));
+    let port: u16 = std::env::var("SERVER_PORT")
+        .unwrap_or_else(|_| "3012".into())
+        .parse()
+        .unwrap_or(3012);
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();

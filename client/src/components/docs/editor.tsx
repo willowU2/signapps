@@ -126,14 +126,15 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
 
     useEffect(() => {
         const baseUrl = process.env.NEXT_PUBLIC_DOCS_WS_URL || 'ws://localhost:3010/api/v1/docs/text';
+        const wsUrl = `${baseUrl}/${documentId}`;
 
-        const wsProvider = new WebsocketProvider(baseUrl, documentId, ydoc, { connect: false });
+        const wsProvider = new WebsocketProvider(wsUrl, documentId, ydoc, { connect: false });
 
         // Check if server is reachable before connecting
-        const httpUrl = baseUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+        const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
         fetch(httpUrl, { method: 'HEAD' })
             .then(() => wsProvider.connect())
-            .catch(() => console.warn(`[Docs Editor] Collaboration server at ${baseUrl} is offline. Running in local-only mode.`));
+            .catch(() => console.warn(`[Docs Editor] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
 
         wsProvider.on('status', (event: { status: 'connecting' | 'connected' | 'disconnected' }) => {
             setStatus(event.status);

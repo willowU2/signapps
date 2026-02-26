@@ -33,7 +33,8 @@ export function useSlides(docId: string = 'slides-demo') {
     const initializedRef = useRef(false)
 
     useEffect(() => {
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/slide'
+        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/slide'
+        const wsUrl = `${baseUrl}/${docId}`
         const webrtcProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
 
         // Check health endpoint before connecting (WS paths don't support HTTP methods)

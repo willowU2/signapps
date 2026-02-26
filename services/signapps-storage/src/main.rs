@@ -316,11 +316,11 @@ fn create_router(state: AppState) -> Router {
         .merge(quota_routes)
         .merge(preview_routes)
         .merge(permissions_routes)
+        .merge(tags_routes)
+        .merge(versions_routes)
         .merge(mount_routes)
         .merge(external_routes)
         .merge(stats_routes)
-        .merge(tags_routes)
-        .merge(versions_routes)
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -332,11 +332,13 @@ fn create_router(state: AppState) -> Router {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    // Combine all routes
+    // Combine all routes into a single v1 router to prevent path shadowing
+    let v1_routes = public_routes
+        .merge(public_share_routes)
+        .merge(protected_routes);
+
     Router::new()
-        .nest("/api/v1", public_routes)
-        .nest("/api/v1", public_share_routes)
-        .nest("/api/v1", protected_routes)
+        .nest("/api/v1", v1_routes)
         .layer(
             ServiceBuilder::new()
                 .layer(middleware::from_fn(request_id_middleware))

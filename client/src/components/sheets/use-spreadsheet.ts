@@ -20,14 +20,15 @@ export function useSpreadsheet(docId: string = 'default-sheet') {
 
     // WebSocket + IndexedDB providers (once)
     useEffect(() => {
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/sheet'
+        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/sheet'
+        const wsUrl = `${baseUrl}/${docId}`
         const wsProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
         const idbProvider = new IndexeddbPersistence(docId, doc)
 
         // Check health endpoint (WS paths don't support HTTP methods)
         fetch('http://localhost:3010/health', { method: 'GET', mode: 'no-cors' })
             .then(() => wsProvider.connect())
-            .catch(() => {})
+            .catch(() => { })
 
         wsProvider.on('status', (event: any) => {
             setIsConnected(event.status === 'connected')
