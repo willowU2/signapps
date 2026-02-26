@@ -13,7 +13,20 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { accountApi } from "@/lib/api-mail"
+import { toast } from "sonner"
 
 interface Account {
     email: string
@@ -32,8 +45,38 @@ export function AccountSwitcher({
     accounts,
 }: AccountSwitcherProps) {
     const [selectedAccount, setSelectedAccount] = React.useState<Account>(
-        accounts[0]
+        accounts[0] || { name: "", email: "", icon: "", provider: "gmail" }
     )
+    const [open, setOpen] = React.useState(false)
+    const [loading, setLoading] = React.useState(false)
+
+    const handleAddAccount = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        setLoading(true)
+        const formData = new FormData(e.currentTarget)
+        const email = formData.get("email") as string
+        const password = formData.get("password") as string
+        const provider = formData.get("provider") as string
+        const imap = formData.get("imap") as string
+
+        try {
+            await accountApi.create({
+                user_id: "00000000-0000-0000-0000-000000000000", // Generic ID for MVP
+                email_address: email,
+                provider: provider as any,
+                app_password: password,
+                imap_server: imap,
+                imap_port: 993,
+            })
+            toast.success("Account connected successfully!")
+            setOpen(false)
+            setTimeout(() => window.location.reload(), 1000)
+        } catch (error) {
+            toast.error("Failed to connect account.")
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <DropdownMenu>
@@ -94,12 +137,52 @@ export function AccountSwitcher({
                     </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="flex items-center gap-2 rounded-lg cursor-pointer p-2 text-primary focus:bg-primary/5 focus:text-primary">
-                    <div className="flex bg-primary/10 h-6 w-6 items-center justify-center rounded-full">
-                        <Plus className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="font-medium text-sm">Add another account</span>
-                </DropdownMenuItem>
+                <Dialog open={open} onOpenChange={setOpen}>
+                    <DialogTrigger asChild>
+                        <DropdownMenuItem
+                            onSelect={(e) => e.preventDefault()}
+                            className="flex items-center gap-2 rounded-lg cursor-pointer p-2 text-primary focus:bg-primary/5 focus:text-primary"
+                        >
+                            <div className="flex bg-primary/10 h-6 w-6 items-center justify-center rounded-full">
+                                <Plus className="h-3.5 w-3.5" />
+                            </div>
+                            <span className="font-medium text-sm">Add another account</span>
+                        </DropdownMenuItem>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <form onSubmit={handleAddAccount}>
+                            <DialogHeader>
+                                <DialogTitle>Add Email Account</DialogTitle>
+                                <DialogDescription>
+                                    Connect an external IMAP account to sync your emails perfectly.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="provider">Provider Name</Label>
+                                    <Input id="provider" name="provider" defaultValue="local" />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="email">Email address</Label>
+                                    <Input id="email" name="email" type="email" defaultValue="test@signapps.local" required />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="password">App Password</Label>
+                                    <Input id="password" name="password" type="password" required />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="imap">IMAP Server</Label>
+                                    <Input id="imap" name="imap" defaultValue="127.0.0.1" required />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button type="submit" disabled={loading}>
+                                    {loading ? "Connecting..." : "Connect Account"}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </DropdownMenuContent>
         </DropdownMenu>
     )

@@ -41,9 +41,11 @@ import { useAiStream } from "@/hooks/use-ai-stream"
 interface MailDisplayProps {
     mail: Mail | null
     onSnooze?: (id: string, time: string) => void
+    onArchive?: (id: string) => void
+    onDelete?: (id: string) => void
 }
 
-export function MailDisplay({ mail, onSnooze }: MailDisplayProps) {
+export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplayProps) {
     const [replyText, setReplyText] = useState("")
     const [smartReplies, setSmartReplies] = useState<string[]>([])
     const [isRepliesLoading, setIsRepliesLoading] = useState(false)
@@ -120,29 +122,53 @@ export function MailDisplay({ mail, onSnooze }: MailDisplayProps) {
     }
 
     const generateSmartReplies = async () => {
-        if (!mail) return
+        if (!mail || isStreaming) return
         setIsRepliesLoading(true)
+        setSmartReplies([])
+
+        // We will accumulate the stream and split by '|'
+        let fullResponse = ""
+
         try {
-            const response = await aiApi.chat(
+            await stream(
                 `Generate 3 short, professional reply options for this email. Consider the tone and context. Output ONLY the replies separated by '|'.\n\nFrom: ${mail.name}\nSubject: ${mail.subject}\nContent: ${mail.text}`,
                 {
-                    systemPrompt: "You are a professional email assistant. Generate contextually appropriate, concise reply suggestions.",
-                },
-            )
+                    onToken: (token) => {
+                        fullResponse += token
+                        // Try to parse partial replies to show them as they arrive
+                        const partialReplies = fullResponse
+                            .split("|")
+                            .map((r) => r.trim())
+                            .filter((r) => r.length > 0)
 
-            if (response.data.answer) {
-                const replies = response.data.answer
-                    .split("|")
-                    .map((r: string) => r.trim())
-                    .filter((r: string) => r.length > 0)
-                    .slice(0, 3)
-                setSmartReplies(replies)
-            }
+                        // Only update if we have a completely formed reply (which means we saw a '|') 
+                        // or if we're just accumulating. For UI smoothness, we'll just show what we have.
+                        setSmartReplies(partialReplies.slice(0, 3))
+                    },
+                    onDone: () => {
+                        setIsRepliesLoading(false)
+                        const finalReplies = fullResponse
+                            .split("|")
+                            .map((r) => r.trim())
+                            .filter((r) => r.length > 0)
+                            .slice(0, 3)
+                        setSmartReplies(finalReplies)
+                    },
+                    onError: (err) => {
+                        setIsRepliesLoading(false)
+                        toast.error(`Failed to generate replies: ${err}`)
+                        console.error(err)
+                    }
+                },
+                {
+                    systemPrompt: "You are a professional email assistant. Generate contextually appropriate, concise reply suggestions.",
+                    language: "en"
+                }
+            )
         } catch (e) {
-            toast.error("Failed to generate replies")
-            console.error(e)
-        } finally {
             setIsRepliesLoading(false)
+            toast.error("Failed to start generation")
+            console.error(e)
         }
     }
 
@@ -196,36 +222,47 @@ export function MailDisplay({ mail, onSnooze }: MailDisplayProps) {
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all hover:shadow-sm">
-                                <Trash2 className="h-[18px] w-[18px]" />
-                                <span className="sr-only">Move to trash</span>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => mail && onArchive?.(mail.id)}>
+                                <Archive className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-red-100 dark:border-red-900 text-red-600 dark:text-red-400">Move to trash</TooltipContent>
+                        <TooltipContent>Archive</TooltipContent>
                     </Tooltip>
-                    <Separator orientation="vertical" className="mx-2 h-5 bg-gray-200/60 dark:bg-gray-800/60" />
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all hover:shadow-sm">
-                                <Clock className="h-[18px] w-[18px]" />
-                                <span className="sr-only">Snooze</span>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => mail && onDelete?.(mail.id)}>
+                                <Trash2 className="h-4 w-4" />
                             </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[160px] rounded-xl shadow-xl border-gray-100 dark:border-gray-800 p-1">
-                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Later today")}>
-                                Later today
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Tomorrow")}>
-                                Tomorrow
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "This weekend")}>
-                                This weekend
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Next week")}>
-                                Next week
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        </TooltipTrigger>
+                        <TooltipContent>Move to trash</TooltipContent>
+                    </Tooltip>
+                    <Separator orientation="vertical" className="mx-1 h-6" />
+                    <Tooltip>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
+                                        <Clock className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                            </DropdownMenuTrigger>
+                            <TooltipContent>Snooze</TooltipContent>
+                            <DropdownMenuContent align="end" className="w-[160px] rounded-xl shadow-xl border-border/50 p-1">
+                                <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Later today")}>
+                                    Later today
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Tomorrow")}>
+                                    Tomorrow
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "This weekend")}>
+                                    This weekend
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Next week")}>
+                                    Next week
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </Tooltip>
                 </div>
                 <div className="ml-auto flex items-center gap-2">
                     {mail && (

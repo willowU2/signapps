@@ -20,9 +20,11 @@ interface MailListProps {
     selectedId: string | null
     onSelect: (id: string) => void
     onSnooze?: (id: string, time: string) => void
+    onArchive?: (id: string) => void
+    onDelete?: (id: string) => void
 }
 
-export function MailList({ items, selectedId, onSelect, onSnooze }: MailListProps) {
+export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onDelete }: MailListProps) {
     return (
         <div className="flex flex-col h-full bg-background/50">
             <div className="px-4 py-3 border-b flex-shrink-0">
@@ -94,10 +96,10 @@ export function MailList({ items, selectedId, onSelect, onSnooze }: MailListProp
 
                             {/* Hover Actions (Gmail style overlay on right edge) */}
                             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gradient-to-l from-background/95 via-background/95 to-transparent pl-8 pr-2 py-1.5 rounded-l-full">
-                                <div className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-sm bg-background border border-border/50" title="Archive" onClick={(e) => e.stopPropagation()}>
+                                <div className="p-2 rounded-full text-muted-foreground hover:text-green-600 hover:bg-green-50 transition-colors shadow-sm bg-background border border-border/50" title="Archive" onClick={(e) => { e.stopPropagation(); onArchive?.(item.id) }}>
                                     <Archive className="w-4 h-4" />
                                 </div>
-                                <div className="p-2 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shadow-sm bg-background border border-border/50" title="Delete" onClick={(e) => { e.stopPropagation(); }}>
+                                <div className="p-2 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shadow-sm bg-background border border-border/50" title="Delete" onClick={(e) => { e.stopPropagation(); onDelete?.(item.id) }}>
                                     <Trash2 className="w-4 h-4" />
                                 </div>
                                 <DropdownMenu>

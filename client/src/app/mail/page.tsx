@@ -24,50 +24,44 @@ import { AccountSwitcher } from "@/components/mail/account-switcher"
 import { ComposeAiDialog } from "@/components/mail/compose-ai-dialog"
 import { Mail } from "@/lib/data/mail"
 import { useMail } from "@/app/mail/use-mail"
-import { mailApi } from "@/lib/api-mail"
+import { mailApi, accountApi, MailAccount } from "@/lib/api-mail"
 
-// Mock data (fallback)
-import { mails } from "@/lib/data/mail"
-
-const MOCK_ACCOUNTS = [
-    {
-        name: "Alice Smith",
-        email: "alice@signapps.com",
-        icon: "gmail",
-        provider: "gmail" as const,
-    },
-    {
-        name: "Personal (IMAP)",
-        email: "alice.personal@example.com",
-        icon: "custom",
-        provider: "custom" as const,
-    },
-]
 
 export default function MailPage() {
-    const [mailState, setMailState] = useMail() // useMail returns [state, setState]
-    const [mailList, setMailList] = useState<Mail[]>(mails)
+    const [mailState, setMailState] = useMail()
+    const [mailList, setMailList] = useState<Mail[]>([])
+    const [accounts, setAccounts] = useState<any[]>([])
     const [composeAiOpen, setComposeAiOpen] = useState(false)
 
     useEffect(() => {
+        // Fetch accounts
+        accountApi.list().then(list => {
+            const uiAccounts = list.map(a => ({
+                id: a.id,
+                name: a.email_address.split('@')[0],
+                email: a.email_address,
+                icon: a.provider,
+                provider: a.provider
+            }))
+            setAccounts(uiAccounts)
+        }).catch(err => console.error('Failed to fetch mail accounts:', err))
+
+        // Fetch emails
         mailApi.list().then(apiMails => {
-            if (apiMails.length > 0) {
-                const adapted: Mail[] = apiMails.map(e => ({
-                    id: e.id,
-                    name: e.sender.split('@')[0],
-                    email: e.sender,
-                    subject: e.subject,
-                    text: e.body,
-                    date: e.created_at,
-                    read: e.is_read,
-                    labels: e.labels,
-                    folder: 'inbox' // Default for now, generic implementation
-                }))
-                setMailList(adapted)
-            }
-        }).catch(() => {
-            // Ignore error, keep mock data
-            console.log("Mail backend not reachable, using mock data")
+            const adapted: Mail[] = apiMails.map(e => ({
+                id: e.id,
+                name: e.sender.split('@')[0],
+                email: e.sender,
+                subject: e.subject,
+                text: e.body,
+                date: e.created_at,
+                read: e.is_read,
+                labels: e.labels,
+                folder: 'inbox' // Default for now, generic implementation
+            }))
+            setMailList(adapted)
+        }).catch((err) => {
+            console.error("Failed to fetch emails:", err)
         })
     }, [])
 
@@ -75,12 +69,63 @@ export default function MailPage() {
     // The original scaffold used 'mails' from data/mail directly in MailList props or state
     // We are now keeping 'mailList' in state
 
-    const handleSnooze = (id: string, time: string) => {
-        setMailList(prev => prev.filter(m => m.id !== id))
-        if (mailState.selected === id) {
-            setMailState({ ...mailState, selected: null })
+    const handleSnooze = async (id: string, time: string) => {
+        let snoozeDate = new Date()
+        if (time === "Later today") {
+            snoozeDate.setHours(snoozeDate.getHours() + 4)
+        } else if (time === "Tomorrow") {
+            snoozeDate.setDate(snoozeDate.getDate() + 1)
+            snoozeDate.setHours(9, 0, 0, 0)
+        } else if (time === "This weekend") {
+            const daysToFriday = (5 - snoozeDate.getDay() + 7) % 7 || 7 // Friday or next Friday
+            snoozeDate.setDate(snoozeDate.getDate() + daysToFriday)
+            snoozeDate.setHours(17, 0, 0, 0)
+        } else if (time === "Next week") {
+            const daysToMonday = (1 - snoozeDate.getDay() + 7) % 7 || 7 // Monday or next Monday
+            snoozeDate.setDate(snoozeDate.getDate() + daysToMonday)
+            snoozeDate.setHours(9, 0, 0, 0)
         }
-        toast.success(`Conversation snoozed until ${time}.`)
+
+        try {
+            // Optimistic UI update could go here, but doing it after success is safer for now
+            // We just don't handle real persistence for the "mock" mail list right now if it fails,
+            // but the API is hooked up for custom fetched emails.
+            await mailApi.update(id, { snoozed_until: snoozeDate.toISOString() })
+
+            setMailList(prev => prev.filter(m => m.id !== id))
+            if (mailState.selected === id) {
+                setMailState({ ...mailState, selected: null })
+            }
+            toast.success(`Conversation snoozed until ${time}.`)
+        } catch (error) {
+            toast.error("Failed to snooze conversation.")
+        }
+    }
+
+    const handleArchive = async (id: string) => {
+        try {
+            await mailApi.update(id, { is_archived: true })
+            setMailList(prev => prev.filter(m => m.id !== id))
+            if (mailState.selected === id) {
+                setMailState({ ...mailState, selected: null })
+            }
+            toast.success("Conversation archived.")
+        } catch (error) {
+            toast.error("Failed to archive conversation.")
+        }
+    }
+
+    const handleDelete = async (id: string) => {
+        try {
+            await mailApi.update(id, { is_deleted: true })
+            setMailList(prev => prev.filter(m => m.id !== id))
+            if (mailState.selected === id) {
+                setMailState({ ...mailState, selected: null })
+            }
+            toast.success("Conversation moved to trash.")
+        } catch (error) {
+            toast.error("Failed to delete conversation.")
+        }
     }
 
     return (
@@ -114,7 +159,7 @@ export default function MailPage() {
                     <div className="flex flex-1 overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
                         {/* Sidebar */}
                         <div className="hidden md:flex w-[240px] shrink-0 bg-background/60 backdrop-blur-3xl rounded-2xl border shadow-sm p-3 flex-col gap-4 relative">
-                            <AccountSwitcher isCollapsed={false} accounts={MOCK_ACCOUNTS} />
+                            <AccountSwitcher isCollapsed={false} accounts={accounts} />
 
                             <Button
                                 className="w-full gap-2 rounded-xl h-11 shadow-sm font-semibold bg-primary/90 hover:bg-primary text-primary-foreground transition-all"
@@ -163,13 +208,14 @@ export default function MailPage() {
                             ]} />
                         </div>
 
-                        {/* Mail List */}
                         <div className="w-full lg:w-[400px] shrink-0 bg-background/80 backdrop-blur-3xl rounded-2xl border shadow-sm overflow-hidden flex flex-col relative transition-all duration-300">
                             <MailList
                                 items={mailList}
                                 selectedId={mailState.selected}
                                 onSelect={(id) => setMailState({ ...mailState, selected: id })}
                                 onSnooze={handleSnooze}
+                                onArchive={handleArchive}
+                                onDelete={handleDelete}
                             />
                         </div>
 
@@ -178,6 +224,8 @@ export default function MailPage() {
                             <MailDisplay
                                 mail={mailList.find(m => m.id === mailState.selected) || null}
                                 onSnooze={handleSnooze}
+                                onArchive={handleArchive}
+                                onDelete={handleDelete}
                             />
                         </div>
                     </div>

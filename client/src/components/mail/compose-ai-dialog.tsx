@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import {
     Bot,
     Loader2,
@@ -37,9 +37,52 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
     const [body, setBody] = useState("")
     const [generated, setGenerated] = useState(false)
     const [generating, setGenerating] = useState(false)
+    const [draftId, setDraftId] = useState<string | null>(null)
+    const [isSaving, setIsSaving] = useState(false)
+    const initialLoad = useRef(true)
 
     const { stream, stop, isStreaming } = useAiStream()
     const { getRouteConfig } = useAiRouting()
+
+    // Auto-save draft
+    useEffect(() => {
+        if (!open) return
+        if (!recipient && !subject && !body && !description) return
+
+        if (initialLoad.current) {
+            initialLoad.current = false
+            return
+        }
+
+        const timer = setTimeout(async () => {
+            setIsSaving(true)
+            try {
+                if (draftId) {
+                    await mailApi.update(draftId, {
+                        recipient: recipient.trim() || undefined,
+                        subject: subject.trim() || (description ? description.slice(0, 30) : undefined),
+                        body: body.trim() || undefined,
+                        folder: "drafts",
+                    })
+                } else {
+                    const res = await mailApi.send({
+                        sender: "me@signapps.local", // Using stub ID for MVP
+                        recipient: recipient.trim() || "",
+                        subject: subject.trim() || (description ? description.slice(0, 30) : ""),
+                        body: body.trim() || "",
+                        folder: "drafts",
+                    })
+                    setDraftId(res.id)
+                }
+            } catch (err) {
+                console.error("Failed to auto-save draft", err)
+            } finally {
+                setIsSaving(false)
+            }
+        }, 1500)
+
+        return () => clearTimeout(timer)
+    }, [recipient, subject, body, description, open, draftId])
 
     const handleGenerate = useCallback(async () => {
         if (!description.trim() || isStreaming) return
@@ -120,12 +163,22 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
         }
 
         try {
-            await mailApi.send({
-                sender: "me@signapps.local",
-                recipient: recipient.trim(),
-                subject: subject.trim(),
-                body: body.trim(),
-            })
+            if (draftId) {
+                await mailApi.update(draftId, {
+                    recipient: recipient.trim(),
+                    subject: subject.trim(),
+                    body: body.trim(),
+                    folder: "sent",
+                })
+            } else {
+                await mailApi.send({
+                    sender: "me@signapps.local",
+                    recipient: recipient.trim(),
+                    subject: subject.trim(),
+                    body: body.trim(),
+                    folder: "sent",
+                })
+            }
             toast.success("Email sent!")
             handleReset()
             onOpenChange(false)
@@ -141,6 +194,8 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
         setBody("")
         setGenerated(false)
         setGenerating(false)
+        setDraftId(null)
+        initialLoad.current = true
         if (isStreaming) stop()
     }
 
@@ -154,6 +209,16 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
                     <DialogTitle className="flex items-center gap-2">
                         <Bot className="h-5 w-5 text-purple-600" />
                         Compose with AI
+                        {isSaving && (
+                            <span className="ml-auto flex items-center gap-1.5 text-xs font-normal text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full animate-pulse">
+                                Saving draft...
+                            </span>
+                        )}
+                        {!isSaving && draftId && (
+                            <span className="ml-auto flex items-center gap-1.5 text-xs font-normal text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-full">
+                                Draft saved
+                            </span>
+                        )}
                     </DialogTitle>
                 </DialogHeader>
 

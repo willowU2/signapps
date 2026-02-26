@@ -20,6 +20,7 @@ export type CreateEmail = {
     recipient: string
     subject: string
     body: string
+    folder?: string
 }
 
 export type UpdateEmail = {
@@ -27,6 +28,11 @@ export type UpdateEmail = {
     is_archived?: boolean
     is_deleted?: boolean
     labels?: string[]
+    snoozed_until?: string | null
+    subject?: string
+    body?: string
+    recipient?: string
+    folder?: string
 }
 
 export const mailApi = {
@@ -47,6 +53,29 @@ export const mailApi = {
 
     update: async (id: string, data: UpdateEmail): Promise<Email> => {
         const res = await axios.patch(`${API_URL}/${id}`, data)
+        return res.data
+    }
+}
+
+export interface MailAccount {
+    id: string
+    user_id: string
+    email_address: string
+    provider: "gmail" | "outlook" | "custom"
+    imap_server?: string
+    imap_port?: number
+    smtp_server?: string
+    smtp_port?: number
+}
+
+export const accountApi = {
+    list: async (): Promise<MailAccount[]> => {
+        const res = await axios.get(`${API_URL}/accounts`)
+        return res.data
+    },
+
+    create: async (data: Partial<MailAccount> & { app_password?: string }): Promise<MailAccount> => {
+        const res = await axios.post(`${API_URL}/accounts`, data)
         return res.data
     }
 }
