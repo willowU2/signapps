@@ -23,11 +23,14 @@ services:
       - ONE_DIR=1
       - ENABLE_POP3=1
     volumes:
-      - ./data/mail/mail-data:/var/mail
-      - ./data/mail/mail-state:/var/mail-state
+      - mail-data:/var/mail
+      - mail-state:/var/mail-state
       - ./data/mail/mail-logs:/var/log/mail
       - ./data/mail/config:/tmp/docker-mailserver
       - /etc/localtime:/etc/localtime:ro
     restart: always
     cap_add:
       - NET_ADMIN
+volumes:
+  mail-state:
+  mail-data:

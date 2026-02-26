@@ -49,7 +49,8 @@ async fn sync_account(
 
     let tls = tokio_native_tls::TlsConnector::from(
         native_tls::TlsConnector::builder()
-            .danger_accept_invalid_certs(true) // Accept self-signed cert from internal mail server
+            .danger_accept_invalid_certs(true)
+            .danger_accept_invalid_hostnames(true)
             .build()
             .unwrap(),
     );
