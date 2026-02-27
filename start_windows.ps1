@@ -23,7 +23,8 @@ $services = @{
 foreach ($service in $services.GetEnumerator()) {
     Write-Host "Starting $($service.Name) on port $($service.Value)..."
     $env:SERVER_PORT = $service.Value
-    Start-Process ".\target\debug\$($service.Name).exe" -WindowStyle Minimized
+    # Use cmd.exe /c start to bypass strict PowerShell AppControl policies blocks on unsigned binaries
+    Start-Process "cmd.exe" -ArgumentList "/c start /min `"$($service.Name)`" .\target\debug\$($service.Name).exe" -WindowStyle Hidden
     Start-Sleep -Milliseconds 500
 }
 

@@ -46,9 +46,9 @@ async fn main() -> anyhow::Result<()> {
     let pool = signapps_db::create_pool(&database_url).await?;
 
     // Run migrations (to ensure schema is up-to-date)
-    signapps_db::run_migrations(&pool)
-        .await
-        .map_err(|e| anyhow::anyhow!("Failed to run migrations: {}", e))?;
+    // signapps_db::run_migrations(&pool)
+    //     .await
+    //     .map_err(|e| anyhow::anyhow!("Failed to run migrations: {}", e))?;
 
     // Initialize cache
     let cache = Arc::new(CacheService::new(1000, Duration::from_secs(3600)));

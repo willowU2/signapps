@@ -31,12 +31,6 @@ async fn main() {
         .await
         .expect("Failed to connect to Postgres");
 
-    // Run migrations
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .expect("Failed to run migrations");
-
     let state = AppState { pool: pool.clone() };
 
     // Start background sync service

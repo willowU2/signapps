@@ -37,9 +37,12 @@ async fn main() -> anyhow::Result<()> {
     // Initialize tracing
     tracing_subscriber::fmt::init();
 
+    // Load .env file
+    dotenvy::dotenv().ok();
+
     // Get configuration from environment
     let server_port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3010".to_string())
+        .unwrap_or_else(|_| "3013".to_string())
         .parse::<u16>()?;
 
     let database_url = std::env::var("DATABASE_URL")
@@ -52,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
     let pool = create_pool(&database_url).await?;
 
     info!("Running migrations...");
-    signapps_db::run_migrations(&pool).await?;
+    // signapps_db::run_migrations(&pool).await?;
 
     // Create JWT config
     let jwt_config = JwtConfig {

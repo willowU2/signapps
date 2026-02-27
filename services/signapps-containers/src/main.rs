@@ -56,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
     let pool = create_pool(&database_url).await?;
 
     // Run migrations
-    run_migrations(&pool).await?;
+    // run_migrations(&pool).await?;
 
     // Create Docker client
     let docker = DockerClient::new()?;

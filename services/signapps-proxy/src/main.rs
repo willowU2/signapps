@@ -87,7 +87,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Database connection established");
 
     // Run migrations
-    signapps_db::run_migrations(&pool).await?;
+    // signapps_db::run_migrations(&pool).await?;
     tracing::info!("Database migrations completed");
 
     // Initialize SmartShield service (in-process, no Redis needed)

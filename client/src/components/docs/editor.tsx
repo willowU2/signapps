@@ -130,11 +130,9 @@ const Editor = ({ documentId, className, userName }: EditorProps) => {
 
         const wsProvider = new WebsocketProvider(wsUrl, documentId, ydoc, { connect: false });
 
-        // Check if server is reachable before connecting
-        const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
-        fetch(httpUrl, { method: 'HEAD' })
-            .then(() => wsProvider.connect())
-            .catch(() => console.warn(`[Docs Editor] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
+        // Directly connect the WebSocket provider
+        // Tiptap's Hocuspocus/y-websocket provider handles reconnections automatically
+        wsProvider.connect();
 
         wsProvider.on('status', (event: { status: 'connecting' | 'connected' | 'disconnected' }) => {
             setStatus(event.status);

@@ -35,7 +35,9 @@ pub async fn create_pool(database_url: &str) -> Result<DatabasePool, sqlx::Error
 /// we fix the checksum in the database and retry.
 ///
 /// If migrations are severely broken, attempt to reset in dev mode.
-pub async fn run_migrations(_pool: &DatabasePool) -> Result<(), sqlx::migrate::MigrateError> {
-    tracing::info!("Database migrations bypassed globally for local testing");
-    Ok(())
+pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::MigrateError> {
+    tracing::info!("Running database migrations...");
+    let mut migrator = sqlx::migrate!("../../migrations");
+    migrator.set_ignore_missing(true);
+    migrator.run(pool.inner()).await
 }

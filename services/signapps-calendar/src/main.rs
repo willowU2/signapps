@@ -61,7 +61,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Initialize database
     let pool = create_pool(&database_url).await?;
-    run_migrations(&pool).await?;
+    // run_migrations(&pool).await?;
 
     info!("Database initialized successfully");
 

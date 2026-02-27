@@ -64,8 +64,8 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Database connection established");
 
     // Run migrations
-    signapps_db::run_migrations(&pool).await?;
-    tracing::info!("Database migrations completed");
+    // signapps_db::run_migrations(&pool).await?;
+    // tracing::info!("Database migrations completed (bypassed for storage)");
 
     // Initialize storage backend
     let storage = match storage_mode.as_str() {

@@ -37,5 +37,6 @@ tracing-subscriber = "0.3"
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
 signapps-cache = { path = "../../crates/signapps-cache" }
+dotenvy.workspace = true
 
 [dev-dependencies]
