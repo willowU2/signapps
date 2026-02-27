@@ -5,8 +5,8 @@ use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use uuid::Uuid;
 use tracing::{debug, info};
+use uuid::Uuid;
 
 /// User presence status
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -60,12 +60,7 @@ impl CalendarPresenceManager {
     }
 
     /// User joined calendar
-    pub fn on_user_join(
-        &self,
-        user_id: Uuid,
-        username: String,
-        session_id: Uuid,
-    ) -> UserPresence {
+    pub fn on_user_join(&self, user_id: Uuid, username: String, session_id: Uuid) -> UserPresence {
         let now = Self::timestamp_now();
         let presence = UserPresence {
             user_id,
@@ -194,7 +189,7 @@ impl CalendarPresenceManager {
             .filter(|entry| {
                 matches!(
                     entry.value().status,
-                    PresenceStatus::Viewing | PresenceStatus::Editing
+                    PresenceStatus::Join | PresenceStatus::Viewing | PresenceStatus::Editing
                 )
             })
             .count()
@@ -368,9 +363,6 @@ mod tests {
         assert_eq!(manager.calendar_count(), 1);
 
         // Both should be same manager
-        assert_eq!(
-            Arc::as_ptr(&cal_presence),
-            Arc::as_ptr(&cal_presence2)
-        );
+        assert_eq!(Arc::as_ptr(&cal_presence), Arc::as_ptr(&cal_presence2));
     }
 }
