@@ -5,7 +5,7 @@ use axum::{extract::DefaultBodyLimit, http::StatusCode, middleware, routing::get
 use dashmap::DashMap;
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::JwtConfig;
-use signapps_db::{create_pool, run_migrations, DatabasePool};
+use signapps_db::{create_pool, DatabasePool};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tower_http::trace::TraceLayer;

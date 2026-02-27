@@ -1,4 +1,4 @@
 pub mod document;
 pub mod session;
 
-pub use session::{BroadcastMessage, ClientSession};
+pub use session::BroadcastMessage;

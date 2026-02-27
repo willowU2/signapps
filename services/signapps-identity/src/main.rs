@@ -16,7 +16,7 @@ use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin, AuthState,
 };
 use signapps_common::JwtConfig;
-use signapps_db::{create_pool, DatabasePool};
+use signapps_db::{create_pool, run_migrations, DatabasePool};
 use std::net::SocketAddr;
 use tower_http::{
     cors::{Any, CorsLayer},
@@ -51,8 +51,8 @@ async fn main() -> anyhow::Result<()> {
     // Create database pool
     let pool = create_pool(&database_url).await?;
 
-    // Run migrations disabled to bypass panic
-    // run_migrations(&pool).await?;
+    // Run global database migrations orchestrator
+    run_migrations(&pool).await?;
 
     // Create in-process cache for token blacklisting
     let cache = signapps_cache::CacheService::new(

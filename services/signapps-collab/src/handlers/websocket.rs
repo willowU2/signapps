@@ -13,10 +13,7 @@ use yrs::updates::decoder::Decode;
 use yrs::{Doc, ReadTxn, Transact};
 // Import Transact and ReadTxn for state_vector
 
-use crate::{
-    models::{BroadcastMessage, ClientSession},
-    AppState,
-};
+use crate::{models::BroadcastMessage, AppState};
 
 /// WebSocket handler for collaborative document editing
 /// Endpoint: GET /api/v1/collab/ws/:doc_id?token=JWT_TOKEN
@@ -80,13 +77,6 @@ async fn handle_socket(socket: WebSocket, doc_id: String, state: AppState) {
 
     // Split WebSocket into sender and receiver
     let (mut sender, mut receiver) = socket.split();
-
-    // Create session (unused for now)
-    let _session = ClientSession {
-        id: session_id,
-        doc_id: doc_id.clone(),
-        tx: tx.clone(),
-    };
 
     // Send initial state to client
     let state_vector = doc.transact().state_vector();
@@ -164,7 +154,6 @@ async fn handle_socket(socket: WebSocket, doc_id: String, state: AppState) {
                     );
                     break;
                 },
-                _ => {},
             }
         }
     });

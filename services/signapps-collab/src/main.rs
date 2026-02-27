@@ -1,8 +1,10 @@
 use crate::models::BroadcastMessage;
 use axum::{routing::get, Router};
 use signapps_cache::CacheService;
-use signapps_common::middleware::{logging_middleware, request_id_middleware};
-use signapps_common::{auth::JwtConfig, middleware::AuthState};
+use signapps_common::auth::JwtConfig;
+use signapps_common::middleware::{
+    auth_middleware, logging_middleware, optional_auth_middleware, request_id_middleware,
+};
 use signapps_db::{create_pool, DatabasePool};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::broadcast;
@@ -89,7 +91,7 @@ async fn main() -> anyhow::Result<()> {
         // WebSocket endpoint for collaborative editing
         .route("/api/v1/collab/ws/:doc_id",
             get(websocket_handler)
-                // .layer(axum::middleware::from_fn_with_state(app_state.clone(), auth_middleware))
+                .layer(axum::middleware::from_fn_with_state(app_state.clone(), auth_middleware::<AppState>))
         )
 
         // Global middleware
@@ -97,7 +99,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(logging_middleware))
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
-        // .layer(axum::middleware::from_fn_with_state(app_state.clone(), signapps_common::middleware::optional_auth_middleware))
+        .layer(axum::middleware::from_fn_with_state(app_state.clone(), optional_auth_middleware::<AppState>))
 
         // State
         .with_state(app_state)

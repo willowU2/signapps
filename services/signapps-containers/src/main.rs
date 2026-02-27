@@ -18,7 +18,7 @@ use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin, AuthState,
 };
 use signapps_common::JwtConfig;
-use signapps_db::{create_pool, run_migrations, DatabasePool};
+use signapps_db::{create_pool, DatabasePool};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::{

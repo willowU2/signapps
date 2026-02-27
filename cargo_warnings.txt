@@ -1,0 +1,30 @@
+warning: unused imports: `DateTime` and `Utc`
+ --> services\signapps-collab\src\models\document.rs:1:14
+  |
+1 | use chrono::{DateTime, Utc};
+  |              ^^^^^^^^  ^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `Deserialize` and `Serialize`
+ --> services\signapps-collab\src\models\document.rs:2:13
+  |
+2 | use serde::{Deserialize, Serialize};
+  |             ^^^^^^^^^^^  ^^^^^^^^^
+
+warning: unused import: `uuid::Uuid`
+ --> services\signapps-collab\src\models\document.rs:3:5
+  |
+3 | use uuid::Uuid;
+  |     ^^^^^^^^^^
+
+warning: unused import: `tokio::sync::broadcast`
+ --> services\signapps-collab\src\models\session.rs:1:5
+  |
+1 | use tokio::sync::broadcast;
+  |     ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `signapps-collab` (bin "signapps-collab") generated 4 warnings (run `cargo fix --bin "signapps-collab" -p signapps-collab` to apply 4 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.62s
+warning: the following packages contain code that will be rejected by a future version of Rust: sqlx-postgres v0.7.4
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 11`
