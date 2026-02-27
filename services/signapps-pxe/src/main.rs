@@ -1,5 +1,6 @@
 mod handlers;
 mod models;
+mod tftp;
 
 use axum::{
     routing::{get, post},
@@ -12,6 +13,7 @@ use signapps_common::middleware::{
 use signapps_db::{create_pool, DatabasePool};
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
+use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
 #[derive(Clone)]
@@ -60,7 +62,19 @@ async fn main() -> anyhow::Result<()> {
         jwt_config,
     };
 
+    // Ensure HTTP boot directory exists
+    let http_boot_dir = "data/pxe/httpboot";
+    tokio::fs::create_dir_all(http_boot_dir).await?;
+
+    // Spawn TFTP server in the background
+    tokio::spawn(async move {
+        if let Err(e) = tftp::start_tftp_server("data/pxe/tftpboot", 69).await {
+            tracing::error!("TFTP Server failed: {}", e);
+        }
+    });
+
     let app = Router::new()
+        .nest_service("/boot", ServeDir::new(http_boot_dir))
         .route("/api/v1/pxe/health", get(health_check))
         .route(
             "/api/v1/pxe/profiles",

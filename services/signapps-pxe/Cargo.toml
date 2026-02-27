@@ -24,3 +24,4 @@ tower-http.workspace = true
 signapps-common = { path = "../../crates/signapps-common" }
 signapps-db = { path = "../../crates/signapps-db" }
 ipnetwork = { version = "0.20", features = ["serde"] }
+async-tftp.workspace = true

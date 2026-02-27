@@ -13,8 +13,7 @@ use crate::AppState;
 pub async fn list_connections(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<RemoteConnection>>, (StatusCode, String)> {
-    let connections = sqlx::query_as!(
-        RemoteConnection,
+    let connections = sqlx::query_as::<_, RemoteConnection>(
         r#"
         SELECT id, hardware_id, name, protocol, hostname, port, username, password_encrypted, private_key_encrypted, parameters, created_at, updated_at
         FROM remote.connections
@@ -37,23 +36,22 @@ pub async fn create_connection(
 ) -> Result<(StatusCode, Json<RemoteConnection>), (StatusCode, String)> {
     // In a real production system, the password must be symmetrically encrypted using a secure KMS
     // prior to resting in the Postgres DB to maintain compliance.
-    let connection = sqlx::query_as!(
-        RemoteConnection,
+    let connection = sqlx::query_as::<_, RemoteConnection>(
         r#"
         INSERT INTO remote.connections (hardware_id, name, protocol, hostname, port, username, password_encrypted, private_key_encrypted, parameters)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, hardware_id, name, protocol, hostname, port, username, password_encrypted, private_key_encrypted, parameters, created_at, updated_at
-        "#,
-        payload.hardware_id,
-        payload.name,
-        payload.protocol,
-        payload.hostname,
-        payload.port,
-        payload.username,
-        payload.password, // MOCK: Raw storage for MVP layout testing.
-        payload.private_key,
-        payload.parameters.unwrap_or_else(|| serde_json::json!({}))
+        "#
     )
+    .bind(&payload.hardware_id)
+    .bind(&payload.name)
+    .bind(&payload.protocol)
+    .bind(&payload.hostname)
+    .bind(payload.port)
+    .bind(&payload.username)
+    .bind(&payload.password) // MOCK: Raw storage for MVP layout testing.
+    .bind(&payload.private_key)
+    .bind(payload.parameters.unwrap_or_else(|| serde_json::json!({})))
     .fetch_one(state.db.inner())
     .await
     .map_err(|e| {
@@ -79,12 +77,11 @@ async fn handle_guacamole_socket(mut socket: WebSocket, connection_id: Uuid, sta
     );
 
     // 1. Fetch credentials from DB
-    let conn_record = match sqlx::query_as!(
-        RemoteConnection,
+    let conn_record = match sqlx::query_as::<_, RemoteConnection>(
         r#"SELECT id, hardware_id, name, protocol, hostname, port, username, password_encrypted, private_key_encrypted, parameters, created_at, updated_at
-           FROM remote.connections WHERE id = $1"#,
-        connection_id
+           FROM remote.connections WHERE id = $1"#
     )
+    .bind(connection_id)
     .fetch_one(state.db.inner())
     .await {
         Ok(c) => c,
