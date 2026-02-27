@@ -1,0 +1,26 @@
+[package]
+name = "signapps-it-assets"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+tokio.workspace = true
+axum.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+dotenvy.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+tower-http.workspace = true
+
+signapps-common = { path = "../../crates/signapps-common" }
+signapps-db = { path = "../../crates/signapps-db" }
+ipnetwork = { version = "0.20", features = ["serde"] }
