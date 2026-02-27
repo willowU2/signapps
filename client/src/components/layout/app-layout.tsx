@@ -8,6 +8,7 @@ import { CommandBar } from './command-bar';
 import { RightSidebar } from './right-sidebar';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -31,7 +32,20 @@ export function AppLayout({ children }: AppLayoutProps) {
         )}
       >
         {pathname === '/dashboard' ? <Header /> : <GlobalHeader />}
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="h-full w-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
     </div>
   );
