@@ -1,11 +1,10 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct HardwareAsset {
-    pub id: Uuid,
+    pub id: DefaultUuidField,
     pub name: String,
     pub r#type: String,
     pub manufacturer: Option<String>,
@@ -21,10 +20,14 @@ pub struct HardwareAsset {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CreateHardwareRequest {
+// Handling postgres optional uuid type mappings that sqlx might complain about
+pub type DefaultUuidField = Uuid;
+
+#[derive(Debug, Deserialize)]
+pub struct CreateHardwareReq {
     pub name: String,
-    pub r#type: String,
+    #[serde(rename = "type")]
+    pub asset_type: String,
     pub manufacturer: Option<String>,
     pub model: Option<String>,
     pub serial_number: Option<String>,
@@ -34,20 +37,11 @@ pub struct CreateHardwareRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct NetworkInterface {
-    pub id: Uuid,
-    pub hardware_id: Option<Uuid>,
-    pub mac_address: String,
-    pub ip_address: Option<ipnetwork::IpNetwork>,
-    pub is_primary: Option<bool>,
-    pub created_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CreateNetworkInterfaceRequest {
-    pub hardware_id: Uuid,
-    pub mac_address: String,
-    pub ip_address: Option<String>,
-    pub is_primary: Option<bool>,
+#[derive(Debug, Deserialize)]
+pub struct UpdateHardwareReq {
+    pub name: Option<String>,
+    pub status: Option<String>,
+    pub location: Option<String>,
+    pub assigned_user_id: Option<Uuid>,
+    pub notes: Option<String>,
 }
