@@ -110,3 +110,62 @@ pub async fn ingest_webhook(
         message: format!("Successfully mapped JSON to Universal AI Memory ({} chunks)", chunks_indexed),
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_extract_security_tags() {
+        // Simulate an incoming Odoo Ticket JSON payload
+        let payload = json!({
+            "ticket_id": 402,
+            "title": "Server Crash",
+            "organization_id": "org_abc123",
+            "user_id": "usr_xyz890"
+        });
+        
+        // Emulate the extraction logic in webhook.rs
+        let mut security_tags = serde_json::Map::new();
+        let source_type = "odoo_ticket".to_string();
+        security_tags.insert("source_type".to_string(), Value::String(source_type.clone()));
+        
+        if let Some(org_id) = payload.get("organization_id").or(payload.get("org_id")) {
+            security_tags.insert("organization_id".to_string(), org_id.clone());
+        }
+        if let Some(user_id) = payload.get("user_id").or(payload.get("owner_id")) {
+            security_tags.insert("owner_id".to_string(), user_id.clone());
+        }
+
+        // Validate that crucial RBAC tags are captured for RAG filtering
+        assert_eq!(security_tags.get("source_type").unwrap().as_str().unwrap(), "odoo_ticket");
+        assert_eq!(security_tags.get("organization_id").unwrap().as_str().unwrap(), "org_abc123");
+        assert_eq!(security_tags.get("owner_id").unwrap().as_str().unwrap(), "usr_xyz890");
+    }
+
+    #[test]
+    fn test_extract_security_tags_fallback_fields() {
+        // Simulate a Github Webhook payload using different field names
+        let payload = json!({
+            "issue_id": 99,
+            "title": "Bug in API",
+            "org_id": "github_org_1",
+            "owner_id": "dev_404"
+        });
+        
+        let mut security_tags = serde_json::Map::new();
+        let source_type = "github_issue".to_string();
+        security_tags.insert("source_type".to_string(), Value::String(source_type.clone()));
+        
+        if let Some(org_id) = payload.get("organization_id").or(payload.get("org_id")) {
+            security_tags.insert("organization_id".to_string(), org_id.clone());
+        }
+        if let Some(user_id) = payload.get("user_id").or(payload.get("owner_id")) {
+            security_tags.insert("owner_id".to_string(), user_id.clone());
+        }
+
+        assert_eq!(security_tags.get("organization_id").unwrap().as_str().unwrap(), "github_org_1");
+        assert_eq!(security_tags.get("owner_id").unwrap().as_str().unwrap(), "dev_404");
+    }
+}

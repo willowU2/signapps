@@ -6,6 +6,7 @@ description: Guidelines for writing and maintaining Playwright E2E tests
 
 1. **Location**: Tests are typically located in `e2e/` or `client/e2e/`.
 2. **Commands**: Ensure you use `npx playwright test` to run the test suite.
+3. **Data Generation (CRITICAL)**: **NEVER USE MOCK DATA**. You must test using real data generated via the actual UI (Create, Read, Update, Delete). Do not intercept API requests to return fake JSON.
 3. **Selectors**: 
    - Prefer user-facing attributes such as text content, labels, or testing IDs (`data-testid`).
    - Avoid relying on structural CSS classes (e.g., Tailwind classes) which may change frequently.

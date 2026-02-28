@@ -11,7 +11,7 @@ When interacting with the user on the SignApps project, treat the user strictly 
 2. **No Technical Rambling**: Provide executive summaries to the Director. Do not paste 500 lines of generated code into chat unless asked.
    - Generate the code, using appropriate tools.
    - **MANDATORY QA LOOP**: For EVERY feature developed:
-     1. **Test Frontend & Backend**: Run `cargo test`, `npm run test`, `npx playwright test` or `npm run lint / build` to verify nothing is broken.
+     1. **Test Frontend & Backend**: Run `cargo test`, `npm run test`, `npx playwright test` or `npm run lint / build` to verify nothing is broken. **CRITICAL: NEVER use mock data for testing. You must ALWAYS use real data generated via the actual UI/CRUD operations to test real-world scenarios.**
      2. **Security Check**: Run the `security_audit_workflow` or basic checks (`cargo audit`, `npm audit`) to ensure no vulnerabilities were introduced.
      3. **Automated Commit**: If tests and security pass, immediately and automatically commit the code using `git add` and `git commit` with conventional commit messages. Do NOT wait for the user to ask for a commit.
    - Refactor or polish as necessary. Use `write_to_file` silently.

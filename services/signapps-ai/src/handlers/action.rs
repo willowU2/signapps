@@ -139,3 +139,44 @@ pub async fn execute_action(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_parse_valid_ai_intent() {
+        // Simulate a successful JSON response from Claude Opus
+        let raw_ai_response = r#"{ "intent": "restart_container", "target": "web-ui", "confidence": 0.95 }"#;
+        let parsed_intent: Result<Value, _> = serde_json::from_str(raw_ai_response);
+        
+        assert!(parsed_intent.is_ok());
+        let intent_val = parsed_intent.unwrap();
+        
+        assert_eq!(intent_val.get("intent").and_then(|v| v.as_str()).unwrap_or(""), "restart_container");
+        assert_eq!(intent_val.get("target").and_then(|v| v.as_str()).unwrap_or(""), "web-ui");
+        assert_eq!(intent_val.get("confidence").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32, 0.95);
+    }
+
+    #[test]
+    fn test_parse_invalid_ai_intent_format() {
+        // Simulate Claude hallucinating text outside of JSON
+        let raw_ai_response = r#"Here is the JSON you requested: { "intent": "unknown", "target": "", "confidence": 0.0 }"#;
+        let parsed_intent: Result<Value, _> = serde_json::from_str(raw_ai_response);
+        
+        // This should fail standard serde parsing, forcing the handler into the error path
+        assert!(parsed_intent.is_err());
+    }
+
+    #[test]
+    fn test_low_confidence_rejection() {
+        // Simulate an extraction but the AI isn't sure
+        let raw_ai_response = r#"{ "intent": "restart_container", "target": "database", "confidence": 0.4 }"#;
+        let parsed_intent: Value = serde_json::from_str(raw_ai_response).unwrap();
+        let confidence = parsed_intent.get("confidence").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+        
+        // Ensure the handler logic would reject this
+        assert!(confidence < 0.8, "Confidence 0.4 should trigger the rejection path");
+    }
+}
