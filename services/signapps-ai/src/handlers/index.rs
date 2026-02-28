@@ -24,6 +24,8 @@ pub struct IndexRequest {
     pub mime_type: Option<String>,
     /// Target collection.
     pub collection: Option<String>,
+    /// Access control tags.
+    pub security_tags: Option<serde_json::Value>,
 }
 
 /// Index response.
@@ -60,6 +62,7 @@ pub async fn index_document(
             &payload.path,
             payload.mime_type.as_deref(),
             payload.collection.as_deref(),
+            payload.security_tags.clone(),
         )
         .await?;
 

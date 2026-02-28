@@ -50,6 +50,7 @@ impl VectorService {
                     .collection
                     .clone()
                     .unwrap_or_else(|| "default".to_string()),
+                security_tags: c.security_tags.clone(),
             })
             .collect();
 
@@ -63,17 +64,19 @@ impl VectorService {
     /// Search for similar documents.
     pub async fn search(
         &self,
-        query_vector: Vec<f32>,
-        limit: u64,
+        query_vector: &Vec<f32>, // Borrow it instead to match pipeline
+        limit: i64,
         score_threshold: Option<f32>,
         collection: Option<&str>,
+        security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<Vec<SearchResult>> {
         let results = VectorRepository::search(
             &self.pool,
-            &query_vector,
-            limit as i64,
+            query_vector,
+            limit,
             score_threshold,
             collection,
+            security_tags_filter,
         )
         .await?;
 

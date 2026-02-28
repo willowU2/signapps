@@ -74,6 +74,7 @@ impl RagPipeline {
         path: &str,
         mime_type: Option<&str>,
         collection: Option<&str>,
+        security_tags: Option<serde_json::Value>,
     ) -> Result<usize> {
         // Chunk the document
         let text_chunks = self.chunker.chunk_by_paragraphs(content);
@@ -95,6 +96,7 @@ impl RagPipeline {
                 path: path.to_string(),
                 mime_type: mime_type.map(|s| s.to_string()),
                 collection: collection.map(|s| s.to_string()),
+                security_tags: security_tags.clone(),
             })
             .collect();
 

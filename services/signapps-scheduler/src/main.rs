@@ -18,6 +18,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod handlers;
 mod scheduler;
+mod crawlers;
 
 use scheduler::SchedulerService;
 use signapps_common::middleware::AuthState;
@@ -103,6 +104,12 @@ async fn main() -> Result<()> {
     let scheduler_clone = Arc::new(scheduler.clone());
     tokio::spawn(async move {
         scheduler_clone.start_scheduler().await;
+    });
+
+    // Start background unified RAG Ingestion loop
+    let ingestion_pool = pool.clone();
+    tokio::spawn(async move {
+        crate::scheduler::ingestion::start_ingestion_loop(ingestion_pool).await;
     });
 
     // Create JWT config

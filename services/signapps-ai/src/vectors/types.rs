@@ -22,6 +22,7 @@ pub struct DocumentChunk {
     pub mime_type: Option<String>,
     /// Collection name.
     pub collection: Option<String>,
+    pub security_tags: Option<Value>,
 }
 
 /// Search result from vector similarity search.
