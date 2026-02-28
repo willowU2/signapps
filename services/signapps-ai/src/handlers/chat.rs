@@ -1,7 +1,7 @@
 //! Chat handlers with RAG.
 
 use axum::{
-    extract::State,
+    extract::{State, Extension},
     response::sse::{Event, Sse},
     Json,
 };
@@ -77,11 +77,16 @@ pub enum ChatEvent {
 }
 
 /// Chat with RAG (non-streaming).
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip(state, claims))]
 pub async fn chat(
     State(state): State<AppState>,
+    Extension(claims): Extension<signapps_common::auth::Claims>,
     Json(payload): Json<ChatRequest>,
 ) -> Result<Json<ChatResponse>> {
+    let tags_filter = serde_json::json!({
+        "organization_id": claims.org_id
+    });
+
     let response = state
         .rag
         .query_with_provider(
@@ -91,6 +96,7 @@ pub async fn chat(
             payload.language.as_deref(),
             payload.system_prompt.as_deref(),
             payload.collection.as_deref(),
+            Some(&tags_filter),
         )
         .await?;
 
@@ -117,11 +123,16 @@ pub async fn chat(
 }
 
 /// Chat with RAG (streaming via SSE).
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip(state, claims))]
 pub async fn chat_stream(
     State(state): State<AppState>,
+    Extension(claims): Extension<signapps_common::auth::Claims>,
     Json(payload): Json<ChatRequest>,
 ) -> Sse<impl Stream<Item = std::result::Result<Event, Infallible>>> {
+    let tags_filter = serde_json::json!({
+        "organization_id": claims.org_id
+    });
+
     let model = payload.model.clone();
     let provider = payload.provider.clone();
     let language = payload.language.clone();
@@ -129,7 +140,7 @@ pub async fn chat_stream(
     let collection = payload.collection.clone();
     let stream = async_stream::stream! {
         // First, retrieve sources
-        match state.rag.query_stream_with_provider(&payload.question, provider.as_deref(), model.as_deref(), language.as_deref(), system_prompt.as_deref(), collection.as_deref()).await {
+        match state.rag.query_stream_with_provider(&payload.question, provider.as_deref(), model.as_deref(), language.as_deref(), system_prompt.as_deref(), collection.as_deref(), Some(&tags_filter)).await {
             Ok((sources, mut token_rx)) => {
                 // Send sources first
                 if payload.include_sources {

@@ -126,25 +126,33 @@ impl RagPipeline {
         query: &str,
         limit: Option<u64>,
         collection: Option<&str>,
+        security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<Vec<SearchResult>> {
         let query_embedding = self.embeddings.embed(query).await?;
 
         let results = self
             .vectors
             .search(
-                query_embedding,
-                limit.unwrap_or(self.config.top_k),
+                &query_embedding,
+                limit.unwrap_or(self.config.top_k) as i64,
                 Some(self.config.score_threshold),
                 collection,
+                security_tags_filter,
             )
             .await?;
 
-        Ok(results)
+        // Map DB results to SearchResult
+        Ok(results.into_iter().map(|r| SearchResult {
+            document_id: r.document_id,
+            filename: r.filename,
+            content: r.content,
+            score: r.score,
+        }).collect())
     }
 
     /// Query with RAG (retrieve + generate), using default provider.
     pub async fn query(&self, question: &str) -> Result<RagResponse> {
-        self.query_with_provider(question, None, None, None, None, None)
+        self.query_with_provider(question, None, None, None, None, None, None)
             .await
     }
 
@@ -154,7 +162,7 @@ impl RagPipeline {
         question: &str,
         model: Option<&str>,
     ) -> Result<RagResponse> {
-        self.query_with_provider(question, None, model, None, None, None)
+        self.query_with_provider(question, None, model, None, None, None, None)
             .await
     }
 
@@ -168,11 +176,12 @@ impl RagPipeline {
         language: Option<&str>,
         custom_system_prompt: Option<&str>,
         collection: Option<&str>,
+        security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<RagResponse> {
         let provider = self.providers.resolve(provider_id)?;
 
         // 1. Try to retrieve relevant context (graceful fallback)
-        let search_results = match self.search(question, None, collection).await {
+        let search_results = match self.search(question, None, collection, security_tags_filter).await {
             Ok(results) => results,
             Err(e) => {
                 tracing::warn!(
@@ -220,7 +229,7 @@ impl RagPipeline {
         &self,
         question: &str,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
-        self.query_stream_with_provider(question, None, None, None, None, None)
+        self.query_stream_with_provider(question, None, None, None, None, None, None)
             .await
     }
 
@@ -230,7 +239,7 @@ impl RagPipeline {
         question: &str,
         model: Option<&str>,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
-        self.query_stream_with_provider(question, None, model, None, None, None)
+        self.query_stream_with_provider(question, None, model, None, None, None, None)
             .await
     }
 
@@ -243,11 +252,12 @@ impl RagPipeline {
         language: Option<&str>,
         custom_system_prompt: Option<&str>,
         collection: Option<&str>,
+        security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
         let provider = self.providers.resolve(provider_id)?;
 
         // 1. Try to retrieve relevant context (graceful fallback)
-        let search_results = match self.search(question, None, collection).await {
+        let search_results = match self.search(question, None, collection, security_tags_filter).await {
             Ok(results) => results,
             Err(e) => {
                 tracing::warn!(

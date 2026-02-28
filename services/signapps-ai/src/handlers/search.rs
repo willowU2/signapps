@@ -1,7 +1,7 @@
 //! Search handlers.
 
 use axum::{
-    extract::{Query, State},
+    extract::{Query, State, Extension},
     Json,
 };
 use serde::{Deserialize, Serialize};
@@ -43,14 +43,25 @@ pub struct SearchResponse {
 }
 
 /// Semantic search endpoint.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip(state, claims))]
 pub async fn search(
     State(state): State<AppState>,
+    Extension(claims): Extension<signapps_common::auth::Claims>,
     Query(query): Query<SearchQuery>,
 ) -> Result<Json<SearchResponse>> {
+    // Generate the security filter based on the user's claims
+    let tags_filter = serde_json::json!({
+        "organization_id": claims.org_id
+    });
+
     let results = state
         .rag
-        .search(&query.q, query.limit, query.collection.as_deref())
+        .search(
+            &query.q, 
+            query.limit, 
+            query.collection.as_deref(),
+            Some(&tags_filter)
+        )
         .await?;
 
     let items: Vec<SearchResultItem> = results
