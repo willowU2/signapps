@@ -25,7 +25,7 @@ mod vectors;
 
 use embeddings::EmbeddingsClient;
 use handlers::{
-    chat, collections, health, index, model_management, models, providers, search, webhook,
+    action, chat, collections, health, index, model_management, models, providers, search, webhook,
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
@@ -332,6 +332,8 @@ fn create_router(state: AppState) -> Router {
         // Chat
         .route("/chat", post(chat::chat))
         .route("/chat/stream", post(chat::chat_stream))
+        // Action Execution
+        .route("/action", post(action::execute_action))
         // Index
         .route("/index", post(index::index_document))
         .route("/index/:document_id", delete(index::remove_document))

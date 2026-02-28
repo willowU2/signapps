@@ -1,5 +1,4 @@
 Write-Host "Compiling all services first to prevent Cargo lock conflicts..."
-$env:SQLX_OFFLINE = "true"
 Start-Process "cargo" -ArgumentList "build", "--workspace" -Wait -NoNewWindow
 
 Write-Host "Starting microservices..."

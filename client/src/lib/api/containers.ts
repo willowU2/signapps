@@ -193,8 +193,12 @@ export const containersApi = {
     // Docker-specific operations
     startDocker: (dockerId: string) =>
         containersApiClient.post(`/containers/docker/${dockerId}/start`),
+    stopDocker: (dockerId: string) =>
+        containersApiClient.post(`/containers/docker/${dockerId}/stop`),
     restartDocker: (dockerId: string) =>
         containersApiClient.post(`/containers/docker/${dockerId}/restart`),
+    removeDocker: (dockerId: string, force: boolean = false) =>
+        containersApiClient.delete(`/containers/docker/${dockerId}`, { params: { force } }),
     inspectDocker: (dockerId: string) =>
         containersApiClient.get<ContainerInfo>(`/containers/docker/${dockerId}/inspect`),
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -39,12 +39,14 @@ import { ComposeImportDialog } from '@/components/containers/compose-import-dial
 import { ContainerDetailsSheet } from '@/components/containers/container-details-sheet';
 import { RouteDialog } from '@/components/routes/route-dialog';
 import { useContainers, useContainerAction, Container } from '@/hooks/use-containers';
+import { usePageContext } from '@/lib/store/page-context';
 import { Globe } from 'lucide-react';
 
 export default function ContainersPage() {
   const queryClient = useQueryClient();
   const { data: containers = [], isLoading } = useContainers();
   const containerAction = useContainerAction();
+  const pageContext = usePageContext();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'user' | 'running' | 'stopped' | 'system'>('user');
@@ -142,6 +144,24 @@ export default function ContainersPage() {
         return <Badge variant="outline">{state}</Badge>;
     }
   };
+
+  // Autopilot Context: If the AI detects a crashed/exited container in the user's filtered view,
+  // it proactively offers to restart and fetch the IT ticket solution
+  useEffect(() => {
+    // We only trigger this if the page finishes loading
+    if (!isLoading && containers.length > 0) {
+      pageContext.setContext('containers_dashboard');
+      
+      const crashedContainer = containers.find((c: Container) => c.state === 'exited' || c.state === 'stopped');
+      if (crashedContainer && !pageContext.proactiveMessage) {
+         // Proactive Trigger
+         pageContext.setProactiveMessage(
+           `Container "${crashedContainer.name}" is stopped/crashed. Would you like me to analyze its logs and restart it?`,
+           'warning'
+         );
+      }
+    }
+  }, [isLoading, containers]);
 
   if (isLoading) {
     return (

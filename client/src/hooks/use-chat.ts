@@ -45,7 +45,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
         wsRef.current = ws
 
         ws.onopen = () => {
-            console.log('Connected to chat channel:', channelId)
+            console.debug('Connected to chat channel:', channelId)
             setIsConnected(true)
         }
 
@@ -59,7 +59,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
         }
 
         ws.onclose = () => {
-            console.log('Disconnected from chat channel')
+            console.debug('Disconnected from chat channel')
             setIsConnected(false)
         }
 

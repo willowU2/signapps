@@ -64,7 +64,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
         wsRef.current = ws
 
         ws.onopen = () => {
-            console.log('Connected to signaling server')
+            console.debug('Connected to signaling server')
             setIsConnected(true)
             // Send join message
             sendSignal({ type: 'join', senderId: userId })
@@ -115,7 +115,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
         }
 
         pc.ontrack = (event) => {
-            console.log("Received track from", peerId)
+            console.debug("Received track from", peerId)
             const stream = event.streams[0]
             if (stream) {
                 setPeers(prev => {
@@ -141,7 +141,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
         switch (type) {
             case 'join': {
                 // New peer joined, create offer
-                console.log("Peer joined:", senderId)
+                console.debug("Peer joined:", senderId)
                 const pc = createPeerConnection(senderId)
                 const offer = await pc.createOffer()
                 await pc.setLocalDescription(offer)
@@ -155,7 +155,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
             }
             case 'offer': {
                 if (msg.targetId !== userId) return
-                console.log("Received offer from:", senderId)
+                console.debug("Received offer from:", senderId)
                 const pc = createPeerConnection(senderId)
                 await pc.setRemoteDescription(new RTCSessionDescription(payload))
                 const answer = await pc.createAnswer()
@@ -170,7 +170,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
             }
             case 'answer': {
                 if (msg.targetId !== userId) return
-                console.log("Received answer from:", senderId)
+                console.debug("Received answer from:", senderId)
                 const pc = peersRef.current.get(senderId)
                 if (pc) {
                     await pc.setRemoteDescription(new RTCSessionDescription(payload))

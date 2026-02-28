@@ -106,7 +106,19 @@ export function useContainerAction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, action }: { id: string; action: 'start' | 'stop' | 'restart' | 'remove' | 'update' }) => {
+    mutationFn: async ({ id, dockerId, isManaged, action }: { id: string; dockerId?: string; isManaged?: boolean; action: 'start' | 'stop' | 'restart' | 'remove' | 'update' }) => {
+      // If it's explicitly not managed, use Docker APIs directly
+      if (isManaged === false && dockerId) {
+        switch (action) {
+          case 'start': return containersApi.startDocker(dockerId);
+          case 'stop': return containersApi.stopDocker(dockerId);
+          case 'restart': return containersApi.restartDocker(dockerId);
+          case 'remove': return containersApi.removeDocker(dockerId, true);
+          case 'update': throw new Error('Cannot automatically update an unmanaged container');
+        }
+      }
+
+      // Default DB-managed flow
       switch (action) {
         case 'start': return containersApi.start(id);
         case 'stop': return containersApi.stop(id);
@@ -126,8 +138,9 @@ export function useContainerAction() {
       toast.success(messages[action]);
       queryClient.invalidateQueries({ queryKey: ['containers'] });
     },
-    onError: (_, { action }) => {
-      toast.error(`Failed to ${action} container`);
+    onError: (error, { action }) => {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to ${action} container: ${msg}`);
     },
   });
 }

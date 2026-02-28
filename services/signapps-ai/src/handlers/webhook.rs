@@ -27,11 +27,11 @@ pub async fn ingest_webhook(
 ) -> Result<Json<WebhookResponse>> {
     tracing::info!("Received webhook ingestion from source: {}", source_type);
 
-    // 1. OMNIPRESENT AI: Convert the arbitrary JSON into a human-readable narrative using Claude 4.6
+    // 1. OMNIPRESENT AI: Convert the arbitrary JSON into a human-readable narrative
     let json_str = serde_json::to_string_pretty(&payload).unwrap_or_default();
     
     let system_prompt = format!(
-        "You are the SignApps Universal Memory Engine (Claude 4.6). Your job is to read raw JSON payloads from a \
+        "You are the SignApps Universal Memory Engine. Your job is to read raw JSON payloads from a \
         webhook (source: {}) and construct a highly descriptive, narrative full-text search summary of the event. \
         This summary will be embedded into a Vector Database for Retrieval-Augmented Generation (RAG). \
         Include all relevant text, names, IDs, statuses, and context so the AI can find it later when a user asks a question. \
@@ -44,11 +44,25 @@ pub async fn ingest_webhook(
         ChatMessage::user(format!("JSON Payload:\n{}", json_str)),
     ];
 
-    // Call the AI Provider (Claude Opus default)
-    let ai_response = state
-        .rag
-        .providers()
-        .get_default()?
+    // Find the vLLM provider for ingestion to save tokens, fallback to default if none found
+    let registry = state.rag.providers();
+    let vllm_id = registry.list_providers().into_iter()
+        .find(|(_, cfg)| cfg.provider_type == crate::llm::LlmProviderType::Vllm)
+        .map(|(id, _)| id);
+        
+    let provider = match vllm_id {
+        Some(id) => {
+            tracing::info!("Using local AI provider '{}' (vLLM) for RAG ingestion to save tokens", id);
+            registry.get(id)?
+        },
+        None => {
+            tracing::warn!("No vLLM provider found. Falling back to default (e.g., Claude Opus) for RAG ingestion.");
+            registry.get_default()?
+        }
+    };
+
+    // Call the AI Provider
+    let ai_response = provider
         .chat(messages, None, Some(1024), Some(0.2))
         .await?;
 

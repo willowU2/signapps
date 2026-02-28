@@ -687,3 +687,35 @@ pub async fn inspect_docker(
     let info = state.docker.get_container(&docker_id).await?;
     Ok(Json(info))
 }
+
+/// Stop a Docker container directly by docker_id.
+#[tracing::instrument(skip(state))]
+pub async fn stop_docker(
+    State(state): State<AppState>,
+    Path(docker_id): Path<String>,
+    Json(payload): Json<Option<StopRequest>>,
+) -> Result<Json<ActionResponse>> {
+    let timeout = payload.and_then(|p| p.timeout_secs);
+    state.docker.stop_container(&docker_id, timeout).await?;
+
+    Ok(Json(ActionResponse {
+        success: true,
+        message: "Docker container stopped".to_string(),
+    }))
+}
+
+/// Remove a Docker container directly by docker_id.
+#[tracing::instrument(skip(state))]
+pub async fn remove_docker(
+    State(state): State<AppState>,
+    Path(docker_id): Path<String>,
+) -> Result<StatusCode> {
+    // Try to stop first, ignore errors
+    let _ = state.docker.stop_container(&docker_id, Some(5)).await;
+    state
+        .docker
+        .remove_container(&docker_id, true, false)
+        .await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}

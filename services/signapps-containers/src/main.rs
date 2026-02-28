@@ -158,16 +158,23 @@ fn create_router(state: AppState) -> Router {
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        .route("/api/v1/containers", get(handlers::containers::list))
-        .route("/api/v1/containers", post(handlers::containers::create))
+        .route("/api/v1/containers", get(handlers::containers::list).post(handlers::containers::create))
         // Docker-direct routes (for containers without DB records)
         .route(
             "/api/v1/containers/docker/:docker_id/start",
             post(handlers::containers::start_docker),
         )
         .route(
+            "/api/v1/containers/docker/:docker_id/stop",
+            post(handlers::containers::stop_docker),
+        )
+        .route(
             "/api/v1/containers/docker/:docker_id/restart",
             post(handlers::containers::restart_docker),
+        )
+        .route(
+            "/api/v1/containers/docker/:docker_id",
+            delete(handlers::containers::remove_docker),
         )
         .route(
             "/api/v1/containers/docker/:docker_id/logs",
@@ -213,12 +220,12 @@ fn create_router(state: AppState) -> Router {
         // App Store
         .route("/api/v1/store/apps", get(handlers::store::list_apps))
         .route(
-            "/api/v1/store/apps/:source_id/:app_id",
+            "/api/v1/store/sources/:source_id/apps/:app_id/details",
             get(handlers::store::get_app_details),
         )
         .route("/api/v1/store/install", post(handlers::store::install_app))
         .route(
-            "/api/v1/store/install/multi",
+            "/api/v1/store/install-multi",
             post(handlers::store::install_multi),
         )
         .route(
@@ -255,23 +262,13 @@ fn create_router(state: AppState) -> Router {
         // Backups
         .route(
             "/api/v1/backups",
-            get(handlers::backups::list_profiles),
-        )
-        .route(
-            "/api/v1/backups",
-            post(handlers::backups::create_profile),
+            get(handlers::backups::list_profiles).post(handlers::backups::create_profile),
         )
         .route(
             "/api/v1/backups/:id",
-            get(handlers::backups::get_profile),
-        )
-        .route(
-            "/api/v1/backups/:id",
-            put(handlers::backups::update_profile),
-        )
-        .route(
-            "/api/v1/backups/:id",
-            delete(handlers::backups::delete_profile),
+            get(handlers::backups::get_profile)
+                .put(handlers::backups::update_profile)
+                .delete(handlers::backups::delete_profile),
         )
         .route(
             "/api/v1/backups/:id/run",
@@ -334,11 +331,7 @@ fn create_router(state: AppState) -> Router {
         // User quotas (admin)
         .route(
             "/api/v1/users/:user_id/quotas",
-            get(handlers::quotas::get_user_quota),
-        )
-        .route(
-            "/api/v1/users/:user_id/quotas",
-            put(handlers::quotas::update_user_quota),
+            get(handlers::quotas::get_user_quota).put(handlers::quotas::update_user_quota),
         )
         .route(
             "/api/v1/users/:user_id/containers",

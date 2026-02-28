@@ -279,11 +279,24 @@ impl StoreManager {
 
     pub async fn get_app(&self, source_id: Uuid, app_id: &str) -> Option<StoreApp> {
         let cache = self.cache.read().await;
-        cache
-            .get(&source_id)?
-            .iter()
-            .find(|a| a.id == app_id)
-            .cloned()
+        let source_apps = match cache.get(&source_id) {
+            Some(apps) => apps,
+            None => {
+                tracing::warn!(%source_id, app_id, "Source not found in cache");
+                return None;
+            },
+        };
+        let app = source_apps.iter().find(|a| a.id == app_id).cloned();
+        if app.is_none() {
+            tracing::warn!(%source_id, app_id, "App not found in source cache");
+            // Log available app IDs for this source
+            let available_ids: Vec<_> =
+                source_apps.iter().map(|a| a.id.as_str()).take(10).collect();
+            tracing::info!("Available apps in source: {:?}", available_ids);
+        } else {
+            tracing::info!(%source_id, app_id, "App successfully retrieved from cache");
+        }
+        app
     }
 
     /// Fetch and parse a compose file on demand.
