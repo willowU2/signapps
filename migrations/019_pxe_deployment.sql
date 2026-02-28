@@ -4,7 +4,7 @@
 CREATE SCHEMA IF NOT EXISTS pxe;
 
 -- Deployment Profiles (e.g., Ubuntu 24.04, Windows PE)
-CREATE TABLE pxe.profiles (
+CREATE TABLE IF NOT EXISTS pxe.profiles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
@@ -16,10 +16,10 @@ CREATE TABLE pxe.profiles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_pxe_profiles_name ON pxe.profiles(name);
+CREATE INDEX IF NOT EXISTS idx_pxe_profiles_name ON pxe.profiles(name);
 
 -- Hardware Assets tracked by MAC Address
-CREATE TABLE pxe.assets (
+CREATE TABLE IF NOT EXISTS pxe.assets (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     mac_address VARCHAR(17) UNIQUE NOT NULL, -- Format: 00:1A:2B:3C:4D:5E
     hostname VARCHAR(255),
@@ -33,8 +33,8 @@ CREATE TABLE pxe.assets (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_pxe_assets_mac ON pxe.assets(mac_address);
-CREATE INDEX idx_pxe_assets_status ON pxe.assets(status);
+CREATE INDEX IF NOT EXISTS idx_pxe_assets_mac ON pxe.assets(mac_address);
+CREATE INDEX IF NOT EXISTS idx_pxe_assets_status ON pxe.assets(status);
 
 -- Seed an empty default profile so undocumented MAC addresses don't crash the boot sequence
 INSERT INTO pxe.profiles (name, description, boot_script, is_default)

@@ -50,6 +50,7 @@ import {
   Star,
   LayoutGrid,
   List as ListIcon,
+  AlignLeft, // Added for tree view
 } from 'lucide-react';
 import {
   Dialog,
@@ -108,10 +109,10 @@ const TABS = [
 export default function StoragePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'files');
 
   // Drive UI state
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'tree'>('list');
   const [driveView, setDriveView] = useState<DriveView>('my-drive');
 
   // File browser state
@@ -278,9 +279,7 @@ export default function StoragePage() {
       const response = await storageApi.listBuckets();
       const bucketList = (response.data || []).filter((b: { name: string }) => b.name);
       setBuckets(bucketList.map((b: { name: string; created_at?: string }) => ({ name: b.name, creationDate: b.created_at })));
-      if (bucketList.length > 0 && !currentBucket) {
-        setCurrentBucket(bucketList[0].name);
-      } else if (bucketList.length === 0) {
+      if (bucketList.length === 0) {
         setLoading(false);
       }
     } catch {
@@ -346,6 +345,13 @@ export default function StoragePage() {
       } else {
         // My Drive
         if (!currentBucket) {
+          const bucketFolders: FileItem[] = buckets.map(b => ({
+            key: b.name,
+            name: b.name,
+            type: 'folder' as const,
+            bucket: b.name
+          }));
+          setFiles(bucketFolders);
           setLoading(false);
           return;
         }
@@ -422,12 +428,19 @@ export default function StoragePage() {
 
   const handleNavigate = (item: FileItem) => {
     if (item.type === 'folder') {
-      setCurrentPath([...currentPath, item.name]);
+      if (!currentBucket && item.bucket) {
+        // Navigating into a bucket from root
+        setCurrentBucket(item.name);
+        setCurrentPath([]);
+      } else {
+        setCurrentPath([...currentPath, item.name]);
+      }
     }
   };
 
   const handleBreadcrumbClick = (index: number) => {
     if (index === -1) {
+      setCurrentBucket('');
       setCurrentPath([]);
     } else {
       setCurrentPath(currentPath.slice(0, index + 1));
@@ -763,6 +776,14 @@ export default function StoragePage() {
                       >
                         <ListIcon className="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => setViewMode('tree')}
+                      >
+                        <AlignLeft className="h-4 w-4" />
+                      </Button>
                     </div>
                     {currentBucket && (
                       <DropdownMenu>
@@ -793,13 +814,42 @@ export default function StoragePage() {
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 overflow-y-auto p-4 bg-muted/10">
-                  {currentBucket ? (
+                <div className="flex-1 overflow-y-auto p-4 bg-muted/10 flex flex-col min-h-0">
+                  {viewMode === 'tree' ? (
+                    <div className="flex-1 bg-background rounded-xl border shadow-sm overflow-hidden p-6 max-w-2xl mx-auto w-full mt-4">
+                      <div className="mb-6 pb-4 border-b">
+                        <h2 className="text-xl font-semibold flex items-center gap-2">
+                          <FolderOpen className="h-5 w-5 text-primary" />
+                          Explorateur d'arborescence
+                        </h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Parcourez vos fichiers sous forme d'arbre hiérarchique.
+                        </p>
+                      </div>
+
+                      {!currentBucket ? (
+                        <div className="text-center py-12">
+                          <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
+                            <Database className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <p className="text-muted-foreground">Sélectionnez un bucket pour afficher son arborescence.</p>
+                        </div>
+                      ) : (
+                        <div className="overflow-auto max-h-[60vh] pr-4">
+                          <FolderTree
+                            bucket={currentBucket}
+                            currentPath={currentPath.join('/')}
+                            onSelectFolder={(path) => setCurrentPath(path ? path.split('/').filter(Boolean) : [])}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : currentBucket ? (
                     <DropZone
                       bucket={currentBucket}
                       prefix={currentPath.length > 0 ? currentPath.join('/') : undefined}
                       onUploadComplete={fetchFiles}
-                      className="h-full"
+                      className="flex-1 min-h-[400px]"
                     >
                       {loading ? (
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -850,17 +900,61 @@ export default function StoragePage() {
                       )}
                     </DropZone>
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
-                      <div className="p-4 bg-muted/50 rounded-full">
-                        <HardDrive className="h-8 w-8" />
-                      </div>
-                      <div className="text-center">
-                        <h3 className="font-semibold text-lg">No Bucket Selected</h3>
-                        <p className="text-sm">Select a bucket from the dropdown to view files.</p>
-                      </div>
-                      <Button onClick={() => setBucketDialogOpen(true)}>
-                        Create Bucket
-                      </Button>
+                    <div className="h-full flex flex-col min-h-[400px]">
+                      {loading ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                          {[...Array(10)].map((_, i) => (
+                            <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
+                          ))}
+                        </div>
+                      ) : displayFiles.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
+                          <div className="p-4 bg-muted/50 rounded-full">
+                            <HardDrive className="h-8 w-8" />
+                          </div>
+                          <div className="text-center">
+                            <h3 className="font-semibold text-lg">No Buckets Found</h3>
+                            <p className="text-sm">Create a bucket to start uploading files.</p>
+                          </div>
+                          <Button onClick={() => setBucketDialogOpen(true)}>
+                            Create Bucket
+                          </Button>
+                        </div>
+                      ) : (
+                        viewMode === 'grid' ? (
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+                            {displayFiles.map((file) => (
+                              <FileGridItem
+                                key={file.key}
+                                item={file}
+                                onNavigate={() => handleNavigate(file)}
+                                onPreview={() => { }}
+                                onAction={handleAction}
+                                viewMode={driveView}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <div className="grid grid-cols-12 px-2 py-2 text-xs font-medium text-muted-foreground border-b mb-2">
+                              <div className="col-span-6 ml-9">Name</div>
+                              <div className="col-span-3 hidden sm:block">Date modified</div>
+                              <div className="col-span-2 hidden sm:block text-right">Size</div>
+                              <div className="col-span-1"></div>
+                            </div>
+                            {displayFiles.map((file) => (
+                              <FileListItem
+                                key={file.key}
+                                item={file}
+                                onNavigate={() => handleNavigate(file)}
+                                onPreview={() => { }}
+                                onAction={handleAction}
+                                viewMode={driveView}
+                              />
+                            ))}
+                          </div>
+                        )
+                      )}
                     </div>
                   )}
                 </div>

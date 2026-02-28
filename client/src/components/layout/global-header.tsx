@@ -100,7 +100,7 @@ export function GlobalHeader() {
                     variant="ghost"
                     size="icon"
                     onClick={toggleSidebar}
-                    className={`transition-colors lg:hidden ${!sidebarCollapsed ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
+                    className={`transition-colors lg:hidden ${mounted && !sidebarCollapsed ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
                     title="Toggle Left Menu"
                 >
                     <PanelLeft className="h-5 w-5" />
@@ -111,7 +111,7 @@ export function GlobalHeader() {
                     variant="ghost"
                     size="icon"
                     onClick={toggleSidebar}
-                    className={`transition-colors hidden lg:flex ${!sidebarCollapsed ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
+                    className={`transition-colors hidden lg:flex ${mounted && !sidebarCollapsed ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
                     title="Toggle Left Menu"
                 >
                     <PanelLeft className="h-5 w-5" />
@@ -183,7 +183,7 @@ export function GlobalHeader() {
                         variant="ghost"
                         size="icon"
                         onClick={toggleRightSidebar}
-                        className={`transition-colors mr-2 ${rightSidebarOpen ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
+                        className={`transition-colors mr-2 ${mounted && rightSidebarOpen ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
                         title="Toggle Right Menu"
                     >
                         <PanelRight className="h-5 w-5" />

@@ -46,6 +46,8 @@ export function createApiClient(baseURL: string): AxiosInstance {
                     const refreshToken = localStorage.getItem('refresh_token');
                     if (!refreshToken) {
                         localStorage.removeItem('access_token');
+                        localStorage.removeItem('auth-storage');
+                        document.cookie = 'auth-storage=; path=/; max-age=0';
                         window.location.href = '/login';
                         return Promise.reject(error);
                     }
@@ -64,6 +66,8 @@ export function createApiClient(baseURL: string): AxiosInstance {
                     } catch (refreshError) {
                         localStorage.removeItem('access_token');
                         localStorage.removeItem('refresh_token');
+                        localStorage.removeItem('auth-storage');
+                        document.cookie = 'auth-storage=; path=/; max-age=0';
                         window.location.href = '/login';
                         return Promise.reject(refreshError);
                     }

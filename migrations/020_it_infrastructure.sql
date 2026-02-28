@@ -3,7 +3,7 @@
 CREATE SCHEMA IF NOT EXISTS it;
 
 -- IT Hardware Assets (Computers, Servers, Switches)
-CREATE TABLE it.hardware (
+CREATE TABLE IF NOT EXISTS it.hardware (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     type VARCHAR(64) NOT NULL, -- e.g., 'server', 'desktop', 'switch', 'router'
@@ -20,11 +20,11 @@ CREATE TABLE it.hardware (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_it_hardware_type ON it.hardware(type);
-CREATE INDEX idx_it_hardware_status ON it.hardware(status);
+CREATE INDEX IF NOT EXISTS idx_it_hardware_type ON it.hardware(type);
+CREATE INDEX IF NOT EXISTS idx_it_hardware_status ON it.hardware(status);
 
 -- IT Components (CPU, RAM, Disks)
-CREATE TABLE it.components (
+CREATE TABLE IF NOT EXISTS it.components (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     hardware_id UUID REFERENCES it.hardware(id) ON DELETE CASCADE,
     type VARCHAR(64) NOT NULL, -- 'cpu', 'ram', 'disk', 'gpu'
@@ -35,7 +35,7 @@ CREATE TABLE it.components (
 );
 
 -- IT Software Licenses
-CREATE TABLE it.software_licenses (
+CREATE TABLE IF NOT EXISTS it.software_licenses (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     software_name VARCHAR(255) NOT NULL,
     license_key TEXT,
@@ -47,7 +47,7 @@ CREATE TABLE it.software_licenses (
 );
 
 -- Hardware Network Interfaces (MAC mappings)
-CREATE TABLE it.network_interfaces (
+CREATE TABLE IF NOT EXISTS it.network_interfaces (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     hardware_id UUID REFERENCES it.hardware(id) ON DELETE CASCADE,
     mac_address VARCHAR(17) UNIQUE NOT NULL,
@@ -56,13 +56,13 @@ CREATE TABLE it.network_interfaces (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_it_interfaces_mac ON it.network_interfaces(mac_address);
+CREATE INDEX IF NOT EXISTS idx_it_interfaces_mac ON it.network_interfaces(mac_address);
 
 
 CREATE SCHEMA IF NOT EXISTS remote;
 
 -- Remote Desktop Connections (Guacamole configurations)
-CREATE TABLE remote.connections (
+CREATE TABLE IF NOT EXISTS remote.connections (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     hardware_id UUID REFERENCES it.hardware(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -77,4 +77,4 @@ CREATE TABLE remote.connections (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_remote_conn_hardware ON remote.connections(hardware_id);
+CREATE INDEX IF NOT EXISTS idx_remote_conn_hardware ON remote.connections(hardware_id);

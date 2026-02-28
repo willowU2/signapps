@@ -11,6 +11,8 @@ export const authApi = {
     logout: () => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('auth-storage');
+        document.cookie = 'auth-storage=; path=/; max-age=0';
         window.location.href = '/login';
         return Promise.resolve();
     },

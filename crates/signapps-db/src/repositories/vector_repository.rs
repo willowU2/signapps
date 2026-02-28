@@ -31,15 +31,16 @@ impl VectorRepository {
                 r#"
                 INSERT INTO ai.document_vectors
                     (id, document_id, chunk_index, content, filename,
-                     path, mime_type, embedding, collection)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                     path, mime_type, embedding, collection, security_tags)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 ON CONFLICT (document_id, chunk_index) DO UPDATE SET
                     content = EXCLUDED.content,
                     filename = EXCLUDED.filename,
                     path = EXCLUDED.path,
                     mime_type = EXCLUDED.mime_type,
                     embedding = EXCLUDED.embedding,
-                    collection = EXCLUDED.collection
+                    collection = EXCLUDED.collection,
+                    security_tags = EXCLUDED.security_tags
                 "#,
             )
             .bind(chunk.id)
@@ -51,6 +52,7 @@ impl VectorRepository {
             .bind(&chunk.mime_type)
             .bind(vec)
             .bind(&chunk.collection)
+            .bind(&chunk.security_tags)
             .execute(pool.inner())
             .await
             .map_err(|e| Error::Internal(format!("Failed to upsert chunk: {}", e)))?;
@@ -66,49 +68,50 @@ impl VectorRepository {
         limit: i64,
         score_threshold: Option<f32>,
         collection: Option<&str>,
+        security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<Vec<VectorSearchResult>> {
         let vec = Vector::from(query_vector.to_vec());
         let threshold = score_threshold.unwrap_or(0.0);
 
-        let rows = if let Some(coll) = collection {
-            sqlx::query_as::<_, VectorSearchRow>(
-                r#"
-                SELECT
-                    id, document_id, chunk_index, content,
-                    filename, path, mime_type,
-                    1 - (embedding <=> $1::vector) AS score
-                FROM ai.document_vectors
-                WHERE 1 - (embedding <=> $1::vector) >= $2
-                  AND collection = $4
-                ORDER BY embedding <=> $1::vector
-                LIMIT $3
-                "#,
-            )
-            .bind(&vec)
-            .bind(threshold)
-            .bind(limit)
-            .bind(coll)
-            .fetch_all(pool.inner())
-            .await
-        } else {
-            sqlx::query_as::<_, VectorSearchRow>(
-                r#"
-                SELECT
-                    id, document_id, chunk_index, content,
-                    filename, path, mime_type,
-                    1 - (embedding <=> $1::vector) AS score
-                FROM ai.document_vectors
-                WHERE 1 - (embedding <=> $1::vector) >= $2
-                ORDER BY embedding <=> $1::vector
-                LIMIT $3
-                "#,
-            )
-            .bind(&vec)
-            .bind(threshold)
-            .bind(limit)
-            .fetch_all(pool.inner())
-            .await
+        let mut query = String::from(
+            r#"
+            SELECT
+                id, document_id, chunk_index, content,
+                filename, path, mime_type,
+                1 - (embedding <=> $1::vector) AS score, security_tags
+            FROM ai.document_vectors
+            WHERE 1 - (embedding <=> $1::vector) >= $2
+            "#,
+        );
+
+        if collection.is_some() {
+            query.push_str(" AND collection = $4");
         }
+
+        if security_tags_filter.is_some() {
+            if collection.is_some() {
+                query.push_str(" AND security_tags @> $5::jsonb");
+            } else {
+                query.push_str(" AND security_tags @> $4::jsonb");
+            }
+        }
+
+        query.push_str(" ORDER BY embedding <=> $1::vector LIMIT $3");
+
+        let mut sqlx_query = sqlx::query_as::<_, VectorSearchRow>(&query)
+            .bind(&vec)
+            .bind(threshold)
+            .bind(limit);
+
+        if let Some(coll) = collection {
+            sqlx_query = sqlx_query.bind(coll);
+        }
+
+        if let Some(tags) = security_tags_filter {
+            sqlx_query = sqlx_query.bind(tags);
+        }
+
+        let rows = sqlx_query.fetch_all(pool.inner()).await
         .map_err(|e| Error::Internal(format!("Vector search failed: {}", e)))?;
 
         Ok(rows
@@ -122,6 +125,7 @@ impl VectorRepository {
                 path: r.path,
                 mime_type: r.mime_type,
                 score: r.score,
+                security_tags: r.security_tags,
             })
             .collect())
     }
@@ -342,6 +346,7 @@ pub struct ChunkInput {
     pub path: String,
     pub mime_type: Option<String>,
     pub collection: String,
+    pub security_tags: Option<serde_json::Value>,
 }
 
 /// Internal row type for search results.
@@ -355,6 +360,7 @@ struct VectorSearchRow {
     path: String,
     mime_type: Option<String>,
     score: f32,
+    security_tags: Option<serde_json::Value>,
 }
 
 /// Internal row type for stats.

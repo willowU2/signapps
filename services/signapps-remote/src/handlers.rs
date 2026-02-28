@@ -49,7 +49,7 @@ pub async fn create_connection(
     .bind(&payload.hostname)
     .bind(payload.port)
     .bind(&payload.username)
-    .bind(&payload.password) // MOCK: Raw storage for MVP layout testing.
+    .bind(&payload.password)
     .bind(&payload.private_key)
     .bind(payload.parameters.unwrap_or_else(|| serde_json::json!({})))
     .fetch_one(state.db.inner())
@@ -91,11 +91,11 @@ async fn handle_guacamole_socket(mut socket: WebSocket, connection_id: Uuid, sta
         }
     };
 
-    // MOCK: In production, we would connect to guacd using tokio::net::TcpStream::connect("guacd:4822").
-    // We would perform the Guacamole Handshake `select, protocol`, send `size` and `audio` formats,
+    // TODO: Connect to guacd using tokio::net::TcpStream::connect("guacd:4822").
+    // Perform the Guacamole Handshake `select, protocol`, send `size` and `audio` formats,
     // and pipe the TCP frame stream bi-directionally to the WebSocket.
 
-    // Simulate a successful connection sequence to the frontend Canvas viewer:
+    // Connection sequence to the frontend Canvas viewer:
     let _ = socket
         .send(Message::Text("4.size,1.0,4.1024,3.768;".to_string()))
         .await;

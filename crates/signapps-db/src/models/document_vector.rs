@@ -28,6 +28,7 @@ pub struct VectorSearchResult {
     pub path: String,
     pub mime_type: Option<String>,
     pub score: f32,
+    pub security_tags: Option<serde_json::Value>,
 }
 
 /// Collection statistics.

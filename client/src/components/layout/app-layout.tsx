@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useUIStore } from '@/lib/store';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
@@ -17,6 +18,14 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { sidebarCollapsed, rightSidebarOpen } = useUIStore();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isSidebarCollapsed = mounted ? sidebarCollapsed : false;
+  const isRightSidebarOpen = mounted ? rightSidebarOpen : false;
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,9 +35,9 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div
         className={cn(
           'flex flex-col transition-all duration-300',
-          sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-60',
+          isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-60',
           // Allocate space for the right sidebar: always 16 (icon bar) + 80 (panel if open)
-          rightSidebarOpen ? 'pr-[24rem]' : 'pr-16'
+          isRightSidebarOpen ? 'pr-[24rem]' : 'pr-16'
         )}
       >
         {pathname === '/dashboard' ? <Header /> : <GlobalHeader />}

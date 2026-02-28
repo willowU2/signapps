@@ -73,6 +73,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           logout();
           syncAuthCookie(false);
         }
+      } finally {
+        setLoading(false);
       }
     };
 

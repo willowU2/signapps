@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useUIStore, RightWidgetType } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,11 @@ import { TasksWidget } from "@/components/tasks/tasks-widget";
 
 export function RightSidebar() {
   const { rightSidebarOpen, activeRightWidget, setRightSidebarOpen, setActiveRightWidget } = useUIStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleWidget = (widget: RightWidgetType) => {
     if (rightSidebarOpen && activeRightWidget === widget) {
@@ -38,13 +44,15 @@ export function RightSidebar() {
     { id: "details", icon: Info, label: "Document Details" },
   ] as const;
 
+  const isRightSidebarOpen = mounted ? rightSidebarOpen : false;
+
   return (
     <>
       {/* Expanded Panel */}
       <div
         className={cn(
           "fixed top-0 right-16 bottom-0 w-80 bg-background border-l border-border transition-transform duration-300 ease-in-out z-30 flex flex-col shadow-xl",
-          rightSidebarOpen ? "translate-x-0" : "translate-x-full"
+          isRightSidebarOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
         <div className="h-14 flex items-center justify-between px-4 border-b border-border">
@@ -80,7 +88,7 @@ export function RightSidebar() {
       <div className="fixed top-0 right-0 bottom-0 w-16 bg-background border-l border-border z-40 flex flex-col items-center py-4 gap-4">
         <TooltipProvider delayDuration={0}>
           {navItems.map((item) => {
-            const isActive = rightSidebarOpen && activeRightWidget === item.id;
+            const isActive = isRightSidebarOpen && activeRightWidget === item.id;
             return (
               <Tooltip key={item.id}>
                 <TooltipTrigger asChild>
@@ -112,13 +120,13 @@ export function RightSidebar() {
                   variant="ghost"
                   size="icon"
                   className="h-10 w-10 text-muted-foreground"
-                  onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+                  onClick={() => setRightSidebarOpen(!isRightSidebarOpen)}
                 >
-                  <ChevronRight className={cn("h-5 w-5 transition-transform", rightSidebarOpen && "rotate-180")} />
+                  <ChevronRight className={cn("h-5 w-5 transition-transform", isRightSidebarOpen && "rotate-180")} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="left">
-                <p>{rightSidebarOpen ? 'Hide Panel' : 'Show Panel'}</p>
+                <p>{isRightSidebarOpen ? 'Hide Panel' : 'Show Panel'}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
