@@ -37,7 +37,7 @@ export function NotificationPermissionDialog({
   const { register, loading } = usePushNotifications();
 
   const isSupported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
-  const permission = typeof window !== 'undefined' ? Notification.permission : 'default';
+  const permission = typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';
   const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
   // Sync controlled open state

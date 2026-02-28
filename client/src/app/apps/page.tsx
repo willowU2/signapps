@@ -15,6 +15,8 @@ import { AppCard } from '@/components/apps/app-card';
 import { InstallDialog } from '@/components/apps/install-dialog';
 import { AppDetailDialog } from '@/components/apps/app-detail-dialog';
 import { SourceManager } from '@/components/apps/source-manager';
+import { CustomAppDialog } from '@/components/apps/custom-app-dialog';
+import { Plus } from 'lucide-react';
 
 const PAGE_SIZE = 24;
 
@@ -39,6 +41,7 @@ export default function AppsPage() {
   const [installApp, setInstallApp] = useState<StoreApp | null>(null);
   const [detailApp, setDetailApp] = useState<StoreApp | null>(null);
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [customAppOpen, setCustomAppOpen] = useState(false);
 
   const fetchApps = async (params?: { search?: string; category?: string }) => {
     try {
@@ -55,6 +58,7 @@ export default function AppsPage() {
       const map = new Map<string, InstalledContainer>();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for (const c of (res.data || []) as any[]) {
+        const appId = c.labels?.['signapps.app.id'];
         const imgBase = (c.image as string).split(':')[0].toLowerCase();
         const portMappings: ContainerPortMapping[] = (c.docker_info?.ports || [])
           .filter((p: { host_port?: number }) => p.host_port)
@@ -64,7 +68,8 @@ export default function AppsPage() {
             protocol: p.protocol || 'tcp',
           }));
         const state: string = c.docker_info?.state || 'unknown';
-        map.set(imgBase, { id: c.id, image: c.image, portMappings, state });
+
+        map.set(appId || imgBase, { id: c.id, image: c.image, portMappings, state });
       }
       setInstalledMap(map);
     } catch {
@@ -72,18 +77,23 @@ export default function AppsPage() {
     }
   }, []);
 
-  // Find installed container id for a store app by matching image
+  // Find installed container id for a store app by matching app.id or image
   const getInstalledId = useCallback((app: StoreApp): string | undefined => {
-    if (!app.image) return undefined;
-    const imgBase = app.image.split(':')[0].toLowerCase();
-    return installedMap.get(imgBase)?.id;
+    let id = installedMap.get(app.id)?.id;
+    if (!id && app.image) {
+      const imgBase = app.image.split(':')[0].toLowerCase();
+      id = installedMap.get(imgBase)?.id;
+    }
+    return id;
   }, [installedMap]);
 
   // Get URL for an installed app
   const getInstalledUrl = useCallback((app: StoreApp): string | null => {
-    if (!app.image) return null;
-    const imgBase = app.image.split(':')[0].toLowerCase();
-    const container = installedMap.get(imgBase);
+    let container = installedMap.get(app.id);
+    if (!container && app.image) {
+      const imgBase = app.image.split(':')[0].toLowerCase();
+      container = installedMap.get(imgBase);
+    }
     if (!container || container.state !== 'running') return null;
     return getContainerUrl(container.portMappings);
   }, [installedMap]);
@@ -218,6 +228,10 @@ export default function AppsPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="default" onClick={() => setCustomAppOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Custom App
+            </Button>
             <Button variant="outline" onClick={() => setSourcesOpen(true)}>
               <Settings2 className="mr-2 h-4 w-4" />
               Sources
@@ -382,6 +396,13 @@ export default function AppsPage() {
             setInstallApp(null);
             fetchInstalledContainers();
           }}
+        />
+
+        {/* Custom App Dialog */}
+        <CustomAppDialog
+          open={customAppOpen}
+          onOpenChange={setCustomAppOpen}
+          onInstalled={fetchInstalledContainers}
         />
 
         {/* Source Manager */}

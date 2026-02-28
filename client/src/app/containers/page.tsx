@@ -82,8 +82,13 @@ export default function ContainersPage() {
     containerName: '',
   });
 
-  const handleAction = (id: string, action: 'start' | 'stop' | 'restart' | 'remove' | 'update') => {
-    containerAction.mutate({ id, action });
+  const handleAction = (container: Container, action: 'start' | 'stop' | 'restart' | 'remove' | 'update') => {
+    containerAction.mutate({
+      id: container.id,
+      dockerId: container.docker_id,
+      isManaged: container.is_managed,
+      action
+    });
   };
 
   // Extract unique categories from containers
@@ -245,8 +250,8 @@ export default function ContainersPage() {
                             container.state === 'running'
                               ? 'bg-green-500'
                               : container.state === 'restarting'
-                              ? 'bg-yellow-500'
-                              : 'bg-gray-400'
+                                ? 'bg-yellow-500'
+                                : 'bg-gray-400'
                           )}
                         />
                         <div>
@@ -353,7 +358,7 @@ export default function ContainersPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleAction(container.id, 'stop')}
+                                onClick={() => handleAction(container, 'stop')}
                               >
                                 <Square className="mr-1 h-4 w-4" />
                                 Stop
@@ -362,7 +367,7 @@ export default function ContainersPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleAction(container.id, 'start')}
+                                onClick={() => handleAction(container, 'start')}
                               >
                                 <Play className="mr-1 h-4 w-4" />
                                 Start
@@ -379,14 +384,14 @@ export default function ContainersPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => handleAction(container.id, 'restart')}
+                              onClick={() => handleAction(container, 'restart')}
                             >
                               <RotateCcw className="mr-2 h-4 w-4" />
                               Restart
                             </DropdownMenuItem>
                             {container.is_managed && !container.is_system && (
                               <DropdownMenuItem
-                                onClick={() => handleAction(container.id, 'update')}
+                                onClick={() => handleAction(container, 'update')}
                               >
                                 <ArrowUpCircle className="mr-2 h-4 w-4" />
                                 Update
@@ -408,7 +413,7 @@ export default function ContainersPage() {
                             {!container.is_system && (
                               <DropdownMenuItem
                                 className="text-destructive"
-                                onClick={() => handleAction(container.id, 'remove')}
+                                onClick={() => handleAction(container, 'remove')}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Remove
