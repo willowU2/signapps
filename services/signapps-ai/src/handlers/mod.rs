@@ -8,3 +8,4 @@ pub mod model_management;
 pub mod models;
 pub mod providers;
 pub mod search;
+pub mod webhook;

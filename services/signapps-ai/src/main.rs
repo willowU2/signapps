@@ -24,7 +24,9 @@ mod rag;
 mod vectors;
 
 use embeddings::EmbeddingsClient;
-use handlers::{chat, collections, health, index, model_management, models, providers, search};
+use handlers::{
+    chat, collections, health, index, model_management, models, providers, search, webhook,
+};
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
 use rag::RagPipeline;
@@ -334,6 +336,8 @@ fn create_router(state: AppState) -> Router {
         .route("/index", post(index::index_document))
         .route("/index/:document_id", delete(index::remove_document))
         .route("/stats", get(index::get_stats))
+        // Universal Webhook Memory
+        .route("/webhook/:source_type", post(webhook::ingest_webhook))
         // Collections
         .route(
             "/collections",
