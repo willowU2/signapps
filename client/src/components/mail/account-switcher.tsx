@@ -61,7 +61,6 @@ export function AccountSwitcher({
 
         try {
             await accountApi.create({
-                user_id: "00000000-0000-0000-0000-000000000000", // Generic ID for MVP
                 email_address: email,
                 provider: provider as any,
                 app_password: password,

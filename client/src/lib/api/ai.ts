@@ -42,6 +42,7 @@ export const aiApi = {
     // Model management
     localModels: () => aiApiClient.get<{ models: ModelEntry[] }>('/ai/models/local'),
     availableModels: () => aiApiClient.get<{ models: ModelEntry[] }>('/ai/models/available'),
+    searchModels: (query: string) => aiApiClient.get<{ models: ModelEntry[] }>('/ai/models/search', { params: { q: query } }),
     downloadModel: (modelId: string) =>
         aiApiClient.post<{ model_id: string; status: string; path?: string }>('/ai/models/download', { model_id: modelId }),
     deleteModel: (modelId: string) => aiApiClient.delete(`/ai/models/${modelId}`),

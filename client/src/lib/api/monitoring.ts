@@ -84,76 +84,92 @@ export interface MetricHistoryPoint {
     network_tx: number;
 }
 
-// Alerts API
+// Alerts API - synced with backend /api/v1/alerts routes
 export const alertsApi = {
-    // Alert configurations
-    listConfigs: () => metricsApiClient.get<AlertConfig[]>('/alerts/configs'),
-    getConfig: (id: string) => metricsApiClient.get<AlertConfig>(`/alerts/configs/${id}`),
+    // Alert configurations (CRUD on /alerts)
+    listConfigs: () => metricsApiClient.get<AlertConfig[]>('/alerts'),
+    getConfig: (id: string) => metricsApiClient.get<AlertConfig>(`/alerts/${id}`),
     createConfig: (data: CreateAlertConfigRequest) =>
-        metricsApiClient.post<AlertConfig>('/alerts/configs', data),
+        metricsApiClient.post<AlertConfig>('/alerts', data),
     updateConfig: (id: string, data: Partial<CreateAlertConfigRequest>) =>
-        metricsApiClient.put<AlertConfig>(`/alerts/configs/${id}`, data),
-    deleteConfig: (id: string) => metricsApiClient.delete(`/alerts/configs/${id}`),
+        metricsApiClient.put<AlertConfig>(`/alerts/${id}`, data),
+    deleteConfig: (id: string) => metricsApiClient.delete(`/alerts/${id}`),
     toggleConfig: (id: string, enabled: boolean) =>
-        metricsApiClient.patch(`/alerts/configs/${id}`, { enabled }),
-    // Active alerts
+        metricsApiClient.put<AlertConfig>(`/alerts/${id}`, { enabled }),
+    // Active alerts (currently firing)
     listActive: () => metricsApiClient.get<AlertEvent[]>('/alerts/active'),
-    // Alert history
+    // Alert event history
     listHistory: (limit?: number, offset?: number) =>
-        metricsApiClient.get<AlertHistoryResponse>('/alerts/history', { params: { limit, offset } }),
-    // Acknowledge alert
-    acknowledge: (id: string) => metricsApiClient.post(`/alerts/${id}/acknowledge`),
-    // Test alert notification
-    testNotification: (configId: string) =>
-        metricsApiClient.post(`/alerts/configs/${configId}/test`),
+        metricsApiClient.get<AlertEvent[]>('/alerts/events', { params: { limit, status: undefined } }),
+    // Acknowledge an active alert event
+    acknowledge: (id: string, acknowledged_by: string = 'admin') =>
+        metricsApiClient.post(`/alerts/${id}/acknowledge`, { acknowledged_by }),
 };
 
+// Alert severity levels
+export type AlertSeverity = 'info' | 'warning' | 'critical';
+
+// Alert status
+export type AlertStatus = 'active' | 'acknowledged' | 'resolved';
+
+// Metric types supported by the backend
+export type MetricType = 'cpu_usage' | 'memory_usage' | 'disk_usage' | 'disk_io' | 'network_in' | 'network_out' | 'custom';
+
+// Comparison operators
+export type Operator = 'greater_than' | 'greater_than_or_equal' | 'less_than' | 'less_than_or_equal' | 'equal' | 'not_equal';
+
+// Alert configuration (synced with backend AlertConfig)
 export interface AlertConfig {
     id: string;
     name: string;
-    metric: 'cpu' | 'memory' | 'disk' | 'network';
-    condition: 'above' | 'below';
+    description?: string;
+    metric_type: MetricType;
+    metric_target?: string; // e.g., disk name or network interface
+    operator: Operator;
     threshold: number;
+    severity: AlertSeverity;
     duration_seconds: number;
     enabled: boolean;
-    actions: AlertAction[];
+    notify_channels: string[];
+    webhook_url?: string;
     created_at: string;
     updated_at: string;
+    // Legacy compatibility fields
+    metric?: 'cpu' | 'memory' | 'disk' | 'network';
+    condition?: 'above' | 'below';
 }
 
-export interface AlertAction {
-    type: 'email' | 'webhook' | 'browser';
-    config: {
-        email?: string;
-        webhook_url?: string;
-    };
-}
-
+// Request to create an alert configuration
 export interface CreateAlertConfigRequest {
     name: string;
-    metric: 'cpu' | 'memory' | 'disk' | 'network';
-    condition: 'above' | 'below';
+    description?: string;
+    metric_type: MetricType;
+    metric_target?: string;
+    operator: Operator;
     threshold: number;
+    severity: AlertSeverity;
     duration_seconds?: number;
-    actions: AlertAction[];
+    enabled?: boolean;
+    notify_channels?: string[];
+    webhook_url?: string;
 }
 
+// Alert event (when an alert is triggered)
 export interface AlertEvent {
     id: string;
     config_id: string;
     config_name: string;
-    metric: 'cpu' | 'memory' | 'disk' | 'network';
-    current_value: number;
+    status: AlertStatus;
+    severity: AlertSeverity;
+    metric_type: MetricType;
+    metric_value: number;
     threshold: number;
-    severity: 'warning' | 'critical';
     message: string;
     triggered_at: string;
     acknowledged_at?: string;
     acknowledged_by?: string;
     resolved_at?: string;
-}
-
-export interface AlertHistoryResponse {
-    alerts: AlertEvent[];
-    total: number;
+    // Legacy compatibility
+    current_value?: number;
+    metric?: 'cpu' | 'memory' | 'disk' | 'network';
 }

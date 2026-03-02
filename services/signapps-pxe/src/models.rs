@@ -47,3 +47,21 @@ pub struct RegisterPxeAssetRequest {
     pub hostname: Option<String>,
     pub profile_id: Option<Uuid>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdatePxeProfileRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub boot_script: Option<String>,
+    pub os_type: Option<String>,
+    pub os_version: Option<String>,
+    pub is_default: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdatePxeAssetRequest {
+    pub hostname: Option<String>,
+    pub status: Option<String>,
+    pub profile_id: Option<Uuid>,
+    pub metadata: Option<serde_json::Value>,
+}

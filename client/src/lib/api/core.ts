@@ -12,6 +12,11 @@ export const METRICS_URL = process.env.NEXT_PUBLIC_METRICS_URL || 'http://127.0.
 export const MEDIA_URL = process.env.NEXT_PUBLIC_MEDIA_URL || 'http://127.0.0.1:3009/api/v1';
 export const DOCS_URL = process.env.NEXT_PUBLIC_DOCS_URL || 'http://127.0.0.1:3010/api/v1';
 export const CALENDAR_URL = process.env.NEXT_PUBLIC_CALENDAR_URL || 'http://127.0.0.1:3011/api/v1';
+export const MAIL_URL = process.env.NEXT_PUBLIC_MAIL_URL || 'http://127.0.0.1:3012/api/v1';
+export const MEET_URL = process.env.NEXT_PUBLIC_MEET_URL || 'http://127.0.0.1:3013/api/v1';
+export const IT_ASSETS_URL = process.env.NEXT_PUBLIC_IT_ASSETS_URL || 'http://127.0.0.1:3015/api/v1';
+export const PXE_URL = process.env.NEXT_PUBLIC_PXE_URL || 'http://127.0.0.1:3016/api/v1';
+export const REMOTE_URL = process.env.NEXT_PUBLIC_REMOTE_URL || 'http://127.0.0.1:3017/api/v1';
 
 // Create axios instance with auth interceptors
 export function createApiClient(baseURL: string): AxiosInstance {
@@ -93,6 +98,11 @@ export const metricsApiClient = createApiClient(METRICS_URL);
 export const mediaApiClient = createApiClient(MEDIA_URL);
 export const docsApiClient = createApiClient(DOCS_URL);
 export const calendarApiClient = createApiClient(CALENDAR_URL);
+export const mailApiClient = createApiClient(MAIL_URL);
+export const meetApiClient = createApiClient(MEET_URL);
+export const itAssetsApiClient = createApiClient(IT_ASSETS_URL);
+export const pxeApiClient = createApiClient(PXE_URL);
+export const remoteApiClient = createApiClient(REMOTE_URL);
 
 // Legacy api export for compatibility (aliased to identity for auth calls)
 export const api = identityApiClient;

@@ -6,7 +6,7 @@ use axum::{
 use signapps_db::DatabasePool;
 use uuid::Uuid;
 
-use crate::models::{CreateHardwareReq, HardwareAsset};
+use crate::models::{CreateHardwareReq, HardwareAsset, UpdateHardwareReq};
 
 pub async fn list_hardware(
     State(pool): State<DatabasePool>,
@@ -59,4 +59,60 @@ pub async fn create_hardware(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok((StatusCode::CREATED, Json(asset)))
+}
+
+pub async fn update_hardware(
+    State(pool): State<DatabasePool>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateHardwareReq>,
+) -> Result<Json<HardwareAsset>, (StatusCode, String)> {
+    // Check exists
+    let _ = sqlx::query("SELECT id FROM it.hardware WHERE id = $1")
+        .bind(id)
+        .fetch_optional(pool.inner())
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Asset not found".to_string()))?;
+
+    let asset = sqlx::query_as::<_, HardwareAsset>(
+        r#"
+        UPDATE it.hardware SET
+            name = COALESCE($1, name),
+            status = COALESCE($2, status),
+            location = COALESCE($3, location),
+            assigned_user_id = COALESCE($4, assigned_user_id),
+            notes = COALESCE($5, notes),
+            updated_at = NOW()
+        WHERE id = $6
+        RETURNING *
+        "#
+    )
+    .bind(payload.name)
+    .bind(payload.status)
+    .bind(payload.location)
+    .bind(payload.assigned_user_id)
+    .bind(payload.notes)
+    .bind(id)
+    .fetch_one(pool.inner())
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(asset))
+}
+
+pub async fn delete_hardware(
+    State(pool): State<DatabasePool>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    let result = sqlx::query("DELETE FROM it.hardware WHERE id = $1")
+        .bind(id)
+        .execute(pool.inner())
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if result.rows_affected() == 0 {
+        return Err((StatusCode::NOT_FOUND, "Asset not found".to_string()));
+    }
+
+    Ok(StatusCode::NO_CONTENT)
 }

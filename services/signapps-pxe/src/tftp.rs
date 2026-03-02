@@ -5,7 +5,7 @@ pub async fn start_tftp_server(dir: &str, port: u16) -> anyhow::Result<()> {
 
     let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse()?;
 
-    let mut server = match TftpServerBuilder::with_dir_ro(dir)?
+    let server = match TftpServerBuilder::with_dir_ro(dir)?
         .bind(addr)
         .build()
         .await

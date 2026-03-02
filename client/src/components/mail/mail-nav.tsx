@@ -27,9 +27,9 @@ export function MailNav({ isCollapsed, links }: NavProps) {
     return (
         <div
             data-collapsed={isCollapsed}
-            className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2"
+            className="group flex flex-col gap-2 py-2 data-[collapsed=true]:py-2"
         >
-            <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
+            <nav className="grid gap-1 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2 w-[calc(100%+12px)] -ml-3">
                 {links.map((link, index) =>
                     isCollapsed ? (
                         <Tooltip key={index} delayDuration={0}>
@@ -38,9 +38,9 @@ export function MailNav({ isCollapsed, links }: NavProps) {
                                     onClick={link.onClick}
                                     className={cn(
                                         buttonVariants({ variant: link.variant, size: "icon" }),
-                                        "h-10 w-10 cursor-pointer rounded-xl transition-all duration-200",
+                                        "h-10 w-10 cursor-pointer rounded-full transition-all duration-200",
                                         link.variant === "default"
-                                            ? "bg-primary/15 text-primary dark:bg-primary/20 shadow-sm ring-1 ring-primary/20 hover:bg-primary/20"
+                                            ? "bg-[#d3e3fd] text-[#041e49] dark:bg-[#004a77] dark:text-[#c2e7ff] hover:bg-[#b5cff8]"
                                             : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                     )}
                                 >
@@ -63,10 +63,10 @@ export function MailNav({ isCollapsed, links }: NavProps) {
                             onClick={link.onClick}
                             className={cn(
                                 buttonVariants({ variant: link.variant, size: "sm" }),
-                                "justify-start cursor-pointer transition-all duration-200 rounded-xl h-10 px-3 font-medium",
+                                "justify-start cursor-pointer transition-all duration-200 rounded-r-full h-8 px-4 font-medium mr-3",
                                 link.variant === "default"
-                                    ? "bg-primary/10 text-primary dark:bg-primary/20 shadow-sm ring-1 ring-primary/20 hover:bg-primary/15 dark:hover:bg-primary/25"
-                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                    ? "bg-[#d3e3fd] text-[#041e49] font-bold dark:bg-[#004a77] dark:text-[#c2e7ff] hover:bg-[#b5cff8]"
+                                    : "text-[#444746] dark:text-[#e3e3e3] font-normal hover:bg-[#f2f4f6]"
                             )}
                         >
                             <link.icon className="mr-2.5 h-4 w-4" />
@@ -76,8 +76,8 @@ export function MailNav({ isCollapsed, links }: NavProps) {
                                     className={cn(
                                         "ml-auto text-xs font-semibold px-2 py-0.5 rounded-full transition-colors",
                                         link.variant === "default"
-                                            ? "bg-primary/20 text-primary"
-                                            : "bg-muted text-muted-foreground group-hover:bg-muted-foreground/10"
+                                            ? "text-[#041e49] dark:text-[#c2e7ff]"
+                                            : "text-[#444746] dark:text-[#e3e3e3]"
                                     )}
                                 >
                                     {link.label}

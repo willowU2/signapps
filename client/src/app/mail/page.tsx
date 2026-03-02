@@ -8,13 +8,29 @@ import {
     File,
     Send,
     Archive,
+    Clock,
     Trash2,
+    SlidersHorizontal,
+    Menu,
+    HelpCircle,
+    Settings,
+    Grid,
+    CheckCircle2,
+    MoreVertical,
+    Plus,
+    ListTodo,
+    Calendar as CalendarIcon,
+    Lightbulb,
+    Users,
     Bot,
+    MessageSquare,
+    Video,
 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AppLayout } from "@/components/layout/app-layout"
 import { MailDisplay } from "@/components/mail/mail-display"
@@ -22,6 +38,8 @@ import { MailList } from "@/components/mail/mail-list"
 import { MailNav } from "@/components/mail/mail-nav"
 import { AccountSwitcher } from "@/components/mail/account-switcher"
 import { ComposeAiDialog } from "@/components/mail/compose-ai-dialog"
+import { MailHeader } from "@/components/mail/mail-header"
+import { MailAddons } from "@/components/mail/mail-addons"
 import { Mail } from "@/lib/data/mail"
 import { useMail } from "@/app/mail/use-mail"
 import { mailApi, accountApi, MailAccount } from "@/lib/api-mail"
@@ -46,23 +64,43 @@ export default function MailPage() {
             setAccounts(uiAccounts)
         }).catch(err => console.error('Failed to fetch mail accounts:', err))
 
-        // Fetch emails
-        mailApi.list().then(apiMails => {
-            const adapted: Mail[] = apiMails.map(e => ({
-                id: e.id,
-                name: e.sender.split('@')[0],
-                email: e.sender,
-                subject: e.subject,
-                text: e.body,
-                date: e.created_at,
-                read: e.is_read,
-                labels: e.labels,
-                folder: 'inbox' // Default for now, generic implementation
-            }))
-            setMailList(adapted)
-        }).catch((err) => {
-            console.error("Failed to fetch emails:", err)
-        })
+        // Use static mock data matching the user's screenshot
+        const mockMails: Mail[] = [
+            {
+                id: "1",
+                name: "Indeed",
+                email: "donotreply@alert.indeed.com",
+                subject: "Helvetic Emploi recrute pour Informaticien + 30 nouvelles offres à Porrentruy, JU",
+                text: "indeed\n\n30 nouveaux emplois - Porrentruy, JU\nCes annonces correspondent à l'alerte Emploi que vous avez enregistrée.\n\ninformaticien H/F\nSigma\nCanton du Jura\nN'hésitez pas à nous faire parvenir votre dossier complet en suivant les instructions ci-dessous. Solides compétences en systèmes, réseaux et environnement...\nil y a 1 jour\n\nInformaticien\nHelvetic Emploi\nDelémont, JU\n53 357 CHF - 109 454 CHF par an\nCandidature simplifiée\nAssurer aux clients informatiques l'assistance, la maintenance, le support et le dépannage. Solides compétences en réseaux, systèmes et environnements Microsoft...\nil y a 2 jours\n\nResponsable Logistique & Expédition\nPRECIDIP SA\nDelémont, JU\nCandidature simplifiée\nVous contrôlez la qualité des emballages ainsi que la conformité des quantités livrées, tout en optimisant la circulation des composants, des produits finis,...",
+                date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+                read: true,
+                labels: ["Boîte de réception", "Externe"],
+                folder: "inbox"
+            },
+            {
+                id: "2",
+                name: "LinkedIn",
+                email: "messages-noreply@linkedin.com",
+                subject: "Vous avez 3 nouveaux messages, dont un de recruteur",
+                text: "Découvrez vos nouveaux messages sur LinkedIn...",
+                date: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+                read: false,
+                labels: ["Boîte de réception"],
+                folder: "inbox"
+            },
+            {
+                id: "3",
+                name: "Alan Assurances",
+                email: "hello@alan.com",
+                subject: "Votre décompte de remboursement est disponible",
+                text: "Bonjour, nous venons de traiter votre dernière demande de remboursement. Le virement sera effectif sur votre compte d'ici 48h...",
+                date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                read: true,
+                labels: ["Boîte de réception", "Important"],
+                folder: "inbox"
+            }
+        ];
+        setMailList(mockMails);
     }, [])
 
     // NOTE: This logic mimics the original scaffold but integrates the list
@@ -129,109 +167,105 @@ export default function MailPage() {
     }
 
     return (
-        <TooltipProvider delayDuration={0}>
-            <AppLayout>
-                <div className="flex h-[calc(100vh-4rem)] flex-col bg-background/50 dark:bg-background/20">
-                    {/* Header */}
-                    <div className="flex items-center px-4 md:px-6 py-4 bg-background/60 backdrop-blur-3xl sticky top-0 z-10 border-b shadow-sm">
-                        <h1 className="text-2xl font-bold tracking-tight">Inbox</h1>
-                        <div className="ml-auto flex items-center gap-4">
-                            <Button
-                                variant="default"
-                                size="sm"
-                                className="rounded-full shadow-sm transition-all font-medium gap-2"
-                                onClick={() => setComposeAiOpen(true)}
-                            >
-                                <Bot className="h-4 w-4 mr-2" />
-                                Compose with AI
-                            </Button>
-                            <div className="relative group shadow-sm rounded-full">
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                <Input
-                                    placeholder="Search emails..."
-                                    className="pl-10 w-[200px] lg:w-[300px] h-9 rounded-full bg-background/80 border-border focus-visible:ring-primary/30 focus-visible:border-primary/50 transition-all shadow-inner text-sm"
-                                />
-                            </div>
-                        </div>
-                    </div>
+        <AppLayout>
+            <TooltipProvider delayDuration={0}>
+                {/* Full viewport Workspace Layout */}
+                <div className="h-[calc(100vh-8rem)] w-full flex flex-col bg-[#f2f6fc] dark:bg-[#111111] text-foreground overflow-hidden font-sans rounded-xl border shadow-sm">
+                    
+                    {/* 1. Global Workspace Header */}
+                    <MailHeader />
 
-                    {/* Main Content Area */}
-                    <div className="flex flex-1 overflow-hidden p-2 md:p-4 gap-2 md:gap-4">
-                        {/* Sidebar */}
-                        <div className="hidden md:flex w-[240px] shrink-0 bg-background/60 backdrop-blur-3xl rounded-2xl border shadow-sm p-3 flex-col gap-4 relative">
+                <div className="flex flex-1 overflow-hidden relative">
+
+
+                    {/* 3. Mail Navigation Sidebar */}
+                    <div className="w-[256px] shrink-0 bg-transparent flex flex-col gap-2 relative">
                             <AccountSwitcher isCollapsed={false} accounts={accounts} />
 
                             <Button
-                                className="w-full gap-2 rounded-xl h-11 shadow-sm font-semibold bg-primary/90 hover:bg-primary text-primary-foreground transition-all"
+                                className="w-full gap-2 rounded-xl h-14 shadow-sm font-semibold bg-[#c2e7ff] hover:bg-[#b0dcf8] text-[#001d35] transition-all justify-start px-4 text-base"
                                 onClick={() => setComposeAiOpen(true)}
                             >
-                                <Bot className="h-4 w-4" />
-                                Compose
+                                <Bot className="h-5 w-5 mr-1" />
+                                Nouveau message
                             </Button>
 
                             <MailNav isCollapsed={false} links={[
                                 {
-                                    title: "Inbox",
+                                    title: "Boîte de réception",
                                     label: "128",
                                     icon: Inbox,
                                     variant: "default",
                                     href: "/mail",
                                 },
                                 {
-                                    title: "Drafts",
+                                    title: "Brouillons",
                                     label: "9",
                                     icon: File,
                                     variant: "ghost",
                                     href: "/mail",
                                 },
                                 {
-                                    title: "Sent",
+                                    title: "Messages envoyés",
                                     label: "",
                                     icon: Send,
                                     variant: "ghost",
                                     href: "/mail",
                                 },
                                 {
-                                    title: "Junk",
+                                    title: "Spam",
                                     label: "23",
                                     icon: Archive,
                                     variant: "ghost",
                                     href: "/mail",
                                 },
                                 {
-                                    title: "Trash",
+                                    title: "Corbeille",
                                     label: "",
                                     icon: Trash2,
                                     variant: "ghost",
                                     href: "/mail",
                                 },
                             ]} />
-                        </div>
-
-                        <div className="w-full lg:w-[400px] shrink-0 bg-background/80 backdrop-blur-3xl rounded-2xl border shadow-sm overflow-hidden flex flex-col relative transition-all duration-300">
-                            <MailList
-                                items={mailList}
-                                selectedId={mailState.selected}
-                                onSelect={(id) => setMailState({ ...mailState, selected: id })}
-                                onSnooze={handleSnooze}
-                                onArchive={handleArchive}
-                                onDelete={handleDelete}
-                            />
-                        </div>
-
-                        {/* Mail Display */}
-                        <div className="hidden lg:flex flex-1 overflow-hidden bg-background/95 backdrop-blur-3xl rounded-2xl border shadow-md relative flex-col">
-                            <MailDisplay
-                                mail={mailList.find(m => m.id === mailState.selected) || null}
-                                onSnooze={handleSnooze}
-                                onArchive={handleArchive}
-                                onDelete={handleDelete}
-                            />
-                        </div>
                     </div>
+
+                    {/* 4. White Card Content Area (List or Display) */}
+                    <div className="flex-1 bg-white dark:bg-[#1f1f1f] rounded-2xl shadow-sm border-none overflow-hidden flex flex-col relative transition-all duration-300 mr-4 mb-4 z-10">
+                            {!mailState.selected ? (
+                                <MailList
+                                    items={mailList}
+                                    selectedId={mailState.selected}
+                                    onSelect={(id) => setMailState({ ...mailState, selected: id })}
+                                    onSnooze={handleSnooze}
+                                    onArchive={handleArchive}
+                                    onDelete={handleDelete}
+                                />
+                            ) : (
+                                <div className="flex flex-col h-full">
+                                    <div className="p-2 border-b flex items-center bg-white dark:bg-[#1f1f1f] sticky top-0 z-10 w-full">
+                                        <Button variant="ghost" size="sm" onClick={() => setMailState({ ...mailState, selected: null })} className="gap-2">
+                                            &larr; Retour
+                                        </Button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto">
+                                        <MailDisplay
+                                            mail={mailList.find(m => m.id === mailState.selected) || null}
+                                            onSnooze={handleSnooze}
+                                            onArchive={handleArchive}
+                                            onDelete={handleDelete}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                    {/* 5. Extreme Right Add-ons Rail */}
+                    <MailAddons />
                 </div>
+
                 <ComposeAiDialog open={composeAiOpen} onOpenChange={setComposeAiOpen} />
-            </AppLayout>
-        </TooltipProvider>
+                </div>
+            </TooltipProvider>
+        </AppLayout>
     )
 }

@@ -8,12 +8,19 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Server, MonitorSmartphone, Target, Cpu, HardDrive, Network, Plus, ShieldCheck, Download, Trash, Webhook } from "lucide-react"
-import { getHardware, Hardware, createHardware } from "@/lib/api-it-assets"
+import { itAssetsApi, HardwareAsset, CreateHardwareRequest } from "@/lib/api/it-assets"
+
+// Extended type for UI compatibility
+interface HardwareDisplay extends HardwareAsset {
+    hardware_type?: string;
+    mac_address?: string;
+    ip_address?: string;
+}
 
 export default function ITAssetsDashboard() {
-    const [hardwareList, setHardwareList] = useState<Hardware[]>([])
+    const [hardwareList, setHardwareList] = useState<HardwareDisplay[]>([])
     const [isCreating, setIsCreating] = useState(false)
-    const [newDevice, setNewDevice] = useState<Partial<Hardware>>({
+    const [newDevice, setNewDevice] = useState<Partial<HardwareDisplay>>({
         hardware_type: "laptop",
         status: "active"
     })
@@ -22,8 +29,18 @@ export default function ITAssetsDashboard() {
         loadHardware()
     }, [])
 
-    const loadHardware = () => {
-        getHardware().then(setHardwareList).catch(console.error)
+    const loadHardware = async () => {
+        try {
+            const response = await itAssetsApi.listHardware()
+            // Map backend type field to hardware_type for UI
+            const mapped = (response.data || []).map(h => ({
+                ...h,
+                hardware_type: h.type,
+            }))
+            setHardwareList(mapped)
+        } catch (error) {
+            console.error("Failed to load hardware:", error)
+        }
     }
 
     const handleCreate = async (e: React.FormEvent) => {
@@ -31,7 +48,13 @@ export default function ITAssetsDashboard() {
         if (!newDevice.name) return
 
         try {
-            await createHardware(newDevice as Omit<Hardware, "id">)
+            const createData: CreateHardwareRequest = {
+                name: newDevice.name,
+                type: newDevice.hardware_type || 'laptop',
+                location: newDevice.location,
+                notes: newDevice.notes,
+            }
+            await itAssetsApi.createHardware(createData)
             setIsCreating(false)
             setNewDevice({ hardware_type: "laptop", status: "active" })
             loadHardware()

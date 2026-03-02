@@ -8,5 +8,11 @@ export * from './tunnel';
 export * from './scheduler';
 export * from './monitoring';
 export * from './media';
-
 export * from './calendar';
+export * from './chat';
+export * from './docs';
+export * from './mail';
+export * from './meet';
+export * from './remote';
+export * from './pxe';
+export * from './it-assets';

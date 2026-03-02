@@ -263,6 +263,10 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </Tooltip>
+                    <Separator orientation="vertical" className="mx-2 h-5 bg-gray-200/60 dark:bg-gray-800/60" />
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
+                        <MoreVertical className="h-4 w-4" />
+                    </Button>
                 </div>
                 <div className="ml-auto flex items-center gap-2">
                     {mail && (
@@ -308,49 +312,42 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                         </TooltipTrigger>
                         <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Forward</TooltipContent>
                     </Tooltip>
-                    <Separator orientation="vertical" className="mx-2 h-5 bg-gray-200/60 dark:bg-gray-800/60" />
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
-                                <MoreVertical className="h-[18px] w-[18px]" />
-                                <span className="sr-only">More</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[180px] rounded-xl shadow-xl border-gray-100 dark:border-gray-800 p-1">
-                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium">Mark as unread</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium">Star thread</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium">Add label</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-900/30">Mute thread</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
             </div>
             {mail ? (
                 <div className="flex flex-1 flex-col overflow-y-auto">
                     {/* Email Header */}
-                    <div className="flex items-start p-8 pb-6 bg-white/40 dark:bg-gray-950/40">
-                        <div className="flex items-start gap-5 text-sm w-full">
-                            <Avatar className="h-14 w-14 border border-gray-200/50 dark:border-gray-800/50 shadow-md transform hover:scale-105 transition-transform">
+                    <div className="flex flex-col px-8 pt-6 pb-2 bg-white dark:bg-[#1f1f1f]">
+                        <div className="flex items-center gap-3 mb-6 w-full flex-wrap">
+                            <h2 className="font-normal text-[22px] leading-tight text-[#1f1f1f] dark:text-[#e3e3e3]">{mail.subject}</h2>
+                            <span className="bg-[#fef7e0] text-[#b06000] text-xs px-2 py-0.5 rounded border border-[#fbdc8e] font-medium leading-none flex items-center h-5">Externe</span>
+                            <span className="bg-[#f1f3f4] text-[#444746] dark:bg-[#3c4043] dark:text-[#e3e3e3] text-xs px-2 rounded flex items-center gap-1 cursor-pointer hover:bg-[#e8eaed] transition-colors leading-none h-5">Boîte de réception <X className="h-3 w-3" /></span>
+                        </div>
+
+                        <div className="flex items-start gap-4 text-sm w-full">
+                            <Avatar className="h-10 w-10 mt-0.5">
                                 <AvatarImage alt={mail.name} src={`https://avatar.vercel.sh/${mail.email}.png`} />
-                                <AvatarFallback className="bg-gradient-to-br from-purple-100 to-indigo-100 text-purple-700 dark:from-purple-900/50 dark:to-indigo-900/50 dark:text-purple-300 font-bold text-lg">
+                                <AvatarFallback className="bg-blue-600 text-white font-medium text-lg">
                                     {mail.name.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="grid gap-1.5 flex-1 mt-1">
-                                <div className="font-bold text-2xl leading-tight tracking-tight text-gray-900 dark:text-white pr-12">{mail.subject}</div>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className="font-semibold text-[15px] text-gray-800 dark:text-gray-200">{mail.name}</span>
-                                    <span className="text-sm font-medium text-gray-400 dark:text-gray-500">&lt;{mail.email}&gt;</span>
+                            <div className="grid gap-0 flex-1">
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="font-bold text-[14px] text-[#1f1f1f] dark:text-[#e3e3e3]">{mail.name}</span>
+                                    <span className="text-xs text-[#5f6368] dark:text-[#9aa0a6] font-normal cursor-pointer hover:underline">&lt;{mail.email}&gt;</span>
+                                    <span className="text-[13px] text-[#0b57d0] dark:text-[#a8c7fa] cursor-pointer hover:underline ml-1 font-medium">Se désabonner</span>
+                                </div>
+                                <div className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-0.5">
+                                    à moi <span className="text-[10px]">▼</span>
                                 </div>
                             </div>
                             {mail.date && (
-                                <div className="shrink-0 text-sm text-gray-500 font-medium bg-gray-100/50 dark:bg-gray-800/50 px-3 py-1.5 rounded-xl border border-gray-200/50 dark:border-gray-800 mt-1 shadow-sm">
-                                    {format(new Date(mail.date), "PPpp")}
+                                <div className="shrink-0 flex items-center gap-4 text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-2">
+                                    <span>{format(new Date(mail.date), "EEE d MMM HH:mm", { timeZone: "Europe/Paris" } as any)} (il y a {Math.max(1, Math.floor((new Date().getTime() - new Date(mail.date).getTime()) / (1000 * 3600 * 24)))} jours)</span>
                                 </div>
                             )}
                         </div>
                     </div>
-                    <Separator className="bg-gray-200/50 dark:bg-gray-800/50 mx-8 w-auto h-px" />
 
                     {/* AI Summary Panel */}
                     {showSummary && (
@@ -390,8 +387,20 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                         </div>
                     )}
 
-                    <div className="flex-1 whitespace-pre-wrap p-8 text-[16px] leading-relaxed text-gray-800 dark:text-gray-200 font-medium">
+                    <div className="whitespace-pre-wrap px-8 py-2 text-[14px] leading-relaxed text-[#202124] dark:text-[#e3e3e3]">
                         {mail.text}
+                    </div>
+
+                    {/* Bottom Action Buttons */}
+                    <div className="flex items-center gap-3 px-8 py-6 mb-4">
+                        <Button variant="outline" className="rounded-full px-5 h-9 text-[#444746] dark:text-[#e3e3e3] border-[#747775] dark:border-[#5f6368] font-medium hover:bg-[#f3f7fe] dark:hover:bg-[#3c4043] transition-colors" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}>
+                            <Reply className="h-4 w-4 mr-2" />
+                            Répondre
+                        </Button>
+                        <Button variant="outline" className="rounded-full px-5 h-9 text-[#444746] dark:text-[#e3e3e3] border-[#747775] dark:border-[#5f6368] font-medium hover:bg-[#f3f7fe] dark:hover:bg-[#3c4043] transition-colors">
+                            <Forward className="h-4 w-4 mr-2" />
+                            Transférer
+                        </Button>
                     </div>
 
                     {/* Reply Composer Area */}

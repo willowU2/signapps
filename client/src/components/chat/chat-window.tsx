@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sparkles, Hash, Phone, Video, Search, ChevronDown, Bot, X, Loader2, CheckCircle, Presentation, Calendar, Info } from "lucide-react"
+import { Sparkles, Hash, Phone, Video, Search, ChevronDown, Bot, X, Loader2, CheckCircle, Info, LogIn } from "lucide-react"
 import { useChat } from "@/hooks/use-chat"
 import { cn } from "@/lib/utils"
 import { MessageItem, ChatMessage } from "./message-item"
@@ -11,6 +11,8 @@ import { ChatInput } from "./chat-input"
 import { ThreadPane } from "./thread-pane"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAiStream } from "@/hooks/use-ai-stream"
+import { useAuth } from "@/hooks/use-auth"
+import Link from "next/link"
 
 interface ChatWindowProps {
     channelId: string
@@ -19,11 +21,23 @@ interface ChatWindowProps {
 export function ChatWindow({ channelId }: ChatWindowProps) {
     const scrollRef = useRef<HTMLDivElement>(null)
 
-    // Mock user (persistent for the component lifecycle)
-    const [user] = useState(() => ({
-        id: "user-" + Math.floor(Math.random() * 1000),
-        name: "User " + Math.floor(Math.random() * 1000)
-    }))
+    // Use real authenticated user
+    const { user: authUser, isAuthenticated } = useAuth()
+
+    // Create user object from auth or fallback to anonymous
+    const user = useMemo(() => {
+        if (authUser && isAuthenticated) {
+            return {
+                id: authUser.id,
+                name: authUser.display_name || authUser.username,
+            }
+        }
+        // Fallback for anonymous/guest users (should rarely happen)
+        return {
+            id: `guest-${Date.now()}`,
+            name: "Invité",
+        }
+    }, [authUser, isAuthenticated])
 
     const { messages, sendMessage, addReaction, isConnected } = useChat(channelId, user.id, user.name)
     const [activeThreadMsgId, setActiveThreadMsgId] = useState<string | null>(null)

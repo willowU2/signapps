@@ -1,0 +1,45 @@
+[package]
+name = "signapps-meet"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Web framework
+tokio = { version = "1.0", features = ["full"] }
+axum = { version = "0.7", features = ["ws"] }
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "macros", "uuid", "chrono"] }
+
+# Auth
+signapps-common = { path = "../../crates/signapps-common" }
+
+# UUID and time
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# LiveKit token generation
+jsonwebtoken = "9.3"
+base64 = "0.22"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Environment
+dotenvy = "0.15"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Password hashing
+bcrypt = "0.15"
+
+# Random generation
+rand = "0.8"

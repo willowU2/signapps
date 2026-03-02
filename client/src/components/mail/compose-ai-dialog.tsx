@@ -59,18 +59,16 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
             try {
                 if (draftId) {
                     await mailApi.update(draftId, {
-                        recipient: recipient.trim() || undefined,
+                        folder_id: "drafts",
                         subject: subject.trim() || (description ? description.slice(0, 30) : undefined),
-                        body: body.trim() || undefined,
-                        folder: "drafts",
+                        body_text: body.trim() || undefined,
                     })
                 } else {
                     const res = await mailApi.send({
-                        sender: "me@signapps.local", // Using stub ID for MVP
+                        account_id: "00000000-0000-0000-0000-000000000000", // Using stub ID for MVP
                         recipient: recipient.trim() || "",
                         subject: subject.trim() || (description ? description.slice(0, 30) : ""),
-                        body: body.trim() || "",
-                        folder: "drafts",
+                        body_text: body.trim() || "",
                     })
                     setDraftId(res.id)
                 }
@@ -165,18 +163,16 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
         try {
             if (draftId) {
                 await mailApi.update(draftId, {
-                    recipient: recipient.trim(),
+                    folder_id: "sent",
                     subject: subject.trim(),
-                    body: body.trim(),
-                    folder: "sent",
+                    body_text: body.trim(),
                 })
             } else {
                 await mailApi.send({
-                    sender: "me@signapps.local",
+                    account_id: "00000000-0000-0000-0000-000000000000",
                     recipient: recipient.trim(),
                     subject: subject.trim(),
-                    body: body.trim(),
-                    folder: "sent",
+                    body_text: body.trim(),
                 })
             }
             toast.success("Email sent!")

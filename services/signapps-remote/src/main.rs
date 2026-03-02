@@ -2,7 +2,7 @@ mod handlers;
 mod models;
 
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use signapps_common::auth::JwtConfig;
@@ -65,6 +65,12 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/api/v1/remote/connections",
             get(handlers::list_connections).post(handlers::create_connection),
+        )
+        .route(
+            "/api/v1/remote/connections/:id",
+            get(handlers::get_connection)
+                .put(handlers::update_connection)
+                .delete(handlers::delete_connection),
         )
         .route(
             "/api/v1/remote/ws/:id",

@@ -3,7 +3,7 @@ mod models;
 mod tftp;
 
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use signapps_common::auth::JwtConfig;
@@ -76,10 +76,29 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .nest_service("/boot", ServeDir::new(http_boot_dir))
         .route("/api/v1/pxe/health", get(health_check))
+        // Profiles
         .route(
             "/api/v1/pxe/profiles",
             get(handlers::list_profiles).post(handlers::create_profile),
         )
+        .route(
+            "/api/v1/pxe/profiles/:id",
+            get(handlers::get_profile)
+                .put(handlers::update_profile)
+                .delete(handlers::delete_profile),
+        )
+        // Assets
+        .route(
+            "/api/v1/pxe/assets",
+            get(handlers::list_assets).post(handlers::register_asset),
+        )
+        .route(
+            "/api/v1/pxe/assets/:id",
+            get(handlers::get_asset)
+                .put(handlers::update_asset)
+                .delete(handlers::delete_asset),
+        )
+        // Boot script
         .route("/api/v1/pxe/boot.ipxe", get(handlers::generate_ipxe_script))
         .layer(axum::middleware::from_fn_with_state(
             app_state.clone(),

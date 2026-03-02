@@ -7,7 +7,7 @@ use axum::{
 use futures::{sink::SinkExt, stream::StreamExt};
 use uuid::Uuid;
 
-use crate::models::{CreateConnectionRequest, RemoteConnection};
+use crate::models::{CreateConnectionRequest, RemoteConnection, UpdateConnectionRequest};
 use crate::AppState;
 
 pub async fn list_connections(
@@ -60,6 +60,99 @@ pub async fn create_connection(
     })?;
 
     Ok((StatusCode::CREATED, Json(connection)))
+}
+
+pub async fn get_connection(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<RemoteConnection>, (StatusCode, String)> {
+    let connection = sqlx::query_as::<_, RemoteConnection>(
+        r#"
+        SELECT id, hardware_id, name, protocol, hostname, port, username, password_encrypted, private_key_encrypted, parameters, created_at, updated_at
+        FROM remote.connections
+        WHERE id = $1
+        "#
+    )
+    .bind(id)
+    .fetch_optional(state.db.inner())
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to fetch connection: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
+    })?
+    .ok_or((StatusCode::NOT_FOUND, "Connection not found".to_string()))?;
+
+    Ok(Json(connection))
+}
+
+pub async fn update_connection(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateConnectionRequest>,
+) -> Result<Json<RemoteConnection>, (StatusCode, String)> {
+    // First check if connection exists
+    let existing = sqlx::query_as::<_, RemoteConnection>(
+        "SELECT * FROM remote.connections WHERE id = $1"
+    )
+    .bind(id)
+    .fetch_optional(state.db.inner())
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+    .ok_or((StatusCode::NOT_FOUND, "Connection not found".to_string()))?;
+
+    let connection = sqlx::query_as::<_, RemoteConnection>(
+        r#"
+        UPDATE remote.connections SET
+            name = COALESCE($1, name),
+            protocol = COALESCE($2, protocol),
+            hostname = COALESCE($3, hostname),
+            port = COALESCE($4, port),
+            username = COALESCE($5, username),
+            password_encrypted = COALESCE($6, password_encrypted),
+            private_key_encrypted = COALESCE($7, private_key_encrypted),
+            parameters = COALESCE($8, parameters),
+            updated_at = NOW()
+        WHERE id = $9
+        RETURNING id, hardware_id, name, protocol, hostname, port, username, password_encrypted, private_key_encrypted, parameters, created_at, updated_at
+        "#
+    )
+    .bind(&payload.name)
+    .bind(&payload.protocol)
+    .bind(&payload.hostname)
+    .bind(payload.port)
+    .bind(&payload.username)
+    .bind(&payload.password)
+    .bind(&payload.private_key)
+    .bind(&payload.parameters)
+    .bind(id)
+    .fetch_one(state.db.inner())
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to update connection: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
+    })?;
+
+    Ok(Json(connection))
+}
+
+pub async fn delete_connection(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    let result = sqlx::query("DELETE FROM remote.connections WHERE id = $1")
+        .bind(id)
+        .execute(state.db.inner())
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete connection: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
+        })?;
+
+    if result.rows_affected() == 0 {
+        return Err((StatusCode::NOT_FOUND, "Connection not found".to_string()));
+    }
+
+    Ok(StatusCode::NO_CONTENT)
 }
 
 pub async fn connection_gateway_ws(

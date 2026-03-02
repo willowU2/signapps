@@ -1,5 +1,5 @@
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use signapps_cache::CacheService;
@@ -79,8 +79,19 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/docs/slide/:doc_id/slides", get(slide::get_slides))
         .route("/api/v1/docs/board", post(board::create_board))
         .route("/api/v1/docs/board/:doc_id/columns", get(board::get_columns))
+        // Chat channels
         .route("/api/v1/docs/chat", post(chat::create_channel))
         .route("/api/v1/channels", get(chat::get_channels))
+        .route("/api/v1/channels/:channel_id", get(chat::get_channel))
+        .route("/api/v1/channels/:channel_id", put(chat::update_channel))
+        .route("/api/v1/channels/:channel_id", delete(chat::delete_channel))
+        // Channel members
+        .route("/api/v1/channels/:channel_id/members", get(chat::get_channel_members))
+        .route("/api/v1/channels/:channel_id/members", post(chat::add_channel_member))
+        .route("/api/v1/channels/:channel_id/members/:user_id", delete(chat::remove_channel_member))
+        // Direct messages
+        .route("/api/v1/dms", get(chat::get_direct_messages))
+        .route("/api/v1/dms", post(chat::create_direct_message))
 
         // Global middleware
         .layer(TraceLayer::new_for_http())

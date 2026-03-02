@@ -1,4 +1,8 @@
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    Json,
+};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 use uuid::Uuid;
@@ -149,4 +153,501 @@ pub async fn get_channels(
         .collect();
 
     Ok(Json(response))
+}
+
+/// Get a specific channel by ID
+pub async fn get_channel(
+    State(state): State<AppState>,
+    Path(channel_id): Path<Uuid>,
+) -> Result<Json<ChannelResponse>, (StatusCode, String)> {
+    let channel = sqlx::query_as::<_, ChannelRow>(
+        r#"
+        SELECT
+            d.id,
+            d.name,
+            (m.metadata->>'topic') as topic,
+            COALESCE((m.metadata->>'is_private')::boolean, false) as is_private,
+            d.created_at,
+            d.created_by
+        FROM documents d
+        LEFT JOIN document_metadata m ON d.id = m.doc_id
+        WHERE d.id = $1 AND d.doc_type = 'chat'
+        "#,
+    )
+    .bind(channel_id)
+    .fetch_optional(state.pool.inner())
+    .await
+    .map_err(|e| {
+        error!("Failed to fetch channel: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to fetch channel".to_string(),
+        )
+    })?
+    .ok_or((StatusCode::NOT_FOUND, "Channel not found".to_string()))?;
+
+    Ok(Json(ChannelResponse {
+        id: channel.id.to_string(),
+        name: channel.name,
+        topic: channel.topic,
+        is_private: channel.is_private.unwrap_or(false),
+        created_at: channel.created_at.to_rfc3339(),
+        created_by: channel.created_by.map(|id| id.to_string()).unwrap_or_default(),
+    }))
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UpdateChannelRequest {
+    pub name: Option<String>,
+    pub topic: Option<String>,
+    pub is_private: Option<bool>,
+}
+
+/// Update a channel
+pub async fn update_channel(
+    State(state): State<AppState>,
+    Path(channel_id): Path<Uuid>,
+    Json(payload): Json<UpdateChannelRequest>,
+) -> Result<Json<ChannelResponse>, (StatusCode, String)> {
+    // Check channel exists
+    let existing = sqlx::query_as::<_, ChannelRow>(
+        r#"
+        SELECT
+            d.id,
+            d.name,
+            (m.metadata->>'topic') as topic,
+            COALESCE((m.metadata->>'is_private')::boolean, false) as is_private,
+            d.created_at,
+            d.created_by
+        FROM documents d
+        LEFT JOIN document_metadata m ON d.id = m.doc_id
+        WHERE d.id = $1 AND d.doc_type = 'chat'
+        "#,
+    )
+    .bind(channel_id)
+    .fetch_optional(state.pool.inner())
+    .await
+    .map_err(|e| {
+        error!("Failed to fetch channel for update: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to fetch channel".to_string(),
+        )
+    })?
+    .ok_or((StatusCode::NOT_FOUND, "Channel not found".to_string()))?;
+
+    // Update document name if provided
+    if let Some(ref name) = payload.name {
+        sqlx::query("UPDATE documents SET name = $1, updated_at = NOW() WHERE id = $2")
+            .bind(name)
+            .bind(channel_id)
+            .execute(state.pool.inner())
+            .await
+            .map_err(|e| {
+                error!("Failed to update channel name: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to update channel".to_string(),
+                )
+            })?;
+    }
+
+    // Update metadata (topic, is_private)
+    let new_topic = payload.topic.or(existing.topic);
+    let new_is_private = payload.is_private.unwrap_or(existing.is_private.unwrap_or(false));
+    let metadata = serde_json::json!({
+        "topic": new_topic,
+        "is_private": new_is_private
+    });
+
+    sqlx::query(
+        "INSERT INTO document_metadata (doc_id, metadata) VALUES ($1, $2)
+         ON CONFLICT (doc_id) DO UPDATE SET metadata = $2",
+    )
+    .bind(channel_id)
+    .bind(&metadata)
+    .execute(state.pool.inner())
+    .await
+    .map_err(|e| {
+        error!("Failed to update channel metadata: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to update channel metadata".to_string(),
+        )
+    })?;
+
+    info!(channel_id = %channel_id, "Updated chat channel");
+
+    Ok(Json(ChannelResponse {
+        id: channel_id.to_string(),
+        name: payload.name.unwrap_or(existing.name),
+        topic: new_topic,
+        is_private: new_is_private,
+        created_at: existing.created_at.to_rfc3339(),
+        created_by: existing.created_by.map(|id| id.to_string()).unwrap_or_default(),
+    }))
+}
+
+/// Delete a channel
+pub async fn delete_channel(
+    State(state): State<AppState>,
+    Path(channel_id): Path<Uuid>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    // Check exists
+    let exists = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM documents WHERE id = $1 AND doc_type = 'chat')",
+    )
+    .bind(channel_id)
+    .fetch_one(state.pool.inner())
+    .await
+    .map_err(|e| {
+        error!("Failed to check channel existence: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to check channel".to_string(),
+        )
+    })?;
+
+    if !exists {
+        return Err((StatusCode::NOT_FOUND, "Channel not found".to_string()));
+    }
+
+    // Delete metadata first (foreign key)
+    sqlx::query("DELETE FROM document_metadata WHERE doc_id = $1")
+        .bind(channel_id)
+        .execute(state.pool.inner())
+        .await
+        .ok(); // Ignore if no metadata
+
+    // Delete document updates
+    sqlx::query("DELETE FROM document_updates WHERE doc_id = $1")
+        .bind(channel_id)
+        .execute(state.pool.inner())
+        .await
+        .ok();
+
+    // Delete document presence
+    sqlx::query("DELETE FROM document_presence WHERE doc_id = $1")
+        .bind(channel_id)
+        .execute(state.pool.inner())
+        .await
+        .ok();
+
+    // Delete channel members
+    sqlx::query("DELETE FROM channel_members WHERE channel_id = $1")
+        .bind(channel_id)
+        .execute(state.pool.inner())
+        .await
+        .ok();
+
+    // Delete the document
+    sqlx::query("DELETE FROM documents WHERE id = $1")
+        .bind(channel_id)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| {
+            error!("Failed to delete channel: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to delete channel".to_string(),
+            )
+        })?;
+
+    info!(channel_id = %channel_id, "Deleted chat channel");
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+// ============================================================================
+// Channel Members
+// ============================================================================
+
+#[derive(Serialize, Deserialize)]
+pub struct ChannelMember {
+    pub user_id: String,
+    pub username: String,
+    pub role: String, // "owner", "admin", "member"
+    pub joined_at: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct AddMemberRequest {
+    pub user_id: Uuid,
+    #[serde(default = "default_role")]
+    pub role: String,
+}
+
+fn default_role() -> String {
+    "member".to_string()
+}
+
+/// Get channel members
+pub async fn get_channel_members(
+    State(state): State<AppState>,
+    Path(channel_id): Path<Uuid>,
+) -> Result<Json<Vec<ChannelMember>>, (StatusCode, String)> {
+    let members = sqlx::query_as::<_, (Uuid, String, String, chrono::DateTime<chrono::Utc>)>(
+        r#"
+        SELECT cm.user_id, u.username, cm.role, cm.joined_at
+        FROM channel_members cm
+        JOIN users u ON cm.user_id = u.id
+        WHERE cm.channel_id = $1
+        ORDER BY cm.joined_at
+        "#,
+    )
+    .bind(channel_id)
+    .fetch_all(state.pool.inner())
+    .await
+    .unwrap_or_default();
+
+    let response: Vec<ChannelMember> = members
+        .into_iter()
+        .map(|(user_id, username, role, joined_at)| ChannelMember {
+            user_id: user_id.to_string(),
+            username,
+            role,
+            joined_at: joined_at.to_rfc3339(),
+        })
+        .collect();
+
+    Ok(Json(response))
+}
+
+/// Add a member to a channel
+pub async fn add_channel_member(
+    State(state): State<AppState>,
+    Path(channel_id): Path<Uuid>,
+    Json(payload): Json<AddMemberRequest>,
+) -> Result<(StatusCode, Json<ChannelMember>), (StatusCode, String)> {
+    // Check channel exists
+    let exists = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM documents WHERE id = $1 AND doc_type = 'chat')",
+    )
+    .bind(channel_id)
+    .fetch_one(state.pool.inner())
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if !exists {
+        return Err((StatusCode::NOT_FOUND, "Channel not found".to_string()));
+    }
+
+    // Get username
+    let username = sqlx::query_scalar::<_, String>("SELECT username FROM users WHERE id = $1")
+        .bind(payload.user_id)
+        .fetch_optional(state.pool.inner())
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "User not found".to_string()))?;
+
+    let joined_at = chrono::Utc::now();
+
+    // Insert member (upsert)
+    sqlx::query(
+        r#"
+        INSERT INTO channel_members (channel_id, user_id, role, joined_at)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (channel_id, user_id) DO UPDATE SET role = $3
+        "#,
+    )
+    .bind(channel_id)
+    .bind(payload.user_id)
+    .bind(&payload.role)
+    .bind(joined_at)
+    .execute(state.pool.inner())
+    .await
+    .map_err(|e| {
+        error!("Failed to add channel member: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to add member".to_string(),
+        )
+    })?;
+
+    info!(channel_id = %channel_id, user_id = %payload.user_id, "Added member to channel");
+
+    Ok((
+        StatusCode::CREATED,
+        Json(ChannelMember {
+            user_id: payload.user_id.to_string(),
+            username,
+            role: payload.role,
+            joined_at: joined_at.to_rfc3339(),
+        }),
+    ))
+}
+
+/// Remove a member from a channel
+pub async fn remove_channel_member(
+    State(state): State<AppState>,
+    Path((channel_id, user_id)): Path<(Uuid, Uuid)>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    let result = sqlx::query("DELETE FROM channel_members WHERE channel_id = $1 AND user_id = $2")
+        .bind(channel_id)
+        .bind(user_id)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if result.rows_affected() == 0 {
+        return Err((StatusCode::NOT_FOUND, "Member not found".to_string()));
+    }
+
+    info!(channel_id = %channel_id, user_id = %user_id, "Removed member from channel");
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+// ============================================================================
+// Direct Messages
+// ============================================================================
+
+#[derive(Serialize, Deserialize)]
+pub struct DirectMessage {
+    pub id: String,
+    pub participants: Vec<DmParticipant>,
+    pub created_at: String,
+    pub last_message_at: Option<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DmParticipant {
+    pub user_id: String,
+    pub username: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CreateDmRequest {
+    pub participant_ids: Vec<Uuid>,
+}
+
+/// Get direct messages for current user
+pub async fn get_direct_messages(
+    State(state): State<AppState>,
+    // TODO: Get user_id from auth middleware
+) -> Result<Json<Vec<DirectMessage>>, (StatusCode, String)> {
+    // For now, return all DMs (doc_type = 'dm')
+    // In production, filter by current user's DMs
+    let dms = sqlx::query_as::<_, (Uuid, chrono::DateTime<chrono::Utc>)>(
+        r#"
+        SELECT d.id, d.created_at
+        FROM documents d
+        WHERE d.doc_type = 'dm'
+        ORDER BY d.updated_at DESC
+        "#,
+    )
+    .fetch_all(state.pool.inner())
+    .await
+    .unwrap_or_default();
+
+    let mut response = Vec::new();
+    for (dm_id, created_at) in dms {
+        // Get participants
+        let participants = sqlx::query_as::<_, (Uuid, String)>(
+            r#"
+            SELECT cm.user_id, u.username
+            FROM channel_members cm
+            JOIN users u ON cm.user_id = u.id
+            WHERE cm.channel_id = $1
+            "#,
+        )
+        .bind(dm_id)
+        .fetch_all(state.pool.inner())
+        .await
+        .unwrap_or_default();
+
+        response.push(DirectMessage {
+            id: dm_id.to_string(),
+            participants: participants
+                .into_iter()
+                .map(|(user_id, username)| DmParticipant {
+                    user_id: user_id.to_string(),
+                    username,
+                })
+                .collect(),
+            created_at: created_at.to_rfc3339(),
+            last_message_at: None, // TODO: Track last message
+        });
+    }
+
+    Ok(Json(response))
+}
+
+/// Create a direct message conversation
+pub async fn create_direct_message(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateDmRequest>,
+) -> Result<(StatusCode, Json<DirectMessage>), (StatusCode, String)> {
+    if payload.participant_ids.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "At least one participant required".to_string(),
+        ));
+    }
+
+    let dm_id = Uuid::new_v4();
+
+    // Initialize empty Yjs document
+    let doc = yrs::Doc::new();
+    let doc_binary = doc
+        .transact()
+        .encode_state_as_update_v1(&yrs::StateVector::default());
+
+    // Create DM document
+    sqlx::query(
+        "INSERT INTO documents (id, name, doc_type, doc_binary) VALUES ($1, $2, 'dm', $3)",
+    )
+    .bind(dm_id)
+    .bind("Direct Message")
+    .bind(doc_binary)
+    .execute(state.pool.inner())
+    .await
+    .map_err(|e| {
+        error!("Failed to create DM: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to create DM".to_string(),
+        )
+    })?;
+
+    let created_at = chrono::Utc::now();
+    let mut participants = Vec::new();
+
+    // Add participants
+    for user_id in &payload.participant_ids {
+        let username = sqlx::query_scalar::<_, String>("SELECT username FROM users WHERE id = $1")
+            .bind(user_id)
+            .fetch_optional(state.pool.inner())
+            .await
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| format!("User {}", user_id));
+
+        sqlx::query(
+            "INSERT INTO channel_members (channel_id, user_id, role, joined_at) VALUES ($1, $2, 'member', $3)",
+        )
+        .bind(dm_id)
+        .bind(user_id)
+        .bind(created_at)
+        .execute(state.pool.inner())
+        .await
+        .ok();
+
+        participants.push(DmParticipant {
+            user_id: user_id.to_string(),
+            username,
+        });
+    }
+
+    info!(dm_id = %dm_id, "Created direct message");
+
+    Ok((
+        StatusCode::CREATED,
+        Json(DirectMessage {
+            id: dm_id.to_string(),
+            participants,
+            created_at: created_at.to_rfc3339(),
+            last_message_at: None,
+        }),
+    ))
 }

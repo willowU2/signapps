@@ -10,20 +10,20 @@ use crate::models::MailAccount;
 use crate::AppState;
 
 pub fn oauth_client() -> BasicClient {
-    let google_client_id = ClientId::new(
-        env::var("GOOGLE_CLIENT_ID").unwrap_or_else(|_| "dummy_client_id".to_string()),
+    let oauth_client_id = ClientId::new(
+        env::var("OAUTH_CLIENT_ID").unwrap_or_else(|_| "dummy_client_id".to_string()),
     );
-    let google_client_secret = ClientSecret::new(
-        env::var("GOOGLE_CLIENT_SECRET").unwrap_or_else(|_| "dummy_client_secret".to_string()),
+    let oauth_client_secret = ClientSecret::new(
+        env::var("OAUTH_CLIENT_SECRET").unwrap_or_else(|_| "dummy_client_secret".to_string()),
     );
-    let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
+    let auth_url = AuthUrl::new("https://oauth.example.com/v2/auth".to_string())
         .expect("Invalid authorization endpoint URL");
-    let token_url = TokenUrl::new("https://oauth2.googleapis.com/token".to_string())
+    let token_url = TokenUrl::new("https://oauth.example.com/token".to_string())
         .expect("Invalid token endpoint URL");
 
     BasicClient::new(
-        google_client_id,
-        Some(google_client_secret),
+        oauth_client_id,
+        Some(oauth_client_secret),
         auth_url,
         Some(token_url),
     )
@@ -38,11 +38,11 @@ pub struct AuthUrlResponse {
     pub url: String,
 }
 
-pub async fn google_auth_url() -> impl IntoResponse {
+pub async fn oauth_login_url() -> impl IntoResponse {
     let client = oauth_client();
     let (authorize_url, _csrf_state) = client
         .authorize_url(CsrfToken::new_random)
-        .add_scope(Scope::new("https://mail.google.com/".to_string()))
+        .add_scope(Scope::new("https://mail.example.com/".to_string()))
         .add_extra_param("access_type", "offline")
         .add_extra_param("prompt", "consent") // Force consent to get refresh token
         .url();
@@ -59,11 +59,11 @@ pub struct AuthCallbackRequest {
 }
 
 #[derive(Deserialize)]
-struct GoogleUserProfile {
+struct ProviderUserProfile {
     email: String,
 }
 
-pub async fn google_auth_callback(
+pub async fn oauth_callback(
     State(state): State<AppState>,
     Json(payload): Json<AuthCallbackRequest>,
 ) -> impl IntoResponse {
@@ -90,14 +90,14 @@ pub async fn google_auth_callback(
     // Fetch user profile to get their email address
     let http_client = reqwest::Client::new();
     let profile_resp = http_client
-        .get("https://www.googleapis.com/oauth2/v2/userinfo")
+        .get("https://api.example.com/oauth2/v2/userinfo")
         .bearer_auth(&access_token)
         .send()
         .await;
 
     let email = match profile_resp {
         Ok(resp) => {
-            if let Ok(profile) = resp.json::<GoogleUserProfile>().await {
+            if let Ok(profile) = resp.json::<ProviderUserProfile>().await {
                 profile.email
             } else {
                 return StatusCode::INTERNAL_SERVER_ERROR.into_response();
@@ -127,7 +127,7 @@ pub async fn google_auth_callback(
     )
     .bind(payload.user_id)
     .bind(&email)
-    .bind("google")
+    .bind("oauth")
     .bind("imap.gmail.com")
     .bind(993)
     .bind(&access_token)

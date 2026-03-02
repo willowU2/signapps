@@ -3,7 +3,7 @@ import { formatDistanceToNow } from "date-fns"
 
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Archive, Clock, Trash2 } from "lucide-react"
+import { Archive, Clock, Trash2, Square, Star } from "lucide-react"
 import { Mail } from "@/lib/data/mail"
 import {
     DropdownMenu,
@@ -12,7 +12,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+// Avatars removed for Gmail layout
 // import { useMail } from "@/app/mail/use-mail"
 
 interface MailListProps {
@@ -49,63 +49,58 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
                         <button
                             key={item.id}
                             className={cn(
-                                "group relative flex items-center gap-4 px-4 py-3 text-left text-sm transition-all duration-300 outline-none w-full border-b border-border/40 select-none",
+                                "group relative flex items-center gap-2 px-1 py-0 h-10 text-left text-sm transition-all duration-150 outline-none w-full border-b border-gray-200/60 dark:border-gray-800/60 select-none cursor-pointer hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] hover:z-10",
                                 selectedId === item.id
-                                    ? "bg-primary/5 dark:bg-primary/10"
-                                    : "hover:bg-muted/50 dark:hover:bg-muted/20",
-                                !item.read && "bg-white dark:bg-gray-950/40"
+                                    ? "bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff]"
+                                    : "bg-white dark:bg-[#1f1f1f] hover:bg-gray-50/80 dark:hover:bg-[#202124]",
+                                !item.read && "bg-white dark:bg-[#1f1f1f]"
                             )}
                             onClick={() => onSelect(item.id)}
                         >
-                            {/* Avatar or Checkbox area */}
-                            <div className="flex-shrink-0 flex items-center justify-center">
-                                <Avatar className="h-9 w-9 border border-border/50">
-                                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.email}`} />
-                                    <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
-                                        {item.name.substring(0, 2).toUpperCase()}
-                                    </AvatarFallback>
-                                </Avatar>
+                            {/* Checkbox and Star area */}
+                            <div className="flex-shrink-0 flex items-center gap-2 px-3 text-gray-400 dark:text-gray-500">
+                                <Square className="h-[18px] w-[18px] hover:text-gray-700 dark:hover:text-gray-300 transition-colors" />
+                                <Star className="h-[18px] w-[18px] hover:text-gray-700 dark:hover:text-gray-300 transition-colors" />
                             </div>
 
-                            {/* Content */}
-                            <div className="flex flex-col w-full overflow-hidden gap-0.5">
-                                <div className="flex items-center justify-between w-full">
-                                    <span className={cn(
-                                        "truncate font-medium text-[15px]",
-                                        !item.read ? "text-foreground font-bold" : "text-foreground/80"
-                                    )}>
-                                        {item.name}
+                            {/* Content row */}
+                            <div className="flex items-center w-full overflow-hidden gap-2 pr-4">
+                                <span className={cn(
+                                    "w-48 truncate flex-shrink-0 text-[14px]",
+                                    !item.read ? "text-[#202124] dark:text-[#e3e3e3] font-bold" : "text-[#202124] dark:text-[#e3e3e3] font-medium"
+                                )}>
+                                    {item.name}
+                                </span>
+
+                                <div className="flex items-center truncate flex-1 text-[14px]">
+                                    <span className={cn("truncate", !item.read ? "font-bold text-[#202124] dark:text-[#e3e3e3]" : "font-medium text-[#202124] dark:text-[#e3e3e3]")}>
+                                        {item.subject}
                                     </span>
-                                    <span className={cn(
-                                        "whitespace-nowrap text-xs flex-shrink-0 ml-2",
-                                        !item.read ? "text-primary font-semibold" : "text-muted-foreground font-medium"
-                                    )}>
-                                        {formatDistanceToNow(new Date(item.date), { addSuffix: true })}
+                                    <span className="truncate text-[#5f6368] dark:text-[#9aa0a6] ml-2 font-normal hidden sm:inline-block">
+                                        - {item.text.replace(/\s+/g, ' ')}
                                     </span>
                                 </div>
 
-                                <div className="flex items-center truncate text-[14px]">
-                                    <span className={cn("truncate", !item.read ? "font-semibold text-foreground/90" : "font-medium text-muted-foreground")}>
-                                        {item.subject}
-                                    </span>
-                                    <span className="truncate text-muted-foreground/70 ml-2 font-normal hidden sm:inline-block">
-                                        - {item.text.substring(0, 80).replace(/\s+/g, ' ')}...
-                                    </span>
-                                </div>
+                                <span className={cn(
+                                    "w-24 text-right flex-shrink-0 text-[12px]",
+                                    !item.read ? "text-[#202124] dark:text-[#e3e3e3] font-bold" : "text-[#5f6368] dark:text-[#9aa0a6] font-medium group-hover:hidden"
+                                )}>
+                                    {formatDistanceToNow(new Date(item.date))}
+                                </span>
                             </div>
 
                             {/* Hover Actions (Gmail style overlay on right edge) */}
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gradient-to-l from-background/95 via-background/95 to-transparent pl-8 pr-2 py-1.5 rounded-l-full">
-                                <div className="p-2 rounded-full text-muted-foreground hover:text-green-600 hover:bg-green-50 transition-colors shadow-sm bg-background border border-border/50" title="Archive" onClick={(e) => { e.stopPropagation(); onArchive?.(item.id) }}>
-                                    <Archive className="w-4 h-4" />
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 bg-white dark:bg-[#202124] pl-2 pr-1 py-1">
+                                <div className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" title="Archive" onClick={(e) => { e.stopPropagation(); onArchive?.(item.id) }}>
+                                    <Archive className="w-5 h-5" />
                                 </div>
-                                <div className="p-2 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shadow-sm bg-background border border-border/50" title="Delete" onClick={(e) => { e.stopPropagation(); onDelete?.(item.id) }}>
-                                    <Trash2 className="w-4 h-4" />
+                                <div className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" title="Delete" onClick={(e) => { e.stopPropagation(); onDelete?.(item.id) }}>
+                                    <Trash2 className="w-5 h-5" />
                                 </div>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <div className="p-2 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer shadow-sm bg-background border border-border/50" title="Snooze" onClick={(e) => e.stopPropagation()}>
-                                            <Clock className="w-4 h-4" />
+                                        <div className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer shadow-none bg-transparent border-none" title="Snooze" onClick={(e) => e.stopPropagation()}>
+                                            <Clock className="w-5 h-5" />
                                         </div>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="w-[160px] rounded-xl shadow-xl border-border/50 p-1" onClick={(e) => e.stopPropagation()}>
