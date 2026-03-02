@@ -145,23 +145,27 @@ export default function ContainersPage() {
     }
   };
 
+  const setContext = pageContext.setContext;
+  const proactiveMessage = pageContext.proactiveMessage;
+  const setProactiveMessage = pageContext.setProactiveMessage;
+
   // Autopilot Context: If the AI detects a crashed/exited container in the user's filtered view,
   // it proactively offers to restart and fetch the IT ticket solution
   useEffect(() => {
     // We only trigger this if the page finishes loading
     if (!isLoading && containers.length > 0) {
-      pageContext.setContext('containers_dashboard');
+      setContext('containers_dashboard');
       
-      const crashedContainer = containers.find((c: Container) => c.state === 'exited' || c.state === 'stopped');
-      if (crashedContainer && !pageContext.proactiveMessage) {
+      const crashedContainer = containers.find((c: Container) => c.state === 'exited' || c.state === 'stopped' || c.state === 'restarting');
+      if (crashedContainer && !proactiveMessage) {
          // Proactive Trigger
-         pageContext.setProactiveMessage(
+         setProactiveMessage(
            `Container "${crashedContainer.name}" is stopped/crashed. Would you like me to analyze its logs and restart it?`,
            'warning'
          );
       }
     }
-  }, [isLoading, containers]);
+  }, [isLoading, containers, setContext, proactiveMessage, setProactiveMessage]);
 
   if (isLoading) {
     return (

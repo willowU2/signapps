@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// GPU vendor.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
 pub enum GpuVendor {
     Nvidia,
@@ -93,6 +93,7 @@ impl HardwareProfile {
         // Auto-detect
         let mut gpus = Vec::new();
         let mut preferred_backend = InferenceBackend::Cpu;
+        let mut native_vendors = std::collections::HashSet::new();
 
         // Try NVIDIA
         if let Some((nvidia_gpus, cuda_version)) = detect_nvidia().await {
@@ -107,19 +108,21 @@ impl HardwareProfile {
                 version: cuda_version,
             };
             gpus.extend(nvidia_gpus);
+            native_vendors.insert(GpuVendor::Nvidia);
         }
 
-        // Try AMD (only if no NVIDIA)
-        if gpus.is_empty() {
-            if let Some((amd_gpus, rocm_version)) = detect_amd().await {
-                for gpu in &amd_gpus {
-                    tracing::info!("Detected AMD GPU: {} ({} MB VRAM)", gpu.name, gpu.vram_mb);
-                }
+        // Try AMD via rocm-smi
+        if let Some((amd_gpus, rocm_version)) = detect_amd().await {
+            for gpu in &amd_gpus {
+                tracing::info!("Detected AMD GPU: {} ({} MB VRAM)", gpu.name, gpu.vram_mb);
+            }
+            if matches!(preferred_backend, InferenceBackend::Cpu) {
                 preferred_backend = InferenceBackend::Rocm {
                     version: rocm_version,
                 };
-                gpus.extend(amd_gpus);
             }
+            gpus.extend(amd_gpus);
+            native_vendors.insert(GpuVendor::Amd);
         }
 
         // macOS Metal
@@ -132,6 +135,32 @@ impl HardwareProfile {
                 vendor: GpuVendor::Apple,
                 vram_mb: system_ram_mb / 2, // Unified memory, estimate half
             });
+            native_vendors.insert(GpuVendor::Apple);
+        }
+
+        // Fallback for Windows (iGPU, missing drivers, etc.)
+        #[cfg(target_os = "windows")]
+        if let Some(cim_gpus) = detect_windows_cim().await {
+            for gpu in cim_gpus {
+                // Skip if native tools already found this vendor's GPU accurately
+                if native_vendors.contains(&gpu.vendor) {
+                    continue;
+                }
+
+                tracing::info!(
+                    "Detected Windows GPU (CIM): {} ({} MB VRAM)",
+                    gpu.name,
+                    gpu.vram_mb
+                );
+
+                if (gpu.vendor == GpuVendor::Amd || gpu.vendor == GpuVendor::Intel)
+                    && matches!(preferred_backend, InferenceBackend::Cpu)
+                {
+                    preferred_backend = InferenceBackend::Vulkan;
+                }
+
+                gpus.push(gpu);
+            }
         }
 
         let total_vram_mb = gpus.iter().map(|g| g.vram_mb).sum();
@@ -181,10 +210,13 @@ fn get_system_ram_mb() -> u64 {
     // Cross-platform: read from sysinfo
     #[cfg(target_os = "windows")]
     {
-        // Use Windows API via sysinfo-like approach
-        // Fallback: parse systeminfo or use known defaults
-        let output = std::process::Command::new("wmic")
-            .args(["computersystem", "get", "TotalPhysicalMemory"])
+        // Use PowerShell to get Physical Memory as WMIC is deprecated
+        let output = std::process::Command::new("powershell")
+            .args([
+                "-NoProfile",
+                "-Command",
+                "(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory",
+            ])
             .output();
         if let Ok(out) = output {
             let text = String::from_utf8_lossy(&out.stdout);
@@ -232,8 +264,114 @@ fn get_system_ram_mb() -> u64 {
     }
 }
 
+#[cfg(target_os = "windows")]
+#[derive(serde::Deserialize)]
+struct CimVideoController {
+    #[serde(alias = "Name")]
+    name: Option<String>,
+    #[serde(alias = "AdapterRAM")]
+    adapter_ram: Option<u64>,
+}
+
+#[cfg(target_os = "windows")]
+async fn detect_windows_cim() -> Option<Vec<GpuInfo>> {
+    let output = tokio::process::Command::new("powershell")
+        .args([
+            "-NoProfile",
+            "-Command",
+            "Get-CimInstance Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json -Compress",
+        ])
+        .output()
+        .await
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut controllers: Vec<CimVideoController> = Vec::new();
+
+    if let Ok(parsed) = serde_json::from_str::<Vec<CimVideoController>>(&stdout) {
+        controllers = parsed;
+    } else if let Ok(single) = serde_json::from_str::<CimVideoController>(&stdout) {
+        controllers.push(single);
+    }
+
+    let system_ram_mb = get_system_ram_mb();
+    let mut gpus = Vec::new();
+    for ctrl in controllers {
+        if let Some(name) = ctrl.name {
+            let name_lower = name.to_lowercase();
+            let vendor = if name_lower.contains("amd") || name_lower.contains("radeon") {
+                GpuVendor::Amd
+            } else if name_lower.contains("nvidia") || name_lower.contains("geforce") {
+                GpuVendor::Nvidia
+            } else if name_lower.contains("intel") {
+                GpuVendor::Intel
+            } else {
+                GpuVendor::Unknown
+            };
+
+            let mut vram_mb = ctrl.adapter_ram.unwrap_or(0) / (1024 * 1024);
+            let mut display_name = name.clone();
+
+            // Windows WMI misreports modern GPU memory strictly at 4293918720 bytes (4095 MB limit on uint32)
+            // If it's an APU or Intel iGPU integrated graphics, the OS apportions shared RAM memory dynamically
+            let is_igpu = (vram_mb == 4095 || vram_mb == 4096)
+                && (name_lower.contains("integrated")
+                    || name_lower.contains("radeon graphics")
+                    || name_lower.contains("uhd")
+                    || name_lower.contains("iris")
+                    || vendor == GpuVendor::Intel);
+
+            if is_igpu {
+                // Assign full system RAM for calculation purposes as shared GPUs can span flexibly
+                vram_mb = system_ram_mb;
+                display_name = format!("{} (iGPU)", name);
+            } else if vram_mb == 4095 || vram_mb == 4096 {
+                // It's a dedicated GPU that exceeds the WMI 32-bit limit (4GB).
+                // Without native CLI tools (nvidia-smi/rocm-smi), we can't reliably know the exact VRAM.
+                // But for enterprise AMD AI PRO cards like the R9700, they carry exactly 32 GB.
+                if name_lower.contains("r9700")
+                    || name_lower.contains("w7900")
+                    || name_lower.contains("pro")
+                {
+                    vram_mb = 32768; // 32 GB
+                } else {
+                    vram_mb = 8192; // Generic fallback for >4GB
+                }
+            }
+
+            gpus.push(GpuInfo {
+                name: display_name,
+                vendor,
+                vram_mb,
+            });
+        }
+    }
+
+    if gpus.is_empty() {
+        None
+    } else {
+        Some(gpus)
+    }
+}
+
 async fn detect_nvidia() -> Option<(Vec<GpuInfo>, String)> {
-    let output = tokio::process::Command::new("nvidia-smi")
+    let mut command_name = "nvidia-smi".to_string();
+
+    #[cfg(target_os = "windows")]
+    {
+        // On Windows, nvidia-smi might not be in PATH. Test if it exists at the default location.
+        let default_path =
+            std::path::Path::new("C:\\Program Files\\NVIDIA Corporation\\NVSMI\\nvidia-smi.exe");
+        if default_path.exists() {
+            command_name = default_path.to_string_lossy().to_string();
+        }
+    }
+
+    let output = tokio::process::Command::new(&command_name)
         .args([
             "--query-gpu=name,memory.total",
             "--format=csv,noheader,nounits",
@@ -267,7 +405,7 @@ async fn detect_nvidia() -> Option<(Vec<GpuInfo>, String)> {
     }
 
     // Get CUDA version
-    let cuda_version = tokio::process::Command::new("nvidia-smi")
+    let cuda_version = tokio::process::Command::new(&command_name)
         .args(["--query-gpu=driver_version", "--format=csv,noheader"])
         .output()
         .await

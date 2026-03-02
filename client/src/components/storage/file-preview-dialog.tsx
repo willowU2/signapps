@@ -32,6 +32,25 @@ import { VideoPreview } from './previews/video-preview';
 import { ArchivePreview } from './previews/archive-preview';
 import { DocumentPreview } from './previews/document-preview';
 import { CodePreview } from './previews/code-preview';
+import dynamic from 'next/dynamic';
+import mammoth from 'mammoth';
+import * as XLSX from 'xlsx';
+import { CellData } from '@/components/sheets/types';
+
+const Editor = dynamic(
+    () => import('@/components/docs/editor'),
+    { ssr: false }
+);
+
+const Spreadsheet = dynamic(
+    () => import("@/components/sheets/spreadsheet").then(m => ({ default: m.Spreadsheet })),
+    { ssr: false }
+);
+
+const SlidesContent = dynamic(
+    () => import("@/components/slides/slides-content").then(m => ({ default: m.SlidesContent })),
+    { ssr: false }
+);
 
 interface FileItem {
   key: string;
@@ -53,16 +72,17 @@ interface FilePreviewDialogProps {
   onNavigate?: (file: FileItem) => void;
 }
 
-type PreviewType = 'image' | 'pdf' | 'text' | 'code' | 'markdown' | 'video' | 'audio' | 'archive' | 'document' | 'unsupported';
+type PreviewType = 'image' | 'pdf' | 'text' | 'code' | 'markdown' | 'spreadsheet' | 'slides' | 'video' | 'audio' | 'archive' | 'document' | 'unsupported';
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
 const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'ogv'];
 const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'];
 const ARCHIVE_EXTENSIONS = ['zip', 'tar', 'gz', 'rar', '7z', 'bz2', 'xz'];
-const DOCUMENT_EXTENSIONS = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp'];
-const TEXT_EXTENSIONS = ['txt', 'log', 'csv', 'xml', 'yaml', 'yml', 'ini', 'conf', 'cfg'];
+const TEXT_EXTENSIONS = ['txt', 'log', 'xml', 'yaml', 'yml', 'ini', 'conf', 'cfg', 'rtf'];
 const CODE_EXTENSIONS = ['js', 'ts', 'tsx', 'jsx', 'py', 'rs', 'go', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'php', 'rb', 'swift', 'kt', 'scala', 'sh', 'bash', 'zsh', 'ps1', 'sql', 'html', 'css', 'scss', 'less', 'json', 'toml'];
-const MARKDOWN_EXTENSIONS = ['md', 'mdx', 'markdown'];
+const MARKDOWN_EXTENSIONS = ['md', 'mdx', 'markdown', 'doc', 'docx', 'odt'];
+const SPREADSHEET_EXTENSIONS = ['csv', 'tsv', 'xls', 'xlsx', 'ods'];
+const SLIDES_EXTENSIONS = ['ppt', 'pptx', 'odp'];
 
 function getPreviewType(file: FileItem): PreviewType {
   const name = file.name.toLowerCase();
@@ -87,14 +107,17 @@ function getPreviewType(file: FileItem): PreviewType {
   if (MARKDOWN_EXTENSIONS.includes(ext)) {
     return 'markdown';
   }
+  if (SPREADSHEET_EXTENSIONS.includes(ext)) {
+    return 'spreadsheet';
+  }
+  if (SLIDES_EXTENSIONS.includes(ext)) {
+    return 'slides';
+  }
   if (CODE_EXTENSIONS.includes(ext)) {
     return 'code';
   }
   if (contentType.startsWith('text/') || TEXT_EXTENSIONS.includes(ext)) {
     return 'text';
-  }
-  if (DOCUMENT_EXTENSIONS.includes(ext)) {
-    return 'document';
   }
 
   return 'unsupported';
@@ -115,6 +138,10 @@ function getPreviewIcon(previewType: PreviewType, size: 'sm' | 'lg' = 'lg') {
       return <FileArchive className={`${sizeClass} text-yellow-500`} />;
     case 'document':
       return <FileText className={`${sizeClass} text-blue-600`} />;
+    case 'spreadsheet':
+      return <FileText className={`${sizeClass} text-green-600`} />;
+    case 'slides':
+      return <FileText className={`${sizeClass} text-yellow-600`} />;
     case 'code':
       return <FileCode className={`${sizeClass} text-purple-500`} />;
     case 'text':
@@ -149,6 +176,8 @@ export function FilePreviewDialog({
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [parsedDocsContent, setParsedDocsContent] = useState<string | null>(null);
+  const [parsedSheetsData, setParsedSheetsData] = useState<Record<string, CellData> | null>(null);
 
   // Filter only previewable files
   const previewableFiles = useMemo(() =>
@@ -168,6 +197,8 @@ export function FilePreviewDialog({
 
     // Reset state
     setContent(null);
+    setParsedDocsContent(null);
+    setParsedSheetsData(null);
     setError(null);
     setZoom(1);
 
@@ -194,17 +225,44 @@ export function FilePreviewDialog({
         : file.name;
 
       const response = await storageApi.download(bucket, key);
-      const blob = new Blob([response.data]);
+      const fileType = file.contentType || 'application/octet-stream';
+      const blob = new Blob([response.data], { type: fileType });
 
       if (type === 'image' || type === 'pdf' || type === 'video' || type === 'audio' || type === 'code') {
         const url = URL.createObjectURL(blob);
         setBlobUrl(url);
+      } else if (type === 'markdown') {
+        if (file.name.toLowerCase().endsWith('.docx')) {
+            const arrayBuffer = await blob.arrayBuffer();
+            const result = await mammoth.convertToHtml({ arrayBuffer });
+            setParsedDocsContent(result.value);
+        } else {
+            const text = await blob.text();
+            setParsedDocsContent(text);
+        }
+      } else if (type === 'spreadsheet') {
+        const arrayBuffer = await blob.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1, defval: '' });
+        
+        const cellData: Record<string, CellData> = {};
+        jsonData.forEach((row, rowIndex) => {
+            row.forEach((colValue, colIndex) => {
+                if (colValue !== undefined && colValue !== null && colValue !== '') {
+                    cellData[`${rowIndex},${colIndex}`] = { value: String(colValue) };
+                }
+            });
+        });
+        setParsedSheetsData(cellData);
       } else {
         // Text-based content
         const text = await blob.text();
         setContent(text);
       }
-    } catch {
+    } catch (err) {
+      console.error("File preview error:", err);
       setError('Impossible de charger le fichier');
     } finally {
       setLoading(false);
@@ -232,6 +290,8 @@ export function FilePreviewDialog({
       setBlobUrl(null);
     }
     setContent(null);
+    setParsedDocsContent(null);
+    setParsedSheetsData(null);
     setError(null);
     setZoom(1);
     setIsFullscreen(false);
@@ -357,13 +417,33 @@ export function FilePreviewDialog({
         ) : null;
 
       case 'markdown':
-        return content !== null ? (
-          <div className="max-h-[70vh] overflow-auto">
-            <div className="p-4 prose prose-sm dark:prose-invert max-w-none">
-              <pre className="whitespace-pre-wrap">{content}</pre>
-            </div>
+        return (
+          <div className="w-full h-[75vh] border rounded-lg overflow-hidden bg-white dark:bg-[#1f1f1f] relative">
+            {parsedDocsContent !== null ? (
+                <Editor documentId={file.key.replace(/[/.]/g, '-')} initialContent={parsedDocsContent} className="h-full" />
+            ) : (
+                <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+            )}
           </div>
-        ) : null;
+        );
+
+      case 'spreadsheet':
+        return (
+          <div className="w-full h-[75vh] border rounded-lg overflow-hidden bg-white dark:bg-[#1f1f1f] relative">
+            {parsedSheetsData !== null ? (
+                <Spreadsheet documentId={file.key.replace(/[/.]/g, '-')} initialData={parsedSheetsData} />
+            ) : (
+               <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+            )}
+          </div>
+        );
+
+      case 'slides':
+        return (
+          <div className="w-full h-[75vh] border rounded-lg overflow-hidden bg-white relative">
+            <SlidesContent />
+          </div>
+        );
 
       case 'video':
         return blobUrl ? (
@@ -383,7 +463,7 @@ export function FilePreviewDialog({
         return <ArchivePreview fileName={file.name} />;
 
       case 'document':
-        return <DocumentPreview fileName={file.name} />;
+        return <DocumentPreview fileName={file.name} bucket={bucket} fileKey={file.key} />;
 
       case 'unsupported':
       default:

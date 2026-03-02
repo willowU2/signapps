@@ -144,12 +144,16 @@ impl RagPipeline {
             .await?;
 
         // Map DB results to SearchResult
-        Ok(results.into_iter().map(|r| SearchResult {
-            document_id: r.document_id,
-            filename: r.filename,
-            content: r.content,
-            score: r.score,
-        }).collect())
+        Ok(results
+            .into_iter()
+            .map(|r| SearchResult {
+                id: r.id,
+                document_id: r.document_id,
+                filename: r.filename,
+                content: r.content,
+                score: r.score,
+            })
+            .collect())
     }
 
     /// Query with RAG (retrieve + generate), using default provider.
@@ -183,15 +187,15 @@ impl RagPipeline {
         let provider = self.providers.resolve(provider_id)?;
 
         // 1. Try to retrieve relevant context (graceful fallback)
-        let search_results = match self.search(question, None, collection, security_tags_filter).await {
+        let search_results = match self
+            .search(question, None, collection, security_tags_filter)
+            .await
+        {
             Ok(results) => results,
             Err(e) => {
-                tracing::warn!(
-                    "RAG search failed, falling back to direct LLM: {}",
-                    e
-                );
+                tracing::warn!("RAG search failed, falling back to direct LLM: {}", e);
                 vec![]
-            }
+            },
         };
 
         // 2. Build context from results
@@ -259,7 +263,10 @@ impl RagPipeline {
         let provider = self.providers.resolve(provider_id)?;
 
         // 1. Try to retrieve relevant context (graceful fallback)
-        let search_results = match self.search(question, None, collection, security_tags_filter).await {
+        let search_results = match self
+            .search(question, None, collection, security_tags_filter)
+            .await
+        {
             Ok(results) => results,
             Err(e) => {
                 tracing::warn!(
@@ -267,7 +274,7 @@ impl RagPipeline {
                     e
                 );
                 vec![]
-            }
+            },
         };
 
         // 2. Build context from results

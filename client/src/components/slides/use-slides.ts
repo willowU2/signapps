@@ -192,6 +192,32 @@ export function useSlides(docId: string = 'slides-demo') {
         }
     }
 
+    const duplicateSlide = (id: string) => {
+        const ySlideList = doc.getArray<SlideData>('slide-list')
+        const slidesArr = ySlideList.toArray()
+        const sourceIndex = slidesArr.findIndex(s => s.id === id)
+        
+        if (sourceIndex > -1) {
+            const sourceSlide = slidesArr[sourceIndex]
+            const newSlideId = `slide-${Math.random().toString(36).substr(2, 9)}`
+            
+            // 1. Insert the new slide directly after the source
+            ySlideList.insert(sourceIndex + 1, [{ id: newSlideId, title: `${sourceSlide.title} (Copie)` }])
+            
+            // 2. Copy all objects from the source slide
+            const sourceObjectsMap = doc.getMap<string>(`objects-${id}`)
+            const targetObjectsMap = doc.getMap<string>(`objects-${newSlideId}`)
+            
+            doc.transact(() => {
+                sourceObjectsMap.forEach((json, key) => {
+                    targetObjectsMap.set(key, json)
+                })
+            }, 'duplicate-slide')
+            
+            setActiveSlideId(newSlideId)
+        }
+    }
+
     const updateObject = (id: string, obj: any) => {
         if (!activeSlideId) return
         const slideObjectsMap = doc.getMap<string>(`objects-${activeSlideId}`)
@@ -236,6 +262,7 @@ export function useSlides(docId: string = 'slides-demo') {
         setActiveSlideId,
         addSlide,
         removeSlide,
+        duplicateSlide,
 
         // Active Slide Level
         objects: activeObjects,

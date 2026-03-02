@@ -2,6 +2,7 @@
 
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::io::AsyncWriteExt;
@@ -251,6 +252,84 @@ impl ModelManager {
             .filter(|e| model_type.map_or(true, |t| e.model_type == t))
             .map(|e| e.value().clone())
             .collect()
+    }
+
+    /// Dynamically search HuggingFace for GGUF models.
+    pub async fn search_huggingface(&self, query: &str) -> Result<Vec<ModelEntry>, ModelError> {
+        let safe_query = urlencoding::encode(query);
+        let url = format!(
+            "https://huggingface.co/api/models?search={}&filter=gguf&sort=downloads&direction=-1&limit=15",
+            safe_query
+        );
+
+        let response =
+            self.client.get(&url).send().await.map_err(|e| {
+                ModelError::IoError(format!("Failed to reach HuggingFace API: {}", e))
+            })?;
+
+        if !response.status().is_success() {
+            return Err(ModelError::IoError(format!(
+                "HF API returned {}",
+                response.status()
+            )));
+        }
+
+        let json_array: Vec<Value> = response.json().await.unwrap_or_default();
+        let mut dynamic_models = Vec::new();
+
+        for item in json_array {
+            if let Some(repo_id) = item.get("id").and_then(|v| v.as_str()) {
+                let downloads = item.get("downloads").and_then(|v| v.as_u64()).unwrap_or(0);
+                let description = format!(
+                    "Modèle GGUF communautaire dynamique ({} téléchargements)",
+                    downloads
+                );
+
+                // Estimate that community dynamically found models require moderate VRAM (e.g., 5GB assuming ~7B Q4)
+                // In a perfect world we would query the HF Tree API for each to find the exact .gguf size,
+                // but for real-time search responsiveness over 15 results, a default assumption is safer immediately.
+                let mut vram_estimate = 5000;
+                let mut size_estimate = 4_500_000_000;
+
+                // Simple heuristic on the model name
+                let name_lower = repo_id.to_lowercase();
+                if name_lower.contains("1.5b")
+                    || name_lower.contains("0.5b")
+                    || name_lower.contains("1b")
+                {
+                    vram_estimate = 2000;
+                    size_estimate = 1_500_000_000;
+                } else if name_lower.contains("3b") || name_lower.contains("4b") {
+                    vram_estimate = 3500;
+                    size_estimate = 2_500_000_000;
+                } else if name_lower.contains("14b")
+                    || name_lower.contains("12b")
+                    || name_lower.contains("13b")
+                {
+                    vram_estimate = 10000;
+                    size_estimate = 8_000_000_000;
+                } else if name_lower.contains("32b") || name_lower.contains("70b") {
+                    vram_estimate = 24000;
+                    size_estimate = 19_000_000_000;
+                }
+
+                dynamic_models.push(ModelEntry {
+                    id: repo_id.split('/').last().unwrap_or(repo_id).to_string(), // Shorthand ID
+                    model_type: ModelType::Llm, // Most searched GGUFs are LLMs
+                    source: ModelSource::HuggingFace {
+                        repo_id: repo_id.to_string(),
+                        filename: "fastest_quantile_q4_k_m.gguf".to_string(), // Requires user to eventually map this to real file
+                    },
+                    size_bytes: size_estimate,
+                    status: ModelStatus::Available,
+                    local_path: None,
+                    recommended_vram_mb: vram_estimate,
+                    description,
+                });
+            }
+        }
+
+        Ok(dynamic_models)
     }
 
     /// Delete a downloaded model.

@@ -2,6 +2,7 @@
 
 import { useAuthStore, useUIStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
+import { useTheme } from 'next-themes';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +20,8 @@ import { NotificationBadge } from '@/components/notifications/notification-badge
 
 export function Header() {
   const { user, logout } = useAuthStore();
-  const { theme, setTheme, toggleSidebar, sidebarCollapsed } = useUIStore();
+  const { toggleSidebar, sidebarCollapsed } = useUIStore();
+  const { theme, setTheme } = useTheme();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 

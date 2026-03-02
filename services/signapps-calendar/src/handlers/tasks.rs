@@ -28,13 +28,29 @@ pub async fn create_task(
         repo.find_by_id(parent_id)
             .await
             .map_err(|_| CalendarError::InternalError)?
-            .ok_or(CalendarError::InvalidInput("Parent task not found".to_string()))?;
+            .ok_or(CalendarError::InvalidInput(
+                "Parent task not found".to_string(),
+            ))?;
     }
 
     let task = repo
         .create(calendar_id, payload, claims.sub)
         .await
         .map_err(|_| CalendarError::InternalError)?;
+
+    // Index task in AI RAG
+    let ai_client = state.ai_client.clone();
+    let task_id = task.id;
+    let title = task.title.clone();
+    let desc = task.description.clone();
+    tokio::spawn(async move {
+        if let Err(e) = ai_client
+            .index_entity(task_id, calendar_id, "tasks", &title, desc.as_deref())
+            .await
+        {
+            tracing::error!("Failed to index new task in AI: {}", e);
+        }
+    });
 
     Ok((StatusCode::CREATED, Json(task)))
 }
@@ -94,12 +110,28 @@ pub async fn update_task(
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
+    // Update task in AI RAG
+    let ai_client = state.ai_client.clone();
+    let task_id = task.id;
+    let calendar_id = task.calendar_id;
+    let title = task.title.clone();
+    let desc = task.description.clone();
+    tokio::spawn(async move {
+        if let Err(e) = ai_client
+            .index_entity(task_id, calendar_id, "tasks", &title, desc.as_deref())
+            .await
+        {
+            tracing::error!("Failed to update task in AI index: {}", e);
+        }
+    });
+
     Ok(Json(task))
 }
 
 #[derive(Debug, Deserialize)]
 pub struct MoveTaskRequest {
     pub new_parent_id: Option<Uuid>,
+    pub position: Option<i32>,
 }
 
 /// Move task to new parent (change position in tree)
@@ -134,7 +166,7 @@ pub async fn move_task(
 
     // Perform the move
     let updated = repo
-        .move_task(id, payload.new_parent_id)
+        .move_task(id, payload.new_parent_id, payload.position)
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
@@ -163,6 +195,14 @@ pub async fn delete_task(
     repo.delete(id)
         .await
         .map_err(|_| CalendarError::InternalError)?;
+
+    // Remove task from AI RAG
+    let ai_client = state.ai_client.clone();
+    tokio::spawn(async move {
+        if let Err(e) = ai_client.remove_indexed_entity(id).await {
+            tracing::error!("Failed to delete task from AI index: {}", e);
+        }
+    });
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -234,7 +274,10 @@ pub async fn get_task_tree_info(
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
-    let root_count = all_tasks.iter().filter(|t| t.parent_task_id.is_none()).count();
+    let root_count = all_tasks
+        .iter()
+        .filter(|t| t.parent_task_id.is_none())
+        .count();
 
     let mut parent_map = HashMap::new();
     for task in &all_tasks {

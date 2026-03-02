@@ -11,19 +11,22 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import {
     Moon, Sun, LogOut, User as UserIcon, Settings, PanelLeft, PanelRight,
     Share2, MessageSquare, History, HardDrive, Mail, CheckSquare,
-    Video, Activity, Route, Calendar, Shield, Users, MessageCircle
+    Video, Activity, Route, Calendar, Shield, Users, MessageCircle, Search, SlidersHorizontal
 } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
 import { NotificationBadge } from '@/components/notifications/notification-badge';
+import { useTheme } from 'next-themes';
 
 export function GlobalHeader() {
     const { user, logout } = useAuthStore();
-    const { theme, setTheme, toggleSidebar, sidebarCollapsed, toggleRightSidebar, rightSidebarOpen } = useUIStore();
+    const { toggleSidebar, sidebarCollapsed, toggleRightSidebar, rightSidebarOpen } = useUIStore();
+    const { theme, setTheme } = useTheme();
     const router = useRouter();
     const pathname = usePathname();
     const [mounted, setMounted] = useState(false);
@@ -153,6 +156,17 @@ export function GlobalHeader() {
                     </div>
                 </div>
             </div>
+
+            {headerTitle === 'Mail' && (
+                <div className="flex-1 max-w-[720px] mx-8 relative hidden md:block">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Rechercher dans les messages"
+                        className="w-full pl-12 pr-12 h-12 bg-[#f1f3f4] dark:bg-[#1f1f1f] border-transparent hover:bg-white hover:dark:bg-[#202124] hover:shadow-sm focus-visible:bg-white focus-visible:dark:bg-[#202124] focus-visible:ring-0 focus-visible:shadow-md transition-all rounded-full text-base"
+                    />
+                    <SlidersHorizontal className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground cursor-pointer hover:text-foreground" />
+                </div>
+            )}
 
             <div className="flex items-center gap-2">
                 {/* Action Items Based on Context */}

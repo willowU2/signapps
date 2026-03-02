@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Plus, Download, Upload, MoreVertical } from "lucide-react";
+import { Plus, Download, Upload, MoreVertical, ExternalLink, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskForm } from "@/components/tasks/TaskForm";
+import { TasksHeader } from "@/components/tasks/tasks-header";
 import { ExportDialog } from "@/components/calendar/ExportDialog";
 import { ImportDialog } from "@/components/calendar/ImportDialog";
 import { calendarApi } from "@/lib/api";
@@ -66,103 +67,46 @@ export default function TasksPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold">Tasks</h1>
-            <p className="text-muted-foreground mt-1">
-              Organize your work with hierarchical tasks
-            </p>
-          </div>
+      <div className="flex justify-center h-[calc(100vh-8rem)] w-full py-6 bg-background">
+        <div className="w-full max-w-md bg-white border rounded-[24px] shadow-sm flex flex-col overflow-hidden relative">
+          
+          <TasksHeader 
+            calendars={calendars}
+            selectedCalendarId={selectedCalendarId}
+            onSelectCalendar={setSelectedCalendarId}
+            onExportTasks={() => setExportDialogOpen(true)}
+            onImportTasks={() => setImportDialogOpen(true)}
+            onAddTask={handleAddTask}
+          />
 
-          <div className="flex gap-2">
-            {/* Export/Import menu */}
-            {selectedCalendarId && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="gap-2">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => setExportDialogOpen(true)} className="gap-2">
-                    <Download className="h-4 w-4" />
-                    <span>Export Tasks</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setImportDialogOpen(true)} className="gap-2">
-                    <Upload className="h-4 w-4" />
-                    <span>Import Tasks</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleAddTask} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    <span>New Task</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+          {/* Content Line Items */}
+          <div className="flex-1 overflow-y-auto w-full">
+            {isLoading ? (
+              <div className="text-center text-[#5f6368] py-12 text-sm">
+                Chargement...
+              </div>
+            ) : calendars.length === 0 ? (
+              <div className="text-center text-[#5f6368] py-12 text-sm">
+                Aucune liste de tâches trouvée.
+              </div>
+            ) : selectedCalendarId && (
+                <div className="pb-20">
+                    <TaskTree
+                        key={treeKey}
+                        calendarId={selectedCalendarId}
+                        onAddChild={handleAddChild}
+                    />
+                </div>
             )}
-
-            {/* New Task button (primary) */}
-            <Button onClick={handleAddTask} className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Task
-            </Button>
           </div>
+
+          {/* New Task Check FAB Button Optional Placeholder */}
+           <div className="absolute right-6 bottom-6 hidden shadow-lg rounded-full flex items-center justify-center cursor-pointer hover:shadow-xl transition-shadow bg-blue-600 text-white w-14 h-14">
+               <Plus className="h-8 w-8" />
+           </div>
         </div>
 
-        {/* Content */}
-        {isLoading ? (
-          <div className="text-center text-muted-foreground py-12">
-            Loading...
-          </div>
-        ) : calendars.length === 0 ? (
-          <div className="text-center text-muted-foreground py-12">
-            <p>No calendars found. Create a calendar first.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-12 gap-6">
-            {/* Sidebar */}
-            <div className="col-span-3">
-              <div className="space-y-2">
-                <h2 className="font-semibold text-lg mb-4">Calendars</h2>
-                {calendars.map((calendar) => (
-                  <div
-                    key={calendar.id}
-                    onClick={() => setSelectedCalendarId(calendar.id)}
-                    className={`p-3 rounded-lg cursor-pointer border-2 transition ${selectedCalendarId === calendar.id
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-transparent hover:bg-muted"
-                      }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: calendar.color }}
-                      />
-                      <p className="font-medium text-sm">{calendar.name}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Task tree */}
-            <div className="col-span-9">
-              {selectedCalendarId && (
-                <div className="bg-white rounded-lg border p-4">
-                  <TaskTree
-                    key={treeKey}
-                    calendarId={selectedCalendarId}
-                    onAddChild={handleAddChild}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Task form dialog */}
+        {/* Dialogs */}
         <TaskForm
           open={formOpen}
           onOpenChange={setFormOpen}
@@ -171,7 +115,6 @@ export default function TasksPage() {
           onTaskCreated={handleTaskCreated}
         />
 
-        {/* Export dialog */}
         <ExportDialog
           open={exportDialogOpen}
           onOpenChange={setExportDialogOpen}
@@ -181,13 +124,11 @@ export default function TasksPage() {
           }
         />
 
-        {/* Import dialog */}
         <ImportDialog
           open={importDialogOpen}
           onOpenChange={setImportDialogOpen}
           calendarId={selectedCalendarId}
           onImportComplete={() => {
-            // Refresh task tree after import
             setTreeKey((prev) => prev + 1);
           }}
         />

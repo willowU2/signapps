@@ -48,7 +48,7 @@ pub struct CalendarMember {
     pub id: Uuid,
     pub calendar_id: Uuid,
     pub user_id: Uuid,
-    pub role: String,  // owner|editor|viewer
+    pub role: String, // owner|editor|viewer
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -140,7 +140,7 @@ pub struct EventAttendee {
     pub event_id: Uuid,
     pub user_id: Option<Uuid>,
     pub email: Option<String>,
-    pub rsvp_status: String,  // pending|accepted|declined|tentative
+    pub rsvp_status: String, // pending|accepted|declined|tentative
     pub response_date: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -176,7 +176,7 @@ pub struct EventMetadata {
 pub struct Resource {
     pub id: Uuid,
     pub name: String,
-    pub resource_type: String,  // room|equipment|vehicle
+    pub resource_type: String, // room|equipment|vehicle
     pub description: Option<String>,
     pub capacity: Option<i32>,
     pub location: Option<String>,
@@ -216,8 +216,9 @@ pub struct Task {
     pub parent_task_id: Option<Uuid>,
     pub title: String,
     pub description: Option<String>,
-    pub status: String,  // open|in_progress|completed|archived
-    pub priority: i32,   // 0=low, 1=medium, 2=high, 3=urgent
+    pub status: String, // open|in_progress|completed|archived
+    pub priority: i32,  // 0=low, 1=medium, 2=high, 3=urgent
+    pub position: i32,
     pub due_date: Option<NaiveDate>,
     pub assigned_to: Option<Uuid>,
     pub created_by: Uuid,
@@ -232,6 +233,7 @@ pub struct CreateTask {
     pub title: String,
     pub description: Option<String>,
     pub priority: Option<i32>,
+    pub position: Option<i32>,
     pub due_date: Option<NaiveDate>,
     pub assigned_to: Option<Uuid>,
 }
@@ -242,6 +244,7 @@ pub struct UpdateTask {
     pub description: Option<String>,
     pub status: Option<String>,
     pub priority: Option<i32>,
+    pub position: Option<i32>,
     pub due_date: Option<NaiveDate>,
     pub assigned_to: Option<Uuid>,
 }
@@ -278,7 +281,7 @@ pub struct Reminder {
     pub event_id: Option<Uuid>,
     pub task_id: Option<Uuid>,
     pub user_id: Uuid,
-    pub reminder_type: String,  // notification|email|sms
+    pub reminder_type: String, // notification|email|sms
     pub minutes_before: i32,
     pub is_sent: bool,
     pub sent_at: Option<DateTime<Utc>>,
@@ -301,9 +304,9 @@ pub struct CreateReminder {
 pub struct ActivityLog {
     pub id: Uuid,
     pub calendar_id: Uuid,
-    pub entity_type: String,  // event|task|calendar|resource
+    pub entity_type: String, // event|task|calendar|resource
     pub entity_id: Uuid,
-    pub action: String,  // created|updated|deleted|shared
+    pub action: String, // created|updated|deleted|shared
     pub user_id: Option<Uuid>,
     pub changes: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,

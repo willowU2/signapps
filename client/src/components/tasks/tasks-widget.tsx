@@ -6,8 +6,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Trash2, CheckCircle2, Circle } from "lucide-react";
+import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TaskItem } from "./task-item";
 
 export function TasksWidget() {
     const { tasks, addTask, toggleTask, removeTask } = useQuickTasksStore();
@@ -39,38 +40,12 @@ export function TasksWidget() {
                         </div>
                     ) : (
                         tasks.map((task) => (
-                            <div
+                            <TaskItem 
                                 key={task.id}
-                                className="group flex items-start gap-3 py-3 px-2 rounded-md hover:bg-muted/50 transition-colors"
-                                onClick={() => toggleTask(task.id)}
-                            >
-                                <div className="mt-0.5 shrink-0 cursor-pointer">
-                                    {task.done ? (
-                                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                                    ) : (
-                                        <Circle className="h-4 w-4 text-muted-foreground" />
-                                    )}
-                                </div>
-                                <div
-                                    className={cn(
-                                        "flex-1 text-sm leading-tight select-none cursor-pointer",
-                                        task.done && "text-muted-foreground line-through"
-                                    )}
-                                >
-                                    {task.label}
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        removeTask(task.id);
-                                    }}
-                                >
-                                    <Trash2 className="h-3 w-3" />
-                                </Button>
-                            </div>
+                                task={task}
+                                onToggle={toggleTask}
+                                onRemove={removeTask}
+                            />
                         ))
                     )}
                 </div>

@@ -115,8 +115,8 @@ export function ExportDialog({
                 <Label htmlFor="format-ics" className="cursor-pointer flex-1 mb-0">
                   <div>
                     <p className="font-medium">iCalendar (.ics)</p>
-                    <p className="text-xs text-muted-foreground">
-                      RFC 5545 format - compatible with Google Calendar, Outlook, Apple Calendar
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Format RFC 5545 - compatible avec Outlook, Apple Calendar et d'autres agendas
                     </p>
                   </div>
                 </Label>
@@ -143,7 +143,8 @@ export function ExportDialog({
               <ul className="text-xs space-y-1 list-disc list-inside">
                 <li>Standard format supported by all calendar apps</li>
                 <li>Includes events, recurrence rules, and timezones</li>
-                <li>Can be imported into Google Calendar, Outlook, Apple Calendar</li>
+                <li>Peut être importé dans Outlook, Apple Calendar, etc.</li>
+                <li>Inclut les événements récurrents et les informations de téléchargement</li>
               </ul>
             </div>
           )}

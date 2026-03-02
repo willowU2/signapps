@@ -16,7 +16,12 @@ members = [
     "services/signapps-calendar",
     "services/signapps-ai",
     "services/signapps-collab",
-    "services/signapps-media", "services/signapps-mail", "services/signapps-pxe", "services/signapps-it-assets", "services/signapps-remote",
+    "services/signapps-media",
+    "services/signapps-mail",
+    "services/signapps-pxe",
+    "services/signapps-it-assets",
+    "services/signapps-remote",
+    "services/signapps-meet",
 ]
 
 [workspace.package]

@@ -2,6 +2,7 @@
 
 import { useAuthStore, useUIStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
+import { useTheme } from 'next-themes';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -23,7 +24,8 @@ interface EditorHeaderProps {
 
 export function EditorHeader({ documentId, icon }: EditorHeaderProps) {
     const { user, logout } = useAuthStore();
-    const { theme, setTheme, toggleSidebar, sidebarCollapsed, toggleRightSidebar, rightSidebarOpen } = useUIStore();
+    const { toggleSidebar, sidebarCollapsed, toggleRightSidebar, rightSidebarOpen } = useUIStore();
+    const { theme, setTheme } = useTheme();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
 

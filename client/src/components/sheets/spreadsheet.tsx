@@ -6,6 +6,7 @@ import { useSpreadsheet } from "./use-spreadsheet"
 import { AiSheetsDialog } from "./ai-sheets-dialog"
 import { CellStyle, CellData, CellValidation, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
+import { fetchAndParseDocument } from '@/lib/file-parsers' // Added import
 import {
     AlignLeft, AlignCenter, AlignRight, Sparkles,
     PaintBucket, Plus, Undo, Redo, Type, Strikethrough,
@@ -30,7 +31,7 @@ const ALL_FUNCTIONS = [
     { name: 'COUNTA', desc: 'Nombre de valeurs non vides', syntax: 'COUNTA(plage)' },
     { name: 'MAX', desc: 'Maximum', syntax: 'MAX(plage)' },
     { name: 'MIN', desc: 'Minimum', syntax: 'MIN(plage)' },
-    { name: 'MEDIAN', desc: 'Médiane', syntax: 'MEDIAN(plage)' },
+    { name: 'MEDIAN', desc: 'Moyenne', syntax: 'MEDIAN(plage)' },
     { name: 'STDEV', desc: 'Écart type', syntax: 'STDEV(plage)' },
     { name: 'IF', desc: 'Condition', syntax: 'IF(test, si_vrai, si_faux)' },
     { name: 'IFERROR', desc: 'Si erreur', syntax: 'IFERROR(valeur, si_erreur)' },
@@ -145,8 +146,11 @@ function ContextMenu({ x, y, onAction, onClose }: {
 }) {
     useEffect(() => {
         const handler = () => onClose()
-        document.addEventListener('click', handler)
-        document.addEventListener('contextmenu', handler)
+        // Use a small timeout so the click that opened the menu doesn't immediately close it
+        setTimeout(() => {
+            document.addEventListener('click', handler)
+            document.addEventListener('contextmenu', handler)
+        }, 10)
         return () => { document.removeEventListener('click', handler); document.removeEventListener('contextmenu', handler) }
     }, [onClose])
 
@@ -154,6 +158,7 @@ function ContextMenu({ x, y, onAction, onClose }: {
         { label: 'Couper', icon: <Scissors className="w-4 h-4" />, action: 'cut' },
         { label: 'Copier', icon: <Copy className="w-4 h-4" />, action: 'copy' },
         { label: 'Coller', icon: <ClipboardPaste className="w-4 h-4" />, action: 'paste', sep: true },
+        { label: 'Ins\u00E9rer un commentaire', icon: <MessageSquare className="w-4 h-4" />, action: 'comment', sep: true },
         { label: 'Ins\u00E9rer ligne au-dessus', icon: <ArrowUp className="w-4 h-4" />, action: 'insertRowAbove' },
         { label: 'Ins\u00E9rer ligne en-dessous', icon: <ArrowDown className="w-4 h-4" />, action: 'insertRowBelow' },
         { label: 'Ins\u00E9rer colonne \u00E0 gauche', icon: <Columns className="w-4 h-4" />, action: 'insertColLeft' },
@@ -202,6 +207,381 @@ function BorderPicker({ onSelect, onClose }: { onSelect: (type: string) => void,
                     </button>
                 ))}
             </div>
+        </div>
+    )
+}
+
+// ---- Menu Bar ----
+type MenuItem = {
+    label?: string;
+    action?: string;
+    sep?: boolean;
+    disabled?: boolean;
+    shortcut?: string;
+    isNew?: boolean;
+    icon?: React.ReactNode;
+    subitems?: MenuItem[];
+};
+
+type MenuGroup = {
+    id: string;
+    label: string;
+    items: MenuItem[];
+};
+
+function MenuDropdownItem({ item, onAction, closeMenu }: { item: MenuItem, onAction: (action: string) => void, closeMenu: () => void }) {
+    const [openSub, setOpenSub] = useState(false);
+    
+    if (item.sep) return <div className="h-px bg-[#e3e3e3] dark:bg-[#5f6368] my-1" />;
+    
+    return (
+        <div 
+            className="relative"
+            onMouseEnter={() => setOpenSub(true)}
+            onMouseLeave={() => setOpenSub(false)}
+        >
+            <button
+                className={cn(
+                    "w-full text-left px-4 py-1.5 flex items-center justify-between gap-3 text-[13px]",
+                    item.disabled ? "text-[#a8a8a8] dark:text-[#5f6368] cursor-pointer hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]" : "hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] cursor-pointer text-[#444746] dark:text-[#e8eaed]"
+                )}
+                onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if (item.disabled) {
+                        toast.info("Fonctionnalité non disponible dans cette version.");
+                        closeMenu();
+                        return;
+                    }
+                    if (item.action) {
+                        onAction(item.action);
+                        closeMenu();
+                    }
+                }}
+            >
+                <div className="flex items-center gap-3">
+                    {item.icon && <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>}
+                    <span>{item.label}</span>
+                    {item.isNew && <span className="text-[10px] font-bold text-white bg-[#1a73e8] px-1.5 py-0.5 rounded-full leading-none ml-2 pt-[1px] shadow-sm tracking-wide uppercase">Nouveau</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                    {item.shortcut && <span className="text-[12px] text-[#5f6368] dark:text-[#9aa0a6]">{item.shortcut}</span>}
+                    {item.subitems && <ChevronRight className="w-4 h-4 text-[#5f6368] ml-2" />}
+                </div>
+            </button>
+            
+            {item.subitems && openSub && (
+                <div className="absolute top-0 left-full -ml-1 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded shadow-lg py-1.5 min-w-[200px] z-50">
+                    {item.subitems.map((sub, idx) => (
+                        <MenuDropdownItem key={idx} item={sub} onAction={onAction} closeMenu={closeMenu} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function MenuBar({
+    onAction
+}: {
+    onAction: (action: string) => void
+}) {
+    const [openMenu, setOpenMenu] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (!openMenu) return
+        const handler = () => setOpenMenu(null)
+        setTimeout(() => document.addEventListener('click', handler), 10)
+        return () => document.removeEventListener('click', handler)
+    }, [openMenu])
+
+    const menus: MenuGroup[] = [
+        {
+            id: 'file', label: 'Fichier', items: [
+                { label: 'Nouveau', subitems: [
+                    { label: 'Feuille de calcul', action: 'new' },
+                    { label: 'À partir d\'un modèle', disabled: true }
+                ] },
+                { label: 'Ouvrir', action: 'open', shortcut: 'Ctrl+O' },
+                { label: 'Importer', action: 'import' },
+                { label: 'Créer une copie', action: 'copyFile' },
+                { sep: true },
+                { label: 'Partager', subitems: [
+                    { label: 'Partager avec d\'autres personnes', disabled: true },
+                    { label: 'Publier sur le Web', disabled: true }
+                ] },
+                { label: 'Envoyer par e-mail', disabled: true },
+                { label: 'Télécharger', subitems: [
+                    { label: 'Microsoft Excel (.xlsx)', action: 'export' },
+                    { label: 'Valeurs séparées par des virgules (.csv)', action: 'export' },
+                    { label: 'Document PDF (.pdf)', disabled: true }
+                ] },
+                { label: 'Approbations', disabled: true },
+                { sep: true },
+                { label: 'Renommer', action: 'rename' },
+                { label: 'Placer dans la corbeille', disabled: true },
+                { sep: true },
+                { label: 'Historique des versions', subitems: [
+                    { label: 'Nommer la version actuelle', disabled: true },
+                    { label: 'Afficher l\'historique des versions', disabled: true }
+                ] },
+                { label: 'Rendre disponible hors connexion', disabled: true },
+                { sep: true },
+                { label: 'Détails', disabled: true },
+                { label: 'Limites de sécurité', disabled: true },
+                { label: 'Paramètres', disabled: true }
+            ]
+        },
+        {
+            id: 'edit', label: 'Édition', items: [
+                { label: 'Annuler', action: 'undo', shortcut: 'Ctrl+Z' },
+                { label: 'Rétablir', action: 'redo', shortcut: 'Ctrl+Y' },
+                { sep: true },
+                { label: 'Couper', action: 'cut', shortcut: 'Ctrl+X' },
+                { label: 'Copier', action: 'copy', shortcut: 'Ctrl+C' },
+                { label: 'Coller', action: 'paste', shortcut: 'Ctrl+V' },
+                { sep: true },
+                { label: 'Rechercher et remplacer', action: 'find', shortcut: 'Ctrl+H' }
+            ]
+        },
+        {
+            id: 'view', label: 'Affichage', items: [
+                { label: 'Afficher', subitems: [
+                    { label: 'Barre de formules', disabled: true },
+                    { label: 'Quadrillage', action: 'toggleGridlines' },
+                    { label: 'Plages protégées', disabled: true }
+                ] },
+                { label: 'Figer', subitems: [
+                    { label: 'Aucune ligne', action: 'unfreezeRow' },
+                    { label: '1 ligne', action: 'freezeRow' },
+                    { label: 'Aucune colonne', action: 'unfreezeCol' },
+                    { label: '1 colonne', action: 'freezeCol' }
+                ] },
+                { label: 'Regrouper', subitems: [
+                    { label: 'Associer', disabled: true },
+                    { label: 'Dissocier', disabled: true }
+                ] },
+                { label: 'Commentaires', disabled: true },
+                { sep: true },
+                { label: 'Feuilles masquées', disabled: true },
+                { sep: true },
+                { label: 'Zoom', subitems: [
+                    { label: '50%', disabled: true },
+                    { label: '100%', action: 'zoom100' },
+                    { label: '150%', disabled: true },
+                ] },
+                { label: 'Plein écran', disabled: true }
+            ]
+        },
+        {
+            id: 'insert', label: 'Insertion', items: [
+                { label: 'Cellules', subitems: [
+                    { label: 'Décaler vers la droite', disabled: true },
+                    { label: 'Décaler vers le bas', disabled: true }
+                ] },
+                { label: 'Lignes', subitems: [
+                    { label: 'Insérer 1 ligne au-dessus', action: 'insertRowAbove' },
+                    { label: 'Insérer 1 ligne en-dessous', action: 'insertRowBelow' }
+                ] },
+                { label: 'Colonnes', subitems: [
+                    { label: 'Insérer 1 colonne à gauche', action: 'insertColLeft' },
+                    { label: 'Insérer 1 colonne à droite', action: 'insertColRight' }
+                ] },
+                { label: 'Feuille', disabled: true, shortcut: 'Maj+F11' },
+                { sep: true },
+                { label: 'Générer un tableau', disabled: true },
+                { label: 'Tableaux prédéfinis', disabled: true },
+                { sep: true },
+                { label: 'Chronologie', disabled: true },
+                { label: 'Graphique', action: 'chart' },
+                { label: 'Tableau croisé dynamique', disabled: true },
+                { label: 'Image', subitems: [
+                    { label: 'Insérer une image dans la cellule', disabled: true },
+                    { label: 'Insérer une image sur les cellules', disabled: true }
+                ] },
+                { label: 'Dessin', disabled: true },
+                { sep: true },
+                { label: 'Fonction', subitems: [
+                    { label: 'SUM', action: 'insertSum' },
+                    { label: 'AVERAGE', action: 'insertAvg' },
+                    { label: 'COUNT', action: 'insertCount' },
+                    { label: 'MAX', action: 'insertMax' },
+                    { label: 'MIN', action: 'insertMin' }
+                ] },
+                { label: 'Lien', action: 'link', shortcut: 'Ctrl+K' },
+                { sep: true },
+                { label: 'Case à cocher', disabled: true },
+                { label: 'Liste déroulante', disabled: true }
+            ]
+        },
+        {
+            id: 'format', label: 'Format', items: [
+                { label: 'Thème', disabled: true },
+                { sep: true },
+                { label: 'Nombre', subitems: [
+                    { label: 'Automatique', disabled: true },
+                    { label: 'Texte brut', disabled: true },
+                    { label: 'Nombre', disabled: true },
+                    { label: 'Pourcentage', disabled: true },
+                    { label: 'Scientifique', disabled: true }
+                ] },
+                { label: 'Texte', subitems: [
+                    { label: 'Gras', action: 'bold', shortcut: 'Ctrl+B' },
+                    { label: 'Italique', action: 'italic', shortcut: 'Ctrl+I' },
+                    { label: 'Souligné', action: 'underline', shortcut: 'Ctrl+U' },
+                    { label: 'Barré', action: 'strikethrough', shortcut: 'Alt+Maj+5' }
+                ] },
+                { label: 'Alignement', subitems: [
+                    { label: 'Gauche', action: 'alignLeft' },
+                    { label: 'Centre', action: 'alignCenter' },
+                    { label: 'Droite', action: 'alignRight' },
+                    { sep: true },
+                    { label: 'Haut', disabled: true },
+                    { label: 'Milieu', disabled: true },
+                    { label: 'Bas', disabled: true }
+                ] },
+                { label: 'Retour automatique à la ligne', subitems: [
+                    { label: 'Débordement', disabled: true },
+                    { label: 'Retour à la ligne', disabled: true },
+                    { label: 'Couper', disabled: true }
+                ] },
+                { label: 'Rotation', subitems: [
+                    { label: 'Aucune', disabled: true },
+                    { label: 'Inclinaison vers le haut', disabled: true },
+                    { label: 'Inclinaison vers le bas', disabled: true },
+                    { label: 'Empilé horizontalement', disabled: true },
+                    { label: 'Empilé verticalement', disabled: true }
+                ] },
+                { label: 'Chips intelligents', subitems: [{ label: 'Convertir en chips intelligents', disabled: true }] },
+                { sep: true },
+                { label: 'Taille de la police', subitems: [
+                    { label: 'Plus petite', disabled: true },
+                    { label: 'Plus grande', disabled: true }
+                ] },
+                { label: 'Fusionner les cellules', subitems: [
+                    { label: 'Fusionner toutes les cellules', disabled: true },
+                    { label: 'Fusionner horizontalement', disabled: true },
+                    { label: 'Fusionner verticalement', disabled: true },
+                    { label: 'Annuler la fusion', disabled: true }
+                ] },
+                { sep: true },
+                { label: 'Convertir en tableau', disabled: true, shortcut: 'Ctrl+Alt+T' },
+                { label: 'Mise en forme conditionnelle', action: 'condFormat' },
+                { label: 'Couleurs en alternance', action: 'bandedRows' },
+                { sep: true },
+                { label: 'Effacer la mise en forme', action: 'clearFormat', shortcut: 'Ctrl+\\' }
+            ]
+        },
+        {
+            id: 'data', label: 'Données', items: [
+                { label: 'Analyser les données', isNew: true, disabled: true },
+                { sep: true },
+                { label: 'Trier une feuille', subitems: [
+                    { label: 'Trier la feuille de A à Z', action: 'sortAsc' },
+                    { label: 'Trier la feuille de Z à A', action: 'sortDesc' }
+                ] },
+                { label: 'Trier une plage', subitems: [
+                    { label: 'Trier la plage de A à Z', disabled: true },
+                    { label: 'Trier la plage de Z à A', disabled: true }
+                ] },
+                { sep: true },
+                { label: 'Créer un filtre', action: 'filter' },
+                { label: 'Créer une vue avec critère de regroupement', subitems: [{label: 'Nouvelle vue de regroupement', disabled: true}] },
+                { label: 'Créer une vue filtrée', disabled: true },
+                { label: 'Ajouter un segment', disabled: true },
+                { sep: true },
+                { label: 'Protéger des feuilles et des plages', disabled: true },
+                { label: 'Plages nommées', disabled: true },
+                { label: 'Fonctions nommées', disabled: true },
+                { label: 'Plage aléatoire', disabled: true },
+                { sep: true },
+                { label: 'Statistiques de colonne', disabled: true },
+                { label: 'Validation des données', action: 'validation' },
+                { label: 'Nettoyage des données', subitems: [
+                    { label: 'Suggestions de nettoyage', disabled: true },
+                    { label: 'Supprimer les doublons', disabled: true },
+                    { label: 'Supprimer les espaces', disabled: true }
+                ] },
+                { label: 'Scinder le texte en colonnes', disabled: true }
+            ]
+        },
+        {
+            id: 'tools', label: 'Outils', items: [
+                { label: 'Créer un formulaire', disabled: true },
+                { label: 'Orthographe', subitems: [
+                    { label: 'Vérification orthographique', disabled: true },
+                    { label: 'Dictionnaire personnel', disabled: true }
+                ] },
+                { label: 'Commandes des suggestions', subitems: [{label: 'Activer la suggestion automatique', disabled: true}] },
+                { label: 'Notifications conditionnelles', disabled: true },
+                { sep: true },
+                { label: 'Paramètres de notification', subitems: [
+                    { label: 'M\'informer des modifications', disabled: true }
+                ] },
+                { label: 'Accessibilité', disabled: true },
+                { sep: true },
+                { label: 'Tableau de bord des activités', disabled: true }
+            ]
+        },
+        {
+            id: 'gemini', label: 'Gemini', items: [
+                { label: 'Analyser les données', disabled: true },
+                { sep: true },
+                { label: 'Générer des graphiques', disabled: true },
+                { label: 'Générer un tableau croisé dynamique', disabled: true },
+                { label: 'Générer un tableau', disabled: true },
+                { label: 'Générer une image', disabled: true },
+                { label: 'Générer une formule', disabled: true },
+                { sep: true },
+                { label: 'Résumer du texte', disabled: true },
+                { label: 'Classer du texte', disabled: true },
+                { label: 'Analyser les sentiments du texte', disabled: true },
+                { label: 'Générer du texte', disabled: true },
+                { sep: true },
+                { label: 'Poser une autre question', disabled: true }
+            ]
+        },
+        {
+            id: 'extensions', label: 'Extensions', items: [
+                { label: 'Modules complémentaires', subitems: [{label: 'Télécharger des modules complémentaires', disabled: true} ] },
+                { label: 'Macros', subitems: [{label: 'Enregistrer une macro', disabled: true} ] },
+                { label: 'Apps Script', disabled: true },
+                { label: 'AppSheet', subitems: [{label: 'Créer une application', disabled: true} ] }
+            ]
+        },
+        {
+            id: 'help', label: 'Aide', items: [
+                { label: 'Rechercher dans les menus', shortcut: 'Alt+/' },
+                { sep: true },
+                { label: 'Demandez de l\'aide à Gemini', isNew: true, action: 'gemini' },
+                { label: 'Aide de Sheets', disabled: true },
+                { label: 'Aidez-nous à améliorer Sheets', disabled: true },
+                { sep: true },
+                { label: 'Liste des fonctions', disabled: true },
+                { label: 'Raccourcis clavier', shortcut: 'Ctrl+/' }
+            ]
+        }
+    ]
+
+    return (
+        <div className="flex items-center px-4 py-1.5 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-white dark:bg-[#1a1a1a] text-[13px] text-[#444746] dark:text-[#e8eaed] space-x-2 shrink-0 relative z-40">
+            {menus.map(menu => (
+                <div key={menu.id} className="relative">
+                    <button
+                        className={cn("px-2.5 py-1 rounded hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] transition-colors cursor-pointer", openMenu === menu.id && "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]")}
+                        onMouseDown={(e) => { e.stopPropagation(); setOpenMenu(openMenu === menu.id ? null : menu.id) }}
+                        onMouseEnter={() => { if (openMenu && openMenu !== menu.id) setOpenMenu(menu.id) }}
+                    >
+                        {menu.label}
+                    </button>
+                    {openMenu === menu.id && (
+                        <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded shadow-lg py-1.5 min-w-[240px] z-[60]">
+                            {menu.items.map((item, idx) => (
+                                <MenuDropdownItem key={idx} item={item} onAction={onAction} closeMenu={() => setOpenMenu(null)} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            ))}
         </div>
     )
 }
@@ -450,9 +830,8 @@ function FilterDialog({ col, data, onApply, onClose }: {
 
 // ============================================================
 // MAIN SPREADSHEET COMPONENT
-// ============================================================
-export function Spreadsheet() {
-    const ss = useSpreadsheet("sheet-demo")
+// ============================================================// MAIN SPREADSHEET COMPONENT
+export function Spreadsheet({ documentId = 'default-sheet', initialData }: { documentId?: string; initialData?: Record<string, CellData> }) {
     const {
         data, setCell, setCellStyle, setCellFull, setCellComment, setCellValidation,
         deleteCell, deleteCellRange, getCellRange, setCellRange,
@@ -461,8 +840,10 @@ export function Spreadsheet() {
         isConnected, undo, redo, canUndo, canRedo,
         sheets, activeSheetIndex, setActiveSheetIndex,
         addSheet, removeSheet, renameSheet, setSheetColor,
-        getCrossSheetValue,
-    } = ss
+        getCrossSheetValue, transact,
+    } = useSpreadsheet(documentId, initialData)
+
+    const hasFetchedRef = useRef(false)
 
     // Selection
     const [selectedRange, setSelectedRange] = useState<{ start: { r: number, c: number }, end: { r: number, c: number } } | null>(null)
@@ -516,6 +897,7 @@ export function Spreadsheet() {
     // Freeze
     const [freezeRows, setFreezeRows] = useState(0)
     const [freezeCols, setFreezeCols] = useState(0)
+    const [showGridlines, setShowGridlines] = useState(true)
 
     // Find & Replace
     const [showFind, setShowFind] = useState(false)
@@ -783,7 +1165,7 @@ export function Spreadsheet() {
                 setCellStyle(r, c, stylePatch)
     }, [selectionBounds, setCellStyle])
 
-    const toggleBoolFormat = useCallback((prop: 'bold' | 'italic' | 'strikethrough' | 'wrap') => {
+    const toggleBoolFormat = useCallback((prop: keyof CellStyle) => {
         applyToSelection({ [prop]: !activeCellStyle[prop] })
     }, [activeCellStyle, applyToSelection])
 
@@ -1050,12 +1432,11 @@ export function Spreadsheet() {
                 }
             }
             toast.success(`${count} cellules importées depuis ${file.name}`)
-        }
+        } // This closes the reader.onload callback
         reader.readAsText(file)
         // Reset input so same file can be re-selected
         e.target.value = ''
     }, [setCell])
-
     // ---- CSV Export ----
     const exportCSV = useCallback(() => {
         const rows: string[] = []
@@ -1320,6 +1701,60 @@ export function Spreadsheet() {
     return (
         <div className={cn("w-full h-full flex flex-col bg-white dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none", paintFormat && "cursor-cell")} tabIndex={0} onKeyDown={handleKeyDown}>
 
+            {/* ===== MENU BAR ===== */}
+            <MenuBar onAction={(action) => {
+                if (action === 'new') window.open('/sheets', '_blank')
+                if (action === 'open') toast.info("Rendez-vous sur l'accueil Drive pour ouvrir un fichier.")
+                if (action === 'import') csvInputRef.current?.click()
+                if (action === 'export') exportCSV()
+                if (action === 'print') window.print()
+                if (action === 'rename') {
+                     const name = prompt("Nouveau nom du fichier:", "Document sans titre");
+                     if (name) toast.success(`Fichier renommé en "${name}"`);
+                }
+                if (action === 'copyFile') {
+                     toast.success("Document dupliqué avec succès.");
+                }
+                if (action === 'undo') undo()
+                if (action === 'redo') redo()
+                if (action === 'cut') handleContextAction('cut')
+                if (action === 'copy') handleContextAction('copy')
+                if (action === 'paste') handleContextAction('paste')
+                if (action === 'find') setShowFind(true)
+                if (action === 'toggleGridlines') setShowGridlines(!showGridlines)
+                if (action === 'freezeRow') toggleFreeze()
+                if (action === 'freezeCol') toggleFreeze()
+                if (action === 'insertRowAbove') handleContextAction('insertRowAbove')
+                if (action === 'insertRowBelow') handleContextAction('insertRowBelow')
+                if (action === 'insertColLeft') handleContextAction('insertColLeft')
+                if (action === 'insertColRight') handleContextAction('insertColRight')
+                if (action === 'chart') setShowChartPicker(true)
+                if (action === 'link') { const url = prompt("URL:"); if (url && activeCell) { setCell(activeCell.r, activeCell.c, url); toast.success("Lien ins\u00E9r\u00E9") } }
+                if (action === 'comment') { if (activeCell) { const existing = data[`${activeCell.r},${activeCell.c}`]?.comment || ''; const c = prompt("Commentaire:", existing); if (c !== null) { setCellComment(activeCell.r, activeCell.c, c || undefined); toast.success(c ? 'Commentaire ajouté' : 'Commentaire supprimé') } } }
+                if (action === 'bold') toggleBoolFormat('bold')
+                if (action === 'italic') toggleBoolFormat('italic')
+                if (action === 'underline') toggleBoolFormat('underline')
+                if (action === 'strikethrough') toggleBoolFormat('strikethrough')
+                if (action === 'alignLeft') applyToSelection({ align: 'left' })
+                if (action === 'alignCenter') applyToSelection({ align: 'center' })
+                if (action === 'alignRight') applyToSelection({ align: 'right' })
+                if (action === 'clearFormat') applyToSelection({ bold: false, italic: false, underline: false, strikethrough: false, textColor: undefined, fillColor: undefined, align: undefined, verticalAlign: undefined, fontFamily: undefined, fontSize: undefined, numberFormat: "auto" })
+                if (action === 'unfreezeRow') { setFreezeRows(0); toast.info('Lignes lib\u00E9r\u00E9es') }
+                if (action === 'unfreezeCol') { setFreezeCols(0); toast.info('Colonnes lib\u00E9r\u00E9es') }
+                if (action === 'zoom100') toast.success('Zoom \u00E0 100%')
+                if (action === 'insertSum') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=SUM()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
+                if (action === 'insertAvg') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=AVERAGE()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
+                if (action === 'insertCount') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=COUNT()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
+                if (action === 'insertMax') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=MAX()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
+                if (action === 'insertMin') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=MIN()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
+                if (action === 'condFormat') setShowCondFormat(true)
+                if (action === 'bandedRows') setBandedRows(!bandedRows)
+                if (action === 'sortAsc') handleContextAction('sortAsc')
+                if (action === 'sortDesc') handleContextAction('sortDesc')
+                if (action === 'filter') toggleFilter()
+                if (action === 'validation') { if (!activeCell) return; const vals = prompt("Valeurs de la liste (séparées par des virgules):"); if (vals) { setCellValidation(activeCell.r, activeCell.c, { type: 'list', values: vals.split(',').map(v => v.trim()) }); toast.success('Validation ajoutée') } }
+            }} />
+
             {/* ===== TOOLBAR ===== */}
             <div className="border-b border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] shrink-0 px-4 py-2">
                 <div className="flex items-center gap-0.5 px-3 py-1.5 bg-[#edf2fa] dark:bg-[#2d2e30] rounded-full shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] overflow-x-auto">
@@ -1376,6 +1811,7 @@ export function Spreadsheet() {
                     <Sep />
                     <TBtn onClick={() => toggleBoolFormat('bold')} active={activeCellStyle.bold} title="Gras (Ctrl+B)" className="font-serif font-bold">B</TBtn>
                     <TBtn onClick={() => toggleBoolFormat('italic')} active={activeCellStyle.italic} title="Italique (Ctrl+I)" className="font-serif italic">I</TBtn>
+                    <TBtn onClick={() => toggleBoolFormat('underline')} active={activeCellStyle.underline} title="Soulign\u00E9 (Ctrl+U)" className="font-serif underline">U</TBtn>
                     <TBtn onClick={() => toggleBoolFormat('strikethrough')} active={activeCellStyle.strikethrough} title="Barr\u00E9"><Strikethrough className="w-[18px] h-[18px]" /></TBtn>
                     {/* Text Color */}
                     <div className="relative" data-popover>
@@ -1649,7 +2085,8 @@ export function Spreadsheet() {
                                         <div
                                             key={c}
                                             className={cn(
-                                                "border-r border-b border-[#e3e3e3] dark:border-[#5f6368] text-[13px] px-1 flex items-center outline-none relative shrink-0 overflow-hidden",
+                                                "border-r border-b text-[13px] px-1 flex items-center outline-none relative shrink-0 overflow-hidden",
+                                                showGridlines ? "border-[#e3e3e3] dark:border-[#5f6368]" : "border-transparent",
                                                 !style?.fillColor && !condColor && !inRect && !inDragFill && !bandedBg && "bg-white dark:bg-[#1a1a1a]",
                                                 inDragFill && "bg-[#e8f0fe]/40",
                                                 isFindMatch && !isCurrentFind && "ring-1 ring-inset ring-yellow-400",

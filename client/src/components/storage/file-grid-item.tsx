@@ -19,6 +19,7 @@ import {
     DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { useDraggable } from '@dnd-kit/core';
 import type { FileItem, DriveView } from './types';
 
 interface FileGridItemProps {
@@ -40,6 +41,13 @@ export function FileGridItem({
     onAction,
     viewMode
 }: FileGridItemProps) {
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+        id: `file-${item.id}`,
+        data: {
+            type: 'file',
+            file: item,
+        },
+    });
 
     const getIcon = () => {
         if (item.type === 'folder') return <Folder className="h-12 w-12 text-blue-500" />;
@@ -65,9 +73,13 @@ export function FileGridItem({
 
     return (
         <Card
+            ref={setNodeRef}
+            {...attributes}
+            {...listeners}
             className={cn(
-                "group relative flex flex-col overflow-hidden transition-all hover:shadow-md cursor-pointer border-transparent",
-                selected && "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500/20"
+                "group relative flex flex-col overflow-hidden transition-all hover:shadow-md cursor-grab active:cursor-grabbing border-transparent",
+                selected && "border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500/20",
+                isDragging && "opacity-50 ring-2 ring-blue-500"
             )}
             onClick={onSelect}
             onDoubleClick={() => {

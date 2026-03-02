@@ -196,7 +196,7 @@ mod tests {
     fn test_push_subscription_payload_deserialization() {
         let json = r#"
         {
-          "endpoint": "https://fcm.googleapis.com/fcm/send/...",
+          "endpoint": "https://push.example.com/api/send/...",
           "expirationTime": null,
           "keys": {
             "p256dh": "key1",

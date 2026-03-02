@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
@@ -18,8 +19,8 @@ import {
 
 import { DriveSidebar } from '@/components/storage/drive-sidebar';
 import { DriveView } from '@/components/storage/types';
-import { FileGridItem } from '@/components/storage/file-grid-item';
-import { FileListItem } from '@/components/storage/file-list-item';
+import { StorageFileGrid } from '@/components/storage/storage-file-grid';
+import { StorageHeader } from '@/components/storage/storage-header';
 import { RenameDialog } from '@/components/storage/rename-dialog';
 import { MoveToDialog } from '@/components/storage/move-to-dialog';
 import {
@@ -29,12 +30,12 @@ import {
   Image as ImageIcon,
   Search,
   ChevronRight,
+  ChevronDown,
   MoreVertical,
   Download,
   Trash2,
   FolderPlus,
   Home,
-  File as FileIcon,
   FileArchive,
   FileCode,
   Loader2,
@@ -294,15 +295,16 @@ export default function StoragePage() {
     setFiles([]);
 
     try {
-      if (driveView === 'recent') {
-        const response = await searchApi.recent(50);
+      if (driveView === 'recent' || driveView === 'home') {
+        const response = await searchApi.recent(driveView === 'home' ? 12 : 50);
         const recentFiles: FileItem[] = response.data.map((item: any) => ({
           key: item.key,
-          name: item.filename || item.key.split('/').pop() || item.key,
-          type: 'file',
+          name: item.filename,
+          type: 'file' as const,
           size: item.size,
           contentType: item.content_type,
-          bucket: item.bucket
+          bucket: item.bucket,
+          lastModified: item.modified_at,
         }));
         setFiles(recentFiles);
       } else if (driveView === 'starred') {
@@ -610,30 +612,6 @@ export default function StoragePage() {
     }
   };
 
-  const getFileIcon = (item: FileItem) => {
-    if (item.type === 'folder') {
-      return <Folder className="h-5 w-5 text-blue-500" />;
-    }
-
-    const contentType = item.contentType || '';
-    const name = item.name.toLowerCase();
-
-    if (contentType.startsWith('image/') || /\.(png|jpg|jpeg|gif|webp|svg)$/.test(name)) {
-      return <ImageIcon className="h-5 w-5 text-green-500" />;
-    }
-    if (contentType.includes('zip') || /\.(zip|tar|gz|rar|7z)$/.test(name)) {
-      return <FileArchive className="h-5 w-5 text-yellow-500" />;
-    }
-    if (/\.(js|ts|tsx|jsx|py|rs|go|java|c|cpp|html|css|json|md)$/.test(name)) {
-      return <FileCode className="h-5 w-5 text-purple-500" />;
-    }
-    if (contentType.includes('pdf') || name.endsWith('.pdf')) {
-      return <FileText className="h-5 w-5 text-red-500" />;
-    }
-
-    return <FileIcon className="h-5 w-5 text-gray-500" />;
-  };
-
   const formatSize = (bytes?: number) => {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
@@ -646,172 +624,37 @@ export default function StoragePage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Storage</h1>
-        </div>
+      <>
+      {activeTab === 'files' ? (
+        <div className="flex h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-white dark:bg-[#1a1a1a]">
+          <DriveSidebar
+            currentView={driveView}
+            onViewChange={setDriveView}
+            quota={storageStats.stats ? {
+              used: storageStats.stats.used_bytes,
+              total: storageStats.stats.total_bytes
+            } : undefined}
+            onNewClick={() => setUploadDialogOpen(true)}
+          />
 
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-7">
-            {TABS.map((tab) => (
-              <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
-                <tab.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="space-y-6 mt-6">
-            <OverviewStats
-              stats={storageStats.stats}
-              raidHealth={raidData.health}
-              loading={storageStats.loading}
+          <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#202124] rounded-tl-2xl overflow-hidden shadow-sm border border-[#e3e3e3] dark:border-[#3c4043]">
+            {/* Drive Header / Toolbar */}
+            <StorageHeader
+              driveView={driveView}
+              currentBucket={currentBucket}
+              buckets={buckets}
+              currentPath={currentPath}
+              search={search}
+              viewMode={viewMode}
+              onBucketSelect={(bucketName) => {
+                setCurrentBucket(bucketName);
+                setCurrentPath([]);
+              }}
+              onPathClick={handleBreadcrumbClick}
+              onSearchChange={setSearch}
+              onViewModeChange={setViewMode}
+              onCreateBucket={() => setBucketDialogOpen(true)}
             />
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <HealthGauge
-                value={storageStats.stats && storageStats.stats.total_bytes > 0
-                  ? Math.round((storageStats.stats.used_bytes / storageStats.stats.total_bytes) * 100)
-                  : 0}
-                label="Utilisation Stockage"
-                status={storageStats.stats?.health_status}
-              />
-              <QuotaCard />
-              <AlertsPanel events={raidData.events || []} loading={raidData.loading} />
-            </div>
-          </TabsContent>
-
-          {/* Files Tab */}
-          <TabsContent value="files" className="h-[calc(100vh-14rem)] mt-6">
-            <div className="flex h-full rounded-lg border bg-background/50 backdrop-blur-sm overflow-hidden">
-              <DriveSidebar
-                currentView={driveView}
-                onViewChange={setDriveView}
-                quota={storageStats.stats ? {
-                  used: storageStats.stats.used_bytes,
-                  total: storageStats.stats.total_bytes
-                } : undefined}
-                onNewClick={() => setUploadDialogOpen(true)}
-              />
-
-              <div className="flex-1 flex flex-col min-w-0">
-                {/* Toolbar */}
-                <div className="flex items-center justify-between p-4 border-b">
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleBreadcrumbClick(-1)}>
-                        <Home className="h-4 w-4" />
-                      </Button>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground overflow-hidden">
-                        {currentBucket ? (
-                          <>
-                            <ChevronRight className="h-4 w-4 shrink-0" />
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-auto font-medium px-2 py-1">
-                                  {currentBucket}
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent>
-                                {buckets.map(b => (
-                                  <DropdownMenuItem key={b.name} onClick={() => {
-                                    setCurrentBucket(b.name);
-                                    setCurrentPath([]);
-                                  }}>
-                                    {b.name}
-                                  </DropdownMenuItem>
-                                ))}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => setBucketDialogOpen(true)}>
-                                  <Plus className="mr-2 h-4 w-4" />
-                                  New Bucket
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            {currentPath.map((path, i) => (
-                              <div key={i} className="flex items-center gap-1 shrink-0">
-                                <ChevronRight className="h-4 w-4 shrink-0" />
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-auto px-2 py-1"
-                                  onClick={() => handleBreadcrumbClick(i)}
-                                >
-                                  {path}
-                                </Button>
-                              </div>
-                            ))}
-                          </>
-                        ) : (
-                          <div className="ml-2">Select a bucket to start</div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 ml-4">
-                    <div className="relative w-64 hidden md:block">
-                      <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Search files..."
-                        className="pl-9 h-9"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex items-center border rounded-md p-1">
-                      <Button
-                        variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => setViewMode('grid')}
-                      >
-                        <LayoutGrid className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => setViewMode('list')}
-                      >
-                        <ListIcon className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => setViewMode('tree')}
-                      >
-                        <AlignLeft className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {currentBucket && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="default" size="sm" className="gap-2">
-                            <Plus className="h-4 w-4" />
-                            <span className="hidden sm:inline">New</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setFolderDialogOpen(true)}>
-                            <FolderPlus className="mr-2 h-4 w-4" />
-                            New Folder
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setUploadDialogOpen(true)}>
-                            <Upload className="mr-2 h-4 w-4" />
-                            File Upload
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setManageTagsOpen(true)}>
-                            <Star className="mr-2 h-4 w-4" />
-                            Manage Tags
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                </div>
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto p-4 bg-muted/10 flex flex-col min-h-0">
@@ -844,6 +687,66 @@ export default function StoragePage() {
                         </div>
                       )}
                     </div>
+                  ) : driveView === 'home' ? (
+                    <div className="flex-1 p-6 max-w-6xl mx-auto w-full space-y-8">
+                      <h2 className="text-2xl text-[#202124] dark:text-[#e8eaed]">Accueil</h2>
+                      
+                      {/* Suggérés */}
+                      <div>
+                        <h3 className="text-[14px] font-medium text-[#5f6368] dark:text-[#9aa0a6] mb-4">Suggérés</h3>
+                        {loading ? (
+                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {[...Array(6)].map((_, i) => (
+                              <Skeleton key={i} className="aspect-[4/3] rounded-xl" />
+                            ))}
+                          </div>
+                        ) : displayFiles.length === 0 ? (
+                           <div className="text-sm text-muted-foreground">Aucun fichier suggéré.</div>
+                        ) : (
+                          <StorageFileGrid
+                            files={displayFiles.slice(0, 6)}
+                            viewMode="grid"
+                            driveView={driveView}
+                            onNavigate={handleNavigate}
+                            onPreview={(file) => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
+                            onAction={handleAction}
+                          />
+                        )}
+                      </div>
+
+                      {/* Récents */}
+                      {displayFiles.length > 6 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-4">
+                             <h3 className="text-[14px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">Récents</h3>
+                             <div className="flex items-center border border-[#dadce0] dark:border-[#5f6368] rounded-md p-1 bg-white dark:bg-[#1a1a1a]">
+                               <Button variant={viewMode === 'grid' ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setViewMode('grid')}>
+                                 <LayoutGrid className="h-4 w-4" />
+                               </Button>
+                               <Button variant={viewMode === 'list' ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setViewMode('list')}>
+                                 <ListIcon className="h-4 w-4" />
+                               </Button>
+                             </div>
+                          </div>
+
+                          {loading ? (
+                            <div className="space-y-4 shadow-sm border rounded-xl p-4">
+                              <Skeleton className="h-10 w-full" />
+                              <Skeleton className="h-10 w-full" />
+                            </div>
+                          ) : (
+                            <StorageFileGrid
+                              files={displayFiles.slice(6)}
+                              viewMode={viewMode}
+                              driveView={driveView}
+                              onNavigate={handleNavigate}
+                              onPreview={(file) => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
+                              onAction={handleAction}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
                   ) : currentBucket ? (
                     <DropZone
                       bucket={currentBucket}
@@ -864,39 +767,14 @@ export default function StoragePage() {
                           <p className="text-sm">Drag files here or click New</p>
                         </div>
                       ) : (
-                        viewMode === 'grid' ? (
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-                            {displayFiles.map((file) => (
-                              <FileGridItem
-                                key={file.key}
-                                item={file}
-                                onNavigate={() => file.type === 'folder' && handleNavigate(file)}
-                                onPreview={() => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
-                                onAction={handleAction}
-                                viewMode={driveView}
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="space-y-1">
-                            <div className="grid grid-cols-12 px-2 py-2 text-xs font-medium text-muted-foreground border-b mb-2">
-                              <div className="col-span-6 ml-9">Name</div>
-                              <div className="col-span-3 hidden sm:block">Date modified</div>
-                              <div className="col-span-2 hidden sm:block text-right">Size</div>
-                              <div className="col-span-1"></div>
-                            </div>
-                            {displayFiles.map((file) => (
-                              <FileListItem
-                                key={file.key}
-                                item={file}
-                                onNavigate={() => file.type === 'folder' && handleNavigate(file)}
-                                onPreview={() => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
-                                onAction={handleAction}
-                                viewMode={driveView}
-                              />
-                            ))}
-                          </div>
-                        )
+                        <StorageFileGrid
+                          files={displayFiles}
+                          viewMode={viewMode}
+                          driveView={driveView}
+                          onNavigate={(file) => file.type === 'folder' && handleNavigate(file)}
+                          onPreview={(file) => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
+                          onAction={handleAction}
+                        />
                       )}
                     </DropZone>
                   ) : (
@@ -921,46 +799,53 @@ export default function StoragePage() {
                           </Button>
                         </div>
                       ) : (
-                        viewMode === 'grid' ? (
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-                            {displayFiles.map((file) => (
-                              <FileGridItem
-                                key={file.key}
-                                item={file}
-                                onNavigate={() => handleNavigate(file)}
-                                onPreview={() => { }}
-                                onAction={handleAction}
-                                viewMode={driveView}
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="space-y-1">
-                            <div className="grid grid-cols-12 px-2 py-2 text-xs font-medium text-muted-foreground border-b mb-2">
-                              <div className="col-span-6 ml-9">Name</div>
-                              <div className="col-span-3 hidden sm:block">Date modified</div>
-                              <div className="col-span-2 hidden sm:block text-right">Size</div>
-                              <div className="col-span-1"></div>
-                            </div>
-                            {displayFiles.map((file) => (
-                              <FileListItem
-                                key={file.key}
-                                item={file}
-                                onNavigate={() => handleNavigate(file)}
-                                onPreview={() => { }}
-                                onAction={handleAction}
-                                viewMode={driveView}
-                              />
-                            ))}
-                          </div>
-                        )
+                        <StorageFileGrid
+                          files={displayFiles}
+                          viewMode={viewMode}
+                          driveView={driveView}
+                          onNavigate={handleNavigate}
+                          onPreview={() => { }}
+                          onAction={handleAction}
+                        />
                       )}
                     </div>
                   )}
                 </div>
               </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-bold">Administration Stockage</h1>
+              <Button variant="outline" onClick={() => handleTabChange('files')}>
+                Retour au Drive
+              </Button>
             </div>
-          </TabsContent>
+            
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <TabsList className="grid w-full grid-cols-6 mb-6">
+                {TABS.filter(t => t.id !== 'files').map((tab) => (
+                  <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
+                    <tab.icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              
+              <TabsContent value="dashboard" className="space-y-6">
+                <OverviewStats stats={storageStats.stats} raidHealth={raidData.health} loading={storageStats.loading} />
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  <HealthGauge
+                    value={storageStats.stats && storageStats.stats.total_bytes > 0
+                      ? Math.round((storageStats.stats.used_bytes / storageStats.stats.total_bytes) * 100)
+                      : 0}
+                    label="Utilisation Stockage"
+                    status={storageStats.stats?.health_status}
+                  />
+                  <QuotaCard />
+                  <AlertsPanel events={raidData.events || []} loading={raidData.loading} />
+                </div>
+              </TabsContent>
 
           {/* Disks Tab */}
           <TabsContent value="disks" className="mt-6">
@@ -1011,8 +896,11 @@ export default function StoragePage() {
             />
           </TabsContent>
         </Tabs>
-
-        <ManageTagsDialog
+        </div>
+      )}
+      
+      {/* Dialogs globally accessible */}
+      <ManageTagsDialog
           open={manageTagsOpen}
           onOpenChange={setManageTagsOpen}
           onTagsUpdated={fetchFiles}
@@ -1189,7 +1077,7 @@ export default function StoragePage() {
           </DialogContent>
         </Dialog>
         <ShareDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} item={shareItem} />
-      </div>
+      </>
     </AppLayout>
   );
 }

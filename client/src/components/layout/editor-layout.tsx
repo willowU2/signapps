@@ -6,6 +6,7 @@ import { GlobalHeader } from './global-header';
 import { CommandBar } from './command-bar';
 import { RightSidebar } from './right-sidebar';
 import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
 
 interface EditorLayoutProps {
     documentId: string;
@@ -15,6 +16,12 @@ interface EditorLayoutProps {
 
 export function EditorLayout({ documentId, icon, children }: EditorLayoutProps) {
     const { sidebarCollapsed, rightSidebarOpen } = useUIStore();
+    const pathname = usePathname();
+
+    // Determine if we are in a fullscreen editor route
+    const isFullscreenEditor = pathname.includes('/docs/editor') || 
+                               pathname.includes('/sheets/editor') || 
+                               pathname.includes('/slides/editor');
 
     return (
         <div className="min-h-screen bg-background overflow-hidden relative">

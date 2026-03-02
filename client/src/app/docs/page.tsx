@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import DocsDashboard from '@/components/docs/dashboard';
+import { AppLayout } from '@/components/layout/app-layout';
 
 export const metadata: Metadata = {
     description: 'Collaborative documents, sheets, slides, and boards',
@@ -7,8 +8,10 @@ export const metadata: Metadata = {
 
 export default function DocsPage() {
     return (
-        <div className="flex-1 flex flex-col h-full overflow-hidden bg-white dark:bg-gray-950">
-            <DocsDashboard />
-        </div>
+        <AppLayout>
+            <div className="flex-1 flex flex-col h-[calc(100vh-8rem)] overflow-hidden bg-white dark:bg-gray-950 rounded-xl border shadow-sm">
+                <DocsDashboard />
+            </div>
+        </AppLayout>
     );
 }

@@ -19,7 +19,9 @@ import {
   CircuitBoard,
   Play,
   AlertTriangle,
+  Search,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import {
   aiApi,
   HardwareProfile,
@@ -27,6 +29,7 @@ import {
   ModelStatus,
   InferenceBackend,
 } from '@/lib/api';
+import { useMetricsStream } from '@/hooks/use-monitoring';
 import { toast } from 'sonner';
 
 function formatBytes(bytes: number): string {
@@ -120,7 +123,19 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [compatibleOnly, setCompatibleOnly] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const pollIntervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
+  const { metrics, connected } = useMetricsStream(true);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -148,6 +163,33 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
       setLoading(false);
     }
   }, []);
+
+  // Fetch dynamic HF models when search changes
+  useEffect(() => {
+    const fetchSearch = async () => {
+      if (debouncedSearch.length < 2) {
+        setIsSearching(false);
+        // Reset to default available models by refetching
+        fetchData();
+        return;
+      }
+      
+      setIsSearching(true);
+      try {
+        const res = await aiApi.searchModels(debouncedSearch);
+        if (res.data?.models) {
+          setAvailableModels(res.data.models);
+        }
+      } catch (err) {
+        console.error('Failed to search HuggingFace models:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+    
+    fetchSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   useEffect(() => {
     fetchData();
@@ -254,8 +296,15 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
   };
 
   const totalVram = hardware?.total_vram_mb ?? 0;
+  const systemRam = hardware?.system_ram_mb ?? 0;
 
   const isCompatible = useCallback(
+    (model: ModelEntry) =>
+      model.recommended_vram_mb === 0 || model.recommended_vram_mb <= (totalVram + systemRam),
+    [totalVram, systemRam],
+  );
+
+  const isOptimal = useCallback(
     (model: ModelEntry) =>
       model.recommended_vram_mb === 0 || model.recommended_vram_mb <= totalVram,
     [totalVram],
@@ -310,46 +359,84 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
       {/* Hardware Card */}
       {hardware && (
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <Monitor className="h-5 w-5" />
               Hardware detecte
             </CardTitle>
+            {connected && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mr-4">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                En direct
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex items-center gap-3">
-                <CircuitBoard className="h-5 w-5 text-muted-foreground" />
+              <div className="flex flex-col gap-2 p-3 border rounded-lg bg-card/50">
+                <div className="flex items-center gap-3">
+                  <CircuitBoard className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">CPU</p>
+                  </div>
+                </div>
                 <div>
-                  <p className="text-sm font-medium">{hardware.cpu_cores} coeurs</p>
-                  <p className="text-xs text-muted-foreground">CPU</p>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>{hardware.cpu_cores} coeurs</span>
+                    {metrics?.cpu_usage_percent !== undefined && (
+                      <span className="font-semibold">{metrics.cpu_usage_percent.toFixed(1)}%</span>
+                    )}
+                  </div>
+                  <Progress value={metrics?.cpu_usage_percent ?? 0} className="h-1.5" />
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <MemoryStick className="h-5 w-5 text-muted-foreground" />
+
+              <div className="flex flex-col gap-2 p-3 border rounded-lg bg-card/50">
+                <div className="flex items-center gap-3">
+                  <MemoryStick className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">RAM ({formatBytes(hardware.system_ram_mb * 1024 * 1024)})</p>
+                  </div>
+                </div>
                 <div>
-                  <p className="text-sm font-medium">{formatBytes(hardware.system_ram_mb * 1024 * 1024)}</p>
-                  <p className="text-xs text-muted-foreground">RAM</p>
+                  <div className="flex justify-between text-xs mb-1">
+                    {metrics?.memory_used_bytes !== undefined ? (
+                      <span>{formatBytes(metrics.memory_used_bytes)} utilise</span>
+                    ) : (
+                      <span>En attente...</span>
+                    )}
+                    {metrics?.memory_usage_percent !== undefined && (
+                      <span className="font-semibold">{metrics.memory_usage_percent.toFixed(1)}%</span>
+                    )}
+                  </div>
+                  <Progress value={metrics?.memory_usage_percent ?? 0} className="h-1.5" />
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Cpu className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">
-                    {hardware.gpus.length > 0 ? hardware.gpus[0].name : 'Aucun'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">GPU</p>
+              <div className="flex flex-col gap-2 p-3 border rounded-lg bg-card/50 justify-center">
+                <div className="flex items-center gap-3">
+                  <Cpu className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {hardware.gpus.length > 0 ? hardware.gpus[0].name : 'Aucun'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">GPU</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <HardDrive className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">
-                    {hardware.total_vram_mb > 0
-                      ? formatBytes(hardware.total_vram_mb * 1024 * 1024)
-                      : 'N/A'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">VRAM</p>
+              <div className="flex flex-col gap-2 p-3 border rounded-lg bg-card/50 justify-center">
+                <div className="flex items-center gap-3">
+                  <HardDrive className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">
+                      {hardware.total_vram_mb > 0
+                        ? formatBytes(hardware.total_vram_mb * 1024 * 1024)
+                        : 'N/A'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Capacite Totale VRAM</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -406,13 +493,13 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
             <Badge variant="outline" className="ml-2">{filteredLocal.length}</Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4 p-0 pb-4">
           {filteredLocal.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               Aucun modele local{typeFilter !== 'all' ? ` (${getModelTypeLabel(typeFilter)})` : ''}
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[500px] overflow-y-auto px-6 pb-2">
               {filteredLocal.map((model) => {
                 const compat = isCompatible(model);
                 return (
@@ -476,14 +563,29 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
 
       {/* Available Models Card */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Download className="h-5 w-5" />
-            Modeles disponibles
-            <Badge variant="outline" className="ml-2">{filteredAvailable.length}</Badge>
-          </CardTitle>
+        <CardHeader className="pb-3 border-b">
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Modeles disponibles
+              <Badge variant="outline" className="ml-2">{filteredAvailable.length}</Badge>
+              {isSearching && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />
+              )}
+            </CardTitle>
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Chercher sur HuggingFace (ex: Qwen, Llama...)"
+                className="pl-9 h-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4 p-0 pb-4">
           {filteredAvailable.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               {typeFilter !== 'all'
@@ -491,9 +593,10 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
                 : 'Tous les modeles sont deja installes'}
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[500px] overflow-y-auto px-6 pb-2">
               {filteredAvailable.map((model) => {
                 const compat = isCompatible(model);
+                const optimal = isOptimal(model);
                 return (
                   <div
                     key={model.id}
@@ -512,9 +615,14 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
                           {formatVram(model.recommended_vram_mb)}
                         </Badge>
                         {!compat && (
-                          <Badge className="text-xs shrink-0 bg-orange-500/15 text-orange-700 border-orange-200">
+                          <Badge className="text-xs shrink-0 bg-red-500/15 text-red-700 border-red-200">
                             <AlertTriangle className="h-3 w-3 mr-1" />
-                            VRAM insuffisante
+                            Memoire insuffisante
+                          </Badge>
+                        )}
+                        {compat && !optimal && (
+                          <Badge className="text-xs shrink-0 bg-yellow-500/15 text-yellow-700 border-yellow-200" title="Va utiliser la RAM systeme en plus de la VRAM">
+                            RAM System (Offload lent)
                           </Badge>
                         )}
                       </div>

@@ -1,14 +1,13 @@
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     Json,
 };
 use serde_json::Value;
 use signapps_common::Result;
 use uuid::Uuid;
 
-use crate::AppState;
 use crate::llm::types::{ChatMessage, Role};
+use crate::AppState;
 
 /// Webhook ingest response.
 #[derive(Debug, serde::Serialize)]
@@ -29,7 +28,7 @@ pub async fn ingest_webhook(
 
     // 1. OMNIPRESENT AI: Convert the arbitrary JSON into a human-readable narrative
     let json_str = serde_json::to_string_pretty(&payload).unwrap_or_default();
-    
+
     let system_prompt = format!(
         "You are the SignApps Universal Memory Engine. Your job is to read raw JSON payloads from a \
         webhook (source: {}) and construct a highly descriptive, narrative full-text search summary of the event. \
@@ -45,26 +44,29 @@ pub async fn ingest_webhook(
     ];
 
     // Find the vLLM provider for ingestion to save tokens, fallback to default if none found
-    let registry = state.rag.providers();
-    let vllm_id = registry.list_providers().into_iter()
+    let registry = state.providers;
+    let vllm_id = registry
+        .list_providers()
+        .into_iter()
         .find(|(_, cfg)| cfg.provider_type == crate::llm::LlmProviderType::Vllm)
         .map(|(id, _)| id);
-        
+
     let provider = match vllm_id {
         Some(id) => {
-            tracing::info!("Using local AI provider '{}' (vLLM) for RAG ingestion to save tokens", id);
+            tracing::info!(
+                "Using local AI provider '{}' (vLLM) for RAG ingestion to save tokens",
+                id
+            );
             registry.get(id)?
         },
         None => {
             tracing::warn!("No vLLM provider found. Falling back to default (e.g., Claude Opus) for RAG ingestion.");
             registry.get_default()?
-        }
+        },
     };
 
     // Call the AI Provider
-    let ai_response = provider
-        .chat(messages, None, Some(1024), Some(0.2))
-        .await?;
+    let ai_response = provider.chat(messages, None, Some(1024), Some(0.2)).await?;
 
     let narrative_text = ai_response
         .choices
@@ -77,8 +79,11 @@ pub async fn ingest_webhook(
     // 2. Extract dynamic Access Control (RBAC) tags if present in the raw JSON
     // Common fields: user_id, organization_id, project_id, owner_id
     let mut security_tags = serde_json::Map::new();
-    security_tags.insert("source_type".to_string(), Value::String(source_type.clone()));
-    
+    security_tags.insert(
+        "source_type".to_string(),
+        Value::String(source_type.clone()),
+    );
+
     if let Some(org_id) = payload.get("organization_id").or(payload.get("org_id")) {
         security_tags.insert("organization_id".to_string(), org_id.clone());
     }
@@ -107,7 +112,10 @@ pub async fn ingest_webhook(
     Ok(Json(WebhookResponse {
         document_id,
         chunks_indexed,
-        message: format!("Successfully mapped JSON to Universal AI Memory ({} chunks)", chunks_indexed),
+        message: format!(
+            "Successfully mapped JSON to Universal AI Memory ({} chunks)",
+            chunks_indexed
+        ),
     }))
 }
 
@@ -125,12 +133,15 @@ mod tests {
             "organization_id": "org_abc123",
             "user_id": "usr_xyz890"
         });
-        
+
         // Emulate the extraction logic in webhook.rs
         let mut security_tags = serde_json::Map::new();
         let source_type = "odoo_ticket".to_string();
-        security_tags.insert("source_type".to_string(), Value::String(source_type.clone()));
-        
+        security_tags.insert(
+            "source_type".to_string(),
+            Value::String(source_type.clone()),
+        );
+
         if let Some(org_id) = payload.get("organization_id").or(payload.get("org_id")) {
             security_tags.insert("organization_id".to_string(), org_id.clone());
         }
@@ -139,9 +150,22 @@ mod tests {
         }
 
         // Validate that crucial RBAC tags are captured for RAG filtering
-        assert_eq!(security_tags.get("source_type").unwrap().as_str().unwrap(), "odoo_ticket");
-        assert_eq!(security_tags.get("organization_id").unwrap().as_str().unwrap(), "org_abc123");
-        assert_eq!(security_tags.get("owner_id").unwrap().as_str().unwrap(), "usr_xyz890");
+        assert_eq!(
+            security_tags.get("source_type").unwrap().as_str().unwrap(),
+            "odoo_ticket"
+        );
+        assert_eq!(
+            security_tags
+                .get("organization_id")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "org_abc123"
+        );
+        assert_eq!(
+            security_tags.get("owner_id").unwrap().as_str().unwrap(),
+            "usr_xyz890"
+        );
     }
 
     #[test]
@@ -153,11 +177,14 @@ mod tests {
             "org_id": "github_org_1",
             "owner_id": "dev_404"
         });
-        
+
         let mut security_tags = serde_json::Map::new();
         let source_type = "github_issue".to_string();
-        security_tags.insert("source_type".to_string(), Value::String(source_type.clone()));
-        
+        security_tags.insert(
+            "source_type".to_string(),
+            Value::String(source_type.clone()),
+        );
+
         if let Some(org_id) = payload.get("organization_id").or(payload.get("org_id")) {
             security_tags.insert("organization_id".to_string(), org_id.clone());
         }
@@ -165,7 +192,17 @@ mod tests {
             security_tags.insert("owner_id".to_string(), user_id.clone());
         }
 
-        assert_eq!(security_tags.get("organization_id").unwrap().as_str().unwrap(), "github_org_1");
-        assert_eq!(security_tags.get("owner_id").unwrap().as_str().unwrap(), "dev_404");
+        assert_eq!(
+            security_tags
+                .get("organization_id")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "github_org_1"
+        );
+        assert_eq!(
+            security_tags.get("owner_id").unwrap().as_str().unwrap(),
+            "dev_404"
+        );
     }
 }

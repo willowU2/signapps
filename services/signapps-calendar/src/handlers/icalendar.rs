@@ -86,7 +86,7 @@ pub async fn export_calendar(
     ))
 }
 
-/// Get calendar as iCalendar feed (public URL like Google Calendar)
+/// Get calendar as iCalendar feed (public URL like standard Calendar apps)
 pub async fn get_calendar_feed(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,

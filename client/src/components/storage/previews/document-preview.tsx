@@ -3,9 +3,13 @@
 import { useEffect, useState } from 'react';
 import { FileText, Loader2 } from 'lucide-react';
 
+import { previewApi } from '@/lib/api';
+
 interface DocumentPreviewProps {
   fileName: string;
   fileType?: string;
+  bucket?: string;
+  fileKey?: string;
 }
 
 /**
@@ -21,6 +25,8 @@ interface DocumentPreviewProps {
 export function DocumentPreview({
   fileName,
   fileType,
+  bucket,
+  fileKey,
 }: DocumentPreviewProps) {
   const [metadata, setMetadata] = useState<Record<string, string> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +54,13 @@ export function DocumentPreview({
     };
     return typeMap[ext] || ext.toUpperCase();
   };
+
+  const isOfficeDocument = () => {
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    return ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext);
+  };
+
+  const publicUrl = bucket && fileKey ? previewApi.getPreviewUrl(bucket, fileKey) : null;
 
   if (loading) {
     return (
@@ -85,13 +98,41 @@ export function DocumentPreview({
         </div>
       )}
 
-      {/* Info message */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <p className="text-sm text-amber-900">
-          La prévisualisation des documents n'est pas disponible en ligne.
-          Téléchargez le fichier pour l'ouvrir avec votre application.
-        </p>
-      </div>
+      {/* Info message or Iframe */}
+      {metadata && !isOfficeDocument() && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-sm text-amber-900">
+            La prévisualisation native de ce document n'est pas disponible.
+            Téléchargez le fichier pour l'ouvrir.
+          </p>
+        </div>
+      )}
+
+      {/* Office Viewer Iframe */}
+      {isOfficeDocument() && publicUrl && (
+        <div className="w-full h-[60vh] border rounded-lg overflow-hidden bg-white">
+          <iframe
+            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(publicUrl)}`}
+            width="100%"
+            height="100%"
+            frameBorder="0"
+            title="Office Document Preview"
+            onError={() => {
+              // Si le viewer ne peut pas charger (ex: localhost)
+              console.warn("Office Web Viewer ne peut pas accéder à une URL locale.");
+            }}
+          />
+        </div>
+      )}
+      
+      {isOfficeDocument() && !publicUrl && (
+         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="text-sm text-amber-900">
+            La prévisualisation nécessite une URL publique pour le document Office.
+            (Le viewer Microsoft ne fonctionne pas sur localhost).
+          </p>
+        </div>
+      )}
     </div>
   );
 }

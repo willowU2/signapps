@@ -1,4 +1,5 @@
 //! Document indexing handlers.
+//!
 
 use axum::{
     extract::{Path, State},
@@ -25,6 +26,26 @@ pub struct IndexRequest {
     /// Target collection.
     pub collection: Option<String>,
     /// Access control tags.
+    pub security_tags: Option<serde_json::Value>,
+}
+
+/// Internal request triggered by signapps-storage
+#[derive(Debug, Deserialize)]
+pub struct InternalIndexRequest {
+    pub bucket: String,
+    pub key: String,
+    pub content_type: String,
+    pub collection_name: Option<String>,
+}
+
+/// Direct index request for entity indexing (Tasks, Events)
+#[derive(Debug, Deserialize)]
+pub struct DirectIndexRequest {
+    pub content: String,
+    pub filename: String,
+    pub path: String,
+    pub mime_type: Option<String>,
+    pub collection: Option<String>,
     pub security_tags: Option<serde_json::Value>,
 }
 
@@ -70,6 +91,121 @@ pub async fn index_document(
         document_id,
         chunks_indexed,
         message: format!("Document indexed with {} chunks", chunks_indexed),
+    }))
+}
+
+/// Index a document from an internal storage notification.
+#[tracing::instrument(skip(state, payload))]
+pub async fn index_internal_document(
+    State(state): State<AppState>,
+    Json(payload): Json<InternalIndexRequest>,
+) -> Result<Json<IndexResponse>> {
+    tracing::info!(
+        "Received internal index request for {}/{}",
+        payload.bucket,
+        payload.key
+    );
+
+    // Fetch the file content from signapps-storage
+    let storage_url = std::env::var("STORAGE_INTERNAL_URL")
+        .unwrap_or_else(|_| "http://signapps-storage:3004/api/v1".into());
+    let url = format!("{}/files/{}/{}", storage_url, payload.bucket, payload.key);
+
+    // Using a reqwest client without auth for internal docker networks or using a service token
+    let client = reqwest::Client::new();
+    let res = client.get(&url)
+        // Note: For a real setup with auth required on storage internal routes, we'd inject a machine token here.
+        .send()
+        .await
+        .map_err(|e| signapps_common::Error::Internal(format!("Failed to fetch file from storage: {}", e)))?;
+
+    if !res.status().is_success() {
+        return Err(signapps_common::Error::Internal(format!(
+            "Storage returned status {}",
+            res.status()
+        )));
+    }
+
+    let bytes = res.bytes().await.map_err(|e| {
+        signapps_common::Error::Internal(format!("Failed to read file bytes: {}", e))
+    })?;
+
+    // Parse text from file based on mimetype using the indexer's processor
+    let content = state
+        .indexer
+        .process_document_bytes(&bytes, &payload.content_type)
+        .await
+        .map_err(|e| {
+            signapps_common::Error::Internal(format!("Failed to parse document: {}", e))
+        })?;
+
+    let path = format!("{}/{}", payload.bucket, payload.key);
+    // Use a deterministic UUID so re-indexing the same file overwrites its old chunks
+    let document_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, path.as_bytes());
+
+    // Clear existing vectors for this document if they exist
+    if let Err(e) = state.vectors.delete_document(document_id).await {
+        tracing::warn!(
+            "Failed to clear old document vectors (may not exist): {}",
+            e
+        );
+    }
+
+    // Index it
+    let chunks_indexed = state
+        .rag
+        .index_document(
+            document_id,
+            &content,
+            &payload.key, // Filename abstraction
+            &path,
+            Some(&payload.content_type),
+            payload.collection_name.as_deref(),
+            None,
+        )
+        .await?;
+
+    Ok(Json(IndexResponse {
+        document_id,
+        chunks_indexed,
+        message: format!("Internal document indexed with {} chunks", chunks_indexed),
+    }))
+}
+
+/// Index a document from a direct request with known ID.
+#[tracing::instrument(skip(state, payload))]
+pub async fn index_direct_document(
+    State(state): State<AppState>,
+    Path(document_id): Path<Uuid>,
+    Json(payload): Json<DirectIndexRequest>,
+) -> Result<Json<IndexResponse>> {
+    tracing::info!("Received direct index request for document {}", document_id);
+
+    // Clear existing vectors for this document if they exist
+    if let Err(e) = state.vectors.delete_document(document_id).await {
+        tracing::warn!(
+            "Failed to clear old document vectors (may not exist): {}",
+            e
+        );
+    }
+
+    let chunks_indexed = state
+        .rag
+        .index_document(
+            document_id,
+            &payload.content,
+            &payload.filename,
+            &payload.path,
+            payload.mime_type.as_deref(),
+            payload.collection.as_deref(),
+            payload.security_tags.clone(),
+        )
+        .await?;
+
+    Ok(Json(IndexResponse {
+        document_id,
+        chunks_indexed,
+        message: format!("Direct document indexed with {} chunks", chunks_indexed),
     }))
 }
 

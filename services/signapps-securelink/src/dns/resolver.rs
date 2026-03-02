@@ -397,7 +397,7 @@ impl DnsResolver {
             .await
             .map_err(|e| Error::Internal(format!("Failed to parse DoH response: {}", e)))?;
 
-        // Parse Google/Cloudflare DNS JSON format
+        // Parse Quad9/Cloudflare DNS JSON format
         let answers = json["Answer"]
             .as_array()
             .ok_or_else(|| Error::Internal("No answers in DoH response".to_string()))?;

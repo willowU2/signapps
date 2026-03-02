@@ -5,36 +5,52 @@ import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import Placeholder from '@tiptap/extension-placeholder';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
+import Table from '@tiptap/extension-table';
+import TableRow from '@tiptap/extension-table-row';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TextStyle from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
 import { useYjsDocument } from '@/hooks/use-yjs-document';
 import { useAuthStore } from '@/lib/store';
 import { useState, useEffect, useCallback } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Sparkles, Loader2, StopCircle, Type } from 'lucide-react';
+import { Loader2, Sparkles, PencilLine, PanelRightOpen, MessageSquarePlus } from 'lucide-react';
 import { useAiStream } from '@/hooks/use-ai-stream';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+
+import { DocumentHeader } from '../docs/editor/document-header';
+import { EditorMenuBar } from '../docs/editor/editor-menu-bar';
+import { EditorToolbar } from '../docs/editor/editor-toolbar';
 
 interface CollaborativeEditorProps {
     docId: string;
     onSynced?: () => void;
     placeholder?: string;
+    title?: string;
 }
 
 export function CollaborativeEditor({
     docId,
     onSynced,
-    placeholder = 'Start typing...',
+    placeholder = 'Commencez à taper...',
+    title = 'Document sans titre',
 }: CollaborativeEditorProps) {
     const { ydoc, provider, awareness, isSynced } = useYjsDocument(docId, {
         onSync: onSynced,
     });
     const { user } = useAuthStore();
     const [editorReady, setEditorReady] = useState(false);
+    const [docTitle, setDocTitle] = useState(title);
 
     // AI state
     const [aiQuery, setAiQuery] = useState('');
-    const [isAiOpen, setIsAiOpen] = useState(false);
     const { stream, stop, isStreaming } = useAiStream();
 
     // Update awareness with current user info
@@ -53,12 +69,24 @@ export function CollaborativeEditor({
         extensions: [
             StarterKit,
             Placeholder.configure({ placeholder }),
+            Underline,
+            TextAlign.configure({ types: ['heading', 'paragraph'] }),
+            TaskList,
+            TaskItem.configure({ nested: true }),
+            Link.configure({ openOnClick: false }),
+            Image,
+            Table.configure({ resizable: true }),
+            TableRow,
+            TableHeader,
+            TableCell,
+            TextStyle,
+            Color,
             ydoc ? Collaboration.configure({ document: ydoc }) : null,
             provider ? CollaborationCursor.configure({ provider }) : null,
         ].filter(Boolean) as any[],
         content: '',
         onUpdate: () => {
-            // Auto-save could be added here
+            // Auto-save logic could be added here
         },
         editable: isSynced,
     });
@@ -73,43 +101,37 @@ export function CollaborativeEditor({
         if (e) e.preventDefault();
         if (!aiQuery.trim() || !editor) return;
 
-        // Ensure we are inserting at current position or at the end
         if (!editor.isFocused) {
             editor.commands.focus();
         }
 
-        // Add a newline before AI content if needed
         editor.commands.insertContent(' ');
 
         await stream(
             `Write content for a document based on this prompt: ${aiQuery}`,
             {
                 onToken: (token) => {
-                    // Tiptap insert text directly
                     editor.commands.insertContent(token);
                 },
                 onDone: () => {
                     setAiQuery('');
-                    setIsAiOpen(false);
                 },
                 onError: (err) => {
                     toast.error(`AI Error: ${err}`);
                 },
             },
             {
-                systemPrompt: "You are an expert writing assistant. Provide direct, formatting-friendly plain text without filler phrases like 'Here is the content'. Output the direct requested content.",
-                language: 'en'
+                systemPrompt: "You are an expert writing assistant. Provide direct, formatting-friendly plain text without filler phrases.",
+                language: 'fr'
             }
         );
     }, [aiQuery, editor, stream]);
 
     const stopAi = useCallback(() => {
         stop();
-        toast.info("AI generation stopped.");
+        toast.info("Génération d'IA arrêtée.");
     }, [stop]);
 
-    // Handle selection changes for awareness manually if needed
-    // (useEditor handles it normally, but doing it explicitly here)
     useEffect(() => {
         if (!editor) return;
         const updateAwareness = () => {
@@ -132,143 +154,87 @@ export function CollaborativeEditor({
 
     if (!editor || !ydoc || !provider) {
         return (
-            <div className="flex items-center justify-center h-64 bg-gray-50 dark:bg-gray-900 rounded-xl border border-border">
+            <div className="flex items-center justify-center h-full w-full bg-gray-50 dark:bg-gray-900 absolute inset-0">
                 <div className="text-center">
                     <Loader2 className="animate-spin h-8 w-8 text-muted-foreground mx-auto" />
-                    <p className="text-muted-foreground mt-4 text-sm font-medium">Initializing collaborative workspace...</p>
+                    <p className="text-muted-foreground mt-4 text-sm font-medium">Initialisation du document...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="border border-border rounded-xl overflow-hidden glass-panel flex flex-col h-full bg-card">
-            {/* Toolbar */}
-            <div className="bg-muted/30 border-b border-border p-2 flex items-center gap-1 overflow-x-auto">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleBold().run()}
-                    className={editor.isActive('bold') ? 'bg-primary/20 text-primary hover:bg-primary/30' : ''}
-                >
-                    <strong className="font-bold font-serif text-lg">B</strong>
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleItalic().run()}
-                    className={editor.isActive('italic') ? 'bg-primary/20 text-primary hover:bg-primary/30' : ''}
-                >
-                    <em className="font-serif text-lg">I</em>
-                </Button>
-                <div className="w-px h-6 bg-border mx-1" />
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                    className={editor.isActive('heading', { level: 1 }) ? 'bg-primary/20 text-primary hover:bg-primary/30' : ''}
-                >
-                    <Type className="h-4 w-4" />
-                </Button>
-
-                <div className="w-px h-6 bg-border mx-2" />
-
-                {/* AI Help Me Write Tool */}
-                <Popover open={isAiOpen} onOpenChange={setIsAiOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:hover:bg-purple-900/50 dark:border-purple-800 dark:text-purple-300 shadow-sm transition-all group"
-                        >
-                            <Sparkles className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
-                            Help me write
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-3 glass" align="start">
-                        {isStreaming ? (
-                            <div className="space-y-3">
-                                <p className="text-sm font-medium text-purple-700 dark:text-purple-400 flex items-center gap-2">
-                                    <Sparkles className="h-4 w-4 animate-pulse" />
-                                    AI is writing...
-                                </p>
-                                <Button size="sm" variant="destructive" className="w-full" onClick={stopAi}>
-                                    <StopCircle className="h-4 w-4 mr-2" /> Stop Generation
-                                </Button>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleAiGenerate} className="grid gap-3">
-                                <div className="space-y-2">
-                                    <h4 className="font-medium leading-none text-purple-700 dark:text-purple-400 flex items-center gap-2">
-                                        <Sparkles className="h-4 w-4" /> Ask Assistant
-                                    </h4>
-                                    <p className="text-xs text-muted-foreground">
-                                        Describe what you want to add to your document.
-                                    </p>
-                                </div>
-                                <Input
-                                    autoFocus
-                                    placeholder="e.g., Write an intro about our new Q3 roadmap..."
-                                    value={aiQuery}
-                                    onChange={(e) => setAiQuery(e.target.value)}
-                                    className="h-9 focus-visible:ring-purple-500"
-                                />
-                                <Button
-                                    type="submit"
-                                    size="sm"
-                                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                                    disabled={!aiQuery.trim()}
-                                >
-                                    Generate
-                                </Button>
-                            </form>
-                        )}
-                    </PopoverContent>
-                </Popover>
-
-                {/* Sync indicator */}
-                <div className="ml-auto flex items-center gap-2 px-2 bg-background/50 rounded-full py-1 border border-border">
-                    <div
-                        className={`w-2 h-2 rounded-full ${isSynced ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-500 animate-pulse'
-                            }`}
-                    />
-                    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mr-1">
-                        {isSynced ? 'Synced' : 'Syncing'}
-                    </span>
-                </div>
-            </div>
-
-            {/* Editor */}
-            <div className="flex-1 overflow-y-auto cursor-text bg-background">
-                <EditorContent
+        <div className="flex flex-col h-screen w-full bg-[#f8f9fa] dark:bg-background overflow-hidden font-sans">
+            {/* Header & Menus */}
+            <div className="flex flex-col shrink-0 drop-shadow-sm z-20">
+                <DocumentHeader
+                    title={docTitle}
+                    onTitleChange={setDocTitle}
+                    isSynced={isSynced}
+                    awarenessStates={awareness ? Array.from(awareness.getStates().values() as unknown as any[]) : []}
+                    menuBar={<EditorMenuBar editor={editor} />}
+                />
+                
+                <EditorToolbar 
                     editor={editor}
-                    className="prose prose-sm dark:prose-invert max-w-none p-6 min-h-[500px] focus:outline-none focus-visible:outline-none"
-                    onClick={() => editor.commands.focus()}
+                    isStreaming={isStreaming}
+                    aiQuery={aiQuery}
+                    setAiQuery={setAiQuery}
+                    onAiGenerate={handleAiGenerate}
+                    stopAi={stopAi} 
                 />
             </div>
 
-            {/* Collaborators indicator */}
-            {awareness && (
-                <div className="bg-muted/20 border-t border-border p-2 flex items-center gap-3">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Present:</span>
-                    <div className="flex gap-1.5 -space-x-2 *:ring-2 *:ring-background">
-                        {Array.from(awareness.getStates().values()).map((state: any, idx) => (
-                            <div
-                                key={idx}
-                                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm hover:scale-110 transition-transform cursor-default relative group"
-                                style={{
-                                    backgroundColor: state.user?.color || '#ccc',
-                                }}
+            {/* Document Canvas Area */}
+            <div className="flex-1 overflow-y-auto w-full flex justify-center py-6 px-4 cursor-text bg-[#f8f9fa] dark:bg-[#1f1f1f]">
+                <div className="w-[816px] shrink-0 min-h-[1056px] bg-white dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10">
+                    <EditorContent
+                        editor={editor}
+                        className="prose prose-sm md:prose-base dark:prose-invert max-w-none px-[96px] py-[96px] min-h-full focus:outline-none focus-visible:outline-none placeholder:text-[#5f6368] dark:placeholder:text-[#9aa0a6] text-[11pt]"
+                        onClick={() => editor.commands.focus()}
+                    />
+                    
+                    {/* Floating Canvas AI Buttons (visible when empty) */}
+                    {editor.isEmpty && (
+                        <div className="absolute top-[300px] left-0 right-0 flex items-center justify-center gap-2 z-10 select-none pointer-events-none">
+                            <Button 
+                                variant="secondary" 
+                                className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full shadow-sm font-medium h-[36px] px-5 pointer-events-auto transition-colors"
                             >
-                                {state.user?.name?.[0]?.toUpperCase() || '?'}
-                                <div className="absolute -top-8 bg-black text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                                    {state.user?.name || 'Unknown'}
-                                </div>
-                            </div>
-                        ))}
+                                <Sparkles className="h-[18px] w-[18px] mb-0.5 mr-2 text-[#0b57d0]" fill="#0b57d0" />
+                                Générer un document
+                            </Button>
+                            <Button 
+                                variant="secondary" 
+                                className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full shadow-sm font-medium h-[36px] px-5 pointer-events-auto transition-colors"
+                            >
+                                <PencilLine className="h-[18px] w-[18px] mb-0.5 mr-2 text-[#0b57d0]" fill="#0b57d0" />
+                                M'aider à écrire
+                            </Button>
+                            <Button 
+                                variant="secondary" 
+                                className="bg-white hover:bg-gray-50 text-[#444746] rounded-full shadow-sm ring-1 ring-[#dadce0] font-medium h-[36px] px-4 pointer-events-auto transition-colors"
+                            >
+                                <PanelRightOpen className="h-[18px] w-[18px] mb-0.5 mr-2" />
+                                Plus
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* Floating Right Page Action Buttons */}
+                    <div className="absolute top-[300px] -right-12 hidden xl:flex flex-col gap-2 items-center">
+                        <div className="bg-white dark:bg-[#202124] rounded-full shadow-sm ring-1 ring-[#dadce0] dark:ring-[#5f6368] p-1.5 flex flex-col items-center">
+                            <Button variant="ghost" size="icon" className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]">
+                                <PencilLine className="h-[18px] w-[18px]" />
+                            </Button>
+                            <div className="h-[1px] w-6 bg-[#dadce0] dark:bg-[#5f6368] my-0.5" />
+                            <Button variant="ghost" size="icon" className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]">
+                                <MessageSquarePlus className="h-[18px] w-[18px]" />
+                            </Button>
+                        </div>
                     </div>
                 </div>
-            )}
+            </div>
         </div>
     );
 }

@@ -1,4 +1,5 @@
 //! Document indexing pipeline implementation.
+//!
 
 use signapps_common::{Error, Result};
 use uuid::Uuid;
@@ -64,6 +65,7 @@ impl IndexPipeline {
             .iter()
             .enumerate()
             .map(|(i, content)| DocumentChunk {
+                security_tags: None,
                 id: Uuid::new_v4(),
                 document_id,
                 chunk_index: i as i32,
@@ -146,6 +148,28 @@ impl IndexPipeline {
         result.ocr_applied = needs_ocr;
 
         Ok(result)
+    }
+
+    /// Extract text content from document bytes based on MIME type.
+    pub async fn process_document_bytes(&self, content: &[u8], mime_type: &str) -> Result<String> {
+        let needs_ocr = matches!(
+            mime_type,
+            "image/png"
+                | "image/jpeg"
+                | "image/jpg"
+                | "image/tiff"
+                | "image/bmp"
+                | "application/pdf"
+        );
+
+        if needs_ocr {
+            self.extract_text_ocr(content, mime_type).await
+        } else if mime_type.starts_with("text/") || mime_type == "application/json" {
+            Ok(String::from_utf8_lossy(content).to_string())
+        } else {
+            // Unrecognized/unsupported types fallback
+            Ok(String::new())
+        }
     }
 
     /// Delete a document's index.

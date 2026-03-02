@@ -57,7 +57,8 @@ export function useAlertHistory(limit: number = 10) {
     queryKey: ['alerts', 'history', limit],
     queryFn: async () => {
       const response = await alertsApi.listHistory(limit);
-      return response.data?.alerts || [];
+      // Backend returns array directly, not {alerts: [...]}
+      return Array.isArray(response.data) ? response.data : (response.data?.alerts || []);
     },
     refetchInterval: 30000,
   });

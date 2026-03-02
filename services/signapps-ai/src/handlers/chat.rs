@@ -1,7 +1,7 @@
 //! Chat handlers with RAG.
 
 use axum::{
-    extract::{State, Extension},
+    extract::{Extension, State},
     response::sse::{Event, Sse},
     Json,
 };
@@ -84,7 +84,7 @@ pub async fn chat(
     Json(payload): Json<ChatRequest>,
 ) -> Result<Json<ChatResponse>> {
     let tags_filter = serde_json::json!({
-        "organization_id": claims.org_id
+        "organization_id": claims.sub
     });
 
     let response = state
@@ -130,7 +130,7 @@ pub async fn chat_stream(
     Json(payload): Json<ChatRequest>,
 ) -> Sse<impl Stream<Item = std::result::Result<Event, Infallible>>> {
     let tags_filter = serde_json::json!({
-        "organization_id": claims.org_id
+        "organization_id": claims.sub
     });
 
     let model = payload.model.clone();

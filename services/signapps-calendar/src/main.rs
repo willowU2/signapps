@@ -32,6 +32,8 @@ pub struct AppState {
     pub calendar_broadcasts: Arc<DashMap<String, broadcast::Sender<Vec<u8>>>>,
     /// Presence tracking for active users
     pub presence_manager: Arc<PresenceManager>,
+    /// Client for pushing indexing requests to signapps-ai
+    pub ai_client: Arc<crate::services::ai_service::AiServiceClient>,
 }
 
 impl AuthState for AppState {
@@ -74,13 +76,13 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
-    // Create application state
     let state = AppState {
-        pool,
+        pool: pool.clone(),
         jwt_config,
         calendar_docs: Arc::new(DashMap::new()),
         calendar_broadcasts: Arc::new(DashMap::new()),
         presence_manager: Arc::new(PresenceManager::new()),
+        ai_client: Arc::new(crate::services::ai_service::AiServiceClient::new()),
     };
 
     info!("Real-time collaboration system initialized");

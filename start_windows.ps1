@@ -1,5 +1,5 @@
-Write-Host "Compiling all services first to prevent Cargo lock conflicts..."
-Start-Process "cargo" -ArgumentList "build", "--workspace" -Wait -NoNewWindow
+# Write-Host "Compiling all services first to prevent Cargo lock conflicts..."
+# Start-Process "cargo" -ArgumentList "build", "--workspace" -Wait -NoNewWindow
 
 Write-Host "Starting microservices..."
 

@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from "react"
+import { Wand2 } from "lucide-react"
 import * as fabric from "fabric"
 import { useSlides } from "./use-slides"
 import { SlideToolbar } from "./slide-toolbar"
@@ -869,6 +870,17 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
                 updateObjectRemotely={handleUpdateActiveObject}
                 canvasRef={fabricCanvasRef}
             />
+
+            {/* Floating AI Bottom Pill */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 shadow-lg rounded-full animate-fade-in-up">
+                <button
+                    onClick={addMagicLayout}
+                    className="flex items-center gap-2 group px-6 py-2.5 bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full text-[14px] font-medium transition-all shadow-md dark:bg-[#004a77] dark:hover:bg-[#005a92] dark:text-[#c2e7ff]"
+                >
+                    <Wand2 className="w-4 h-4 text-[#0b57d0] dark:text-[#a8c7fa] group-hover:scale-110 transition-transform" />
+                    Améliorer cette diapositive
+                </button>
+            </div>
         </div>
     )
 }

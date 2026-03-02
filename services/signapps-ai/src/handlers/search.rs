@@ -1,7 +1,7 @@
 //! Search handlers.
 
 use axum::{
-    extract::{Query, State, Extension},
+    extract::{Extension, Query, State},
     Json,
 };
 use serde::{Deserialize, Serialize};
@@ -51,16 +51,16 @@ pub async fn search(
 ) -> Result<Json<SearchResponse>> {
     // Generate the security filter based on the user's claims
     let tags_filter = serde_json::json!({
-        "organization_id": claims.org_id
+        "organization_id": claims.sub
     });
 
     let results = state
         .rag
         .search(
-            &query.q, 
-            query.limit, 
+            &query.q,
+            query.limit,
             query.collection.as_deref(),
-            Some(&tags_filter)
+            Some(&tags_filter),
         )
         .await?;
 

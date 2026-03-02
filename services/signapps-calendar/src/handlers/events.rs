@@ -8,10 +8,7 @@ use axum::{
 use chrono::{DateTime, TimeZone, Utc};
 use serde::Deserialize;
 use signapps_common::Claims;
-use signapps_db::{
-    models::*,
-    EventRepository, EventAttendeeRepository,
-};
+use signapps_db::{models::*, EventAttendeeRepository, EventRepository};
 use uuid::Uuid;
 
 use crate::{AppState, CalendarError};
@@ -42,6 +39,20 @@ pub async fn create_event(
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
+    // Index event in AI RAG
+    let ai_client = state.ai_client.clone();
+    let event_id = event.id;
+    let title = event.title.clone();
+    let desc = event.description.clone();
+    tokio::spawn(async move {
+        if let Err(e) = ai_client
+            .index_entity(event_id, calendar_id, "events", &title, desc.as_deref())
+            .await
+        {
+            tracing::error!("Failed to index new event in AI: {}", e);
+        }
+    });
+
     Ok((StatusCode::CREATED, Json(event)))
 }
 
@@ -59,16 +70,16 @@ pub async fn list_events(
     let month = now.month();
 
     let start = query.start.unwrap_or_else(|| {
-        now.with_day(1).unwrap_or_else(|| {
-            Utc.with_ymd_and_hms(year, month, 1, 0, 0, 0).unwrap()
-        })
+        now.with_day(1)
+            .unwrap_or_else(|| Utc.with_ymd_and_hms(year, month, 1, 0, 0, 0).unwrap())
     });
 
     let next_month = if month == 12 { 1 } else { month + 1 };
     let next_year = if month == 12 { year + 1 } else { year };
 
     let end = query.end.unwrap_or_else(|| {
-        Utc.with_ymd_and_hms(next_year, next_month, 1, 0, 0, 0).unwrap()
+        Utc.with_ymd_and_hms(next_year, next_month, 1, 0, 0, 0)
+            .unwrap()
     });
 
     let repo = EventRepository::new(&state.pool);
@@ -79,7 +90,6 @@ pub async fn list_events(
 
     Ok(Json(events))
 }
-
 
 /// Get event by ID.
 pub async fn get_event(
@@ -117,6 +127,21 @@ pub async fn update_event(
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
+    // Update event in AI RAG
+    let ai_client = state.ai_client.clone();
+    let event_id = event.id;
+    let calendar_id = event.calendar_id;
+    let title = event.title.clone();
+    let desc = event.description.clone();
+    tokio::spawn(async move {
+        if let Err(e) = ai_client
+            .index_entity(event_id, calendar_id, "events", &title, desc.as_deref())
+            .await
+        {
+            tracing::error!("Failed to update event in AI index: {}", e);
+        }
+    });
+
     Ok(Json(event))
 }
 
@@ -129,6 +154,14 @@ pub async fn delete_event(
     repo.delete(id)
         .await
         .map_err(|_| CalendarError::InternalError)?;
+
+    // Remove event from AI RAG
+    let ai_client = state.ai_client.clone();
+    tokio::spawn(async move {
+        if let Err(e) = ai_client.remove_indexed_entity(id).await {
+            tracing::error!("Failed to delete event from AI index: {}", e);
+        }
+    });
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -168,10 +201,13 @@ pub async fn update_rsvp(
     Path(attendee_id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> Result<StatusCode, CalendarError> {
-    let status = payload
-        .get("rsvp_status")
-        .and_then(|v| v.as_str())
-        .ok_or(CalendarError::InvalidInput("Missing rsvp_status".to_string()))?;
+    let status =
+        payload
+            .get("rsvp_status")
+            .and_then(|v| v.as_str())
+            .ok_or(CalendarError::InvalidInput(
+                "Missing rsvp_status".to_string(),
+            ))?;
 
     let repo = EventAttendeeRepository::new(&state.pool);
     repo.update_rsvp(attendee_id, status)

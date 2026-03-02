@@ -12,4 +12,4 @@ export interface FileItem {
     originalPath?: string;
 }
 
-export type DriveView = 'my-drive' | 'shared' | 'recent' | 'starred' | 'trash';
+export type DriveView = 'home' | 'my-drive' | 'shared' | 'recent' | 'starred' | 'trash';

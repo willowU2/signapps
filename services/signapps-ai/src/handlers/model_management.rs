@@ -1,7 +1,7 @@
 //! Model management endpoints for downloading, listing, and managing local models.
 
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     Json,
 };
@@ -18,6 +18,11 @@ pub struct LocalModelsResponse {
 #[derive(Debug, Serialize)]
 pub struct AvailableModelsResponse {
     pub models: Vec<ModelEntry>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SearchQuery {
+    pub q: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -70,6 +75,29 @@ pub async fn list_available_models(
     ))?;
 
     let models = model_manager.list_models(None);
+    Ok(Json(AvailableModelsResponse { models }))
+}
+
+/// Dynamically search HuggingFace for models.
+pub async fn search_models(
+    State(state): State<AppState>,
+    Query(query): Query<SearchQuery>,
+) -> Result<Json<AvailableModelsResponse>, (StatusCode, String)> {
+    let model_manager = state.model_manager.as_ref().ok_or((
+        StatusCode::SERVICE_UNAVAILABLE,
+        "Model manager not initialized".to_string(),
+    ))?;
+
+    let models = model_manager
+        .search_huggingface(&query.q)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("HF search failed: {}", e),
+            )
+        })?;
+
     Ok(Json(AvailableModelsResponse { models }))
 }
 

@@ -10,6 +10,7 @@ pub mod task_tree;
 #[allow(dead_code)]
 pub mod timezone;
 // pub mod email_service;  // TODO: Fix OpenSSL dependency on Windows
+pub mod ai_service;
 pub mod notification_scheduler;
 
 pub use notification_scheduler::{NotificationScheduler, SchedulerConfig};

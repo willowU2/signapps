@@ -19,12 +19,11 @@ impl<'a> CalendarRepository<'a> {
 
     /// Find calendar by ID.
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Calendar>> {
-        let calendar = sqlx::query_as::<_, Calendar>(
-            "SELECT * FROM calendar.calendars WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let calendar =
+            sqlx::query_as::<_, Calendar>("SELECT * FROM calendar.calendars WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.pool.inner())
+                .await?;
 
         Ok(calendar)
     }
@@ -150,7 +149,12 @@ impl<'a> CalendarMemberRepository<'a> {
     }
 
     /// Add a member to a calendar.
-    pub async fn add_member(&self, calendar_id: Uuid, user_id: Uuid, role: &str) -> Result<CalendarMember> {
+    pub async fn add_member(
+        &self,
+        calendar_id: Uuid,
+        user_id: Uuid,
+        role: &str,
+    ) -> Result<CalendarMember> {
         let member = sqlx::query_as::<_, CalendarMember>(
             r#"
             INSERT INTO calendar.calendar_members (calendar_id, user_id, role)
@@ -172,11 +176,13 @@ impl<'a> CalendarMemberRepository<'a> {
 
     /// Remove a member from a calendar.
     pub async fn remove_member(&self, calendar_id: Uuid, user_id: Uuid) -> Result<()> {
-        sqlx::query("DELETE FROM calendar.calendar_members WHERE calendar_id = $1 AND user_id = $2")
-            .bind(calendar_id)
-            .bind(user_id)
-            .execute(self.pool.inner())
-            .await?;
+        sqlx::query(
+            "DELETE FROM calendar.calendar_members WHERE calendar_id = $1 AND user_id = $2",
+        )
+        .bind(calendar_id)
+        .bind(user_id)
+        .execute(self.pool.inner())
+        .await?;
 
         Ok(())
     }
@@ -257,7 +263,12 @@ impl<'a> EventRepository<'a> {
     }
 
     /// Create a new event.
-    pub async fn create(&self, calendar_id: Uuid, event: CreateEvent, created_by: Uuid) -> Result<Event> {
+    pub async fn create(
+        &self,
+        calendar_id: Uuid,
+        event: CreateEvent,
+        created_by: Uuid,
+    ) -> Result<Event> {
         let created = sqlx::query_as::<_, Event>(
             r#"
             INSERT INTO calendar.events
@@ -318,10 +329,12 @@ impl<'a> EventRepository<'a> {
 
     /// Soft delete (mark as deleted).
     pub async fn delete(&self, id: Uuid) -> Result<()> {
-        sqlx::query("UPDATE calendar.events SET is_deleted = true, updated_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(self.pool.inner())
-            .await?;
+        sqlx::query(
+            "UPDATE calendar.events SET is_deleted = true, updated_at = NOW() WHERE id = $1",
+        )
+        .bind(id)
+        .execute(self.pool.inner())
+        .await?;
 
         Ok(())
     }
@@ -414,12 +427,10 @@ impl<'a> TaskRepository<'a> {
 
     /// Find task by ID.
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Task>> {
-        let task = sqlx::query_as::<_, Task>(
-            "SELECT * FROM calendar.tasks WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let task = sqlx::query_as::<_, Task>("SELECT * FROM calendar.tasks WHERE id = $1")
+            .bind(id)
+            .fetch_optional(self.pool.inner())
+            .await?;
 
         Ok(task)
     }
@@ -427,7 +438,7 @@ impl<'a> TaskRepository<'a> {
     /// List all tasks in a calendar.
     pub async fn list_by_calendar(&self, calendar_id: Uuid) -> Result<Vec<Task>> {
         let tasks = sqlx::query_as::<_, Task>(
-            "SELECT * FROM calendar.tasks WHERE calendar_id = $1 ORDER BY created_at DESC",
+            "SELECT * FROM calendar.tasks WHERE calendar_id = $1 ORDER BY parent_task_id NULLS FIRST, position ASC, created_at DESC",
         )
         .bind(calendar_id)
         .fetch_all(self.pool.inner())
@@ -439,7 +450,7 @@ impl<'a> TaskRepository<'a> {
     /// List root tasks (parent_task_id IS NULL).
     pub async fn list_root_tasks(&self, calendar_id: Uuid) -> Result<Vec<Task>> {
         let tasks = sqlx::query_as::<_, Task>(
-            "SELECT * FROM calendar.tasks WHERE calendar_id = $1 AND parent_task_id IS NULL ORDER BY due_date, priority DESC",
+            "SELECT * FROM calendar.tasks WHERE calendar_id = $1 AND parent_task_id IS NULL ORDER BY position ASC, priority DESC",
         )
         .bind(calendar_id)
         .fetch_all(self.pool.inner())
@@ -451,7 +462,7 @@ impl<'a> TaskRepository<'a> {
     /// List child tasks.
     pub async fn list_children(&self, parent_task_id: Uuid) -> Result<Vec<Task>> {
         let tasks = sqlx::query_as::<_, Task>(
-            "SELECT * FROM calendar.tasks WHERE parent_task_id = $1 ORDER BY due_date, priority DESC",
+            "SELECT * FROM calendar.tasks WHERE parent_task_id = $1 ORDER BY position ASC, priority DESC",
         )
         .bind(parent_task_id)
         .fetch_all(self.pool.inner())
@@ -481,12 +492,17 @@ impl<'a> TaskRepository<'a> {
     }
 
     /// Create a new task.
-    pub async fn create(&self, calendar_id: Uuid, task: CreateTask, created_by: Uuid) -> Result<Task> {
+    pub async fn create(
+        &self,
+        calendar_id: Uuid,
+        task: CreateTask,
+        created_by: Uuid,
+    ) -> Result<Task> {
         let created = sqlx::query_as::<_, Task>(
             r#"
             INSERT INTO calendar.tasks
-            (calendar_id, parent_task_id, title, description, priority, due_date, assigned_to, created_by)
-            VALUES ($1, $2, $3, $4, COALESCE($5, 0), $6, $7, $8)
+            (calendar_id, parent_task_id, title, description, priority, position, due_date, assigned_to, created_by)
+            VALUES ($1, $2, $3, $4, COALESCE($5, 0), COALESCE($6, 0), $7, $8, $9)
             RETURNING *
             "#,
         )
@@ -495,6 +511,7 @@ impl<'a> TaskRepository<'a> {
         .bind(&task.title)
         .bind(&task.description)
         .bind(task.priority)
+        .bind(task.position)
         .bind(task.due_date)
         .bind(task.assigned_to)
         .bind(created_by)
@@ -514,8 +531,9 @@ impl<'a> TaskRepository<'a> {
                 description = COALESCE($3, description),
                 status = COALESCE($4, status),
                 priority = COALESCE($5, priority),
-                due_date = COALESCE($6, due_date),
-                assigned_to = COALESCE($7, assigned_to),
+                position = COALESCE($6, position),
+                due_date = COALESCE($7, due_date),
+                assigned_to = COALESCE($8, assigned_to),
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
@@ -526,6 +544,7 @@ impl<'a> TaskRepository<'a> {
         .bind(&task.description)
         .bind(&task.status)
         .bind(task.priority)
+        .bind(task.position)
         .bind(task.due_date)
         .bind(task.assigned_to)
         .fetch_one(self.pool.inner())
@@ -535,12 +554,18 @@ impl<'a> TaskRepository<'a> {
     }
 
     /// Move task to a new parent.
-    pub async fn move_task(&self, id: Uuid, new_parent_id: Option<Uuid>) -> Result<Task> {
+    pub async fn move_task(
+        &self,
+        id: Uuid,
+        new_parent_id: Option<Uuid>,
+        position: Option<i32>,
+    ) -> Result<Task> {
         let updated = sqlx::query_as::<_, Task>(
-            "UPDATE calendar.tasks SET parent_task_id = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
+            "UPDATE calendar.tasks SET parent_task_id = $2, position = COALESCE($3, position), updated_at = NOW() WHERE id = $1 RETURNING *",
         )
         .bind(id)
         .bind(new_parent_id)
+        .bind(position)
         .fetch_one(self.pool.inner())
         .await?;
 
@@ -594,23 +619,21 @@ impl<'a> ResourceRepository<'a> {
 
     /// Find resource by ID.
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Resource>> {
-        let resource = sqlx::query_as::<_, Resource>(
-            "SELECT * FROM calendar.resources WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_optional(self.pool.inner())
-        .await?;
+        let resource =
+            sqlx::query_as::<_, Resource>("SELECT * FROM calendar.resources WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.pool.inner())
+                .await?;
 
         Ok(resource)
     }
 
     /// List all resources.
     pub async fn list(&self) -> Result<Vec<Resource>> {
-        let resources = sqlx::query_as::<_, Resource>(
-            "SELECT * FROM calendar.resources ORDER BY name",
-        )
-        .fetch_all(self.pool.inner())
-        .await?;
+        let resources =
+            sqlx::query_as::<_, Resource>("SELECT * FROM calendar.resources ORDER BY name")
+                .fetch_all(self.pool.inner())
+                .await?;
 
         Ok(resources)
     }
@@ -628,7 +651,11 @@ impl<'a> ResourceRepository<'a> {
     }
 
     /// Create a new resource.
-    pub async fn create(&self, resource: CreateResource, owner_id: Option<Uuid>) -> Result<Resource> {
+    pub async fn create(
+        &self,
+        resource: CreateResource,
+        owner_id: Option<Uuid>,
+    ) -> Result<Resource> {
         let created = sqlx::query_as::<_, Resource>(
             r#"
             INSERT INTO calendar.resources (name, resource_type, description, capacity, location, owner_id)
@@ -649,7 +676,12 @@ impl<'a> ResourceRepository<'a> {
     }
 
     /// Update a resource.
-    pub async fn update(&self, id: Uuid, name: Option<&str>, is_available: Option<bool>) -> Result<Resource> {
+    pub async fn update(
+        &self,
+        id: Uuid,
+        name: Option<&str>,
+        is_available: Option<bool>,
+    ) -> Result<Resource> {
         let updated = sqlx::query_as::<_, Resource>(
             r#"
             UPDATE calendar.resources

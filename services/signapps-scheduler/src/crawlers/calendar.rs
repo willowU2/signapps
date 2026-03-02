@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use serde_json::json;
 use signapps_common::traits::crawler::{CrawledDocument, DatabaseCrawler};
 use signapps_common::{Error, Result};
-use signapps_db::DatabasePool;
+use sqlx::PgPool;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -14,10 +14,10 @@ impl DatabaseCrawler for CalendarCrawler {
         "calendar_events"
     }
 
-    async fn fetch_pending_records(&self, pool: &DatabasePool, limit: i64) -> Result<Vec<Uuid>> {
+    async fn fetch_pending_records(&self, pool: &PgPool, limit: i64) -> Result<Vec<Uuid>> {
         // Find events that haven't been processed yet based on ai.ingestion_queue
         // For simplicity in this implementation, we just mock the fetch or do a basic left join
-        
+
         let rows: Vec<(Uuid,)> = sqlx::query_as(
             r#"
             SELECT e.id 
@@ -28,28 +28,32 @@ impl DatabaseCrawler for CalendarCrawler {
             "#,
         )
         .bind(limit)
-        .fetch_all(pool.inner())
+        .fetch_all(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(rows.into_iter().map(|(id,)| id).collect())
     }
 
-    async fn crawl_record(&self, pool: &DatabasePool, record_id: Uuid) -> Result<Option<CrawledDocument>> {
+    async fn crawl_record(
+        &self,
+        pool: &PgPool,
+        record_id: Uuid,
+    ) -> Result<Option<CrawledDocument>> {
         let row: Option<(String, String, Option<String>, Option<Uuid>)> = sqlx::query_as(
-            "SELECT title, description, location, organizer_id FROM calendar_events WHERE id = $1"
+            "SELECT title, description, location, organizer_id FROM calendar_events WHERE id = $1",
         )
         .bind(record_id)
-        .fetch_optional(pool.inner())
+        .fetch_optional(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
 
         if let Some((title, description, location, organizer_id)) = row {
             // Build the string to embed
             let content = format!(
-                "Event: {}\nLocation: {}\nDescription: {}", 
-                title, 
-                location.unwrap_or_else(|| "Unknown".to_string()), 
+                "Event: {}\nLocation: {}\nDescription: {}",
+                title,
+                location.unwrap_or_else(|| "Unknown".to_string()),
                 description
             );
 
@@ -70,17 +74,17 @@ impl DatabaseCrawler for CalendarCrawler {
         }
     }
 
-    async fn mark_as_processed(&self, pool: &DatabasePool, record_id: Uuid) -> Result<()> {
+    async fn mark_as_processed(&self, pool: &PgPool, record_id: Uuid) -> Result<()> {
         sqlx::query(
             r#"
             INSERT INTO ai.ingestion_queue (source_table, record_id, action, status, processed_at)
             VALUES ($1, $2, 'UPSERT', 'COMPLETED', NOW())
             ON CONFLICT (id) DO UPDATE SET status = 'COMPLETED', processed_at = NOW()
-            "#
+            "#,
         )
         .bind(self.table_name())
         .bind(record_id.to_string())
-        .execute(pool.inner())
+        .execute(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
 

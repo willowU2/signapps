@@ -7,6 +7,66 @@ import { useEvents } from "@/hooks/use-events";
 import { Event } from "@/types/calendar";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useDroppable } from "@dnd-kit/core";
+
+// Separate component needed because useDroppable is a hook
+function DroppableDay({ day, isCurrentMonth, isTodayDate, dayEvents, selectedEventId, selectEvent, format }: any) {
+  const dayStr = day.toDateString();
+  const { isOver, setNodeRef } = useDroppable({
+    id: `calendar-day-${dayStr}`,
+    data: {
+      type: "calendar-slot",
+      date: day.toISOString(),
+    }
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`border-r border-gray-200 p-1 flex flex-col relative transition-colors ${
+        !isCurrentMonth ? "bg-gray-50/50" : "bg-white"
+      } ${isOver ? "bg-blue-50 ring-2 ring-blue-500 z-10" : ""}`}
+    >
+      {/* Day number */}
+      <div className="flex justify-center mb-1">
+        <div
+          className={`text-[12px] font-medium w-6 h-6 flex items-center justify-center rounded-full ${
+            isTodayDate 
+              ? "bg-[#1a73e8] text-white" 
+              : isCurrentMonth ? "text-[#3c4043]" : "text-[#70757a]"
+          }`}
+        >
+          {format(day, "d")}
+        </div>
+      </div>
+
+      {/* Events Container */}
+      <div className="flex-1 space-y-[2px] overflow-y-auto px-1 hide-scrollbar">
+        {dayEvents.slice(0, 4).map((event: any) => (
+          <div
+            key={event.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              selectEvent(event.id);
+            }}
+            className={`text-[11px] px-2 py-[2px] rounded-sm cursor-pointer truncate font-medium leading-tight ${
+              selectedEventId === event.id
+                ? "bg-blue-800 text-white ring-1 ring-blue-900"
+                : "bg-[#039be5] text-white hover:opacity-90"
+            }`}
+          >
+            {event.title}
+          </div>
+        ))}
+        {dayEvents.length > 4 && (
+          <div className="text-[11px] font-medium text-[#3c4043] hover:bg-gray-100 rounded px-1 cursor-pointer">
+            {dayEvents.length - 4} autres
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface MonthCalendarProps {
   selectedCalendarId?: string;
@@ -61,37 +121,20 @@ export function MonthCalendar({ selectedCalendarId }: MonthCalendarProps) {
   const weeks = Array.from({ length: 6 }, (_, i) => calendarDays.slice(i * 7, (i + 1) * 7));
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">{format(currentDate, "MMMM yyyy")}</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={prevMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => useCalendarStore.setState({ currentDate: new Date() })}>
-            Today
-          </Button>
-          <Button variant="outline" size="icon" onClick={nextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+    <div className="flex flex-col h-full bg-white relative">
+      {/* Day headers */}
+      <div className="grid grid-cols-7 border-b border-gray-200">
+        {weekDays.map((day) => (
+          <div key={day} className="py-2 text-center text-[11px] font-medium text-[#70757a] uppercase tracking-wider">
+            {day}
+          </div>
+        ))}
       </div>
 
-      {/* Calendar Grid */}
-      <div className="border rounded-lg overflow-hidden">
-        {/* Day headers */}
-        <div className="grid grid-cols-7 bg-muted">
-          {weekDays.map((day) => (
-            <div key={day} className="p-3 text-center font-semibold text-sm">
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Weeks */}
+      {/* Grid */}
+      <div className="flex-1 flex flex-col overflow-hidden">
         {weeks.map((week, weekIdx) => (
-          <div key={weekIdx} className="grid grid-cols-7">
+          <div key={weekIdx} className="flex-1 grid grid-cols-7 border-b border-gray-200 min-h-[100px]">
             {week.map((day, dayIdx) => {
               const isCurrentMonth = isSameMonth(day, currentDate);
               const isTodayDate = isToday(day);
@@ -99,50 +142,27 @@ export function MonthCalendar({ selectedCalendarId }: MonthCalendarProps) {
               const dayEvents = eventsByDate.get(dayStr) || [];
 
               return (
-                <div
-                  key={dayIdx}
-                  className={`min-h-32 p-2 border-r border-b ${
-                    !isCurrentMonth ? "bg-muted/50" : ""
-                  } ${isTodayDate ? "bg-blue-50" : ""}`}
-                >
-                  {/* Day number */}
-                  <div
-                    className={`text-sm font-semibold mb-2 ${
-                      isTodayDate ? "bg-blue-500 text-white rounded w-6 h-6 flex items-center justify-center" : isCurrentMonth ? "text-foreground" : "text-muted-foreground"
-                    }`}
-                  >
-                    {format(day, "d")}
-                  </div>
-
-                  {/* Events */}
-                  <div className="space-y-1">
-                    {dayEvents.slice(0, 3).map((event) => (
-                      <div
-                        key={event.id}
-                        onClick={() => selectEvent(event.id)}
-                        className={`text-xs p-1 rounded cursor-pointer truncate ${
-                          selectedEventId === event.id
-                            ? "bg-blue-600 text-white"
-                            : "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                        }`}
-                      >
-                        {event.title}
-                      </div>
-                    ))}
-                    {dayEvents.length > 3 && (
-                      <div className="text-xs text-muted-foreground px-1">
-                        +{dayEvents.length - 3} more
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <DroppableDay 
+                  key={dayIdx} 
+                  day={day} 
+                  isCurrentMonth={isCurrentMonth} 
+                  isTodayDate={isTodayDate} 
+                  dayEvents={dayEvents} 
+                  selectedEventId={selectedEventId} 
+                  selectEvent={selectEvent} 
+                  format={format} 
+                />
               );
             })}
           </div>
         ))}
       </div>
 
-      {isLoading && <div className="text-center text-muted-foreground">Loading events...</div>}
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/50 flex items-center justify-center pointer-events-none">
+          <span className="text-[#5f6368] text-sm">Loading events...</span>
+        </div>
+      )}
     </div>
   );
 }

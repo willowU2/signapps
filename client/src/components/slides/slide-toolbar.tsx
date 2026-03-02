@@ -55,14 +55,14 @@ export function SlideToolbar({
     onPageConfigChange
 }: SlideToolbarProps) {
     return (
-        <div className="flex items-center gap-3 px-4 py-2 bg-white/80 backdrop-blur-md rounded-2xl shadow-premium border border-white/20 sticky top-2 z-10 animate-fade-in-up justify-between">
-            <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 mx-4 my-2 px-5 py-1.5 bg-[#edf2fa] dark:bg-[#3c4043] rounded-full shrink-0 shadow-sm border border-transparent dark:border-[#5f6368] sticky top-2 z-10 w-auto self-center animate-fade-in text-[#444746] dark:text-[#e8eaed]">
+            <div className="flex items-center gap-2">
                 <div
-                    className={cn("h-2.5 w-2.5 rounded-full", isConnected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-red-500")}
+                    className={cn("h-2 w-2 rounded-full", isConnected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-red-500")}
                     title={isConnected ? "Connected" : "Disconnected"}
                 />
 
-                <div className="w-px h-6 bg-gray-200 mx-1" />
+                <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1" />
 
                 {/* History */}
                 <div className="flex items-center gap-1 bg-gray-50/50 p-1 rounded-lg border border-gray-200/50">
@@ -86,16 +86,7 @@ export function SlideToolbar({
 
                 <div className="w-px h-6 bg-gray-200 mx-1" />
 
-                {/* Addition Tools */}
-                <button
-                    onClick={onAddMagicLayout}
-                    className="flex items-center gap-2 group px-4 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl text-sm font-medium shadow-md transition-all sm:hover:scale-105"
-                >
-                    <Wand2 className="w-4 h-4 text-white/90 group-hover:rotate-12 transition-transform" />
-                    Magic Layout
-                </button>
-
-                <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block" />
+                {/* Addition Tools removed (Magic layout is now floating) */}
 
                 {/* Precision Tools */}
                 <div className="flex items-center gap-1 bg-gray-50/50 p-1 rounded-lg border border-gray-200/50">

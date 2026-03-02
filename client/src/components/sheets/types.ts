@@ -2,6 +2,7 @@ export interface CellStyle {
     bold?: boolean
     italic?: boolean
     strikethrough?: boolean
+    underline?: boolean
     align?: 'left' | 'center' | 'right'
     verticalAlign?: 'top' | 'middle' | 'bottom'
     wrap?: boolean

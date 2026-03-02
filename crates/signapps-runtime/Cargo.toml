@@ -16,3 +16,4 @@ dashmap = { workspace = true }
 reqwest = { workspace = true }
 futures-util = { workspace = true }
 thiserror = { workspace = true }
+urlencoding = "2.1.3"

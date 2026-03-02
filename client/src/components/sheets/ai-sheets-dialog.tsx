@@ -47,8 +47,8 @@ export function AiSheetsDialog({ onClose, selectionBounds, data, onApplyResult, 
         setResult("");
 
         const context = type === "formula"
-            ? `Objectif: Tu es un expert Excel/Google Sheets. L'utilisateur veut une formule pour faire: "${prompt}". Réponds JUSTE avec la formule commençant par =, RIEN d'autre.`
-            : `Objectif: Tu es un analyste de données. Analyse ce contexte extrait d'un tableur (Plage ${selectedRangeStr}) : \n\n${getSelectionContext()}\n\nDemande de l'utilisateur: "${prompt}". Sois concis et direct.`;
+            ? `Objectif: Tu es un expert Excel/SignApps Sheets. L'utilisateur veut une formule pour faire: "${prompt}". Réponds JUSTE avec la formule commençant par =, RIEN d'autre.`
+            : `Objectif: L'utilisateur demande "${prompt}" sur un tableur. Fournis une explication concise et claire sans texte superflu.`;
 
         const modelConfig = routing.getRouteConfig('docs');
 

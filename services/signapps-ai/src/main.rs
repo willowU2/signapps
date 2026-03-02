@@ -1,4 +1,5 @@
 //! SignApps AI Service - RAG and LLM integration
+//!
 
 use axum::{
     middleware,
@@ -364,6 +365,7 @@ fn create_router(state: AppState) -> Router {
             "/models/available",
             get(model_management::list_available_models),
         )
+        .route("/models/search", get(model_management::search_models))
         .route("/models/download", post(model_management::download_model))
         .route(
             "/models/:model_id",
@@ -385,6 +387,12 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Internal routes (no auth needed, only callable from internal VPN/Docker)
+    let internal_routes = Router::new()
+        .route("/index", post(index::index_internal_document))
+        .route("/index/:document_id", post(index::index_direct_document))
+        .route("/index/:document_id", delete(index::remove_document));
+
     // CORS configuration
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -394,6 +402,7 @@ fn create_router(state: AppState) -> Router {
     // Combine all routes
     Router::new()
         .nest("/api/v1", public_routes)
+        .nest("/api/v1/internal", internal_routes)
         .nest("/api/v1/ai", ai_routes)
         .nest("/api/v1/admin/ai", admin_routes)
         .layer(

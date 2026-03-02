@@ -16,6 +16,144 @@ use crate::storage::{CopyRequest, ListObjectsQuery, ListObjectsResponse, ObjectI
 use crate::AppState;
 use uuid::Uuid;
 
+/// Resolves the destination bucket based on the file content type and admin storage rules.
+async fn resolve_target_bucket(
+    pool: &sqlx::PgPool,
+    original_bucket: &str,
+    content_type: &str,
+) -> String {
+    let rule = sqlx::query!(
+        r#"
+        SELECT target_bucket 
+        FROM storage_rules 
+        WHERE is_active = true 
+          AND $1 LIKE REPLACE(mime_type_pattern, '*', '%')
+        ORDER BY created_at DESC
+        LIMIT 1
+        "#,
+        content_type
+    )
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None);
+
+    if let Some(r) = rule {
+        r.target_bucket
+    } else {
+        original_bucket.to_string()
+    }
+}
+
+async fn trigger_ai_indexing(pool: &sqlx::PgPool, bucket: &str, key: &str, content_type: &str) {
+    let global_default_row = sqlx::query_as::<_, (String,)>(
+        r#"
+        SELECT setting_value 
+        FROM admin_system_settings 
+        WHERE setting_key = 'ai_index_all_default'
+        "#,
+    )
+    .fetch_optional(pool)
+    .await
+    .unwrap_or_default();
+
+    let global_index_all = global_default_row
+        .map(|r| r.0.to_lowercase() == "true")
+        .unwrap_or(false);
+
+    // 2. Fetch specific rules for this bucket
+    let rules = sqlx::query!(
+        r#"
+        SELECT folder_path, include_subfolders, file_types_allowed, collection_name
+        FROM ai_indexing_rules
+        WHERE is_active = true AND bucket = $1
+        ORDER BY LENGTH(folder_path) DESC
+        "#,
+        bucket
+    )
+    .fetch_all(pool)
+    .await
+    .unwrap_or_default();
+
+    let mut should_index = global_index_all;
+    let mut matched_collection: Option<String> = None;
+
+    // 3. Evaluate rules
+    for r in rules {
+        let is_match = if r.include_subfolders {
+            key.starts_with(&r.folder_path)
+        } else {
+            // Check if it's strictly in that folder (no deeper)
+            let dir = key.rsplit_once('/').map(|(d, _)| d).unwrap_or("");
+            dir == r.folder_path.trim_end_matches('/')
+        };
+
+        if !is_match {
+            continue;
+        }
+
+        // If the file is in a matched folder rule, we respect the file_types_allowed of THAT rule.
+        if let Some(mut allowed_exts) = r.file_types_allowed {
+            let ext = key
+                .rsplit_once('.')
+                .map(|(_, e)| e.to_lowercase())
+                .unwrap_or_default();
+            allowed_exts.iter_mut().for_each(|e| *e = e.to_lowercase());
+
+            if !allowed_exts.is_empty() && !allowed_exts.contains(&ext) {
+                should_index = false; // Excluded by rule
+                matched_collection = None;
+            } else {
+                should_index = true; // explicitly included
+                matched_collection = r.collection_name.clone();
+            }
+        } else {
+            // Matched a rule with no specific extension limit
+            should_index = true;
+            matched_collection = r.collection_name.clone();
+        }
+
+        // Stop matching after first valid folder rule is applied
+        break;
+    }
+
+    if !should_index {
+        return;
+    }
+
+    // Send HTTP request to AI service in the background
+    let target_bucket = bucket.to_string();
+    let target_key = key.to_string();
+    let ct = content_type.to_string();
+
+    tokio::spawn(async move {
+        let client = reqwest::Client::new();
+        // In a real k8s/docker environment, URL would come from env. Hardcoding for internal docker networking here.
+        let ai_url = std::env::var("AI_INTERNAL_URL")
+            .unwrap_or_else(|_| "http://signapps-ai:3005/api/v1/internal/index".into());
+
+        let payload = serde_json::json!({
+            "bucket": target_bucket,
+            "key": target_key,
+            "content_type": ct,
+            "collection_name": matched_collection,
+        });
+
+        let res = client.post(&ai_url).json(&payload).send().await;
+
+        match res {
+            Ok(resp) if resp.status().is_success() => {
+                tracing::info!(bucket = %target_bucket, key = %target_key, "Successfully triggered AI vector indexing");
+            },
+            Ok(resp) => {
+                tracing::error!(status = %resp.status(), "AI service rejected index request");
+            },
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to connect to AI index service");
+            },
+        }
+    });
+}
+
 /// Upload response.
 #[derive(Debug, Serialize)]
 pub struct UploadResponse {
@@ -111,6 +249,8 @@ pub async fn upload(
                     .to_string()
             });
 
+        let target_bucket = resolve_target_bucket(state.pool.inner(), &bucket, &content_type).await;
+
         let data = field
             .bytes()
             .await
@@ -123,14 +263,14 @@ pub async fn upload(
 
         state
             .storage
-            .put_object(&bucket, &filename, data, Some(&content_type))
+            .put_object(&target_bucket, &filename, data, Some(&content_type))
             .await?;
 
         // Update quota after successful upload
         if let Err(e) = quotas::record_upload(
             &state,
             user_id,
-            &bucket,
+            &target_bucket,
             &filename,
             size as i64,
             Some(&content_type),
@@ -138,10 +278,13 @@ pub async fn upload(
         .await
         {
             tracing::error!(error = %e, "Failed to record upload quota");
+        } else {
+            // Trigger AI indexing check
+            trigger_ai_indexing(state.pool.inner(), &target_bucket, &filename, &content_type).await;
         }
 
         uploads.push(UploadResponse {
-            bucket: bucket.clone(),
+            bucket: target_bucket,
             key: filename,
             size,
             content_type,
@@ -176,6 +319,8 @@ pub async fn upload_with_key(
                 .to_string()
         });
 
+    let target_bucket = resolve_target_bucket(state.pool.inner(), &bucket, &content_type).await;
+
     let size = body.len();
 
     // Check quota before upload
@@ -183,14 +328,14 @@ pub async fn upload_with_key(
 
     state
         .storage
-        .put_object(&bucket, &key, body, Some(&content_type))
+        .put_object(&target_bucket, &key, body, Some(&content_type))
         .await?;
 
     // Update quota after successful upload
     if let Err(e) = quotas::record_upload(
         &state,
         user_id,
-        &bucket,
+        &target_bucket,
         &key,
         size as i64,
         Some(&content_type),
@@ -198,12 +343,14 @@ pub async fn upload_with_key(
     .await
     {
         tracing::error!(error = %e, "Failed to record upload quota");
+    } else {
+        trigger_ai_indexing(state.pool.inner(), &target_bucket, &key, &content_type).await;
     }
 
-    tracing::info!(bucket = %bucket, key = %key, size = size, "File uploaded");
+    tracing::info!(bucket = %target_bucket, key = %key, size = size, "File uploaded");
 
     Ok(Json(UploadResponse {
-        bucket,
+        bucket: target_bucket,
         key,
         size,
         content_type,
@@ -309,6 +456,16 @@ pub async fn copy(
         .get_object_info(&payload.dest_bucket, &payload.dest_key)
         .await?;
 
+    trigger_ai_indexing(
+        state.pool.inner(),
+        &payload.dest_bucket,
+        &payload.dest_key,
+        info.content_type
+            .as_deref()
+            .unwrap_or("application/octet-stream"),
+    )
+    .await;
+
     tracing::info!(
         from = format!("{}/{}", payload.source_bucket, payload.source_key),
         to = format!("{}/{}", payload.dest_bucket, payload.dest_key),
@@ -353,6 +510,16 @@ pub async fn move_file(
         .storage
         .get_object_info(&payload.dest_bucket, &payload.dest_key)
         .await?;
+
+    trigger_ai_indexing(
+        state.pool.inner(),
+        &payload.dest_bucket,
+        &payload.dest_key,
+        info.content_type
+            .as_deref()
+            .unwrap_or("application/octet-stream"),
+    )
+    .await;
 
     tracing::info!(
         from = format!("{}/{}", payload.source_bucket, payload.source_key),

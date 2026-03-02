@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -103,6 +104,7 @@ const navGroups = [
     items: [
       { href: '/admin', icon: ShieldCheck, label: 'Admin' },
       { href: '/admin/users', icon: Users, label: 'Users' },
+      { href: '/admin/storage', icon: HardDrive, label: 'Storage Config' },
       { href: '/settings', icon: Settings, label: 'Settings' },
     ]
   }

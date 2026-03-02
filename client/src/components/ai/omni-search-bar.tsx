@@ -22,8 +22,13 @@ export function OmniSearchBar() {
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const [isExecuting, setIsExecuting] = React.useState(false)
+  const [mounted, setMounted] = React.useState(false)
   const omniStore = useOmniSearch()
   const pageContext = usePageContext()
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -74,6 +79,8 @@ export function OmniSearchBar() {
       setQuery("")
     }
   }
+
+  if (!mounted) return null;
 
   return (
     <CommandDialog open={omniStore.isOpen} onOpenChange={omniStore.close}>

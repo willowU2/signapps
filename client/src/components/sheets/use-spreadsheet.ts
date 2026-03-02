@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
@@ -6,7 +7,7 @@ import { CellData, CellStyle, CellValidation, SheetInfo, ROWS, COLS } from './ty
 
 export type { CellStyle, CellData, CellValidation, SheetInfo }
 
-export function useSpreadsheet(docId: string = 'default-sheet') {
+export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Record<string, CellData>) {
     const [doc] = useState(() => new Y.Doc())
     const [data, setData] = useState<Record<string, CellData>>({})
     const [isConnected, setIsConnected] = useState(false)
@@ -73,6 +74,15 @@ export function useSpreadsheet(docId: string = 'default-sheet') {
         const sync = () => setData(gridMap.toJSON())
         gridMap.observe(sync)
         sync()
+
+        // Apply initial data if grid is empty
+        if (initialData && gridMap.keys().next().done) {
+            doc.transact(() => {
+                for (const [key, value] of Object.entries(initialData)) {
+                    gridMap.set(key, value)
+                }
+            })
+        }
 
         return () => {
             gridMap.unobserve(sync)
@@ -338,6 +348,10 @@ export function useSpreadsheet(docId: string = 'default-sheet') {
     const undo = useCallback(() => { undoManagerRef.current?.undo() }, [])
     const redo = useCallback(() => { undoManagerRef.current?.redo() }, [])
 
+    const transact = useCallback((fn: () => void) => {
+        doc.transact(fn)
+    }, [doc])
+
     return {
         data, setCell, setCellStyle, setCellFull, setCellComment, setCellValidation,
         deleteCell, deleteCellRange, getCellRange, setCellRange,
@@ -347,5 +361,6 @@ export function useSpreadsheet(docId: string = 'default-sheet') {
         sheets, activeSheetIndex, setActiveSheetIndex,
         addSheet, removeSheet, renameSheet, setSheetColor,
         getCrossSheetValue,
+        transact,
     }
 }

@@ -13,11 +13,12 @@ use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
 mod handlers;
+mod jobs;
 mod storage;
 
 use handlers::{
     buckets, external, favorites, files, health, mounts, permissions, preview, quotas, raid,
-    search, shares, stats, trash,
+    search, shares, stats, storage_settings, trash,
 };
 use storage::StorageBackend;
 
@@ -64,8 +65,8 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Database connection established");
 
     // Run migrations
-    // signapps_db::run_migrations(&pool).await?;
-    // tracing::info!("Database migrations completed (bypassed for storage)");
+    signapps_db::run_migrations(&pool).await?;
+    tracing::info!("Database migrations completed");
 
     // Initialize storage backend
     let storage = match storage_mode.as_str() {
@@ -105,6 +106,11 @@ async fn main() -> anyhow::Result<()> {
         storage,
         jwt_config,
     };
+
+    // Start background jobs
+    jobs::start_cron_scheduler(state.clone())
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to start cron: {}", e))?;
 
     // Build router
     let app = create_router(state);
@@ -302,6 +308,43 @@ fn create_router(state: AppState) -> Router {
     // Stats route
     let stats_routes = Router::new().route("/stats", get(stats::get_stats));
 
+    // Admin Storage Settings routes
+    let storage_settings_routes = Router::new()
+        .route("/storage_rules", get(storage_settings::list_storage_rules))
+        .route(
+            "/storage_rules",
+            post(storage_settings::create_storage_rule),
+        )
+        .route(
+            "/storage_rules/:id",
+            put(storage_settings::update_storage_rule),
+        )
+        .route(
+            "/storage_rules/:id",
+            delete(storage_settings::delete_storage_rule),
+        )
+        .route(
+            "/indexing_rules",
+            get(storage_settings::list_indexing_rules),
+        )
+        .route(
+            "/indexing_rules",
+            post(storage_settings::create_indexing_rule),
+        )
+        .route(
+            "/indexing_rules/:id",
+            put(storage_settings::update_indexing_rule),
+        )
+        .route(
+            "/indexing_rules/:id",
+            delete(storage_settings::delete_indexing_rule),
+        )
+        .route("/settings/:key", get(storage_settings::get_system_setting))
+        .route(
+            "/settings/:key",
+            put(storage_settings::update_system_setting),
+        );
+
     // Combine protected routes
     let protected_routes = Router::new()
         .merge(file_routes)
@@ -321,6 +364,7 @@ fn create_router(state: AppState) -> Router {
         .merge(mount_routes)
         .merge(external_routes)
         .merge(stats_routes)
+        .merge(storage_settings_routes)
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
