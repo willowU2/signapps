@@ -330,7 +330,7 @@ async fn test_smtp_connection(account: &MailAccount) -> (bool, Option<String>) {
 
     let creds = Credentials::new(account.email_address.clone(), password.clone());
 
-    let mailer_result = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)
+    let mailer_result: Result<AsyncSmtpTransport<Tokio1Executor>, _> = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)
         .map(|builder| builder.credentials(creds).build());
 
     match mailer_result {

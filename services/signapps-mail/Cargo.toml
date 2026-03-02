@@ -21,13 +21,14 @@ signapps-common = { path = "../../crates/signapps-common" }
 
 # IMAP/SMTP Backend
 async-imap = { version = "0.9.1", default-features = false, features = ["runtime-tokio"] }
-lettre = { version = "0.11", features = ["tokio1-rustls-tls", "builder", "smtp-transport"] }
+async-native-tls = "0.5"
+native-tls = "0.2"
+tokio-native-tls = "0.3"
+lettre = { version = "0.11", default-features = false, features = ["tokio1", "tokio1-native-tls", "builder", "smtp-transport"] }
 mailparse = "0.14.0"
 oauth2 = "4.4.2"
 tokio-cron-scheduler = "0.9.4"
-reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
-tokio-native-tls = "0.3"
-native-tls = "0.2.11"
+reqwest = { version = "0.12", features = ["json", "native-tls"] }
 base64 = "0.22"
 futures-util = "0.3.30"
 thiserror = "1.0"

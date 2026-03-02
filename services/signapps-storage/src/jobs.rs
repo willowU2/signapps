@@ -31,9 +31,7 @@ pub async fn start_cron_scheduler(state: AppState) -> signapps_common::Result<()
     Ok(())
 }
 
-async fn run_nightly_sync(state: &AppState) -> signapps_common::Result<()> {
-    use tokio_stream::StreamExt;
-
+async fn run_nightly_sync(_state: &AppState) -> signapps_common::Result<()> {
     // We assume the local `fs` or `s3` storage is used.
     // For simplicity, we trigger a webhook to sync. In a full implementation, we'd list all files recursively.
     info!("Nightly sync logic triggered.");

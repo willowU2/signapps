@@ -90,23 +90,31 @@ pub async fn sync_account(
 
     let mut uids_to_fetch = Vec::new();
 
+    // Collect UIDs from message headers
+    let mut header_uids: Vec<u32> = Vec::new();
     while let Some(msg) = stream.next().await {
         if let Ok(fetch) = msg {
-            let uid = fetch.uid.unwrap_or(0) as i64;
+            let uid = fetch.uid.unwrap_or(0);
             if uid > 0 {
-                // Check if we already have this message
-                let exists: (i64,) = sqlx::query_as(
-                    "SELECT COUNT(*) FROM mail.emails WHERE account_id = $1 AND imap_uid = $2",
-                )
-                .bind(account.id)
-                .bind(uid)
-                .fetch_one(pool)
-                .await?;
-
-                if exists.0 == 0 {
-                    uids_to_fetch.push(uid as u32);
-                }
+                header_uids.push(uid);
             }
+        }
+    }
+    // Drop the stream to release the borrow on session
+    drop(stream);
+
+    // Check which UIDs we don't have yet
+    for uid in header_uids {
+        let exists: (i64,) = sqlx::query_as(
+            "SELECT COUNT(*) FROM mail.emails WHERE account_id = $1 AND imap_uid = $2",
+        )
+        .bind(account.id)
+        .bind(uid as i64)
+        .fetch_one(pool)
+        .await?;
+
+        if exists.0 == 0 {
+            uids_to_fetch.push(uid);
         }
     }
 
@@ -140,7 +148,7 @@ pub async fn sync_account(
                             .map(|t| t.chars().take(200).collect::<String>());
 
                         // Check if read (from FLAGS)
-                        let is_read = m.flags().iter().any(|f| matches!(f, async_imap::types::Flag::Seen));
+                        let is_read = m.flags().any(|f| matches!(f, async_imap::types::Flag::Seen));
 
                         // Parse received date
                         let received_at = date_str

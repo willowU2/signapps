@@ -3,7 +3,8 @@ pub mod auth;
 pub mod models;
 pub mod sync_service;
 
-use signapps_common::middleware::auth_middleware;
+use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::JwtConfig;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::net::SocketAddr;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
@@ -12,6 +13,13 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[derive(Clone)]
 pub struct AppState {
     pub pool: Pool<Postgres>,
+    pub jwt_config: JwtConfig,
+}
+
+impl AuthState for AppState {
+    fn jwt_config(&self) -> &JwtConfig {
+        &self.jwt_config
+    }
 }
 
 #[tokio::main]
@@ -33,7 +41,15 @@ async fn main() {
         .await
         .expect("Failed to connect to Postgres");
 
-    let state = AppState { pool: pool.clone() };
+    let jwt_config = JwtConfig {
+        secret: std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into()),
+        issuer: std::env::var("JWT_ISSUER").unwrap_or_else(|_| "signapps".into()),
+        audience: std::env::var("JWT_AUDIENCE").unwrap_or_else(|_| "signapps-users".into()),
+        access_expiration: 3600,
+        refresh_expiration: 86400 * 7,
+    };
+
+    let state = AppState { pool: pool.clone(), jwt_config };
 
     // Start background sync service
     let sync_pool = pool.clone();
@@ -41,13 +57,10 @@ async fn main() {
         sync_service::start_sync_scheduler(sync_pool).await;
     });
 
-    // Get JWT secret
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
-
     let app = api::router()
         .layer(axum::middleware::from_fn_with_state(
-            jwt_secret,
-            auth_middleware,
+            state.clone(),
+            auth_middleware::<AppState>,
         ))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())

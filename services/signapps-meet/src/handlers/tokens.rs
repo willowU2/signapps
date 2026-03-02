@@ -6,7 +6,7 @@ use axum::{
     Extension, Json,
 };
 use serde::Deserialize;
-use signapps_common::middleware::Claims;
+use signapps_common::Claims;
 use uuid::Uuid;
 
 use crate::{
