@@ -1,5 +1,4 @@
 use axum::Router;
-use signapps_common::config::AppConfig;
 use std::net::SocketAddr;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -18,25 +17,27 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    tracing::info!("Configuration overrides loading...");
+    tracing::info!("Starting IT Assets service...");
     dotenvy::dotenv().ok();
 
-    // We override port if needed using std::env before loading config, or just use AppConfig
-    let config = AppConfig::load()?;
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://signapps:password@localhost:5432/signapps".to_string());
 
-    let pool = signapps_db::create_pool(&config.database.url).await?;
+    let pool = signapps_db::create_pool(&database_url).await?;
+    tracing::info!("Database connected");
 
     let app = Router::new()
         .nest("/api/v1/it-assets", routes::api_routes())
         .with_state(pool)
         .layer(TraceLayer::new_for_http());
 
-    let port = std::env::var("PORT")
+    let port: u16 = std::env::var("SERVER_PORT")
+        .or_else(|_| std::env::var("PORT"))
         .unwrap_or_else(|_| "3015".to_string())
         .parse()?;
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
 
-    tracing::info!("Listening on {}", addr);
+    tracing::info!("IT Assets service listening on {}", addr);
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
 

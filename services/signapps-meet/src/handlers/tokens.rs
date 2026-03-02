@@ -123,14 +123,20 @@ pub async fn get_room_token(
         return Err((StatusCode::GONE, "Room has ended".to_string()));
     }
 
+    // Extract display name before consuming req
+    let display_name = req
+        .as_ref()
+        .and_then(|r| r.display_name.clone())
+        .unwrap_or_else(|| claims.username.clone());
+
     // Check password if room is private
     if room.is_private {
         if let Some(hash) = &room.password_hash {
-            let req = req.ok_or((
+            let join_req = req.ok_or((
                 StatusCode::UNAUTHORIZED,
                 "Password required for private room".to_string(),
             ))?;
-            let password = req.password.ok_or((
+            let password = join_req.password.ok_or((
                 StatusCode::UNAUTHORIZED,
                 "Password required for private room".to_string(),
             ))?;
@@ -157,12 +163,6 @@ pub async fn get_room_token(
 
     // Determine if user is host
     let is_host = room.created_by == claims.sub;
-
-    // Use provided display name or default to username
-    let display_name = req
-        .as_ref()
-        .and_then(|r| r.display_name.clone())
-        .unwrap_or_else(|| claims.username.clone());
 
     // Generate LiveKit token
     let token = generate_participant_token(

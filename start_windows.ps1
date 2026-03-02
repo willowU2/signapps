@@ -16,7 +16,11 @@ $services = @{
     "signapps-docs"       = 3010
     "signapps-calendar"   = 3011
     "signapps-mail"       = 3012
-    "signapps-collab"     = 3013
+    "signapps-meet"       = 3013
+    "signapps-collab"     = 3014
+    "signapps-it-assets"  = 3015
+    "signapps-pxe"        = 3016
+    "signapps-remote"     = 3017
 }
 
 foreach ($service in $services.GetEnumerator()) {
