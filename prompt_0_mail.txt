@@ -1,0 +1,19 @@
+SignApps Project - Mail UI Redesign (Workspace Style)
+
+You are the Autonomous AI Development Team for "SignApps". Your task is to implement the "Mail App Layout Redesign" using the existing Next.js / Tailwind stack.
+
+**Context & Requirements:**
+1. Bypass the standard `AppLayout` in `client/src/app/mail/page.tsx`. Implement a custom standalone layout with a background of `bg-[#f2f6fc]`.
+2. Build the extreme left rail containing the Hamburger menu and icons for Mail, Chat, Spaces, and Meet.
+3. Re-integrate `MailNav` as the secondary left panel, ensuring it includes a floating pill button styled for "Nouveau message".
+4. Build the unified Google Workspace top header containing a Search bar, Active status indicator, Apps grid icon, and Avatar.
+5. Wrap the main content (`MailList` and `MailDisplay`) in a large floating white card (`bg-white rounded-3xl` with shadow).
+6. Implement a narrow right rail containing add-on icons (Calendar, Keep, Tasks, Contacts).
+
+**Aesthetics:**
+Rely on exact alignment, minimal borders, and a stark contrast between the `bg-[#f2f6fc]` background and the `bg-white` main floating card.
+
+**Constraints:**
+1. Do not use test/mock data. Connect to existing Zustand stores or API hooks where applicable.
+2. Only use existing libraries (`lucide-react`, `tailwindcss`, `shadcn/ui`).
+3. Run `npm run lint` and `npx tsc --noEmit` locally before considering this complete to ensure no build breaks.

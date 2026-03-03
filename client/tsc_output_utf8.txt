@@ -1,0 +1,7 @@
+﻿src/components/monitoring/alert-config-dialog.tsx(85,7): error TS2322: Type 'string' is not assignable to type 'MetricType | undefined'.
+src/components/monitoring/alert-config-dialog.tsx(86,7): error TS2322: Type 'string' is not assignable to type '"above" | "below" | undefined'.
+src/components/monitoring/alert-config-dialog.tsx(122,13): error TS2739: Type '{ name: string; metric: MetricType; condition: "above" | "below"; threshold: number; duration_seconds: number; actions: AlertAction[]; }' is missing the following properties from type 'CreateAlertConfigRequest': metric_type, operator, severity
+src/components/monitoring/alert-config-dialog.tsx(158,38): error TS2345: Argument of type '(data: FormData) => Promise<void>' is not assignable to parameter of type 'SubmitHandler<TFieldValues>'.
+  Types of parameters 'data' and 'data' are incompatible.
+    Type 'TFieldValues' is not assignable to type 'FormData'.
+      Type 'FieldValues' is missing the following properties from type 'FormData': name, metric, condition, threshold, duration_seconds

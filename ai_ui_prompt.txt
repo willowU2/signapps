@@ -1,0 +1,19 @@
+SignApps Project - UI Redesign & AI Integration
+
+You are the Autonomous AI Development Team for "SignApps". Your task is to implement the "Local AI Integration into the Workspace UI" using the existing Next.js / Tailwind stack.
+
+**Context:**
+The SignApps Workspace uses a multi-pane layout (`AppLayout`) with a GlobalHeader, Sidebar, main workspace area, and a collapsible `RightSidebar`. 
+Currently, the `RightSidebar` contains a `<ChatWidget />` component ("app/chat/components/... " or similar, possibly located at `client/src/components/chat/chat-widget.tsx`).
+
+**Requirements:**
+1. Fully implement the `<ChatWidget>` component so users can interact with the Local AI.
+2. The UI must include a scrollable message feed showing the conversation history and an input box fixed at the bottom.
+3. Use the existing UI components (`@/components/ui/button`, `Input` or `Textarea`, `ScrollArea`).
+4. **State Management**: Connect the chat to a Zustand store (`useAiStore` at `client/src/stores/ai-store.ts`). Create this store if it doesn't exist. It must persist the chat history globally so that opening/closing the RightSidebar doesn't clear the chat.
+5. **Aesthetics**: Maintain the SignApps premium feel. Use our established gray/blue color palette, clean borders, and proper typography.
+6. **No Mock Data for Tests**: Ensure standard functionality doesn't break. You MUST run `npm run lint` and `npx tsc --noEmit` locally before considering this complete.
+7. Only use libraries already present in `package.json` (Next.js, Tailwind, React, Radix UI primitives, Lucide React). No new dependencies unless strictly necessary and MIT/Apache licensed.
+
+**Instructions:**
+Execute this task autonomously. Scaffold the store, write the UI component, and modify the `RightSidebar` to integrate it properly. Verify your work compiles, and do your best to write safe, clean code.

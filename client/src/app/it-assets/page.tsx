@@ -219,7 +219,7 @@ export default function ITAssetsDashboard() {
                                     ) : hardwareList.map((device) => (
                                         <TableRow key={device.id} className="group">
                                             <TableCell className="font-medium flex items-center gap-2">
-                                                {getIcon(device.hardware_type)}
+                                                {getIcon(device.hardware_type || '')}
                                                 {device.name}
                                             </TableCell>
                                             <TableCell className="capitalize">{device.hardware_type}</TableCell>

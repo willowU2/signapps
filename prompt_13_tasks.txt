@@ -1,0 +1,18 @@
+SignApps Project - Tasks UI Redesign (Google Tasks Style)
+
+You are the Autonomous AI Development Team for "SignApps". Your task is to implement the "Tasks App Redesign" using the existing Next.js / Tailwind stack.
+
+**Context & Requirements:**
+1. Refactor the `/tasks` page or the `Tasks Sidebar Widget` components (`client/src/components/tasks/...`) to exactly match a clean, white list styling akin to Google Tasks.
+2. Implement rounded date chips, specifically rendering overdue or specific states with red text (e.g., "Il y a 2 semaines").
+3. Implement small chat/user avatar chips alongside the tasks.
+4. Style the task completion checkboxes as rounded radio-button checkmarks.
+5. Build the top "TASKS" dropdown header for list selection.
+
+**Aesthetics:**
+The design needs to be exceptionally clean with ample whitespace, subtle gray borders, and distinct interactive states for the radio buttons.
+
+**Constraints:**
+1. Do not break the existing Zustand store (`useQuickTasksStore` or similar). Link these new UI models seamlessly.
+2. Use existing libraries only (`lucide-react`, `tailwindcss`, `shadcn/ui`).
+3. You MUST run `npm run lint` and `npx tsc --noEmit` to verify type safety before finishing.

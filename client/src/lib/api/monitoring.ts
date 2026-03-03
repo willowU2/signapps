@@ -135,8 +135,14 @@ export interface AlertConfig {
     created_at: string;
     updated_at: string;
     // Legacy compatibility fields
-    metric?: 'cpu' | 'memory' | 'disk' | 'network';
-    condition?: 'above' | 'below';
+    metric?: 'cpu' | 'memory' | 'disk' | 'network' | string;
+    condition?: 'above' | 'below' | string;
+    actions?: AlertAction[];
+}
+
+export interface AlertAction {
+    type: string;
+    config: any;
 }
 
 // Request to create an alert configuration
@@ -152,6 +158,9 @@ export interface CreateAlertConfigRequest {
     enabled?: boolean;
     notify_channels?: string[];
     webhook_url?: string;
+    metric?: string;
+    condition?: string;
+    actions?: AlertAction[];
 }
 
 // Alert event (when an alert is triggered)

@@ -82,8 +82,8 @@ export function AlertConfigDialog({
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     defaultValues: {
       name: config?.name || '',
-      metric: config?.metric || 'cpu',
-      condition: config?.condition || 'above',
+      metric: (config?.metric as MetricType) || 'cpu',
+      condition: (config?.condition as 'above' | 'below') || 'above',
       threshold: config?.threshold || 80,
       duration_seconds: config?.duration_seconds || 60,
     },
@@ -122,8 +122,11 @@ export function AlertConfigDialog({
       const payload: CreateAlertConfigRequest = {
         name: data.name,
         metric: data.metric,
+        metric_type: data.metric === 'network' ? 'network_in' : `${data.metric}_usage` as any,
         condition: data.condition,
+        operator: data.condition === 'above' ? 'greater_than' : 'less_than',
         threshold: data.threshold,
+        severity: 'warning',
         duration_seconds: data.duration_seconds,
         actions,
       };

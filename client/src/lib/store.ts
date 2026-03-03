@@ -136,27 +136,65 @@ export const useNotesStore = create<NotesState>()(
   )
 );
 
-// Quick Tasks State (Right Sidebar)
-interface QuickTask {
+// Quick Tasks State (Right Sidebar) - Google Tasks Style
+export interface TaskAssignee {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
+export interface TaskList {
+  id: string;
+  name: string;
+  color?: string;
+}
+
+export interface QuickTask {
   id: string;
   label: string;
   done: boolean;
+  dueDate?: string; // ISO date string
+  assignee?: TaskAssignee;
+  listId?: string;
+  createdAt: string;
 }
 
 interface QuickTasksState {
   tasks: QuickTask[];
-  addTask: (label: string) => void;
+  lists: TaskList[];
+  selectedListId: string | null;
+  addTask: (label: string, dueDate?: string, assignee?: TaskAssignee) => void;
   toggleTask: (id: string) => void;
   removeTask: (id: string) => void;
+  updateTask: (id: string, updates: Partial<QuickTask>) => void;
+  addList: (name: string) => void;
+  removeList: (id: string) => void;
+  setSelectedList: (id: string | null) => void;
 }
+
+const defaultLists: TaskList[] = [
+  { id: 'default', name: 'My Tasks', color: '#4285f4' },
+  { id: 'work', name: 'Work', color: '#ea4335' },
+  { id: 'personal', name: 'Personal', color: '#34a853' },
+];
 
 export const useQuickTasksStore = create<QuickTasksState>()(
   persist(
     (set) => ({
       tasks: [],
-      addTask: (label) =>
+      lists: defaultLists,
+      selectedListId: 'default',
+      addTask: (label, dueDate, assignee) =>
         set((state) => ({
-          tasks: [...state.tasks, { id: crypto.randomUUID(), label, done: false }],
+          tasks: [...state.tasks, {
+            id: crypto.randomUUID(),
+            label,
+            done: false,
+            dueDate,
+            assignee,
+            listId: state.selectedListId || 'default',
+            createdAt: new Date().toISOString(),
+          }],
         })),
       toggleTask: (id) =>
         set((state) => ({
@@ -164,6 +202,21 @@ export const useQuickTasksStore = create<QuickTasksState>()(
         })),
       removeTask: (id) =>
         set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
+      updateTask: (id, updates) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+        })),
+      addList: (name) =>
+        set((state) => ({
+          lists: [...state.lists, { id: crypto.randomUUID(), name }],
+        })),
+      removeList: (id) =>
+        set((state) => ({
+          lists: state.lists.filter((l) => l.id !== id),
+          tasks: state.tasks.filter((t) => t.listId !== id),
+        })),
+      setSelectedList: (id) =>
+        set({ selectedListId: id }),
     }),
     { name: 'quick-tasks-storage' }
   )

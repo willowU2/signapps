@@ -1,7 +1,5 @@
 {
-  {
-  "contextWindow": 1000000"
-  }
+  "contextWindow": 1000000,
   "permissions": {
     "allow": [
       "Bash(test:*)",

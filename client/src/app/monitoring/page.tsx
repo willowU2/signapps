@@ -47,7 +47,7 @@ import {
   Legend,
 } from 'recharts';
 import { useQueryClient } from '@tanstack/react-query';
-import { AlertConfig } from '@/lib/api';
+import { AlertConfig, AlertSeverity } from '@/lib/api';
 import { AlertConfigDialog } from '@/components/monitoring/alert-config-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import {
@@ -201,7 +201,7 @@ export default function MonitoringPage() {
     return <Badge variant="destructive">Critical</Badge>;
   };
 
-  const getAlertSeverityBadge = (severity: 'warning' | 'critical') => {
+  const getAlertSeverityBadge = (severity: AlertSeverity) => {
     if (severity === 'critical') {
       return <Badge variant="destructive">Critical</Badge>;
     }
@@ -657,12 +657,12 @@ export default function MonitoringPage() {
                           >
                             <div className="flex items-center gap-3">
                               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
-                                {getMetricIcon(config.metric)}
+                                {getMetricIcon(config.metric || config.metric_type || '')}
                               </div>
                               <div>
                                 <p className="font-medium">{config.name}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {config.metric.toUpperCase()} {config.condition} {config.threshold}%
+                                  {(config.metric || config.metric_type || '').toUpperCase()} {config.condition || config.operator} {config.threshold}%
                                 </p>
                               </div>
                             </div>
