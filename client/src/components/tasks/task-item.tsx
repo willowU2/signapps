@@ -69,9 +69,9 @@ export function TaskItem({ task, onToggle, onRemove }: TaskItemProps) {
             {...attributes}
             {...listeners}
             className={cn(
-                "group flex items-start gap-3 py-3 px-3 rounded-lg transition-all cursor-grab active:cursor-grabbing border border-transparent",
-                isOver ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50",
-                isDragging && "opacity-50 shadow-lg bg-white border-gray-200"
+                "group flex items-start gap-3 py-3 px-4 transition-all cursor-grab active:cursor-grabbing border-l-2 border-l-transparent border-b border-b-[#f1f3f4]",
+                isOver ? "bg-[#e8f0fe] border-l-[#1a73e8]" : "hover:bg-[#f8f9fa]",
+                isDragging && "opacity-50 shadow-lg bg-white border-l-gray-300"
             )}
         >
             {/* Google Tasks Style Radio Checkbox - Rounded circle with border */}
@@ -98,8 +98,8 @@ export function TaskItem({ task, onToggle, onRemove }: TaskItemProps) {
             <div className="flex-1 min-w-0">
                 <div
                     className={cn(
-                        "text-sm leading-relaxed select-none cursor-pointer",
-                        task.done && "text-gray-400 line-through"
+                        "text-[14px] leading-snug select-none cursor-pointer text-[#202124]",
+                        task.done && "text-[#80868b] line-through decoration-[#80868b]"
                     )}
                     onClick={() => onToggle(task.id)}
                 >
@@ -148,11 +148,11 @@ export function TaskItem({ task, onToggle, onRemove }: TaskItemProps) {
                 )}
             </div>
 
-            {/* Delete Button */}
+            {/* Delete Button - Google Tasks style */}
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-500 hover:bg-red-50 shrink-0"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] rounded-full shrink-0"
                 onClick={(e) => {
                     e.stopPropagation();
                     onRemove(task.id);

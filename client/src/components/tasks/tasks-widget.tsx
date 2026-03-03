@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuickTasksStore } from "@/lib/store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -12,16 +12,10 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Plus, ChevronDown, Calendar as CalendarIcon, ListTodo, Check } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, ListTodo, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TaskItem } from "./task-item";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export function TasksWidget() {
@@ -36,8 +30,8 @@ export function TasksWidget() {
     } = useQuickTasksStore();
 
     const [newTask, setNewTask] = useState("");
-    const [dueDate, setDueDate] = useState<Date | undefined>();
-    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+    const [dueDate, setDueDate] = useState<string>("");
+    const dateInputRef = useRef<HTMLInputElement>(null);
 
     const selectedList = lists.find(l => l.id === selectedListId) || lists[0];
     const filteredTasks = selectedListId
@@ -50,69 +44,85 @@ export function TasksWidget() {
     const handleAddTask = (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!newTask.trim()) return;
-        addTask(newTask.trim(), dueDate?.toISOString());
+        const dateToSave = dueDate ? new Date(dueDate).toISOString() : undefined;
+        addTask(newTask.trim(), dateToSave);
         setNewTask("");
-        setDueDate(undefined);
+        setDueDate("");
     };
+
+    const handleDateClick = () => {
+        dateInputRef.current?.showPicker();
+    };
+
+    const formattedDate = dueDate ? format(parseISO(dueDate), "d MMM", { locale: fr }) : null;
 
     return (
         <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
-            {/* Google Tasks Style Header */}
-            <div className="px-4 py-3 border-b border-gray-100">
+            {/* Google Tasks Style Header - Clean white design */}
+            <div className="px-4 pt-5 pb-3 border-b border-[#f1f3f4]">
+                {/* TASKS label */}
+                <div className="text-[11px] font-semibold text-[#5f6368] tracking-widest uppercase mb-2">
+                    TASKS
+                </div>
+
+                {/* List Dropdown */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-2 text-lg font-semibold text-gray-900 hover:bg-gray-50 rounded-lg px-2 py-1 -ml-2 transition-colors">
-                            <ListTodo className="w-5 h-5 text-blue-500" />
-                            {selectedList?.name || "TASKS"}
-                            <ChevronDown className="w-4 h-4 text-gray-400" />
+                        <button className="flex items-center gap-1 text-[22px] font-normal text-[#202124] hover:bg-[#f1f3f4] rounded-md px-2 py-1 -ml-2 transition-colors">
+                            {selectedList?.name || "My Tasks"}
+                            <svg width="20" height="20" viewBox="0 0 24 24" className="text-[#5f6368] fill-current ml-1">
+                                <path d="M7 10l5 5 5-5H7z"></path>
+                            </svg>
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56">
+                    <DropdownMenuContent align="start" className="w-56 rounded-xl shadow-lg border-[#dadce0]">
                         {lists.map((list) => (
                             <DropdownMenuItem
                                 key={list.id}
                                 onClick={() => setSelectedList(list.id)}
-                                className="flex items-center justify-between"
+                                className="flex items-center justify-between rounded-lg"
                             >
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-3">
                                     <div
-                                        className="w-3 h-3 rounded-full"
+                                        className="w-3 h-3 rounded-sm"
                                         style={{ backgroundColor: list.color || '#4285f4' }}
                                     />
-                                    {list.name}
+                                    <span className="text-[14px] text-[#202124]">{list.name}</span>
                                 </div>
                                 {selectedListId === list.id && (
-                                    <Check className="w-4 h-4 text-blue-500" />
+                                    <Check className="w-4 h-4 text-[#1a73e8]" />
                                 )}
                             </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={() => setSelectedList(null)}
-                            className="text-gray-500"
+                            className="text-[#5f6368] rounded-lg"
                         >
                             Voir toutes les tâches
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
-                <p className="text-sm text-gray-500 mt-1 pl-1">
+                <p className="text-[13px] text-[#5f6368] mt-1.5">
                     {pendingTasks.length === 0
                         ? "Aucune tâche en attente"
                         : `${pendingTasks.length} tâche${pendingTasks.length > 1 ? 's' : ''} en attente`}
                 </p>
             </div>
 
-            {/* Tasks List */}
-            <ScrollArea className="flex-1">
-                <div className="px-2 py-2">
+            {/* Tasks List - Google Tasks clean white style */}
+            <ScrollArea className="flex-1 bg-white">
+                <div className="py-1">
                     {filteredTasks.length === 0 ? (
-                        <div className="text-center py-12">
-                            <ListTodo className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                            <p className="text-sm text-gray-400">
+                        <div className="text-center py-16 px-4">
+                            <div className="w-16 h-16 rounded-full bg-[#f1f3f4] mx-auto mb-4 flex items-center justify-center">
+                                <ListTodo className="w-8 h-8 text-[#9aa0a6]" />
+                            </div>
+                            <p className="text-[14px] text-[#5f6368] font-medium">
                                 Aucune tâche pour le moment
                             </p>
-                            <p className="text-xs text-gray-300 mt-1">
+                            <p className="text-[13px] text-[#9aa0a6] mt-1">
                                 Ajoutez une tâche ci-dessous
                             </p>
                         </div>
@@ -120,7 +130,7 @@ export function TasksWidget() {
                         <>
                             {/* Pending Tasks */}
                             {pendingTasks.length > 0 && (
-                                <div className="space-y-0.5">
+                                <div>
                                     {pendingTasks.map((task) => (
                                         <TaskItem
                                             key={task.id}
@@ -134,13 +144,13 @@ export function TasksWidget() {
 
                             {/* Completed Tasks */}
                             {completedTasks.length > 0 && (
-                                <div className="mt-4">
-                                    <div className="px-3 py-2">
-                                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                                <div className="mt-2 border-t border-[#f1f3f4]">
+                                    <div className="px-4 py-3">
+                                        <span className="text-[11px] font-semibold text-[#5f6368] uppercase tracking-wider">
                                             Terminées ({completedTasks.length})
                                         </span>
                                     </div>
-                                    <div className="space-y-0.5 opacity-60">
+                                    <div className="opacity-70">
                                         {completedTasks.map((task) => (
                                             <TaskItem
                                                 key={task.id}
@@ -158,68 +168,66 @@ export function TasksWidget() {
             </ScrollArea>
 
             {/* Add Task Form - Google Tasks Style */}
-            <div className="p-3 border-t border-gray-100 bg-white">
-                <form onSubmit={handleAddTask} className="space-y-2">
-                    <div className="flex items-center gap-2">
-                        <div className="flex-1 relative">
-                            <Input
-                                placeholder="Ajouter une tâche..."
-                                value={newTask}
-                                onChange={(e) => setNewTask(e.target.value)}
-                                className="pr-10 border-gray-200 focus:border-blue-400 focus:ring-blue-400"
-                            />
+            <div className="p-4 border-t border-[#f1f3f4] bg-white">
+                <form onSubmit={handleAddTask} className="space-y-3">
+                    <div className="flex items-center gap-3">
+                        {/* Plus icon like Google Tasks */}
+                        <div className="w-[18px] h-[18px] rounded-full border-[1.5px] border-[#80868b] flex items-center justify-center shrink-0">
+                            <Plus className="w-3 h-3 text-[#80868b]" />
                         </div>
-                        <Button
-                            type="submit"
-                            size="icon"
-                            disabled={!newTask.trim()}
-                            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full h-9 w-9 shadow-sm"
-                        >
-                            <Plus className="h-5 w-5" />
-                        </Button>
+                        <Input
+                            placeholder="Ajouter une tâche"
+                            value={newTask}
+                            onChange={(e) => setNewTask(e.target.value)}
+                            className="border-0 border-b border-[#e8eaed] rounded-none px-0 h-9 text-[14px] text-[#202124] placeholder:text-[#80868b] focus-visible:ring-0 focus-visible:border-[#1a73e8] transition-colors"
+                        />
                     </div>
 
-                    {/* Date Picker Row */}
-                    <div className="flex items-center gap-2 pl-1">
-                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                            <PopoverTrigger asChild>
-                                <button
-                                    type="button"
-                                    className={cn(
-                                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors",
-                                        dueDate
-                                            ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                    )}
-                                >
-                                    <CalendarIcon className="w-3.5 h-3.5" />
-                                    {dueDate
-                                        ? format(dueDate, "d MMM", { locale: fr })
-                                        : "Ajouter une date"}
-                                </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={dueDate}
-                                    onSelect={(date) => {
-                                        setDueDate(date);
-                                        setIsCalendarOpen(false);
-                                    }}
-                                    locale={fr}
-                                    initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
+                    {/* Date Picker Row - Google Tasks chip style */}
+                    <div className="flex items-center gap-2 pl-7">
+                        {/* Hidden native date input */}
+                        <input
+                            ref={dateInputRef}
+                            type="date"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                            className="sr-only"
+                        />
 
-                        {dueDate && (
+                        {/* Date chip button */}
+                        <button
+                            type="button"
+                            onClick={handleDateClick}
+                            className={cn(
+                                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium transition-colors",
+                                formattedDate
+                                    ? "bg-[#e8f0fe] text-[#1967d2] border border-[#d2e3fc] hover:bg-[#d2e3fc]"
+                                    : "bg-[#f1f3f4] text-[#5f6368] hover:bg-[#e8eaed] border border-transparent"
+                            )}
+                        >
+                            <CalendarIcon className="w-3.5 h-3.5" />
+                            {formattedDate || "Date"}
+                        </button>
+
+                        {formattedDate && (
                             <button
                                 type="button"
-                                onClick={() => setDueDate(undefined)}
-                                className="text-xs text-gray-400 hover:text-gray-600"
+                                onClick={() => setDueDate("")}
+                                className="text-[12px] text-[#5f6368] hover:text-[#202124] transition-colors"
                             >
                                 Effacer
                             </button>
+                        )}
+
+                        {/* Submit button when task has content */}
+                        {newTask.trim() && (
+                            <Button
+                                type="submit"
+                                size="sm"
+                                className="ml-auto bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-full h-8 px-4 text-[13px] font-medium shadow-sm"
+                            >
+                                Enregistrer
+                            </Button>
                         )}
                     </div>
                 </form>
