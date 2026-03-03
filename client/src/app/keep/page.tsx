@@ -40,6 +40,10 @@ import {
 import { cn } from "@/lib/utils";
 import {
   useKeepStore,
+  useKeepUIState,
+  useKeepUIActions,
+  useKeepNoteActions,
+  useKeepLabels,
   selectPinnedNotes,
   selectUnpinnedNotes,
   NOTE_COLORS,
@@ -55,16 +59,10 @@ const sidebarItems = [
 ];
 
 export default function KeepPage() {
+  // Optimized selectors to prevent unnecessary re-renders
+  const { searchQuery, isGridView, activeSidebarView, sidebarExpanded } = useKeepUIState();
+  const { setSearchQuery, setGridView, setActiveSidebarView, setSidebarExpanded } = useKeepUIActions();
   const {
-    searchQuery,
-    isGridView,
-    activeSidebarView,
-    sidebarExpanded,
-    labels,
-    setSearchQuery,
-    setGridView,
-    setActiveSidebarView,
-    setSidebarExpanded,
     addNote,
     togglePin,
     archiveNote,
@@ -74,7 +72,8 @@ export default function KeepPage() {
     emptyTrash,
     setNoteColor,
     toggleChecklistItem,
-  } = useKeepStore();
+  } = useKeepNoteActions();
+  const labels = useKeepLabels();
 
   const pinnedNotes = useKeepStore(selectPinnedNotes);
   const unpinnedNotes = useKeepStore(selectUnpinnedNotes);

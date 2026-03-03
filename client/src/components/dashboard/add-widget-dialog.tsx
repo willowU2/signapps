@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Check } from 'lucide-react';
-import { useDashboardStore, WIDGET_CATALOG, WidgetType } from '@/stores/dashboard-store';
+import { useDashboardWidgets, useDashboardWidgetActions, WIDGET_CATALOG, WidgetType } from '@/stores/dashboard-store';
 
 interface AddWidgetDialogProps {
   open: boolean;
@@ -18,7 +18,9 @@ interface AddWidgetDialogProps {
 }
 
 export function AddWidgetDialog({ open, onOpenChange }: AddWidgetDialogProps) {
-  const { widgets, addWidget } = useDashboardStore();
+  // Granular selectors for optimized re-renders
+  const widgets = useDashboardWidgets();
+  const { addWidget } = useDashboardWidgetActions();
 
   const activeTypes = new Set(widgets.map((w) => w.type));
 

@@ -7,14 +7,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCw, Pencil, Plus, RotateCcw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDashboardData } from '@/hooks/use-dashboard';
-import { useDashboardStore } from '@/stores/dashboard-store';
+import { useDashboardEditMode, useDashboardEditActions } from '@/stores/dashboard-store';
 import { WidgetGrid } from '@/components/dashboard/widget-grid';
 import { AddWidgetDialog } from '@/components/dashboard/add-widget-dialog';
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
   const { isLoading: loading, isFetching: refreshing } = useDashboardData();
-  const { editMode, setEditMode, resetLayout } = useDashboardStore();
+  // Granular selectors for optimized re-renders
+  const editMode = useDashboardEditMode();
+  const { setEditMode, resetLayout } = useDashboardEditActions();
   const [addWidgetOpen, setAddWidgetOpen] = useState(false);
 
   if (loading) {

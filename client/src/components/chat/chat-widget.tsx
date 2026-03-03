@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { useAiStream } from "@/hooks/use-ai-stream";
-import { useAiStore } from "@/stores/ai-store";
+import { useAiMessages, useAiStreamingState, useAiMessageActions } from "@/stores/ai-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,16 +16,16 @@ import {
 } from "@/components/ui/tooltip";
 
 export function ChatWidget() {
+  // Granular selectors for optimized re-renders
+  const messages = useAiMessages();
+  const { isStreaming: storeIsStreaming, streamingMessageId } = useAiStreamingState();
   const {
-    messages,
-    isStreaming: storeIsStreaming,
-    streamingMessageId,
     addMessage,
     appendToMessage,
     setMessageSources,
     setStreaming,
     clearMessages,
-  } = useAiStore();
+  } = useAiMessageActions();
 
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);

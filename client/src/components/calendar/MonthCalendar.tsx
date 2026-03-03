@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from "date-fns";
-import { useCalendarStore } from "@/stores/calendar-store";
+import { useCalendarStore, useCalendarSelection } from "@/stores/calendar-store";
 import { useEvents } from "@/hooks/use-events";
 import { Event } from "@/types/calendar";
 import { Button } from "@/components/ui/button";
@@ -73,7 +73,9 @@ interface MonthCalendarProps {
 }
 
 export function MonthCalendar({ selectedCalendarId }: MonthCalendarProps) {
-  const { currentDate, nextMonth, prevMonth, selectEvent, selectedEventId } = useCalendarStore();
+  // Granular selectors for optimized re-renders
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const { selectedEventId, selectEvent } = useCalendarSelection();
   const { events, fetchEvents, isLoading } = useEvents(selectedCalendarId);
 
   // Fetch events for current month when it changes

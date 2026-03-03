@@ -4,7 +4,7 @@ import { useMemo, useCallback } from 'react';
 import { ResponsiveGridLayout, useContainerWidth, Layout } from 'react-grid-layout';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { useDashboardStore, WidgetConfig } from '@/stores/dashboard-store';
+import { useDashboardStore, useDashboardWidgets, useDashboardEditMode, useDashboardWidgetActions, WidgetConfig } from '@/stores/dashboard-store';
 import { useContainers } from '@/hooks/use-containers';
 
 import { WidgetStatCards } from './widget-stat-cards';
@@ -62,7 +62,10 @@ function compactLayout(items: { i: string; x: number; y: number; w: number; h: n
 }
 
 export function WidgetGrid() {
-  const { widgets, editMode, updateLayout, removeWidget } = useDashboardStore();
+  // Granular selectors for optimized re-renders
+  const widgets = useDashboardWidgets();
+  const editMode = useDashboardEditMode();
+  const { updateLayout, removeWidget } = useDashboardWidgetActions();
   const { width, containerRef, mounted } = useContainerWidth();
   const { data: containers = [] } = useContainers();
 

@@ -11,7 +11,8 @@ interface CalendarViewProps {
 }
 
 export function CalendarView({ selectedCalendarId }: CalendarViewProps) {
-    const { viewMode } = useCalendarStore();
+    // Granular selector - only re-render when viewMode changes
+    const viewMode = useCalendarStore((state) => state.viewMode);
 
     switch (viewMode) {
         case "week":

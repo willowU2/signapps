@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 
 export interface ChecklistItem {
   id: string;
@@ -447,9 +448,24 @@ export const useKeepStore = create<KeepState>()(
   )
 );
 
-// Selectors
-export const selectActiveNotes = (state: KeepState) => {
-  const { notes, activeSidebarView, searchQuery, selectedLabelFilter } = state;
+// Selectors - memoization keys for stable references
+const activeNotesCache = new WeakMap<KeepState['notes'], Map<string, KeepNote[]>>();
+
+export const selectActiveNotes = (state: KeepState): KeepNote[] => {
+  const { notes, activeSidebarView, searchQuery, selectedLabelFilter, labels } = state;
+
+  // Create a cache key from the filter parameters
+  const cacheKey = `${activeSidebarView}|${searchQuery}|${selectedLabelFilter}`;
+
+  // Check cache
+  let notesCache = activeNotesCache.get(notes);
+  if (!notesCache) {
+    notesCache = new Map();
+    activeNotesCache.set(notes, notesCache);
+  }
+
+  const cached = notesCache.get(cacheKey);
+  if (cached) return cached;
 
   let filtered = notes;
 
@@ -479,17 +495,58 @@ export const selectActiveNotes = (state: KeepState) => {
 
   // Filter by label
   if (selectedLabelFilter) {
-    const label = state.labels.find((l) => l.id === selectedLabelFilter);
+    const label = labels.find((l) => l.id === selectedLabelFilter);
     if (label) {
       filtered = filtered.filter((n) => n.labels.includes(label.name));
     }
   }
 
+  // Cache the result
+  notesCache.set(cacheKey, filtered);
+
   return filtered;
 };
 
-export const selectPinnedNotes = (state: KeepState) =>
+export const selectPinnedNotes = (state: KeepState): KeepNote[] =>
   selectActiveNotes(state).filter((n) => n.isPinned);
 
-export const selectUnpinnedNotes = (state: KeepState) =>
+export const selectUnpinnedNotes = (state: KeepState): KeepNote[] =>
   selectActiveNotes(state).filter((n) => !n.isPinned);
+
+// Granular selector hooks for optimized re-renders
+export const useKeepUIState = () =>
+  useKeepStore(
+    useShallow((state) => ({
+      searchQuery: state.searchQuery,
+      isGridView: state.isGridView,
+      activeSidebarView: state.activeSidebarView,
+      sidebarExpanded: state.sidebarExpanded,
+    }))
+  );
+
+export const useKeepUIActions = () =>
+  useKeepStore(
+    useShallow((state) => ({
+      setSearchQuery: state.setSearchQuery,
+      setGridView: state.setGridView,
+      setActiveSidebarView: state.setActiveSidebarView,
+      setSidebarExpanded: state.setSidebarExpanded,
+    }))
+  );
+
+export const useKeepNoteActions = () =>
+  useKeepStore(
+    useShallow((state) => ({
+      addNote: state.addNote,
+      togglePin: state.togglePin,
+      archiveNote: state.archiveNote,
+      trashNote: state.trashNote,
+      restoreNote: state.restoreNote,
+      permanentlyDeleteNote: state.permanentlyDeleteNote,
+      emptyTrash: state.emptyTrash,
+      setNoteColor: state.setNoteColor,
+      toggleChecklistItem: state.toggleChecklistItem,
+    }))
+  );
+
+export const useKeepLabels = () => useKeepStore((state) => state.labels);

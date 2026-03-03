@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 
 export type WidgetType =
   | 'stat-cards'
@@ -143,3 +144,36 @@ export const useDashboardStore = create<DashboardStore>()(
     },
   ),
 );
+
+// Granular selector hooks for optimized re-renders
+export const useDashboardWidgets = () => useDashboardStore((state) => state.widgets);
+
+export const useDashboardEditMode = () => useDashboardStore((state) => state.editMode);
+
+export const useDashboardEditActions = () =>
+  useDashboardStore(
+    useShallow((state) => ({
+      setEditMode: state.setEditMode,
+      resetLayout: state.resetLayout,
+    }))
+  );
+
+export const useDashboardWidgetActions = () =>
+  useDashboardStore(
+    useShallow((state) => ({
+      addWidget: state.addWidget,
+      removeWidget: state.removeWidget,
+      updateLayout: state.updateLayout,
+    }))
+  );
+
+export const useDashboardBookmarks = () => useDashboardStore((state) => state.bookmarks);
+
+export const useDashboardBookmarkActions = () =>
+  useDashboardStore(
+    useShallow((state) => ({
+      addBookmark: state.addBookmark,
+      removeBookmark: state.removeBookmark,
+      updateBookmark: state.updateBookmark,
+    }))
+  );

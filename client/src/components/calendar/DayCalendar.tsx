@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo } from "react";
 import { format, startOfDay, endOfDay, addDays, getHours, getMinutes, differenceInMinutes, isToday } from "date-fns";
-import { useCalendarStore } from "@/stores/calendar-store";
+import { useCalendarStore, useCalendarSelection, useCalendarTimezones } from "@/stores/calendar-store";
 import { useEvents } from "@/hooks/use-events";
 import { Event } from "@/types/calendar";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,11 @@ interface DayCalendarProps {
 }
 
 export function DayCalendar({ selectedCalendarId }: DayCalendarProps) {
-    const { currentDate, selectEvent, selectedEventId } = useCalendarStore();
+    // Granular selectors for optimized re-renders
+    const currentDate = useCalendarStore((state) => state.currentDate);
+    const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
+    const { selectedEventId, selectEvent } = useCalendarSelection();
+    const timezones = useCalendarTimezones();
     const { events, fetchEvents, isLoading } = useEvents(selectedCalendarId);
 
     // Fetch events
@@ -26,12 +30,12 @@ export function DayCalendar({ selectedCalendarId }: DayCalendarProps) {
 
     const handlePrevDay = () => {
         const newDate = addDays(currentDate, -1);
-        useCalendarStore.getState().setCurrentDate(newDate);
+        setCurrentDate(newDate);
     };
 
     const handleNextDay = () => {
         const newDate = addDays(currentDate, 1);
-        useCalendarStore.getState().setCurrentDate(newDate);
+        setCurrentDate(newDate);
     };
 
     const hours = Array.from({ length: 24 }, (_, i) => i);
@@ -60,7 +64,7 @@ export function DayCalendar({ selectedCalendarId }: DayCalendarProps) {
                     <Button variant="outline" size="icon" onClick={handlePrevDay}>
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => useCalendarStore.setState({ currentDate: new Date() })}>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
                         Today
                     </Button>
                     <Button variant="outline" size="icon" onClick={handleNextDay}>
@@ -73,7 +77,7 @@ export function DayCalendar({ selectedCalendarId }: DayCalendarProps) {
             <div className="flex border-b">
                 {/* Timezone Headers */}
                 <div className="flex min-w-max border-r bg-muted/50">
-                    {useCalendarStore.getState().timezones.map((tz, i) => (
+                    {timezones.map((tz, i) => (
                         <div key={tz} className={`w-16 text-center py-2 text-xs font-medium text-muted-foreground ${i > 0 ? 'border-l' : ''}`}>
                             <span className="truncate block px-1" title={tz}>{tz.split('/').pop()?.replace('_', ' ') || tz}</span>
                         </div>
@@ -90,7 +94,7 @@ export function DayCalendar({ selectedCalendarId }: DayCalendarProps) {
                 <div className="flex min-h-[1440px]">
                     {/* Time Axes */}
                     <div className="flex min-w-max border-r bg-muted/30 z-10 bg-white dark:bg-gray-950">
-                        {useCalendarStore.getState().timezones.map((tz, i) => (
+                        {timezones.map((tz, i) => (
                             <div key={tz} className={`w-16 ${i > 0 ? 'border-l border-gray-200/50 dark:border-gray-800/50' : ''}`}>
                                 {hours.map((hour) => {
                                     const date = new Date();

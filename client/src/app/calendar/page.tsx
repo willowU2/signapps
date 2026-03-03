@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useCalendarStore } from "@/stores/calendar-store";
+import { useCalendarStore, useCalendarSelection } from "@/stores/calendar-store";
+import { useShallow } from "zustand/react/shallow";
 import { calendarApi } from "@/lib/api";
 import { CalendarView } from "@/components/calendar/CalendarView";
 import { EventForm } from "@/components/calendar/EventForm";
@@ -35,18 +36,14 @@ import {
 } from "lucide-react";
 
 export default function CalendarPage() {
-  const {
-    calendars,
-    setCalendars,
-    events,
-    selectedEventId,
-    selectEvent,
-    setSelectedCalendars,
-    viewMode,
-    setViewMode,
-    timezones,
-    setTimezones,
-  } = useCalendarStore();
+  // Granular selectors for optimized re-renders
+  const calendars = useCalendarStore((state) => state.calendars);
+  const setCalendars = useCalendarStore((state) => state.setCalendars);
+  const setSelectedCalendars = useCalendarStore((state) => state.setSelectedCalendars);
+  const events = useCalendarStore((state) => state.events);
+  const viewMode = useCalendarStore((state) => state.viewMode);
+  const setViewMode = useCalendarStore((state) => state.setViewMode);
+  const { selectedEventId, selectEvent } = useCalendarSelection();
 
   const selectedEvent = useMemo(() =>
     events.find((e) => e.id === selectedEventId),

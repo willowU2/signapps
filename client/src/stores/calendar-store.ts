@@ -1,6 +1,7 @@
 //! Zustand store for calendar UI state
 
 import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 import { Calendar, Event } from "@/types/calendar";
 
 export type ViewMode = "month" | "week" | "day" | "agenda" | "year";
@@ -97,3 +98,41 @@ export const useCalendarStore = create<CalendarState>((set) => ({
     }),
   today: () => set({ currentDate: new Date() }),
 }));
+
+// Granular selector hooks for optimized re-renders
+export const useCalendarViewState = () =>
+  useCalendarStore(
+    useShallow((state) => ({
+      viewMode: state.viewMode,
+      currentDate: state.currentDate,
+    }))
+  );
+
+export const useCalendarNavigation = () =>
+  useCalendarStore(
+    useShallow((state) => ({
+      nextMonth: state.nextMonth,
+      prevMonth: state.prevMonth,
+      today: state.today,
+      setCurrentDate: state.setCurrentDate,
+    }))
+  );
+
+export const useCalendarSelection = () =>
+  useCalendarStore(
+    useShallow((state) => ({
+      selectedEventId: state.selectedEventId,
+      selectEvent: state.selectEvent,
+    }))
+  );
+
+export const useCalendarData = () =>
+  useCalendarStore(
+    useShallow((state) => ({
+      events: state.events,
+      calendars: state.calendars,
+      isLoading: state.isLoading,
+    }))
+  );
+
+export const useCalendarTimezones = () => useCalendarStore((state) => state.timezones);

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, isToday, addDays, getHours, getMinutes, differenceInMinutes } from "date-fns";
-import { useCalendarStore } from "@/stores/calendar-store";
+import { useCalendarStore, useCalendarSelection, useCalendarTimezones } from "@/stores/calendar-store";
 import { useEvents } from "@/hooks/use-events";
 import { Event } from "@/types/calendar";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,11 @@ interface WeekCalendarProps {
 }
 
 export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
-    const { currentDate, nextMonth, prevMonth, selectEvent, selectedEventId } = useCalendarStore();
-    // We can reuse nextMonth/prevMonth but for week view we might want nextWeek/prevWeek
-    // But store only has nextMonth. We might need to implement nextWeek in store or local state?
-    // The store has `setCurrentDate`. Page.tsx handles some navigation? No, MonthCalendar used store actions.
-    // I should add `nextWeek` / `prevWeek` to store or just calculate here and set date.
+    // Granular selectors for optimized re-renders
+    const currentDate = useCalendarStore((state) => state.currentDate);
+    const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
+    const { selectedEventId, selectEvent } = useCalendarSelection();
+    const timezones = useCalendarTimezones();
 
     const { events, fetchEvents, isLoading } = useEvents(selectedCalendarId);
 
@@ -49,12 +49,12 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
 
     const handlePrevWeek = () => {
         const newDate = addDays(currentDate, -7);
-        useCalendarStore.getState().setCurrentDate(newDate);
+        setCurrentDate(newDate);
     };
 
     const handleNextWeek = () => {
         const newDate = addDays(currentDate, 7);
-        useCalendarStore.getState().setCurrentDate(newDate);
+        setCurrentDate(newDate);
     };
 
     const getEventStyle = (event: Event) => {
@@ -84,7 +84,7 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
                     <Button variant="outline" size="icon" onClick={handlePrevWeek}>
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => useCalendarStore.setState({ currentDate: new Date() })}>
+                    <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
                         Today
                     </Button>
                     <Button variant="outline" size="icon" onClick={handleNextWeek}>
@@ -97,7 +97,7 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
             <div className="flex border-b">
                 {/* Timezone Headers */}
                 <div className="flex min-w-max border-r bg-muted/50">
-                    {useCalendarStore.getState().timezones.map((tz, i) => (
+                    {timezones.map((tz, i) => (
                         <div key={tz} className={`w-16 text-center py-2 text-xs font-medium text-muted-foreground ${i > 0 ? 'border-l' : ''}`}>
                             <span className="truncate block px-1" title={tz}>{tz.split('/').pop()?.replace('_', ' ') || tz}</span>
                         </div>
@@ -119,7 +119,7 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
                 <div className="flex min-h-[1440px]"> {/* 60px * 24 = 1440px height */}
                     {/* Time Axes */}
                     <div className="flex min-w-max border-r bg-muted/30">
-                        {useCalendarStore.getState().timezones.map((tz, i) => (
+                        {timezones.map((tz, i) => (
                             <div key={tz} className={`w-16 ${i > 0 ? 'border-l border-gray-200/50 dark:border-gray-800/50' : ''}`}>
                                 {hours.map((hour) => {
                                     const date = new Date();

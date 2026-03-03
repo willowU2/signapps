@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 
 export interface AiMessage {
   id: string;
@@ -113,3 +114,26 @@ export const useAiStore = create<AiState>()(
     }
   )
 );
+
+// Granular selector hooks for optimized re-renders
+export const useAiMessages = () => useAiStore((state) => state.messages);
+
+export const useAiStreamingState = () =>
+  useAiStore(
+    useShallow((state) => ({
+      isStreaming: state.isStreaming,
+      streamingMessageId: state.streamingMessageId,
+    }))
+  );
+
+export const useAiMessageActions = () =>
+  useAiStore(
+    useShallow((state) => ({
+      addMessage: state.addMessage,
+      updateMessage: state.updateMessage,
+      appendToMessage: state.appendToMessage,
+      setMessageSources: state.setMessageSources,
+      setStreaming: state.setStreaming,
+      clearMessages: state.clearMessages,
+    }))
+  );
