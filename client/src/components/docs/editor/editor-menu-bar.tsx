@@ -44,8 +44,12 @@ export function EditorMenuBar({ editor }: EditorMenuBarProps) {
                             <span>Nouveau</span>
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
-                            <DropdownMenuItem>Document</DropdownMenuItem>
-                            <DropdownMenuItem>À partir d'un modèle</DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <a href="/docs">Document</a>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <a href="/docs">À partir d'un modèle</a>
+                            </DropdownMenuItem>
                         </DropdownMenuSubContent>
                     </DropdownMenuSub>
                     <DropdownMenuItem>
@@ -84,10 +88,18 @@ export function EditorMenuBar({ editor }: EditorMenuBarProps) {
                             <span>Télécharger</span>
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
-                            <DropdownMenuItem onClick={() => { /* Export to PDF */ }}>
+                            <DropdownMenuItem onClick={() => window.print()}>
                                 Document PDF (.pdf)
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                                const element = document.createElement("a");
+                                const text = editor.getText();
+                                const file = new Blob([text], {type: 'text/plain'});
+                                element.href = URL.createObjectURL(file);
+                                element.download = "document.txt";
+                                document.body.appendChild(element); // Required for this to work in FireFox
+                                element.click();
+                            }}>
                                 Format texte simple (.txt)
                             </DropdownMenuItem>
                         </DropdownMenuSubContent>
@@ -176,34 +188,57 @@ export function EditorMenuBar({ editor }: EditorMenuBarProps) {
                         <span className="ml-auto text-xs tracking-widest text-muted-foreground">Ctrl+Y</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                        editor.chain().focus().run();
+                        document.execCommand('cut');
+                    }}>
                         <Scissors className="mr-2 h-4 w-4" />
                         <span>Couper</span>
                         <span className="ml-auto text-xs tracking-widest text-muted-foreground">Ctrl+X</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                        editor.chain().focus().run();
+                        document.execCommand('copy');
+                    }}>
                         <Copy className="mr-2 h-4 w-4" />
                         <span>Copier</span>
                         <span className="ml-auto text-xs tracking-widest text-muted-foreground">Ctrl+C</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={async () => {
+                        try {
+                            const text = await navigator.clipboard.readText();
+                            editor.chain().focus().insertContent(text).run();
+                        } catch (err) {
+                            console.error('Failed to read clipboard contents: ', err);
+                        }
+                    }}>
                         <Clipboard className="mr-2 h-4 w-4" />
                         <span>Coller</span>
                         <span className="ml-auto text-xs tracking-widest text-muted-foreground">Ctrl+V</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={async () => {
+                        try {
+                            const text = await navigator.clipboard.readText();
+                            editor.chain().focus().insertContent(text).run();
+                        } catch (err) {
+                            console.error('Failed to read clipboard contents: ', err);
+                        }
+                    }}>
                         <ClipboardPaste className="mr-2 h-4 w-4" />
                         <span>Coller sans la mise en forme</span>
                         <span className="ml-auto text-xs tracking-widest text-muted-foreground">Ctrl+Maj+V</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                        <BoxSelect className="mr-2 h-4 w-4 opacity-50" />
+                    <DropdownMenuItem onClick={() => editor.chain().focus().selectAll().run()}>
+                        <BoxSelect className="mr-2 h-4 w-4" />
                         <span>Tout sélectionner</span>
                         <span className="ml-auto text-xs tracking-widest text-muted-foreground">Ctrl+A</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem disabled>
-                        <Trash2 className="mr-2 h-4 w-4 opacity-50" />
+                    <DropdownMenuItem 
+                        onClick={() => editor.chain().focus().deleteSelection().run()}
+                        disabled={editor.state.selection.empty}
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
                         <span>Supprimer</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
