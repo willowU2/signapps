@@ -2,12 +2,12 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
-    routing::{delete, get, post},
+    routing::{get, post},
     Extension, Json, Router,
 };
 use chrono::Utc;
 use lettre::{
-    message::{header::ContentType, Mailbox, MultiPart, SinglePart},
+    message::{Mailbox, MultiPart, SinglePart},
     transport::smtp::authentication::Credentials,
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
@@ -435,46 +435,6 @@ async fn list_emails(
     let limit = query.limit.unwrap_or(50).min(200);
     let offset = query.offset.unwrap_or(0);
 
-    // Build dynamic query based on filters
-    let mut sql = String::from(
-        r#"
-        SELECT e.* FROM mail.emails e
-        JOIN mail.accounts a ON a.id = e.account_id
-        LEFT JOIN mail.folders f ON f.id = e.folder_id
-        WHERE a.user_id = $1 AND e.is_deleted = false
-        "#,
-    );
-
-    let mut param_idx = 2;
-    let mut params: Vec<String> = vec![];
-
-    if query.account_id.is_some() {
-        sql.push_str(&format!(" AND e.account_id = ${}", param_idx));
-        param_idx += 1;
-    }
-    if query.folder_id.is_some() {
-        sql.push_str(&format!(" AND e.folder_id = ${}", param_idx));
-        param_idx += 1;
-    }
-    if query.folder_type.is_some() {
-        sql.push_str(&format!(" AND f.folder_type = ${}", param_idx));
-        param_idx += 1;
-    }
-    if let Some(is_read) = query.is_read {
-        sql.push_str(&format!(" AND e.is_read = {}", is_read));
-    }
-    if let Some(is_starred) = query.is_starred {
-        sql.push_str(&format!(" AND e.is_starred = {}", is_starred));
-    }
-    if query.label.is_some() {
-        sql.push_str(&format!(" AND ${} = ANY(e.labels)", param_idx));
-        param_idx += 1;
-    }
-
-    sql.push_str(" ORDER BY COALESCE(e.received_at, e.created_at) DESC");
-    sql.push_str(&format!(" LIMIT {} OFFSET {}", limit, offset));
-
-    // For simplicity, using a simpler query here
     let emails = sqlx::query_as::<_, Email>(
         r#"
         SELECT e.* FROM mail.emails e

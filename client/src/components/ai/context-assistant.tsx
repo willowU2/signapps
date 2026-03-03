@@ -37,17 +37,13 @@ export function ContextAssistant() {
     <div className="fixed bottom-6 right-6 z-50">
       <Button
         onClick={async () => {
-          console.log("AI Button Clicked:", { isProactive, message: pageContext.proactiveMessage, isExecuting });
           if (isProactive) {
             // Execute the action immediately
             setIsExecuting(true)
-            
-            const actionPromise = aiApiClient.post('/ai/action', { 
+
+            const actionPromise = aiApiClient.post('/ai/action', {
               prompt: "restart the crashed container shown on screen",
               context_id: pageContext.activeContext
-            }).then(res => {
-              console.log("AI Action Result:", res.data);
-              return res;
             }).finally(() => {
               setIsExecuting(false);
               pageContext.clearProactive();

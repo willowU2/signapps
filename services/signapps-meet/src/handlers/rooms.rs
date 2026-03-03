@@ -34,6 +34,7 @@ fn hash_password(password: &str) -> Result<String, bcrypt::BcryptError> {
 }
 
 /// Verify password
+#[allow(dead_code)]
 fn verify_password(password: &str, hash: &str) -> bool {
     bcrypt::verify(password, hash).unwrap_or(false)
 }

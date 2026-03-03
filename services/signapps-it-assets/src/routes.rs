@@ -1,7 +1,4 @@
-use axum::{
-    routing::{delete, get, put},
-    Router,
-};
+use axum::{routing::get, Router};
 use signapps_db::DatabasePool;
 
 use crate::handlers::{create_hardware, delete_hardware, get_hardware, list_hardware, update_hardware};

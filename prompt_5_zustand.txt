@@ -1,0 +1,18 @@
+SignApps Project - Zustand State Management Audit & Optimization
+
+You are the Autonomous AI Development Team for "SignApps". Your task is to implement the "Zustand State Management Optimization" using the existing Next.js / Tailwind stack.
+
+**Context & Requirements:**
+1. Audit the existing Zustand stores in `client/src/stores/`.
+2. Identify and eliminate unnecessary re-renders in the React components that consume these stores (especially in `AppLayout`, `MonthCalendar`, `TasksWidget`, and `Mail` views).
+3. Implement `useShallow` from `zustand/react/shallow` where appropriate to prevent re-renders when selecting multiple state properties or derived state.
+4. Ensure state selectors are granular. Avoid returning the entire store object in selectors (e.g., `const state = useStore()`).
+5. Ensure that derived state (like filtering active tasks) is either memoized or handled in the selector properly to avoid object reference changes on every render.
+
+**Aesthetics (Performance):**
+The primary goal is to hit a consistent 60fps UI experience, minimizing unnecessary layout thrashing and heavy React reconciliation cycles caused by global state updates.
+
+**Constraints:**
+1. Do not break any existing functionality. The UI should look and behave exactly the same, just faster and smoother.
+2. Only use the existing `zustand` library. Do not introduce new state management libraries.
+3. Run `npm run lint` and `npx tsc --noEmit` locally before considering this complete to ensure no build breaks.

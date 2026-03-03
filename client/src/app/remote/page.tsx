@@ -138,14 +138,11 @@ export default function RemoteAccessDashboard() {
         wsRef.current = ws
 
         ws.onopen = () => {
-            console.log('WebSocket connected to remote session')
             toast.success(`Connect  ${conn.name}`)
         }
 
-        ws.onmessage = (event) => {
+        ws.onmessage = (_event) => {
             // Handle Guacamole protocol messages
-            const instruction = event.data
-            console.log('Received instruction:', instruction)
             // In a real implementation, we would parse and render Guacamole instructions on canvas
         }
 
@@ -155,7 +152,7 @@ export default function RemoteAccessDashboard() {
         }
 
         ws.onclose = () => {
-            console.log('WebSocket closed')
+            // Connection closed
         }
     }
 

@@ -10,7 +10,7 @@ pub async fn start_cron_scheduler(state: AppState) -> signapps_common::Result<()
     })?;
 
     // Nightly sync at 03:00 AM daily
-    let nightly_job = Job::new_async("0 0 3 * * *", move |uuid, _l| {
+    let nightly_job = Job::new_async("0 0 3 * * *", move |_uuid, _l| {
         let state_clone = state.clone();
         Box::pin(async move {
             info!("Starting nightly AI vector sync job");

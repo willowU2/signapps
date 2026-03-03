@@ -1,15 +1,10 @@
-use axum::{
-    extract::{State},
-    http::StatusCode,
-    Json,
-};
+use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use signapps_common::{Error, Result};
-use uuid::Uuid;
 
+use crate::llm::types::ChatMessage;
 use crate::AppState;
-use crate::llm::types::{ChatMessage, Role};
 
 /// Request to execute a natural language action.
 #[derive(Debug, Deserialize)]

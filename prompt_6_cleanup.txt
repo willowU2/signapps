@@ -1,0 +1,16 @@
+SignApps Project - Code Quality & Compliance Cleanup
+
+You are the Autonomous AI Development Team for "SignApps". Your task is to perform the "Code Quality & Compliance" cleanup.
+
+**Context & Requirements:**
+1. Analyze `package.json` and Cargo.toml for any non-compliant licenses (must be MIT/Apache 2.0).
+2. Clean up "vibe-coded" artifacts across frontend (`client/src`) and backend (`crates/`, `services/`):
+   - Search for and remove unused component files or dead code paths.
+   - Search for and remove leftover `console.log(...)` and `dbg!(...)` statements (excluding legitimate logger flows).
+   - Ensure `tracing` is used on the Rust side for valid logging instead of standard output.
+3. Validate strict typing logic where applicable.
+
+**Constraints:**
+1. Do not break the core functionality. Everything must continue to work perfectly.
+2. Do not hesitate to aggressively remove code that is flagged as "unused" by tsc or cargo.
+3. Run `npm run lint` and `npx tsc --noEmit` in the client directory, and `cargo check` globally before considering this complete to ensure no build breaks.

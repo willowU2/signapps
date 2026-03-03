@@ -2,13 +2,10 @@ mod handlers;
 mod models;
 mod tftp;
 
-use axum::{
-    routing::{delete, get, post, put},
-    Router,
-};
+use axum::{routing::get, Router};
 use signapps_common::auth::JwtConfig;
 use signapps_common::middleware::{
-    auth_middleware, logging_middleware, optional_auth_middleware, request_id_middleware,
+    logging_middleware, optional_auth_middleware, request_id_middleware,
 };
 use signapps_db::{create_pool, DatabasePool};
 use std::net::SocketAddr;

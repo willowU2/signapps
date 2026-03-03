@@ -2,7 +2,6 @@
 //!
 //! Generates JWT tokens for LiveKit room access
 
-use base64::{engine::general_purpose::STANDARD, Engine};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
@@ -106,6 +105,7 @@ impl VideoGrant {
     }
 
     /// Create a viewer-only grant (subscribe only)
+    #[allow(dead_code)]
     pub fn viewer(room_name: &str) -> Self {
         Self {
             room: Some(room_name.to_string()),
@@ -118,6 +118,7 @@ impl VideoGrant {
     }
 
     /// Create a server grant for room management
+    #[allow(dead_code)]
     pub fn server() -> Self {
         Self {
             room_create: Some(true),
@@ -188,6 +189,7 @@ pub fn generate_participant_token(
 }
 
 /// Generate a server token for room management operations
+#[allow(dead_code)]
 pub fn generate_server_token(config: &LiveKitConfig) -> Result<String, jsonwebtoken::errors::Error> {
     generate_token(
         config,

@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use futures::{sink::SinkExt, stream::StreamExt};
+use futures::stream::StreamExt;
 use uuid::Uuid;
 
 use crate::models::{CreateConnectionRequest, RemoteConnection, UpdateConnectionRequest};
@@ -91,8 +91,8 @@ pub async fn update_connection(
     Json(payload): Json<UpdateConnectionRequest>,
 ) -> Result<Json<RemoteConnection>, (StatusCode, String)> {
     // First check if connection exists
-    let existing = sqlx::query_as::<_, RemoteConnection>(
-        "SELECT * FROM remote.connections WHERE id = $1"
+    let _ = sqlx::query_as::<_, RemoteConnection>(
+        "SELECT * FROM remote.connections WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(state.db.inner())

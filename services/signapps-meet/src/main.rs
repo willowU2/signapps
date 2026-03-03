@@ -6,7 +6,6 @@ use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::JwtConfig;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::net::SocketAddr;
-use std::sync::Arc;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -96,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use axum::routing::{delete, get, post, put};
+    use axum::routing::{get, post};
     use handlers::{participants, recordings, rooms, tokens};
 
     // Public routes

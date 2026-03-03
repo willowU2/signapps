@@ -6,7 +6,7 @@ use serde_json::Value;
 use signapps_common::Result;
 use uuid::Uuid;
 
-use crate::llm::types::{ChatMessage, Role};
+use crate::llm::types::ChatMessage;
 use crate::AppState;
 
 /// Webhook ingest response.
