@@ -7,8 +7,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use signapps_common::{Claims, Error, Result};
-use signapps_db::models::{CreateUser, UpdateUser};
-use signapps_db::repositories::UserRepository;
+use signapps_db::models::{CreateUser, UpdateUser, CreateCalendar, CreateTask};
+use signapps_db::repositories::{UserRepository, CalendarRepository, TaskRepository};
 use uuid::Uuid;
 use validator::Validate;
 
@@ -183,7 +183,31 @@ pub async fn create(
         UserRepository::create(&state.pool, create_user).await?
     };
 
-    tracing::info!(user_id = %user.id, "Admin created user");
+    // Initialize Default Calendar
+    let calendar_params = CreateCalendar {
+        name: "Mon Calendrier".to_string(),
+        description: Some("Calendrier personnel de l'utilisateur".to_string()),
+        timezone: Some("UTC".to_string()),
+        color: Some("#3b82f6".to_string()),
+        is_shared: Some(false),
+    };
+    let calendar_repo = CalendarRepository::new(&state.pool);
+    let calendar = calendar_repo.create(calendar_params, user.id).await?;
+
+    // Initialize Default Tasks List (Root task for the calendar)
+    let task_params = CreateTask {
+        parent_task_id: None,
+        title: "Mes Tâches".to_string(),
+        description: Some("Liste principale des tâches de l'utilisateur".to_string()),
+        priority: Some(1),
+        position: Some(0),
+        due_date: None,
+        assigned_to: Some(user.id),
+    };
+    let task_repo = TaskRepository::new(&state.pool);
+    let _root_task = task_repo.create(calendar.id, task_params, user.id).await?;
+
+    tracing::info!(user_id = %user.id, calendar_id = %calendar.id, "Admin created user and default calendar & tasks");
 
     Ok(Json(UserResponse::from(user)))
 }
