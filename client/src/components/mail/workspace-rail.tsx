@@ -22,13 +22,13 @@ const apps = [
 
 export function WorkspaceRail({ activeApp = "mail", onMenuClick }: WorkspaceRailProps) {
     return (
-        <div className="w-16 shrink-0 flex flex-col items-center py-3 gap-1">
+        <div className="w-[68px] shrink-0 flex flex-col items-center py-2 gap-0.5">
             {/* Hamburger Menu */}
             <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
                     <button
                         onClick={onMenuClick}
-                        className="h-12 w-12 rounded-full flex items-center justify-center text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mb-4"
+                        className="h-12 w-12 rounded-full flex items-center justify-center text-[#5f6368] dark:text-[#e3e3e3] hover:bg-[#e8eaed] dark:hover:bg-gray-800 transition-colors mb-3"
                     >
                         <Menu className="h-6 w-6" />
                     </button>
@@ -44,10 +44,10 @@ export function WorkspaceRail({ activeApp = "mail", onMenuClick }: WorkspaceRail
                     <TooltipTrigger asChild>
                         <button
                             className={cn(
-                                "h-12 w-12 rounded-full flex items-center justify-center transition-all duration-200",
+                                "h-12 w-12 rounded-2xl flex items-center justify-center transition-all duration-200",
                                 activeApp === app.id
                                     ? "bg-[#d3e3fd] dark:bg-[#004a77]"
-                                    : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    : "hover:bg-[#e8eaed] dark:hover:bg-gray-800"
                             )}
                         >
                             <app.icon
@@ -55,7 +55,7 @@ export function WorkspaceRail({ activeApp = "mail", onMenuClick }: WorkspaceRail
                                     "h-5 w-5",
                                     activeApp === app.id
                                         ? app.color
-                                        : "text-[#444746] dark:text-[#e3e3e3]"
+                                        : "text-[#5f6368] dark:text-[#e3e3e3]"
                                 )}
                             />
                         </button>

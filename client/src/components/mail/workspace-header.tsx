@@ -12,9 +12,9 @@ import {
 
 export function WorkspaceHeader() {
     return (
-        <header className="h-16 shrink-0 flex items-center justify-between px-2">
+        <header className="h-16 shrink-0 flex items-center justify-between px-4">
             {/* Left: Logo */}
-            <div className="flex items-center gap-2 w-[200px] shrink-0 pl-2">
+            <div className="flex items-center gap-2 w-[200px] shrink-0 pl-0">
                 <div className="flex items-center gap-2 px-2 select-none cursor-pointer">
                     <div className="w-8 h-8 rounded shrink-0 bg-white flex items-center justify-center">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -29,16 +29,16 @@ export function WorkspaceHeader() {
             </div>
 
             {/* Central Search Bar */}
-            <div className="flex-1 max-w-[720px] mx-4 relative hidden md:block group">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-full cursor-pointer transition-colors">
-                    <Search className="h-5 w-5 text-[#444746] dark:text-gray-400 group-focus-within:text-[#1a73e8]" />
+            <div className="flex-1 max-w-[720px] mx-6 relative hidden md:block group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200/60 dark:hover:bg-gray-700/50 rounded-full cursor-pointer transition-colors">
+                    <Search className="h-5 w-5 text-[#5f6368] dark:text-gray-400 group-focus-within:text-[#1a73e8]" />
                 </div>
                 <Input
                     placeholder="Rechercher dans les messages"
-                    className="w-full pl-14 pr-12 h-12 bg-[#eaf1fb] dark:bg-[#1f1f1f] border-transparent hover:bg-white hover:shadow-[0_1px_2px_0_rgba(60,64,67,0.3)] focus-visible:bg-white focus-visible:ring-0 focus-visible:shadow-[0_1px_2px_0_rgba(60,64,67,0.3)] transition-all rounded-full text-base dark:hover:bg-[#28292a] dark:focus-visible:bg-[#28292a] text-[#1f1f1f] dark:text-[#e3e3e3] placeholder:text-[#444746] dark:placeholder:text-gray-400"
+                    className="w-full pl-14 pr-14 h-12 bg-[#eaf1fb] dark:bg-[#1f1f1f] border-transparent hover:bg-white hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] focus-visible:bg-white focus-visible:ring-0 focus-visible:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] transition-all duration-200 rounded-full text-base dark:hover:bg-[#28292a] dark:focus-visible:bg-[#28292a] text-[#1f1f1f] dark:text-[#e3e3e3] placeholder:text-[#5f6368] dark:placeholder:text-gray-400"
                 />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-full cursor-pointer transition-colors">
-                    <SlidersHorizontal className="h-5 w-5 text-[#444746] dark:text-gray-400" />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200/60 dark:hover:bg-gray-700/50 rounded-full cursor-pointer transition-colors">
+                    <SlidersHorizontal className="h-5 w-5 text-[#5f6368] dark:text-gray-400" />
                 </div>
             </div>
 

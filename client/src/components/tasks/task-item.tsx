@@ -1,7 +1,7 @@
 "use client";
 
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { Trash2, Calendar, User } from "lucide-react";
+import { Trash2, Calendar, User, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -74,21 +74,21 @@ export function TaskItem({ task, onToggle, onRemove }: TaskItemProps) {
                 isDragging && "opacity-50 shadow-lg bg-white border-gray-200"
             )}
         >
-            {/* Google Tasks Style Radio Checkbox */}
+            {/* Google Tasks Style Radio Checkbox - Rounded circle with border */}
             <button
                 onClick={(e) => {
                     e.stopPropagation();
                     onToggle(task.id);
                 }}
                 className={cn(
-                    "mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                    "mt-1 shrink-0 w-[18px] h-[18px] rounded-full border-[1.5px] flex items-center justify-center transition-all duration-200",
                     task.done
-                        ? "bg-blue-500 border-blue-500"
-                        : "border-gray-300 hover:border-blue-400"
+                        ? "bg-[#1a73e8] border-[#1a73e8] shadow-sm"
+                        : "border-[#80868b] hover:border-[#1a73e8] hover:bg-[#e8f0fe] bg-transparent"
                 )}
             >
                 {task.done && (
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                 )}
@@ -106,28 +106,38 @@ export function TaskItem({ task, onToggle, onRemove }: TaskItemProps) {
                     {task.label}
                 </div>
 
-                {/* Meta row: date chip and assignee */}
+                {/* Meta row: date chip, chat indicator and assignee - Google Tasks Style */}
                 {(dueInfo || task.assignee) && (
-                    <div className="flex items-center gap-2 mt-1.5">
-                        {/* Date Chip */}
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        {/* Date Chip - Google Tasks rounded pill style */}
                         {dueInfo && (
                             <span className={cn(
-                                "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+                                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium transition-colors",
                                 dueInfo.isOverdue && !task.done
-                                    ? "bg-red-50 text-red-600"
-                                    : "bg-gray-100 text-gray-600"
+                                    ? "bg-[#fce8e6] text-[#c5221f] border border-[#fad2cf]"
+                                    : task.done
+                                        ? "bg-gray-100 text-gray-400"
+                                        : "bg-[#e8f0fe] text-[#1967d2] border border-[#d2e3fc]"
                             )}>
-                                <Calendar className="w-3 h-3" />
+                                <Calendar className="w-3.5 h-3.5" />
                                 {dueInfo.text}
                             </span>
                         )}
 
-                        {/* Assignee Chip */}
+                        {/* Chat/Conversation Chip - Google Tasks style */}
                         {task.assignee && (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                <Avatar className="w-4 h-4">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium bg-[#f1f3f4] text-[#3c4043] border border-[#dadce0] hover:bg-[#e8eaed] transition-colors cursor-pointer">
+                                <MessageSquare className="w-3.5 h-3.5 text-[#5f6368]" />
+                                Chat
+                            </span>
+                        )}
+
+                        {/* Assignee Chip - Google Tasks avatar pill style */}
+                        {task.assignee && (
+                            <span className="inline-flex items-center gap-2 pl-1 pr-3 py-0.5 rounded-full text-[12px] font-medium bg-[#f1f3f4] text-[#3c4043] border border-[#dadce0] hover:bg-[#e8eaed] transition-colors cursor-pointer">
+                                <Avatar className="w-5 h-5 border border-white shadow-sm">
                                     <AvatarImage src={task.assignee.avatar} />
-                                    <AvatarFallback className="text-[8px] bg-blue-100 text-blue-700">
+                                    <AvatarFallback className="text-[9px] bg-[#1a73e8] text-white font-semibold">
                                         {getInitials(task.assignee.name)}
                                     </AvatarFallback>
                                 </Avatar>
