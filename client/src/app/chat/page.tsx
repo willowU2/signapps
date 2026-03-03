@@ -6,12 +6,19 @@ import { ChatWindow } from "@/components/chat/chat-window"
 import { GlobalHeader } from "@/components/layout/global-header"
 import { Menu, MessageSquare, Hash, Video, Settings, Search, Layers, Columns, ChevronDown, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { useUIStore } from "@/lib/store"
 
 export default function ChatPage() {
+    const { sidebarCollapsed, rightSidebarOpen } = useUIStore()
     const [selectedChannel, setSelectedChannel] = useState<string | null>(null)
 
     return (
-        <div className="flex flex-col h-screen w-screen bg-[#f2f6fc] overflow-hidden">
+        <div className={cn(
+            "flex flex-col h-screen w-screen bg-[#f2f6fc] overflow-hidden transition-all duration-300",
+            sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-60',
+            rightSidebarOpen ? 'pr-[24rem]' : 'pr-16'
+        )}>
             {/* Header Global (Simplifié pour correspondre à Gmail/Chat Workspace) */}
             <header className="h-16 flex items-center justify-between px-4 bg-[#f2f6fc] shrink-0">
                 <div className="flex items-center gap-4 w-[250px]">

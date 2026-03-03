@@ -38,6 +38,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useUIStore } from "@/lib/store";
 import {
   useKeepStore,
   useKeepUIState,
@@ -74,6 +75,8 @@ export default function KeepPage() {
     toggleChecklistItem,
   } = useKeepNoteActions();
   const labels = useKeepLabels();
+
+  const { sidebarCollapsed, rightSidebarOpen } = useUIStore();
 
   const pinnedNotes = useKeepStore(selectPinnedNotes);
   const unpinnedNotes = useKeepStore(selectUnpinnedNotes);
@@ -164,7 +167,11 @@ export default function KeepPage() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="h-screen w-screen flex flex-col bg-[#202124] text-[#e8eaed] overflow-hidden font-['Google_Sans',_Roboto,_sans-serif]">
+      <div className={cn(
+        "h-screen w-screen flex flex-col bg-[#202124] text-[#e8eaed] overflow-hidden font-['Google_Sans',_Roboto,_sans-serif] transition-all duration-300",
+        sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-60',
+        rightSidebarOpen ? 'pr-[24rem]' : 'pr-16'
+      )}>
         {/* Header */}
         <header className="h-16 shrink-0 flex items-center px-2 border-b border-[#5f6368]/30">
           <Button

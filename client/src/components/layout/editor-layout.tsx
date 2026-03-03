@@ -25,9 +25,6 @@ export function EditorLayout({ documentId, icon, children }: EditorLayoutProps) 
 
     return (
         <div className="min-h-screen bg-background overflow-hidden relative">
-            <CommandBar />
-            <Sidebar />
-            <RightSidebar />
             <div
                 className={cn(
                     'flex flex-col transition-all duration-300 h-screen',

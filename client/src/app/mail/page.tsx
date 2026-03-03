@@ -30,10 +30,12 @@ import { WorkspaceRail } from "@/components/mail/workspace-rail"
 import { WorkspaceHeader } from "@/components/mail/workspace-header"
 import { Mail } from "@/lib/data/mail"
 import { useMail } from "@/app/mail/use-mail"
+import { useUIStore } from "@/lib/store"
 import { mailApi, accountApi } from "@/lib/api-mail"
 import { cn } from "@/lib/utils"
 
 export default function MailPage() {
+    const { sidebarCollapsed, rightSidebarOpen } = useUIStore()
     const [mailState, setMailState] = useMail()
     const [mailList, setMailList] = useState<Mail[]>([])
     const [accounts, setAccounts] = useState<any[]>([])
@@ -150,7 +152,11 @@ export default function MailPage() {
     return (
         <TooltipProvider delayDuration={0}>
             {/* Full Viewport Workspace Layout - Bypasses AppLayout */}
-            <div className="h-screen w-screen flex flex-col bg-[#f2f6fc] dark:bg-[#111111] text-foreground overflow-hidden font-sans">
+            <div className={cn(
+                "h-screen w-screen flex flex-col bg-[#f2f6fc] dark:bg-[#111111] text-foreground overflow-hidden font-sans",
+                sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-60',
+                rightSidebarOpen ? 'pr-[24rem]' : 'pr-16'
+            )}>
 
                 {/* 1. Global Workspace Header */}
                 <WorkspaceHeader />
