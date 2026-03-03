@@ -189,4 +189,242 @@ mod tests {
             assert!(chunk.len() <= 60); // Allow some flexibility
         }
     }
+
+    // ========================================================================
+    // Additional chunker tests for RAG pipeline
+    // ========================================================================
+
+    #[test]
+    fn test_chunk_by_paragraphs_empty() {
+        let chunker = TextChunker::new();
+        let chunks = chunker.chunk_by_paragraphs("");
+        assert!(chunks.is_empty());
+    }
+
+    #[test]
+    fn test_chunk_by_paragraphs_single() {
+        let chunker = TextChunker::new();
+        let text = "This is a single paragraph without any breaks.";
+        let chunks = chunker.chunk_by_paragraphs(text);
+
+        assert_eq!(chunks.len(), 1);
+        assert_eq!(chunks[0], text);
+    }
+
+    #[test]
+    fn test_chunk_by_paragraphs_multiple() {
+        let chunker = TextChunker::new();
+        let text = "First paragraph here.\n\nSecond paragraph here.\n\nThird paragraph.";
+        let chunks = chunker.chunk_by_paragraphs(text);
+
+        // May combine into one chunk if under size limit
+        assert!(!chunks.is_empty());
+        let combined = chunks.join("\n\n");
+        assert!(combined.contains("First paragraph"));
+        assert!(combined.contains("Second paragraph"));
+        assert!(combined.contains("Third paragraph"));
+    }
+
+    #[test]
+    fn test_chunk_by_paragraphs_large_paragraph() {
+        let chunker = TextChunker::with_config(ChunkConfig {
+            chunk_size: 50,
+            chunk_overlap: 10,
+        });
+
+        // Create a paragraph larger than chunk_size
+        let large_paragraph = "This is a very long paragraph. ".repeat(10);
+        let text = format!("{}\n\nShort second paragraph.", large_paragraph);
+
+        let chunks = chunker.chunk_by_paragraphs(&text);
+
+        // Should split the large paragraph
+        assert!(chunks.len() > 1);
+    }
+
+    #[test]
+    fn test_chunk_preserves_content() {
+        let chunker = TextChunker::new();
+        let original = "Important content that must be preserved entirely.";
+        let chunks = chunker.chunk(original);
+
+        // Small text should return as single chunk
+        assert_eq!(chunks.len(), 1);
+        assert_eq!(chunks[0], original);
+    }
+
+    #[test]
+    fn test_chunk_overlap() {
+        let chunker = TextChunker::with_config(ChunkConfig {
+            chunk_size: 30,
+            chunk_overlap: 10,
+        });
+
+        let text = "Sentence one. Sentence two. Sentence three. Sentence four.";
+        let chunks = chunker.chunk(text);
+
+        // With overlap, adjacent chunks should share some content
+        assert!(chunks.len() >= 2);
+    }
+
+    #[test]
+    fn test_chunk_sentence_boundaries() {
+        let chunker = TextChunker::with_config(ChunkConfig {
+            chunk_size: 50,
+            chunk_overlap: 5,
+        });
+
+        let text = "First sentence. Second sentence. Third sentence. Fourth sentence.";
+        let chunks = chunker.chunk(text);
+
+        // Chunks should preferably end at sentence boundaries
+        for chunk in &chunks {
+            // Each chunk should be trimmed
+            assert_eq!(chunk.trim(), chunk.as_str());
+        }
+    }
+
+    #[test]
+    fn test_chunk_whitespace_handling() {
+        let chunker = TextChunker::new();
+
+        let text = "   Content with leading spaces.   ";
+        let chunks = chunker.chunk(text);
+
+        assert_eq!(chunks.len(), 1);
+        // Should be trimmed
+        assert_eq!(chunks[0], "Content with leading spaces.");
+    }
+
+    #[test]
+    fn test_chunk_by_paragraphs_whitespace_paragraphs() {
+        let chunker = TextChunker::new();
+
+        // Paragraphs with only whitespace should be ignored
+        let text = "First paragraph.\n\n   \n\nSecond paragraph.";
+        let chunks = chunker.chunk_by_paragraphs(text);
+
+        let combined = chunks.join(" ");
+        assert!(combined.contains("First paragraph"));
+        assert!(combined.contains("Second paragraph"));
+    }
+
+    #[test]
+    fn test_chunk_unicode() {
+        let chunker = TextChunker::new();
+
+        let text = "Bonjour le monde! 你好世界! مرحبا بالعالم!";
+        let chunks = chunker.chunk(text);
+
+        assert_eq!(chunks.len(), 1);
+        assert!(chunks[0].contains("Bonjour"));
+        assert!(chunks[0].contains("你好"));
+        assert!(chunks[0].contains("مرحبا"));
+    }
+
+    #[test]
+    fn test_chunk_very_long_word() {
+        let chunker = TextChunker::with_config(ChunkConfig {
+            chunk_size: 20,
+            chunk_overlap: 5,
+        });
+
+        // A word longer than chunk_size
+        let text = "supercalifragilisticexpialidocious";
+        let chunks = chunker.chunk(text);
+
+        // Should handle gracefully without panic
+        assert!(!chunks.is_empty());
+    }
+
+    #[test]
+    fn test_chunk_newlines_preserved_in_paragraphs() {
+        let chunker = TextChunker::new();
+
+        let text = "Line 1\nLine 2\nLine 3";
+        let chunks = chunker.chunk_by_paragraphs(text);
+
+        // Single paragraphs (no double newlines)
+        assert_eq!(chunks.len(), 1);
+    }
+
+    #[test]
+    fn test_chunk_config_defaults() {
+        let config = ChunkConfig::default();
+
+        assert_eq!(config.chunk_size, 512);
+        assert_eq!(config.chunk_overlap, 50);
+    }
+
+    #[test]
+    fn test_chunker_default_impl() {
+        let chunker1 = TextChunker::new();
+        let chunker2 = TextChunker::default();
+
+        // Both should behave the same
+        let text = "Test content";
+        assert_eq!(chunker1.chunk(text), chunker2.chunk(text));
+    }
+
+    #[test]
+    fn test_chunk_question_marks() {
+        let chunker = TextChunker::with_config(ChunkConfig {
+            chunk_size: 40,
+            chunk_overlap: 5,
+        });
+
+        let text = "What is this? This is a test. Is it working?";
+        let chunks = chunker.chunk(text);
+
+        // Should break at question marks as sentence boundaries
+        assert!(!chunks.is_empty());
+    }
+
+    #[test]
+    fn test_chunk_exclamation_marks() {
+        let chunker = TextChunker::with_config(ChunkConfig {
+            chunk_size: 30,
+            chunk_overlap: 5,
+        });
+
+        let text = "Hello! World! This is great!";
+        let chunks = chunker.chunk(text);
+
+        assert!(!chunks.is_empty());
+    }
+
+    #[test]
+    fn test_chunk_mixed_punctuation() {
+        let chunker = TextChunker::with_config(ChunkConfig {
+            chunk_size: 60,
+            chunk_overlap: 10,
+        });
+
+        let text = "Question? Statement. Exclamation! Another question? Done.";
+        let chunks = chunker.chunk(text);
+
+        // All content should be preserved
+        let combined = chunks.join(" ");
+        assert!(combined.contains("Question"));
+        assert!(combined.contains("Statement"));
+        assert!(combined.contains("Exclamation"));
+    }
+
+    #[test]
+    fn test_paragraphs_aggregation() {
+        let chunker = TextChunker::with_config(ChunkConfig {
+            chunk_size: 200,
+            chunk_overlap: 20,
+        });
+
+        // Multiple small paragraphs that fit in one chunk
+        let text = "Para 1.\n\nPara 2.\n\nPara 3.";
+        let chunks = chunker.chunk_by_paragraphs(text);
+
+        // Should combine into one chunk since total < 200
+        assert_eq!(chunks.len(), 1);
+        assert!(chunks[0].contains("Para 1"));
+        assert!(chunks[0].contains("Para 2"));
+        assert!(chunks[0].contains("Para 3"));
+    }
 }

@@ -1,0 +1,13 @@
+SignApps Project - Playwright & Rust Testing
+
+You are the Autonomous AI Development Team for "SignApps". Your task is to generate the missing tests for the recent refactoring.
+
+**Context & Requirements:**
+1. Frontend Testing: Write Playwright E2E tests in the `client/e2e` or `client/tests` directory to cover the core layouts (Workspace Mail, Tasks, Keep) and the Drag & Drop functionality across tasks and files.
+2. Backend Testing: Write Rust unit/integration tests in `crates/` and `services/` to cover the PostgreSQL recursive tasks query logic and the RAG logic.
+3. Keep the tests robust. Instead of relying on strict CSS selectors, use data-testid or accessible ARIA roles for Playwright.
+4. Do not delete existing tests. Append or create new test files.
+
+**Constraints:**
+1. Do not prompt the user for validation; modify the files directly.
+2. Run a dry compilation of the tests (e.g., `cargo test --no-run` and `npx tsc --noEmit` in the client directory) to verify everything compiles prior to finishing your task.
