@@ -22,33 +22,44 @@ async fn resolve_target_bucket(
     original_bucket: &str,
     content_type: &str,
 ) -> String {
-    let rule = sqlx::query!(
+    use sqlx::Row;
+
+    let rule = sqlx::query(
         r#"
-        SELECT target_bucket 
-        FROM storage_rules 
-        WHERE is_active = true 
+        SELECT target_bucket
+        FROM storage_rules
+        WHERE is_active = true
           AND $1 LIKE REPLACE(mime_type_pattern, '*', '%')
         ORDER BY created_at DESC
         LIMIT 1
         "#,
-        content_type
     )
+    .bind(content_type)
     .fetch_optional(pool)
     .await
     .unwrap_or(None);
 
     if let Some(r) = rule {
-        r.target_bucket
+        r.get::<String, _>("target_bucket")
     } else {
         original_bucket.to_string()
     }
 }
 
+/// Represents a row from ai_indexing_rules for trigger_ai_indexing
+#[derive(sqlx::FromRow)]
+struct IndexingRuleRow {
+    folder_path: String,
+    include_subfolders: bool,
+    file_types_allowed: Option<Vec<String>>,
+    collection_name: Option<String>,
+}
+
 async fn trigger_ai_indexing(pool: &sqlx::PgPool, bucket: &str, key: &str, content_type: &str) {
     let global_default_row = sqlx::query_as::<_, (String,)>(
         r#"
-        SELECT setting_value 
-        FROM admin_system_settings 
+        SELECT setting_value
+        FROM admin_system_settings
         WHERE setting_key = 'ai_index_all_default'
         "#,
     )
@@ -61,15 +72,15 @@ async fn trigger_ai_indexing(pool: &sqlx::PgPool, bucket: &str, key: &str, conte
         .unwrap_or(false);
 
     // 2. Fetch specific rules for this bucket
-    let rules = sqlx::query!(
+    let rules: Vec<IndexingRuleRow> = sqlx::query_as(
         r#"
         SELECT folder_path, include_subfolders, file_types_allowed, collection_name
         FROM ai_indexing_rules
         WHERE is_active = true AND bucket = $1
         ORDER BY LENGTH(folder_path) DESC
         "#,
-        bucket
     )
+    .bind(bucket)
     .fetch_all(pool)
     .await
     .unwrap_or_default();
@@ -92,7 +103,7 @@ async fn trigger_ai_indexing(pool: &sqlx::PgPool, bucket: &str, key: &str, conte
         }
 
         // If the file is in a matched folder rule, we respect the file_types_allowed of THAT rule.
-        if let Some(mut allowed_exts) = r.file_types_allowed {
+        if let Some(mut allowed_exts) = r.file_types_allowed.clone() {
             let ext = key
                 .rsplit_once('.')
                 .map(|(_, e)| e.to_lowercase())

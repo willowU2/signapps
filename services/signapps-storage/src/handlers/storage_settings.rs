@@ -7,12 +7,13 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
+use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::AppState;
 
 /// Storage Rule Model
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct StorageRule {
     pub id: Uuid,
     pub file_type: String,
@@ -33,7 +34,7 @@ pub struct UpsertStorageRule {
 }
 
 /// AI Indexing Rule Model
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct IndexingRule {
     pub id: Uuid,
     pub folder_path: String,
@@ -62,8 +63,7 @@ pub struct UpsertIndexingRule {
 /// List all storage rules
 #[tracing::instrument(skip(state))]
 pub async fn list_storage_rules(State(state): State<AppState>) -> Result<Json<Vec<StorageRule>>> {
-    let rules = sqlx::query_as!(
-        StorageRule,
+    let rules: Vec<StorageRule> = sqlx::query_as(
         r#"
         SELECT id, file_type, mime_type_pattern, target_bucket, target_backend, is_active
         FROM storage_rules
@@ -72,7 +72,7 @@ pub async fn list_storage_rules(State(state): State<AppState>) -> Result<Json<Ve
     )
     .fetch_all(state.pool.inner())
     .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| Error::Database(e.to_string()))?;
 
     Ok(Json(rules))
 }
@@ -83,22 +83,21 @@ pub async fn create_storage_rule(
     State(state): State<AppState>,
     Json(payload): Json<UpsertStorageRule>,
 ) -> Result<Json<StorageRule>> {
-    let rule = sqlx::query_as!(
-        StorageRule,
+    let rule: StorageRule = sqlx::query_as(
         r#"
         INSERT INTO storage_rules (file_type, mime_type_pattern, target_bucket, target_backend, is_active)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id, file_type, mime_type_pattern, target_bucket, target_backend, is_active
         "#,
-        payload.file_type,
-        payload.mime_type_pattern,
-        payload.target_bucket,
-        payload.target_backend,
-        payload.is_active
     )
+    .bind(&payload.file_type)
+    .bind(&payload.mime_type_pattern)
+    .bind(&payload.target_bucket)
+    .bind(&payload.target_backend)
+    .bind(payload.is_active)
     .fetch_one(state.pool.inner())
     .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| Error::Database(e.to_string()))?;
 
     Ok(Json(rule))
 }
@@ -110,24 +109,23 @@ pub async fn update_storage_rule(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpsertStorageRule>,
 ) -> Result<Json<StorageRule>> {
-    let rule = sqlx::query_as!(
-        StorageRule,
+    let rule: StorageRule = sqlx::query_as(
         r#"
         UPDATE storage_rules
         SET file_type = $1, mime_type_pattern = $2, target_bucket = $3, target_backend = $4, is_active = $5, updated_at = NOW()
         WHERE id = $6
         RETURNING id, file_type, mime_type_pattern, target_bucket, target_backend, is_active
         "#,
-        payload.file_type,
-        payload.mime_type_pattern,
-        payload.target_bucket,
-        payload.target_backend,
-        payload.is_active,
-        id
     )
+    .bind(&payload.file_type)
+    .bind(&payload.mime_type_pattern)
+    .bind(&payload.target_bucket)
+    .bind(&payload.target_backend)
+    .bind(payload.is_active)
+    .bind(id)
     .fetch_one(state.pool.inner())
     .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| Error::Database(e.to_string()))?;
 
     Ok(Json(rule))
 }
@@ -138,15 +136,15 @@ pub async fn delete_storage_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    sqlx::query!(
+    sqlx::query(
         r#"
         DELETE FROM storage_rules WHERE id = $1
         "#,
-        id
     )
+    .bind(id)
     .execute(state.pool.inner())
     .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| Error::Database(e.to_string()))?;
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -158,8 +156,7 @@ pub async fn delete_storage_rule(
 /// List all AI indexing rules
 #[tracing::instrument(skip(state))]
 pub async fn list_indexing_rules(State(state): State<AppState>) -> Result<Json<Vec<IndexingRule>>> {
-    let rules = sqlx::query_as!(
-        IndexingRule,
+    let rules: Vec<IndexingRule> = sqlx::query_as(
         r#"
         SELECT id, folder_path, bucket, include_subfolders, file_types_allowed, collection_name, is_active
         FROM ai_indexing_rules
@@ -168,7 +165,7 @@ pub async fn list_indexing_rules(State(state): State<AppState>) -> Result<Json<V
     )
     .fetch_all(state.pool.inner())
     .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| Error::Database(e.to_string()))?;
 
     Ok(Json(rules))
 }
@@ -179,23 +176,22 @@ pub async fn create_indexing_rule(
     State(state): State<AppState>,
     Json(payload): Json<UpsertIndexingRule>,
 ) -> Result<Json<IndexingRule>> {
-    let rule = sqlx::query_as!(
-        IndexingRule,
+    let rule: IndexingRule = sqlx::query_as(
         r#"
         INSERT INTO ai_indexing_rules (folder_path, bucket, include_subfolders, file_types_allowed, collection_name, is_active)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, folder_path, bucket, include_subfolders, file_types_allowed, collection_name, is_active
         "#,
-        payload.folder_path,
-        payload.bucket,
-        payload.include_subfolders,
-        payload.file_types_allowed.as_deref(),
-        payload.collection_name,
-        payload.is_active
     )
+    .bind(&payload.folder_path)
+    .bind(&payload.bucket)
+    .bind(payload.include_subfolders)
+    .bind(&payload.file_types_allowed)
+    .bind(&payload.collection_name)
+    .bind(payload.is_active)
     .fetch_one(state.pool.inner())
     .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| Error::Database(e.to_string()))?;
 
     Ok(Json(rule))
 }
@@ -207,25 +203,24 @@ pub async fn update_indexing_rule(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpsertIndexingRule>,
 ) -> Result<Json<IndexingRule>> {
-    let rule = sqlx::query_as!(
-        IndexingRule,
+    let rule: IndexingRule = sqlx::query_as(
         r#"
         UPDATE ai_indexing_rules
         SET folder_path = $1, bucket = $2, include_subfolders = $3, file_types_allowed = $4, collection_name = $5, is_active = $6, updated_at = NOW()
         WHERE id = $7
         RETURNING id, folder_path, bucket, include_subfolders, file_types_allowed, collection_name, is_active
         "#,
-        payload.folder_path,
-        payload.bucket,
-        payload.include_subfolders,
-        payload.file_types_allowed.as_deref(),
-        payload.collection_name,
-        payload.is_active,
-        id
     )
+    .bind(&payload.folder_path)
+    .bind(&payload.bucket)
+    .bind(payload.include_subfolders)
+    .bind(&payload.file_types_allowed)
+    .bind(&payload.collection_name)
+    .bind(payload.is_active)
+    .bind(id)
     .fetch_one(state.pool.inner())
     .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| Error::Database(e.to_string()))?;
 
     Ok(Json(rule))
 }
@@ -236,15 +231,15 @@ pub async fn delete_indexing_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    sqlx::query!(
+    sqlx::query(
         r#"
         DELETE FROM ai_indexing_rules WHERE id = $1
         "#,
-        id
     )
+    .bind(id)
     .execute(state.pool.inner())
     .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| Error::Database(e.to_string()))?;
 
     Ok(StatusCode::NO_CONTENT)
 }
