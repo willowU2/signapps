@@ -82,16 +82,48 @@ export default function KeepPage() {
   const pinnedNotes = useKeepStore(selectPinnedNotes);
   const unpinnedNotes = useKeepStore(selectUnpinnedNotes);
 
+  // New note creation form state
   const [newNoteExpanded, setNewNoteExpanded] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteContent, setNewNoteContent] = useState("");
   const [newNoteIsChecklist, setNewNoteIsChecklist] = useState(false);
   const [newChecklistItems, setNewChecklistItems] = useState<ChecklistItem[]>([]);
-  const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
+  const [newNoteColor, setNewNoteColor] = useState("#202124");
+  const [newNotePinned, setNewNotePinned] = useState(false);
 
   const newNoteRef = useRef<HTMLDivElement>(null);
 
-  // Close new note on outside click
+  // Create note and reset form - defined before useEffect to avoid dependency issues
+  const handleCreateNote = useCallback(() => {
+    const hasContent =
+      newNoteTitle.trim() ||
+      newNoteContent.trim() ||
+      newChecklistItems.some((item) => item.text.trim());
+
+    if (hasContent) {
+      addNote({
+        title: newNoteTitle.trim(),
+        content: newNoteContent.trim(),
+        color: newNoteColor,
+        isPinned: newNotePinned,
+        hasChecklist: newNoteIsChecklist && newChecklistItems.length > 0,
+        checklistItems: newNoteIsChecklist
+          ? newChecklistItems.filter((item) => item.text.trim())
+          : [],
+      });
+    }
+
+    // Reset form to initial state
+    setNewNoteTitle("");
+    setNewNoteContent("");
+    setNewNoteIsChecklist(false);
+    setNewChecklistItems([]);
+    setNewNoteColor("#202124");
+    setNewNotePinned(false);
+    setNewNoteExpanded(false);
+  }, [newNoteTitle, newNoteContent, newChecklistItems, newNoteIsChecklist, newNoteColor, newNotePinned, addNote]);
+
+  // Close new note on outside click and save if has content
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -108,31 +140,7 @@ export default function KeepPage() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [newNoteExpanded, newNoteTitle, newNoteContent, newChecklistItems]);
-
-  const handleCreateNote = useCallback(() => {
-    const hasContent =
-      newNoteTitle.trim() ||
-      newNoteContent.trim() ||
-      newChecklistItems.some((item) => item.text.trim());
-
-    if (hasContent) {
-      addNote({
-        title: newNoteTitle,
-        content: newNoteContent,
-        hasChecklist: newNoteIsChecklist && newChecklistItems.length > 0,
-        checklistItems: newNoteIsChecklist
-          ? newChecklistItems.filter((item) => item.text.trim())
-          : [],
-      });
-    }
-
-    setNewNoteTitle("");
-    setNewNoteContent("");
-    setNewNoteIsChecklist(false);
-    setNewChecklistItems([]);
-    setNewNoteExpanded(false);
-  }, [newNoteTitle, newNoteContent, newChecklistItems, newNoteIsChecklist, addNote]);
+  }, [newNoteExpanded, handleCreateNote]);
 
   const addNewChecklistItem = () => {
     setNewChecklistItems([
@@ -363,12 +371,30 @@ export default function KeepPage() {
                     </div>
                   </button>
                 ) : (
-                  <div className="bg-[#202124] border border-[#5f6368]/50 rounded-lg shadow-[0_1px_2px_0_rgba(0,0,0,0.3),0_2px_6px_2px_rgba(0,0,0,0.15)] overflow-hidden">
+                  <div
+                    className="relative border border-[#5f6368]/50 rounded-lg shadow-[0_1px_2px_0_rgba(0,0,0,0.3),0_2px_6px_2px_rgba(0,0,0,0.15)] overflow-hidden transition-colors"
+                    style={{ backgroundColor: newNoteColor }}
+                  >
+                    {/* Pin button in expanded form */}
+                    <button
+                      type="button"
+                      onClick={() => setNewNotePinned(!newNotePinned)}
+                      className={cn(
+                        "absolute top-2 right-2 p-2 rounded-full transition-all z-10",
+                        newNotePinned
+                          ? "text-[#e8eaed] bg-[#3c4043]/50"
+                          : "text-[#9aa0a6] hover:bg-[#3c4043]/50"
+                      )}
+                      title={newNotePinned ? "Désépingler" : "Épingler"}
+                    >
+                      <Pin className={cn("h-[18px] w-[18px]", newNotePinned && "fill-current")} />
+                    </button>
+
                     <Input
                       placeholder="Titre"
                       value={newNoteTitle}
                       onChange={(e) => setNewNoteTitle(e.target.value)}
-                      className="border-0 bg-transparent text-[#e8eaed] placeholder:text-[#9aa0a6] text-base font-medium px-4 py-3 h-auto focus-visible:ring-0"
+                      className="border-0 bg-transparent text-[#e8eaed] placeholder:text-[#9aa0a6] text-base font-medium px-4 py-3 pr-12 h-auto focus-visible:ring-0"
                     />
 
                     {newNoteIsChecklist ? (
@@ -447,20 +473,44 @@ export default function KeepPage() {
                             Nouvelle liste
                           </TooltipContent>
                         </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
-                            >
-                              <Palette className="h-[18px] w-[18px]" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                            Couleur d'arri\u00e8re-plan
-                          </TooltipContent>
-                        </Tooltip>
+                        {/* Color picker for new note */}
+                        <Popover>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                                >
+                                  <Palette className="h-[18px] w-[18px]" />
+                                </Button>
+                              </PopoverTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
+                              Couleur d'arrière-plan
+                            </TooltipContent>
+                          </Tooltip>
+                          <PopoverContent className="w-auto p-2 bg-[#3c4043] border-[#5f6368]">
+                            <div className="grid grid-cols-4 gap-1">
+                              {NOTE_COLORS.map((color) => (
+                                <button
+                                  key={color.id}
+                                  type="button"
+                                  onClick={() => setNewNoteColor(color.value)}
+                                  className={cn(
+                                    "w-8 h-8 rounded-full border-2 transition-all hover:scale-110",
+                                    newNoteColor === color.value
+                                      ? "border-[#a142f4]"
+                                      : "border-transparent hover:border-[#5f6368]"
+                                  )}
+                                  style={{ backgroundColor: color.value }}
+                                  title={color.name}
+                                />
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -473,34 +523,6 @@ export default function KeepPage() {
                           </TooltipTrigger>
                           <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
                             Ajouter une image
-                          </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
-                            >
-                              <Archive className="h-[18px] w-[18px]" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                            Archiver
-                          </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
-                            >
-                              <MoreVertical className="h-[18px] w-[18px]" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                            Plus
                           </TooltipContent>
                         </Tooltip>
                       </div>
