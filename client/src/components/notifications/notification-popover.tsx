@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -8,7 +8,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import {
   Bell,
   Container,
@@ -19,7 +18,9 @@ import {
   CheckCircle,
   Info,
   X,
+  Loader2,
 } from 'lucide-react';
+import { notificationsApi, type NotificationRecord } from '@/lib/api/calendar';
 
 interface Notification {
   id: string;
@@ -31,40 +32,70 @@ interface Notification {
   read: boolean;
 }
 
-// Mock notifications - in production, these would come from an API
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'system',
-    title: 'System Health',
-    message: 'All services are running normally',
-    status: 'success',
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'container',
-    title: 'Container Started',
-    message: 'nginx-proxy container started successfully',
-    status: 'info',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'security',
-    title: 'New Login',
-    message: 'New login from 192.168.1.100',
-    status: 'info',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60),
-    read: true,
-  },
-];
+function mapApiToNotification(record: NotificationRecord): Notification {
+  // Map notification_type to UI type
+  const typeMap: Record<string, Notification['type']> = {
+    event_reminder: 'system',
+    event_invitation: 'user',
+    attendee_rsvp: 'user',
+    task_assigned: 'system',
+    task_completed: 'system',
+    daily_digest: 'system',
+    weekly_digest: 'system',
+    container: 'container',
+    security: 'security',
+    storage: 'storage',
+  };
+
+  // Map status to UI status
+  const statusMap: Record<string, Notification['status']> = {
+    pending: 'info',
+    sent: 'success',
+    failed: 'error',
+    delivered: 'success',
+  };
+
+  return {
+    id: record.id,
+    type: typeMap[record.notification_type] || 'system',
+    title: record.notification_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+    message: record.recipient_address ? `Envoyé à ${record.recipient_address}` : `Via ${record.channel}`,
+    status: statusMap[record.status] || 'info',
+    timestamp: new Date(record.created_at),
+    read: record.status === 'sent' || record.status === 'delivered',
+  };
+}
 
 export function NotificationPopover() {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [open, setOpen] = useState(false);
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await notificationsApi.getHistory({ limit: 20 });
+      const mapped = response.data.notifications.map(mapApiToNotification);
+      setNotifications(mapped);
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+      // Keep empty on error - database is source of truth
+      setNotifications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
+
+  // Refresh when popover opens
+  useEffect(() => {
+    if (open) {
+      loadNotifications();
+    }
+  }, [open, loadNotifications]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -152,10 +183,15 @@ export function NotificationPopover() {
         </div>
 
         <ScrollArea className="h-[300px]">
-          {notifications.length === 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Loader2 className="h-8 w-8 text-muted-foreground mb-2 animate-spin" />
+              <p className="text-sm text-muted-foreground">Chargement...</p>
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Bell className="h-8 w-8 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">No notifications</p>
+              <p className="text-sm text-muted-foreground">Aucune notification</p>
             </div>
           ) : (
             <div className="divide-y">

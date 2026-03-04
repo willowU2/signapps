@@ -2,6 +2,69 @@
 import { calendarApiClient } from './core';
 import { Calendar, CreateCalendar, UpdateCalendar, Event, CreateEvent, UpdateEvent, EventAttendee, AddEventAttendee } from '@/types/calendar';
 
+// Notification types (served by calendar service)
+export interface NotificationRecord {
+    id: string;
+    notification_type: string;
+    channel: string;
+    status: string;
+    recipient_address?: string;
+    created_at: string;
+    sent_at?: string;
+}
+
+export interface NotificationHistoryResponse {
+    notifications: NotificationRecord[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
+export interface NotificationPreferences {
+    id: string;
+    email_enabled: boolean;
+    email_frequency?: string;
+    sms_enabled: boolean;
+    phone_number?: string;
+    push_enabled: boolean;
+    quiet_hours_enabled: boolean;
+    quiet_start?: string;
+    quiet_end?: string;
+    reminder_times?: number[];
+}
+
+export interface UnreadCount {
+    pending: number;
+    failed: number;
+    total: number;
+}
+
+export const notificationsApi = {
+    getPreferences: () =>
+        calendarApiClient.get<NotificationPreferences>("/notifications/preferences"),
+
+    updatePreferences: (data: Partial<NotificationPreferences>) =>
+        calendarApiClient.put<NotificationPreferences>("/notifications/preferences", data),
+
+    getHistory: (params?: { limit?: number; offset?: number }) =>
+        calendarApiClient.get<NotificationHistoryResponse>("/notifications/history", { params }),
+
+    getUnreadCount: () =>
+        calendarApiClient.get<UnreadCount>("/notifications/unread-count"),
+
+    resend: (notificationId: string) =>
+        calendarApiClient.post(`/notifications/${notificationId}/resend`),
+
+    subscribePush: (subscription: object, browserName?: string) =>
+        calendarApiClient.post("/notifications/subscriptions/push", { subscription, browser_name: browserName }),
+
+    listPushSubscriptions: () =>
+        calendarApiClient.get<Array<{ id: string; browser_name?: string; created_at: string }>>("/notifications/subscriptions/push"),
+
+    unsubscribePush: (subscriptionId: string) =>
+        calendarApiClient.delete(`/notifications/subscriptions/push/${subscriptionId}`),
+};
+
 export const calendarApi = {
     // Calendars
     createCalendar: (data: CreateCalendar) =>

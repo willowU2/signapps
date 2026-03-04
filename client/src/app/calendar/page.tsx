@@ -80,23 +80,21 @@ export default function CalendarPage() {
           setSelectedCalendarId(response.data[0].id);
           setSelectedCalendars([response.data[0]]);
         } else {
-          // Mock data for UI demonstration purposes
-          const mockCalendar = {
-            id: "cal_1",
-            name: "My Calendar",
-            color: "#3b82f6",
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            is_default: true,
-            user_id: "user_1",
-            owner_id: "user_1",
-            is_shared: false,
-            is_public: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          setCalendars([mockCalendar]);
-          setSelectedCalendarId(mockCalendar.id);
-          setSelectedCalendars([mockCalendar]);
+          // No calendars exist - create a default one via API
+          try {
+            const newCalResponse = await calendarApi.createCalendar({
+              name: "Mon agenda",
+              color: "#3b82f6",
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              is_shared: false
+            });
+            setCalendars([newCalResponse.data]);
+            setSelectedCalendarId(newCalResponse.data.id);
+            setSelectedCalendars([newCalResponse.data]);
+          } catch (createErr) {
+            console.error('Failed to create default calendar:', createErr);
+            // Leave empty - user can create manually
+          }
         }
       } catch {
         // ignore

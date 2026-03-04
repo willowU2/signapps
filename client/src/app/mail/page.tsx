@@ -50,56 +50,41 @@ export default function MailPage() {
     const { setMailList, removeMail } = useMailDataActions()
 
     useEffect(() => {
-        // Fetch accounts
-        accountApi.list().then(list => {
-            const uiAccounts = list.map(a => ({
-                id: a.id,
-                name: a.email_address.split('@')[0],
-                email: a.email_address,
-                icon: a.provider,
-                provider: a.provider
-            }))
-            // uiAccounts available for future use
-            void uiAccounts
-        }).catch(err => console.error('Failed to fetch mail accounts:', err))
+        // Fetch accounts and emails from the real backend
+        const loadData = async () => {
+            try {
+                // Fetch accounts
+                const accounts = await accountApi.list()
+                const uiAccounts = accounts.map(a => ({
+                    id: a.id,
+                    name: a.email_address.split('@')[0],
+                    email: a.email_address,
+                    icon: a.provider,
+                    provider: a.provider
+                }))
+                void uiAccounts // Available for future use
 
-        // Use static mock data matching the user's screenshot
-        const mockMails: Mail[] = [
-            {
-                id: "1",
-                name: "Indeed",
-                email: "donotreply@alert.indeed.com",
-                subject: "Helvetic Emploi recrute pour Informaticien + 30 nouvelles offres à Porrentruy, JU",
-                text: "indeed\n\n30 nouveaux emplois - Porrentruy, JU\nCes annonces correspondent à l'alerte Emploi que vous avez enregistrée.\n\ninformaticien H/F\nSigma\nCanton du Jura\nN'hésitez pas à nous faire parvenir votre dossier complet en suivant les instructions ci-dessous. Solides compétences en systèmes, réseaux et environnement...\nil y a 1 jour\n\nInformaticien\nHelvetic Emploi\nDelémont, JU\n53 357 CHF - 109 454 CHF par an\nCandidature simplifiée\nAssurer aux clients informatiques l'assistance, la maintenance, le support et le dépannage. Solides compétences en réseaux, systèmes et environnements Microsoft...\nil y a 2 jours\n\nResponsable Logistique & Expédition\nPRECIDIP SA\nDelémont, JU\nCandidature simplifiée\nVous contrôlez la qualité des emballages ainsi que la conformité des quantités livrées, tout en optimisant la circulation des composants, des produits finis,...",
-                date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-                read: true,
-                labels: ["Boîte de réception", "Externe"],
-                folder: "inbox"
-            },
-            {
-                id: "2",
-                name: "LinkedIn",
-                email: "messages-noreply@linkedin.com",
-                subject: "Vous avez 3 nouveaux messages, dont un de recruteur",
-                text: "Découvrez vos nouveaux messages sur LinkedIn...",
-                date: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-                read: false,
-                labels: ["Boîte de réception"],
-                folder: "inbox"
-            },
-            {
-                id: "3",
-                name: "Alan Assurances",
-                email: "hello@alan.com",
-                subject: "Votre décompte de remboursement est disponible",
-                text: "Bonjour, nous venons de traiter votre dernière demande de remboursement. Le virement sera effectif sur votre compte d'ici 48h...",
-                date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                read: true,
-                labels: ["Boîte de réception", "Important"],
-                folder: "inbox"
+                // Fetch emails from inbox
+                const emails = await mailApi.list({ folder_type: 'inbox', limit: 50 })
+                const uiMails: Mail[] = emails.map(email => ({
+                    id: email.id,
+                    name: email.sender_name || email.sender.split('@')[0],
+                    email: email.sender,
+                    subject: email.subject || '(Sans objet)',
+                    text: email.body_text || email.snippet || '',
+                    date: email.received_at || email.created_at || new Date().toISOString(),
+                    read: email.is_read ?? false,
+                    labels: email.labels || [],
+                    folder: 'inbox' as const
+                }))
+                setMailList(uiMails)
+            } catch (err) {
+                console.error('Failed to fetch mail data:', err)
+                // Keep empty list on error - database is source of truth
+                setMailList([])
             }
-        ];
-        setMailList(mockMails);
+        }
+        loadData()
     }, [setMailList])
 
     const handleSnooze = async (id: string, time: string) => {
