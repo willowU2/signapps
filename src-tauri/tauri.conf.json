@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "SignApps Platform",
+  "version": "0.1.0",
+  "identifier": "com.signapps.platform",
+  "build": {
+    "beforeDevCommand": "cd ../client && npm run dev",
+    "devUrl": "http://localhost:3000",
+    "beforeBuildCommand": "cd ../client && npm run build",
+    "frontendDist": "../client/out"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "SignApps Platform",
+        "width": 1280,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": []
+  }
+}

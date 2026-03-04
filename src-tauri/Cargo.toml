@@ -1,0 +1,38 @@
+[package]
+name = "signapps-tauri"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "SignApps Platform - Tauri Desktop Application"
+
+[lib]
+name = "signapps_tauri_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[[bin]]
+name = "signapps-tauri"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { workspace = true, features = [] }
+
+[dependencies]
+# Tauri
+tauri = { workspace = true }
+tauri-plugin-shell = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Internal crates
+signapps-entity = { path = "../crates/signapps-entity" }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

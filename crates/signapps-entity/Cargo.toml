@@ -1,0 +1,22 @@
+[package]
+name = "signapps-entity"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "SeaORM entities for SignApps Platform"
+
+[dependencies]
+# SeaORM
+sea-orm = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
