@@ -14,16 +14,16 @@ setup('authenticate', async ({ page }) => {
   // Wait for the login form to be visible
   await expect(page.locator('text=Welcome Back')).toBeVisible();
 
-  // Fill in login credentials
-  // Note: In a real scenario, use environment variables for credentials
-  await page.getByLabel('Username').fill('admin');
-  await page.getByLabel('Password').fill('admin123');
+  // Fill in login credentials using specific input IDs within the form
+  // This avoids conflicts with other inputs on the page (like AI assistant)
+  await page.locator('input#username').fill('admin');
+  await page.locator('input#password').fill('admin123');
 
-  // Click the sign in button
-  await page.getByRole('button', { name: /sign in/i }).click();
+  // Click the sign in button within the form
+  await page.locator('form').getByRole('button', { name: /sign in/i }).click();
 
   // Wait for redirect to dashboard or MFA verification
-  await page.waitForURL(/\/(dashboard|login\/verify)/);
+  await page.waitForURL(/\/(dashboard|login\/verify)/, { timeout: 15000 });
 
   // If MFA is required, we'd handle it here
   // For now, assume direct login to dashboard
