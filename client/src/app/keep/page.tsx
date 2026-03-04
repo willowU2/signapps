@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   Search,
   Menu,
@@ -22,6 +22,7 @@ import {
   X,
   Plus,
   Tag,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -41,17 +42,39 @@ import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/store";
 import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import {
-  useKeepStore,
-  useKeepUIState,
-  useKeepUIActions,
-  useKeepNoteActions,
-  useKeepLabels,
+  useKeepData,
+  useCreateNote,
+  useTogglePin,
+  useToggleArchive,
+  useMoveToTrash,
+  useRestoreFromTrash,
+  useDeleteNote,
+  useEmptyTrash,
+  useChangeColor,
+  useToggleChecklistItem,
+  selectNotesByView,
   selectPinnedNotes,
   selectUnpinnedNotes,
-  NOTE_COLORS,
-  type KeepNote,
-  type ChecklistItem,
-} from "@/lib/store/keep-store";
+} from "@/hooks/use-keep";
+import type { KeepNote, ChecklistItem as ChecklistItemType } from "@/lib/api/keep";
+
+// Google Keep dark mode colors
+const NOTE_COLORS = [
+  { id: 'default', value: '#202124', name: 'Par défaut' },
+  { id: 'coral', value: '#77172e', name: 'Corail' },
+  { id: 'peach', value: '#692b17', name: 'Pêche' },
+  { id: 'sand', value: '#7c4a03', name: 'Sable' },
+  { id: 'mint', value: '#264d3b', name: 'Menthe' },
+  { id: 'sage', value: '#0d625d', name: 'Sauge' },
+  { id: 'fog', value: '#256377', name: 'Brume' },
+  { id: 'storm', value: '#284255', name: 'Orage' },
+  { id: 'dusk', value: '#472e5b', name: 'Crépuscule' },
+  { id: 'blossom', value: '#6c394f', name: 'Fleur' },
+  { id: 'clay', value: '#4b443a', name: 'Argile' },
+  { id: 'chalk', value: '#232427', name: 'Craie' },
+] as const;
+
+type SidebarView = 'notes' | 'reminders' | 'archive' | 'trash';
 
 const sidebarItems = [
   { id: "notes" as const, icon: Lightbulb, label: "Notes" },
@@ -61,39 +84,48 @@ const sidebarItems = [
 ];
 
 export default function KeepPage() {
-  // Optimized selectors to prevent unnecessary re-renders
-  const { searchQuery, isGridView, activeSidebarView, sidebarExpanded } = useKeepUIState();
-  const { setSearchQuery, setGridView, setActiveSidebarView, setSidebarExpanded } = useKeepUIActions();
-  const {
-    addNote,
-    togglePin,
-    toggleArchive,
-    moveToTrash,
-    restoreFromTrash,
-    permanentlyDeleteNote,
-    emptyTrash,
-    changeColor,
-    toggleChecklistItem,
-  } = useKeepNoteActions();
-  const labels = useKeepLabels();
+  // React Query hooks
+  const { data: keepData, isLoading, error, refetch } = useKeepData();
+  const createNoteMutation = useCreateNote();
+  const togglePinMutation = useTogglePin();
+  const toggleArchiveMutation = useToggleArchive();
+  const moveToTrashMutation = useMoveToTrash();
+  const restoreFromTrashMutation = useRestoreFromTrash();
+  const deleteNoteMutation = useDeleteNote();
+  const emptyTrashMutation = useEmptyTrash();
+  const changeColorMutation = useChangeColor();
+  const toggleChecklistItemMutation = useToggleChecklistItem();
+
+  // UI State (local)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isGridView, setIsGridView] = useState(true);
+  const [activeSidebarView, setActiveSidebarView] = useState<SidebarView>("notes");
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
   const { sidebarCollapsed, rightSidebarOpen } = useUIStore();
 
-  const pinnedNotes = useKeepStore(selectPinnedNotes);
-  const unpinnedNotes = useKeepStore(selectUnpinnedNotes);
+  // Memoized filtered notes
+  const filteredNotes = useMemo(
+    () => selectNotesByView(keepData, activeSidebarView, searchQuery, null),
+    [keepData, activeSidebarView, searchQuery]
+  );
+
+  const pinnedNotes = useMemo(() => selectPinnedNotes(filteredNotes), [filteredNotes]);
+  const unpinnedNotes = useMemo(() => selectUnpinnedNotes(filteredNotes), [filteredNotes]);
+  const labels = keepData?.labels || [];
 
   // New note creation form state
   const [newNoteExpanded, setNewNoteExpanded] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [newNoteContent, setNewNoteContent] = useState("");
   const [newNoteIsChecklist, setNewNoteIsChecklist] = useState(false);
-  const [newChecklistItems, setNewChecklistItems] = useState<ChecklistItem[]>([]);
+  const [newChecklistItems, setNewChecklistItems] = useState<ChecklistItemType[]>([]);
   const [newNoteColor, setNewNoteColor] = useState("#202124");
   const [newNotePinned, setNewNotePinned] = useState(false);
 
   const newNoteRef = useRef<HTMLDivElement>(null);
 
-  // Create note and reset form - defined before useEffect to avoid dependency issues
+  // Create note and reset form
   const handleCreateNote = useCallback(() => {
     const hasContent =
       newNoteTitle.trim() ||
@@ -101,15 +133,18 @@ export default function KeepPage() {
       newChecklistItems.some((item) => item.text.trim());
 
     if (hasContent) {
-      addNote({
+      createNoteMutation.mutate({
         title: newNoteTitle.trim(),
         content: newNoteContent.trim(),
         color: newNoteColor,
         isPinned: newNotePinned,
+        isArchived: false,
+        isTrashed: false,
         hasChecklist: newNoteIsChecklist && newChecklistItems.length > 0,
         checklistItems: newNoteIsChecklist
           ? newChecklistItems.filter((item) => item.text.trim())
           : [],
+        labels: [],
       });
     }
 
@@ -121,7 +156,7 @@ export default function KeepPage() {
     setNewNoteColor("#202124");
     setNewNotePinned(false);
     setNewNoteExpanded(false);
-  }, [newNoteTitle, newNoteContent, newChecklistItems, newNoteIsChecklist, newNoteColor, newNotePinned, addNote]);
+  }, [newNoteTitle, newNoteContent, newChecklistItems, newNoteIsChecklist, newNoteColor, newNotePinned, createNoteMutation]);
 
   // Close new note on outside click and save if has content
   useEffect(() => {
@@ -170,9 +205,89 @@ export default function KeepPage() {
     }
   };
 
+  // Action handlers using mutations
+  const handleTogglePin = useCallback((note: KeepNote) => {
+    togglePinMutation.mutate(note);
+  }, [togglePinMutation]);
+
+  const handleToggleArchive = useCallback((note: KeepNote) => {
+    toggleArchiveMutation.mutate(note);
+  }, [toggleArchiveMutation]);
+
+  const handleMoveToTrash = useCallback((note: KeepNote) => {
+    moveToTrashMutation.mutate(note);
+  }, [moveToTrashMutation]);
+
+  const handleRestoreFromTrash = useCallback((note: KeepNote) => {
+    restoreFromTrashMutation.mutate(note);
+  }, [restoreFromTrashMutation]);
+
+  const handlePermanentlyDelete = useCallback((noteId: string) => {
+    deleteNoteMutation.mutate(noteId);
+  }, [deleteNoteMutation]);
+
+  const handleEmptyTrash = useCallback(() => {
+    const trashedNoteIds = keepData?.notes
+      .filter((n) => n.isTrashed)
+      .map((n) => n.id) || [];
+    if (trashedNoteIds.length > 0) {
+      emptyTrashMutation.mutate(trashedNoteIds);
+    }
+  }, [keepData, emptyTrashMutation]);
+
+  const handleChangeColor = useCallback((noteId: string, color: string) => {
+    changeColorMutation.mutate({ noteId, color });
+  }, [changeColorMutation]);
+
+  const handleToggleChecklistItem = useCallback((note: KeepNote, itemId: string) => {
+    toggleChecklistItemMutation.mutate({ note, itemId });
+  }, [toggleChecklistItemMutation]);
+
   const showTrashActions = activeSidebarView === "trash";
   const showArchiveActions = activeSidebarView === "archive";
   const hasNotes = pinnedNotes.length > 0 || unpinnedNotes.length > 0;
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <TooltipProvider delayDuration={0}>
+        <WorkspaceShell
+          className="bg-[#202124] text-[#e8eaed] font-['Google_Sans',_Roboto,_sans-serif]"
+          header={<div className="h-16" />}
+          sidebar={<div className="w-[80px]" />}
+        >
+          <div className="flex flex-col items-center justify-center h-full">
+            <Loader2 className="h-12 w-12 text-[#fbbc04] animate-spin mb-4" />
+            <p className="text-[#9aa0a6]">Chargement des notes...</p>
+          </div>
+        </WorkspaceShell>
+      </TooltipProvider>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <TooltipProvider delayDuration={0}>
+        <WorkspaceShell
+          className="bg-[#202124] text-[#e8eaed] font-['Google_Sans',_Roboto,_sans-serif]"
+          header={<div className="h-16" />}
+          sidebar={<div className="w-[80px]" />}
+        >
+          <div className="flex flex-col items-center justify-center h-full">
+            <p className="text-[#ea4335] mb-4">Erreur lors du chargement des notes</p>
+            <Button
+              variant="outline"
+              onClick={() => refetch()}
+              className="border-[#5f6368] text-[#e8eaed] hover:bg-[#3c4043]"
+            >
+              Réessayer
+            </Button>
+          </div>
+        </WorkspaceShell>
+      </TooltipProvider>
+    );
+  }
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -226,6 +341,7 @@ export default function KeepPage() {
                   variant="ghost"
                   size="icon"
                   className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                  onClick={() => refetch()}
                 >
                   <RefreshCw className="h-5 w-5" />
                 </Button>
@@ -241,7 +357,7 @@ export default function KeepPage() {
                   variant="ghost"
                   size="icon"
                   className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
-                  onClick={() => setGridView(!isGridView)}
+                  onClick={() => setIsGridView(!isGridView)}
                 >
                   {isGridView ? (
                     <List className="h-5 w-5" />
@@ -266,7 +382,7 @@ export default function KeepPage() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                Param\u00e8tres
+                Paramètres
               </TooltipContent>
             </Tooltip>
 
@@ -327,7 +443,7 @@ export default function KeepPage() {
                 <div className="h-px bg-[#5f6368]/30 mx-4 my-2" />
                 <div className="px-4 py-2">
                   <span className="text-xs font-medium text-[#9aa0a6] uppercase tracking-wider">
-                    Libell\u00e9s
+                    Libellés
                   </span>
                 </div>
                 {labels.slice(0, 5).map((label) => (
@@ -345,7 +461,7 @@ export default function KeepPage() {
                   <div className="w-6 h-6 flex items-center justify-center ml-2">
                     <Pencil className="h-4 w-4" />
                   </div>
-                  <span className="text-sm">Modifier les libell\u00e9s</span>
+                  <span className="text-sm">Modifier les libellés</span>
                 </button>
               </>
             )}
@@ -363,7 +479,7 @@ export default function KeepPage() {
                     className="w-full flex items-center gap-4 px-4 py-3.5 bg-[#202124] border border-[#5f6368]/50 rounded-lg shadow-[0_1px_2px_0_rgba(0,0,0,0.3),0_2px_6px_2px_rgba(0,0,0,0.15)] hover:shadow-[0_1px_3px_0_rgba(0,0,0,0.3),0_4px_8px_3px_rgba(0,0,0,0.15)] transition-shadow text-left"
                   >
                     <span className="text-[#9aa0a6] text-[15px]">
-                      Cr\u00e9er une note...
+                      Créer une note...
                     </span>
                     <div className="ml-auto flex items-center gap-3">
                       <CheckSquare className="h-5 w-5 text-[#9aa0a6]" />
@@ -415,7 +531,7 @@ export default function KeepPage() {
                               onChange={(e) =>
                                 updateNewChecklistItem(item.id, e.target.value)
                               }
-                              placeholder="\u00c9l\u00e9ment de liste"
+                              placeholder="Élément de liste"
                               className="flex-1 bg-transparent text-[#e8eaed] placeholder:text-[#5f6368] text-sm py-1 focus:outline-none"
                               autoFocus={index === newChecklistItems.length - 1}
                               onKeyDown={(e) => {
@@ -438,12 +554,12 @@ export default function KeepPage() {
                           className="flex items-center gap-2 text-[#9aa0a6] hover:text-[#e8eaed] py-1"
                         >
                           <Plus className="h-4 w-4" />
-                          <span className="text-sm">\u00c9l\u00e9ment de liste</span>
+                          <span className="text-sm">Élément de liste</span>
                         </button>
                       </div>
                     ) : (
                       <textarea
-                        placeholder="Cr\u00e9er une note..."
+                        placeholder="Créer une note..."
                         value={newNoteContent}
                         onChange={(e) => setNewNoteContent(e.target.value)}
                         className="w-full bg-transparent text-[#e8eaed] placeholder:text-[#9aa0a6] text-[14px] px-4 py-2 min-h-[60px] resize-none focus:outline-none"
@@ -530,9 +646,14 @@ export default function KeepPage() {
                         variant="ghost"
                         size="sm"
                         onClick={handleCreateNote}
+                        disabled={createNoteMutation.isPending}
                         className="text-[#e8eaed] hover:bg-[#3c4043] rounded-md px-6 font-medium"
                       >
-                        Fermer
+                        {createNoteMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Fermer"
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -544,15 +665,19 @@ export default function KeepPage() {
             {showTrashActions && (
               <div className="max-w-[600px] mx-auto mb-6 flex items-center justify-center">
                 <p className="text-sm text-[#9aa0a6]">
-                  Les notes de la corbeille sont supprim\u00e9es au bout de 7 jours.
+                  Les notes de la corbeille sont supprimées au bout de 7 jours.
                 </p>
                 {(pinnedNotes.length > 0 || unpinnedNotes.length > 0) && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={emptyTrash}
+                    onClick={handleEmptyTrash}
+                    disabled={emptyTrashMutation.isPending}
                     className="ml-4 text-[#e8eaed] hover:bg-[#3c4043]"
                   >
+                    {emptyTrashMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
                     Vider la corbeille
                   </Button>
                 )}
@@ -577,14 +702,14 @@ export default function KeepPage() {
                       key={note.id}
                       note={note}
                       isGridView={isGridView}
-                      onTogglePin={() => togglePin(note.id)}
-                      onToggleArchive={() => toggleArchive(note.id)}
-                      onMoveToTrash={() => moveToTrash(note.id)}
-                      onRestoreFromTrash={() => restoreFromTrash(note.id)}
-                      onPermanentlyDelete={() => permanentlyDeleteNote(note.id)}
-                      onChangeColor={(color) => changeColor(note.id, color)}
+                      onTogglePin={() => handleTogglePin(note)}
+                      onToggleArchive={() => handleToggleArchive(note)}
+                      onMoveToTrash={() => handleMoveToTrash(note)}
+                      onRestoreFromTrash={() => handleRestoreFromTrash(note)}
+                      onPermanentlyDelete={() => handlePermanentlyDelete(note.id)}
+                      onChangeColor={(color) => handleChangeColor(note.id, color)}
                       onToggleChecklistItem={(itemId) =>
-                        toggleChecklistItem(note.id, itemId)
+                        handleToggleChecklistItem(note, itemId)
                       }
                       showTrashActions={showTrashActions}
                       showArchiveActions={showArchiveActions}
@@ -614,14 +739,14 @@ export default function KeepPage() {
                       key={note.id}
                       note={note}
                       isGridView={isGridView}
-                      onTogglePin={() => togglePin(note.id)}
-                      onToggleArchive={() => toggleArchive(note.id)}
-                      onMoveToTrash={() => moveToTrash(note.id)}
-                      onRestoreFromTrash={() => restoreFromTrash(note.id)}
-                      onPermanentlyDelete={() => permanentlyDeleteNote(note.id)}
-                      onChangeColor={(color) => changeColor(note.id, color)}
+                      onTogglePin={() => handleTogglePin(note)}
+                      onToggleArchive={() => handleToggleArchive(note)}
+                      onMoveToTrash={() => handleMoveToTrash(note)}
+                      onRestoreFromTrash={() => handleRestoreFromTrash(note)}
+                      onPermanentlyDelete={() => handlePermanentlyDelete(note.id)}
+                      onChangeColor={(color) => handleChangeColor(note.id, color)}
                       onToggleChecklistItem={(itemId) =>
-                        toggleChecklistItem(note.id, itemId)
+                        handleToggleChecklistItem(note, itemId)
                       }
                       showTrashActions={showTrashActions}
                       showArchiveActions={showArchiveActions}
@@ -646,7 +771,7 @@ export default function KeepPage() {
                   <>
                     <Archive className="h-28 w-28 text-[#5f6368] mb-4 opacity-50" />
                     <p className="text-[22px] text-[#9aa0a6]">
-                      Vos notes archiv\u00e9es apparaissent ici
+                      Vos notes archivées apparaissent ici
                     </p>
                   </>
                 )}
@@ -722,7 +847,7 @@ function NoteCard({
       )}
       style={{ backgroundColor }}
     >
-      {/* Pin Button - toggles pin state via Zustand store */}
+      {/* Pin Button - toggles pin state via mutation */}
       {!showTrashActions && (
         <Tooltip>
           <TooltipTrigger asChild>

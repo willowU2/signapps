@@ -16,3 +16,4 @@ export * from './meet';
 export * from './remote';
 export * from './pxe';
 export * from './it-assets';
+export * from './keep';
