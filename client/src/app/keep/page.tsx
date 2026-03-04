@@ -541,12 +541,12 @@ export default function KeepPage() {
             {pinnedNotes.length > 0 && (
               <div className="mb-8">
                 <div className="text-[11px] font-medium text-[#9aa0a6] uppercase tracking-wider px-2 mb-3">
-                  \u00c9pingl\u00e9es
+                  Épinglées
                 </div>
                 <div
                   className={cn(
                     isGridView
-                      ? "columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 [column-fill:_balance]"
+                      ? "columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4"
                       : "flex flex-col gap-3 max-w-[600px] mx-auto"
                   )}
                 >
@@ -583,7 +583,7 @@ export default function KeepPage() {
                 <div
                   className={cn(
                     isGridView
-                      ? "columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 [column-fill:_balance]"
+                      ? "columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4"
                       : "flex flex-col gap-3 max-w-[600px] mx-auto"
                   )}
                 >
@@ -682,15 +682,23 @@ function NoteCard({
   const uncheckedItems = note.checklistItems.filter((item) => !item.checked);
   const checkedItems = note.checklistItems.filter((item) => item.checked);
 
+  // Use note color or default dark gray
+  const backgroundColor = note.color || "#202124";
+
   return (
     <div
       className={cn(
-        "group relative rounded-lg overflow-hidden cursor-pointer mb-4 transition-all duration-200",
-        "border border-[#5f6368]/40 hover:border-[#5f6368]/70",
-        "shadow-none hover:shadow-[0_1px_2px_0_rgba(0,0,0,0.3),0_1px_3px_1px_rgba(0,0,0,0.15)]",
-        isGridView ? "break-inside-avoid" : ""
+        "group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200",
+        // Masonry layout: break-inside-avoid prevents card splitting across columns
+        isGridView && "break-inside-avoid mb-4",
+        // List layout: simple margin
+        !isGridView && "mb-3",
+        // Subtle thin border for dark mode aesthetic
+        "border border-[#5f6368]",
+        // Hover effects
+        "hover:border-[#8a8f94] hover:shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
       )}
-      style={{ backgroundColor: note.color }}
+      style={{ backgroundColor }}
     >
       {/* Pin Button */}
       {!showTrashActions && (
@@ -722,6 +730,7 @@ function NoteCard({
 
         {note.hasChecklist && note.checklistItems.length > 0 ? (
           <div className="space-y-0.5">
+            {/* Unchecked items - normal text */}
             {uncheckedItems.map((item) => (
               <div
                 key={item.id}
@@ -733,15 +742,18 @@ function NoteCard({
                     onToggleChecklistItem(item.id);
                   }}
                   className="w-[18px] h-[18px] rounded-sm border border-[#5f6368] flex items-center justify-center shrink-0 mt-0.5 hover:border-[#9aa0a6] transition-colors"
+                  aria-label={`Marquer "${item.text}" comme terminé`}
                 />
                 <span className="text-[13px] text-[#e8eaed] leading-5">
                   {item.text}
                 </span>
               </div>
             ))}
+            {/* Separator between unchecked and checked */}
             {checkedItems.length > 0 && uncheckedItems.length > 0 && (
-              <div className="h-px bg-[#5f6368]/30 my-2" />
+              <div className="h-px bg-[#5f6368]/40 my-2" />
             )}
+            {/* Checked items - strikethrough with muted color */}
             {checkedItems.map((item) => (
               <div
                 key={item.id}
@@ -753,10 +765,11 @@ function NoteCard({
                     onToggleChecklistItem(item.id);
                   }}
                   className="w-[18px] h-[18px] rounded-sm border border-[#5f6368] bg-transparent flex items-center justify-center shrink-0 mt-0.5 hover:border-[#9aa0a6] transition-colors"
+                  aria-label={`Marquer "${item.text}" comme non terminé`}
                 >
                   <Check className="h-3 w-3 text-[#9aa0a6]" />
                 </button>
-                <span className="text-[13px] text-[#9aa0a6] line-through leading-5">
+                <span className="text-[13px] text-[#9aa0a6] line-through decoration-[#9aa0a6]/60 leading-5">
                   {item.text}
                 </span>
               </div>
@@ -776,7 +789,7 @@ function NoteCard({
             {note.labels.map((label) => (
               <span
                 key={label}
-                className="px-2 py-0.5 bg-[#3c4043]/60 text-[11px] text-[#e8eaed] rounded-full font-medium"
+                className="px-2 py-0.5 bg-[#3c4043]/70 text-[11px] text-[#e8eaed] rounded-full font-medium border border-[#5f6368]/30"
               >
                 {label}
               </span>
