@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/lib/store";
+import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import {
   useKeepStore,
   useKeepUIState,
@@ -50,7 +51,7 @@ import {
   NOTE_COLORS,
   type KeepNote,
   type ChecklistItem,
-} from "@/stores/keep-store";
+} from "@/lib/store/keep-store";
 
 const sidebarItems = [
   { id: "notes" as const, icon: Lightbulb, label: "Notes" },
@@ -167,13 +168,10 @@ export default function KeepPage() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className={cn(
-        "h-screen w-screen flex flex-col bg-[#202124] text-[#e8eaed] overflow-hidden font-['Google_Sans',_Roboto,_sans-serif] transition-all duration-300",
-        sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-60',
-        rightSidebarOpen ? 'pr-[24rem]' : 'pr-16'
-      )}>
-        {/* Header */}
-        <header className="h-16 shrink-0 flex items-center px-2 border-b border-[#5f6368]/30">
+      <WorkspaceShell
+        className="bg-[#202124] text-[#e8eaed] font-['Google_Sans',_Roboto,_sans-serif]"
+        header={
+          <header className="h-16 shrink-0 flex items-center px-2 border-b border-[#5f6368]/30">
           <Button
             variant="ghost"
             size="icon"
@@ -274,9 +272,8 @@ export default function KeepPage() {
             </div>
           </div>
         </header>
-
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
+        }
+        sidebar={
           <nav
             className={cn(
               "shrink-0 flex flex-col py-2 transition-all duration-200",
@@ -345,7 +342,8 @@ export default function KeepPage() {
               </>
             )}
           </nav>
-
+        }
+      >
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto px-4 py-6">
             {/* Create Note Input - Only show in notes view */}
@@ -649,8 +647,7 @@ export default function KeepPage() {
               </div>
             )}
           </main>
-        </div>
-      </div>
+      </WorkspaceShell>
     </TooltipProvider>
   );
 }
