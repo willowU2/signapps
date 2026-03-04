@@ -33,6 +33,7 @@ import { useMail } from "@/app/mail/use-mail"
 import { useUIStore } from "@/lib/store"
 import { mailApi, accountApi } from "@/lib/api-mail"
 import { cn } from "@/lib/utils"
+import { WorkspaceShell } from "@/components/layout/workspace-shell"
 
 export default function MailPage() {
     const { sidebarCollapsed, rightSidebarOpen } = useUIStore()
@@ -151,21 +152,13 @@ export default function MailPage() {
 
     return (
         <TooltipProvider delayDuration={0}>
-            {/* Full Viewport Workspace Layout - Bypasses AppLayout */}
-            <div className={cn(
-                "h-screen w-screen flex flex-col bg-[#f2f6fc] dark:bg-[#111111] text-foreground overflow-hidden font-sans",
-                sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-60',
-                rightSidebarOpen ? 'pr-[24rem]' : 'pr-16'
-            )}>
-
-                {/* 1. Global Workspace Header */}
-                <WorkspaceHeader />
-
-                <div className="flex flex-1 overflow-hidden">
-                    {/* 2. Extreme Left Rail (Mail, Chat, Spaces, Meet) */}
-                    <WorkspaceRail activeApp="mail" />
-
-                    {/* 3. Mail Navigation Sidebar */}
+            {/* Full Viewport Workspace Layout using Generic Shell */}
+            <WorkspaceShell
+                className="bg-[#f2f6fc] dark:bg-[#111111] text-foreground font-sans"
+                header={<WorkspaceHeader />}
+                leftRail={<WorkspaceRail activeApp="mail" />}
+                rightRail={<MailAddons />}
+                sidebar={
                     <div className="w-[256px] shrink-0 flex flex-col gap-2 px-4 pt-4 overflow-y-auto">
                         {/* Compose Button - Floating Pill Style */}
                         <Button
@@ -268,9 +261,10 @@ export default function MailPage() {
                             )}
                         </div>
                     </div>
-
-                    {/* 4. White Card Content Area (List + Display) - Floating Card */}
-                    <div className="flex-1 flex flex-col bg-white dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative">
+                }
+            >
+                {/* 4. White Card Content Area (List + Display) - Floating Card */}
+                <div className="flex-1 flex flex-col bg-white dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative">
                         {!mailState.selected ? (
                             <MailList
                                 items={mailList}
@@ -303,13 +297,9 @@ export default function MailPage() {
                             </div>
                         )}
                     </div>
+            </WorkspaceShell>
 
-                    {/* 5. Extreme Right Add-ons Rail */}
-                    <MailAddons />
-                </div>
-
-                <ComposeAiDialog open={composeAiOpen} onOpenChange={setComposeAiOpen} />
-            </div>
+            <ComposeAiDialog open={composeAiOpen} onOpenChange={setComposeAiOpen} />
         </TooltipProvider>
     )
 }

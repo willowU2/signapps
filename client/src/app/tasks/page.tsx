@@ -67,8 +67,8 @@ export default function TasksPage() {
 
   return (
     <AppLayout>
-      <div className="flex justify-center h-[calc(100vh-8rem)] w-full py-6 bg-background">
-        <div className="w-full max-w-md bg-white border rounded-[24px] shadow-sm flex flex-col overflow-hidden relative">
+      <div className="flex h-[calc(100vh-8rem)] w-full bg-background">
+        <div className="w-full bg-white border rounded-[24px] shadow-sm flex flex-col overflow-hidden relative">
           
           <TasksHeader 
             calendars={calendars}

@@ -164,6 +164,54 @@ All services expose REST APIs at `/api/v1/...`. The frontend connects directly t
 - Path alias: `@/*` maps to `./src/*`
 - ESLint with next config
 
+## Automatic Tool Usage
+
+Claude MUST automatically invoke the following tools when the situation matches. This is MANDATORY, not optional.
+
+### BMAD Workflows (via `_bmad/` system)
+
+| Situation | Action | Command |
+|-----------|--------|---------|
+| New major feature or project | Create Product Brief | `/bmad CB` |
+| Need detailed specifications | Create PRD | `/bmad CP` |
+| Architecture decisions needed | Create Architecture | `/bmad CA` |
+| Break down into implementable stories | Create Epics & Stories | `/bmad CE` |
+| Rapid development without ceremony | Quick Dev | `/bmad QD` |
+| Code review needed | Code Review | `/bmad CR` |
+| Brainstorming ideas needed | Brainstorm Project | `/bmad BP` |
+| Multi-agent collaboration | Party Mode | `/bmad party` |
+
+### Superpowers Plugin Skills
+
+| Situation | Skill to Invoke |
+|-----------|-----------------|
+| **Before** creating any new feature, component, or functionality | `superpowers:brainstorming` |
+| Encountering any bug, test failure, or unexpected behavior | `superpowers:systematic-debugging` |
+| Implementing any feature or bugfix | `superpowers:test-driven-development` |
+| Multi-step implementation task | `superpowers:writing-plans` |
+| 2+ independent tasks that can run in parallel | `superpowers:dispatching-parallel-agents` |
+| About to claim work is complete, fixed, or passing | `superpowers:verification-before-completion` |
+| After completing major feature implementation | `superpowers:requesting-code-review` |
+| Receiving code review feedback | `superpowers:receiving-code-review` |
+
+### Local Skills (`.agents/skills/`)
+
+These skills provide project-specific guidance. Read the relevant SKILL.md before implementing:
+
+- `agent_planning_workflow` - Architect role workflow before complex changes
+- `ai_self_refinement` - Auto-update conventions when detecting drift
+- `rust_api_endpoint` - Creating Rust API endpoints
+- `nextjs_component` - Creating Next.js components
+- `db_migrations` - Database migrations with sqlx
+- `rust_debugging_workflow` - Rust debugging patterns
+- `playwright_e2e_testing` - E2E testing setup
+
+### Priority Order
+
+1. **Superpowers** skills for methodology (brainstorming, TDD, debugging)
+2. **BMAD** workflows for structured project work (PRD, architecture, stories)
+3. **Local skills** for implementation patterns specific to this codebase
+
 ## CI Pipeline
 
 GitHub Actions runs on push/PR to main and develop:
