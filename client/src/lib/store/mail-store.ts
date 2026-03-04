@@ -13,6 +13,9 @@ interface MailState {
   // Data
   mailList: Mail[];
 
+  // Selection
+  selectedId: Mail['id'] | null;
+
   // UI State
   composeAiOpen: boolean;
   labelsExpanded: boolean;
@@ -22,6 +25,10 @@ interface MailState {
   addMail: (mail: Mail) => void;
   updateMail: (id: string, updates: Partial<Mail>) => void;
   removeMail: (id: string) => void;
+
+  // Selection Actions
+  setSelectedId: (id: Mail['id'] | null) => void;
+  clearSelection: () => void;
 
   // UI Actions
   setComposeAiOpen: (open: boolean) => void;
@@ -39,6 +46,7 @@ export const useMailStore = create<MailState>()(
     (set) => ({
       // Initial state
       mailList: [],
+      selectedId: null,
       composeAiOpen: false,
       labelsExpanded: true,
 
@@ -63,7 +71,15 @@ export const useMailStore = create<MailState>()(
       removeMail: (id) =>
         set((state) => ({
           mailList: state.mailList.filter((mail) => mail.id !== id),
+          selectedId: state.selectedId === id ? null : state.selectedId,
         })),
+
+      // ========================================
+      // Selection Actions
+      // ========================================
+
+      setSelectedId: (id) => set({ selectedId: id }),
+      clearSelection: () => set({ selectedId: null }),
 
       // ========================================
       // UI Actions
@@ -103,6 +119,13 @@ export const selectMailById = (state: MailState, id: string): Mail | undefined =
 
 export const useMailList = () => useMailStore((state) => state.mailList);
 
+export const useSelectedMailId = () => useMailStore((state) => state.selectedId);
+
+export const useSelectedMail = () =>
+  useMailStore((state) =>
+    state.selectedId ? state.mailList.find((m) => m.id === state.selectedId) ?? null : null
+  );
+
 export const useMailUIState = () =>
   useMailStore(
     useShallow((state) => ({
@@ -118,6 +141,14 @@ export const useMailUIActions = () =>
       toggleComposeAi: state.toggleComposeAi,
       setLabelsExpanded: state.setLabelsExpanded,
       toggleLabelsExpanded: state.toggleLabelsExpanded,
+    }))
+  );
+
+export const useMailSelectionActions = () =>
+  useMailStore(
+    useShallow((state) => ({
+      setSelectedId: state.setSelectedId,
+      clearSelection: state.clearSelection,
     }))
   );
 

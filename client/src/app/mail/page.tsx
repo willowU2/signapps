@@ -1,21 +1,18 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import {
     Inbox,
     File,
     Send,
-    Archive,
-    Trash2,
     Star,
     Clock,
-    AlertCircle,
-    Tag,
     ChevronDown,
     ChevronRight,
     Plus,
-    Bot,
+    Pencil,
+    Tag,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -28,20 +25,29 @@ import { ComposeAiDialog } from "@/components/mail/compose-ai-dialog"
 import { MailAddons } from "@/components/mail/mail-addons"
 import { WorkspaceRail } from "@/components/mail/workspace-rail"
 import { WorkspaceHeader } from "@/components/mail/workspace-header"
-import { Mail } from "@/lib/data/mail"
-import { useMail } from "@/app/mail/use-mail"
-import { useUIStore } from "@/lib/store"
+import type { Mail } from "@/lib/data/mail"
+import {
+    useMailList,
+    useSelectedMailId,
+    useSelectedMail,
+    useMailUIState,
+    useMailUIActions,
+    useMailSelectionActions,
+    useMailDataActions,
+} from "@/lib/store/mail-store"
 import { mailApi, accountApi } from "@/lib/api-mail"
 import { cn } from "@/lib/utils"
 import { WorkspaceShell } from "@/components/layout/workspace-shell"
 
 export default function MailPage() {
-    const { sidebarCollapsed, rightSidebarOpen } = useUIStore()
-    const [mailState, setMailState] = useMail()
-    const [mailList, setMailList] = useState<Mail[]>([])
-    const [accounts, setAccounts] = useState<any[]>([])
-    const [composeAiOpen, setComposeAiOpen] = useState(false)
-    const [labelsExpanded, setLabelsExpanded] = useState(true)
+    // Zustand store hooks
+    const mailList = useMailList()
+    const selectedId = useSelectedMailId()
+    const selectedMail = useSelectedMail()
+    const { composeAiOpen, labelsExpanded } = useMailUIState()
+    const { setComposeAiOpen, toggleLabelsExpanded } = useMailUIActions()
+    const { setSelectedId, clearSelection } = useMailSelectionActions()
+    const { setMailList, removeMail } = useMailDataActions()
 
     useEffect(() => {
         // Fetch accounts
@@ -53,7 +59,8 @@ export default function MailPage() {
                 icon: a.provider,
                 provider: a.provider
             }))
-            setAccounts(uiAccounts)
+            // uiAccounts available for future use
+            void uiAccounts
         }).catch(err => console.error('Failed to fetch mail accounts:', err))
 
         // Use static mock data matching the user's screenshot
@@ -93,7 +100,7 @@ export default function MailPage() {
             }
         ];
         setMailList(mockMails);
-    }, [])
+    }, [setMailList])
 
     const handleSnooze = async (id: string, time: string) => {
         let snoozeDate = new Date()
@@ -114,12 +121,9 @@ export default function MailPage() {
 
         try {
             await mailApi.update(id, { snoozed_until: snoozeDate.toISOString() })
-            setMailList(prev => prev.filter(m => m.id !== id))
-            if (mailState.selected === id) {
-                setMailState({ ...mailState, selected: null })
-            }
+            removeMail(id)
             toast.success(`Conversation snoozed until ${time}.`)
-        } catch (error) {
+        } catch {
             toast.error("Failed to snooze conversation.")
         }
     }
@@ -127,12 +131,9 @@ export default function MailPage() {
     const handleArchive = async (id: string) => {
         try {
             await mailApi.update(id, { is_archived: true })
-            setMailList(prev => prev.filter(m => m.id !== id))
-            if (mailState.selected === id) {
-                setMailState({ ...mailState, selected: null })
-            }
+            removeMail(id)
             toast.success("Conversation archived.")
-        } catch (error) {
+        } catch {
             toast.error("Failed to archive conversation.")
         }
     }
@@ -140,19 +141,15 @@ export default function MailPage() {
     const handleDelete = async (id: string) => {
         try {
             await mailApi.update(id, { is_deleted: true })
-            setMailList(prev => prev.filter(m => m.id !== id))
-            if (mailState.selected === id) {
-                setMailState({ ...mailState, selected: null })
-            }
+            removeMail(id)
             toast.success("Conversation moved to trash.")
-        } catch (error) {
+        } catch {
             toast.error("Failed to delete conversation.")
         }
     }
 
     return (
         <TooltipProvider delayDuration={0}>
-            {/* Full Viewport Workspace Layout using Generic Shell */}
             <WorkspaceShell
                 className="bg-[#f2f6fc] dark:bg-[#111111] text-foreground font-sans"
                 header={<WorkspaceHeader />}
@@ -160,15 +157,12 @@ export default function MailPage() {
                 rightRail={<MailAddons />}
                 sidebar={
                     <div className="w-[256px] shrink-0 flex flex-col gap-2 px-4 pt-4 overflow-y-auto">
-                        {/* Compose Button - Floating Pill Style */}
+                        {/* Compose Button */}
                         <Button
                             className="w-fit gap-4 rounded-2xl h-14 shadow-lg font-medium bg-[#c2e7ff] hover:bg-[#a8d8f8] hover:shadow-xl text-[#001d35] transition-all duration-200 justify-start px-6 text-[15px] border-0"
                             onClick={() => setComposeAiOpen(true)}
                         >
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M3 17.25V21H6.75L17.81 9.94L14.06 6.19L3 17.25Z" fill="#1a73e8"/>
-                                <path d="M20.71 7.04C21.1 6.65 21.1 6.02 20.71 5.63L18.37 3.29C17.98 2.9 17.35 2.9 16.96 3.29L15.13 5.12L18.88 8.87L20.71 7.04Z" fill="#1a73e8"/>
-                            </svg>
+                            <Pencil className="h-6 w-6 text-[#1a73e8]" />
                             Nouveau message
                         </Button>
 
@@ -222,7 +216,7 @@ export default function MailPage() {
                         {/* Labels Section */}
                         <div className="mt-3 border-t border-[#e0e0e0]/60 dark:border-gray-800/60 pt-4">
                             <button
-                                onClick={() => setLabelsExpanded(!labelsExpanded)}
+                                onClick={toggleLabelsExpanded}
                                 className="flex items-center justify-between w-full px-4 py-1.5 group"
                             >
                                 <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5f6368] dark:text-[#9aa0a6]">
@@ -263,40 +257,40 @@ export default function MailPage() {
                     </div>
                 }
             >
-                {/* 4. White Card Content Area (List + Display) - Floating Card */}
+                {/* Content Area (List + Display) */}
                 <div className="flex-1 flex flex-col bg-white dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative">
-                        {!mailState.selected ? (
-                            <MailList
-                                items={mailList}
-                                selectedId={mailState.selected}
-                                onSelect={(id) => setMailState({ ...mailState, selected: id })}
-                                onSnooze={handleSnooze}
-                                onArchive={handleArchive}
-                                onDelete={handleDelete}
-                            />
-                        ) : (
-                            <div className="flex flex-col h-full">
-                                <div className="p-2 border-b flex items-center bg-white dark:bg-[#1f1f1f] sticky top-0 z-10 w-full">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setMailState({ ...mailState, selected: null })}
-                                        className="gap-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-                                    >
-                                        &larr; Retour
-                                    </Button>
-                                </div>
-                                <div className="flex-1 overflow-y-auto">
-                                    <MailDisplay
-                                        mail={mailList.find(m => m.id === mailState.selected) || null}
-                                        onSnooze={handleSnooze}
-                                        onArchive={handleArchive}
-                                        onDelete={handleDelete}
-                                    />
-                                </div>
+                    {!selectedId ? (
+                        <MailList
+                            items={mailList}
+                            selectedId={selectedId}
+                            onSelect={setSelectedId}
+                            onSnooze={handleSnooze}
+                            onArchive={handleArchive}
+                            onDelete={handleDelete}
+                        />
+                    ) : (
+                        <div className="flex flex-col h-full">
+                            <div className="p-2 border-b flex items-center bg-white dark:bg-[#1f1f1f] sticky top-0 z-10 w-full">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={clearSelection}
+                                    className="gap-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                                >
+                                    &larr; Retour
+                                </Button>
                             </div>
-                        )}
-                    </div>
+                            <div className="flex-1 overflow-y-auto">
+                                <MailDisplay
+                                    mail={selectedMail}
+                                    onSnooze={handleSnooze}
+                                    onArchive={handleArchive}
+                                    onDelete={handleDelete}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
             </WorkspaceShell>
 
             <ComposeAiDialog open={composeAiOpen} onOpenChange={setComposeAiOpen} />
