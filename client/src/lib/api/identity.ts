@@ -63,19 +63,29 @@ export interface RefreshResponse {
     refresh_token: string;
 }
 
+// Aligned with Rust UserResponse from signapps-identity
 export interface User {
     id: string;
     username: string;
-    email: string;
+    email?: string;
     display_name?: string;
-    role: number; // 0: User, 1: Admin
-    is_active: boolean;
-    is_ldap: boolean;
-    avatar_url?: string;
-    mfa_enabled?: boolean;
-    auth_provider?: string;
+    role: number; // i16 in Rust: 0=guest, 1=user, 2=admin
+    mfa_enabled: boolean;
+    auth_provider: string; // 'local' | 'ldap'
     created_at: string;
-    updated_at: string;
+    last_login?: string;
+    // Frontend-only computed fields
+    avatar_url?: string;
+}
+
+// Helper to check if user is admin (role >= 2)
+export function isAdmin(user: User): boolean {
+    return user.role >= 2;
+}
+
+// Helper to check if user is LDAP user
+export function isLdap(user: User): boolean {
+    return user.auth_provider === 'ldap';
 }
 
 export interface LdapConfig {

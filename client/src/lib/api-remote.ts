@@ -26,19 +26,19 @@ export interface RemoteConnection {
     id: string
     hardware_id?: string
     name: string
-    protocol: 'rdp' | 'vnc' | 'ssh' | 'telnet'
+    protocol: string // 'rdp' | 'vnc' | 'ssh' | 'telnet'
     hostname: string
     port: number
     username?: string
     parameters?: Record<string, unknown>
-    created_at: string
-    updated_at: string
+    created_at?: string
+    updated_at?: string
 }
 
 export interface CreateConnectionRequest {
     hardware_id?: string
     name: string
-    protocol: 'rdp' | 'vnc' | 'ssh' | 'telnet'
+    protocol: string // 'rdp' | 'vnc' | 'ssh' | 'telnet'
     hostname: string
     port: number
     username?: string
@@ -49,7 +49,7 @@ export interface CreateConnectionRequest {
 
 export interface UpdateConnectionRequest {
     name?: string
-    protocol?: 'rdp' | 'vnc' | 'ssh' | 'telnet'
+    protocol?: string // 'rdp' | 'vnc' | 'ssh' | 'telnet'
     hostname?: string
     port?: number
     username?: string

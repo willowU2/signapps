@@ -30,22 +30,22 @@ export interface PxeProfile {
     os_type?: string
     os_version?: string
     is_default?: boolean
-    created_at: string
-    updated_at: string
+    created_at?: string
+    updated_at?: string
 }
 
 export interface PxeAsset {
     id: string
     mac_address: string
     hostname?: string
-    ip_address?: string
-    status: 'discovered' | 'provisioning' | 'deployed' | 'offline'
+    ip_address?: string // Serialized from ipnetwork::IpNetwork
+    status: string // 'discovered' | 'provisioning' | 'deployed' | 'offline'
     profile_id?: string
     assigned_user_id?: string
     metadata?: Record<string, unknown>
     last_seen?: string
-    created_at: string
-    updated_at: string
+    created_at?: string
+    updated_at?: string
 }
 
 export interface CreatePxeProfileRequest {
@@ -74,7 +74,7 @@ export interface RegisterPxeAssetRequest {
 
 export interface UpdatePxeAssetRequest {
     hostname?: string
-    status?: 'discovered' | 'provisioning' | 'deployed' | 'offline'
+    status?: string // 'discovered' | 'provisioning' | 'deployed' | 'offline'
     profile_id?: string
     metadata?: Record<string, unknown>
 }

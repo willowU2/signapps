@@ -27,7 +27,7 @@ export interface Room {
     name: string
     description?: string
     room_code: string
-    status: 'scheduled' | 'active' | 'ended'
+    status: string // 'scheduled' | 'active' | 'ended'
     is_private: boolean
     max_participants?: number
     scheduled_start?: string
@@ -44,7 +44,7 @@ export interface Participant {
     id: string
     user_id?: string
     display_name: string
-    role: 'host' | 'moderator' | 'participant'
+    role: string // 'host' | 'moderator' | 'participant'
     joined_at: string
     is_muted: boolean
     is_video_off: boolean
@@ -54,7 +54,7 @@ export interface Participant {
 export interface Recording {
     id: string
     room_id: string
-    status: 'recording' | 'processing' | 'ready' | 'failed'
+    status: string // 'recording' | 'processing' | 'ready' | 'failed'
     started_at: string
     ended_at?: string
     duration_seconds?: number

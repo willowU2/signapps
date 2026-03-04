@@ -284,7 +284,7 @@ function ImportUsersDialog({
       const users: UserImportRow[] = [];
       const errors: { row: number; field: string; error: string }[] = [];
       const existingUsernames = new Set(existingUsers.map((u) => u.username.toLowerCase()));
-      const existingEmails = new Set(existingUsers.map((u) => u.email.toLowerCase()));
+      const existingEmails = new Set(existingUsers.filter((u) => u.email).map((u) => u.email!.toLowerCase()));
       const seenUsernames = new Set<string>();
       const seenEmails = new Set<string>();
 
@@ -931,7 +931,7 @@ export default function UsersPage() {
     setEditingUser(user);
     setFormData({
       username: user.username,
-      email: user.email,
+      email: user.email || '',
       password: '',
       display_name: user.display_name || '',
       role: user.role,
@@ -1009,7 +1009,7 @@ export default function UsersPage() {
   const filteredUsers = users.filter(
     (u) =>
       u.username.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase()) ||
+      (u.email?.toLowerCase() ?? '').includes(search.toLowerCase()) ||
       (u.display_name?.toLowerCase().includes(search.toLowerCase()) ?? false)
   );
 

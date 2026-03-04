@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getUsers, getSystemMetrics, type User, type SystemMetrics } from "@/lib/api-admin"
+import { getUsers, getSystemMetrics, type User, type SystemMetrics, isAdmin } from "@/lib/api-admin"
 import { Users, Activity, HardDrive, Cpu, ShieldCheck } from "lucide-react"
 
 export default function AdminDashboard() {
@@ -74,11 +74,11 @@ export default function AdminDashboard() {
                                 {users.slice(0, 5).map(user => (
                                     <div key={user.id} className="flex items-center justify-between border-b pb-2 last:border-0">
                                         <div className="space-y-1">
-                                            <p className="text-sm font-medium leading-none">{user.full_name}</p>
-                                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                                            <p className="text-sm font-medium leading-none">{user.display_name || user.username}</p>
+                                            <p className="text-sm text-muted-foreground">{user.email || '-'}</p>
                                         </div>
-                                        <div className={`px-2 py-1 rounded text-xs ${user.is_admin ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
-                                            {user.is_admin ? 'Admin' : 'User'}
+                                        <div className={`px-2 py-1 rounded text-xs ${isAdmin(user) ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
+                                            {isAdmin(user) ? 'Admin' : 'User'}
                                         </div>
                                     </div>
                                 ))}

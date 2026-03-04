@@ -1,15 +1,27 @@
 export const IDENTITY_API = "http://localhost:3001/api/v1"
 export const METRICS_API = "http://localhost:3008/api/v1"
 
-// Types
+// Types - aligned with Rust UserResponse from signapps-identity
 export interface User {
     id: string
     username: string
-    email: string
-    full_name: string
-    is_active: boolean
-    is_admin: boolean
+    email?: string
+    display_name?: string
+    role: number // i16 in Rust: 0=guest, 1=user, 2=admin
+    mfa_enabled: boolean
+    auth_provider: string
     created_at: string
+    last_login?: string
+}
+
+// Helper to check if user is admin (role >= 2)
+export function isAdmin(user: User): boolean {
+    return user.role >= 2
+}
+
+// Helper to check if user is active (has logged in)
+export function isActive(user: User): boolean {
+    return !!user.last_login
 }
 
 export interface SystemMetrics {
@@ -28,9 +40,9 @@ export async function getUsers(): Promise<User[]> {
     } catch (e) {
         console.warn("Using mock users data due to API error:", e)
         return [
-            { id: "1", username: "admin", email: "admin@example.com", full_name: "Admin User", is_active: true, is_admin: true, created_at: new Date().toISOString() },
-            { id: "2", username: "user", email: "user@example.com", full_name: "Regular User", is_active: true, is_admin: false, created_at: new Date().toISOString() },
-            { id: "3", username: "guest", email: "guest@example.com", full_name: "Guest User", is_active: false, is_admin: false, created_at: new Date().toISOString() },
+            { id: "1", username: "admin", email: "admin@example.com", display_name: "Admin User", role: 2, mfa_enabled: false, auth_provider: "local", created_at: new Date().toISOString(), last_login: new Date().toISOString() },
+            { id: "2", username: "user", email: "user@example.com", display_name: "Regular User", role: 1, mfa_enabled: false, auth_provider: "local", created_at: new Date().toISOString(), last_login: new Date().toISOString() },
+            { id: "3", username: "guest", email: "guest@example.com", display_name: "Guest User", role: 0, mfa_enabled: false, auth_provider: "local", created_at: new Date().toISOString() },
         ]
     }
 }

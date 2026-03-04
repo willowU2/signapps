@@ -27,15 +27,21 @@ export interface MailAccount {
     user_id: string
     email_address: string
     display_name?: string
-    provider: 'gmail' | 'outlook' | 'custom'
+    provider: string // 'gmail' | 'outlook' | 'custom'
+    // IMAP settings
     imap_server?: string
     imap_port?: number
+    imap_use_tls?: boolean
+    // SMTP settings
     smtp_server?: string
     smtp_port?: number
+    smtp_use_tls?: boolean
+    // Sync status
     status?: string
     last_sync_at?: string
     last_error?: string
     sync_interval_minutes?: number
+    // Signature
     signature_html?: string
     signature_text?: string
     created_at?: string
@@ -46,7 +52,7 @@ export interface MailFolder {
     id: string
     account_id: string
     name: string
-    folder_type: 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'custom'
+    folder_type: string // 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'custom'
     imap_path?: string
     unread_count?: number
     total_count?: number

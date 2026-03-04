@@ -12,7 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { getUsers, type User } from "@/lib/api-admin"
+import { getUsers, type User, isAdmin, isActive } from "@/lib/api-admin"
 import { Plus, Search, MoreHorizontal } from "lucide-react"
 import {
     DropdownMenu,
@@ -33,8 +33,8 @@ export default function UsersPage() {
 
     const filteredUsers = users.filter(user =>
         user.username.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase()) ||
-        user.full_name.toLowerCase().includes(search.toLowerCase())
+        (user.email?.toLowerCase() ?? '').includes(search.toLowerCase()) ||
+        (user.display_name?.toLowerCase() ?? '').includes(search.toLowerCase())
     )
 
     return (
@@ -74,16 +74,16 @@ export default function UsersPage() {
                         <TableBody>
                             {filteredUsers.map((user) => (
                                 <TableRow key={user.id}>
-                                    <TableCell className="font-medium">{user.full_name}</TableCell>
-                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell className="font-medium">{user.display_name || user.username}</TableCell>
+                                    <TableCell>{user.email || '-'}</TableCell>
                                     <TableCell>
-                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.is_admin ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
-                                            {user.is_admin ? 'Admin' : 'User'}
+                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isAdmin(user) ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
+                                            {isAdmin(user) ? 'Admin' : 'User'}
                                         </span>
                                     </TableCell>
                                     <TableCell>
-                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                            {user.is_active ? 'Active' : 'Inactive'}
+                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isActive(user) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                            {isActive(user) ? 'Active' : 'Inactive'}
                                         </span>
                                     </TableCell>
                                     <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
