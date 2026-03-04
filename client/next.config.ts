@@ -1,8 +1,11 @@
+import path from 'path';
+
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
   turbopack: {
+    root: path.resolve(__dirname, '..'),
     resolveAlias: {
       // onnxruntime-web/wasm is used by @ricky0123/vad-web;
       // alias to the pre-built bundle so Turbopack doesn't try to
