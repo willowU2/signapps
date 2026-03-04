@@ -67,12 +67,12 @@ export default function KeepPage() {
   const {
     addNote,
     togglePin,
-    archiveNote,
-    trashNote,
-    restoreNote,
+    toggleArchive,
+    moveToTrash,
+    restoreFromTrash,
     permanentlyDeleteNote,
     emptyTrash,
-    setNoteColor,
+    changeColor,
     toggleChecklistItem,
   } = useKeepNoteActions();
   const labels = useKeepLabels();
@@ -578,11 +578,11 @@ export default function KeepPage() {
                       note={note}
                       isGridView={isGridView}
                       onTogglePin={() => togglePin(note.id)}
-                      onArchive={() => archiveNote(note.id)}
-                      onTrash={() => trashNote(note.id)}
-                      onRestore={() => restoreNote(note.id)}
-                      onDelete={() => permanentlyDeleteNote(note.id)}
-                      onColorChange={(color) => setNoteColor(note.id, color)}
+                      onToggleArchive={() => toggleArchive(note.id)}
+                      onMoveToTrash={() => moveToTrash(note.id)}
+                      onRestoreFromTrash={() => restoreFromTrash(note.id)}
+                      onPermanentlyDelete={() => permanentlyDeleteNote(note.id)}
+                      onChangeColor={(color) => changeColor(note.id, color)}
                       onToggleChecklistItem={(itemId) =>
                         toggleChecklistItem(note.id, itemId)
                       }
@@ -615,11 +615,11 @@ export default function KeepPage() {
                       note={note}
                       isGridView={isGridView}
                       onTogglePin={() => togglePin(note.id)}
-                      onArchive={() => archiveNote(note.id)}
-                      onTrash={() => trashNote(note.id)}
-                      onRestore={() => restoreNote(note.id)}
-                      onDelete={() => permanentlyDeleteNote(note.id)}
-                      onColorChange={(color) => setNoteColor(note.id, color)}
+                      onToggleArchive={() => toggleArchive(note.id)}
+                      onMoveToTrash={() => moveToTrash(note.id)}
+                      onRestoreFromTrash={() => restoreFromTrash(note.id)}
+                      onPermanentlyDelete={() => permanentlyDeleteNote(note.id)}
+                      onChangeColor={(color) => changeColor(note.id, color)}
                       onToggleChecklistItem={(itemId) =>
                         toggleChecklistItem(note.id, itemId)
                       }
@@ -678,11 +678,11 @@ interface NoteCardProps {
   note: KeepNote;
   isGridView: boolean;
   onTogglePin: () => void;
-  onArchive: () => void;
-  onTrash: () => void;
-  onRestore: () => void;
-  onDelete: () => void;
-  onColorChange: (color: string) => void;
+  onToggleArchive: () => void;
+  onMoveToTrash: () => void;
+  onRestoreFromTrash: () => void;
+  onPermanentlyDelete: () => void;
+  onChangeColor: (color: string) => void;
   onToggleChecklistItem: (itemId: string) => void;
   showTrashActions: boolean;
   showArchiveActions: boolean;
@@ -692,11 +692,11 @@ function NoteCard({
   note,
   isGridView,
   onTogglePin,
-  onArchive,
-  onTrash,
-  onRestore,
-  onDelete,
-  onColorChange,
+  onToggleArchive,
+  onMoveToTrash,
+  onRestoreFromTrash,
+  onPermanentlyDelete,
+  onChangeColor,
   onToggleChecklistItem,
   showTrashActions,
   showArchiveActions,
@@ -722,24 +722,33 @@ function NoteCard({
       )}
       style={{ backgroundColor }}
     >
-      {/* Pin Button */}
+      {/* Pin Button - toggles pin state via Zustand store */}
       {!showTrashActions && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onTogglePin();
-          }}
-          className={cn(
-            "absolute top-2 right-2 p-2 rounded-full transition-all z-10",
-            note.isPinned
-              ? "opacity-100 text-[#e8eaed]"
-              : "opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:bg-[#3c4043]/50"
-          )}
-        >
-          <Pin
-            className={cn("h-[18px] w-[18px]", note.isPinned && "fill-current")}
-          />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTogglePin();
+              }}
+              className={cn(
+                "absolute top-2 right-2 p-2 rounded-full transition-all z-10",
+                note.isPinned
+                  ? "opacity-100 text-[#e8eaed]"
+                  : "opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:bg-[#3c4043]/50"
+              )}
+              aria-label={note.isPinned ? "Désépingler" : "Épingler"}
+            >
+              <Pin
+                className={cn("h-[18px] w-[18px]", note.isPinned && "fill-current")}
+              />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
+            {note.isPinned ? "Désépingler" : "Épingler"}
+          </TooltipContent>
+        </Tooltip>
       )}
 
       {/* Content */}
@@ -823,6 +832,7 @@ function NoteCard({
       {/* Action Bar */}
       <div className="flex items-center gap-0.5 px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {showTrashActions ? (
+          // Actions for notes in Trash view
           <>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -832,14 +842,15 @@ function NoteCard({
                   className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDelete();
+                    onPermanentlyDelete();
                   }}
+                  aria-label="Supprimer définitivement"
                 >
                   <Trash2 className="h-[18px] w-[18px]" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                Supprimer d\u00e9finitivement
+                Supprimer définitivement
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -850,8 +861,9 @@ function NoteCard({
                   className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onRestore();
+                    onRestoreFromTrash();
                   }}
+                  aria-label="Restaurer de la corbeille"
                 >
                   <RefreshCw className="h-[18px] w-[18px]" />
                 </Button>
@@ -862,6 +874,7 @@ function NoteCard({
             </Tooltip>
           </>
         ) : showArchiveActions ? (
+          // Actions for notes in Archive view
           <>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -871,8 +884,9 @@ function NoteCard({
                   className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onTrash();
+                    onMoveToTrash();
                   }}
+                  aria-label="Mettre à la corbeille"
                 >
                   <Trash2 className="h-[18px] w-[18px]" />
                 </Button>
@@ -889,18 +903,20 @@ function NoteCard({
                   className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onRestore();
+                    onToggleArchive();
                   }}
+                  aria-label="Désarchiver"
                 >
                   <RefreshCw className="h-[18px] w-[18px]" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                D\u00e9sarchiver
+                Désarchiver
               </TooltipContent>
             </Tooltip>
           </>
         ) : (
+          // Actions for notes in normal view
           <>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -908,6 +924,7 @@ function NoteCard({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                  aria-label="Me rappeler"
                 >
                   <Bell className="h-[18px] w-[18px]" />
                 </Button>
@@ -926,13 +943,14 @@ function NoteCard({
                       size="icon"
                       className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
                       onClick={(e) => e.stopPropagation()}
+                      aria-label="Changer la couleur"
                     >
                       <Palette className="h-[18px] w-[18px]" />
                     </Button>
                   </PopoverTrigger>
                 </TooltipTrigger>
                 <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
-                  Couleur d'arri\u00e8re-plan
+                  Couleur d'arrière-plan
                 </TooltipContent>
               </Tooltip>
               <PopoverContent
@@ -943,7 +961,8 @@ function NoteCard({
                   {NOTE_COLORS.map((color) => (
                     <button
                       key={color.id}
-                      onClick={() => onColorChange(color.value)}
+                      type="button"
+                      onClick={() => onChangeColor(color.value)}
                       className={cn(
                         "w-8 h-8 rounded-full border-2 transition-all hover:scale-110",
                         note.color === color.value
@@ -952,6 +971,7 @@ function NoteCard({
                       )}
                       style={{ backgroundColor: color.value }}
                       title={color.name}
+                      aria-label={`Couleur ${color.name}`}
                     />
                   ))}
                 </div>
@@ -964,6 +984,7 @@ function NoteCard({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                  aria-label="Ajouter une image"
                 >
                   <Image className="h-[18px] w-[18px]" />
                 </Button>
@@ -981,8 +1002,9 @@ function NoteCard({
                   className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onArchive();
+                    onToggleArchive();
                   }}
+                  aria-label="Archiver la note"
                 >
                   <Archive className="h-[18px] w-[18px]" />
                 </Button>
@@ -1000,8 +1022,9 @@ function NoteCard({
                   className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onTrash();
+                    onMoveToTrash();
                   }}
+                  aria-label="Mettre à la corbeille"
                 >
                   <Trash2 className="h-[18px] w-[18px]" />
                 </Button>
@@ -1017,6 +1040,7 @@ function NoteCard({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                  aria-label="Plus d'options"
                 >
                   <MoreVertical className="h-[18px] w-[18px]" />
                 </Button>
