@@ -1,23 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUIStore } from '@/lib/store';
-import { Sidebar } from './sidebar';
 import { Header } from './header';
 import { GlobalHeader } from './global-header';
-import { CommandBar } from './command-bar';
-import { RightSidebar } from './right-sidebar';
-import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GlobalDndProvider } from './dnd-provider';
+import { WorkspaceShell } from './workspace-shell';
+import { OmniSearch } from '@/components/ui/omni-search';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { sidebarCollapsed, rightSidebarOpen } = useUIStore();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
@@ -25,20 +21,13 @@ export function AppLayout({ children }: AppLayoutProps) {
     setMounted(true);
   }, []);
 
-  const isSidebarCollapsed = mounted ? sidebarCollapsed : false;
-  const isRightSidebarOpen = mounted ? rightSidebarOpen : false;
-
   return (
     <GlobalDndProvider>
-      <div 
-        className={cn(
-          "min-h-screen bg-background relative flex flex-col transition-all duration-300",
-          isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-60',
-          isRightSidebarOpen ? 'pr-[24rem]' : 'pr-16'
-        )}
+      <WorkspaceShell
+        className="bg-background"
+        header={pathname === '/dashboard' ? <Header /> : <GlobalHeader />}
       >
-        {pathname === '/dashboard' ? <Header /> : <GlobalHeader />}
-        <main className="flex-1 p-6 relative overflow-hidden">
+        <main className="flex-1 p-6 relative overflow-y-auto overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={pathname}
@@ -52,7 +41,8 @@ export function AppLayout({ children }: AppLayoutProps) {
             </motion.div>
           </AnimatePresence>
         </main>
-      </div>
+      </WorkspaceShell>
+      <OmniSearch />
     </GlobalDndProvider>
   );
 }
