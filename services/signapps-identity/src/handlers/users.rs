@@ -265,6 +265,20 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Resu
         .await?
         .ok_or_else(|| Error::NotFound(format!("User {}", id)))?;
 
+    // Purge associated tasks
+    sqlx::query("DELETE FROM calendar.tasks WHERE created_by = $1 OR assigned_to = $1")
+        .bind(id)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
+    // Purge associated calendars
+    sqlx::query("DELETE FROM calendar.calendars WHERE owner_id = $1")
+        .bind(id)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
     UserRepository::delete(&state.pool, id).await?;
 
     tracing::info!(user_id = %id, "Admin deleted user");

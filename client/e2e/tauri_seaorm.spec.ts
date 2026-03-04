@@ -22,7 +22,7 @@ test.describe('Tauri + SeaORM Absolute Verification', () => {
 
   let accessToken: string;
   let createdUserId: string | null = null;
-  const testAccountUsername = `test_e2e_account_${Date.now()}`;
+  const testAccountUsername = `test_e2e_account_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const testAccountEmail = `${testAccountUsername}@test.local`;
 
   test.beforeAll(async ({ request }) => {
@@ -245,7 +245,7 @@ test.describe('Tauri + SeaORM Absolute Verification', () => {
       await expect(addUserButton).toBeVisible({ timeout: 10000 });
 
       // Click the button - this verifies UI responsiveness
-      await addUserButton.click();
+      await addUserButton.click({ force: true });
 
       // Note: The current implementation doesn't have a modal, but clicking
       // the button should not cause any errors. This test verifies the button

@@ -4,7 +4,6 @@
 Write-Host "Starting microservices..."
 
 $services = @{
-    "signapps-identity"   = 3001
     "signapps-containers" = 3002
     "signapps-proxy"      = 3003
     "signapps-storage"    = 3004
@@ -23,12 +22,17 @@ $services = @{
     "signapps-remote"     = 3017
 }
 
+Write-Host "Starting signapps-identity on port 3001 (Priority for DB Migrations)..."
+$env:SERVER_PORT = 3001
+Start-Process "cmd.exe" -ArgumentList "/c .\target\debug\signapps-identity.exe > signapps-identity.log 2>&1" -WindowStyle Hidden
+Write-Host "Waiting 5 seconds for identity migrations to complete..."
+Start-Sleep -Seconds 5
+
 foreach ($service in $services.GetEnumerator()) {
     Write-Host "Starting $($service.Name) on port $($service.Value)..."
     $env:SERVER_PORT = $service.Value
-    # Use cmd.exe /c start to bypass strict PowerShell AppControl policies blocks on unsigned binaries
-    Start-Process "cmd.exe" -ArgumentList "/c start /min `"$($service.Name)`" .\target\debug\$($service.Name).exe" -WindowStyle Hidden
-    Start-Sleep -Milliseconds 500
+    Start-Process "cmd.exe" -ArgumentList "/c .\target\debug\$($service.Name).exe > $($service.Name).log 2>&1" -WindowStyle Hidden
+    Start-Sleep -Seconds 2
 }
 
 Write-Host "Starting Next.js..."

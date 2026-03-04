@@ -17,7 +17,7 @@ setup('authenticate', async ({ page }) => {
   // Fill in login credentials using specific input IDs within the form
   // This avoids conflicts with other inputs on the page (like AI assistant)
   await page.locator('input#username').fill('admin');
-  await page.locator('input#password').fill('admin123');
+  await page.locator('input#password').fill('password123');
 
   // Click the sign in button within the form
   await page.locator('form').getByRole('button', { name: /sign in/i }).click();

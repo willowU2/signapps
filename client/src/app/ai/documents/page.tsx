@@ -1,11 +1,6 @@
+"use client"
+
 import { CollaborativeEditor } from '@/components/ai/collaborative-editor';
-
-export const metadata = {
-    title: 'Collaborative Documents - SignApps',
-    description: 'Real-time collaborative document editing',
-};
-
-export const dynamic = 'force-dynamic';
 
 export default function DocumentsPage() {
     // In a real app, this would come from URL params or state
