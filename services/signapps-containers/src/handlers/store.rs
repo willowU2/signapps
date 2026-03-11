@@ -84,6 +84,36 @@ pub async fn install_app(
         .first()
         .ok_or_else(|| Error::BadRequest("No services in compose file".to_string()))?;
 
+    // Analyze environment for DB dynamic creation
+    let mut needs_db = false;
+    for ev in &svc.environment {
+        let val = req
+            .environment
+            .as_ref()
+            .and_then(|m| m.get(&ev.key))
+            .or(ev.default.as_ref())
+            .cloned()
+            .unwrap_or_default();
+
+        if val.contains("{SignApps.Database.Name}") || val.contains("{SignApps.Database.Url}") {
+            needs_db = true;
+            break;
+        }
+    }
+
+    let db_name_opt = if needs_db {
+        match provision_app_database(&state.pool, &req.app_id).await {
+            Ok(name) => Some(name),
+            Err(e) => {
+                let msg = format!("Failed to provision database: {:?}", e);
+                tracing::error!(msg);
+                return Err(Error::Internal(msg));
+            },
+        }
+    } else {
+        None
+    };
+
     // Build environment variables
     let mut env_vars: Vec<String> = Vec::new();
     for ev in &svc.environment {
@@ -94,8 +124,31 @@ pub async fn install_app(
             .or(ev.default.as_ref())
             .cloned()
             .unwrap_or_default();
+
         // Resolve any remaining store template variables
         val = crate::store::parser::resolve_store_templates(&val, &req.container_name);
+
+        if let Some(ref db_name) = db_name_opt {
+            val = val.replace("{SignApps.Database.Name}", db_name);
+
+            if val.contains("{SignApps.Database.Url}") {
+                let base_urlv = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+                    "postgres://postgres:postgres@localhost:5432/signapps".to_string()
+                });
+                if let Ok(parsed_url) = reqwest::Url::parse(&base_urlv) {
+                    let host = parsed_url.host_str().unwrap_or("signapps-db");
+                    let user = parsed_url.username();
+                    let password = parsed_url.password().unwrap_or("");
+                    let port = parsed_url.port().unwrap_or(5432);
+                    let full_url = format!(
+                        "postgres://{}:{}@{}:{}/{}",
+                        user, password, host, port, db_name
+                    );
+                    val = val.replace("{SignApps.Database.Url}", &full_url);
+                }
+            }
+        }
+
         env_vars.push(format!("{}={}", ev.key, val));
     }
 
@@ -174,7 +227,11 @@ pub async fn install_app(
         overrides
             .iter()
             .map(|v| VolumeMount {
-                source: v.source.replace("{ServiceName}", &req.container_name),
+                source: crate::store::parser::resolve_volume_for_install(
+                    &v.source,
+                    &req.container_name,
+                    &state.app_data_path,
+                ),
                 target: v.target.clone(),
                 read_only: false,
             })
@@ -183,12 +240,28 @@ pub async fn install_app(
         svc.volumes
             .iter()
             .map(|v| VolumeMount {
-                source: v.source.replace("{ServiceName}", &req.container_name),
+                source: crate::store::parser::resolve_volume_for_install(
+                    &v.source,
+                    &req.container_name,
+                    &state.app_data_path,
+                ),
                 target: v.target.clone(),
                 read_only: v.read_only,
             })
             .collect()
     };
+
+    // Attempt to physically create the host directories for Bind mounts
+    for v in &volumes {
+        if v.source.starts_with('/') || v.source.contains(":/") || v.source.contains(":\\") {
+            if let Err(e) = std::fs::create_dir_all(&v.source) {
+                tracing::warn!(
+                    directory = %v.source,
+                    "Failed to create bind mount directory on host: {e}"
+                );
+            }
+        }
+    }
 
     // Map restart policy
     let restart_policy = match svc.restart.as_str() {
@@ -406,6 +479,7 @@ pub async fn install_multi(
             &req,
             &parsed,
             &store_meta,
+            &state.app_data_path,
         )
         .await;
 
@@ -435,6 +509,89 @@ struct StoreAppMeta {
     app_tags: Vec<String>,
 }
 
+/// Provision a dedicated PostgreSQL database for an app, including the vector extension.
+pub async fn provision_app_database(
+    pool: &signapps_db::DatabasePool,
+    app_id: &str,
+) -> Result<String> {
+    // Sanitize app_id to create a safe database name
+    let sanitized_id = app_id.replace('-', "_").to_lowercase();
+    let db_name = format!("app_{}", sanitized_id);
+
+    // We cannot use prepared statements for CREATE DATABASE
+    // Also, we need to check if it exists first
+    let exists: bool =
+        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)")
+            .bind(&db_name)
+            .fetch_one(&**pool)
+            .await
+            .map_err(|e| {
+                signapps_common::Error::Internal(format!(
+                    "Error checking database existence: {}",
+                    e
+                ))
+            })?;
+
+    if !exists {
+        tracing::info!(db_name = %db_name, "Provisioning new dedicated database for app");
+        // Cannot execute CREATE DATABASE in a transaction/bind block, must form string manually
+        let create_query = format!("CREATE DATABASE {}", db_name);
+
+        let mut conn = pool.acquire().await.map_err(|e| {
+            signapps_common::Error::Internal(format!("Failed to acquire connection: {}", e))
+        })?;
+
+        let _ = sqlx::query(&create_query)
+            .execute(&mut *conn)
+            .await
+            .map_err(|e| {
+                signapps_common::Error::Internal(format!(
+                    "Failed to create database {}: {}",
+                    db_name, e
+                ))
+            })?;
+    } else {
+        tracing::debug!(db_name = %db_name, "Dedicated database already exists");
+    }
+
+    // Now we must connect sequentially to the *newly created database* to install the extension
+    // Because Pg connection strings lock to a specific DB.
+    let base_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/signapps".to_string());
+
+    // Create connection to the new database by replacing the db name at the end
+    let mut parts: Vec<&str> = base_url.split('/').collect();
+    if parts.len() > 3 {
+        parts.pop(); // Remove the original db name (e.g. signapps)
+    }
+    let new_url = format!("{}/{}", parts.join("/"), db_name);
+
+    match sqlx::PgPool::connect(&new_url).await {
+        Ok(app_pool) => {
+            // Install pgvector
+            let _ = sqlx::query("CREATE EXTENSION IF NOT EXISTS vector")
+                .execute(&app_pool)
+                .await
+                .map_err(|e| {
+                    Error::Internal(format!(
+                        "Failed to create vector extension in {}: {}",
+                        db_name, e
+                    ))
+                })?;
+
+            app_pool.close().await;
+        },
+        Err(e) => {
+            return Err(Error::Internal(format!(
+                "Failed to connect to newly created database {} to install extensions: {}",
+                db_name, e
+            )));
+        },
+    }
+
+    Ok(db_name)
+}
+
 /// Background multi-service install logic.
 #[allow(clippy::too_many_arguments)]
 async fn run_multi_install(
@@ -447,6 +604,7 @@ async fn run_multi_install(
     req: &MultiServiceInstallRequest,
     parsed: &ParsedAppConfig,
     store_meta: &StoreAppMeta,
+    app_data_path: &str,
 ) -> std::result::Result<(), String> {
     let service_count = req.services.len();
     let _ = tx.send(InstallEvent::Started {
@@ -511,6 +669,44 @@ async fn run_multi_install(
         });
 
         let mut env_vars: Vec<String> = Vec::new();
+
+        // Scan to see if this service needs the signapps database
+        let mut needs_db = false;
+
+        for ev in &svc.environment {
+            let val = if let Some(ovr) = overrides {
+                ovr.environment
+                    .as_ref()
+                    .and_then(|m| m.get(&ev.key))
+                    .cloned()
+            } else {
+                None
+            }
+            .or_else(|| ev.default.clone())
+            .unwrap_or_default();
+
+            if val.contains("{SignApps.Database.Name}") || val.contains("{SignApps.Database.Url}") {
+                needs_db = true;
+                break;
+            }
+        }
+
+        // Provision DB if needed
+        let db_name_opt = if needs_db {
+            match provision_app_database(pool, &store_meta.app_id).await {
+                Ok(name) => Some(name),
+                Err(e) => {
+                    let msg = format!("Failed to provision app database: {e}");
+                    let _ = tx.send(InstallEvent::Error {
+                        message: msg.clone(),
+                    });
+                    return Err(msg);
+                },
+            }
+        } else {
+            None
+        };
+
         for ev in &svc.environment {
             let mut val = if let Some(ovr) = overrides {
                 ovr.environment
@@ -525,6 +721,33 @@ async fn run_multi_install(
 
             // Resolve store template variables
             val = crate::store::parser::resolve_store_templates(&val, container_name);
+
+            // Resolve DB specific variables if DB was provisioned
+            if let Some(ref db_name) = db_name_opt {
+                val = val.replace("{SignApps.Database.Name}", db_name);
+
+                // Construct the final URL using the BaseUrl resolved in parser + db_name
+                // It relies on parser.rs having swapped out the host/user/pass into UrlBase first
+                if val.contains("{SignApps.Database.Url}") {
+                    // Since parser resolved {SignApps.Database.UrlBase} earlier, we might not have it here
+                    // if it was inside {SignApps.Database.Url}. So we have to re-evaluate it if it's a direct template.
+                    let base_urlv = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+                        "postgres://postgres:postgres@localhost:5432/signapps".to_string()
+                    });
+                    if let Ok(parsed_url) = reqwest::Url::parse(&base_urlv) {
+                        let host = parsed_url.host_str().unwrap_or("signapps-db");
+                        let user = parsed_url.username();
+                        let password = parsed_url.password().unwrap_or("");
+                        let port = parsed_url.port().unwrap_or(5432);
+                        let full_url = format!(
+                            "postgres://{}:{}@{}:{}/{}",
+                            user, password, host, port, db_name
+                        );
+                        val = val.replace("{SignApps.Database.Url}", &full_url);
+                    }
+                }
+            }
+
             // Replace service name references in env values
             for (sname, cname) in &name_map {
                 val = val.replace(sname, cname);
@@ -602,13 +825,17 @@ async fn run_multi_install(
             }
         }
 
-        // Build volumes
+        // Build volume mounts
         let volumes: Vec<VolumeMount> = if let Some(ovr) = overrides {
             if let Some(vol_ovr) = &ovr.volumes {
                 vol_ovr
                     .iter()
                     .map(|v| VolumeMount {
-                        source: v.source.replace("{ServiceName}", container_name),
+                        source: crate::store::parser::resolve_volume_for_install(
+                            &v.source,
+                            container_name,
+                            app_data_path,
+                        ),
                         target: v.target.clone(),
                         read_only: false,
                     })
@@ -617,7 +844,11 @@ async fn run_multi_install(
                 svc.volumes
                     .iter()
                     .map(|v| VolumeMount {
-                        source: v.source.replace("{ServiceName}", container_name),
+                        source: crate::store::parser::resolve_volume_for_install(
+                            &v.source,
+                            container_name,
+                            app_data_path,
+                        ),
                         target: v.target.clone(),
                         read_only: v.read_only,
                     })
@@ -627,12 +858,28 @@ async fn run_multi_install(
             svc.volumes
                 .iter()
                 .map(|v| VolumeMount {
-                    source: v.source.replace("{ServiceName}", container_name),
+                    source: crate::store::parser::resolve_volume_for_install(
+                        &v.source,
+                        container_name,
+                        app_data_path,
+                    ),
                     target: v.target.clone(),
                     read_only: v.read_only,
                 })
                 .collect()
         };
+
+        // Attempt to physically create the host directories for Bind mounts
+        for v in &volumes {
+            if v.source.starts_with('/') || v.source.contains(":/") || v.source.contains(":\\") {
+                if let Err(e) = std::fs::create_dir_all(&v.source) {
+                    tracing::warn!(
+                        directory = %v.source,
+                        "Failed to create bind mount directory on host: {e}"
+                    );
+                }
+            }
+        }
 
         let restart_policy = match svc.restart.as_str() {
             "always" => Some(RestartPolicy::Always),

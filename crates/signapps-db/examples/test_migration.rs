@@ -1,6 +1,6 @@
 use sqlx::postgres::PgPoolOptions;
-use std::time::Duration;
 use std::fs;
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,21 +17,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Read migration file ({} bytes)", migration_sql.len());
 
     println!("Executing migration...");
-    match sqlx::query(&migration_sql)
-        .execute(&pool)
-        .await {
-            Ok(_) => println!("Migration SUCCESS!"),
-            Err(e) => {
-                println!("Migration FAILED!");
-                println!("Error: {:?}", e);
-                if let Some(db_err) = e.as_database_error() {
-                    println!("Message: {}", db_err.message());
-                    println!("Code: {:?}", db_err.code());
-                    println!("Table: {:?}", db_err.table());
-                    println!("Constraint: {:?}", db_err.constraint());
-                }
+    match sqlx::query(&migration_sql).execute(&pool).await {
+        Ok(_) => println!("Migration SUCCESS!"),
+        Err(e) => {
+            println!("Migration FAILED!");
+            println!("Error: {:?}", e);
+            if let Some(db_err) = e.as_database_error() {
+                println!("Message: {}", db_err.message());
+                println!("Code: {:?}", db_err.code());
+                println!("Table: {:?}", db_err.table());
+                println!("Constraint: {:?}", db_err.constraint());
             }
-        }
+        },
+    }
 
     Ok(())
 }

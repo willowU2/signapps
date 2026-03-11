@@ -86,7 +86,7 @@ export function CalendarWidget() {
                             });
                         });
                     } catch (err) {
-                        console.error(`Failed to fetch events for calendar ${cal.id}:`, err);
+                        console.debug(`Failed to fetch events for calendar ${cal.id}:`, err);
                     }
                 }
 
@@ -94,7 +94,7 @@ export function CalendarWidget() {
                 allEvents.sort((a, b) => a.time.localeCompare(b.time));
                 setEvents(allEvents);
             } catch (err) {
-                console.error("Failed to load today's events:", err);
+                console.debug("Failed to load today's events:", err);
                 setEvents([]);
             } finally {
                 setIsLoading(false);

@@ -56,61 +56,12 @@ export default function ChatPage() {
                     </div>
                 </header>
             }
-            leftRail={
-                <div className="w-[72px] flex flex-col items-center py-0 gap-4 shrink-0 mt-2">
-                     <div className="flex flex-col items-center gap-1 cursor-pointer group">
-                        <div className="w-12 h-8 rounded-full flex items-center justify-center text-[#444746] group-hover:bg-black/5">
-                            <span className="relative">
-                               <MessageSquare className="h-5 w-5" />
-                            </span>
-                        </div>
-                        <span className="text-[11px] font-medium text-[#444746]">Mail</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 cursor-pointer group">
-                        <div className="w-12 h-8 rounded-full flex items-center justify-center bg-[#d3e3fd] text-[#001d35]">
-                            <span className="relative">
-                               <MessageSquare className="h-5 w-5" />
-                               <span className="absolute -top-1 -right-1 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-[#b3261e] text-[9px] font-bold text-white px-1 border-2 border-[#f2f6fc]">
-                                   99+
-                               </span>
-                            </span>
-                        </div>
-                        <span className="text-[11px] font-bold text-[#001d35]">Chat</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 cursor-pointer group">
-                        <div className="w-12 h-8 rounded-full flex items-center justify-center text-[#444746] group-hover:bg-black/5">
-                            <Video className="h-5 w-5" />
-                        </div>
-                        <span className="text-[11px] font-medium text-[#444746]">Meet</span>
-                    </div>
-                </div>
-            }
             sidebar={
                 <div className="w-[260px] flex flex-col shrink-0 mt-2 mr-2">
                     <ChatSidebar
                         selectedChannel={selectedChannel}
                         onSelectChannel={setSelectedChannel}
                     />
-                </div>
-            }
-            rightRail={
-                <div className="w-14 flex flex-col items-center py-4 shrink-0 bg-[#f2f6fc] gap-6 mt-2 mr-2">
-                     <div className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-black/5">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" alt="Calendar" className="w-5 h-5"/>
-                     </div>
-                     <div className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-black/5">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e5/Google_Keep_icon_%282020%29.svg" alt="Keep" className="w-5 h-5"/>
-                     </div>
-                     <div className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-black/5">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Google_Tasks_2021.svg" alt="Tasks" className="w-5 h-5"/>
-                     </div>
-                     <div className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-black/5">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Google_Contacts_icon.svg" alt="Contacts" className="w-5 h-5"/>
-                     </div>
-                     <div className="w-5 border-b border-[#dadce0] my-2"></div>
-                     <div className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-black/5 text-[#444746]">
-                        <Plus className="w-5 h-5"/>
-                     </div>
                 </div>
             }
         >

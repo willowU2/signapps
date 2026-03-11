@@ -81,6 +81,9 @@ async fn main() -> anyhow::Result<()> {
     // Create store manager
     let store = StoreManager::new(pool.clone());
 
+    let app_data_path =
+        std::env::var("APP_DATA_PATH").unwrap_or_else(|_| "C:/Prog/signapps-data/apps".to_string()); // Default path for Windows dev, should normally be /var/lib/signapps/apps
+
     // Create application state
     let state = AppState {
         pool,
@@ -88,6 +91,7 @@ async fn main() -> anyhow::Result<()> {
         jwt_secret,
         jwt_config,
         store,
+        app_data_path,
         install_channels: Arc::new(DashMap::new()),
     };
 
@@ -137,6 +141,7 @@ pub struct AppState {
     pub jwt_secret: String,
     pub jwt_config: JwtConfig,
     pub store: StoreManager,
+    pub app_data_path: String,
     pub install_channels: Arc<DashMap<uuid::Uuid, tokio::sync::broadcast::Sender<InstallEvent>>>,
 }
 

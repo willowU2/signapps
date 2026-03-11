@@ -106,12 +106,63 @@ pub async fn import_compose(
     for svc in &parsed.services {
         let container_name = svc.container_name.as_deref().unwrap_or(&svc.service_name);
 
+        // Analyze environment for DB dynamic creation
+        let mut needs_db = false;
+        let app_id_for_db = container_name.to_string(); // In raw compose, we use the container name as app_id for isolating
+
+        for ev in &svc.environment {
+            let val = ev.default.as_deref().unwrap_or("");
+            if val.contains("{SignApps.Database.Name}") || val.contains("{SignApps.Database.Url}") {
+                needs_db = true;
+                break;
+            }
+        }
+
+        let db_name_opt = if needs_db {
+            match crate::handlers::store::provision_app_database(&state.pool, &app_id_for_db).await
+            {
+                Ok(name) => Some(name),
+                Err(e) => {
+                    let msg = format!(
+                        "Failed to provision database for {}: {:?}",
+                        app_id_for_db, e
+                    );
+                    tracing::error!(msg);
+                    return Err(Error::Internal(msg));
+                },
+            }
+        } else {
+            None
+        };
+
         // Build environment variables
         let mut env_vars: Vec<String> = Vec::new();
         for ev in &svc.environment {
-            let val = ev.default.as_deref().unwrap_or("");
-            let resolved = resolve_store_templates(val, container_name);
-            env_vars.push(format!("{}={}", ev.key, resolved));
+            let mut val = ev.default.clone().unwrap_or_default();
+            val = resolve_store_templates(&val, container_name);
+
+            if let Some(ref db_name) = db_name_opt {
+                val = val.replace("{SignApps.Database.Name}", db_name);
+
+                if val.contains("{SignApps.Database.Url}") {
+                    let base_urlv = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+                        "postgres://postgres:postgres@localhost:5432/signapps".to_string()
+                    });
+                    if let Ok(parsed_url) = reqwest::Url::parse(&base_urlv) {
+                        let host = parsed_url.host_str().unwrap_or("signapps-db");
+                        let user = parsed_url.username();
+                        let password = parsed_url.password().unwrap_or("");
+                        let port = parsed_url.port().unwrap_or(5432);
+                        let full_url = format!(
+                            "postgres://{}:{}@{}:{}/{}",
+                            user, password, host, port, db_name
+                        );
+                        val = val.replace("{SignApps.Database.Url}", &full_url);
+                    }
+                }
+            }
+
+            env_vars.push(format!("{}={}", ev.key, val));
         }
 
         // Pull image
@@ -157,16 +208,32 @@ pub async fn import_compose(
             }
         }
 
-        // Build volumes
+        // Build volumes with Absolute Path replacement if requested
         let volumes: Vec<VolumeMount> = svc
             .volumes
             .iter()
             .map(|v| VolumeMount {
-                source: v.source.replace("{ServiceName}", container_name),
+                source: crate::store::parser::resolve_volume_for_install(
+                    &v.source,
+                    container_name,
+                    &state.app_data_path,
+                ),
                 target: v.target.clone(),
                 read_only: v.read_only,
             })
             .collect();
+
+        // Attempt to physically create the host directories for Bind mounts
+        for v in &volumes {
+            if v.source.starts_with('/') || v.source.contains(":/") || v.source.contains(":\\") {
+                if let Err(e) = std::fs::create_dir_all(&v.source) {
+                    tracing::warn!(
+                        directory = %v.source,
+                        "Failed to create bind mount directory on host for compose import: {e}"
+                    );
+                }
+            }
+        }
 
         let restart_policy = match svc.restart.as_str() {
             "always" => Some(RestartPolicy::Always),

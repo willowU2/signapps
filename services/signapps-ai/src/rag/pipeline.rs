@@ -127,7 +127,7 @@ impl RagPipeline {
         &self,
         query: &str,
         limit: Option<u64>,
-        collection: Option<&str>,
+        collections: Option<&[String]>,
         security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<Vec<SearchResult>> {
         let query_embedding = self.embeddings.embed(query).await?;
@@ -138,7 +138,7 @@ impl RagPipeline {
                 &query_embedding,
                 limit.unwrap_or(self.config.top_k) as i64,
                 Some(self.config.score_threshold),
-                collection,
+                collections,
                 security_tags_filter,
             )
             .await?;
@@ -181,14 +181,14 @@ impl RagPipeline {
         model: Option<&str>,
         language: Option<&str>,
         custom_system_prompt: Option<&str>,
-        collection: Option<&str>,
+        collections: Option<&[String]>,
         security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<RagResponse> {
         let provider = self.providers.resolve(provider_id)?;
 
         // 1. Try to retrieve relevant context (graceful fallback)
         let search_results = match self
-            .search(question, None, collection, security_tags_filter)
+            .search(question, None, collections, security_tags_filter)
             .await
         {
             Ok(results) => results,
@@ -257,14 +257,14 @@ impl RagPipeline {
         model: Option<&str>,
         language: Option<&str>,
         custom_system_prompt: Option<&str>,
-        collection: Option<&str>,
+        collections: Option<&[String]>,
         security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
         let provider = self.providers.resolve(provider_id)?;
 
         // 1. Try to retrieve relevant context (graceful fallback)
         let search_results = match self
-            .search(question, None, collection, security_tags_filter)
+            .search(question, None, collections, security_tags_filter)
             .await
         {
             Ok(results) => results,

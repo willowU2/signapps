@@ -314,7 +314,11 @@ impl ModelManager {
                 }
 
                 dynamic_models.push(ModelEntry {
-                    id: repo_id.split('/').last().unwrap_or(repo_id).to_string(), // Shorthand ID
+                    id: repo_id
+                        .split('/')
+                        .next_back()
+                        .unwrap_or(repo_id)
+                        .to_string(), // Shorthand ID
                     model_type: ModelType::Llm, // Most searched GGUFs are LLMs
                     source: ModelSource::HuggingFace {
                         repo_id: repo_id.to_string(),

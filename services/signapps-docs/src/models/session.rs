@@ -22,7 +22,10 @@ impl ClientSession {
     }
 
     /// Broadcast an update to all clients
-    pub fn broadcast_update(&self, update: Vec<u8>) -> Result<(), broadcast::error::SendError<Vec<u8>>> {
+    pub fn broadcast_update(
+        &self,
+        update: Vec<u8>,
+    ) -> Result<(), broadcast::error::SendError<Vec<u8>>> {
         self.tx.send(update).map(|_| ())
     }
 }

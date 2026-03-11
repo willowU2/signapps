@@ -27,6 +27,8 @@ import { Comment } from './comment-extension';
 import { v4 as uuidv4 } from 'uuid';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
+import { GenericFeatureModal } from '@/components/editor/generic-feature-modal';
+import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu';
 import {
     Sparkles,
     Wand2,
@@ -71,15 +73,263 @@ import {
     MessageSquarePlus,
     Trash2,
     ChevronRight,
-    Video
+    Video,
+    Mic,
+    Download,
+    Upload
 } from 'lucide-react';
 import { useAiStream } from '@/hooks/use-ai-stream';
 import { toast } from 'sonner';
+import { VoiceInput } from '@/components/ui/voice-input';
+import { storageApi } from '@/lib/api';
 
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
+import mammoth from 'mammoth';
+import { Document as DocxDocument, Packer, Paragraph, TextRun } from "docx";
+import { saveAs } from 'file-saver';
+import VerEx from 'verbal-expressions';
+
 const lowlight = createLowlight(common);
+
+type VoiceAction = 'undo' | 'redo' | 'selectAll' | 'clearAll' | 'delete' | 'fix' | 'improve' | 'summarize';
+
+const parseVoiceCommand = (
+    text: string, 
+    editor: any, 
+    pendingMarksRef: React.MutableRefObject<string[]>, 
+    pendingBlocksRef: React.MutableRefObject<string[]>,
+    onVoiceAction?: (action: VoiceAction) => void
+) => {
+    let rawText = text.trim();
+    if (!rawText) return;
+
+    // Aides à la création de RegExp via VerbalExpressions
+    // VerEx().find('mot').addModifier('i')
+
+    // Construction propre via chaîne pour le saut de ligne
+    const newlineRegex = VerEx().add('\\b')
+        .find('à la ligne').or('a la ligne').or('nouvelle ligne').or('saut de ligne')
+        .or('point à la ligne').or('point a la ligne').or('retour à la ligne').or('retour a la ligne').or('retour chariot')
+        .add('\\b').addModifier('i');
+    
+    rawText = rawText.replace(newlineRegex, ' __NEWLINE__ ');
+
+    const paragraphRegex = VerEx().add('\\b').find('nouveau paragraphe').or('paragraphe suivant').add('\\b').addModifier('i');
+    rawText = rawText.replace(paragraphRegex, ' __PARAGRAPH__ ');
+
+    // Fonction Helper Extraite pour la propreté (utilise les regex raw)
+    const extractKeyword = (keywords: string, type: 'mark' | 'block' | 'action', val: string) => {
+        // Crée une RegExp : /\b(?:mot1|mot2)\b/i
+        // Optionnellement, capture "et", "ou", "puis", "avec", "en", "est placé", "placé", "qui est", "on le met" s'ils sont juste avant la commande
+        const matchRegex = new RegExp(`(?:\\b(?:et|ou|puis|avec|en|est plac[eé]|plac[eé]|qui est|on le met|met ça)\\s+)?\\b(?:${keywords.split('|').join('|')})\\b`, 'i');
+        if (matchRegex.test(rawText)) {
+            rawText = rawText.replace(matchRegex, ' ').replace(/\s+/g, ' ').trim();
+            if (type === 'mark' && !pendingMarksRef.current.includes(val)) pendingMarksRef.current.push(val);
+            if (type === 'block' && !pendingBlocksRef.current.includes(val)) pendingBlocksRef.current.push(val);
+            if (type === 'action' && !actionsToRun.includes(val as VoiceAction)) actionsToRun.push(val as VoiceAction);
+            return true;
+        }
+        return false;
+    };
+
+    let actionsToRun: VoiceAction[] = [];
+    let found = true;
+    while (found) {
+        found = false;
+
+        // Actions Editor & IA (interceptées et retirées du texte avant frappe)
+        if (extractKeyword('annuler|annule ça|annule sa|annule|annuler la dernière action', 'action', 'undo')) found = true;
+        if (extractKeyword('refaire|rétablir|refaire la dernière action', 'action', 'redo')) found = true;
+        if (extractKeyword('tout sélectionner|sélectionner tout|sélectionne tout', 'action', 'selectAll')) found = true;
+        if (extractKeyword('tout effacer|effacer tout le document|effacer tout|vider le document', 'action', 'clearAll')) found = true;
+        if (extractKeyword('supprimer la ligne|effacer la ligne|supprimer le texte|effacer le texte|supprimer ça|supprimer|effacer la sélection|efface ça', 'action', 'delete')) found = true;
+        
+        if (extractKeyword("corriger l'orthographe|corriger la sélection|corriger la phrase|corrige moi ça|corrige les fautes|corriger les fautes", 'action', 'fix')) found = true;
+        if (extractKeyword('améliorer|réécrire|reformuler|améliore ce texte', 'action', 'improve')) found = true;
+        if (extractKeyword('résumer le texte|résumer le document|fais un résumé', 'action', 'summarize')) found = true;
+
+        // Styles de texte
+        if (extractKeyword('en gras|met ça en gras|mettre en gras|mets en gras|gras', 'mark', 'bold')) found = true;
+        if (extractKeyword('en italique|met ça en italique|mettre en italique|mets en italique|italique', 'mark', 'italic')) found = true;
+        if (extractKeyword('souligné|en souligné|met ça en souligné|mets en souligné|souligner', 'mark', 'underline')) found = true;
+        if (extractKeyword('barré|en barré|texte barré', 'mark', 'strike')) found = true;
+        
+        // Transformations de casse
+        if (extractKeyword('en majuscule|tout en majuscule|majuscules', 'mark', 'uppercase')) found = true;
+        if (extractKeyword('en minuscule|tout en minuscule|minuscules', 'mark', 'lowercase')) found = true;
+        if (extractKeyword('première lettre en majuscule|lettre capitale|capitalisé', 'mark', 'capitalize')) found = true;
+
+        // Math
+        if (extractKeyword('en indice|indice', 'mark', 'subscript')) found = true;
+        if (extractKeyword('en exposant|exposant', 'mark', 'superscript')) found = true;
+
+        // Couleurs
+        if (extractKeyword('en rouge|texte rouge|écrit en rouge|couleur rouge', 'mark', 'color:red')) found = true;
+        if (extractKeyword('en bleu|texte bleu|écrit en bleu|couleur bleue?', 'mark', 'color:blue')) found = true;
+        if (extractKeyword('en vert|texte vert|écrit en vert|couleur verte?', 'mark', 'color:green')) found = true;
+        if (extractKeyword('en violet|texte violet|écrit en violet|couleur violette?', 'mark', 'color:purple')) found = true;
+        if (extractKeyword('en gris|texte gris|écrit en gris|couleur grise?', 'mark', 'color:gray')) found = true;
+        if (extractKeyword('en noir|texte noir|écrit en noir|couleur noire?', 'mark', 'color:black')) found = true;
+        if (extractKeyword('en orange|texte orange|écrit en orange|couleur orange', 'mark', 'color:orange')) found = true;
+        
+        // Surlignages
+        if (extractKeyword('surligné en jaune|surligné jaune|surligneur jaune|en surbrillance', 'mark', 'highlight:yellow')) found = true;
+        if (extractKeyword('surligné en rouge|surligné rouge|surligneur rouge', 'mark', 'highlight:red')) found = true;
+        if (extractKeyword('surligné en vert|surligné vert|surligneur vert', 'mark', 'highlight:green')) found = true;
+        if (extractKeyword('surligné en bleu|surligné bleu|surligneur bleu', 'mark', 'highlight:blue')) found = true;
+        
+        if (extractKeyword('en code|format code|bloc de code|monocospace', 'mark', 'code')) found = true;
+
+        // Alignement et Blocs
+        if (extractKeyword('au centre|aligné au centre|aligner au centre|centrer le texte|centré', 'block', 'center')) found = true;
+        if (extractKeyword('à droite|aligné à droite|sur la droite|aligner à droite', 'block', 'right')) found = true;
+        if (extractKeyword('à gauche|aligné à gauche|sur la gauche|aligner à gauche', 'block', 'left')) found = true;
+        if (extractKeyword('justifié|alignement justifié|justifier le texte', 'block', 'justify')) found = true;
+        
+        if (extractKeyword('en titre 1|en grand titre|titre un|titre 1|grand titre|titre principal', 'block', 'h1')) found = true;
+        if (extractKeyword('en titre 2|titre deux|titre 2|moyen titre|sous-titre un|sous titre 1', 'block', 'h2')) found = true;
+        if (extractKeyword('en petit titre|en titre 3|titre trois|titre 3|petit titre|sous-titre deux|sous titre 2', 'block', 'h3')) found = true;
+        
+        if (extractKeyword('en liste|liste à puces|nouvelle puce|puce|liste non numérotée', 'block', 'bullet')) found = true;
+        if (extractKeyword('liste numérotée|numéroté|en liste numérotée|numérotée', 'block', 'ordered')) found = true;
+        if (extractKeyword('en citation|bloc de citation|citation', 'block', 'blockquote')) found = true;
+        if (extractKeyword('en tâche|case à cocher|todo|nouvelle tâche', 'block', 'task')) found = true;
+    }
+
+    // Nettoyage final des conjonctions qui auraient pu rester orphelines à la fin de la phrase
+    // (Ex: "Ceci est un titre en gras et..." -> si "et" était après "en gras", il est isolé à la fin)
+    rawText = rawText.replace(/\b(?:et|ou|puis|avec|qui est|le tout|est plac[eé]|plac[eé])\s*$/i, '').trim();
+
+    // Découpe le texte par mots marqueurs
+    const parts = rawText.split(/(__(?:NEWLINE|PARAGRAPH)__)/g);
+
+    let textWasInserted = false;
+
+    parts.forEach((part) => {
+        let content = part.trim();
+        if (!content) return;
+
+        if (content === '__NEWLINE__' || content === '__PARAGRAPH__') {
+            editor.chain().focus().splitBlock().run(); // Action la plus robuste pour une "nouvelle ligne" formelle (nouveau paragraphe)
+        } else {
+            // ==========================================
+            // APPLICATION DE LA PONCTUATION ET TYPOGRAPHIE AVEC JSVerbalExpressions
+            // ==========================================
+            const punctuationMap: [RegExp, string][] = [
+                [VerEx().add('\\b').find('points de suspension').or('point de suspension').add('\\b').addModifier('g').addModifier('i'), '...'],
+                [VerEx().add('\\b').find('point').then(' ').find("d'interrogation").or("d’interrogation").add('\\b').addModifier('g').addModifier('i'), '?'],
+                [VerEx().add('\\b').find('point').then(' ').find("d'exclamation").or("d’exclamation").add('\\b').addModifier('g').addModifier('i'), '!'],
+                [VerEx().add('\\b').find('deux points').add('\\b').addModifier('g').addModifier('i'), ':'],
+                [VerEx().add('\\b').find('point virgule').add('\\b').addModifier('g').addModifier('i'), ';'],
+                [VerEx().add('\\b').find('virgule').add('\\b').addModifier('g').addModifier('i'), ','],
+                [/\bouvrez(?: les| la)? guillemets?\b/gi, '"'],
+                [/\bfermez(?: les| la)? guillemets?\b/gi, '"'],
+                [/\bouvrez la parenthèse\b/gi, '('],
+                [/\bfermez la parenthèse\b/gi, ')'],
+                [VerEx().add('\\b').find('tiret').add('\\b').addModifier('g').addModifier('i'), '-'],
+                [VerEx().add('\\b').find('arobase').add('\\b').addModifier('g').addModifier('i'), '@'],
+                [VerEx().add('\\b').find('astérisque').add('\\b').addModifier('g').addModifier('i'), '*'],
+                [VerEx().add('\\b').find('et commercial').add('\\b').addModifier('g').addModifier('i'), '&'],
+                [VerEx().add('\\b').find('slash').add('\\b').addModifier('g').addModifier('i'), '/'],
+                [/\banti-?slash\b/gi, '\\'],
+                // Le mot "point" tout seul (avec exception pour les expressions courantes)
+                [/\bpoint\b(?!\s+(?:final|de vue|d['’]|clé|fort|faible|crucial))/gi, '.']
+            ];
+
+            punctuationMap.forEach(([regex, symbol]) => {
+                content = content.replace(regex, symbol);
+            });
+
+            // Nettoyage des espaces pour la typographie française :
+            // 1. Coller le point et la virgule au mot précédent
+            content = content.replace(/\s+([.,])/g, '$1');
+            
+            // 2. Assurer un espace insécable (ou normal) avant la ponctuation double (: ; ? !)
+            // En HTML strict, on utiliserait &nbsp;, mais l'espace standard au clavier passe bien pour un éditeur web.
+            content = content.replace(/\s+([?!;:])/g, ' $1'); // Évite les doubles espaces "  ?"
+            content = content.replace(/([a-zA-ZÀ-ÿ])([?!;:])/g, '$1 $2'); // Force un espace si collé "mot?" -> "mot ?"
+
+            // 3. Ouvrir ou fermer les parenthèses sans espace interne
+            content = content.replace(/(\()\s+/g, '$1');
+            content = content.replace(/\s+(\))/g, '$1');
+            // ==========================================
+
+            let htmlContent = content;
+            textWasInserted = true;
+            
+            const marksToApply = pendingMarksRef.current;
+            const blocksToApply = pendingBlocksRef.current;
+
+            // Transformations de texte JS
+            if (marksToApply.includes('uppercase')) htmlContent = htmlContent.toUpperCase();
+            if (marksToApply.includes('lowercase')) htmlContent = htmlContent.toLowerCase();
+            if (marksToApply.includes('capitalize')) htmlContent = htmlContent.charAt(0).toUpperCase() + htmlContent.slice(1);
+
+            // Application des styles HTML TipTap sur chaque segment textuel
+            if (marksToApply.includes('bold')) htmlContent = `<strong>${htmlContent}</strong>`;
+            if (marksToApply.includes('italic')) htmlContent = `<em>${htmlContent}</em>`;
+            if (marksToApply.includes('underline')) htmlContent = `<u>${htmlContent}</u>`;
+            if (marksToApply.includes('strike')) htmlContent = `<s>${htmlContent}</s>`;
+            if (marksToApply.includes('code')) htmlContent = `<code>${htmlContent}</code>`;
+            if (marksToApply.includes('subscript')) htmlContent = `<sub>${htmlContent}</sub>`;
+            if (marksToApply.includes('superscript')) htmlContent = `<sup>${htmlContent}</sup>`;
+            
+            if (marksToApply.includes('color:red')) htmlContent = `<span style="color: red">${htmlContent}</span>`;
+            if (marksToApply.includes('color:blue')) htmlContent = `<span style="color: blue">${htmlContent}</span>`;
+            if (marksToApply.includes('color:green')) htmlContent = `<span style="color: green">${htmlContent}</span>`;
+            if (marksToApply.includes('color:purple')) htmlContent = `<span style="color: purple">${htmlContent}</span>`;
+            if (marksToApply.includes('color:gray')) htmlContent = `<span style="color: gray">${htmlContent}</span>`;
+            if (marksToApply.includes('color:black')) htmlContent = `<span style="color: black">${htmlContent}</span>`;
+            if (marksToApply.includes('color:orange')) htmlContent = `<span style="color: orange">${htmlContent}</span>`;
+            
+            if (marksToApply.includes('highlight:yellow')) htmlContent = `<mark data-color="#FAF594">${htmlContent}</mark>`;
+            if (marksToApply.includes('highlight:red')) htmlContent = `<mark data-color="#F98181">${htmlContent}</mark>`;
+            if (marksToApply.includes('highlight:green')) htmlContent = `<mark data-color="#B9F18D">${htmlContent}</mark>`;
+            if (marksToApply.includes('highlight:blue')) htmlContent = `<mark data-color="#70CFF8">${htmlContent}</mark>`;
+
+            if (blocksToApply.includes('h1')) htmlContent = `<h1>${htmlContent}</h1>`;
+            else if (blocksToApply.includes('h2')) htmlContent = `<h2>${htmlContent}</h2>`;
+            else if (blocksToApply.includes('h3')) htmlContent = `<h3>${htmlContent}</h3>`;
+            else if (blocksToApply.includes('bullet')) htmlContent = `<ul><li>${htmlContent}</li></ul>`;
+            else if (blocksToApply.includes('ordered')) htmlContent = `<ol><li>${htmlContent}</li></ol>`;
+            if (blocksToApply.includes('blockquote')) htmlContent = `<blockquote>${htmlContent}</blockquote>`;
+            else if (blocksToApply.includes('task')) htmlContent = `<ul data-type="taskList"><li data-type="taskItem" data-checked="false">${htmlContent}</li></ul>`;
+
+            editor.chain().focus().insertContent(htmlContent + ' ').run();
+
+            // S'il y a un alignement demandé, on l'applique sur ce paragraphe nouvellement inséré
+            if (blocksToApply.length > 0) {
+                let alignChain = editor.chain().focus();
+                if (blocksToApply.includes('center')) alignChain = alignChain.setTextAlign('center');
+                if (blocksToApply.includes('right')) alignChain = alignChain.setTextAlign('right');
+                if (blocksToApply.includes('left')) alignChain = alignChain.setTextAlign('left');
+                if (blocksToApply.includes('justify')) alignChain = alignChain.setTextAlign('justify');
+                alignChain.run();
+            }
+        }
+    });
+
+    // On exécute les actions extraites APRES avoir inséré le texte.
+    // Ainsi, si la personne dit "Bonjour tout le monde. Annuler", on écrit "Bonjour tout le monde." puis on l'annule.
+    actionsToRun.forEach(action => {
+        if (action === 'undo') editor.chain().focus().undo().run();
+        else if (action === 'redo') editor.chain().focus().redo().run();
+        else if (action === 'selectAll') editor.chain().focus().selectAll().run();
+        else if (action === 'clearAll') editor.chain().focus().clearContent(true).run();
+        else if (action === 'delete') editor.chain().focus().deleteSelection().run();
+        else if (onVoiceAction) onVoiceAction(action); // Les actions IA sont déléguées au composant React
+    });
+    
+    // On ne réinitialise le formatage que si on a écrit du texte !
+    // Si la personne a juste dit "à la ligne", ou a juste balancé des commandes, on
+    // garde le style en mémoire pour sa prochaine respiration.
+    if (textWasInserted) {
+        pendingMarksRef.current = [];
+        pendingBlocksRef.current = [];
+    }
+};
 
 const getRandomColor = () => {
     const colors = ['#958DF1', '#F98181', '#FBBC88', '#FAF594', '#70CFF8', '#94FADB', '#B9F18D'];
@@ -87,7 +337,8 @@ const getRandomColor = () => {
 };
 
 interface EditorProps {
-    documentId: string;
+    documentId?: string;
+    documentName?: string;
     className?: string;
     userName?: string;
     bucket?: string;
@@ -103,276 +354,53 @@ const LANGUAGES = [
     { code: 'es', label: 'Espa\u00f1ol' },
     { code: 'de', label: 'Deutsch' },
     { code: 'it', label: 'Italiano' },
-    { code: 'pt', label: 'Portugu\u00eas' },
+    {
+        code: 'en',
+        label: 'English'
+    },
+    {
+        code: 'fr',
+        label: 'Fran\u00e7ais'
+    },
+    {
+        code: 'es',
+        label: 'Espa\u00f1ol'
+    },
+    {
+        code: 'de',
+        label: 'Deutsch'
+    },
+    {
+        code: 'it',
+        label: 'Italiano'
+    },
+    {
+        code: 'pt',
+        label: 'Portugu\u00eas'
+    },
 ];
 
-// =====================================================================
-// MENU BAR COMPONENT (Docs)
-// =====================================================================
-function MenuBar({ editor, onAction }: { editor: any, onAction: (action: string) => void }) {
-    const [openMenu, setOpenMenu] = useState<string | null>(null)
-    const menuRef = useRef<HTMLDivElement>(null)
 
-    // Close menu on outside click
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-                setOpenMenu(null)
-            }
-        }
-        document.addEventListener('click', handleClickOutside)
-        return () => document.removeEventListener('click', handleClickOutside)
-    }, [])
 
-    type MenuItem = { label?: string, action?: string, icon?: React.ReactNode, shortcut?: string, sep?: boolean, subItems?: MenuItem[] };
-    type MenuGroup = { id: string, label: string, items: MenuItem[] };
-
-    const menus: MenuGroup[] = [
-        {
-            id: 'file', label: 'Fichier', items: [
-                { label: 'Nouveau', subItems: [
-                    { label: 'Document', action: 'newDoc', icon: <FileText className="w-4 h-4" /> },
-                    { label: 'De mod\u00E8le', action: 'todo' }
-                ]},
-                { label: 'Ouvrir', action: 'todo', shortcut: 'Ctrl+O' },
-                { label: 'Cr\u00E9er une copie', action: 'todo' },
-                { sep: true },
-                { label: 'Partager', subItems: [
-                    { label: 'Partager avec d\'autres personnes', action: 'todo' },
-                    { label: 'Publier sur le Web', action: 'todo' }
-                ]},
-                { label: 'Envoyer par e-mail', action: 'todo' },
-                { label: 'T\u00E9l\u00E9charger', subItems: [
-                    { label: 'Document PDF (.pdf)', action: 'downloadPdf' },
-                    { label: 'Microsoft Word (.docx)', action: 'todo' },
-                    { label: 'Format OpenDocument (.odt)', action: 'todo' },
-                    { label: 'Texte brut (.txt)', action: 'todo' }
-                ]},
-                { label: 'Approbations', action: 'todo' },
-                { sep: true },
-                { label: 'Renommer', action: 'todo' },
-                { label: 'Placer dans la corbeille', action: 'todo' },
-                { sep: true },
-                { label: 'Historique des versions', action: 'todo' },
-                { label: 'Rendre disponible hors connexion', action: 'todo' },
-                { sep: true },
-                { label: 'D\u00E9tails', action: 'todo' },
-                { label: 'Limites de s\u00E9curit\u00E9', action: 'todo' },
-                { label: 'Langue', action: 'todo' },
-                { label: 'Configuration de la page', action: 'todo' },
-                { label: 'Imprimer', action: 'print', shortcut: 'Ctrl+P' }
-            ]
-        },
-        {
-            id: 'edit', label: '\u00C9dition', items: [
-                { label: 'Annuler', icon: <Undo className="w-4 h-4" />, action: 'undo', shortcut: 'Ctrl+Z' },
-                { label: 'R\u00E9tablir', icon: <Redo className="w-4 h-4" />, action: 'redo', shortcut: 'Ctrl+Y' },
-                { sep: true },
-                { label: 'Couper', icon: <X className="w-4 h-4" />, action: 'cut', shortcut: 'Ctrl+X' },
-                { label: 'Copier', action: 'copy', shortcut: 'Ctrl+C' },
-                { label: 'Coller', action: 'paste', shortcut: 'Ctrl+V' },
-                { label: 'Coller sans la mise en forme', action: 'pasteText', shortcut: 'Ctrl+Maj+V' },
-                { sep: true },
-                { label: 'Tout s\u00E9lectionner', action: 'selectAll', shortcut: 'Ctrl+A' },
-                { label: 'Supprimer', action: 'delete' },
-                { sep: true },
-                { label: 'Rechercher et remplacer', action: 'todo', shortcut: 'Ctrl+H' }
-            ]
-        },
-        {
-            id: 'view', label: 'Affichage', items: [
-                { label: 'Mode d\'affichage', subItems: [
-                    { label: 'Modification', action: 'todo' },
-                    { label: 'Suggestion', action: 'todo' },
-                    { label: 'Lecture', action: 'todo' }
-                ]},
-                { sep: true },
-                { label: 'Afficher la r\u00E8gle', action: 'todo' },
-                { label: 'Afficher le plan', action: 'todo' },
-                { label: 'Afficher la barre d\'\u00E9quations', action: 'todo' },
-                { label: 'Afficher les caract\u00E8res non imprimables', action: 'todo' },
-                { sep: true },
-                { label: 'Plein \u00E9cran', action: 'todo' }
-            ]
-        },
-        {
-            id: 'insert', label: 'Insertion', items: [
-                { label: 'Image', icon: <ImageIcon className="w-4 h-4" />, action: 'insertImage' },
-                { label: 'Tableau', icon: <TableIcon className="w-4 h-4" />, subItems: [
-                    { label: 'Mod\u00E8les de tableaux', action: 'todo' },
-                    { label: 'Ins\u00E9rer un tableau simple', action: 'insertTable' }
-                ]},
-                { label: 'Composants de base', action: 'todo' },
-                { label: 'Chips intelligents', action: 'todo' },
-                { label: 'Champs de signature \u00E9lectronique', action: 'todo' },
-                { label: 'Lien', icon: <LinkIcon className="w-4 h-4" />, action: 'insertLink', shortcut: 'Ctrl+K' },
-                { label: 'Dessin', action: 'todo' },
-                { label: 'Graphique', action: 'todo' },
-                { label: 'Symboles', action: 'todo' },
-                { sep: true },
-                { label: 'Onglet', action: 'todo', shortcut: 'Maj+F11' },
-                { label: 'Ligne horizontale', action: 'insertHorizontalRule' },
-                { label: 'Saut', subItems: [
-                    { label: 'Saut de page', action: 'insertHardBreak', shortcut: 'Ctrl+Entr\u00E9e' },
-                    { label: 'Saut de section', action: 'todo' }
-                ]},
-                { label: 'Signet', action: 'todo' },
-                { label: '\u00C9l\u00E9ments de page', action: 'todo' },
-                { sep: true },
-                { label: 'Commentaire', action: 'todo', shortcut: 'Ctrl+Alt+M' }
-            ]
-        },
-        {
-            id: 'format', label: 'Format', items: [
-                { label: 'Texte', subItems: [
-                    { label: 'Gras', icon: <Bold className="w-4 h-4" />, action: 'toggleBold', shortcut: 'Ctrl+B' },
-                    { label: 'Italique', icon: <Italic className="w-4 h-4" />, action: 'toggleItalic', shortcut: 'Ctrl+I' },
-                    { label: 'Soulign\u00E9', icon: <UnderlineIcon className="w-4 h-4" />, action: 'toggleUnderline', shortcut: 'Ctrl+U' },
-                    { label: 'Barr\u00E9', icon: <Strikethrough className="w-4 h-4" />, action: 'toggleStrike', shortcut: 'Alt+Maj+5' },
-                    { label: 'Exposant', action: 'toggleSuperscript', shortcut: 'Ctrl+.' },
-                    { label: 'Indice', action: 'toggleSubscript', shortcut: 'Ctrl+,' },
-                    { label: 'Taille', action: 'todo' }
-                ]},
-                { label: 'Styles de paragraphe', subItems: [
-                    { label: 'Bordures et trames', action: 'todo' },
-                    { label: 'En-t\u00EAte 1', action: 'toggleH1' },
-                    { label: 'En-t\u00EAte 2', action: 'toggleH2' },
-                    { label: 'En-t\u00EAte 3', action: 'toggleH3' },
-                    { label: 'Texte normal', action: 'setParagraph' }
-                ]},
-                { label: 'Aligner et mettre en retrait', subItems: [
-                    { label: 'Gauche', action: 'alignLeft', shortcut: 'Ctrl+Maj+L' },
-                    { label: 'Centre', action: 'alignCenter', shortcut: 'Ctrl+Maj+E' },
-                    { label: 'Droite', action: 'alignRight', shortcut: 'Ctrl+Maj+R' },
-                    { label: 'Justifier', action: 'alignJustify', shortcut: 'Ctrl+Maj+J' },
-                    { sep: true },
-                    { label: 'Augmenter le retrait', action: 'todo' },
-                    { label: 'Diminuer le retrait', action: 'todo' }
-                ]},
-                { label: 'Interligne et espace entre paragraphes', subItems: [
-                    { label: 'Simple', action: 'todo' },
-                    { label: '1.15', action: 'todo' },
-                    { label: '1.5', action: 'todo' },
-                    { label: 'Double', action: 'todo' }
-                ]},
-                { label: 'Colonnes', action: 'todo' },
-                { label: 'Puces et num\u00E9ros', subItems: [
-                    { label: 'Liste num\u00E9rot\u00E9e', action: 'toggleOrderedList', shortcut: 'Ctrl+Maj+7' },
-                    { label: 'Liste \u00E0 puces', action: 'toggleBulletList', shortcut: 'Ctrl+Maj+8' },
-                    { label: 'Checklist', action: 'toggleTaskList', shortcut: 'Ctrl+Maj+9' }
-                ]},
-                { sep: true },
-                { label: 'En-t\u00EAtes et pieds de page', action: 'todo' },
-                { label: 'Num\u00E9ros de page', action: 'todo' },
-                { label: 'Orientation de la page', action: 'todo' },
-                { label: 'Passer au format Sans pages', action: 'todo' },
-                { sep: true },
-                { label: 'Tableau', action: 'todo' },
-                { label: 'Image', action: 'todo' },
-                { label: 'Bordures et lignes', action: 'todo' },
-                { sep: true },
-                { label: 'Supprimer la mise en forme', action: 'clearFormat', shortcut: 'Ctrl+\\' }
-            ]
-        },
-        {
-            id: 'tools', label: 'Outils', items: [
-                { label: 'Orthographe et grammaire', action: 'todo' },
-                { label: 'D\u00E9compte des mots', action: 'todo', shortcut: 'Ctrl+Maj+C' },
-                { label: 'R\u00E9viser les modifications sugg\u00E9r\u00E9es', action: 'todo' },
-                { label: 'Citations', action: 'todo' },
-                { sep: true },
-                { label: 'Assistant IA (G\u00E9n\u00E9rer)', icon: <Sparkles className="w-4 h-4" />, action: 'aiGenerate' },
-                { label: 'R\u00E9sumer', action: 'aiSummarize' },
-                { label: 'Traduire en anglais', icon: <Languages className="w-4 h-4" />, action: 'translateEn' }
-            ]
-        },
-        {
-            id: 'extensions', label: 'Extensions', items: [
-                { label: 'Modules compl\u00E9mentaires', action: 'todo' },
-                { label: 'Apps Script', action: 'todo' }
-            ]
-        },
-        {
-            id: 'help', label: 'Aide', items: [
-                { label: 'Aide SignApps Docs', action: 'todo' },
-                { label: 'Formation', action: 'todo' },
-                { label: 'Mises \u00E0 jour', action: 'todo' }
-            ]
-        }
-    ]
-
-    const renderMenuItem = (item: MenuItem, idx: number, level: number = 0) => {
-        if (item.sep) {
-            return <div key={`sep-${idx}`} className="h-px bg-[#dadce0] dark:bg-[#5f6368] my-1 mx-0" />;
-        }
-        
-        const hasSubMenu = item.subItems && item.subItems.length > 0;
-        
-        return (
-            <div key={item.label || idx} className="relative group/sub">
-                <button
-                    className="w-full text-left px-4 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] flex items-center justify-between text-[#202124] dark:text-[#e8eaed] text-[13px]"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (hasSubMenu) return; // Do nothing if it's a submenu parent
-                        if (item.action) onAction(item.action);
-                        setOpenMenu(null);
-                    }}
-                >
-                    <div className="flex items-center gap-3">
-                        {item.icon ? <div className="text-[#5f6368] dark:text-[#9aa0a6] w-4">{item.icon}</div> : <div className="w-4" />}
-                        <span>{item.label}</span>
-                    </div>
-                    <div className="flex items-center">
-                        {item.shortcut && <span className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] font-sans tracking-wide ml-4">{item.shortcut}</span>}
-                        {hasSubMenu && <span className="ml-3 text-[10px] text-[#5f6368] dark:text-[#9aa0a6]">▶</span>}
-                    </div>
-                </button>
-                
-                {/* Submenu rendering via CSS hover */}
-                {hasSubMenu && (
-                    <div className="absolute top-0 left-full -mt-1 hidden group-hover/sub:block bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded shadow-lg z-50 py-1 min-w-[220px]">
-                        {item.subItems!.map((subItem, sIdx) => renderMenuItem(subItem, sIdx, level + 1))}
-                    </div>
-                )}
-            </div>
-        );
-    };
-
-    return (
-        <div ref={menuRef} className="flex gap-1 text-[13px] text-[#444746] dark:text-[#9aa0a6] mt-0.5 relative">
-            {menus.map(menu => (
-                <div key={menu.id} className="relative">
-                    <button
-                        className={`hover:bg-[#f1f3f4] dark:hover:bg-[#303134] px-2 py-0.5 rounded cursor-pointer transition-colors ${openMenu === menu.id ? 'bg-[#f1f3f4] dark:bg-[#303134] text-[#202124] dark:text-[#e8eaed]' : ''}`}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenMenu(openMenu === menu.id ? null : menu.id)
-                        }}
-                        onMouseEnter={() => {
-                            if (openMenu && openMenu !== menu.id) setOpenMenu(menu.id)
-                        }}
-                    >
-                        {menu.label}
-                    </button>
-                    {openMenu === menu.id && (
-                        <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded shadow-lg z-50 py-1 min-w-[220px]">
-                            {menu.items.map((item, idx) => renderMenuItem(item, idx))}
-                        </div>
-                    )}
-                </div>
-            ))}
-        </div>
-    )
-}
-
-const Editor = ({ documentId, className, userName, bucket, fileName, initialContent }: EditorProps) => {
+const Editor = ({
+    documentId = 'new',
+    documentName = 'document.docx',
+    className,
+    userName,
+    bucket,
+    fileName,
+    initialContent
+}: EditorProps) => {
     const [status, setStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
     const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
 
     // AI state
-    const { stream, stop, isStreaming } = useAiStream();
+    const {
+        stream,
+        stop,
+        isStreaming
+    } = useAiStream();
     const [aiAction, setAiAction] = useState<string | null>(null);
 
     // FloatingMenu state
@@ -390,17 +418,27 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
     const [docIcon, setDocIcon] = useState<string>('\ud83d\udcc4');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
+    const [isReadOnly, setIsReadOnly] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [interimVoiceText, setInterimVoiceText] = useState('');
+    const pendingVoiceMarksRef = useRef<string[]>([]);
+    const pendingVoiceBlocksRef = useRef<string[]>([]);
+
     useEffect(() => {
         const baseUrl = process.env.NEXT_PUBLIC_DOCS_WS_URL || 'ws://localhost:3010/api/v1/docs/text';
         const wsUrl = `${baseUrl}/${documentId}`;
 
-        const wsProvider = new WebsocketProvider(wsUrl, documentId, ydoc, { connect: false });
+        const wsProvider = new WebsocketProvider(wsUrl, documentId, ydoc, {
+            connect: false
+        });
 
         // Directly connect the WebSocket provider
         // Tiptap's Hocuspocus/y-websocket provider handles reconnections automatically
         wsProvider.connect();
 
-        wsProvider.on('status', async (event: { status: 'connecting' | 'connected' | 'disconnected' }) => {
+        wsProvider.on('status', async (event: {
+            status: 'connecting' | 'connected' | 'disconnected'
+        }) => {
             setStatus(event.status);
 
             // Fetch and inject content if document is fresh from S3
@@ -408,24 +446,30 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                 try {
                     // Give Yjs a moment to sync, then check if document is completely empty
                     setTimeout(async () => {
-                         const currentText = ydoc.getText('default').toString();
-                         if (!currentText || currentText.trim() === '') {
-                             toast.loading("Chargement du contenu du fichier...", { id: `load-${documentId}` });
-                             try {
-                                 const parsed: any = await fetchAndParseDocument(bucket, fileName, fileName);
-                                 if (parsed.type === 'document') {
-                                     // Need to inject it using the TipTap editor instance, handled in a separate useEffect
-                                     // since 'editor' isn't available here directly. We'll set a state.
-                                     setInitialParsedContent(parsed.text || parsed.html || '');
-                                 }
-                                 toast.success("Fichier chargé", { id: `load-${documentId}` });
-                             } catch (e: any) {
-                                 toast.error(`Erreur de lecture: ${e.message}`, { id: `load-${documentId}` });
-                             }
-                         }
+                        const currentText = ydoc.getText('default').toString();
+                        if (!currentText || currentText.trim() === '') {
+                            toast.loading("Chargement du contenu du fichier...", {
+                                id: `load-${documentId}`
+                            });
+                            try {
+                                const parsed: any = await fetchAndParseDocument(bucket, fileName, fileName);
+                                if (parsed.type === 'document') {
+                                    // Need to inject it using the TipTap editor instance, handled in a separate useEffect
+                                    // since 'editor' isn't available here directly. We'll set a state.
+                                    setInitialParsedContent(parsed.text || parsed.html || '');
+                                }
+                                toast.success("Fichier chargé", {
+                                    id: `load-${documentId}`
+                                });
+                            } catch (e: any) {
+                                toast.error(`Erreur de lecture: ${e.message}`, {
+                                    id: `load-${documentId}`
+                                });
+                            }
+                        }
                     }, 1000);
-                } catch(e) {
-                    console.error("Failed to fetch initial content", e);
+                } catch (e) {
+                    console.debug("Failed to fetch initial content", e);
                 }
             }
         });
@@ -433,20 +477,43 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         setProvider(wsProvider);
 
         return () => {
+            // Effacement du curseur local avant la destruction du provider pour éviter les fantômes
+            if (wsProvider.awareness) {
+                wsProvider.awareness.setLocalState(null);
+            }
             wsProvider.destroy();
         };
-    }, [documentId, ydoc]);
+    }, [documentId, ydoc, bucket, fileName]);
+
+    // Document Styles state
+    const [docLineHeight, setDocLineHeight] = useState('1.5');
+    const [docFontSize, setDocFontSize] = useState<number>(11);
+    const [docBgColor, setDocBgColor] = useState<string>('');
 
     // Table of Contents state
-    const [toc, setToc] = useState<{ id: string, text: string, level: number }[]>([]);
+    const [toc, setToc] = useState<{
+        id: string,
+        text: string,
+        level: number
+    }[]>([]);
 
     // Comments & File parsing state
-    const [comments, setComments] = useState<{ id: string, text: string, author: string, timestamp: number }[]>([]);
+    const [comments, setComments] = useState<{
+        id: string,
+        text: string,
+        author: string,
+        timestamp: number
+    }[]>([]);
     const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
     const [showComments, setShowComments] = useState(true);
     const [initialParsedContent, setInitialParsedContent] = useState<string | null>(null);
+    const [activeModal, setActiveModal] = useState<{
+        id: string,
+        label?: string
+    } | null>(null);
 
     const editor = useEditor({
+        editable: !isReadOnly,
         extensions: [
             StarterKit.configure({
                 history: false, // Turn off Prosemirror history as Yjs handles it
@@ -483,31 +550,49 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                         title: 'Heading 1',
                         description: 'Big section heading.',
                         icon: <Heading1 className="w-4 h-4" />,
-                        command: ({ editor, range }: any) => {
-                            editor.chain().focus().deleteRange(range).setNode('heading', { level: 1 }).run();
+                        command: ({
+                            editor,
+                            range
+                        }: any) => {
+                            editor.chain().focus().deleteRange(range).setNode('heading', {
+                                level: 1
+                            }).run();
                         },
                     },
                     {
                         title: 'Heading 2',
                         description: 'Medium section heading.',
                         icon: <Heading2 className="w-4 h-4" />,
-                        command: ({ editor, range }: any) => {
-                            editor.chain().focus().deleteRange(range).setNode('heading', { level: 2 }).run();
+                        command: ({
+                            editor,
+                            range
+                        }: any) => {
+                            editor.chain().focus().deleteRange(range).setNode('heading', {
+                                level: 2
+                            }).run();
                         },
                     },
                     {
                         title: 'Heading 3',
                         description: 'Small section heading.',
                         icon: <Heading3 className="w-4 h-4" />,
-                        command: ({ editor, range }: any) => {
-                            editor.chain().focus().deleteRange(range).setNode('heading', { level: 3 }).run();
+                        command: ({
+                            editor,
+                            range
+                        }: any) => {
+                            editor.chain().focus().deleteRange(range).setNode('heading', {
+                                level: 3
+                            }).run();
                         },
                     },
                     {
                         title: 'Bullet List',
                         description: 'Create a simple bulleted list.',
                         icon: <List className="w-4 h-4" />,
-                        command: ({ editor, range }: any) => {
+                        command: ({
+                            editor,
+                            range
+                        }: any) => {
                             editor.chain().focus().deleteRange(range).toggleBulletList().run();
                         },
                     },
@@ -515,7 +600,10 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                         title: 'Numbered List',
                         description: 'Create a list with numbering.',
                         icon: <ListOrdered className="w-4 h-4" />,
-                        command: ({ editor, range }: any) => {
+                        command: ({
+                            editor,
+                            range
+                        }: any) => {
                             editor.chain().focus().deleteRange(range).toggleOrderedList().run();
                         },
                     },
@@ -523,7 +611,10 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                         title: 'To-do List',
                         description: 'Track tasks with a to-do list.',
                         icon: <CheckSquare className="w-4 h-4" />,
-                        command: ({ editor, range }: any) => {
+                        command: ({
+                            editor,
+                            range
+                        }: any) => {
                             editor.chain().focus().deleteRange(range).toggleTaskList().run();
                         },
                     },
@@ -531,7 +622,10 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                         title: 'Code Block',
                         description: 'Capture a code snippet.',
                         icon: <Code className="w-4 h-4" />,
-                        command: ({ editor, range }: any) => {
+                        command: ({
+                            editor,
+                            range
+                        }: any) => {
                             editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
                         },
                     },
@@ -539,10 +633,15 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                         title: 'Image',
                         description: 'Upload or embed an image.',
                         icon: <ImageIcon className="w-4 h-4" />,
-                        command: ({ editor, range }: any) => {
+                        command: ({
+                            editor,
+                            range
+                        }: any) => {
                             const url = window.prompt('Image URL');
                             if (url) {
-                                editor.chain().focus().deleteRange(range).setImage({ src: url }).run();
+                                editor.chain().focus().deleteRange(range).setImage({
+                                    src: url
+                                }).run();
                             } else {
                                 editor.chain().focus().deleteRange(range).run();
                             }
@@ -552,7 +651,10 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                         title: 'Ask AI',
                         description: 'Generate text using AI.',
                         icon: <Sparkles className="w-4 h-4 text-purple-500" />,
-                        command: ({ editor, range }: any) => {
+                        command: ({
+                            editor,
+                            range
+                        }: any) => {
                             editor.chain().focus().deleteRange(range).run();
                             setTimeout(() => {
                                 setFloatingMode('prompt');
@@ -610,8 +712,14 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                 class: 'prose prose-slate dark:prose-invert max-w-none focus:outline-none min-h-[500px] transition-colors font-sans text-[11pt] leading-[1.6]',
             },
         },
-        onUpdate: ({ editor }) => {
-            const headings: { id: string, text: string, level: number }[] = [];
+        onUpdate: ({
+            editor
+        }) => {
+            const headings: {
+                id: string,
+                text: string,
+                level: number
+            } [] = [];
             editor.state.doc.descendants((node, pos) => {
                 if (node.type.name === 'heading') {
                     const id = `heading-${pos}`;
@@ -624,12 +732,16 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
             });
             setToc(headings);
         }
-    }, [ydoc, provider]);
+    }, [ydoc, provider, isReadOnly, userName, initialContent]);
 
     // Initial TOC processing
     useEffect(() => {
         if (!editor) return;
-        const headings: { id: string, text: string, level: number }[] = [];
+        const headings: {
+            id: string,
+            text: string,
+            level: number
+        } [] = [];
         editor.state.doc.descendants((node, pos) => {
             if (node.type.name === 'heading') {
                 const id = `heading-${pos}`;
@@ -646,15 +758,57 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
     // Inject parsed content when available
     useEffect(() => {
         if (editor && initialParsedContent) {
-           editor.commands.setContent(initialParsedContent);
-           setInitialParsedContent(null);
+            editor.commands.setContent(initialParsedContent);
+            setInitialParsedContent(null);
         }
     }, [editor, initialParsedContent]);
+
+    // Global keyboard shortcuts
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey || e.metaKey) {
+                const key = e.key.toLowerCase();
+                
+                // Existing shortcuts
+                if (key === 's' && !e.shiftKey) {
+                    e.preventDefault();
+                    window.dispatchEvent(new CustomEvent('app:save-to-drive'));
+                } else if (key === 'n' && !e.shiftKey) {
+                    e.preventDefault();
+                    window.open('/docs', '_blank');
+                } else if (key === 'o' && !e.shiftKey) {
+                    e.preventDefault();
+                    toast.info("Rendez-vous sur l'accueil Drive pour ouvrir un fichier.");
+                } else if (key === 'q' && !e.shiftKey) {
+                    e.preventDefault();
+                    toast.info("Fermez l'onglet du navigateur pour quitter la session.");
+                }
+                
+                // Docs formatting shortcuts
+                if (editor) {
+                    if (e.shiftKey) {
+                        if (key === 'l') { e.preventDefault(); editor.chain().focus().setTextAlign('left').run(); }
+                        else if (key === 'e') { e.preventDefault(); editor.chain().focus().setTextAlign('center').run(); }
+                        else if (key === 'r') { e.preventDefault(); editor.chain().focus().setTextAlign('right').run(); }
+                        else if (key === 'j') { e.preventDefault(); editor.chain().focus().setTextAlign('justify').run(); }
+                        else if (key === 'x') { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }
+                    } else if (key === '5') {
+                        e.preventDefault(); editor.chain().focus().toggleStrike().run();
+                    }
+                }
+            }
+        };
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, [editor]); 
 
     // Streaming AI action for BubbleMenu (improve/fix/shorten)
     const handleAiAction = useCallback(async (action: 'improve' | 'fix' | 'shorten') => {
         if (!editor || isStreaming) return;
-        const { from, to } = editor.state.selection;
+        const {
+            from,
+            to
+        } = editor.state.selection;
         const text = editor.state.doc.textBetween(from, to);
         if (!text) return;
 
@@ -670,8 +824,7 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         editor.chain().focus().deleteSelection().run();
 
         await stream(
-            `${action === 'improve' ? 'Improve' : action === 'fix' ? 'Fix grammar and spelling in' : 'Shorten'} the following text:\n\n${text}`,
-            {
+            `${action === 'improve' ? 'Improve' : action === 'fix' ? 'Fix grammar and spelling in' : 'Shorten'} the following text:\n\n${text}`, {
                 onToken: (token) => {
                     editor.chain().focus().insertContent(token).run();
                 },
@@ -683,8 +836,10 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                     setAiAction(null);
                     toast.error(`AI error: ${err}`);
                 },
+            }, {
+                systemPrompt: systemPrompts[action],
+                language: 'en'
             },
-            { systemPrompt: systemPrompts[action], language: 'en' },
         );
     }, [editor, isStreaming, stream]);
 
@@ -699,22 +854,31 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         const toastId = toast.loading('Generating summary...');
 
         await stream(
-            `Summarize the following document in 3-5 bullet points:\n\n${text}`,
-            {
+            `Summarize the following document in 3-5 bullet points:\n\n${text}`, {
                 onToken: (token) => {
                     summary += token;
-                    toast.loading(summary.slice(0, 200) + (summary.length > 200 ? '...' : ''), { id: toastId });
+                    toast.loading(summary.slice(0, 200) + (summary.length > 200 ? '...' : ''), {
+                        id: toastId
+                    });
                 },
                 onDone: (full) => {
                     setAiAction(null);
-                    toast.success('Summary', { id: toastId, description: full, duration: 15000 });
+                    toast.success('Summary', {
+                        id: toastId,
+                        description: full,
+                        duration: 15000
+                    });
                 },
                 onError: (err) => {
                     setAiAction(null);
-                    toast.error(`Summarization failed: ${err}`, { id: toastId });
+                    toast.error(`Summarization failed: ${err}`, {
+                        id: toastId
+                    });
                 },
+            }, {
+                systemPrompt: 'You are a helpful assistant. Output a concise summary.',
+                language: 'en'
             },
-            { systemPrompt: 'You are a helpful assistant. Output a concise summary.', language: 'en' },
         );
     }, [editor, isStreaming, stream]);
 
@@ -727,8 +891,7 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         setAiAction('write');
 
         await stream(
-            prompt,
-            {
+            prompt, {
                 onToken: (token) => {
                     editor.chain().focus().insertContent(token).run();
                 },
@@ -739,8 +902,7 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                     setAiAction(null);
                     toast.error(`AI error: ${err}`);
                 },
-            },
-            {
+            }, {
                 systemPrompt: 'You are a professional writer. Write clear, well-structured content based on the user\'s instruction. Output ONLY the content, no explanations or meta-text.',
                 language: 'en',
             },
@@ -754,7 +916,9 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         setAiAction('continue');
 
         // Grab last ~1000 characters before cursor as context
-        const { from } = editor.state.selection;
+        const {
+            from
+        } = editor.state.selection;
         const start = Math.max(0, from - 1000);
         const context = editor.state.doc.textBetween(start, from);
 
@@ -765,8 +929,7 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         }
 
         await stream(
-            `Continue writing naturally from where this text leaves off:\n\n${context}`,
-            {
+            `Continue writing naturally from where this text leaves off:\n\n${context}`, {
                 onToken: (token) => {
                     editor.chain().focus().insertContent(token).run();
                 },
@@ -777,8 +940,7 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                     setAiAction(null);
                     toast.error(`AI error: ${err}`);
                 },
-            },
-            {
+            }, {
                 systemPrompt: 'You are a professional writer. Continue the text seamlessly, matching the tone, style, and topic. Output ONLY the continuation, no explanations.',
                 language: 'en',
             },
@@ -790,11 +952,14 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         if (!editor || isStreaming) return;
         setFloatingMode('menu');
 
-        const { from, to } = editor.state.selection;
+        const {
+            from,
+            to
+        } = editor.state.selection;
         const hasSelection = from !== to;
-        const text = hasSelection
-            ? editor.state.doc.textBetween(from, to)
-            : editor.getText();
+        const text = hasSelection ?
+            editor.state.doc.textBetween(from, to) :
+            editor.getText();
 
         if (!text.trim()) return;
 
@@ -807,8 +972,7 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         }
 
         await stream(
-            `Translate the following text to ${langLabel}:\n\n${text}`,
-            {
+            `Translate the following text to ${langLabel}:\n\n${text}`, {
                 onToken: (token) => {
                     editor.chain().focus().insertContent(token).run();
                 },
@@ -820,8 +984,7 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                     setAiAction(null);
                     toast.error(`Translation failed: ${err}`);
                 },
-            },
-            {
+            }, {
                 systemPrompt: `You are a professional translator. Translate the text to ${langLabel}. Output ONLY the translation.`,
                 language: langCode,
             },
@@ -838,7 +1001,9 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
     // --- Global Command Bar AI Integration ---
     useEffect(() => {
         const handleGlobalAiAction = (e: CustomEvent) => {
-            const { action } = e.detail;
+            const {
+                action
+            } = e.detail;
             if (action === 'summarize') {
                 handleSummarize();
             } else if (action === 'draft') {
@@ -851,7 +1016,9 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         };
 
         const handleEditorAction = (e: CustomEvent) => {
-            const { action } = e.detail;
+            const {
+                action
+            } = e.detail;
             if (action === 'format-fix') {
                 // To fix the whole document if nothing is selected, select all first.
                 if (editor?.state.selection.empty) {
@@ -870,18 +1037,508 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         }
     }, [handleSummarize, handleAiAction, editor]);
 
+    // Export HTML to DOCX or PDF
+    const exportHtmlDocument = useCallback(async (type: 'docx' | 'pdf') => {
+        if (!editor) return;
+        const htmlString = editor.getHTML();
+
+        if (type === 'docx') {
+            const res = await fetch('/api/docs/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ html: htmlString })
+            });
+
+            if (!res.ok) {
+                toast.error("Erreur d'exportation");
+                return;
+            }
+
+            const docxBlob = await res.blob();
+            saveAs(docxBlob, `${documentName.replace(/\.docx$/, '') || 'document'}.docx`);
+        } else if (type === 'pdf') {
+            // For PDF, typically you'd send HTML to a server-side renderer or use a client-side library
+            // For simplicity, we'll just trigger print for now as a client-side PDF "export"
+            window.print();
+        }
+        toast.success(`Exporté en ${type.toUpperCase()}`);
+    }, [editor, documentName]);
+
+    // ---- Save To Drive ----
+    const saveToDrive = useCallback(async () => {
+        if (!editor) return;
+        if (!documentName) {
+            toast.error("Impossible d'enregistrer: Le nom du fichier est manquant.");
+            return;
+        }
+
+        const tId = toast.loading("Enregistrement dans le Drive...");
+
+        try {
+            const htmlString = editor.getHTML();
+            let blob: Blob;
+
+            // Generate DOCX blob via Next.js API
+            const res = await fetch('/api/docs/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ html: htmlString })
+            });
+            
+            if (!res.ok) {
+                throw new Error("Erreur de conversion HTML vers DOCX sur le serveur");
+            }
+
+            blob = await res.blob();
+
+            // Envoyer à l'API backend dans le bucket 'drive'
+            await storageApi.uploadWithKey('drive', documentName, blob);
+
+            toast.success("Enregistré avec succès !", {
+                id: tId
+            });
+        } catch (err: any) {
+            console.error("Erreur enregistrement docx", err);
+            toast.error("Erreur d'enregistrement: " + err.message, {
+                id: tId
+            });
+        }
+    }, [editor, documentName]);
+
+    // Listen to global save event triggered by shortcut
+    useEffect(() => {
+        const handleSave = () => saveToDrive();
+        window.addEventListener('app:save-to-drive', handleSave);
+        return () => window.removeEventListener('app:save-to-drive', handleSave);
+    }, [saveToDrive]);
+
+    // Editor Menus Configuration
+    const editorMenus: MenuGroup[] = [{
+        id: 'file',
+        label: 'Fichier',
+        items: [
+            {
+                label: 'Nouveau',
+                subItems: [{
+                    label: 'Document',
+                    action: 'todo',
+                    icon: <FileText className="w-4 h-4" />
+                }, {
+                    label: 'De modèle',
+                    action: 'todo'
+                }]
+            },
+            {
+                label: 'Enregistrer (Drive)',
+                icon: <Download size={14} />,
+                action: 'saveToDrive',
+                shortcut: 'Ctrl+S'
+            }, // Added this line
+            {
+                label: 'Ouvrir',
+                action: 'open',
+                shortcut: 'Ctrl+O'
+            },
+            {
+                label: 'Créer une copie',
+                action: 'copy_file'
+            },
+            {
+                sep: true
+            },
+            {
+                label: 'Partager',
+                subItems: [{
+                    label: 'Partager avec d\'autres personnes',
+                    action: 'share_advanced'
+                }, {
+                    label: 'Publier sur le Web',
+                    action: 'publish_web'
+                }]
+            },
+            {
+                label: 'Envoyer par e-mail',
+                action: 'email_doc'
+            },
+            {
+                label: 'Télécharger',
+                subItems: [{
+                    label: 'Document PDF (.pdf)',
+                    action: 'downloadPdf'
+                }, {
+                    label: 'Microsoft Word (.docx)',
+                    action: 'download_docx'
+                }, {
+                    label: 'Format OpenDocument (.odt)',
+                    action: 'download_odt'
+                }, {
+                    label: 'Texte brut (.txt)',
+                    action: 'download_txt'
+                }]
+            },
+            {
+                label: 'Approbations',
+                action: 'approvals'
+            },
+            {
+                sep: true
+            },
+            {
+                label: 'Renommer',
+                action: 'rename'
+            },
+            {
+                label: 'Placer dans la corbeille',
+                action: 'trash'
+            },
+            {
+                sep: true
+            },
+            {
+                label: 'Historique des versions',
+                action: 'version_history'
+            },
+            {
+                label: 'Rendre disponible hors connexion',
+                action: 'offline_mode'
+            },
+            {
+                sep: true
+            },
+            {
+                label: 'Détails',
+                action: 'details'
+            },
+            {
+                label: 'Limites de sécurité',
+                action: 'security'
+            },
+            {
+                label: 'Langue',
+                action: 'language'
+            },
+            {
+                label: 'Configuration de la page',
+                action: 'page_setup'
+            },
+            {
+                label: 'Imprimer',
+                action: 'print',
+                shortcut: 'Ctrl+P'
+            }
+        ]
+    }, {
+        id: 'edit',
+        label: 'Édition',
+        items: [{
+            label: 'Annuler',
+            icon: <Undo className="w-4 h-4" />,
+            action: 'undo',
+            shortcut: 'Ctrl+Z'
+        }, {
+            label: 'Rétablir',
+            icon: <Redo className="w-4 h-4" />,
+            action: 'redo',
+            shortcut: 'Ctrl+Y'
+        }, {
+            sep: true
+        }, {
+            label: 'Couper',
+            icon: <X className="w-4 h-4" />,
+            action: 'cut',
+            shortcut: 'Ctrl+X'
+        }, {
+            label: 'Copier',
+            action: 'copy',
+            shortcut: 'Ctrl+C'
+        }, {
+            label: 'Coller',
+            action: 'paste',
+            shortcut: 'Ctrl+V'
+        }, {
+            label: 'Coller sans la mise en forme',
+            action: 'pasteText',
+            shortcut: 'Ctrl+Maj+V'
+        }, {
+            sep: true
+        }, {
+            label: 'Tout sélectionner',
+            action: 'selectAll',
+            shortcut: 'Ctrl+A'
+        }, {
+            label: 'Supprimer',
+            action: 'delete'
+        }, {
+            sep: true
+        }, {
+            label: 'Rechercher et remplacer',
+            action: 'findReplace',
+            shortcut: 'Ctrl+H'
+        }]
+    }, {
+        id: 'view',
+        label: 'Affichage',
+        items: [{
+            label: 'Mode d\'affichage',
+            subItems: [{
+                label: 'Modification',
+                action: 'todo'
+            }, {
+                label: 'Suggestion',
+                action: 'todo'
+            }, {
+                label: 'Lecture',
+                action: 'todo'
+            }]
+        }, {
+            sep: true
+        }, {
+            label: 'Afficher la règle',
+            action: 'todo'
+        }, {
+            label: 'Afficher le plan',
+            action: 'todo'
+        }, {
+            label: 'Afficher la barre d\'équations',
+            action: 'todo'
+        }, {
+            label: 'Afficher les caractères non imprimables',
+            action: 'todo'
+        }, {
+            sep: true
+        }, {
+            label: 'Plein écran',
+            action: 'fullScreen'
+        }]
+    }, {
+        id: 'insert',
+        label: 'Insertion',
+        items: [{
+            label: 'Image',
+            icon: <ImageIcon className="w-4 h-4" />,
+            action: 'insertImage'
+        }, {
+            label: 'Tableau',
+            icon: <TableIcon className="w-4 h-4" />,
+            subItems: [{
+                label: 'Modèles de tableaux',
+                action: 'todo'
+            }, {
+                label: 'Insérer un tableau simple',
+                action: 'insertTable'
+            }]
+        }, {
+            label: 'Composants de base',
+            action: 'todo'
+        }, {
+            label: 'Chips intelligents',
+            action: 'todo'
+        }, {
+            label: 'Champs de signature électronique',
+            action: 'todo'
+        }, {
+            label: 'Lien',
+            icon: <LinkIcon className="w-4 h-4" />,
+            action: 'insertLink',
+            shortcut: 'Ctrl+K'
+        }, {
+            label: 'Dessin',
+            action: 'todo'
+        }, {
+            label: 'Graphique',
+            action: 'todo'
+        }, {
+            label: 'Symboles',
+            action: 'todo'
+        }, {
+            sep: true
+        }, {
+            label: 'Onglet',
+            action: 'todo',
+            shortcut: 'Maj+F11'
+        }, {
+            label: 'Ligne horizontale',
+            action: 'insertHorizontalRule'
+        }, {
+            label: 'Saut',
+            subItems: [{
+                label: 'Saut de page',
+                action: 'insertHardBreak',
+                shortcut: 'Ctrl+Entrée'
+            }, {
+                label: 'Saut de section',
+                action: 'todo'
+            }]
+        }, {
+            label: 'Signet',
+            action: 'todo'
+        }, {
+            label: 'Éléments de page',
+            action: 'todo'
+        }, {
+            sep: true
+        }, {
+            label: 'Commentaire',
+            action: 'comment',
+            shortcut: 'Ctrl+Alt+M'
+        }]
+    }, {
+        id: 'format',
+        label: 'Format',
+        items: [{
+            label: 'Texte',
+            subItems: [{
+                label: 'Indice',
+                icon: <SubscriptIcon className="w-4 h-4" />,
+                action: 'toggleSubscript',
+                shortcut: 'Ctrl+,'
+            }, {
+                label: 'Exposant',
+                icon: <SuperscriptIcon className="w-4 h-4" />,
+                action: 'toggleSuperscript',
+                shortcut: 'Ctrl+.'
+            }, ]
+        }, {
+            label: 'Styles de paragraphe',
+            subItems: [{
+                label: 'Normal',
+                action: 'setParagraph'
+            }, {
+                label: 'Titre 1',
+                action: 'toggleH1',
+                shortcut: 'Ctrl+Alt+1'
+            }, {
+                label: 'Titre 2',
+                action: 'toggleH2',
+                shortcut: 'Ctrl+Alt+2'
+            }, {
+                label: 'Titre 3',
+                action: 'toggleH3',
+                shortcut: 'Ctrl+Alt+3'
+            }, ]
+        }, {
+            sep: true
+        }, {
+            label: 'Effacer la mise en forme',
+            action: 'clearFormat',
+            shortcut: 'Ctrl+\\'
+        }]
+    }, {
+        id: 'tools',
+        label: 'Outils',
+        items: [{
+            label: 'Traduire en anglais',
+            icon: <Languages className="w-4 h-4" />,
+            action: 'translateEn'
+        }]
+    }, {
+        id: 'extensions',
+        label: 'Extensions',
+        items: [{
+            label: 'Modules complémentaires',
+            action: 'add_ons'
+        }, {
+            label: 'Apps Script',
+            action: 'apps_script'
+        }]
+    }, {
+        id: 'help',
+        label: 'Aide',
+        items: [{
+            label: 'Aide SignApps Docs',
+            action: 'todo'
+        }, {
+            label: 'Formation',
+            action: 'todo'
+        }, {
+            label: 'Mises à jour',
+            action: 'todo'
+        }]
+    }];
+
+    const NATIVE_ACTIONS = ['rename', 'trash', 'open', 'print', 'fullScreen', 'wordCount', 'undo', 'redo', 'selectAll', 'delete', 'newDoc', 'downloadPdf', 'cut', 'copy', 'paste', 'pasteText', 'toggleBold', 'toggleItalic', 'toggleUnderline', 'toggleStrike', 'toggleSuperscript', 'toggleSubscript', 'clearFormat', 'toggleH1', 'toggleH2', 'toggleH3', 'setParagraph', 'toggleOrderedList', 'toggleBulletList', 'toggleTaskList', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'insertHorizontalRule', 'insertHardBreak', 'insertImage', 'insertLink', 'insertTable', 'insertCode', 'tableAddRowBefore', 'tableAddRowAfter', 'tableAddColBefore', 'tableAddColAfter', 'tableDeleteRow', 'tableDeleteCol', 'tableDeleteTable', 'tableMergeCells', 'aiGenerate', 'aiSummarize', 'translateEn', 'findReplace', 'comment', 'fontSize_smaller', 'fontSize_larger', 'lineHeight_1', 'lineHeight_1.15', 'lineHeight_1.5', 'lineHeight_2', 'page_setup', 'saveToDrive', 'download_docx'];
+
     // Handle Menu Actions
-    const handleMenuAction = useCallback(async (action: string) => {
-        if (!editor || action === 'todo') {
-            if (action === 'todo') toast.info("Cette fonctionnalit\u00E9 sera bient\u00F4t disponible !");
+    const handleMenuAction = useCallback(async (action: string, label?: string) => {
+        if (!editor || !NATIVE_ACTIONS.includes(action)) {
+            setActiveModal({
+                id: action,
+                label
+            });
             return;
         }
 
         editor.chain().focus(); // Base focus to ensure operations happen inside editor
 
+        // Specific Settings actions
+        if (action === 'findReplace') {
+            toast.info("Appuyez sur Ctrl+F pour utiliser la recherche native de votre navigateur.");
+        }
+        if (action === 'comment') {
+            const commentId = uuidv4();
+            editor.chain().focus().setComment(commentId).run();
+            setComments(prev => [...prev, {
+                id: commentId,
+                text: '',
+                author: userName || 'Anonymous',
+                timestamp: Date.now()
+            }]);
+            setActiveCommentId(commentId);
+            setShowComments(true);
+        }
+        if (action === 'fontSize_smaller') setDocFontSize(s => Math.max(1, s - 1));
+        if (action === 'fontSize_larger') setDocFontSize(s => s + 1);
+        if (action === 'lineHeight_1') setDocLineHeight('1');
+        if (action === 'lineHeight_1.15') setDocLineHeight('1.15');
+        if (action === 'lineHeight_1.5') setDocLineHeight('1.5');
+        if (action === 'lineHeight_2') setDocLineHeight('2');
+        if (action === 'page_setup') {
+            const color = prompt("Entrez une couleur de fond (ex: #ffffff, #f0f0f0, lightblue):", docBgColor);
+            if (color !== null) setDocBgColor(color);
+        }
+
         // File Actions
+        if (action === 'rename') {
+            const name = prompt("Entrez le nouveau nom du document:");
+            if (name) toast.success(`Document renommé en "${name}" avec succès.`);
+            return;
+        }
+        if (action === 'trash') {
+            if (confirm("Voulez-vous placer ce document dans la corbeille ?")) {
+                toast.success("Document placé dans la corbeille.");
+                window.location.href = '/drive';
+            }
+            return;
+        }
+        if (action === 'open') {
+            toast.info("Ouvrez l'explorateur Drive pour choisir un autre document.");
+            return;
+        }
         if (action === 'print') {
             window.print();
+            return;
+        }
+        if (action === 'saveToDrive') {
+            await saveToDrive();
+            return;
+        }
+
+        // View Actions
+        if (action === 'fullScreen') {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => toast.error("Le plein écran est bloqué."));
+            } else {
+                document.exitFullscreen();
+            }
+            return;
+        }
+
+        // Tools Actions
+        if (action === 'wordCount') {
+            const text = editor.getText();
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            const chars = text.length;
+            toast.info(`Statistiques : ${words} mots, ${chars} caractères.`);
             return;
         }
 
@@ -895,26 +1552,29 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
             toast.info("G\u00E9n\u00E9ration du PDF via le gestionnaire d'impression...");
             window.print();
         }
-        
+        if (action === 'download_docx') {
+            await exportHtmlDocument('docx');
+        }
+
         // Native clipboard if possible, fallback to execCommand
         if (action === 'cut' || action === 'copy' || action === 'paste' || action === 'pasteText') {
-           try {
-               editor.view.dom.focus();
-               let successful = false;
-               if (action === 'pasteText') {
+            try {
+                editor.view.dom.focus();
+                let successful = false;
+                if (action === 'pasteText') {
                     // Modern API fallback for text
                     const text = await navigator.clipboard.readText();
                     editor.commands.insertContent(text);
                     successful = true;
-               } else {
+                } else {
                     successful = document.execCommand(action);
-               }
-               if (!successful) {
-                   toast.error(`Votre navigateur bloque l'action '${action}'. Utilisez les raccourcis clavier.`);
-               }
-           } catch(e) {
-               toast.error(`Erreur: ${e}`);
-           }
+                }
+                if (!successful) {
+                    toast.error(`Votre navigateur bloque l'action '${action}'. Utilisez les raccourcis clavier.`);
+                }
+            } catch (e) {
+                toast.error(`Erreur: ${e}`);
+            }
         }
 
         // Font Styles (some toggles)
@@ -930,9 +1590,15 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         }
 
         // Headings
-        if (action === 'toggleH1') editor.commands.toggleHeading({ level: 1 });
-        if (action === 'toggleH2') editor.commands.toggleHeading({ level: 2 });
-        if (action === 'toggleH3') editor.commands.toggleHeading({ level: 3 });
+        if (action === 'toggleH1') editor.commands.toggleHeading({
+            level: 1
+        });
+        if (action === 'toggleH2') editor.commands.toggleHeading({
+            level: 2
+        });
+        if (action === 'toggleH3') editor.commands.toggleHeading({
+            level: 3
+        });
         if (action === 'setParagraph') editor.commands.setParagraph();
 
         // Lists
@@ -950,22 +1616,30 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         if (action === 'insertHorizontalRule') editor.commands.setHorizontalRule();
         if (action === 'insertHardBreak') editor.commands.setHardBreak();
         if (action === 'insertImage') {
-             const url = window.prompt('URL de l\'image:');
-             if (url) editor.commands.setImage({ src: url });
+            const url = window.prompt('URL de l\'image:');
+            if (url) editor.commands.setImage({
+                src: url
+            });
         }
         if (action === 'insertLink') {
-             const url = window.prompt('URL du lien:');
-             if (url) {
-                  // requires a text selection to link, otherwise insert bare text
-                  if (editor.state.selection.empty) {
-                      editor.commands.insertContent(`<a href="${url}">${url}</a>`);
-                  } else {
-                      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-                  }
-             }
+            const url = window.prompt('URL du lien:');
+            if (url) {
+                // requires a text selection to link, otherwise insert bare text
+                if (editor.state.selection.empty) {
+                    editor.commands.insertContent(`<a href="${url}">${url}</a>`);
+                } else {
+                    editor.chain().focus().extendMarkRange('link').setLink({
+                        href: url
+                    }).run();
+                }
+            }
         }
         if (action === 'insertTable') {
-            editor.commands.insertTable({ rows: 3, cols: 3, withHeaderRow: true });
+            editor.commands.insertTable({
+                rows: 3,
+                cols: 3,
+                withHeaderRow: true
+            });
         }
         if (action === 'insertCode') {
             editor.commands.toggleCodeBlock();
@@ -983,19 +1657,19 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
 
         // AI specific
         if (action === 'aiGenerate') {
-             setFloatingMode('prompt');
-             setTimeout(() => promptInputRef.current?.focus(), 100);
+            setFloatingMode('prompt');
+            setTimeout(() => promptInputRef.current?.focus(), 100);
         }
         if (action === 'aiSummarize') {
-             handleSummarize();
+            handleSummarize();
         }
         if (action === 'translateEn') {
-             handleTranslate('en', 'English');
+            handleTranslate('en', 'English');
         }
 
         // Focus back
         editor.view.focus();
-    }, [editor, handleSummarize, handleTranslate]);
+    }, [editor, handleSummarize, handleTranslate, saveToDrive, exportHtmlDocument, userName, docBgColor]);
 
     if (!editor || !ydoc || !provider) {
         return <div className="flex items-center justify-center p-8 text-gray-500">Initializing editor...</div>;
@@ -1009,10 +1683,10 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
         title
     }: {
         onClick: () => void,
-        isActive?: boolean,
-        disabled?: boolean,
+        isActive ? : boolean,
+        disabled ? : boolean,
         children: React.ReactNode,
-        title?: string
+        title ? : string
     }) => (
         <button
             onClick={onClick}
@@ -1042,11 +1716,11 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                             />
                         </div>
                         <div className="-ml-1.5">
-                            <MenuBar editor={editor} onAction={handleMenuAction} />
+                            <EditorMenu menus={editorMenus} onAction={handleMenuAction} />
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-4">
                     <div className="hidden md:flex items-center gap-2 px-3 py-1 mr-4">
                         <span className={`w-2 h-2 rounded-full shadow-sm ${status === 'connected' ? 'bg-[#1e8e3e] shadow-green-500/50' : 'bg-[#d93025] shadow-red-500/50'}`}></span>
@@ -1074,6 +1748,69 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
             {/* Formatting Ribbon */}
             <div className="flex flex-wrap items-center gap-0.5 px-4 py-1.5 w-full bg-[#edf2fa] dark:bg-[#3c4043] shrink-0 border-b border-transparent dark:border-[#5f6368]">
                     {/* Undo/Redo */}
+                    <div className="flex items-center mx-1 relative">
+                        <VoiceInput
+                            onTranscription={(text, isFinal) => {
+                                if (!editor) return;
+
+                                if (isFinal) {
+                                    // Détection de macro vocale IA (Mot clé: SignApps / Synapse)
+                                    const prefixMatch = text.match(/^(?:signapps|sign app|sign apps|synapse|demande à signapps|dis à signapps|demande à synapse)[\s,:-]+(.+)/i);
+                                    const suffixMatch = text.match(/(.+) (?:par signapps|généré par signapps|par synapse|généré par synapse)$/i);
+                                    const aiPrompt = prefixMatch ? prefixMatch[1] : (suffixMatch ? suffixMatch[1] : null);
+
+                                    if (aiPrompt && !isStreaming) {
+                                        setInterimVoiceText('');
+                                        const toastId = toast.loading('IA crée du contenu...');
+                                        setAiAction('voice-macro');
+
+                                        stream(
+                                            aiPrompt,
+                                            {
+                                                onToken: (token) => {
+                                                    editor.chain().focus().insertContent(token).run();
+                                                },
+                                                onDone: () => {
+                                                    setAiAction(null);
+                                                    toast.success('Généré par l\'IA', { id: toastId });
+                                                },
+                                                onError: (err) => {
+                                                    setAiAction(null);
+                                                    toast.error(`Erreur IA : ${err}`, { id: toastId });
+                                                }
+                                            },
+                                            {
+                                               systemPrompt: 'You are an AI assistant integrated into a rich text editor. The user used a voice command to ask you to generate content. Output ONLY the requested content in HTML format compatible with TipTap (like tables, bold, lists, paragraphs). Do NOT wrap your answer in markdown code blocks like ```html. Output raw HTML directly.',
+                                               language: 'fr'
+                                            }
+                                         );
+                                        return;
+                                    }
+
+                                    parseVoiceCommand(text, editor, pendingVoiceMarksRef, pendingVoiceBlocksRef, (action) => {
+                                        if (action === 'fix') handleAiAction('fix');
+                                        if (action === 'improve') handleAiAction('improve');
+                                        if (action === 'summarize') handleSummarize();
+                                    });
+                                    setInterimVoiceText('');
+                                } else {
+                                    // Sauvegarde en état React au lieu d'insérer dans l'éditeur TipTap
+                                    // pour empêcher Yjs de supprimer la phrase finale après coup.
+                                    setInterimVoiceText(text);
+                                }
+                            }}
+                            className="bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 animate-none data-[state=active]:animate-pulse"
+                            title="Dictée Vocale"
+                        />
+                        {interimVoiceText && (
+                            <div className="absolute top-10 left-0 bg-white dark:bg-[#1e1f20] border border-gray-200 dark:border-gray-700 shadow-md rounded-md px-3 py-1.5 text-xs whitespace-nowrap z-50 animate-pulse text-gray-500 dark:text-gray-400 pointer-events-none">
+                                🎤 {interimVoiceText}...
+                            </div>
+                        )}
+                    </div>
+
+                    <ToolbarDivider />
+
                     <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo (Ctrl+Z)">
                         <Undo className="w-4 h-4" />
                     </ToolbarButton>
@@ -1100,9 +1837,13 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                     <div className="flex border border-[#c7c7c7] dark:border-[#5f6368] rounded overflow-hidden h-[28px] mx-1 items-center bg-white dark:bg-[#202124]">
                         <span className="px-3 text-[13px] text-[#444746] dark:text-[#e3e3e3] border-r border-[#c7c7c7] dark:border-[#5f6368] flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-[#303134]">Inter</span>
                         <div className="flex items-center">
-                            <span className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-r border-[#c7c7c7] dark:border-[#5f6368]">-</span>
-                            <span className="px-3 text-[13px] text-[#444746] dark:text-[#e3e3e3]">11</span>
-                            <span className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-l border-[#c7c7c7] dark:border-[#5f6368]">+</span>
+                            <span
+                                onClick={() => setDocFontSize(s => Math.max(1, s - 1))}
+                                className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-r border-[#c7c7c7] dark:border-[#5f6368]">-</span>
+                            <span className="px-3 text-[13px] text-[#444746] dark:text-[#e3e3e3]">{docFontSize}</span>
+                            <span
+                                onClick={() => setDocFontSize(s => s + 1)}
+                                className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-l border-[#c7c7c7] dark:border-[#5f6368]">+</span>
                         </div>
                     </div>
 
@@ -1208,31 +1949,7 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                         <CheckSquare className="w-[18px] h-[18px]" />
                     </ToolbarButton>
 
-                    {/* Alignment */}
-                    <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align left">
-                        <AlignLeft className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })} title="Align center">
-                        <AlignCenter className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })} title="Align right">
-                        <AlignRight className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
 
-                    <ToolbarDivider />
-
-                    {/* Lists */}
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bulleted list">
-                        <List className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} title="Numbered list">
-                        <ListOrdered className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleTaskList().run()} isActive={editor.isActive('taskList')} title="Checklist">
-                        <CheckSquare className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-
-                    <ToolbarDivider />
 
                     <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert table">
                         <TableIcon className="w-[18px] h-[18px]" />
@@ -1312,7 +2029,22 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
             <div className="flex-1 overflow-y-auto w-full relative pb-16 custom-scrollbar bg-[#f8f9fa] dark:bg-[#1b1b1b] flex flex-row justify-center py-6">
                 <div className="flex-1 min-w-0 max-w-[816px]">
                         {/* Main Content Area constrained like Google Docs (A4 Paper) */}
-                        <div className="w-[816px] shrink-0 min-h-[1056px] bg-white dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10 mx-auto px-20 pt-16">
+                        <div 
+                            className="w-[816px] shrink-0 min-h-[1056px] bg-white dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10 mx-auto px-20 pt-16"
+                            onKeyDown={(e) => {
+                                if (!editor) return;
+                                if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+                                    if (e.key.toLowerCase() === 'l') { e.preventDefault(); editor.chain().focus().setTextAlign('left').run(); }
+                                    if (e.key.toLowerCase() === 'e') { e.preventDefault(); editor.chain().focus().setTextAlign('center').run(); }
+                                    if (e.key.toLowerCase() === 'r') { e.preventDefault(); editor.chain().focus().setTextAlign('right').run(); }
+                                    if (e.key.toLowerCase() === 'j') { e.preventDefault(); editor.chain().focus().setTextAlign('justify').run(); }
+                                    if (e.key.toLowerCase() === 'x') { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }
+                                }
+                                if ((e.ctrlKey || e.metaKey) && e.key === '5') {
+                                    e.preventDefault(); editor.chain().focus().toggleStrike().run();
+                                }
+                            }}
+                        >
                         {/* BubbleMenu - Text Selection Toolbar */}
                         {editor && (
                             <BubbleMenu
@@ -1557,6 +2289,13 @@ const Editor = ({ documentId, className, userName, bucket, fileName, initialCont
                     )}
                 </div>
             </div>
+
+            <GenericFeatureModal 
+                isOpen={!!activeModal} 
+                actionId={activeModal?.id || null} 
+                actionLabel={activeModal?.label}
+                onClose={() => setActiveModal(null)} 
+            />
         </div>
     );
 };

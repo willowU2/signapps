@@ -2,33 +2,33 @@ import { aiApiClient } from './core';
 
 // AI API
 export const aiApi = {
-    chat: (question: string, options?: { model?: string; provider?: string; conversationId?: string; includesSources?: boolean; collection?: string; language?: string; systemPrompt?: string; enableTools?: boolean }) =>
+    chat: (question: string, options?: { model?: string; provider?: string; conversationId?: string; includesSources?: boolean; collections?: string[]; language?: string; systemPrompt?: string; enableTools?: boolean }) =>
         aiApiClient.post<ChatResponse>('/ai/chat', {
             question,
             model: options?.model,
             provider: options?.provider,
             conversation_id: options?.conversationId,
             include_sources: options?.includesSources ?? true,
-            collection: options?.collection,
+            collections: options?.collections,
             language: options?.language,
             system_prompt: options?.systemPrompt,
             enable_tools: options?.enableTools ?? true,
         }),
-    chatStream: (question: string, options?: { model?: string; provider?: string; conversationId?: string; collection?: string; language?: string; systemPrompt?: string; enableTools?: boolean }) =>
+    chatStream: (question: string, options?: { model?: string; provider?: string; conversationId?: string; collections?: string[]; language?: string; systemPrompt?: string; enableTools?: boolean }) =>
         aiApiClient.post('/ai/chat/stream', {
             question,
             model: options?.model,
             provider: options?.provider,
             conversation_id: options?.conversationId,
-            collection: options?.collection,
+            collections: options?.collections,
             language: options?.language,
             system_prompt: options?.systemPrompt,
             enable_tools: options?.enableTools ?? true,
         }, {
             responseType: 'stream',
         }),
-    search: (query: string, limit?: number, collection?: string) =>
-        aiApiClient.get<SearchResult[]>('/ai/search', { params: { q: query, limit, collection } }),
+    search: (query: string, limit?: number, collections?: string[]) =>
+        aiApiClient.get<SearchResult[]>('/ai/search', { params: { q: query, limit, collections } }),
     index: (documentId: string, content: string, filename: string, path: string, mimeType?: string, collection?: string) =>
         aiApiClient.post('/ai/index', { document_id: documentId, content, filename, path, mime_type: mimeType, collection }),
     removeDocument: (documentId: string) =>

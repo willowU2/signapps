@@ -41,7 +41,7 @@ export function StorageRulesSettings() {
       setRules(data);
     } catch (error) {
       toast.error("Failed to load storage rules");
-      console.error(error);
+      console.debug(error);
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +93,7 @@ export function StorageRulesSettings() {
       fetchRules();
     } catch (error) {
       toast.error("Failed to save storage rule");
-      console.error(error);
+      console.debug(error);
     }
   };
 
@@ -106,7 +106,7 @@ export function StorageRulesSettings() {
       fetchRules();
     } catch (error) {
       toast.error("Failed to delete rule");
-      console.error(error);
+      console.debug(error);
     }
   };
 
@@ -122,7 +122,7 @@ export function StorageRulesSettings() {
       fetchRules();
     } catch (error) {
       toast.error("Failed to toggle rule state");
-      console.error(error);
+      console.debug(error);
     }
   };
 

@@ -27,9 +27,10 @@ pub async fn get_token(
     Extension(claims): Extension<Claims>,
     Query(query): Query<TokenQuery>,
 ) -> Result<Json<TokenResponse>, (StatusCode, String)> {
-    let room_identifier = query
-        .room
-        .ok_or((StatusCode::BAD_REQUEST, "room parameter required".to_string()))?;
+    let room_identifier = query.room.ok_or((
+        StatusCode::BAD_REQUEST,
+        "room parameter required".to_string(),
+    ))?;
 
     // Try to find room by code or ID
     let room = if let Ok(uuid) = room_identifier.parse::<Uuid>() {

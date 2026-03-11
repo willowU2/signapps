@@ -7,8 +7,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use signapps_common::{Claims, Error, Result};
-use signapps_db::models::{CreateUser, UpdateUser, CreateCalendar, CreateTask};
-use signapps_db::repositories::{UserRepository, CalendarRepository, TaskRepository};
+use signapps_db::models::{CreateCalendar, CreateTask, CreateUser, UpdateUser};
+use signapps_db::repositories::{CalendarRepository, TaskRepository, UserRepository};
 use uuid::Uuid;
 use validator::Validate;
 

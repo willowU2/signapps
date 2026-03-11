@@ -1,5 +1,6 @@
 import { useEffect, useRef, MutableRefObject } from "react"
 import * as fabric from "fabric"
+import { useTheme } from "next-themes"
 
 interface SlideCanvasProps {
     objects: Record<string, any>;
@@ -33,6 +34,12 @@ export function SlideCanvas({
     pageConfig = { orientation: 'portrait', backgroundColor: '#ffffff' }
 }: SlideCanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const { resolvedTheme } = useTheme()
+
+    // Determine actual canvas background color based on theme
+    const actualBg = pageConfig.backgroundColor === '#ffffff' && resolvedTheme === 'dark' 
+        ? '#1a1a1a' // Dark mode default backdrop
+        : pageConfig.backgroundColor;
 
     // Init Canvas
     useEffect(() => {
@@ -48,7 +55,7 @@ export function SlideCanvas({
             canvas = new fabricModule.Canvas(canvasRef.current, {
                 width: pageConfig.orientation === 'landscape' ? 1056 : 816,
                 height: pageConfig.orientation === 'landscape' ? 816 : 1056,
-                backgroundColor: pageConfig.backgroundColor
+                backgroundColor: actualBg
             })
             fabricCanvasRef.current = canvas
 
@@ -184,7 +191,7 @@ export function SlideCanvas({
                             canvas.requestRenderAll();
                         }
                     } catch (err) {
-                        console.error("Smart Compose error:", err);
+                        console.debug("Smart Compose error:", err);
                     }
                 }, 1200); // 1.2s pause triggers completion
             });
@@ -246,7 +253,7 @@ export function SlideCanvas({
                 width: pageConfig.orientation === 'landscape' ? 1056 : 816,
                 height: pageConfig.orientation === 'landscape' ? 816 : 1056
             })
-            canvas.backgroundColor = pageConfig.backgroundColor
+            canvas.backgroundColor = actualBg
 
             // Re-render
             canvas.requestRenderAll()
@@ -271,10 +278,17 @@ export function SlideCanvas({
                             obj.id = id
                             canvas.add(obj)
                         })
-                        canvas.requestRenderAll()
                     })
                 }
             })
+            
+            // Appliquer l'ordre Z-Index
+            const allObjs = [...canvas.getObjects()];
+            allObjs.sort((a: any, b: any) => (a.zIndex || 0) - (b.zIndex || 0));
+            allObjs.forEach((obj: any, idx: number) => {
+                obj.moveTo(idx);
+            });
+            
             canvas.requestRenderAll()
         })
     }, [objects, fabricCanvasRef, isUpdatingRef])
@@ -329,7 +343,7 @@ export function SlideCanvas({
                 style={{
                     width: pageConfig.orientation === 'landscape' ? '1056px' : '816px',
                     height: pageConfig.orientation === 'landscape' ? '816px' : '1056px',
-                    backgroundColor: pageConfig.backgroundColor
+                    backgroundColor: actualBg
                 }}
                 onMouseMove={handleWrapperMouseMove}
             >

@@ -1,6 +1,5 @@
 /// Repository for notification database operations
 /// Handles CRUD for preferences, templates, sent notifications
-
 use crate::models::*;
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
@@ -16,7 +15,7 @@ impl NotificationPreferencesRepository {
         user_id: Uuid,
     ) -> Result<NotificationPreferences, sqlx::Error> {
         sqlx::query_as::<_, NotificationPreferences>(
-            "SELECT * FROM notification_preferences WHERE user_id = $1 AND calendar_id IS NULL"
+            "SELECT * FROM notification_preferences WHERE user_id = $1 AND calendar_id IS NULL",
         )
         .bind(user_id)
         .fetch_one(pool)
@@ -30,7 +29,7 @@ impl NotificationPreferencesRepository {
         calendar_id: Uuid,
     ) -> Result<NotificationPreferences, sqlx::Error> {
         sqlx::query_as::<_, NotificationPreferences>(
-            "SELECT * FROM notification_preferences WHERE user_id = $1 AND calendar_id = $2"
+            "SELECT * FROM notification_preferences WHERE user_id = $1 AND calendar_id = $2",
         )
         .bind(user_id)
         .bind(calendar_id)
@@ -56,7 +55,7 @@ impl NotificationPreferencesRepository {
             (id, user_id, email_enabled, email_frequency, sms_enabled, push_enabled)
             VALUES ($1, $2, true, 'instant', false, true)
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(user_id)
@@ -90,7 +89,7 @@ impl NotificationPreferencesRepository {
               updated_at = NOW()
             WHERE user_id = $1 AND calendar_id IS NULL
             RETURNING *
-            "#
+            "#,
         )
         .bind(user_id)
         .bind(update.email_enabled)
@@ -134,7 +133,7 @@ impl PushSubscriptionRepository {
             (id, user_id, subscription_json, browser_name)
             VALUES ($1, $2, $3, $4)
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(user_id)
@@ -150,7 +149,7 @@ impl PushSubscriptionRepository {
         user_id: Uuid,
     ) -> Result<Vec<PushSubscription>, sqlx::Error> {
         sqlx::query_as::<_, PushSubscription>(
-            "SELECT * FROM push_subscriptions WHERE user_id = $1 ORDER BY created_at DESC"
+            "SELECT * FROM push_subscriptions WHERE user_id = $1 ORDER BY created_at DESC",
         )
         .bind(user_id)
         .fetch_all(pool)
@@ -169,7 +168,7 @@ impl PushSubscriptionRepository {
     /// Delete expired subscriptions (for cleanup job)
     pub async fn delete_old(pool: &PgPool, days: i32) -> Result<u64, sqlx::Error> {
         let result = sqlx::query(
-            "DELETE FROM push_subscriptions WHERE created_at < NOW() - INTERVAL '1 day' * $1"
+            "DELETE FROM push_subscriptions WHERE created_at < NOW() - INTERVAL '1 day' * $1",
         )
         .bind(days)
         .execute(pool)
@@ -199,7 +198,7 @@ impl NotificationSentRepository {
             (id, user_id, event_id, task_id, notification_type, channel, recipient_address, status)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(user_id)
@@ -214,12 +213,10 @@ impl NotificationSentRepository {
 
     /// Get notification by ID
     pub async fn get_by_id(pool: &PgPool, id: Uuid) -> Result<NotificationSent, sqlx::Error> {
-        sqlx::query_as::<_, NotificationSent>(
-            "SELECT * FROM notifications_sent WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_one(pool)
-        .await
+        sqlx::query_as::<_, NotificationSent>("SELECT * FROM notifications_sent WHERE id = $1")
+            .bind(id)
+            .fetch_one(pool)
+            .await
     }
 
     /// Update notification status
@@ -235,7 +232,7 @@ impl NotificationSentRepository {
             SET status = $2, sent_at = NOW(), external_id = COALESCE($3, external_id)
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(status)
@@ -263,11 +260,7 @@ impl NotificationSentRepository {
     }
 
     /// Mark as failed
-    pub async fn mark_failed(
-        pool: &PgPool,
-        id: Uuid,
-        error: &str,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn mark_failed(pool: &PgPool, id: Uuid, error: &str) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
             UPDATE notifications_sent
@@ -283,14 +276,17 @@ impl NotificationSentRepository {
     }
 
     /// Get pending notifications (for scheduler)
-    pub async fn get_pending(pool: &PgPool, limit: i32) -> Result<Vec<NotificationSent>, sqlx::Error> {
+    pub async fn get_pending(
+        pool: &PgPool,
+        limit: i32,
+    ) -> Result<Vec<NotificationSent>, sqlx::Error> {
         sqlx::query_as::<_, NotificationSent>(
             r#"
             SELECT * FROM notifications_sent
             WHERE status = 'pending' AND retry_count < 3
             ORDER BY created_at ASC
             LIMIT $1
-            "#
+            "#,
         )
         .bind(limit)
         .fetch_all(pool)
@@ -310,7 +306,7 @@ impl NotificationSentRepository {
             WHERE user_id = $1
             ORDER BY created_at DESC
             LIMIT $2 OFFSET $3
-            "#
+            "#,
         )
         .bind(user_id)
         .bind(limit)
@@ -326,7 +322,7 @@ impl NotificationSentRepository {
         status: &str,
     ) -> Result<i64, sqlx::Error> {
         let result = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM notifications_sent WHERE user_id = $1 AND status = $2"
+            "SELECT COUNT(*) FROM notifications_sent WHERE user_id = $1 AND status = $2",
         )
         .bind(user_id)
         .bind(status)
@@ -338,7 +334,7 @@ impl NotificationSentRepository {
     /// Delete old notifications (for archival)
     pub async fn delete_old(pool: &PgPool, days: i32) -> Result<u64, sqlx::Error> {
         let result = sqlx::query(
-            "DELETE FROM notifications_sent WHERE created_at < NOW() - INTERVAL '1 day' * $1"
+            "DELETE FROM notifications_sent WHERE created_at < NOW() - INTERVAL '1 day' * $1",
         )
         .bind(days)
         .execute(pool)
@@ -361,7 +357,7 @@ impl NotificationTemplateRepository {
             r#"
             SELECT * FROM notification_templates
             WHERE notification_type = $1 AND channel = $2 AND is_active = true
-            "#
+            "#,
         )
         .bind(notification_type)
         .bind(channel)
@@ -372,7 +368,7 @@ impl NotificationTemplateRepository {
     /// Get all active templates
     pub async fn get_active(pool: &PgPool) -> Result<Vec<NotificationTemplate>, sqlx::Error> {
         sqlx::query_as::<_, NotificationTemplate>(
-            "SELECT * FROM notification_templates WHERE is_active = true ORDER BY name"
+            "SELECT * FROM notification_templates WHERE is_active = true ORDER BY name",
         )
         .fetch_all(pool)
         .await
@@ -396,7 +392,7 @@ impl NotificationTemplateRepository {
               updated_at = NOW()
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(update.subject)
@@ -427,7 +423,7 @@ impl NotificationDigestRepository {
             (id, user_id, digest_type, scheduled_for, status)
             VALUES ($1, $2, $3, $4, 'pending')
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(user_id)
@@ -444,25 +440,19 @@ impl NotificationDigestRepository {
             SELECT * FROM notification_digests
             WHERE status = 'pending' AND scheduled_for <= NOW()
             ORDER BY scheduled_for ASC
-            "#
+            "#,
         )
         .fetch_all(pool)
         .await
     }
 
     /// Update digest status
-    pub async fn update_status(
-        pool: &PgPool,
-        id: Uuid,
-        status: &str,
-    ) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            "UPDATE notification_digests SET status = $2, sent_at = NOW() WHERE id = $1"
-        )
-        .bind(id)
-        .bind(status)
-        .execute(pool)
-        .await?;
+    pub async fn update_status(pool: &PgPool, id: Uuid, status: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE notification_digests SET status = $2, sent_at = NOW() WHERE id = $1")
+            .bind(id)
+            .bind(status)
+            .execute(pool)
+            .await?;
         Ok(())
     }
 }

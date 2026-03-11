@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,6 +31,9 @@ export default function LoginPage() {
   const [showLdapDialog, setShowLdapDialog] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const searchParams = useSearchParams();
+  const autoParam = searchParams.get('auto');
 
   const {
     register,
@@ -83,6 +86,20 @@ export default function LoginPage() {
       setError(parseApiError(err));
     }
   };
+
+  // Auto-login logic for Development Environment
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && autoParam === 'admin') {
+      const savedToken = localStorage.getItem('access_token');
+      // Only auto-login if not already authenticated (no token)
+      if (!savedToken) {
+        onSubmit({ username: 'admin', password: 'password' });
+      } else {
+        // If already logged in, redirect straight to dashboard
+        router.push(redirectAfterLogin || '/dashboard');
+      }
+    }
+  }, [autoParam, router]);
 
   return (
     <div

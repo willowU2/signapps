@@ -55,6 +55,32 @@ pub fn resolve_store_templates(value: &str, service_name: &str) -> String {
     // Replace {ServiceName}
     result = result.replace("{ServiceName}", service_name);
 
+    // Replace Postgres Host & Url dynamically if present
+    // Uses the actual URL from env or derived from pool, but for now we assume signapps-db
+    // We expect the caller to do a string replace of {SignApps.Database.Name} with `app_flowise` etc...
+    let db_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/signapps".to_string());
+
+    // Parse the DB URL to get host, user, password, port
+    if let Ok(parsed) = reqwest::Url::parse(&db_url) {
+        let host = parsed.host_str().unwrap_or("signapps-db");
+        let user = parsed.username();
+        let password = parsed.password().unwrap_or("");
+        let port = parsed.port().unwrap_or(5432);
+
+        result = result.replace("{SignApps.Database.Host}", host);
+        result = result.replace("{SignApps.Database.Port}", &port.to_string());
+        result = result.replace("{SignApps.Database.User}", user);
+        result = result.replace("{SignApps.Database.Password}", password);
+
+        // Construct the base URL without the database name so it can be appended later
+        let base_url = format!("postgres://{}:{}@{}:{}", user, password, host, port);
+        result = result.replace("{SignApps.Database.UrlBase}", &base_url);
+
+        // Note: {SignApps.Database.Name} and {SignApps.Database.Url} involves knowing the app name,
+        // so it will be replaced inside run_multi_install.
+    }
+
     // Remove any remaining {Context.*} references
     let context_re = regex::Regex::new(r"\{Context\.[^}]+\}").unwrap();
     result = context_re.replace_all(&result, "").to_string();
@@ -124,6 +150,49 @@ fn resolve_volume_for_display(source: &str) -> String {
             format!("{{ServiceName}}-{suffix}")
         })
         .to_string();
+
+    result
+}
+
+/// Resolve volume source templates for installation (creating bind mounts).
+///
+/// Converts `{Context.*}` variables into absolute path equivalents based on `APP_DATA_PATH`.
+/// Assumes `app_data_path` is the root for all app data, e.g., `/var/lib/signapps/apps`.
+pub fn resolve_volume_for_install(source: &str, service_name: &str, app_data_path: &str) -> String {
+    if !source.contains('{') {
+        return source.to_string();
+    }
+
+    let mut result = source.to_string();
+
+    // Passwords replacement (though unlikely in volume source, we keep it consistent)
+    let password_re =
+        regex::Regex::new(r"\{Passwords\.(SignAppsString|CosmosString)\.[^}]+\}").unwrap();
+    result = password_re
+        .replace_all(&result, |_caps: &regex::Captures| generate_password(16))
+        .to_string();
+
+    // Replace {Context.*} with absolute host path mounts
+    let context_re = regex::Regex::new(r"\{Context\.([^}]+)\}").unwrap();
+    result = context_re
+        .replace_all(&result, |caps: &regex::Captures| {
+            let key = caps.get(1).map(|m| m.as_str()).unwrap_or("data");
+            let suffix = match key {
+                "downloadsPath" => "downloads",
+                "dataPath" | "storePath" => "data",
+                "configPath" => "config",
+                "mediaPath" => "media",
+                "logsPath" => "logs",
+                "cachePath" => "cache",
+                _ => "data",
+            };
+            // Result e.g: /var/lib/signapps/apps/Service/data
+            format!("{}/{}/{}", app_data_path, "{ServiceName}", suffix)
+        })
+        .to_string();
+
+    // Replace lingering {ServiceName} placeholders with actual service name
+    result = result.replace("{ServiceName}", service_name);
 
     result
 }

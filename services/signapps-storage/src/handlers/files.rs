@@ -55,7 +55,13 @@ struct IndexingRuleRow {
     collection_name: Option<String>,
 }
 
-async fn trigger_ai_indexing(pool: &sqlx::PgPool, bucket: &str, key: &str, content_type: &str) {
+async fn trigger_ai_indexing(
+    pool: &sqlx::PgPool,
+    bucket: &str,
+    key: &str,
+    content_type: &str,
+    user_id: Uuid,
+) {
     let global_default_row = sqlx::query_as::<_, (String,)>(
         r#"
         SELECT setting_value
@@ -131,6 +137,9 @@ async fn trigger_ai_indexing(pool: &sqlx::PgPool, bucket: &str, key: &str, conte
         return;
     }
 
+    // OVERRIDE: Enforce the private user collection for all GED documents
+    matched_collection = Some(format!("user_{}", user_id));
+
     // Send HTTP request to AI service in the background
     let target_bucket = bucket.to_string();
     let target_key = key.to_string();
@@ -168,6 +177,7 @@ async fn trigger_ai_indexing(pool: &sqlx::PgPool, bucket: &str, key: &str, conte
 /// Upload response.
 #[derive(Debug, Serialize)]
 pub struct UploadResponse {
+    pub id: Uuid,
     pub bucket: String,
     pub key: String,
     pub size: usize,
@@ -278,7 +288,7 @@ pub async fn upload(
             .await?;
 
         // Update quota after successful upload
-        if let Err(e) = quotas::record_upload(
+        let file_id = match quotas::record_upload(
             &state,
             user_id,
             &target_bucket,
@@ -288,13 +298,26 @@ pub async fn upload(
         )
         .await
         {
-            tracing::error!(error = %e, "Failed to record upload quota");
-        } else {
-            // Trigger AI indexing check
-            trigger_ai_indexing(state.pool.inner(), &target_bucket, &filename, &content_type).await;
-        }
+            Ok(id) => {
+                // Trigger AI indexing check
+                trigger_ai_indexing(
+                    state.pool.inner(),
+                    &target_bucket,
+                    &filename,
+                    &content_type,
+                    user_id,
+                )
+                .await;
+                id
+            },
+            Err(e) => {
+                tracing::error!(error = %e, "Failed to record upload quota");
+                uuid::Uuid::new_v4() // Fallback ID if quota tracking fails
+            },
+        };
 
         uploads.push(UploadResponse {
+            id: file_id,
             bucket: target_bucket,
             key: filename,
             size,
@@ -343,7 +366,7 @@ pub async fn upload_with_key(
         .await?;
 
     // Update quota after successful upload
-    if let Err(e) = quotas::record_upload(
+    let file_id = match quotas::record_upload(
         &state,
         user_id,
         &target_bucket,
@@ -353,14 +376,27 @@ pub async fn upload_with_key(
     )
     .await
     {
-        tracing::error!(error = %e, "Failed to record upload quota");
-    } else {
-        trigger_ai_indexing(state.pool.inner(), &target_bucket, &key, &content_type).await;
-    }
+        Ok(id) => {
+            trigger_ai_indexing(
+                state.pool.inner(),
+                &target_bucket,
+                &key,
+                &content_type,
+                user_id,
+            )
+            .await;
+            id
+        },
+        Err(e) => {
+            tracing::error!(error = %e, "Failed to record upload quota");
+            uuid::Uuid::new_v4() // Fallback
+        },
+    };
 
     tracing::info!(bucket = %target_bucket, key = %key, size = size, "File uploaded");
 
     Ok(Json(UploadResponse {
+        id: file_id,
         bucket: target_bucket,
         key,
         size,
@@ -381,9 +417,7 @@ pub async fn delete(
     state.storage.delete_object(&bucket, &key).await?;
 
     if let Some(info) = info {
-        if let Err(e) =
-            quotas::record_delete(&state, user_id, &bucket, &key, info.size as i64).await
-        {
+        if let Err(e) = quotas::record_delete(&state, user_id, &bucket, &key, info.size).await {
             tracing::error!(error = %e, "Failed to record delete quota");
         }
     }
@@ -408,9 +442,7 @@ pub async fn delete_many(
         state.storage.delete_object(&bucket, key).await?;
 
         if let Some(info) = info {
-            if let Err(e) =
-                quotas::record_delete(&state, user_id, &bucket, key, info.size as i64).await
-            {
+            if let Err(e) = quotas::record_delete(&state, user_id, &bucket, key, info.size).await {
                 tracing::error!(error = %e, "Failed to record delete quota");
             }
         }
@@ -474,6 +506,7 @@ pub async fn copy(
         info.content_type
             .as_deref()
             .unwrap_or("application/octet-stream"),
+        user_id,
     )
     .await;
 
@@ -529,6 +562,7 @@ pub async fn move_file(
         info.content_type
             .as_deref()
             .unwrap_or("application/octet-stream"),
+        user_id,
     )
     .await;
 

@@ -9,9 +9,7 @@ use signapps_common::Claims;
 use uuid::Uuid;
 
 use crate::{
-    models::{
-        CreateRoomRequest, MeetingHistoryResponse, Room, RoomResponse, UpdateRoomRequest,
-    },
+    models::{CreateRoomRequest, MeetingHistoryResponse, Room, RoomResponse, UpdateRoomRequest},
     AppState,
 };
 
@@ -350,17 +348,18 @@ pub async fn end_room(
     .await
     .unwrap_or((0,));
 
-    let duration = updated
-        .actual_start
-        .and_then(|start| updated.actual_end.map(|end| (end - start).num_seconds() as i32));
+    let duration = updated.actual_start.and_then(|start| {
+        updated
+            .actual_end
+            .map(|end| (end - start).num_seconds() as i32)
+    });
 
-    let had_recording: (bool,) = sqlx::query_as(
-        "SELECT EXISTS(SELECT 1 FROM meet.recordings WHERE room_id = $1)",
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or((false,));
+    let had_recording: (bool,) =
+        sqlx::query_as("SELECT EXISTS(SELECT 1 FROM meet.recordings WHERE room_id = $1)")
+            .bind(id)
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or((false,));
 
     sqlx::query(
         r#"

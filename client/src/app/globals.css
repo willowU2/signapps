@@ -145,3 +145,47 @@
     @apply bg-background/80 backdrop-blur-xl shadow-premium border border-border/50;
   }
 }
+
+/* Handsontable Dark Mode Overrides */
+.dark .handsontable {
+  color: var(--foreground);
+}
+
+.dark .handsontable .ht_master table.htCore {
+  background-color: var(--background);
+  border-color: var(--border);
+}
+
+.dark .handsontable th,
+.dark .handsontable td {
+  background-color: var(--card);
+  border-color: var(--border) !important;
+  color: var(--foreground);
+}
+
+.dark .handsontable th {
+  background-color: var(--muted) !important;
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.dark .handsontable .htDimmed {
+  color: var(--muted-foreground);
+}
+
+.dark .handsontable .htCore > tbody > tr:nth-child(even) > td {
+  background-color: var(--background);
+}
+
+.dark .handsontable.listbox tr:hover td {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* Tiptap Dark Mode Editor Container Fixes */
+.dark .ProseMirror {
+  color: var(--foreground);
+}
+.dark .ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--muted-foreground);
+}

@@ -29,6 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -75,6 +76,7 @@ import { VoiceChatButton } from '@/components/ai/voice-chat-button';
 import { useVoiceChat } from '@/hooks/use-voice-chat';
 import { ModelManagement } from '@/components/ai/model-management';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/lib/store';
 
 // Types for conversations
 interface Message {
@@ -89,7 +91,7 @@ interface Conversation {
   id: string;
   title: string;
   messages: Message[];
-  knowledgeBase?: string;
+  knowledgeBases?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -203,7 +205,7 @@ export default function AIPage() {
 
   // Knowledge bases
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
-  const [selectedKnowledgeBase, setSelectedKnowledgeBase] = useState<string>('');
+  const [selectedKnowledgeBases, setSelectedKnowledgeBases] = useState<string[]>([]);
   const [loadingKnowledgeBases, setLoadingKnowledgeBases] = useState(false);
 
   // Dialogs
@@ -222,14 +224,8 @@ export default function AIPage() {
   const [newKbDescription, setNewKbDescription] = useState('');
 
   // Language & system prompt
-  const [selectedLanguage, setSelectedLanguage] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'fr';
-    return localStorage.getItem(LANGUAGE_KEY) || 'fr';
-  });
-  const [customSystemPrompt, setCustomSystemPrompt] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem(SYSTEM_PROMPT_KEY) || '';
-  });
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('fr');
+  const [customSystemPrompt, setCustomSystemPrompt] = useState<string>('');
   const [systemPromptDialogOpen, setSystemPromptDialogOpen] = useState(false);
   const [tempSystemPrompt, setTempSystemPrompt] = useState('');
 
@@ -251,9 +247,16 @@ export default function AIPage() {
       const active = loaded.find(c => c.id === activeId);
       if (active) {
         setMessages(active.messages);
-        setSelectedKnowledgeBase(active.knowledgeBase || '');
+        setSelectedKnowledgeBases(active.knowledgeBases || []);
       }
     }
+
+    // Load persisted settings to fix Hydration mismatch
+    const lang = localStorage.getItem(LANGUAGE_KEY);
+    if (lang) setSelectedLanguage(lang);
+    
+    const sysPrompt = localStorage.getItem(SYSTEM_PROMPT_KEY);
+    if (sysPrompt) setCustomSystemPrompt(sysPrompt);
   }, []);
 
   // Save conversations when they change
@@ -415,7 +418,7 @@ export default function AIPage() {
         content: 'Bonjour ! Je suis votre assistant IA. Je peux vous aider a rechercher et comprendre vos documents. Que souhaitez-vous savoir ?',
         timestamp: new Date(),
       }],
-      knowledgeBase: selectedKnowledgeBase,
+      knowledgeBases: selectedKnowledgeBases.length > 0 ? selectedKnowledgeBases : undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -423,12 +426,12 @@ export default function AIPage() {
     setConversations(prev => [newConversation, ...prev]);
     setActiveConversationId(newConversation.id);
     setMessages(newConversation.messages);
-  }, [selectedKnowledgeBase]);
+  }, [selectedKnowledgeBases]);
 
   const selectConversation = useCallback((conversation: Conversation) => {
     setActiveConversationId(conversation.id);
     setMessages(conversation.messages);
-    setSelectedKnowledgeBase(conversation.knowledgeBase || '');
+    setSelectedKnowledgeBases(conversation.knowledgeBases || []);
     setActiveTab('chat');
   }, []);
 
@@ -489,8 +492,8 @@ export default function AIPage() {
       await aiApi.deleteCollection(kbToDelete.name);
       await fetchKnowledgeBases();
 
-      if (selectedKnowledgeBase === kbToDelete.name) {
-        setSelectedKnowledgeBase('');
+      if (selectedKnowledgeBases.includes(kbToDelete.name)) {
+        setSelectedKnowledgeBases(prev => prev.filter(n => n !== kbToDelete!.name));
       }
 
       setDeleteKbDialogOpen(false);
@@ -499,7 +502,7 @@ export default function AIPage() {
     } catch {
       toast.error('Erreur lors de la suppression');
     }
-  }, [kbToDelete, selectedKnowledgeBase, fetchKnowledgeBases]);
+  }, [kbToDelete, selectedKnowledgeBases, fetchKnowledgeBases]);
 
   const exportConversation = useCallback(() => {
     if (messages.length === 0) return;
@@ -510,8 +513,8 @@ export default function AIPage() {
     let markdown = `# ${title}\n\n`;
     markdown += `*Exporte le ${new Date().toLocaleDateString('fr-FR')} a ${new Date().toLocaleTimeString('fr-FR')}*\n\n`;
 
-    if (selectedKnowledgeBase) {
-      markdown += `**Knowledge Base:** ${selectedKnowledgeBase}\n\n`;
+    if (selectedKnowledgeBases && selectedKnowledgeBases.length > 0) {
+      markdown += `**Knowledge Bases:** ${selectedKnowledgeBases.join(', ')}\n\n`;
     }
 
     markdown += '---\n\n';
@@ -545,7 +548,7 @@ export default function AIPage() {
     URL.revokeObjectURL(url);
 
     toast.success('Conversation exportee');
-  }, [messages, conversations, activeConversationId, selectedKnowledgeBase]);
+  }, [messages, conversations, activeConversationId, selectedKnowledgeBases]);
 
   const handleSend = async (textOverride?: string) => {
     const text = textOverride || input.trim();
@@ -590,7 +593,7 @@ export default function AIPage() {
           question: text,
           model: selectedModel || undefined,
           provider: selectedProvider || undefined,
-          collection: selectedKnowledgeBase || undefined,
+          collections: selectedKnowledgeBases.length > 0 ? selectedKnowledgeBases : undefined,
           language: selectedLanguage || undefined,
           system_prompt: customSystemPrompt || undefined,
         }),
@@ -697,7 +700,7 @@ export default function AIPage() {
           const response = await aiApi.chat(text, {
             model: selectedModel || undefined,
             provider: selectedProvider || undefined,
-            collection: selectedKnowledgeBase || undefined,
+            collections: selectedKnowledgeBases.length > 0 ? selectedKnowledgeBases : undefined,
             language: selectedLanguage || undefined,
             systemPrompt: customSystemPrompt || undefined,
           });
@@ -745,7 +748,7 @@ export default function AIPage() {
 
     setIsLoading(true);
     try {
-      const response = await aiApi.search(input, 5, selectedKnowledgeBase || undefined);
+      const response = await aiApi.search(input, 5, selectedKnowledgeBases.length > 0 ? selectedKnowledgeBases : undefined);
       const results = response.data || [];
 
       if (results.length === 0) {
@@ -911,10 +914,10 @@ export default function AIPage() {
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold">Assistant IA</h1>
-              {selectedKnowledgeBase && (
+              {selectedKnowledgeBases.length > 0 && (
                 <Badge variant="secondary" className="gap-1">
                   <Database className="h-3 w-3" />
-                  {selectedKnowledgeBase}
+                  {selectedKnowledgeBases.join(', ')}
                 </Badge>
               )}
             </div>
@@ -1149,23 +1152,47 @@ export default function AIPage() {
                 <div className="max-w-4xl mx-auto">
                   {/* Knowledge Base selector and actions */}
                   <div className="flex items-center gap-2 mb-3">
-                    <Select
-                      value={selectedKnowledgeBase || '__all__'}
-                      onValueChange={(value) => setSelectedKnowledgeBase(value === '__all__' ? '' : value)}
-                    >
-                      <SelectTrigger className="w-[200px] h-8">
+                    {useAuthStore(s => s.user?.role) === 2 ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="h-8 max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap">
+                            <Database className="h-3 w-3 mr-2 shrink-0" />
+                            {selectedKnowledgeBases.length === 0
+                              ? "Toutes les bases"
+                              : `${selectedKnowledgeBases.length} base(s) sél.`}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" align="start">
+                          <DropdownMenuCheckboxItem
+                            checked={selectedKnowledgeBases.length === 0}
+                            onCheckedChange={() => setSelectedKnowledgeBases([])}
+                          >
+                            Toutes les bases
+                          </DropdownMenuCheckboxItem>
+                          <DropdownMenuSeparator />
+                          {knowledgeBases.map((kb) => (
+                            <DropdownMenuCheckboxItem
+                              key={kb.name}
+                              checked={selectedKnowledgeBases.includes(kb.name)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedKnowledgeBases(prev => [...prev, kb.name]);
+                                } else {
+                                  setSelectedKnowledgeBases(prev => prev.filter(n => n !== kb.name));
+                                }
+                              }}
+                            >
+                              {kb.name} ({kb.documents_count})
+                            </DropdownMenuCheckboxItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <Badge variant="outline" className="h-8 px-3 font-normal text-muted-foreground bg-muted/50 cursor-not-allowed">
                         <Database className="h-3 w-3 mr-2" />
-                        <SelectValue placeholder="Toutes les bases" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__all__">Toutes les bases</SelectItem>
-                        {knowledgeBases.map((kb) => (
-                          <SelectItem key={kb.name} value={kb.name}>
-                            {kb.name} ({kb.documents_count} docs)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                        Base Personnelle
+                      </Badge>
+                    )}
 
                     <div className="flex-1" />
 
@@ -1260,7 +1287,7 @@ export default function AIPage() {
                     {knowledgeBases.map((kb) => (
                       <Card key={kb.name} className={cn(
                         "cursor-pointer transition-colors hover:bg-muted/50",
-                        selectedKnowledgeBase === kb.name && "ring-2 ring-primary"
+                        selectedKnowledgeBases.includes(kb.name) && "ring-2 ring-primary"
                       )}>
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between">
@@ -1276,14 +1303,15 @@ export default function AIPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => {
-                                  setSelectedKnowledgeBase(kb.name);
+                                  if (!selectedKnowledgeBases.includes(kb.name)) {
+                                    setSelectedKnowledgeBases(prev => [...prev, kb.name]);
+                                  }
                                   setActiveTab('chat');
                                 }}>
                                   <MessageSquare className="h-4 w-4 mr-2" />
                                   Utiliser pour le chat
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => {
-                                  setSelectedKnowledgeBase(kb.name);
                                   setUploadDialogOpen(true);
                                 }}>
                                   <Upload className="h-4 w-4 mr-2" />

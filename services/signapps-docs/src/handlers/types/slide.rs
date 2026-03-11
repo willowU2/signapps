@@ -1,6 +1,10 @@
-use axum::{extract::{State, Path}, http::StatusCode, Json};
-use uuid::Uuid;
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    Json,
+};
 use tracing::info;
+use uuid::Uuid;
 
 use crate::AppState;
 
@@ -74,13 +78,11 @@ pub async fn get_slides(
 ) -> Result<Json<SlidesResponse>, (StatusCode, String)> {
     // In production: fetch from Y.doc
     Ok(Json(SlidesResponse {
-        slides: vec![
-            Slide {
-                id: Uuid::new_v4().to_string(),
-                index: 0,
-                title: "Slide 1".to_string(),
-                content: "Welcome".to_string(),
-            }
-        ],
+        slides: vec![Slide {
+            id: Uuid::new_v4().to_string(),
+            index: 0,
+            title: "Slide 1".to_string(),
+            content: "Welcome".to_string(),
+        }],
     }))
 }

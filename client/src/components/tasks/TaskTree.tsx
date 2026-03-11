@@ -102,23 +102,31 @@ function TaskItem({
                            : "border-[#dadce0] text-[#3c4043]"
                     }`}>
                         <CalendarIcon className="w-3.5 h-3.5" />
-                        <span>Il y a 2 semaines</span> {/* Hardcoded for mockup fidelity */}
+                        <span>{format(parseISO(node.task.due_date), "dd MMM yyyy")}</span>
                     </div>
                 )}
+            </div>
 
-                 {/* User/Chat badge mock */}
-                 {!node.task.due_date && level === 0 && (
-                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#dadce0] text-[#3c4043] text-[12px] font-medium leading-none">
-                         <MessageSquare className="w-3.5 h-3.5" />
-                         <span className="truncate max-w-[150px]">Votre Freebox Pro est raccordée, et...</span>
-                     </div>
-                 )}
-                 {node.task.due_date && level === 0 && (
-                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#dadce0] text-[#3c4043] text-[12px] font-medium leading-none">
-                         <MessageSquare className="w-3.5 h-3.5" />
-                         <span className="truncate max-w-[150px]">Gregory, Et...</span>
-                     </div>
-                 )}
+            {/* Action buttons (shown on hover) */}
+            <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                {level < 3 && (
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 px-2 text-xs text-[#5f6368] hover:text-[#1a73e8]" 
+                        onClick={(e) => { e.stopPropagation(); onAddChild?.(node.task.id); }}
+                    >
+                        <Plus className="h-3.5 w-3.5 mr-1" /> Sous-tâche
+                    </Button>
+                )}
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-6 w-6 text-[#5f6368] hover:text-[#d93025] hover:bg-[#fce8e6]" 
+                    onClick={(e) => { e.stopPropagation(); onDelete?.(node.task.id); }}
+                >
+                    <Trash2 className="h-3.5 w-3.5" />
+                </Button>
             </div>
 
             {/* Subtasks expander (Google Tasks style) */}

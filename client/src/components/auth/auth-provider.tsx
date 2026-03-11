@@ -50,29 +50,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const response = await authApi.me();
         setUser(response.data);
         syncAuthCookie(true);
-      } catch (error: unknown) {
-        // Token might be expired, try to refresh
-        const axiosError = error as { response?: { status: number } };
-        if (axiosError.response?.status === 401 && refreshToken) {
-          try {
-            const refreshResponse = await authApi.refresh(refreshToken);
-            localStorage.setItem('access_token', refreshResponse.data.access_token);
-            localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
-
-            // Retry fetching user data
-            const userResponse = await authApi.me();
-            setUser(userResponse.data);
-            syncAuthCookie(true);
-          } catch {
-            // Refresh failed, clear auth state
-            logout();
-            syncAuthCookie(false);
-          }
-        } else {
-          // Other error, clear auth state
-          logout();
-          syncAuthCookie(false);
-        }
+        // Token expired or invalid, clear auth state
+        logout();
+        syncAuthCookie(false);
       } finally {
         setLoading(false);
       }

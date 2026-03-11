@@ -192,7 +192,10 @@ pub async fn get_channel(
         topic: channel.topic,
         is_private: channel.is_private.unwrap_or(false),
         created_at: channel.created_at.to_rfc3339(),
-        created_by: channel.created_by.map(|id| id.to_string()).unwrap_or_default(),
+        created_by: channel
+            .created_by
+            .map(|id| id.to_string())
+            .unwrap_or_default(),
     }))
 }
 
@@ -254,7 +257,9 @@ pub async fn update_channel(
 
     // Update metadata (topic, is_private)
     let new_topic = payload.topic.or(existing.topic);
-    let new_is_private = payload.is_private.unwrap_or(existing.is_private.unwrap_or(false));
+    let new_is_private = payload
+        .is_private
+        .unwrap_or(existing.is_private.unwrap_or(false));
     let metadata = serde_json::json!({
         "topic": new_topic,
         "is_private": new_is_private
@@ -284,7 +289,10 @@ pub async fn update_channel(
         topic: new_topic,
         is_private: new_is_private,
         created_at: existing.created_at.to_rfc3339(),
-        created_by: existing.created_by.map(|id| id.to_string()).unwrap_or_default(),
+        created_by: existing
+            .created_by
+            .map(|id| id.to_string())
+            .unwrap_or_default(),
     }))
 }
 
@@ -594,21 +602,19 @@ pub async fn create_direct_message(
         .encode_state_as_update_v1(&yrs::StateVector::default());
 
     // Create DM document
-    sqlx::query(
-        "INSERT INTO documents (id, name, doc_type, doc_binary) VALUES ($1, $2, 'dm', $3)",
-    )
-    .bind(dm_id)
-    .bind("Direct Message")
-    .bind(doc_binary)
-    .execute(state.pool.inner())
-    .await
-    .map_err(|e| {
-        error!("Failed to create DM: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to create DM".to_string(),
-        )
-    })?;
+    sqlx::query("INSERT INTO documents (id, name, doc_type, doc_binary) VALUES ($1, $2, 'dm', $3)")
+        .bind(dm_id)
+        .bind("Direct Message")
+        .bind(doc_binary)
+        .execute(state.pool.inner())
+        .await
+        .map_err(|e| {
+            error!("Failed to create DM: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create DM".to_string(),
+            )
+        })?;
 
     let created_at = chrono::Utc::now();
     let mut participants = Vec::new();

@@ -49,7 +49,10 @@ async fn main() {
         refresh_expiration: 86400 * 7,
     };
 
-    let state = AppState { pool: pool.clone(), jwt_config };
+    let state = AppState {
+        pool: pool.clone(),
+        jwt_config,
+    };
 
     // Start background sync service
     let sync_pool = pool.clone();

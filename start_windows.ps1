@@ -35,5 +35,16 @@ foreach ($service in $services.GetEnumerator()) {
     Start-Sleep -Seconds 2
 }
 
+Write-Host "Cleaning Next.js Cache to prevent HMR/Turbopack dev bugs..."
+if (Test-Path "$PSScriptRoot\client\.next") {
+    Remove-Item -Recurse -Force "$PSScriptRoot\client\.next" -ErrorAction Ignore
+}
+
 Write-Host "Starting Next.js..."
 Start-Process "npm.cmd" -ArgumentList "run", "dev" -WorkingDirectory "c:\prog\signapps-platform\client" -WindowStyle Minimized
+
+Write-Host "Waiting for Next.js to start..."
+Start-Sleep -Seconds 12
+
+Write-Host "Opening application in browser with auto-login..."
+Start-Process "http://localhost:3000/login?auto=admin"

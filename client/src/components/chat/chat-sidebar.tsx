@@ -66,7 +66,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                 setDirectMessages([])
             }
         } catch (error) {
-            console.error("Failed to load chat data", error)
+            console.debug("Failed to load chat data", error)
         } finally {
             setIsLoading(false)
         }
@@ -98,7 +98,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
             setNewChannelPrivate(false)
             toast.success("Channel created")
         } catch (error) {
-            console.error("Failed to create channel", error)
+            console.debug("Failed to create channel", error)
             toast.error("Failed to create channel")
         } finally {
             setIsCreating(false)

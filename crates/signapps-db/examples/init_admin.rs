@@ -19,11 +19,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Connected to database");
 
     // Check existing admin users
-    let count: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM identity.users WHERE username = 'admin'"
-    )
-    .fetch_one(&pool)
-    .await?;
+    let count: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM identity.users WHERE username = 'admin'")
+            .fetch_one(&pool)
+            .await?;
     println!("Found {} admin user(s)", count.0);
 
     // Generate Argon2 hash for TestPass123
@@ -49,23 +48,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Created new admin user");
     } else {
         // Force update ALL admin users with new hash
-        let result = sqlx::query(
-            "UPDATE identity.users SET password_hash = $1 WHERE username = 'admin'"
-        )
-        .bind(&hash)
-        .execute(&pool)
-        .await?;
-        println!("Updated {} admin user(s) with new Argon2 hash", result.rows_affected());
+        let result =
+            sqlx::query("UPDATE identity.users SET password_hash = $1 WHERE username = 'admin'")
+                .bind(&hash)
+                .execute(&pool)
+                .await?;
+        println!(
+            "Updated {} admin user(s) with new Argon2 hash",
+            result.rows_affected()
+        );
     }
 
     // Verify
     let verify: (Option<String>,) = sqlx::query_as(
-        "SELECT LEFT(password_hash, 10) FROM identity.users WHERE username = 'admin' LIMIT 1"
+        "SELECT LEFT(password_hash, 10) FROM identity.users WHERE username = 'admin' LIMIT 1",
     )
     .fetch_one(&pool)
     .await?;
-    println!("Verification - hash starts with: {}", verify.0.unwrap_or_default());
+    println!(
+        "Verification - hash starts with: {}",
+        verify.0.unwrap_or_default()
+    );
     println!("Admin password set to: {}", password);
-    
+
     Ok(())
 }

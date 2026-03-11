@@ -12,7 +12,7 @@ export default function MonitoringPage() {
     // Polling for live metrics
     useEffect(() => {
         const fetchMetrics = () => {
-            getSystemMetrics().then(setMetrics).catch(console.error)
+            getSystemMetrics().then(setMetrics).catch(err => console.debug(err))
         }
 
         fetchMetrics()

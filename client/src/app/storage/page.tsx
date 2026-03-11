@@ -240,7 +240,7 @@ export default function StoragePage() {
       toast.success("Renamed successfully");
       fetchFiles();
     } catch (error) {
-      console.error(error);
+      console.debug(error);
       toast.error("Failed to rename");
     }
   };
@@ -258,7 +258,7 @@ export default function StoragePage() {
       toast.success("Moved successfully");
       fetchFiles();
     } catch (error) {
-      console.error(error);
+      console.debug(error);
       toast.error("Failed to move");
     }
   };
@@ -383,7 +383,7 @@ export default function StoragePage() {
         setFiles([...folders, ...files]);
       }
     } catch (e) {
-      console.error(e);
+      console.debug(e);
       setFiles([]);
     } finally {
       setLoading(false);
@@ -417,7 +417,7 @@ export default function StoragePage() {
           }));
           setFiles(searchFiles);
         }).catch(err => {
-          console.error("Search failed", err);
+          console.debug("Search failed", err);
           setFiles([]);
         });
       } else if (!search.trim() && activeTab === 'files') {
@@ -483,7 +483,7 @@ export default function StoragePage() {
       }
       fetchFiles();
     } catch (e) {
-      console.error(e);
+      console.debug(e);
       toast.error("Failed to delete item");
     }
   };

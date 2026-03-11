@@ -133,7 +133,7 @@ export function DriveRightSidebar() {
                 setEvents(evs.data || []);
             }
         } catch (e) {
-            console.error("Failed to load events", e);
+            console.debug("Failed to load events", e);
         } finally {
             setLoadingEvents(false);
         }

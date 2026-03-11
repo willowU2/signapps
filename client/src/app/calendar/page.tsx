@@ -92,7 +92,7 @@ export default function CalendarPage() {
             setSelectedCalendarId(newCalResponse.data.id);
             setSelectedCalendars([newCalResponse.data]);
           } catch (createErr) {
-            console.error('Failed to create default calendar:', createErr);
+            console.debug('Failed to create default calendar:', createErr);
             // Leave empty - user can create manually
           }
         }

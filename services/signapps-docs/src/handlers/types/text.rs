@@ -1,6 +1,6 @@
 use axum::{extract::State, http::StatusCode, Json};
-use uuid::Uuid;
 use tracing::info;
+use uuid::Uuid;
 
 use crate::AppState;
 

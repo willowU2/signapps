@@ -345,11 +345,11 @@ pub async fn record_upload(
     key: &str,
     file_size: i64,
     content_type: Option<&str>,
-) -> Result<()> {
+) -> Result<Uuid> {
     let mut tx = state.pool.inner().begin().await?;
 
     // 1. Record the file
-    sqlx::query(
+    let row = sqlx::query(
         r#"
         INSERT INTO storage.files (user_id, bucket, key, size, content_type)
         VALUES ($1, $2, $3, $4, $5)
@@ -357,6 +357,7 @@ pub async fn record_upload(
             size = EXCLUDED.size,
             content_type = EXCLUDED.content_type,
             updated_at = NOW()
+        RETURNING id
         "#,
     )
     .bind(user_id)
@@ -364,8 +365,10 @@ pub async fn record_upload(
     .bind(key)
     .bind(file_size)
     .bind(content_type)
-    .execute(&mut *tx)
+    .fetch_one(&mut *tx)
     .await?;
+
+    let file_id: Uuid = row.get("id");
 
     // 2. Increment quota
     sqlx::query(
@@ -384,7 +387,7 @@ pub async fn record_upload(
     .await?;
 
     tx.commit().await?;
-    Ok(())
+    Ok(file_id)
 }
 
 /// Update usage after delete.

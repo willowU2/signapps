@@ -9,6 +9,9 @@ pub use account::Entity as Account;
 
 /// Re-export SeaORM prelude for convenience
 pub mod prelude {
+    pub use super::account::{
+        ActiveModel as AccountActiveModel, Column as AccountColumn, Entity as Account,
+        Model as AccountModel,
+    };
     pub use sea_orm::entity::prelude::*;
-    pub use super::account::{ActiveModel as AccountActiveModel, Column as AccountColumn, Entity as Account, Model as AccountModel};
 }

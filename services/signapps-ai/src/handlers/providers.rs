@@ -48,11 +48,14 @@ pub async fn list_providers(State(state): State<AppState>) -> Result<Json<Provid
                 )
                 .await
                 {
-                    Ok(Ok(true)) => {}
+                    Ok(Ok(true)) => {},
                     _ => {
-                        tracing::debug!(provider = id, "Local provider unreachable, marking disabled");
+                        tracing::debug!(
+                            provider = id,
+                            "Local provider unreachable, marking disabled"
+                        );
                         enabled = false;
-                    }
+                    },
                 }
             }
         }

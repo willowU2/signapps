@@ -17,9 +17,7 @@ pub struct TimezoneInfo {
 }
 
 /// List available timezones
-pub async fn list_timezones(
-    Query(query): Query<TimezoneListQuery>,
-) -> Json<Vec<TimezoneInfo>> {
+pub async fn list_timezones(Query(query): Query<TimezoneListQuery>) -> Json<Vec<TimezoneInfo>> {
     let mut timezones = services::list_timezones()
         .into_iter()
         .map(|name| TimezoneInfo {
@@ -79,8 +77,9 @@ pub async fn convert_timezone(
         return Err("From timezone conversion not yet implemented".to_string());
     };
 
-    let converted = services::format_in_timezone(utc_time, &payload.to_timezone, "%Y-%m-%d %H:%M:%S %Z")
-        .map_err(|e| format!("Failed to convert: {}", e))?;
+    let converted =
+        services::format_in_timezone(utc_time, &payload.to_timezone, "%Y-%m-%d %H:%M:%S %Z")
+            .map_err(|e| format!("Failed to convert: {}", e))?;
 
     Ok(Json(ConvertTimezoneResponse {
         original: utc_time.to_rfc3339(),

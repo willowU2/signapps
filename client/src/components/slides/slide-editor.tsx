@@ -13,6 +13,9 @@ import { aiApi } from "@/lib/api"
 import { useAiRouting } from "@/hooks/use-ai-routing"
 import { toast } from "sonner"
 import { useSimulatedMultiplayer } from "@/hooks/use-simulated-multiplayer"
+import { EditorMenu } from "../editor/editor-menu"
+import { GenericFeatureModal } from "@/components/editor/generic-feature-modal"
+import pptxgen from "pptxgenjs"
 
 // Let's create an interface matching the `useSlides` return type conceptually
 interface SlideEditorProps {
@@ -30,9 +33,10 @@ interface SlideEditorProps {
         redo: () => void;
         clearSlide: () => void;
     }
+    isReadOnly?: boolean;
 }
 
-export function SlideEditor({ slideState }: SlideEditorProps) {
+export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps) {
     const {
         objects, updateObject, removeObject, updateCursor, collaborators, isConnected, activeSlideId,
         canUndo, canRedo, undo, redo, clearSlide
@@ -42,6 +46,7 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
     const isUpdatingRef = useRef(false)
     const [activeObject, setActiveObject] = useState<fabric.Object | null>(null)
     const [omniboxMenu, setOmniboxMenu] = useState({ isOpen: false, x: 0, y: 0 })
+    const [activeModal, setActiveModal] = useState<{ id: string, label?: string } | null>(null)
 
     const { getRouteConfig } = useAiRouting()
 
@@ -58,6 +63,110 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
 
     // --- Page Setup State ---
     const [pageConfig, setPageConfig] = useState<{ orientation: 'portrait' | 'landscape', backgroundColor: string }>({ orientation: 'portrait', backgroundColor: '#ffffff' })
+
+    // Global keyboard shortcuts
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey || e.metaKey) {
+                const key = e.key.toLowerCase();
+                if (key === 's') { e.preventDefault(); toast.success('Enregistré automatiquement'); }
+                else if (key === 'n') { e.preventDefault(); window.open('/slides', '_blank'); }
+                else if (key === 'o') { e.preventDefault(); toast.info("Rendez-vous sur l'accueil Drive pour ouvrir un fichier."); }
+                else if (key === 'q') { e.preventDefault(); toast.info("Fermez l'onglet du navigateur pour quitter la session."); }
+                else if (key === 'a') {
+                    const tag = (e.target as HTMLElement).tagName.toLowerCase();
+                    if (tag !== 'input' && tag !== 'textarea') {
+                        e.preventDefault();
+                        const canvas = fabricCanvasRef.current;
+                        if (canvas) {
+                            canvas.discardActiveObject();
+                            const objs = canvas.getObjects();
+                            if (objs.length > 0) {
+                                import("fabric").then((fabricModule) => {
+                                    const sel = new fabricModule.ActiveSelection(objs, { canvas });
+                                    canvas.setActiveObject(sel);
+                                    canvas.requestRenderAll();
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, []);
+
+    const slideMenus = [
+        {
+            id: 'file', label: 'Fichier', items: [
+                { label: 'Nouveau', subItems: [
+                    { label: 'Présentation', action: 'new' },
+                    { label: 'À partir d\'un modèle', action: 'todo' }
+                ] },
+                { label: 'Ouvrir', action: 'open', shortcut: 'Ctrl+O' },
+                { label: 'Importer des diapositives', action: 'todo' },
+                { label: 'Créer une copie', action: 'todo' },
+                { sep: true },
+                { label: 'Télécharger', subItems: [
+                    { label: 'Microsoft PowerPoint (.pptx)', action: 'todo' },
+                    { label: 'Document PDF (.pdf)', action: 'todo' },
+                    { label: 'Image PNG (.png)', action: 'export' }
+                ] },
+                { sep: true },
+                { label: 'Paramètres mis en page', subItems: [
+                    { label: 'Portrait', action: 'pageSetup_portrait' },
+                    { label: 'Paysage', action: 'pageSetup_landscape' }
+                ] }
+            ]
+        },
+        {
+            id: 'edit', label: 'Édition', items: [
+                { label: 'Annuler', action: 'undo', shortcut: 'Ctrl+Z' },
+                { label: 'Rétablir', action: 'redo', shortcut: 'Ctrl+Y' },
+                { sep: true },
+                { label: 'Effacer la page', action: 'clear' }
+            ]
+        },
+        {
+            id: 'view', label: 'Affichage', items: [
+                { label: 'Diaporama', action: 'fullScreen', shortcut: 'Ctrl+F5' },
+                { sep: true },
+                { label: 'Afficher la grille', action: 'toggleGrid' },
+                { label: 'Aligner sur la grille', action: 'toggleSnap' }
+            ]
+        },
+        {
+            id: 'insert', label: 'Insertion', items: [
+                { label: 'Texte', action: 'addText', shortcut: 'T' },
+                { label: 'Forme', subItems: [
+                    { label: 'Rectangle', action: 'addShapeRect' },
+                    { label: 'Cercle', action: 'addShapeCircle' },
+                    { label: 'Triangle', action: 'addShapeTriangle' }
+                ] },
+                { label: 'Ligne', action: 'addShapeLine' },
+                { sep: true },
+                { label: 'Image', action: 'todo' },
+                { label: 'Mise en page AI', action: 'addMagicLayout' }
+            ]
+        },
+        {
+            id: 'format', label: 'Format', items: [
+                { label: 'Reproduire la mise en forme', action: 'toggleFormatPainter' },
+                { sep: true },
+                { label: 'Premier plan', action: 'bringToFront', shortcut: 'Ctrl+Maj+Up' },
+                { label: 'Arrière plan', action: 'sendToBack', shortcut: 'Ctrl+Maj+Down' },
+                { sep: true },
+                { label: 'Grouper', action: 'groupItems', shortcut: 'Ctrl+G' },
+                { label: 'Dégrouper', action: 'ungroupItems', shortcut: 'Ctrl+Maj+G' }
+            ]
+        },
+        {
+            id: 'tools', label: 'Outils', items: [
+                { label: 'Saisie vocale', action: 'toggleListen' }
+            ]
+        }
+    ];
 
     // --- Simulated Multiplayer Presence ---
     const { collaborators: simCollabs } = useSimulatedMultiplayer(activeSlideId || "doc", true)
@@ -116,7 +225,7 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
             }
 
             recognitionRef.current.onerror = (event: any) => {
-                console.error("Speech recognition error", event.error)
+                console.debug("Speech recognition error", event.error)
                 setIsListening(false)
                 toast.error("Microphone issue: " + event.error)
             }
@@ -144,7 +253,7 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
                 setIsListening(true)
                 toast.info("Microphone activé. Parlez maintenant.")
             } catch (err) {
-                console.error("Could not start speech recognition", err)
+                console.debug("Could not start speech recognition", err)
             }
         }
     }, [isListening])
@@ -237,17 +346,160 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
         }
     }, [isFormatPainting]);
 
-    // Listen for global keyboard shortcut to open the Omnibox ('/' or '@')
+    // Clipboard for Fabric objects
+    const clipboardRef = useRef<any>(null);
+
+    // Listen for global keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Only trigger if we aren't typing inside an input or textarea
             const target = e.target as HTMLElement
             const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
 
+            // 1. Omnibox trigger
             if (!isTyping && (e.key === '/' || e.key === '@')) {
                 e.preventDefault()
-                // Display near center if no mouse context, but ideally near mouse
                 setOmniboxMenu({ isOpen: true, x: window.innerWidth / 2 - 160, y: window.innerHeight / 2 - 200 })
+                return;
+            }
+
+            const canvas = fabricCanvasRef.current;
+            if (!canvas || isTyping) return;
+
+            const activeObject = canvas.getActiveObject();
+            if (!activeObject || (activeObject as any).isEditing) return;
+
+            // 2. Delete object
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                e.preventDefault();
+                isUpdatingRef.current = true;
+                if (activeObject.type === 'activeSelection') {
+                    const groupItems = (activeObject as any).getObjects();
+                    groupItems.forEach((item: any) => {
+                        canvas.remove(item);
+                        removeObject(item.id);
+                    });
+                    canvas.discardActiveObject();
+                } else {
+                    canvas.remove(activeObject);
+                    removeObject((activeObject as any).id);
+                }
+                isUpdatingRef.current = false;
+                canvas.requestRenderAll();
+                return;
+            }
+
+            // 3. Copy (Ctrl+C / Cmd+C)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                e.preventDefault();
+                activeObject.clone().then((cloned: any) => {
+                    clipboardRef.current = cloned;
+                });
+                return;
+            }
+
+            // 4. Paste (Ctrl+V / Cmd+V)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboardRef.current) {
+                e.preventDefault();
+                
+                // clone again so you can paste multiple times
+                clipboardRef.current.clone().then((clonedObj: any) => {
+                    canvas.discardActiveObject();
+                    clonedObj.set({
+                        left: clonedObj.left + 20,
+                        top: clonedObj.top + 20,
+                        evented: true,
+                    });
+                    
+                    if (clonedObj.type === 'activeSelection') {
+                        // active selection needs a loop to add objects individually
+                        clonedObj.canvas = canvas;
+                        clonedObj.forEachObject((obj: any) => {
+                            obj.id = Math.random().toString(36).substr(2, 9);
+                            canvas.add(obj);
+                        });
+                        // this should reset the selection to its original position
+                        clonedObj.setCoords();
+                    } else {
+                        clonedObj.id = Math.random().toString(36).substr(2, 9);
+                        canvas.add(clonedObj);
+                    }
+                    clipboardRef.current.top += 20;
+                    clipboardRef.current.left += 20;
+                    
+                    canvas.setActiveObject(clonedObj);
+                    canvas.requestRenderAll();
+                    
+                    // Update state
+                    isUpdatingRef.current = true;
+                    if (clonedObj.type === 'activeSelection') {
+                        clonedObj.forEachObject((obj: any) => updateObject(obj.id, obj.toObject()));
+                    } else {
+                        updateObject(clonedObj.id, clonedObj.toObject());
+                    }
+                    isUpdatingRef.current = false;
+                });
+                return;
+            }
+
+            // 5. Duplicate (Ctrl+D / Cmd+D)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                activeObject.clone().then((clonedObj: any) => {
+                    canvas.discardActiveObject();
+                    clonedObj.set({
+                        left: clonedObj.left + 20,
+                        top: clonedObj.top + 20,
+                        evented: true,
+                    });
+                    
+                    if (clonedObj.type === 'activeSelection') {
+                        clonedObj.canvas = canvas;
+                        clonedObj.forEachObject((obj: any) => {
+                            obj.id = Math.random().toString(36).substr(2, 9);
+                            canvas.add(obj);
+                        });
+                        clonedObj.setCoords();
+                    } else {
+                        clonedObj.id = Math.random().toString(36).substr(2, 9);
+                        canvas.add(clonedObj);
+                    }
+                    
+                    canvas.setActiveObject(clonedObj);
+                    canvas.requestRenderAll();
+                    
+                    isUpdatingRef.current = true;
+                    if (clonedObj.type === 'activeSelection') {
+                        clonedObj.forEachObject((obj: any) => updateObject(obj.id, obj.toObject()));
+                    } else {
+                        updateObject(clonedObj.id, clonedObj.toObject());
+                    }
+                    isUpdatingRef.current = false;
+                });
+                return;
+            }
+
+            // 6. Nudging (Arrows)
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                const step = e.shiftKey ? 10 : 1;
+                let dx = 0; let dy = 0;
+                if (e.key === 'ArrowUp') dy = -step;
+                if (e.key === 'ArrowDown') dy = step;
+                if (e.key === 'ArrowLeft') dx = -step;
+                if (e.key === 'ArrowRight') dx = step;
+
+                const objs = activeObject.type === 'activeSelection' ? (activeObject as any).getObjects() : [activeObject];
+                // Move selection box
+                activeObject.set({ left: (activeObject.left || 0) + dx, top: (activeObject.top || 0) + dy });
+                activeObject.setCoords();
+                
+                isUpdatingRef.current = true;
+                objs.forEach((obj: any) => {
+                    // Update object inside group correctly handled by Fabric magically, or we trigger full update
+                    updateObject(obj.id || (activeObject as any).id, obj.toObject());
+                });
+                isUpdatingRef.current = false;
+                canvas.requestRenderAll();
             }
         }
 
@@ -352,7 +604,7 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
             });
 
         } catch (error) {
-            console.error("Layout generation failed", error);
+            console.debug("Layout generation failed", error);
             toast.error("Failed to generate layout. AI model may have returned invalid JSON or provider is unavailable.", { id: toastId });
         }
     };
@@ -431,7 +683,7 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
                     canvas.add(img)
                     canvas.setActiveObject(img)
                 }).catch((err: any) => {
-                    console.error("Failed to load image:", err)
+                    console.debug("Failed to load image:", err)
                     alert("Impossible de charger cette image. Vérifiez que l'URL est publique et que le serveur autorise le CORS.")
                 })
             }
@@ -719,6 +971,57 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
         document.body.removeChild(link)
     }
 
+    const exportToPPTX = () => {
+        const canvas = fabricCanvasRef.current
+        if (!canvas) return
+        
+        const pres = new pptxgen()
+        const slide = pres.addSlide()
+        
+        // "Best-effort" PPTX generation
+        canvas.getObjects().forEach((obj) => {
+             const o = obj as any
+             const scaleX = o.scaleX || 1
+             const scaleY = o.scaleY || 1
+             const x = (o.left || 0) / 100
+             const y = (o.top || 0) / 100
+             const w = (o.width || 0) * scaleX / 100
+             const h = (o.height || 0) * scaleY / 100
+             
+             if (obj.type === 'i-text' || obj.type === 'textbox' || obj.type === 'text') {
+                 slide.addText(o.text || '', { x, y, w, h, fontSize: (o.fontSize || 18) * scaleY, color: o.fill?.replace('#', '') || '000000' })
+             } else if (obj.type === 'rect') {
+                 slide.addShape(pres.ShapeType.rect, { x, y, w, h, fill: { color: o.fill?.replace('#', '') || 'CCCCCC' } })
+             } else if (obj.type === 'circle') {
+                 slide.addShape(pres.ShapeType.ellipse, { x, y, w, h, fill: { color: o.fill?.replace('#', '') || 'CCCCCC' } })
+             } else if (obj.type === 'image') {
+                 try {
+                     const dataUrl = o.toDataURL()
+                     slide.addImage({ data: dataUrl, x, y, w, h })
+                 } catch (err) {
+                     console.debug("Could not export image to PPTX", err)
+                 }
+             }
+        })
+        
+        pres.writeFile({ fileName: `Slide-Export-${new Date().toISOString().slice(0, 10)}.pptx` })
+        toast.success("Diapositive exportée au format PPTX")
+    }
+
+    // --- Read Only Lock ---
+    useEffect(() => {
+        const canvas = fabricCanvasRef.current;
+        if (!canvas) return;
+        
+        const isInteractive = !isReadOnly;
+        canvas.selection = isInteractive;
+        canvas.getObjects().forEach(obj => {
+            obj.selectable = isInteractive;
+            obj.evented = isInteractive;
+        });
+        canvas.requestRenderAll();
+    }, [isReadOnly, objects, activeSlideId]);
+    
     // --- Global Command Bar AI Integration ---
     useEffect(() => {
         const handleAiAction = async (e: CustomEvent) => {
@@ -778,7 +1081,7 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
                 toast.success("Texte mis à jour avec succès !", { id: toastId });
 
             } catch (err) {
-                console.error("AI Text Action failed", err);
+                console.debug("AI Text Action failed", err);
                 toast.error("Erreur lors de la génération IA.", { id: toastId });
             }
         };
@@ -791,12 +1094,120 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
 
 
     return (
-        <div className="flex flex-col w-full h-full gap-4 relative animate-fade-in flex-1 min-h-0">
+        <div className="flex flex-col w-full h-full gap-0.5 relative animate-fade-in flex-1 min-h-0">
+            {!isReadOnly && (
+                <div className="-ml-1.5 flex flex-col pt-0.5">
+                    <EditorMenu menus={slideMenus} onAction={(action, label) => {
+                        const NATIVE_ACTIONS = ['open', 'new', 'undo', 'redo', 'clear', 'export', 'export_pptx', 'toggleGrid', 'toggleSnap', 'addText', 'addShapeRect', 'addShapeCircle', 'addShapeTriangle', 'addShapeLine', 'addMagicLayout', 'toggleFormatPainter', 'toggleListen', 'fullScreen', 'bringToFront', 'sendToBack', 'pageSetup_portrait', 'pageSetup_landscape', 'groupItems', 'ungroupItems'];
+                        
+                        if (action === 'todo' || !NATIVE_ACTIONS.includes(action)) {
+                            setActiveModal({ id: action, label });
+                            return;
+                        }
 
-            <OmniboxMenu
-                isOpen={omniboxMenu.isOpen}
-                x={omniboxMenu.x}
-                y={omniboxMenu.y}
+                        if (action === 'open') toast.info("Rendez-vous sur l'accueil Drive pour ouvrir une présentation.")
+                        if (action === 'new') window.open('/slides', '_blank');
+                        if (action === 'undo') undo();
+                        if (action === 'redo') redo();
+                        if (action === 'clear') clearSlide();
+                        if (action === 'export') exportToPNG();
+                        if (action === 'export_pptx') exportToPPTX();
+                        if (action === 'toggleGrid') setShowGrid(!showGrid);
+                        if (action === 'toggleSnap') setSnapToGrid(!snapToGrid);
+                        if (action === 'addText') addText();
+                        if (action === 'addShapeRect') addShape('rect');
+                        if (action === 'addShapeCircle') addShape('circle');
+                        if (action === 'addShapeTriangle') addShape('triangle');
+                        if (action === 'addShapeLine') addShape('line');
+                        if (action === 'addMagicLayout') addMagicLayout();
+                        if (action === 'toggleFormatPainter') toggleFormatPainter();
+                        if (action === 'toggleListen') toggleListen();
+                        if (action === 'pageSetup_portrait') setPageConfig({ ...pageConfig, orientation: 'portrait' });
+                        if (action === 'pageSetup_landscape') setPageConfig({ ...pageConfig, orientation: 'landscape' });
+                        if (action === 'bringToFront') {
+                            const canvas = fabricCanvasRef.current;
+                            const active = canvas?.getActiveObject();
+                            if (active && canvas) {
+                                const maxZ = Math.max(0, ...canvas.getObjects().map((o: any) => o.zIndex || 0));
+                                (active as any).zIndex = maxZ + 1;
+                                canvas.bringObjectToFront(active);
+                                isUpdatingRef.current = true;
+                                updateObject((active as any).id, active.toObject(['id', 'zIndex']));
+                                isUpdatingRef.current = false;
+                                canvas.requestRenderAll();
+                            }
+                        }
+                        if (action === 'sendToBack') {
+                            const canvas = fabricCanvasRef.current;
+                            const active = canvas?.getActiveObject();
+                            if (active && canvas) {
+                                const minZ = Math.min(0, ...canvas.getObjects().map((o: any) => o.zIndex || 0));
+                                (active as any).zIndex = minZ - 1;
+                                canvas.sendObjectToBack(active);
+                                isUpdatingRef.current = true;
+                                updateObject((active as any).id, active.toObject(['id', 'zIndex']));
+                                isUpdatingRef.current = false;
+                                canvas.requestRenderAll();
+                            }
+                        }
+                        if (action === 'groupItems') {
+                            const canvas = fabricCanvasRef.current;
+                            if (!canvas) return;
+                            const active = canvas.getActiveObject();
+                            if (active && active.type === 'activeSelection') {
+                                isUpdatingRef.current = true;
+                                const groupItems = (active as any).getObjects();
+                                const groupId = Math.random().toString(36).substr(2, 9);
+                                const group = (active as any).toGroup();
+                                group.id = groupId;
+                                // Save the new group
+                                updateObject(group.id, group.toObject(['id', 'zIndex']));
+                                // Clean up old separated objects from state
+                                groupItems.forEach((item: any) => removeObject(item.id));
+                                isUpdatingRef.current = false;
+                                canvas.requestRenderAll();
+                            } else {
+                                toast.error("Sélectionnez plusieurs éléments avec Shift ou la souris pour les grouper.");
+                            }
+                        }
+                        if (action === 'ungroupItems') {
+                            const canvas = fabricCanvasRef.current;
+                            if (!canvas) return;
+                            const active = canvas.getActiveObject();
+                            if (active && active.type === 'group') {
+                                isUpdatingRef.current = true;
+                                const groupId = (active as any).id;
+                                const items = (active as any).getObjects();
+                                (active as any).toActiveSelection();
+                                // Clean up the old group from state
+                                if (groupId) removeObject(groupId);
+                                // Save the new separated objects to state
+                                items.forEach((item: any) => {
+                                    if (!item.id) item.id = Math.random().toString(36).substr(2, 9);
+                                    updateObject(item.id, item.toObject(['id', 'zIndex']));
+                                });
+                                isUpdatingRef.current = false;
+                                canvas.requestRenderAll();
+                            } else {
+                                toast.error("Sélectionnez un groupe existant pour le dégrouper.");
+                            }
+                        }
+                        if (action === 'fullScreen') {
+                            if (!document.fullscreenElement) {
+                                 document.documentElement.requestFullscreen().catch(() => toast.error("Le plein écran est bloqué."));
+                            } else {
+                                 document.exitFullscreen();
+                            }
+                        }
+                    }} />
+                </div>
+            )}
+
+            {!isReadOnly && (
+                <OmniboxMenu
+                    isOpen={omniboxMenu.isOpen}
+                    x={omniboxMenu.x}
+                    y={omniboxMenu.y}
                 onClose={() => setOmniboxMenu({ ...omniboxMenu, isOpen: false })}
                 onInsertText={addText}
                 onInsertShape={addShape}
@@ -806,17 +1217,20 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
                 onInsertWorkflow={addWorkflow}
                 onInsertTable={addTable}
             />
+            )}
 
             {/* Main Editor Area */}
             <div className="flex flex-col w-full h-full gap-4 relative animate-fade-in flex-1 min-h-0">
                 {/* Context Toolbars */}
-                <SlideToolbar
-                    isConnected={isConnected}
-                    onAddMagicLayout={addMagicLayout}
-                    onAddText={addText}
-                    onAddShape={() => addShape('rect')}
-                    onExport={exportToPNG}
-                    canUndo={canUndo}
+                {!isReadOnly && (
+                    <SlideToolbar
+                        isConnected={isConnected}
+                        onAddMagicLayout={addMagicLayout}
+                        onAddText={addText}
+                        onAddShape={() => addShape('rect')}
+                        onExport={exportToPNG}
+                        onExportPPTX={exportToPPTX}
+                        canUndo={canUndo}
                     canRedo={canRedo}
                     onUndo={undo}
                     onRedo={redo}
@@ -829,9 +1243,10 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
                     snapToGrid={snapToGrid}
                     onToggleGrid={() => setShowGrid(s => !s)}
                     onToggleSnap={() => setSnapToGrid(s => !s)}
-                    pageConfig={pageConfig}
-                    onPageConfigChange={setPageConfig}
-                />
+                        pageConfig={pageConfig}
+                        onPageConfigChange={setPageConfig}
+                    />
+                )}
 
                 <div className="flex-1 w-full flex items-stretch min-h-0 relative">
                     {/* Outline Sidebar (Left) */}
@@ -865,15 +1280,18 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
             {/* Contextual Properties Panel (Right)
                 Only show when an object is selected
             */}
-            <SlidePropertyPanel
-                activeObject={activeObject}
-                updateObjectRemotely={handleUpdateActiveObject}
-                canvasRef={fabricCanvasRef}
-            />
+            {!isReadOnly && (
+                <SlidePropertyPanel
+                    activeObject={activeObject}
+                    updateObjectRemotely={handleUpdateActiveObject}
+                    canvasRef={fabricCanvasRef}
+                />
+            )}
 
             {/* Floating AI Bottom Pill */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 shadow-lg rounded-full animate-fade-in-up">
-                <button
+            {!isReadOnly && (
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 shadow-lg rounded-full animate-fade-in-up">
+                    <button
                     onClick={addMagicLayout}
                     className="flex items-center gap-2 group px-6 py-2.5 bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full text-[14px] font-medium transition-all shadow-md dark:bg-[#004a77] dark:hover:bg-[#005a92] dark:text-[#c2e7ff]"
                 >
@@ -881,6 +1299,14 @@ export function SlideEditor({ slideState }: SlideEditorProps) {
                     Améliorer cette diapositive
                 </button>
             </div>
+            )}
+
+            <GenericFeatureModal 
+                isOpen={!!activeModal} 
+                actionId={activeModal?.id || null} 
+                actionLabel={activeModal?.label}
+                onClose={() => setActiveModal(null)} 
+            />
         </div>
     )
 }

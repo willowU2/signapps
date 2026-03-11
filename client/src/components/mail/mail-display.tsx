@@ -37,6 +37,7 @@ import { aiApi } from "@/lib/api"
 import { toast } from "sonner"
 import { useState, useCallback, useEffect } from "react"
 import { useAiStream } from "@/hooks/use-ai-stream"
+import { VoiceInput } from "@/components/ui/voice-input"
 
 interface MailDisplayProps {
     mail: Mail | null
@@ -55,6 +56,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
     const [summaryText, setSummaryText] = useState("")
     const [showSummary, setShowSummary] = useState(false)
     const [summaryLoading, setSummaryLoading] = useState(false)
+    const [interimReplyText, setInterimReplyText] = useState("")
 
     // Undo Send State
     const [sending, setSending] = useState(false)
@@ -157,7 +159,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                     onError: (err) => {
                         setIsRepliesLoading(false)
                         toast.error(`Failed to generate replies: ${err}`)
-                        console.error(err)
+                        console.debug(err)
                     }
                 },
                 {
@@ -168,7 +170,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
         } catch (e) {
             setIsRepliesLoading(false)
             toast.error("Failed to start generation")
-            console.error(e)
+            console.debug(e)
         }
     }
 
@@ -438,8 +440,11 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                 <Textarea
                                     className="p-4 pt-5 pb-14 min-h-[140px] resize-none border border-gray-200/80 dark:border-gray-800/80 bg-white/80 dark:bg-gray-950/80 focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:border-transparent rounded-2xl shadow-sm transition-all text-[15px] leading-relaxed block w-full placeholder:text-gray-400"
                                     placeholder={`Write your reply to ${mail.name}...`}
-                                    value={replyText}
-                                    onChange={(e) => setReplyText(e.target.value)}
+                                    value={replyText + (interimReplyText ? (replyText && !replyText.endsWith(' ') ? ' ' : '') + interimReplyText : '')}
+                                    onChange={(e) => {
+                                        setReplyText(e.target.value)
+                                        setInterimReplyText("")
+                                    }}
                                 />
                                 <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
                                     <div className="text-[13px] font-medium text-gray-500/80 dark:text-gray-400/80 flex items-center gap-1.5 pl-2 pointer-events-auto">
@@ -462,6 +467,18 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-2 pointer-events-auto">
+                                            <VoiceInput 
+                                                onTranscription={(text, isFinal) => {
+                                                    if (isFinal) {
+                                                        setReplyText((prev) => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + text + ' ')
+                                                        setInterimReplyText('')
+                                                    } else {
+                                                        setInterimReplyText(text)
+                                                    }
+                                                }}
+                                                className="bg-white hover:bg-gray-100 text-gray-500 shadow-sm border border-gray-100 h-9 w-9 [&>svg]:w-4 [&>svg]:h-4 mr-1"
+                                                title="Dicter la réponse"
+                                            />
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button
@@ -489,7 +506,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                             <Button
                                                 onClick={handleSend}
                                                 size="sm"
-                                                disabled={!replyText.trim()}
+                                                disabled={!(replyText.trim() || interimReplyText.trim())}
                                                 className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 rounded-xl px-5 h-9 shadow-md hover:shadow-lg transition-all"
                                             >
                                                 <Send className="w-4 h-4 mr-2 shrink-0" />

@@ -143,3 +143,35 @@ export const calendarApi = {
     delete: <T = any>(url: string, config?: any) =>
         calendarApiClient.delete<T>(url, config),
 };
+
+// Tasks API
+export const tasksApi = {
+    listTasks: (calendarId: string) =>
+        calendarApiClient.get(`/calendars/${calendarId}/tasks`),
+    createTask: (calendarId: string, data: any) =>
+        calendarApiClient.post(`/calendars/${calendarId}/tasks`, data),
+    getTask: (taskId: string) =>
+        calendarApiClient.get(`/tasks/${taskId}`),
+    updateTask: (taskId: string, data: any) =>
+        calendarApiClient.put(`/tasks/${taskId}`, data),
+    deleteTask: (taskId: string) =>
+        calendarApiClient.delete(`/tasks/${taskId}`),
+};
+
+// Timezones API
+export const timezonesApi = {
+    list: () => calendarApiClient.get('/timezones'),
+    getUserTimezone: () => calendarApiClient.get('/timezones/me'),
+    setUserTimezone: (timezone: string) => calendarApiClient.put('/timezones/me', { timezone }),
+};
+
+// Imports & ICS
+export const importApi = {
+    importIcs: (calendarId: string, file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return calendarApiClient.post(`/calendars/${calendarId}/import`, formData);
+    },
+    exportIcs: (calendarId: string) =>
+        calendarApiClient.get(`/calendars/${calendarId}/export`, { responseType: 'blob' }),
+};

@@ -40,7 +40,12 @@ mod tests {
     fn test_document_metadata_creation() {
         let user_id = Uuid::new_v4();
         let doc_id = Uuid::new_v4();
-        let metadata = DocumentMetadata::new(doc_id, "Test Document".to_string(), "text".to_string(), user_id);
+        let metadata = DocumentMetadata::new(
+            doc_id,
+            "Test Document".to_string(),
+            "text".to_string(),
+            user_id,
+        );
 
         assert_eq!(metadata.name, "Test Document");
         assert_eq!(metadata.doc_type, "text");

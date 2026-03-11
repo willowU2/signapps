@@ -45,7 +45,7 @@ export default function RemoteAccessDashboard() {
             const data = await remoteApi.connections.list()
             setConnections(data)
         } catch (err) {
-            console.error('Failed to load connections:', err)
+            console.debug('Failed to load connections:', err)
             toast.error('Impossible de charger les connexions')
         } finally {
             setLoading(false)
@@ -77,7 +77,7 @@ export default function RemoteAccessDashboard() {
             })
             toast.success('Connexion crée avec succs')
         } catch (err) {
-            console.error('Failed to create connection:', err)
+            console.debug('Failed to create connection:', err)
             toast.error('chec de la cration')
         } finally {
             setCreating(false)
@@ -96,7 +96,7 @@ export default function RemoteAccessDashboard() {
             setEditConnection({})
             toast.success('Connexion mise  jour')
         } catch (err) {
-            console.error('Failed to update connection:', err)
+            console.debug('Failed to update connection:', err)
             toast.error('chec de la mise  jour')
         } finally {
             setEditing(false)
@@ -111,7 +111,7 @@ export default function RemoteAccessDashboard() {
             setConnections(prev => prev.filter(c => c.id !== id))
             toast.success('Connexion supprime')
         } catch (err) {
-            console.error('Failed to delete connection:', err)
+            console.debug('Failed to delete connection:', err)
             toast.error('chec de la suppression')
         }
     }
@@ -147,7 +147,7 @@ export default function RemoteAccessDashboard() {
         }
 
         ws.onerror = (error) => {
-            console.error('WebSocket error:', error)
+            console.debug('WebSocket error:', error)
             toast.error('Erreur de connexion')
         }
 

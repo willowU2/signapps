@@ -85,7 +85,7 @@ pub async fn update_hardware(
             updated_at = NOW()
         WHERE id = $6
         RETURNING *
-        "#
+        "#,
     )
     .bind(payload.name)
     .bind(payload.status)

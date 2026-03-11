@@ -25,12 +25,12 @@ export default function DocsDashboard() {
                     mostRecentId = docs[0].id;
                 }
             } catch (e) {
-                console.error("Failed to parse recent docs", e);
+                console.debug("Failed to parse recent docs", e);
             }
         }
 
         if (mostRecentId) {
-            router.replace(`/docs/editor/${mostRecentId}`);
+            router.replace(`/docs/editor?id=${mostRecentId}`);
         } else {
             const id = crypto.randomUUID();
             const newDoc: DocMeta = {
@@ -40,7 +40,7 @@ export default function DocsDashboard() {
                 lastOpened: Date.now()
             };
             localStorage.setItem('signapps_recent_docs', JSON.stringify([newDoc]));
-            router.replace(`/docs/editor/${id}`);
+            router.replace(`/docs/editor?id=${id}`);
         }
     }, [router]);
 

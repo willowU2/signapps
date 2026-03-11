@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Send, Paperclip, Smile, Type, Sparkles, Video, CheckCircle, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { VoiceInput } from "@/components/ui/voice-input";
 
 interface ChatInputProps {
     onSend: (content: string) => void;
@@ -23,7 +24,11 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
     const [isFocused, setIsFocused] = useState(false);
     const [showCommands, setShowCommands] = useState(false);
     const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
+    const [interimValue, setInterimValue] = useState("");
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Formatted value including speech-to-text interim
+    const displayValue = inputValue + (interimValue ? (inputValue && !inputValue.endsWith(' ') ? ' ' : '') + interimValue : '');
 
     // Auto-resize textarea
     useEffect(() => {
@@ -31,7 +36,7 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
             textareaRef.current.style.height = 'auto';
             textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
         }
-    }, [inputValue]);
+    }, [displayValue]);
 
     // Detect slash commands
     useEffect(() => {
@@ -166,8 +171,11 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
 
                     <textarea
                         ref={textareaRef}
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
+                        value={displayValue}
+                        onChange={(e) => {
+                            setInputValue(e.target.value);
+                            setInterimValue("");
+                        }}
                         onKeyDown={handleKeyDown}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => {
@@ -181,6 +189,17 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
                     />
 
                     <div className="flex items-center gap-1 shrink-0 pb-0.5">
+                        <VoiceInput 
+                            onTranscription={(text, isFinal) => {
+                                if (isFinal) {
+                                    setInputValue((prev) => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + text + ' ');
+                                    setInterimValue('');
+                                } else {
+                                    setInterimValue(text);
+                                }
+                            }}
+                            className="hidden sm:flex"
+                        />
                         <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hidden sm:flex">
                             <Smile className="h-5 w-5" />
                         </Button>
@@ -188,16 +207,18 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
                             type="button"
                             size="icon"
                             onClick={() => {
-                                if (inputValue.trim() && !disabled) {
-                                    onSend(inputValue.trim());
+                                const finalValue = displayValue.trim();
+                                if (finalValue && !disabled) {
+                                    onSend(finalValue);
                                     setInputValue("");
+                                    setInterimValue("");
                                 }
                             }}
                             className={cn(
                                 "h-8 w-8 shrink-0 transition-all rounded-lg",
-                                inputValue.trim() ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90" : "bg-muted text-muted-foreground"
+                                displayValue.trim() ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90" : "bg-muted text-muted-foreground"
                             )}
-                            disabled={!inputValue.trim() || disabled}
+                            disabled={!displayValue.trim() || disabled}
                         >
                             <Send className="h-4 w-4" />
                         </Button>

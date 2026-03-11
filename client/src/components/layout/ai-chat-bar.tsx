@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ToolCallDisplay, ToolCallInfo } from '@/components/ai/tool-call-display';
+import { VoiceInput } from '@/components/ui/voice-input';
 
 interface ChatMessage {
   id: string;
@@ -42,9 +43,19 @@ export function AiChatBar() {
   const [expanded, setExpanded] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [interimText, setInterimText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const handleTranscription = useCallback((text: string, isFinal: boolean) => {
+    if (isFinal) {
+      setValue((prev) => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + text + ' ');
+      setInterimText('');
+    } else {
+      setInterimText(text);
+    }
+  }, []);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -397,14 +408,17 @@ export function AiChatBar() {
           ref={inputRef}
           type="text"
           placeholder="Demander à SignApps AI..."
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
+          value={value + (interimText ? (value && !value.endsWith(' ') ? ' ' : '') + interimText : '')}
+          onChange={(e) => {
+            setValue(e.target.value);
+            setInterimText('');
+          }}
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 150)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              handleSend();
+              handleSend(value + (interimText ? (value && !value.endsWith(' ') ? ' ' : '') + interimText : ''));
             }
           }}
           className="flex-1 border-none bg-transparent px-4 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-0"
@@ -438,16 +452,12 @@ export function AiChatBar() {
             </button>
           ) : (
             <>
+              <VoiceInput 
+                onTranscription={handleTranscription} 
+              />
               <button
-                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-                onClick={() => router.push('/media')}
-                title="Voice Command"
-              >
-                <Mic className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => handleSend()}
-                disabled={!value.trim()}
+                onClick={() => handleSend(value + (interimText ? (value && !value.endsWith(' ') ? ' ' : '') + interimText : ''))}
+                disabled={!(value.trim() || interimText.trim())}
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-full transition-all',
                   value.trim()

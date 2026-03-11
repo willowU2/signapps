@@ -443,6 +443,39 @@ pub async fn restart(
     }))
 }
 
+/// Helper to drop a dedicated PostgreSQL database for an app when uninstalled.
+async fn deprovision_app_database(pool: &signapps_db::DatabasePool, app_id: &str) -> Result<()> {
+    let sanitized_id = app_id.replace('-', "_").to_lowercase();
+    let db_name = format!("app_{}", sanitized_id);
+
+    // Check if it exists first
+    let exists: bool =
+        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)")
+            .bind(&db_name)
+            .fetch_one(&**pool)
+            .await
+            .unwrap_or(false);
+
+    if exists {
+        tracing::info!(db_name = %db_name, "Deprovisioning dedicated database for app");
+
+        // Terminate existing connections first, otherwise DROP DATABASE will block/fail
+        let terminate_query = format!(
+            "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{}' AND pid <> pg_backend_pid()",
+            db_name
+        );
+        let _ = sqlx::query(&terminate_query).execute(&**pool).await;
+
+        let drop_query = format!("DROP DATABASE IF EXISTS {}", db_name);
+
+        if let Ok(mut conn) = pool.acquire().await {
+            let _ = sqlx::query(&drop_query).execute(&mut *conn).await;
+        }
+    }
+
+    Ok(())
+}
+
 /// Delete a container.
 #[tracing::instrument(skip(state))]
 pub async fn delete(
@@ -470,6 +503,26 @@ pub async fn delete(
             .docker
             .remove_container(docker_id, true, false)
             .await?;
+    }
+
+    // Deprovision App Database if it's a store app (check metadata)
+    if let Some(labels) = &container.labels {
+        if let Some(app_id_val) = labels.get("signapps.app.id") {
+            if let Some(app_id) = app_id_val.as_str() {
+                // Spawn the DB deletion in the background so we don't block the API
+                let pool = state.pool.clone();
+                let app_id_owned = app_id.to_string();
+                tokio::spawn(async move {
+                    if let Err(e) = deprovision_app_database(&pool, &app_id_owned).await {
+                        tracing::warn!(
+                            "Failed to deprovision database for app {}: {}",
+                            app_id_owned,
+                            e
+                        );
+                    }
+                });
+            }
+        }
     }
 
     // Delete from database

@@ -1,5 +1,4 @@
 {
-  "contextWindow": 1000000,
   "permissions": {
     "allow": [
       "Bash(test:*)",
@@ -210,7 +209,24 @@
       "Bash(winget install:*)",
       "Bash(export LIBCLANG_PATH=\"C:/Program Files/LLVM/bin\")",
       "Bash(export PATH:*)",
-      "Bash(export VULKAN_SDK:*)"
+      "Bash(export VULKAN_SDK:*)",
+      "Skill(superpowers:using-superpowers)",
+      "mcp__MCP_DOCKER__fetch",
+      "mcp__context-mode__ctx_batch_execute",
+      "mcp__context-mode__ctx_search",
+      "Bash(ls:*)",
+      "Bash(SERVER_PORT=3001 ./target/debug/signapps-identity.exe:*)",
+      "Bash(RUST_LOG=debug timeout 15 ./target/debug/signapps-identity.exe:*)",
+      "Bash(RUST_LOG=info,sqlx=warn timeout:*)",
+      "Bash(RUST_BACKTRACE=1 ./target/debug/signapps-identity.exe:*)",
+      "Bash(cmd //c \"set SERVER_PORT=3001 && start /B target\\\\debug\\\\signapps-identity.exe > signapps-identity.log 2>&1\")",
+      "Bash(SERVER_PORT=3001 timeout:*)",
+      "mcp__MCP_DOCKER__browser_navigate",
+      "mcp__MCP_DOCKER__puppeteer_navigate",
+      "mcp__MCP_DOCKER__puppeteer_screenshot",
+      "mcp__MCP_DOCKER__puppeteer_evaluate",
+      "Bash(ipconfig:*)"
     ]
-  }
+  },
+  "contextWindow": 1000000
 }

@@ -101,7 +101,7 @@ export async function getHardware(): Promise<Hardware[]> {
     try {
         return await hardwareApi.list()
     } catch (e) {
-        console.warn("Using mock hardware data due to API error:", e)
+        console.debug("Using mock hardware data due to API error:", e)
         return [
             { id: "1", name: "LAPTOP-JD", type: "laptop", hardware_type: "laptop", status: "active", mac_address: "aa:bb:cc:dd:ee:01" },
             { id: "2", name: "SRV-WEB-01", type: "server", hardware_type: "server", status: "active", mac_address: "00:11:22:33:44:55", ip_address: "10.0.0.10" },

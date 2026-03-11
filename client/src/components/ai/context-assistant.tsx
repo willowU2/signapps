@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Bot, Sparkles, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useOmniSearch } from "@/lib/store/omni-search"
+import { useOmniActions } from "@/stores/omni-store"
 import { usePageContext } from "@/lib/store/page-context"
 import { aiApiClient } from "@/lib/api"
 import { toast } from "sonner"
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/tooltip"
 
 export function ContextAssistant() {
-  const omniStore = useOmniSearch()
+  const { open } = useOmniActions()
   const pageContext = usePageContext()
   const [isExecuting, setIsExecuting] = useState(false)
 
@@ -55,7 +55,7 @@ export function ContextAssistant() {
               error: 'Failed to execute AI action',
             });
           } else {
-            omniStore.open()
+            open()
           }
         }}
         size="icon"

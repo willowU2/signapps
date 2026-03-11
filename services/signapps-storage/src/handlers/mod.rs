@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 
 pub mod buckets;
+pub mod drive;
 pub mod external;
 pub mod favorites;
 pub mod files;

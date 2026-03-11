@@ -36,7 +36,7 @@ export function usePushNotifications() {
       // Check if we need a VAPID key
       const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidKey) {
-        console.warn('No VAPID public key configured. Push might not work properly.');
+        console.debug('No VAPID public key configured. Push might not work properly.');
       }
 
       // Subscribe to push (optional vapid key handling for dev)
@@ -60,7 +60,7 @@ export function usePushNotifications() {
       setRegistered(true);
       return true;
     } catch (error) {
-      console.error('Failed to register push:', error);
+      console.debug('Failed to register push:', error);
       throw error;
     } finally {
       setLoading(false);

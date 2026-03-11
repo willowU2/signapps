@@ -23,7 +23,7 @@ pub async fn websocket_handler(
     State(state): State<AppState>,
 ) -> impl IntoResponse {
     // Validate doc_id is a valid UUID
-    if let Err(_) = Uuid::parse_str(&doc_id) {
+    if Uuid::parse_str(&doc_id).is_err() {
         return (
             axum::http::StatusCode::BAD_REQUEST,
             "Invalid document ID format",

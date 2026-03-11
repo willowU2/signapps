@@ -54,7 +54,7 @@ pub async fn get_event_instances(
         query.end,
         365,
     )
-    .map_err(|e| CalendarError::InvalidInput(e))?;
+    .map_err(CalendarError::InvalidInput)?;
 
     let instance_count = instances.len();
 

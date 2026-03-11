@@ -190,7 +190,9 @@ pub fn generate_participant_token(
 
 /// Generate a server token for room management operations
 #[allow(dead_code)]
-pub fn generate_server_token(config: &LiveKitConfig) -> Result<String, jsonwebtoken::errors::Error> {
+pub fn generate_server_token(
+    config: &LiveKitConfig,
+) -> Result<String, jsonwebtoken::errors::Error> {
     generate_token(
         config,
         "server",
@@ -213,14 +215,9 @@ mod tests {
             server_url: "ws://localhost:7880".to_string(),
         };
 
-        let token = generate_participant_token(
-            &config,
-            "test-room",
-            "user-123",
-            "Test User",
-            false,
-        )
-        .unwrap();
+        let token =
+            generate_participant_token(&config, "test-room", "user-123", "Test User", false)
+                .unwrap();
 
         assert!(!token.is_empty());
         // Token should have 3 parts separated by dots
@@ -235,14 +232,8 @@ mod tests {
             server_url: "ws://localhost:7880".to_string(),
         };
 
-        let token = generate_participant_token(
-            &config,
-            "test-room",
-            "host-123",
-            "Host User",
-            true,
-        )
-        .unwrap();
+        let token = generate_participant_token(&config, "test-room", "host-123", "Host User", true)
+            .unwrap();
 
         assert!(!token.is_empty());
     }

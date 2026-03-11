@@ -23,13 +23,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pool = PgPoolOptions::new()
         .max_connections(2)
         .acquire_timeout(Duration::from_secs(5))
-        .connect(&database_url)
+        .connect(database_url)
         .await?;
 
-    sqlx::query("UPDATE identity.users SET password_hash = $1 WHERE username = 'admin'")
-        .bind(&hash)
-        .execute(&pool)
-        .await?;
+    sqlx::query(
+        r#"
+        INSERT INTO identity.users (username, email, password_hash, role, auth_provider)
+        VALUES ('admin', 'admin@signapps.local', $1, 1, 'local')
+        ON CONFLICT (username) 
+        DO UPDATE SET password_hash = EXCLUDED.password_hash
+        "#,
+    )
+    .bind(&hash)
+    .execute(&pool)
+    .await?;
 
     println!("Database updated for admin.");
 

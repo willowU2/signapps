@@ -165,9 +165,9 @@ async fn create_account(
     .bind(&payload.display_name)
     .bind(&payload.provider)
     .bind(&imap_server)
-    .bind(&imap_port)
+    .bind(imap_port)
     .bind(&smtp_server)
-    .bind(&smtp_port)
+    .bind(smtp_port)
     .bind(&payload.app_password)
     .fetch_one(&state.pool)
     .await;
@@ -176,8 +176,12 @@ async fn create_account(
         Ok(acc) => (StatusCode::CREATED, Json(acc)).into_response(),
         Err(e) => {
             tracing::error!("Failed to create mail account: {:?}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create account").into_response()
-        }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to create account",
+            )
+                .into_response()
+        },
     }
 }
 
@@ -207,13 +211,13 @@ async fn update_account(
     )
     .bind(&payload.display_name)
     .bind(&payload.imap_server)
-    .bind(&payload.imap_port)
+    .bind(payload.imap_port)
     .bind(&payload.smtp_server)
-    .bind(&payload.smtp_port)
+    .bind(payload.smtp_port)
     .bind(&payload.app_password)
     .bind(&payload.signature_html)
     .bind(&payload.signature_text)
-    .bind(&payload.sync_interval_minutes)
+    .bind(payload.sync_interval_minutes)
     .bind(&payload.status)
     .bind(id)
     .bind(claims.sub)
@@ -226,7 +230,7 @@ async fn update_account(
         Err(e) => {
             tracing::error!("Failed to update account: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to update").into_response()
-        }
+        },
     }
 }
 
@@ -247,7 +251,7 @@ async fn delete_account(
         Err(e) => {
             tracing::error!("Failed to delete account: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete").into_response()
-        }
+        },
     }
 }
 
@@ -330,8 +334,9 @@ async fn test_smtp_connection(account: &MailAccount) -> (bool, Option<String>) {
 
     let creds = Credentials::new(account.email_address.clone(), password.clone());
 
-    let mailer_result: Result<AsyncSmtpTransport<Tokio1Executor>, _> = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)
-        .map(|builder| builder.credentials(creds).build());
+    let mailer_result: Result<AsyncSmtpTransport<Tokio1Executor>, _> =
+        AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)
+            .map(|builder| builder.credentials(creds).build());
 
     match mailer_result {
         Ok(mailer) => match mailer.test_connection().await {
@@ -485,7 +490,7 @@ async fn get_email(
                 .execute(&state.pool)
                 .await;
             Json(e).into_response()
-        }
+        },
         None => (StatusCode::NOT_FOUND, "Email not found").into_response(),
     }
 }
@@ -581,7 +586,7 @@ async fn send_email(
         Err(e) => {
             tracing::error!("Failed to save email: {:?}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, "Failed to save email").into_response();
-        }
+        },
     };
 
     // Actually send via SMTP if not a draft
@@ -614,7 +619,10 @@ async fn send_via_smtp(
         .smtp_server
         .as_ref()
         .ok_or("SMTP server not configured")?;
-    let password = account.app_password.as_ref().ok_or("App password not set")?;
+    let password = account
+        .app_password
+        .as_ref()
+        .ok_or("App password not set")?;
 
     let from: Mailbox = account.email_address.parse()?;
     let to: Mailbox = payload.recipient.parse()?;
@@ -721,7 +729,7 @@ async fn update_email(
         Err(e) => {
             tracing::error!("Failed to update email: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to update").into_response()
-        }
+        },
     }
 }
 
@@ -750,7 +758,7 @@ async fn delete_email(
         Err(e) => {
             tracing::error!("Failed to delete email: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete").into_response()
-        }
+        },
     }
 }
 
@@ -855,7 +863,7 @@ async fn create_label(
         Err(e) => {
             tracing::error!("Failed to create label: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to create label").into_response()
-        }
+        },
     }
 }
 
@@ -895,7 +903,7 @@ async fn update_label(
         Err(e) => {
             tracing::error!("Failed to update label: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to update").into_response()
-        }
+        },
     }
 }
 
@@ -923,7 +931,7 @@ async fn delete_label(
         Err(e) => {
             tracing::error!("Failed to delete label: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete").into_response()
-        }
+        },
     }
 }
 

@@ -11,22 +11,38 @@ setup('authenticate', async ({ page }) => {
   // Navigate to login page
   await page.goto('/login');
 
-  // Wait for the login form to be visible
-  await expect(page.locator('text=Welcome Back')).toBeVisible();
+  // Wait for React hydration
+  await page.waitForLoadState('networkidle');
 
-  // Fill in login credentials using specific input IDs within the form
-  // This avoids conflicts with other inputs on the page (like AI assistant)
-  await page.locator('input#username').fill('admin');
-  await page.locator('input#password').fill('password123');
+  // Fill in login credentials using accessibility labels (click first to ensure focus/hydration)
+  const usernameInput = page.getByLabel(/username/i);
+  await usernameInput.click();
+  await usernameInput.fill('admin');
+
+  const passwordInput = page.getByLabel(/password/i);
+  await passwordInput.click();
+  await passwordInput.fill('password123');
 
   // Click the sign in button within the form
   await page.locator('form').getByRole('button', { name: /sign in/i }).click();
 
-  // Wait for redirect to dashboard or MFA verification
-  await page.waitForURL(/\/(dashboard|login\/verify)/, { timeout: 15000 });
-
-  // If MFA is required, we'd handle it here
-  // For now, assume direct login to dashboard
+  // Wait for either the redirect OR an error message to appear
+  try {
+    await page.waitForURL(/\/(dashboard|login\/verify)/, { timeout: 10000 });
+  } catch (error) {
+    // If we timed out, let's grab the text content of the page to see if there's an error message
+    const pageText = await page.locator('body').innerText();
+    console.error("Login failed or timed out. Page content snippet:");
+    console.error(pageText.substring(0, 500));
+    
+    // Also check for any specific error boxes
+    const errorBox = page.locator('.text-destructive');
+    if (await errorBox.count() > 0) {
+      console.error("Found error on page:", await errorBox.first().innerText());
+    }
+    
+    throw error; // Rethrow to fail the test naturally
+  }
   if (page.url().includes('/login/verify')) {
     // MFA verification would go here
     // For tests, you might skip MFA or use a test account without MFA

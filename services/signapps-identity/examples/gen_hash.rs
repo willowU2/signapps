@@ -1,6 +1,6 @@
+use argon2::password_hash::SaltString;
 /// Generate an Argon2 hash for a password
 use argon2::{Argon2, PasswordHasher};
-use argon2::password_hash::SaltString;
 use rand::rngs::OsRng;
 
 fn main() {
@@ -18,12 +18,15 @@ fn main() {
         Err(e) => {
             eprintln!("Error generating hash: {}", e);
             return;
-        }
+        },
     };
 
     println!("Password: {}", password);
     println!("Hash: {}", hashed);
     println!("");
     println!("Use this hash in the database:");
-    println!("UPDATE identity.users SET password_hash = '{}' WHERE username = 'admin';", hashed);
+    println!(
+        "UPDATE identity.users SET password_hash = '{}' WHERE username = 'admin';",
+        hashed
+    );
 }

@@ -44,7 +44,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
                 setLocalStream(stream)
                 localStreamRef.current = stream
             } catch (err) {
-                console.error("Failed to get local stream", err)
+                console.debug("Failed to get local stream", err)
             }
         }
         initStream()
@@ -78,7 +78,7 @@ export function useMeet(roomId: string, userId: string, userName: string) {
 
                     handleSignal(msg)
                 } catch (e) {
-                    console.error("Failed to parse signaling message", e)
+                    console.debug("Failed to parse signaling message", e)
                 }
             }
         }

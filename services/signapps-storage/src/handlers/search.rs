@@ -181,7 +181,12 @@ pub async fn search(
         let q_lower = query.q.to_lowercase();
 
         for obj in listed.objects {
-            let filename = obj.key.split('/').last().unwrap_or(&obj.key).to_string();
+            let filename = obj
+                .key
+                .split('/')
+                .next_back()
+                .unwrap_or(&obj.key)
+                .to_string();
 
             if q_lower.is_empty() || filename.to_lowercase().contains(&q_lower) {
                 let modified_at = if let Some(dt_str) = &obj.last_modified {
@@ -277,7 +282,12 @@ pub async fn quick_search(
             if results.len() >= limit {
                 break;
             }
-            let filename = obj.key.split('/').last().unwrap_or(&obj.key).to_string();
+            let filename = obj
+                .key
+                .split('/')
+                .next_back()
+                .unwrap_or(&obj.key)
+                .to_string();
 
             if q_lower.is_empty() || filename.to_lowercase().contains(&q_lower) {
                 results.push(QuickSearchResult {

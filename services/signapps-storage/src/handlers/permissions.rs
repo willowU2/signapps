@@ -95,9 +95,10 @@ impl PermissionsResponse {
 fn validate_mode(mode: u32) -> Result<()> {
     // Mode should be between 0 and 777 (octal)
     if mode > 0o777 {
-        return Err(Error::BadRequest(
-            format!("Invalid mode: {}. Must be between 0 and 777 (octal)", mode),
-        ));
+        return Err(Error::BadRequest(format!(
+            "Invalid mode: {}. Must be between 0 and 777 (octal)",
+            mode
+        )));
     }
     Ok(())
 }
@@ -119,7 +120,11 @@ pub async fn get_permissions(
         "Permissions retrieved"
     );
 
-    Ok(Json(PermissionsResponse::from_mode(bucket, key, default_mode)))
+    Ok(Json(PermissionsResponse::from_mode(
+        bucket,
+        key,
+        default_mode,
+    )))
 }
 
 /// Set file permissions.
@@ -143,7 +148,9 @@ pub async fn set_permissions(
     );
 
     Ok(Json(PermissionsResponse::from_mode(
-        bucket, key, request.mode,
+        bucket,
+        key,
+        request.mode,
     )))
 }
 
@@ -168,7 +175,8 @@ mod tests {
 
     #[test]
     fn test_permissions_response_from_mode() {
-        let perms = PermissionsResponse::from_mode("test".to_string(), "file.txt".to_string(), 0o755);
+        let perms =
+            PermissionsResponse::from_mode("test".to_string(), "file.txt".to_string(), 0o755);
         assert!(perms.owner_readable);
         assert!(perms.owner_writable);
         assert!(perms.owner_executable);
@@ -182,7 +190,8 @@ mod tests {
 
     #[test]
     fn test_permissions_response_644() {
-        let perms = PermissionsResponse::from_mode("test".to_string(), "file.txt".to_string(), 0o644);
+        let perms =
+            PermissionsResponse::from_mode("test".to_string(), "file.txt".to_string(), 0o644);
         assert!(perms.owner_readable);
         assert!(perms.owner_writable);
         assert!(!perms.owner_executable);

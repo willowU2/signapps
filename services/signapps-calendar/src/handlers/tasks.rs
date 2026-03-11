@@ -162,7 +162,7 @@ pub async fn move_task(
 
     // Validate the move
     services::task_tree::validate_parent_change(id, payload.new_parent_id, &parent_map)
-        .map_err(|e| CalendarError::InvalidInput(e))?;
+        .map_err(CalendarError::InvalidInput)?;
 
     // Perform the move
     let updated = repo
@@ -231,7 +231,7 @@ pub async fn get_task_tree(
     for task in &all_tasks {
         children_map
             .entry(task.parent_task_id)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(task.clone());
     }
 

@@ -68,8 +68,7 @@ fn get_version() -> String {
 /// Initialize database connection
 #[tauri::command]
 async fn init_database(state: State<'_, AppState>) -> Result<String, String> {
-    let db_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite::memory:".to_string());
+    let db_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite::memory:".to_string());
 
     let conn = Database::connect(&db_url)
         .await

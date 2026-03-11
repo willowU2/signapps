@@ -173,7 +173,12 @@ pub async fn list_favorites(
     let favorites_with_info = favorites
         .into_iter()
         .map(|fav| FavoriteWithInfo {
-            filename: fav.key.split('/').last().unwrap_or(&fav.key).to_string(),
+            filename: fav
+                .key
+                .split('/')
+                .next_back()
+                .unwrap_or(&fav.key)
+                .to_string(),
             size: None,
             content_type: None,
             exists: true,
@@ -215,7 +220,7 @@ pub async fn get_favorite(
         filename: favorite
             .key
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or(&favorite.key)
             .to_string(),
         size: None,

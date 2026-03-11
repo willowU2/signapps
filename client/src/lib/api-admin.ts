@@ -38,7 +38,7 @@ export async function getUsers(): Promise<User[]> {
         if (!res.ok) throw new Error("Failed to fetch users")
         return res.json()
     } catch (e) {
-        console.warn("Using mock users data due to API error:", e)
+        console.debug("Using mock users data due to API error:", e)
         return [
             { id: "1", username: "admin", email: "admin@example.com", display_name: "Admin User", role: 2, mfa_enabled: false, auth_provider: "local", created_at: new Date().toISOString(), last_login: new Date().toISOString() },
             { id: "2", username: "user", email: "user@example.com", display_name: "Regular User", role: 1, mfa_enabled: false, auth_provider: "local", created_at: new Date().toISOString(), last_login: new Date().toISOString() },
@@ -53,7 +53,7 @@ export async function getSystemMetrics(): Promise<SystemMetrics> {
         if (!res.ok) throw new Error("Failed to fetch metrics")
         return res.json()
     } catch (e) {
-        console.warn("Using mock metrics data due to API error:", e)
+        console.debug("Using mock metrics data due to API error:", e)
         return {
             cpu_usage: Math.random() * 100,
             memory_usage: Math.random() * 100,

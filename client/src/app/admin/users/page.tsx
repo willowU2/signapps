@@ -28,7 +28,7 @@ export default function UsersPage() {
     const [search, setSearch] = useState("")
 
     useEffect(() => {
-        getUsers().then(setUsers).catch(console.error)
+        getUsers().then(setUsers).catch(err => console.debug(err))
     }, [])
 
     const filteredUsers = users.filter(user =>

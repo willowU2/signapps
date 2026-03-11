@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
+import { v4 as uuidv4 } from 'uuid'
 import { CellData, CellStyle, CellValidation, SheetInfo, ROWS, COLS } from './types'
 
 export type { CellStyle, CellData, CellValidation, SheetInfo }
@@ -14,10 +15,12 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
     const undoManagerRef = useRef<Y.UndoManager | null>(null)
     const [canUndo, setCanUndo] = useState(false)
     const [canRedo, setCanRedo] = useState(false)
-    const [sheets, setSheets] = useState<SheetInfo[]>([{ name: 'Sheet1' }])
+    const [sheets, setSheets] = useState<SheetInfo[]>([{ id: 'default', name: 'Sheet1' }])
     const [activeSheetIndex, setActiveSheetIndex] = useState(0)
+    const [globalGridVersion, setGlobalGridVersion] = useState(0)
 
-    const activeMapKey = `grid-${activeSheetIndex}`
+    const activeSheetId = sheets[activeSheetIndex]?.id || 'default'
+    const activeMapKey = `grid-${activeSheetId}`
 
     // WebSocket + IndexedDB providers (once)
     useEffect(() => {
@@ -35,7 +38,12 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
             setIsConnected(event.status === 'connected')
         })
 
+        // Track global updates across all sheets to force cross-sheet recalculations
+        const bumpVersion = () => setGlobalGridVersion(v => v + 1)
+        doc.on('update', bumpVersion)
+
         return () => {
+            doc.off('update', bumpVersion)
             wsProvider.destroy()
             idbProvider.destroy()
         }
@@ -43,18 +51,44 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
 
     // Sheets metadata
     useEffect(() => {
-        const sheetsMeta = doc.getArray<string>('sheets-meta')
+        const sheetsMetaV2 = doc.getArray<any>('sheets-meta-v2')
         const sheetsColors = doc.getMap<string>('sheets-colors')
-        if (sheetsMeta.length === 0) {
-            sheetsMeta.push(['Sheet1'])
+        const oldSheetsMeta = doc.getArray<string>('sheets-meta')
+
+        // Forward Migration from V1 to V2
+        if (sheetsMetaV2.length === 0) {
+            if (oldSheetsMeta.length > 0) {
+                // Migrate existing
+                doc.transact(() => {
+                    const migrated = oldSheetsMeta.toArray().map((name, i) => ({ id: String(i), name }))
+                    sheetsMetaV2.push(migrated)
+                })
+            } else {
+                // Initialize new document
+                sheetsMetaV2.push([{ id: 'default', name: 'Sheet1' }])
+            }
         }
+
         const syncSheets = () => {
-            setSheets(sheetsMeta.toArray().map((name, i) => ({ name, color: sheetsColors.get(String(i)) })))
+            const arr = sheetsMetaV2.toArray()
+            setSheets(arr.map((s, i) => ({ 
+                id: s.id, 
+                name: s.name, 
+                color: sheetsColors.get(s.id) 
+            })))
+            
+            // Validate boundaries for activeSheetIndex
+            setActiveSheetIndex(prev => Math.min(prev, Math.max(0, arr.length - 1)))
         }
-        sheetsMeta.observe(syncSheets)
+
+        sheetsMetaV2.observe(syncSheets)
         sheetsColors.observe(syncSheets)
         syncSheets()
-        return () => { sheetsMeta.unobserve(syncSheets); sheetsColors.unobserve(syncSheets) }
+
+        return () => { 
+            sheetsMetaV2.unobserve(syncSheets)
+            sheetsColors.unobserve(syncSheets)
+        }
     }, [doc])
 
     // Watch active sheet's grid map
@@ -308,40 +342,48 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
     }, [doc, getGridMap])
 
     const addSheet = useCallback((name: string) => {
-        doc.getArray<string>('sheets-meta').push([name])
+        const sheetsMetaV2 = doc.getArray<any>('sheets-meta-v2')
+        sheetsMetaV2.push([{ id: uuidv4(), name }])
     }, [doc])
 
     const removeSheet = useCallback((index: number) => {
-        const sheetsMeta = doc.getArray<string>('sheets-meta')
-        if (sheetsMeta.length <= 1) return
-        sheetsMeta.delete(index, 1)
-        const gridMap = doc.getMap<CellData>(`grid-${index}`)
-        doc.transact(() => { gridMap.forEach((_, key) => gridMap.delete(key)) })
-        if (activeSheetIndex >= sheetsMeta.length) {
-            setActiveSheetIndex(sheetsMeta.length - 1)
-        }
-    }, [doc, activeSheetIndex])
-
-    const renameSheet = useCallback((index: number, newName: string) => {
-        const sheetsMeta = doc.getArray<string>('sheets-meta')
+        const sheetsMetaV2 = doc.getArray<any>('sheets-meta-v2')
+        if (sheetsMetaV2.length <= 1) return
+        
+        const sheetId = sheetsMetaV2.get(index).id
+        
         doc.transact(() => {
-            sheetsMeta.delete(index, 1)
-            sheetsMeta.insert(index, [newName])
+            sheetsMetaV2.delete(index, 1)
+            const gridMap = doc.getMap<CellData>(`grid-${sheetId}`)
+            gridMap.forEach((_, key) => gridMap.delete(key))
+            const sheetsColors = doc.getMap<string>('sheets-colors')
+            sheetsColors.delete(sheetId)
         })
     }, [doc])
 
-    const setSheetColor = useCallback((index: number, color: string | undefined) => {
+    const renameSheet = useCallback((index: number, newName: string) => {
+        const sheetsMetaV2 = doc.getArray<any>('sheets-meta-v2')
+        const existing = sheetsMetaV2.get(index)
+        doc.transact(() => {
+            sheetsMetaV2.delete(index, 1)
+            sheetsMetaV2.insert(index, [{ ...existing, name: newName }])
+        })
+    }, [doc])
+
+    const setSheetColor = useCallback((sheetId: string, color: string | undefined) => {
         const sheetsColors = doc.getMap<string>('sheets-colors')
-        if (color) sheetsColors.set(String(index), color)
-        else sheetsColors.delete(String(index))
+        if (color) sheetsColors.set(sheetId, color)
+        else sheetsColors.delete(sheetId)
     }, [doc])
 
     const getCrossSheetValue = useCallback((sheetName: string, r: number, c: number): string => {
-        const sheetsMeta = doc.getArray<string>('sheets-meta')
-        const names = sheetsMeta.toArray()
-        const idx = names.findIndex(n => n.toUpperCase() === sheetName.toUpperCase())
-        if (idx === -1) return ''
-        const gridMap = doc.getMap<CellData>(`grid-${idx}`)
+        const sheetsMetaV2 = doc.getArray<any>('sheets-meta-v2')
+        const arr = sheetsMetaV2.toArray()
+        // Allow unquoted names space resilient search
+        const cleanName = sheetName.replace(/^'|'$/g, '')
+        const match = arr.find(s => s.name.toUpperCase() === cleanName.toUpperCase())
+        if (!match) return ''
+        const gridMap = doc.getMap<CellData>(`grid-${match.id}`)
         return gridMap.get(`${r},${c}`)?.value || ''
     }, [doc])
 
@@ -362,5 +404,6 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
         addSheet, removeSheet, renameSheet, setSheetColor,
         getCrossSheetValue,
         transact,
+        globalGridVersion
     }
 }

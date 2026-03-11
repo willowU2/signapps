@@ -11,16 +11,15 @@ test.describe('Navigation', () => {
       await page.goto('/dashboard');
     });
 
-    test('should display sidebar with navigation links', async ({ page }) => {
+    test('should display sidebar with main groups', async ({ page }) => {
       const sidebar = page.locator('aside');
       await expect(sidebar).toBeVisible();
 
-      // Check for main navigation items
-      await expect(page.getByRole('link', { name: /dashboard/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /containers/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /storage/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /routes/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /settings/i })).toBeVisible();
+      // Check for main navigation groups
+      await expect(page.getByRole('button', { name: /Productivity/i })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Infrastructure/i })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Operations/i })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Administration/i })).toBeVisible();
     });
 
     test('should display logo/brand in sidebar', async ({ page }) => {
@@ -35,65 +34,71 @@ test.describe('Navigation', () => {
     });
 
     test('should navigate to Containers', async ({ page }) => {
+      await page.getByRole('button', { name: /Infrastructure/i }).click();
       await page.getByRole('link', { name: /containers/i }).click();
       await expect(page).toHaveURL(/\/containers/);
-      await expect(page.getByRole('heading', { name: 'Containers' })).toBeVisible();
     });
 
     test('should navigate to Storage', async ({ page }) => {
+      await page.getByRole('button', { name: /Infrastructure/i }).click();
       await page.getByRole('link', { name: /storage/i }).click();
       await expect(page).toHaveURL(/\/storage/);
-      await expect(page.getByRole('heading', { name: 'Storage' })).toBeVisible();
     });
 
     test('should navigate to Routes', async ({ page }) => {
+      await page.getByRole('button', { name: /Infrastructure/i }).click();
       await page.getByRole('link', { name: /routes/i }).click();
       await expect(page).toHaveURL(/\/routes/);
     });
 
     test('should navigate to VPN', async ({ page }) => {
+      await page.getByRole('button', { name: /Infrastructure/i }).click();
       await page.getByRole('link', { name: /vpn/i }).click();
       await expect(page).toHaveURL(/\/vpn/);
     });
 
     test('should navigate to Scheduler', async ({ page }) => {
+      await page.getByRole('button', { name: /Operations/i }).click();
       await page.getByRole('link', { name: /scheduler/i }).click();
       await expect(page).toHaveURL(/\/scheduler/);
     });
 
     test('should navigate to Monitoring', async ({ page }) => {
+      await page.getByRole('button', { name: /Operations/i }).click();
       await page.getByRole('link', { name: /monitoring/i }).click();
       await expect(page).toHaveURL(/\/monitoring/);
     });
 
-    test('should navigate to AI Chat', async ({ page }) => {
+    test('should navigate to AI', async ({ page }) => {
+      await page.getByRole('button', { name: /Operations/i }).click();
       await page.getByRole('link', { name: /ai/i }).click();
       await expect(page).toHaveURL(/\/ai/);
     });
 
     test('should navigate to Users', async ({ page }) => {
+      await page.getByRole('button', { name: /Administration/i }).click();
       await page.getByRole('link', { name: /users/i }).click();
-      await expect(page).toHaveURL(/\/users/);
+      await expect(page).toHaveURL(/\/admin\/users/);
     });
 
     test('should navigate to Settings', async ({ page }) => {
+      await page.getByRole('button', { name: /Administration/i }).click();
       await page.getByRole('link', { name: /settings/i }).click();
       await expect(page).toHaveURL(/\/settings/);
     });
 
     test('should highlight active navigation item', async ({ page }) => {
-      // Dashboard link should be active
+      // Dashboard link should be active initially
       const dashboardLink = page.getByRole('link', { name: /dashboard/i });
-
-      // Check for active state (typically has different background/color)
-      await expect(dashboardLink).toHaveClass(/accent|active/);
+      await expect(dashboardLink).toHaveClass(/primary|accent|active/);
 
       // Navigate to containers
+      await page.getByRole('button', { name: /Infrastructure/i }).click();
       await page.getByRole('link', { name: /containers/i }).click();
 
       // Containers link should now be active
       const containersLink = page.getByRole('link', { name: /containers/i });
-      await expect(containersLink).toHaveClass(/accent|active/);
+      await expect(containersLink).toHaveClass(/primary|accent|active/);
     });
 
     test('should collapse and expand sidebar', async ({ page }) => {

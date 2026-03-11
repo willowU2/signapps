@@ -1,4 +1,5 @@
 export * from './core';
+export * from './drive';
 export * from './identity';
 export * from './containers';
 export * from './proxy';

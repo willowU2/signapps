@@ -21,7 +21,7 @@ pub struct SearchQuery {
     #[allow(dead_code)]
     pub threshold: Option<f32>,
     /// Filter by collection.
-    pub collection: Option<String>,
+    pub collections: Option<Vec<String>>,
 }
 
 /// Search result item.
@@ -54,12 +54,18 @@ pub async fn search(
         "organization_id": claims.sub
     });
 
+    let target_collections = if claims.role >= 2 {
+        query.collections.clone()
+    } else {
+        Some(vec![format!("user_{}", claims.sub)])
+    };
+
     let results = state
         .rag
         .search(
             &query.q,
             query.limit,
-            query.collection.as_deref(),
+            target_collections.as_deref(),
             Some(&tags_filter),
         )
         .await?;

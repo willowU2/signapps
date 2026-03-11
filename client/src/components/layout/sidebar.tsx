@@ -65,7 +65,7 @@ const navGroups = [
     items: [
       { href: '/chat', icon: MessagesSquare, label: 'Chat' },
       { href: '/meet', icon: Video, label: 'Meet' },
-      { href: '/media', icon: Mic, label: 'Media' },
+
     ]
   },
   {
@@ -73,7 +73,7 @@ const navGroups = [
     icon: HardDrive,
     items: [
       { href: '/containers', icon: Container, label: 'Containers' },
-      { href: '/storage', icon: HardDrive, label: 'Storage' },
+      { href: '/drive', icon: HardDrive, label: 'Global Drive' },
       { href: '/routes', icon: Network, label: 'Routes' },
       { href: '/vpn', icon: Shield, label: 'VPN' },
       { href: '/backups', icon: Archive, label: 'Backups' },

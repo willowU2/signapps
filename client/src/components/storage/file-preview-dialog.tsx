@@ -262,7 +262,7 @@ export function FilePreviewDialog({
         setContent(text);
       }
     } catch (err) {
-      console.error("File preview error:", err);
+      console.debug("File preview error:", err);
       setError('Impossible de charger le fichier');
     } finally {
       setLoading(false);

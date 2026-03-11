@@ -39,10 +39,10 @@ export default function MeetPage() {
                     setJoinedRoomId(roomId)
                     setInRoom(true)
                 } else {
-                    console.error("Failed to get token", data)
+                    console.debug("Failed to get token", data)
                 }
             } catch (err) {
-                console.error("Error fetching LiveKit token:", err)
+                console.debug("Error fetching LiveKit token:", err)
             } finally {
                 setIsConnecting(false)
             }

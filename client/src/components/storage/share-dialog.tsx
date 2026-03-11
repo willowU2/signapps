@@ -42,7 +42,7 @@ export function ShareDialog({ open, onOpenChange, item }: ShareDialogProps) {
             setShareUrl(response.data.url);
             toast.success('Share link created successfully');
         } catch (error) {
-            console.error(error);
+            console.debug(error);
             toast.error('Failed to create share link');
         } finally {
             setLoading(false);

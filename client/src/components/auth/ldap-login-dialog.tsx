@@ -52,7 +52,11 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
   const onSubmit = async (data: LdapLoginForm) => {
     try {
       setError(null);
-      const response = await authApi.ldapLogin(data.username, data.password, rememberMe);
+      const response = await authApi.login({
+        username: data.username,
+        password: data.password,
+        remember_me: rememberMe
+      });
 
       // Check if MFA is required
       if (response.data.mfa_required && response.data.mfa_session_token) {

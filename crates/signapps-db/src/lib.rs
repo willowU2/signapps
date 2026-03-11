@@ -35,7 +35,10 @@ pub async fn create_pool(database_url: &str) -> Result<DatabasePool, sqlx::Error
 /// we fix the checksum in the database and retry.
 ///
 /// If migrations are severely broken, attempt to reset in dev mode.
-pub async fn run_migrations(_pool: &DatabasePool) -> Result<(), sqlx::migrate::MigrateError> {
-    tracing::info!("Database migrations skipped in dev to prevent deadlocks");
+pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::MigrateError> {
+    sqlx::migrate!("./../../migrations")
+        .run(pool.inner())
+        .await?;
+    tracing::info!("Database migrations executed successfully");
     Ok(())
 }

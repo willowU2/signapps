@@ -16,9 +16,9 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+mod crawlers;
 mod handlers;
 mod scheduler;
-mod crawlers;
 
 use scheduler::SchedulerService;
 use signapps_common::middleware::AuthState;

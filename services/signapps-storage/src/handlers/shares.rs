@@ -355,7 +355,7 @@ pub async fn access_share(
     let filename = share
         .key
         .split('/')
-        .last()
+        .next_back()
         .unwrap_or(&share.key)
         .to_string();
 
@@ -400,7 +400,7 @@ pub async fn download_shared(
     let filename = share
         .key
         .split('/')
-        .last()
+        .next_back()
         .unwrap_or(&share.key)
         .to_string();
 

@@ -67,7 +67,7 @@ impl VectorRepository {
         query_vector: &[f32],
         limit: i64,
         score_threshold: Option<f32>,
-        collection: Option<&str>,
+        collections: Option<&[String]>,
         security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<Vec<VectorSearchResult>> {
         let vec = Vector::from(query_vector.to_vec());
@@ -84,12 +84,12 @@ impl VectorRepository {
             "#,
         );
 
-        if collection.is_some() {
-            query.push_str(" AND collection = $4");
+        if collections.is_some() {
+            query.push_str(" AND collection = ANY($4)");
         }
 
         if security_tags_filter.is_some() {
-            if collection.is_some() {
+            if collections.is_some() {
                 query.push_str(" AND security_tags @> $5::jsonb");
             } else {
                 query.push_str(" AND security_tags @> $4::jsonb");
@@ -103,16 +103,18 @@ impl VectorRepository {
             .bind(threshold)
             .bind(limit);
 
-        if let Some(coll) = collection {
-            sqlx_query = sqlx_query.bind(coll);
+        if let Some(colls) = collections {
+            sqlx_query = sqlx_query.bind(colls);
         }
 
         if let Some(tags) = security_tags_filter {
             sqlx_query = sqlx_query.bind(tags);
         }
 
-        let rows = sqlx_query.fetch_all(pool.inner()).await
-        .map_err(|e| Error::Internal(format!("Vector search failed: {}", e)))?;
+        let rows = sqlx_query
+            .fetch_all(pool.inner())
+            .await
+            .map_err(|e| Error::Internal(format!("Vector search failed: {}", e)))?;
 
         Ok(rows
             .into_iter()

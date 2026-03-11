@@ -57,7 +57,7 @@ export function useYjsDocument(
             const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
             fetch(httpUrl, { method: 'HEAD' })
                 .then(() => wsProvider.connect())
-                .catch(() => console.warn(`[useYjsDocument] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
+                .catch(() => console.debug(`[useYjsDocument] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
 
             // Listen for sync events
             wsProvider.on('sync', (isSynced: boolean) => {

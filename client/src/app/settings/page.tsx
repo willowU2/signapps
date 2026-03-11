@@ -77,6 +77,8 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { AiRoutingSettings } from '@/components/settings/ai-routing-settings';
+import { ProfileSettings } from '@/components/settings/profile-settings';
+import { AppearanceSettings } from '@/components/settings/appearance-settings';
 
 export default function SettingsPage() {
   // General tab state
@@ -347,7 +349,9 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold">Settings</h1>
 
         <Tabs defaultValue="users">
-          <TabsList>
+          <TabsList className="mb-4">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="groups">Groups</TabsTrigger>
@@ -355,6 +359,14 @@ export default function SettingsPage() {
             <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
             <TabsTrigger value="ai-routing">AI Routing</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="profile" className="space-y-6">
+            <ProfileSettings />
+          </TabsContent>
+
+          <TabsContent value="appearance" className="space-y-6">
+            <AppearanceSettings />
+          </TabsContent>
 
           <TabsContent value="general" className="space-y-6">
             <Card>

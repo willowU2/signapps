@@ -254,7 +254,7 @@ function processExpression(upperExpr: string, originalExpr: string, getData: Cel
         expr = expr.substring(0, match.index) + result + expr.substring(argsEnd + 1);
     }
 
-    // Process remaining cell references (handles $A$1, Sheet!Ref)
+    // Process remaining cell references (handles $A$1, Sheet!Ref, 'My Sheet'!Ref)
     expr = expr.replace(/(?:(?:'([^']+)'|[A-Za-z_][A-Za-z0-9_ ]*)!)?\$?([A-Z]+)\$?(\d+)/g, (fullMatch) => {
         const { sheet, rest } = extractSheetPrefix(fullMatch);
         const ref = parseCellRef(rest);
@@ -263,6 +263,11 @@ function processExpression(upperExpr: string, originalExpr: string, getData: Cel
         const rawVal = getData(ref.row, ref.col, targetSheet) || '';
         const val = rawVal.startsWith('=') ? evaluateFormula(rawVal, getData, { r: ref.row, c: ref.col, sheet: targetSheet }, visited) : rawVal;
         if (isError(val)) return val;
+        // Strip quotes around strings for math but keep numbers raw
+        if (val.startsWith('"') && val.endsWith('"')) {
+            const inner = val.slice(1, -1);
+            if (!isNaN(Number(inner))) return inner;
+        }
         const num = Number(val);
         return isNaN(num) ? '0' : num.toString();
     });

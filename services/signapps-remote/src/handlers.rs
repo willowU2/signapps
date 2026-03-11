@@ -43,7 +43,7 @@ pub async fn create_connection(
         RETURNING id, hardware_id, name, protocol, hostname, port, username, password_encrypted, private_key_encrypted, parameters, created_at, updated_at
         "#
     )
-    .bind(&payload.hardware_id)
+    .bind(payload.hardware_id)
     .bind(&payload.name)
     .bind(&payload.protocol)
     .bind(&payload.hostname)
@@ -91,14 +91,12 @@ pub async fn update_connection(
     Json(payload): Json<UpdateConnectionRequest>,
 ) -> Result<Json<RemoteConnection>, (StatusCode, String)> {
     // First check if connection exists
-    let _ = sqlx::query_as::<_, RemoteConnection>(
-        "SELECT * FROM remote.connections WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(state.db.inner())
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-    .ok_or((StatusCode::NOT_FOUND, "Connection not found".to_string()))?;
+    let _ = sqlx::query_as::<_, RemoteConnection>("SELECT * FROM remote.connections WHERE id = $1")
+        .bind(id)
+        .fetch_optional(state.db.inner())
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Connection not found".to_string()))?;
 
     let connection = sqlx::query_as::<_, RemoteConnection>(
         r#"
@@ -145,7 +143,10 @@ pub async fn delete_connection(
         .await
         .map_err(|e| {
             tracing::error!("Failed to delete connection: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, "Database error".to_string())
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Database error".to_string(),
+            )
         })?;
 
     if result.rows_affected() == 0 {

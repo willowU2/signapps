@@ -56,7 +56,7 @@ export function MeetRoom({ roomId, token, serverUrl, onLeave }: MeetRoomProps) {
             data-lk-theme="default"
             style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}
             onError={(err) => {
-                console.error("LiveKitRoom Error:", err)
+                console.debug("LiveKitRoom Error:", err)
                 toast.error("Une erreur critique est survenue dans la salle.")
             }}
         >
@@ -84,7 +84,7 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
             try {
                 await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)
             } catch (err: any) {
-                console.error("Mic toggle error:", err)
+                console.debug("Mic toggle error:", err)
                 if (err.name === 'NotAllowedError' || err.message?.includes('Permission denied')) {
                     toast.error("Accès au micro refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.")
                 } else {
@@ -98,7 +98,7 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
             try {
                 await localParticipant.setCameraEnabled(!isCameraEnabled)
             } catch (err: any) {
-                console.error("Camera toggle error:", err)
+                console.debug("Camera toggle error:", err)
                 if (err.name === 'NotAllowedError' || err.message?.includes('Permission denied')) {
                     toast.error("Accès à la caméra refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.")
                 } else {
@@ -112,7 +112,7 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
             try {
                 await localParticipant.setScreenShareEnabled(!isScreenShareEnabled)
             } catch (err: any) {
-                console.error("Screen share toggle error:", err)
+                console.debug("Screen share toggle error:", err)
                 toast.error("Impossible de partager l'écran. Le serveur de flux (ICE) semble injoignable.")
             }
         }

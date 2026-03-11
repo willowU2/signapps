@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/components/auth/auth-provider';
-import { OmniSearchBar } from '@/components/ai/omni-search-bar';
+
 import { NotificationPermissionDialog } from '@/components/notifications/notification-permission-dialog';
 import { CommandBar } from '@/components/layout/command-bar';
 import { Sidebar } from '@/components/layout/sidebar';
@@ -53,7 +53,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <CommandBar />
           <Sidebar />
           <RightSidebar />
-          <OmniSearchBar />
           <Toaster />
           <NotificationPermissionDialog />
         </TooltipProvider>

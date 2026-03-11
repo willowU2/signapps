@@ -1,12 +1,31 @@
 import axios from 'axios';
 import { storageApiClient, STORAGE_URL } from './core';
 
+export interface Bucket {
+    name: string;
+    created_at: string;
+}
+
+export interface UploadResponse {
+    id: string;
+    bucket: string;
+    key: string;
+    size: number;
+    content_type: string;
+}
+
 // Storage API
 // Backend routes: /files/:bucket, /files/:bucket/*key, /permissions/:bucket/*key, /buckets
 export const storageApi = {
     listBuckets: () => storageApiClient.get<Bucket[]>('/buckets'),
+    getBucket: (name: string) => storageApiClient.get<Bucket>(`/buckets/${name}`),
     createBucket: (name: string) => storageApiClient.post<Bucket>('/buckets', { name }),
     deleteBucket: (name: string) => storageApiClient.delete(`/buckets/${name}`),
+    
+    // Drive Nodes
+    getNodes: () => storageApiClient.get('/drive/nodes'),
+    getRootNodes: () => storageApiClient.get('/drive/nodes/root'),
+    getNodeChildren: (id: string) => storageApiClient.get(`/drive/nodes/${id}/children`),
 
     listFiles: (bucket: string, prefix: string = '', delimiter?: string) =>
         storageApiClient.get<ListObjectsResponse>(`/files/${bucket}`, { params: { prefix, delimiter } }),
@@ -14,7 +33,7 @@ export const storageApi = {
     uploadFile: (bucket: string, file: File, onProgress?: (percent: number) => void) => {
         const formData = new FormData();
         formData.append('file', file);
-        return storageApiClient.post(`/files/${bucket}`, formData, {
+        return storageApiClient.post<UploadResponse[]>(`/files/${bucket}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             onUploadProgress: (progressEvent) => {
                 if (onProgress && progressEvent.total) {
@@ -31,7 +50,7 @@ export const storageApi = {
         if (path) {
             formData.append('path', path);
         }
-        return storageApiClient.post(`/files/${bucket}`, formData, {
+        return storageApiClient.post<UploadResponse[]>(`/files/${bucket}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
     },
@@ -42,6 +61,16 @@ export const storageApi = {
     // Alias for deleteFile
     delete: (bucket: string, key: string) =>
         storageApiClient.delete(`/files/${bucket}/${encodeURIComponent(key)}`),
+
+    // Update an existing file by its exact key
+    uploadWithKey: (bucket: string, key: string, file: File | Blob) => {
+        const url = `/files/${bucket}/${key}`;
+        // Since the backend upload_with_key route accepts the raw body for the file content
+        // and expects content-type header, we will send the blob directly.
+        return storageApiClient.put<UploadResponse>(url, file, {
+            headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        });
+    },
 
     // Download a file
     download: (bucket: string, key: string) =>
@@ -157,6 +186,8 @@ export const sharesApi = {
     access: (token: string, password?: string) =>
         axios.post<ShareAccessResponse>(`${STORAGE_URL}/shares/${token}/access`, { password }),
     download: (token: string) =>
+        storageApiClient.get(`/shares/${token}/download`, { responseType: 'blob' }),
+    downloadUrl: (token: string) =>
         `${STORAGE_URL}/shares/${token}/download`,
 };
 
@@ -604,6 +635,22 @@ export const mountsApi = {
         storageApiClient.delete(`/mounts/${encodeURIComponent(mountPoint)}`),
     getInfo: (mountPoint: string) =>
         storageApiClient.get<MountPoint>(`/mounts/${encodeURIComponent(mountPoint)}`),
+};
+
+// Indexing & Storage Rules API
+export const rulesApi = {
+    getStorageRules: () => storageApiClient.get('/storage_rules'),
+    createStorageRule: (data: any) => storageApiClient.post('/storage_rules', data),
+    updateStorageRule: (id: string, data: any) => storageApiClient.put(`/storage_rules/${id}`, data),
+    deleteStorageRule: (id: string) => storageApiClient.delete(`/storage_rules/${id}`),
+
+    getIndexingRules: () => storageApiClient.get('/indexing_rules'),
+    createIndexingRule: (data: any) => storageApiClient.post('/indexing_rules', data),
+    updateIndexingRule: (id: string, data: any) => storageApiClient.put(`/indexing_rules/${id}`, data),
+    deleteIndexingRule: (id: string) => storageApiClient.delete(`/indexing_rules/${id}`),
+    
+    getSettings: (key: string) => storageApiClient.get(`/settings/${key}`),
+    updateSettings: (key: string, data: any) => storageApiClient.put(`/settings/${key}`, data),
 };
 
 export interface MountPoint {

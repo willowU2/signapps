@@ -273,8 +273,15 @@ mod tests {
         let doc_id = Uuid::new_v4();
         let content = "First paragraph about AI.\n\nSecond paragraph about ML.";
 
-        let chunks =
-            create_document_chunks(doc_id, content, "readme.md", "/docs/readme.md", None, None, None);
+        let chunks = create_document_chunks(
+            doc_id,
+            content,
+            "readme.md",
+            "/docs/readme.md",
+            None,
+            None,
+            None,
+        );
 
         assert!(!chunks.is_empty());
         for (i, chunk) in chunks.iter().enumerate() {
@@ -312,7 +319,8 @@ mod tests {
         let doc_id = Uuid::new_v4();
         let content = "";
 
-        let chunks = create_document_chunks(doc_id, content, "empty.txt", "/empty.txt", None, None, None);
+        let chunks =
+            create_document_chunks(doc_id, content, "empty.txt", "/empty.txt", None, None, None);
 
         assert!(chunks.is_empty());
     }

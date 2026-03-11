@@ -119,9 +119,12 @@ impl SttBackend for NativeSttBackend {
                 let seg = state.get_segment(i).ok_or_else(|| {
                     SttError::ServiceError(format!("Segment {} out of bounds", i))
                 })?;
-                let text = seg.to_str().map_err(|e| {
-                    SttError::ServiceError(format!("Failed to get segment text: {}", e))
-                })?.to_string();
+                let text = seg
+                    .to_str()
+                    .map_err(|e| {
+                        SttError::ServiceError(format!("Failed to get segment text: {}", e))
+                    })?
+                    .to_string();
                 let start_ts = seg.start_timestamp();
                 let end_ts = seg.end_timestamp();
 

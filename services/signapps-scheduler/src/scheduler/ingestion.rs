@@ -26,7 +26,11 @@ pub async fn start_ingestion_loop(pool: DatabasePool) {
                         continue;
                     }
 
-                    tracing::info!("Crawler '{}' found {} pending records", crawler.table_name(), records.len());
+                    tracing::info!(
+                        "Crawler '{}' found {} pending records",
+                        crawler.table_name(),
+                        records.len()
+                    );
 
                     for record_id in records {
                         match crawler.crawl_record(&pool, record_id).await {
@@ -51,11 +55,15 @@ pub async fn start_ingestion_loop(pool: DatabasePool) {
                                         let _ = crawler.mark_as_processed(&pool, record_id).await;
                                     },
                                     Ok(response) => {
-                                        tracing::error!("Failed to ingest {}: {}", record_id, response.status());
+                                        tracing::error!(
+                                            "Failed to ingest {}: {}",
+                                            record_id,
+                                            response.status()
+                                        );
                                     },
                                     Err(e) => {
                                         tracing::error!("Failed to connect to AI service: {}", e);
-                                    }
+                                    },
                                 }
                             },
                             Ok(None) => {
@@ -64,13 +72,17 @@ pub async fn start_ingestion_loop(pool: DatabasePool) {
                             },
                             Err(e) => {
                                 tracing::error!("Crawler error on record {}: {}", record_id, e);
-                            }
+                            },
                         }
                     }
                 },
                 Err(e) => {
-                    tracing::error!("Failed to fetch pending records for crawler '{}': {}", crawler.table_name(), e);
-                }
+                    tracing::error!(
+                        "Failed to fetch pending records for crawler '{}': {}",
+                        crawler.table_name(),
+                        e
+                    );
+                },
             }
         }
     }

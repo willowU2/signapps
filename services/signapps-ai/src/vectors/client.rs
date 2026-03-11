@@ -67,7 +67,7 @@ impl VectorService {
         query_vector: &Vec<f32>, // Borrow it instead to match pipeline
         limit: i64,
         score_threshold: Option<f32>,
-        collection: Option<&str>,
+        collections: Option<&[String]>,
         security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<Vec<SearchResult>> {
         let results = VectorRepository::search(
@@ -75,7 +75,7 @@ impl VectorService {
             query_vector,
             limit,
             score_threshold,
-            collection,
+            collections,
             security_tags_filter,
         )
         .await?;

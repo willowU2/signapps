@@ -215,7 +215,7 @@ async fn move_single_to_trash(
         original_bucket: item_row.get::<String, _>("original_bucket"),
         original_key: item_row.get::<String, _>("original_key"),
         trash_key: item_row.get::<String, _>("trash_key"),
-        filename: key.split('/').last().unwrap_or(key).to_string(),
+        filename: key.split('/').next_back().unwrap_or(key).to_string(),
         size: item_row.get::<i64, _>("size"),
         content_type: item_row.get::<Option<String>, _>("content_type"),
         deleted_by: item_row.get::<Uuid, _>("user_id"),
@@ -261,7 +261,7 @@ pub async fn list_trash(
             filename: row
                 .get::<String, _>("original_key")
                 .split('/')
-                .last()
+                .next_back()
                 .unwrap_or("")
                 .to_string(), // Derive filename
             size: row.get::<i64, _>("size"),
@@ -365,7 +365,7 @@ async fn restore_single_item(
         filename: row
             .get::<String, _>("original_key")
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or("")
             .to_string(), // Derive filename
         size: row.get::<i64, _>("size"),
@@ -390,7 +390,7 @@ async fn restore_single_item(
                 trash_item
                     .original_key
                     .split('/')
-                    .last()
+                    .next_back()
                     .unwrap_or(&trash_item.original_key)
             )
         })
@@ -504,7 +504,7 @@ async fn delete_trash_item(state: &AppState, id: Uuid, user_id: Uuid) -> Result<
     }
 
     // Update quota
-    if let Err(e) = quotas::record_delete(&state, user_id, TRASH_BUCKET, &trash_key, size).await {
+    if let Err(e) = quotas::record_delete(state, user_id, TRASH_BUCKET, &trash_key, size).await {
         tracing::error!(error = %e, "Failed to update quota during trash purge");
     }
 
@@ -548,7 +548,7 @@ pub async fn get_trash_item(
         filename: row
             .get::<String, _>("original_key")
             .split('/')
-            .last()
+            .next_back()
             .unwrap_or("")
             .to_string(),
         size: row.get("size"),

@@ -40,7 +40,7 @@ export function useSlides(docId: string = 'slides-demo') {
         // Check health endpoint before connecting (WS paths don't support HTTP methods)
         fetch('http://localhost:3010/health', { method: 'GET', mode: 'no-cors' })
             .then(() => webrtcProvider.connect())
-            .catch(() => console.warn(`[useSlides] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`))
+            .catch(() => console.debug(`[useSlides] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`))
 
         setProvider(webrtcProvider)
 
@@ -152,7 +152,7 @@ export function useSlides(docId: string = 'slides-demo') {
                 try {
                     newObj[key] = JSON.parse(json)
                 } catch (e) {
-                    console.error("Failed to parse object", e)
+                    console.debug("Failed to parse object", e)
                 }
             })
             setActiveObjects(newObj)
@@ -253,6 +253,28 @@ export function useSlides(docId: string = 'slides-demo') {
     const undo = () => undoManager?.undo()
     const redo = () => undoManager?.redo()
 
+    // Get objects for any slide (not just active) - useful for export
+    const getSlideObjects = useCallback((slideId: string): Record<string, any> => {
+        const slideObjectsMap = doc.getMap<string>(`objects-${slideId}`)
+        const objects: Record<string, any> = {}
+        slideObjectsMap.forEach((json, key) => {
+            try {
+                objects[key] = JSON.parse(json)
+            } catch (e) {
+                console.debug("Failed to parse object", e)
+            }
+        })
+        return objects
+    }, [doc])
+
+    // Get all slides with their objects - useful for export/save
+    const getAllSlidesWithObjects = useCallback(() => {
+        return slides.map(slide => ({
+            ...slide,
+            objects: getSlideObjects(slide.id)
+        }))
+    }, [slides, getSlideObjects])
+
     return {
         // App Level
         isConnected,
@@ -275,6 +297,10 @@ export function useSlides(docId: string = 'slides-demo') {
         canUndo,
         canRedo,
         undo,
-        redo
+        redo,
+
+        // Export helpers
+        getSlideObjects,
+        getAllSlidesWithObjects
     }
 }

@@ -73,7 +73,7 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
                     setDraftId(res.id)
                 }
             } catch (err) {
-                console.error("Failed to auto-save draft", err)
+                console.debug("Failed to auto-save draft", err)
             } finally {
                 setIsSaving(false)
             }

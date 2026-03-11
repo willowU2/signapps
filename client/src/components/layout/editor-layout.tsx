@@ -6,11 +6,12 @@ import { WorkspaceShell } from './workspace-shell';
 
 interface EditorLayoutProps {
     documentId: string;
+    documentName?: string;
     icon?: React.ReactNode;
     children: React.ReactNode;
 }
 
-export function EditorLayout({ documentId, icon, children }: EditorLayoutProps) {
+export function EditorLayout({ documentId, documentName, icon, children }: EditorLayoutProps) {
     const pathname = usePathname();
 
     // Determine if we are in a fullscreen editor route

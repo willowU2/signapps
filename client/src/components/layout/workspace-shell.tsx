@@ -5,8 +5,6 @@ import { cn } from "@/lib/utils"
 interface WorkspaceShellProps {
     /** The top horizontal header area */
     header: ReactNode;
-    /** The optional extreme left rail (e.g. for app switching) */
-    leftRail?: ReactNode;
     /** The optional sidebar navigation area */
     sidebar?: ReactNode;
     /** The main content area */
@@ -19,7 +17,6 @@ interface WorkspaceShellProps {
 
 export function WorkspaceShell({ 
     header, 
-    leftRail, 
     sidebar, 
     children, 
     rightRail, 
@@ -39,7 +36,6 @@ export function WorkspaceShell({
 
             {/* Workspace Body Area */}
             <div className="flex flex-1 overflow-hidden">
-                {leftRail}
                 {sidebar}
                 
                 {/* Scalable Main Content Area */}

@@ -1,14 +1,17 @@
 use axum::{
-    extract::{ws::{WebSocket, WebSocketUpgrade, Message}, Path, State},
+    extract::{
+        ws::{Message, WebSocket, WebSocketUpgrade},
+        Path, State,
+    },
     response::IntoResponse,
 };
 use futures::{stream::StreamExt, SinkExt};
 use tokio::sync::broadcast;
 use tracing::{debug, error, info};
 use uuid::Uuid;
-use yrs::{Doc, ReadTxn, Transact, updates::decoder::Decode};
+use yrs::{updates::decoder::Decode, Doc, ReadTxn, Transact};
 
-use crate::{AppState, handlers::persistence};
+use crate::{handlers::persistence, AppState};
 
 /// Generic WebSocket handler for all document types
 /// Endpoint: GET /api/v1/docs/{type}/{doc_id}/ws
@@ -24,12 +27,7 @@ pub async fn websocket_handler(
         .into_response()
 }
 
-async fn handle_socket(
-    socket: WebSocket,
-    doc_id: String,
-    doc_type: String,
-    state: AppState,
-) {
+async fn handle_socket(socket: WebSocket, doc_id: String, doc_type: String, state: AppState) {
     let session_id = Uuid::new_v4();
 
     info!(
@@ -57,10 +55,10 @@ async fn handle_socket(
             Err(e) => {
                 error!(doc_id = %doc_id, error = %e, "Failed to load document");
                 None
-            }
+            },
         };
 
-        let new_doc = loaded_doc.unwrap_or_else(|| Doc::new());
+        let new_doc = loaded_doc.unwrap_or_else(Doc::new);
         state.docs.insert(cache_key.clone(), new_doc.clone());
         new_doc
     };
@@ -79,7 +77,9 @@ async fn handle_socket(
 
     // Send initial state to client
     // We encode the whole document state as an update and send it
-    let initial_state = doc.transact().encode_state_as_update_v1(&yrs::StateVector::default());
+    let initial_state = doc
+        .transact()
+        .encode_state_as_update_v1(&yrs::StateVector::default());
     if let Err(e) = sender.send(Message::Binary(initial_state)).await {
         error!(session_id = %session_id, error = %e, "Failed to send initial state");
         return;
@@ -89,7 +89,7 @@ async fn handle_socket(
 
     // Handle incoming messages from client
     let mut client_rx = tx.subscribe();
-    
+
     // We need to clone doc and state for the receive task
     let doc_clone = doc.clone();
     let state_clone = state.clone();
@@ -110,7 +110,7 @@ async fn handle_socket(
                             Err(e) => {
                                 error!(session_id = %session_id, error = %e, "Failed to decode update");
                                 continue;
-                            }
+                            },
                         }
                     }
 
@@ -123,32 +123,34 @@ async fn handle_socket(
                     let d_id = doc_id_clone.clone();
                     let d_type = doc_type_clone.clone();
                     let d_ref = doc_clone.clone();
-                    
+
                     tokio::spawn(async move {
-                         // Save snapshot
-                         if let Err(e) = persistence::save_document(pool.inner(), &d_id, &d_type, &d_ref).await {
-                             error!(doc_id = %d_id, error = %e, "Failed to persist document");
-                         }
+                        // Save snapshot
+                        if let Err(e) =
+                            persistence::save_document(pool.inner(), &d_id, &d_type, &d_ref).await
+                        {
+                            error!(doc_id = %d_id, error = %e, "Failed to persist document");
+                        }
                     });
 
                     // Log update
                     // persistence::log_update(state_clone.pool.inner(), &doc_id_clone, &data).await.ok();
 
                     debug!(session_id = %session_id, "Update processed and broadcasted");
-                }
+                },
                 Ok(Message::Text(msg)) => {
                     debug!(session_id = %session_id, message = %msg, "Text message received");
-                }
+                },
                 Ok(Message::Ping(_)) => {
                     // debug!(session_id = %session_id, "Ping received");
-                }
+                },
                 Ok(Message::Pong(_)) => {
                     // debug!(session_id = %session_id, "Pong received");
-                }
+                },
                 Ok(Message::Close(_)) => {
                     info!(session_id = %session_id, "Client requested close");
                     break;
-                }
+                },
                 Err(e) => {
                     error!(
                         session_id = %session_id,
@@ -156,7 +158,7 @@ async fn handle_socket(
                         "WebSocket error"
                     );
                     break;
-                }
+                },
             }
         }
     });
@@ -164,8 +166,8 @@ async fn handle_socket(
     // Handle outgoing broadcasts to client
     let mut broadcast_task = tokio::spawn(async move {
         while let Ok(data) = client_rx.recv().await {
-            // Prevent echoing back to sender? 
-            // Broadcaster sends to ALL. We should probably filter if possible, 
+            // Prevent echoing back to sender?
+            // Broadcaster sends to ALL. We should probably filter if possible,
             // but for now simple broadcast is fine as Yjs handles duplicate updates gracefully.
             if let Err(e) = sender.send(Message::Binary(data)).await {
                 error!(

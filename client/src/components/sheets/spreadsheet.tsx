@@ -6,7 +6,11 @@ import { useSpreadsheet } from "./use-spreadsheet"
 import { AiSheetsDialog } from "./ai-sheets-dialog"
 import { CellStyle, CellData, CellValidation, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
-import { fetchAndParseDocument } from '@/lib/file-parsers' // Added import
+import { fetchAndParseDocument } from '@/lib/file-parsers'
+import * as XLSX from 'xlsx'
+import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu'
+import { GenericFeatureModal } from '@/components/editor/generic-feature-modal'
+import { storageApi } from '@/lib/api'
 import {
     AlignLeft, AlignCenter, AlignRight, Sparkles,
     PaintBucket, Plus, Undo, Redo, Type, Strikethrough,
@@ -211,380 +215,7 @@ function BorderPicker({ onSelect, onClose }: { onSelect: (type: string) => void,
     )
 }
 
-// ---- Menu Bar ----
-type MenuItem = {
-    label?: string;
-    action?: string;
-    sep?: boolean;
-    disabled?: boolean;
-    shortcut?: string;
-    isNew?: boolean;
-    icon?: React.ReactNode;
-    subitems?: MenuItem[];
-};
 
-type MenuGroup = {
-    id: string;
-    label: string;
-    items: MenuItem[];
-};
-
-function MenuDropdownItem({ item, onAction, closeMenu }: { item: MenuItem, onAction: (action: string) => void, closeMenu: () => void }) {
-    const [openSub, setOpenSub] = useState(false);
-    
-    if (item.sep) return <div className="h-px bg-[#e3e3e3] dark:bg-[#5f6368] my-1" />;
-    
-    return (
-        <div 
-            className="relative"
-            onMouseEnter={() => setOpenSub(true)}
-            onMouseLeave={() => setOpenSub(false)}
-        >
-            <button
-                className={cn(
-                    "w-full text-left px-4 py-1.5 flex items-center justify-between gap-3 text-[13px]",
-                    item.disabled ? "text-[#a8a8a8] dark:text-[#5f6368] cursor-pointer hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]" : "hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] cursor-pointer text-[#444746] dark:text-[#e8eaed]"
-                )}
-                onClick={(e) => { 
-                    e.stopPropagation(); 
-                    if (item.disabled) {
-                        toast.info("Fonctionnalité non disponible dans cette version.");
-                        closeMenu();
-                        return;
-                    }
-                    if (item.action) {
-                        onAction(item.action);
-                        closeMenu();
-                    }
-                }}
-            >
-                <div className="flex items-center gap-3">
-                    {item.icon && <span className="w-4 h-4 flex items-center justify-center">{item.icon}</span>}
-                    <span>{item.label}</span>
-                    {item.isNew && <span className="text-[10px] font-bold text-white bg-[#1a73e8] px-1.5 py-0.5 rounded-full leading-none ml-2 pt-[1px] shadow-sm tracking-wide uppercase">Nouveau</span>}
-                </div>
-                <div className="flex items-center gap-2">
-                    {item.shortcut && <span className="text-[12px] text-[#5f6368] dark:text-[#9aa0a6]">{item.shortcut}</span>}
-                    {item.subitems && <ChevronRight className="w-4 h-4 text-[#5f6368] ml-2" />}
-                </div>
-            </button>
-            
-            {item.subitems && openSub && (
-                <div className="absolute top-0 left-full -ml-1 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded shadow-lg py-1.5 min-w-[200px] z-50">
-                    {item.subitems.map((sub, idx) => (
-                        <MenuDropdownItem key={idx} item={sub} onAction={onAction} closeMenu={closeMenu} />
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
-function MenuBar({
-    onAction
-}: {
-    onAction: (action: string) => void
-}) {
-    const [openMenu, setOpenMenu] = useState<string | null>(null)
-
-    useEffect(() => {
-        if (!openMenu) return
-        const handler = () => setOpenMenu(null)
-        setTimeout(() => document.addEventListener('click', handler), 10)
-        return () => document.removeEventListener('click', handler)
-    }, [openMenu])
-
-    const menus: MenuGroup[] = [
-        {
-            id: 'file', label: 'Fichier', items: [
-                { label: 'Nouveau', subitems: [
-                    { label: 'Feuille de calcul', action: 'new' },
-                    { label: 'À partir d\'un modèle', disabled: true }
-                ] },
-                { label: 'Ouvrir', action: 'open', shortcut: 'Ctrl+O' },
-                { label: 'Importer', action: 'import' },
-                { label: 'Créer une copie', action: 'copyFile' },
-                { sep: true },
-                { label: 'Partager', subitems: [
-                    { label: 'Partager avec d\'autres personnes', disabled: true },
-                    { label: 'Publier sur le Web', disabled: true }
-                ] },
-                { label: 'Envoyer par e-mail', disabled: true },
-                { label: 'Télécharger', subitems: [
-                    { label: 'Microsoft Excel (.xlsx)', action: 'export' },
-                    { label: 'Valeurs séparées par des virgules (.csv)', action: 'export' },
-                    { label: 'Document PDF (.pdf)', disabled: true }
-                ] },
-                { label: 'Approbations', disabled: true },
-                { sep: true },
-                { label: 'Renommer', action: 'rename' },
-                { label: 'Placer dans la corbeille', disabled: true },
-                { sep: true },
-                { label: 'Historique des versions', subitems: [
-                    { label: 'Nommer la version actuelle', disabled: true },
-                    { label: 'Afficher l\'historique des versions', disabled: true }
-                ] },
-                { label: 'Rendre disponible hors connexion', disabled: true },
-                { sep: true },
-                { label: 'Détails', disabled: true },
-                { label: 'Limites de sécurité', disabled: true },
-                { label: 'Paramètres', disabled: true }
-            ]
-        },
-        {
-            id: 'edit', label: 'Édition', items: [
-                { label: 'Annuler', action: 'undo', shortcut: 'Ctrl+Z' },
-                { label: 'Rétablir', action: 'redo', shortcut: 'Ctrl+Y' },
-                { sep: true },
-                { label: 'Couper', action: 'cut', shortcut: 'Ctrl+X' },
-                { label: 'Copier', action: 'copy', shortcut: 'Ctrl+C' },
-                { label: 'Coller', action: 'paste', shortcut: 'Ctrl+V' },
-                { sep: true },
-                { label: 'Rechercher et remplacer', action: 'find', shortcut: 'Ctrl+H' }
-            ]
-        },
-        {
-            id: 'view', label: 'Affichage', items: [
-                { label: 'Afficher', subitems: [
-                    { label: 'Barre de formules', disabled: true },
-                    { label: 'Quadrillage', action: 'toggleGridlines' },
-                    { label: 'Plages protégées', disabled: true }
-                ] },
-                { label: 'Figer', subitems: [
-                    { label: 'Aucune ligne', action: 'unfreezeRow' },
-                    { label: '1 ligne', action: 'freezeRow' },
-                    { label: 'Aucune colonne', action: 'unfreezeCol' },
-                    { label: '1 colonne', action: 'freezeCol' }
-                ] },
-                { label: 'Regrouper', subitems: [
-                    { label: 'Associer', disabled: true },
-                    { label: 'Dissocier', disabled: true }
-                ] },
-                { label: 'Commentaires', disabled: true },
-                { sep: true },
-                { label: 'Feuilles masquées', disabled: true },
-                { sep: true },
-                { label: 'Zoom', subitems: [
-                    { label: '50%', disabled: true },
-                    { label: '100%', action: 'zoom100' },
-                    { label: '150%', disabled: true },
-                ] },
-                { label: 'Plein écran', disabled: true }
-            ]
-        },
-        {
-            id: 'insert', label: 'Insertion', items: [
-                { label: 'Cellules', subitems: [
-                    { label: 'Décaler vers la droite', disabled: true },
-                    { label: 'Décaler vers le bas', disabled: true }
-                ] },
-                { label: 'Lignes', subitems: [
-                    { label: 'Insérer 1 ligne au-dessus', action: 'insertRowAbove' },
-                    { label: 'Insérer 1 ligne en-dessous', action: 'insertRowBelow' }
-                ] },
-                { label: 'Colonnes', subitems: [
-                    { label: 'Insérer 1 colonne à gauche', action: 'insertColLeft' },
-                    { label: 'Insérer 1 colonne à droite', action: 'insertColRight' }
-                ] },
-                { label: 'Feuille', disabled: true, shortcut: 'Maj+F11' },
-                { sep: true },
-                { label: 'Générer un tableau', disabled: true },
-                { label: 'Tableaux prédéfinis', disabled: true },
-                { sep: true },
-                { label: 'Chronologie', disabled: true },
-                { label: 'Graphique', action: 'chart' },
-                { label: 'Tableau croisé dynamique', disabled: true },
-                { label: 'Image', subitems: [
-                    { label: 'Insérer une image dans la cellule', disabled: true },
-                    { label: 'Insérer une image sur les cellules', disabled: true }
-                ] },
-                { label: 'Dessin', disabled: true },
-                { sep: true },
-                { label: 'Fonction', subitems: [
-                    { label: 'SUM', action: 'insertSum' },
-                    { label: 'AVERAGE', action: 'insertAvg' },
-                    { label: 'COUNT', action: 'insertCount' },
-                    { label: 'MAX', action: 'insertMax' },
-                    { label: 'MIN', action: 'insertMin' }
-                ] },
-                { label: 'Lien', action: 'link', shortcut: 'Ctrl+K' },
-                { sep: true },
-                { label: 'Case à cocher', disabled: true },
-                { label: 'Liste déroulante', disabled: true }
-            ]
-        },
-        {
-            id: 'format', label: 'Format', items: [
-                { label: 'Thème', disabled: true },
-                { sep: true },
-                { label: 'Nombre', subitems: [
-                    { label: 'Automatique', disabled: true },
-                    { label: 'Texte brut', disabled: true },
-                    { label: 'Nombre', disabled: true },
-                    { label: 'Pourcentage', disabled: true },
-                    { label: 'Scientifique', disabled: true }
-                ] },
-                { label: 'Texte', subitems: [
-                    { label: 'Gras', action: 'bold', shortcut: 'Ctrl+B' },
-                    { label: 'Italique', action: 'italic', shortcut: 'Ctrl+I' },
-                    { label: 'Souligné', action: 'underline', shortcut: 'Ctrl+U' },
-                    { label: 'Barré', action: 'strikethrough', shortcut: 'Alt+Maj+5' }
-                ] },
-                { label: 'Alignement', subitems: [
-                    { label: 'Gauche', action: 'alignLeft' },
-                    { label: 'Centre', action: 'alignCenter' },
-                    { label: 'Droite', action: 'alignRight' },
-                    { sep: true },
-                    { label: 'Haut', disabled: true },
-                    { label: 'Milieu', disabled: true },
-                    { label: 'Bas', disabled: true }
-                ] },
-                { label: 'Retour automatique à la ligne', subitems: [
-                    { label: 'Débordement', disabled: true },
-                    { label: 'Retour à la ligne', disabled: true },
-                    { label: 'Couper', disabled: true }
-                ] },
-                { label: 'Rotation', subitems: [
-                    { label: 'Aucune', disabled: true },
-                    { label: 'Inclinaison vers le haut', disabled: true },
-                    { label: 'Inclinaison vers le bas', disabled: true },
-                    { label: 'Empilé horizontalement', disabled: true },
-                    { label: 'Empilé verticalement', disabled: true }
-                ] },
-                { label: 'Chips intelligents', subitems: [{ label: 'Convertir en chips intelligents', disabled: true }] },
-                { sep: true },
-                { label: 'Taille de la police', subitems: [
-                    { label: 'Plus petite', disabled: true },
-                    { label: 'Plus grande', disabled: true }
-                ] },
-                { label: 'Fusionner les cellules', subitems: [
-                    { label: 'Fusionner toutes les cellules', disabled: true },
-                    { label: 'Fusionner horizontalement', disabled: true },
-                    { label: 'Fusionner verticalement', disabled: true },
-                    { label: 'Annuler la fusion', disabled: true }
-                ] },
-                { sep: true },
-                { label: 'Convertir en tableau', disabled: true, shortcut: 'Ctrl+Alt+T' },
-                { label: 'Mise en forme conditionnelle', action: 'condFormat' },
-                { label: 'Couleurs en alternance', action: 'bandedRows' },
-                { sep: true },
-                { label: 'Effacer la mise en forme', action: 'clearFormat', shortcut: 'Ctrl+\\' }
-            ]
-        },
-        {
-            id: 'data', label: 'Données', items: [
-                { label: 'Analyser les données', isNew: true, disabled: true },
-                { sep: true },
-                { label: 'Trier une feuille', subitems: [
-                    { label: 'Trier la feuille de A à Z', action: 'sortAsc' },
-                    { label: 'Trier la feuille de Z à A', action: 'sortDesc' }
-                ] },
-                { label: 'Trier une plage', subitems: [
-                    { label: 'Trier la plage de A à Z', disabled: true },
-                    { label: 'Trier la plage de Z à A', disabled: true }
-                ] },
-                { sep: true },
-                { label: 'Créer un filtre', action: 'filter' },
-                { label: 'Créer une vue avec critère de regroupement', subitems: [{label: 'Nouvelle vue de regroupement', disabled: true}] },
-                { label: 'Créer une vue filtrée', disabled: true },
-                { label: 'Ajouter un segment', disabled: true },
-                { sep: true },
-                { label: 'Protéger des feuilles et des plages', disabled: true },
-                { label: 'Plages nommées', disabled: true },
-                { label: 'Fonctions nommées', disabled: true },
-                { label: 'Plage aléatoire', disabled: true },
-                { sep: true },
-                { label: 'Statistiques de colonne', disabled: true },
-                { label: 'Validation des données', action: 'validation' },
-                { label: 'Nettoyage des données', subitems: [
-                    { label: 'Suggestions de nettoyage', disabled: true },
-                    { label: 'Supprimer les doublons', disabled: true },
-                    { label: 'Supprimer les espaces', disabled: true }
-                ] },
-                { label: 'Scinder le texte en colonnes', disabled: true }
-            ]
-        },
-        {
-            id: 'tools', label: 'Outils', items: [
-                { label: 'Créer un formulaire', disabled: true },
-                { label: 'Orthographe', subitems: [
-                    { label: 'Vérification orthographique', disabled: true },
-                    { label: 'Dictionnaire personnel', disabled: true }
-                ] },
-                { label: 'Commandes des suggestions', subitems: [{label: 'Activer la suggestion automatique', disabled: true}] },
-                { label: 'Notifications conditionnelles', disabled: true },
-                { sep: true },
-                { label: 'Paramètres de notification', subitems: [
-                    { label: 'M\'informer des modifications', disabled: true }
-                ] },
-                { label: 'Accessibilité', disabled: true },
-                { sep: true },
-                { label: 'Tableau de bord des activités', disabled: true }
-            ]
-        },
-        {
-            id: 'gemini', label: 'Gemini', items: [
-                { label: 'Analyser les données', disabled: true },
-                { sep: true },
-                { label: 'Générer des graphiques', disabled: true },
-                { label: 'Générer un tableau croisé dynamique', disabled: true },
-                { label: 'Générer un tableau', disabled: true },
-                { label: 'Générer une image', disabled: true },
-                { label: 'Générer une formule', disabled: true },
-                { sep: true },
-                { label: 'Résumer du texte', disabled: true },
-                { label: 'Classer du texte', disabled: true },
-                { label: 'Analyser les sentiments du texte', disabled: true },
-                { label: 'Générer du texte', disabled: true },
-                { sep: true },
-                { label: 'Poser une autre question', disabled: true }
-            ]
-        },
-        {
-            id: 'extensions', label: 'Extensions', items: [
-                { label: 'Modules complémentaires', subitems: [{label: 'Télécharger des modules complémentaires', disabled: true} ] },
-                { label: 'Macros', subitems: [{label: 'Enregistrer une macro', disabled: true} ] },
-                { label: 'Apps Script', disabled: true },
-                { label: 'AppSheet', subitems: [{label: 'Créer une application', disabled: true} ] }
-            ]
-        },
-        {
-            id: 'help', label: 'Aide', items: [
-                { label: 'Rechercher dans les menus', shortcut: 'Alt+/' },
-                { sep: true },
-                { label: 'Demandez de l\'aide à Gemini', isNew: true, action: 'gemini' },
-                { label: 'Aide de Sheets', disabled: true },
-                { label: 'Aidez-nous à améliorer Sheets', disabled: true },
-                { sep: true },
-                { label: 'Liste des fonctions', disabled: true },
-                { label: 'Raccourcis clavier', shortcut: 'Ctrl+/' }
-            ]
-        }
-    ]
-
-    return (
-        <div className="flex items-center px-4 py-1.5 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-white dark:bg-[#1a1a1a] text-[13px] text-[#444746] dark:text-[#e8eaed] space-x-2 shrink-0 relative z-40">
-            {menus.map(menu => (
-                <div key={menu.id} className="relative">
-                    <button
-                        className={cn("px-2.5 py-1 rounded hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] transition-colors cursor-pointer", openMenu === menu.id && "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]")}
-                        onMouseDown={(e) => { e.stopPropagation(); setOpenMenu(openMenu === menu.id ? null : menu.id) }}
-                        onMouseEnter={() => { if (openMenu && openMenu !== menu.id) setOpenMenu(menu.id) }}
-                    >
-                        {menu.label}
-                    </button>
-                    {openMenu === menu.id && (
-                        <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded shadow-lg py-1.5 min-w-[240px] z-[60]">
-                            {menu.items.map((item, idx) => (
-                                <MenuDropdownItem key={idx} item={item} onAction={onAction} closeMenu={() => setOpenMenu(null)} />
-                            ))}
-                        </div>
-                    )}
-                </div>
-            ))}
-        </div>
-    )
-}
 
 // ---- Mini Chart ----
 function MiniChart({ type, values, onClose }: { type: 'bar' | 'line' | 'pie', values: number[], onClose: () => void }) {
@@ -831,7 +462,7 @@ function FilterDialog({ col, data, onApply, onClose }: {
 // ============================================================
 // MAIN SPREADSHEET COMPONENT
 // ============================================================// MAIN SPREADSHEET COMPONENT
-export function Spreadsheet({ documentId = 'default-sheet', initialData }: { documentId?: string; initialData?: Record<string, CellData> }) {
+export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'document.xlsx', initialData }: { documentId?: string, documentName?: string, initialData?: any }) {
     const {
         data, setCell, setCellStyle, setCellFull, setCellComment, setCellValidation,
         deleteCell, deleteCellRange, getCellRange, setCellRange,
@@ -840,7 +471,7 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
         isConnected, undo, redo, canUndo, canRedo,
         sheets, activeSheetIndex, setActiveSheetIndex,
         addSheet, removeSheet, renameSheet, setSheetColor,
-        getCrossSheetValue, transact,
+        getCrossSheetValue, transact, globalGridVersion
     } = useSpreadsheet(documentId, initialData)
 
     const hasFetchedRef = useRef(false)
@@ -849,6 +480,11 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
     const [selectedRange, setSelectedRange] = useState<{ start: { r: number, c: number }, end: { r: number, c: number } } | null>(null)
     const [activeCell, setActiveCell] = useState<{ r: number, c: number } | null>(null)
     const [isDragging, setIsDragging] = useState(false)
+    const [activeModal, setActiveModal] = useState<{ id: string, label?: string } | null>(null)
+
+    // Editor Permissions & Refs
+    const [isReadOnly, setIsReadOnly] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Editing
     const [editValue, setEditValue] = useState("")
@@ -934,6 +570,7 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
 
     // Virtualization
     const gridRef = useRef<HTMLDivElement>(null)
+    const mainContainerRef = useRef<HTMLDivElement>(null)
     const [scrollTop, setScrollTop] = useState(0)
     const [scrollLeft, setScrollLeft] = useState(0)
     const [viewportW, setViewportW] = useState(1200)
@@ -1042,7 +679,7 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
             newData[key] = evaluateFormula(data[key].value, getData, { r: parseInt(key), c: parseInt(key.split(',')[1]) }, new Set())
         }
         setEvaluatedData(newData)
-    }, [data, getCrossSheetValue])
+    }, [data, getCrossSheetValue, globalGridVersion])
 
     // Sync edit value
     useEffect(() => {
@@ -1396,77 +1033,123 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
         setAutocompleteSuggestions([])
     }, [editValue, activeCell, setCell])
 
-    // ---- CSV Import ----
-    const importCSV = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    // ---- File Import (CSV/XLSX) ----
+    const importFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
         const reader = new FileReader()
         reader.onload = (ev) => {
-            const text = ev.target?.result as string
-            if (!text) return
-            // Parse CSV (handles quoted fields with commas/newlines)
-            const rows: string[][] = []
-            let row: string[] = [], field = '', inQuotes = false
-            for (let i = 0; i < text.length; i++) {
-                const ch = text[i]
-                if (inQuotes) {
-                    if (ch === '"' && text[i + 1] === '"') { field += '"'; i++ }
-                    else if (ch === '"') inQuotes = false
-                    else field += ch
-                } else {
-                    if (ch === '"') inQuotes = true
-                    else if (ch === ',') { row.push(field); field = '' }
-                    else if (ch === '\n' || (ch === '\r' && text[i + 1] === '\n')) {
-                        row.push(field); field = ''; rows.push(row); row = []
-                        if (ch === '\r') i++
-                    } else field += ch
+            try {
+                const dataBuffer = ev.target?.result
+                if (!dataBuffer) return
+                const workbook = XLSX.read(dataBuffer, { type: 'binary' });
+                const firstSheet = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheet];
+                const json: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                let count = 0;
+                for (let r = 0; r < json.length && r < ROWS; r++) {
+                    const row = json[r] || [];
+                    for (let c = 0; c < row.length && c < COLS; c++) {
+                        const val = row[c];
+                        if (val !== undefined && val !== null && val !== "") { setCell(r, c, String(val)); count++; }
+                    }
                 }
+                toast.success(`${count} cellules importées de ${file.name}`);
+            } catch(err) {
+                toast.error("Format de fichier invalide");
             }
-            if (field || row.length > 0) { row.push(field); rows.push(row) }
-            // Fill grid
-            let count = 0
-            for (let r = 0; r < rows.length && r < ROWS; r++) {
-                for (let c = 0; c < rows[r].length && c < COLS; c++) {
-                    const val = rows[r][c]
-                    if (val) { setCell(r, c, val); count++ }
-                }
-            }
-            toast.success(`${count} cellules importées depuis ${file.name}`)
-        } // This closes the reader.onload callback
-        reader.readAsText(file)
-        // Reset input so same file can be re-selected
+        }
+        reader.readAsArrayBuffer(file)
         e.target.value = ''
     }, [setCell])
-    // ---- CSV Export ----
-    const exportCSV = useCallback(() => {
-        const rows: string[] = []
-        for (let r = 0; r < ROWS; r++) {
-            const cols: string[] = []
-            let hasData = false
-            for (let c = 0; c < COLS; c++) {
-                const val = data[`${r},${c}`]?.value || ''
-                cols.push(val.includes(',') || val.includes('"') || val.includes('\n') ? `"${val.replace(/"/g, '""')}"` : val)
-                if (val) hasData = true
-            }
-            if (hasData || r === 0) rows.push(cols.join(','))
-            else if (rows.length > 0 && !rows[rows.length - 1]) break
-        }
-        // Trim trailing empty columns
-        const maxCol = rows.reduce((m, row) => {
-            const cols = row.split(',')
-            let last = cols.length - 1
-            while (last >= 0 && !cols[last]) last--
-            return Math.max(m, last + 1)
-        }, 0)
-        const trimmed = rows.map(row => row.split(',').slice(0, maxCol).join(','))
 
-        const blob = new Blob([trimmed.join('\n')], { type: 'text/csv;charset=utf-8;' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url; a.download = `${sheets[activeSheetIndex]?.name || 'sheet'}.csv`
-        a.click(); URL.revokeObjectURL(url)
-        toast.success('Export\u00E9 en CSV')
+    // ---- File Export (CSV/XLSX) ----
+    const exportXLSX = useCallback((type: 'xlsx' | 'csv') => {
+        const rowsToExport: any[][] = []
+        let maxR = 0;
+        let maxC = 0;
+        
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (data[`${r},${c}`]?.value) {
+                    maxR = Math.max(maxR, r);
+                    maxC = Math.max(maxC, c);
+                }
+            }
+        }
+        
+        for (let r = 0; r <= maxR; r++) {
+            const row: any[] = []
+            for (let c = 0; c <= maxC; c++) {
+                row.push(data[`${r},${c}`]?.value || '')
+            }
+            rowsToExport.push(row)
+        }
+        
+        try {
+            const worksheet = XLSX.utils.aoa_to_sheet(rowsToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, sheets[activeSheetIndex]?.name || 'Sheet1');
+            XLSX.writeFile(workbook, `${sheets[activeSheetIndex]?.name || 'document'}.${type}`);
+            toast.success(`Exporté en ${type.toUpperCase()}`);
+        } catch (err) {
+            toast.error(`Erreur d'export ${type.toUpperCase()}`);
+        }
     }, [data, sheets, activeSheetIndex])
+
+    // ---- Save To Drive ----
+    const saveToDrive = useCallback(async () => {
+        if (!documentName) {
+            toast.error("Impossible d'enregistrer: Le nom du fichier est manquant.");
+            return;
+        }
+
+        const tId = toast.loading("Enregistrement dans le Drive...");
+
+        try {
+            const workbook = XLSX.utils.book_new();
+            
+            // On convertit chaque feuille du classeur S'il n'y a que le data global on fait une seule sheet
+            const rowsToExport: any[][] = [];
+            let maxR = 0; let maxC = 0;
+            
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (data[`${r},${c}`]?.value) {
+                        maxR = Math.max(maxR, r);
+                        maxC = Math.max(maxC, c);
+                    }
+                }
+            }
+            
+            for (let r = 0; r <= maxR; r++) {
+                const row: any[] = [];
+                for (let c = 0; c <= maxC; c++) {
+                    row.push(data[`${r},${c}`]?.value || '');
+                }
+                rowsToExport.push(row);
+            }
+            
+            const worksheet = XLSX.utils.aoa_to_sheet(rowsToExport);
+            XLSX.utils.book_append_sheet(workbook, worksheet, sheets[activeSheetIndex]?.name || 'Sheet1');
+            
+            // Créer un blob type XLSX
+            const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            
+            // Envoyer à l'API backend
+            // Note: on utilise 'drive' comme paramètre de bucket par défaut 
+            // puisque Global Drive route l'upload générique au bucket principal (qui peut être "drive" ou "general"). 
+            // "drive" est le bucket utilisé par fetchAndParseDocument
+            await storageApi.uploadWithKey('drive', documentName, blob);
+            
+            toast.success("Enregistré avec succès !", { id: tId });
+        } catch(err: any) {
+            console.error("Erreur enregistrement spreadsheet", err);
+            toast.error("Erreur d'enregistrement: " + err.message, { id: tId });
+        }
+    }, [data, sheets, activeSheetIndex, documentName, documentId]);
 
     // ---- Cell interactions ----
     const commitEdit = () => {
@@ -1491,6 +1174,7 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
         setActiveCell({ r: nr, c: nc })
         setSelectedRange({ start: { r: nr, c: nc }, end: { r: nr, c: nc } })
         scrollToCell(nr, nc)
+        setTimeout(() => mainContainerRef.current?.focus({ preventScroll: true }), 0)
     }, [activeCell, scrollToCell])
 
     // Ctrl+Arrow: jump to next non-empty / empty boundary
@@ -1522,11 +1206,18 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
     }, [data])
 
     const handleCellMouseDown = (r: number, c: number, e: React.MouseEvent) => {
-        if (isEditing) commitEdit()
+        if (isEditing) {
+            const isOtherSheet = e.currentTarget.closest('[data-sheet-id]')?.getAttribute('data-sheet-id') !== sheets[activeSheetIndex].id
+            // Currently handled by not preventing default and typing manually, or by custom logic elsewhere.
+            commitEdit()
+        }
         setIsEditing(false); setIsDragging(true)
         if (paintFormat) { setCellStyle(r, c, paintFormat); setPaintFormat(null); return }
         if (e.shiftKey && activeCell) setSelectedRange({ start: activeCell, end: { r, c } })
         else { setActiveCell({ r, c }); setSelectedRange({ start: { r, c }, end: { r, c } }) }
+        
+        // Force focus sur le conteneur pour garantir la capture des flèches directionnelles
+        mainContainerRef.current?.focus({ preventScroll: true })
     }
 
     const handleCellMouseEnter = (r: number, c: number) => {
@@ -1552,9 +1243,32 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
             if (e.key === 'v') { e.preventDefault(); doPaste(); return }
             if (e.key === 'f') { e.preventDefault(); setShowFind(true); setShowReplaceToggle(false); return }
             if (e.key === 'h') { e.preventDefault(); setShowFind(true); setShowReplaceToggle(true); return }
+            if (e.key === 's') { e.preventDefault(); toast.success('Enregistré automatiquement'); return }
+            if (e.key === 'n') { e.preventDefault(); window.open('/sheets', '_blank'); return }
+            if (e.key === 'o') { e.preventDefault(); toast.info("Rendez-vous sur l'accueil Drive pour ouvrir un fichier."); return }
+            if (e.key === 'q') { e.preventDefault(); toast.info("Fermez l'onglet du navigateur pour quitter la session."); return }
+            if (e.key === 'a') {
+                e.preventDefault();
+                setIsEditing(false);
+                commitEdit();
+                setActiveCell({ r: 0, c: 0 });
+                setSelectedRange({ start: { r: 0, c: 0 }, end: { r: ROWS - 1, c: COLS - 1 } });
+                return;
+            }
             if (!isEditing) {
                 if (e.key === 'b') { e.preventDefault(); toggleBoolFormat('bold'); return }
                 if (e.key === 'i') { e.preventDefault(); toggleBoolFormat('italic'); return }
+                if (e.key === 'u') { e.preventDefault(); toggleBoolFormat('underline'); return }
+                if (e.key === '5') { e.preventDefault(); toggleBoolFormat('strikethrough'); return }
+                // Ctrl+Espace -> Sélectionner la colonne entière
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    if (activeCell) {
+                        setActiveCell({ r: 0, c: activeCell.c });
+                        setSelectedRange({ start: { r: 0, c: activeCell.c }, end: { r: ROWS - 1, c: activeCell.c } });
+                    }
+                    return;
+                }
                 if (e.key === 'p') { e.preventDefault(); window.print(); return }
                 // Ctrl+Home → A1
                 if (e.key === 'Home') { e.preventDefault(); setActiveCell({ r: 0, c: 0 }); setSelectedRange({ start: { r: 0, c: 0 }, end: { r: 0, c: 0 } }); scrollToCell(0, 0); return }
@@ -1603,13 +1317,52 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                 if (e.key === 'ArrowUp') { e.preventDefault(); setAutocompleteIdx(i => Math.max(i - 1, 0)); return }
                 if (e.key === 'Escape') { e.preventDefault(); setAutocompleteSuggestions([]); return }
             }
+            if (e.altKey && e.key === 'Enter') {
+                e.preventDefault();
+                setEditValue(prev => prev + '\n');
+                return;
+            }
+            if (e.shiftKey && e.key === 'Enter') { e.preventDefault(); commitEdit(); moveCell(-1, 0); return; }
             if (e.key === 'Enter') { e.preventDefault(); commitEdit(); moveCell(1, 0) }
             if (e.key === 'Tab') { e.preventDefault(); commitEdit(); moveCell(0, e.shiftKey ? -1 : 1) }
             if (e.key === 'Escape') { e.preventDefault(); setIsEditing(false); setEditValue(data[`${activeCell!.r},${activeCell!.c}`]?.value || ""); setAutocompleteSuggestions([]) }
+            
+            if (e.key === 'ArrowUp') { e.preventDefault(); commitEdit(); moveCell(-1, 0) }
+            if (e.key === 'ArrowDown') { e.preventDefault(); commitEdit(); moveCell(1, 0) }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); commitEdit(); moveCell(0, -1) }
+            if (e.key === 'ArrowRight') { e.preventDefault(); commitEdit(); moveCell(0, 1) }
+            
             return
         }
 
         if (!activeCell) return
+        
+        // Maj + Espace -> Sélectionner la ligne entière
+        if (e.shiftKey && e.key === ' ') {
+            e.preventDefault();
+            setActiveCell({ r: activeCell.r, c: 0 });
+            setSelectedRange({ start: { r: activeCell.r, c: 0 }, end: { r: activeCell.r, c: COLS - 1 } });
+            return;
+        }
+
+        // Maj + Flèches -> Étendre la sélection
+        if (e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+            e.preventDefault();
+            let dr = 0, dc = 0;
+            if (e.key === 'ArrowUp') dr = -1;
+            if (e.key === 'ArrowDown') dr = 1;
+            if (e.key === 'ArrowLeft') dc = -1;
+            if (e.key === 'ArrowRight') dc = 1;
+
+            if (selectedRange) {
+                const newR = Math.max(0, Math.min(ROWS - 1, selectedRange.end.r + dr));
+                const newC = Math.max(0, Math.min(COLS - 1, selectedRange.end.c + dc));
+                setSelectedRange({ start: selectedRange.start, end: { r: newR, c: newC } });
+                scrollToCell(newR, newC);
+            }
+            return;
+        }
+
         if (e.key === 'ArrowUp') { e.preventDefault(); moveCell(-1, 0) }
         else if (e.key === 'ArrowDown') { e.preventDefault(); moveCell(1, 0) }
         else if (e.key === 'ArrowLeft') { e.preventDefault(); moveCell(0, -1) }
@@ -1699,18 +1452,349 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
     const { startC, endC } = visibleCols
 
     return (
-        <div className={cn("w-full h-full flex flex-col bg-white dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none", paintFormat && "cursor-cell")} tabIndex={0} onKeyDown={handleKeyDown}>
+        <div ref={mainContainerRef} className={cn("w-full h-full flex flex-col bg-white dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none", paintFormat && "cursor-cell")} tabIndex={0} onKeyDown={handleKeyDown}>
 
             {/* ===== MENU BAR ===== */}
-            <MenuBar onAction={(action) => {
+            <div className="-ml-1.5 flex flex-col pt-0.5">
+                <EditorMenu menus={[
+        {
+            id: 'file', label: 'Fichier', items: [
+                { label: 'Nouveau', subItems: [
+                    { label: 'Feuille de calcul', action: 'new' },
+                    { label: 'À partir d\'un modèle', action: 'todo' }
+                ] },
+                { label: 'Ouvrir', action: 'open', shortcut: 'Ctrl+O' },
+                { label: 'Importer', action: 'import' },
+                { label: 'Créer une copie', action: 'copyFile' },
+                { sep: true },
+                { label: 'Partager', subItems: [
+                    { label: 'Partager avec d\'autres personnes', action: 'todo' },
+                    { label: 'Publier sur le Web', action: 'todo' }
+                ] },
+                { label: 'Envoyer par e-mail', action: 'todo' },
+                { label: 'Télécharger', subItems: [
+                    { label: 'Microsoft Excel (.xlsx)', action: 'export_xlsx' },
+                    { label: 'Valeurs séparées par des virgules (.csv)', action: 'export_csv' },
+                    { label: 'Document PDF (.pdf)', action: 'print' }
+                ] },
+                { label: 'Approbations', action: 'todo' },
+                { sep: true },
+                { label: 'Renommer', action: 'rename' },
+                { label: 'Placer dans la corbeille', action: 'trash' },
+                { sep: true },
+                { label: 'Historique des versions', subItems: [
+                    { label: 'Nommer la version actuelle', action: 'todo' },
+                    { label: 'Afficher l\'historique des versions', action: 'todo' }
+                ] },
+                { label: 'Rendre disponible hors connexion', action: 'todo' },
+                { sep: true },
+                { label: 'Détails', action: 'todo' },
+                { label: 'Limites de sécurité', action: 'todo' },
+                { label: 'Paramètres', action: 'todo' }
+            ]
+        },
+        {
+            id: 'edit', label: 'Édition', items: [
+                { label: 'Annuler', action: 'undo', shortcut: 'Ctrl+Z' },
+                { label: 'Rétablir', action: 'redo', shortcut: 'Ctrl+Y' },
+                { sep: true },
+                { label: 'Couper', action: 'cut', shortcut: 'Ctrl+X' },
+                { label: 'Copier', action: 'copy', shortcut: 'Ctrl+C' },
+                { label: 'Coller', action: 'paste', shortcut: 'Ctrl+V' },
+                { sep: true },
+                { label: 'Rechercher et remplacer', action: 'find', shortcut: 'Ctrl+H' }
+            ]
+        },
+        {
+            id: 'view', label: 'Affichage', items: [
+                { label: 'Afficher', subItems: [
+                    { label: 'Barre de formules', action: 'todo' },
+                    { label: 'Quadrillage', action: 'toggleGridlines' },
+                    { label: 'Plages protégées', action: 'todo' }
+                ] },
+                { label: 'Figer', subItems: [
+                    { label: 'Aucune ligne', action: 'unfreezeRow' },
+                    { label: '1 ligne', action: 'freezeRow' },
+                    { label: 'Aucune colonne', action: 'unfreezeCol' },
+                    { label: '1 colonne', action: 'freezeCol' }
+                ] },
+                { label: 'Regrouper', subItems: [
+                    { label: 'Associer', action: 'todo' },
+                    { label: 'Dissocier', action: 'todo' }
+                ] },
+                { label: 'Commentaires', action: 'todo' },
+                { sep: true },
+                { label: 'Feuilles masquées', action: 'todo' },
+                { sep: true },
+                { label: 'Zoom', subItems: [
+                    { label: '50%', action: 'todo' },
+                    { label: '100%', action: 'zoom100' },
+                    { label: '150%', action: 'todo' },
+                ] },
+                { label: 'Plein écran', action: 'fullScreen' },
+                { sep: true },
+                { label: isReadOnly ? 'Passer en Édition' : 'Mode Lecture', action: 'toggle_read_only' }
+            ]
+        },
+        {
+            id: 'insert', label: 'Insertion', items: [
+                { label: 'Cellules', subItems: [
+                    { label: 'Décaler vers la droite', action: 'todo' },
+                    { label: 'Décaler vers le bas', action: 'todo' }
+                ] },
+                { label: 'Lignes', subItems: [
+                    { label: 'Insérer 1 ligne au-dessus', action: 'insertRowAbove' },
+                    { label: 'Insérer 1 ligne en-dessous', action: 'insertRowBelow' }
+                ] },
+                { label: 'Colonnes', subItems: [
+                    { label: 'Insérer 1 colonne à gauche', action: 'insertColLeft' },
+                    { label: 'Insérer 1 colonne à droite', action: 'insertColRight' }
+                ] },
+                { label: 'Feuille', action: 'todo', shortcut: 'Maj+F11' },
+                { sep: true },
+                { label: 'Générer un tableau', action: 'todo' },
+                { label: 'Tableaux prédéfinis', action: 'todo' },
+                { sep: true },
+                { label: 'Chronologie', action: 'todo' },
+                { label: 'Graphique', action: 'chart' },
+                { label: 'Tableau croisé dynamique', action: 'todo' },
+                { label: 'Image', subItems: [
+                    { label: 'Insérer une image dans la cellule', action: 'todo' },
+                    { label: 'Insérer une image sur les cellules', action: 'todo' }
+                ] },
+                { label: 'Dessin', action: 'todo' },
+                { sep: true },
+                { label: 'Fonction', subItems: [
+                    { label: 'SUM', action: 'insertSum' },
+                    { label: 'AVERAGE', action: 'insertAvg' },
+                    { label: 'COUNT', action: 'insertCount' },
+                    { label: 'MAX', action: 'insertMax' },
+                    { label: 'MIN', action: 'insertMin' }
+                ] },
+                { label: 'Lien', action: 'link', shortcut: 'Ctrl+K' },
+                { sep: true },
+                { label: 'Case à cocher', action: 'insertCheckbox' },
+                { label: 'Liste déroulante', action: 'validation' }
+            ]
+        },
+        {
+            id: 'format', label: 'Format', items: [
+                { label: 'Nombre', subItems: [
+                    { label: 'Automatique', action: 'todo' },
+                    { label: 'Texte brut', action: 'todo' },
+                    { label: 'Nombre', action: 'todo' },
+                    { label: 'Pourcentage', action: 'todo' },
+                    { label: 'Scientifique', action: 'todo' },
+                    { sep: true },
+                    { label: 'Comptabilité', action: 'todo' },
+                    { label: 'Finances', action: 'todo' },
+                    { label: 'Devise', action: 'todo' },
+                    { label: 'Devise (arrondie)', action: 'todo' },
+                    { sep: true },
+                    { label: 'Date', action: 'todo' },
+                    { label: 'Heure', action: 'todo' },
+                    { label: 'Date et heure', action: 'todo' },
+                    { label: 'Durée', action: 'todo' },
+                    { sep: true },
+                    { label: 'Autres formats', action: 'todo' }
+                ]},
+                { label: 'Retour à la ligne', subItems: [
+                    { label: 'Débordement', action: 'todo' },
+                    { label: 'Retour à la ligne', action: 'wrapText' },
+                    { label: 'Tronquer', action: 'todo' }
+                ]},
+                { label: 'Rotation du texte', subItems: [
+                    { label: 'Aucune', action: 'todo' },
+                    { label: 'Incliner vers le haut', action: 'todo' },
+                    { label: 'Incliner vers le bas', action: 'todo' },
+                    { label: 'Rotation vers le haut', action: 'todo' },
+                    { label: 'Rotation vers le bas', action: 'todo' },
+                    { label: 'Empiler verticalement', action: 'todo' }
+                ]},
+                { sep: true },
+                { label: 'Fusionner les cellules', subItems: [
+                    { label: 'Fusionner toutes les cellules', action: 'mergeCellsAll' },
+                    { label: 'Fusionner horizontalement', action: 'mergeCellsHoriz' },
+                    { label: 'Fusionner verticalement', action: 'mergeCellsVert' },
+                    { label: 'Annuler la fusion', action: 'unmergeCellsAction' }
+                ] },
+                { sep: true },
+                { label: 'Convertir en tableau', action: 'todo', shortcut: 'Ctrl+Alt+T' },
+                { label: 'Mise en forme conditionnelle', action: 'condFormat' },
+                { label: 'Couleurs en alternance', action: 'bandedRows' },
+                { sep: true },
+                { label: 'Effacer la mise en forme', action: 'clearFormat', shortcut: 'Ctrl+\\' }
+            ]
+        },
+        {
+            id: 'data', label: 'Données', items: [
+                { label: 'Analyser les données', action: 'todo' },
+                { sep: true },
+                { label: 'Trier une feuille', subItems: [
+                    { label: 'Trier la feuille de A à Z', action: 'sortAsc' },
+                    { label: 'Trier la feuille de Z à A', action: 'sortDesc' }
+                ] },
+                { label: 'Trier une plage', subItems: [
+                    { label: 'Trier la plage de A à Z', action: 'sortAsc' },
+                    { label: 'Trier la plage de Z à A', action: 'sortDesc' }
+                ] },
+                { sep: true },
+                { label: 'Créer un filtre', action: 'filter' },
+                { label: 'Créer une vue avec critère de regroupement', subItems: [{label: 'Nouvelle vue de regroupement', action: 'todo'}] },
+                { label: 'Créer une vue filtrée', action: 'todo' },
+                { label: 'Ajouter un segment', action: 'todo' },
+                { sep: true },
+                { label: 'Protéger des feuilles et des plages', action: 'todo' },
+                { label: 'Plages nommées', action: 'todo' },
+                { label: 'Fonctions nommées', action: 'todo' },
+                { label: 'Plage aléatoire', action: 'todo' },
+                { sep: true },
+                { label: 'Statistiques de colonne', action: 'todo' },
+                { label: 'Validation des données', action: 'validation' },
+                { label: 'Nettoyage des données', subItems: [
+                    { label: 'Suggestions de nettoyage', action: 'todo' },
+                    { label: 'Supprimer les doublons', action: 'todo' },
+                    { label: 'Supprimer les espaces', action: 'todo' }
+                ] },
+                { label: 'Scinder le texte en colonnes', action: 'todo' }
+            ]
+        },
+        {
+            id: 'tools', label: 'Outils', items: [
+                { label: 'Créer un formulaire', action: 'todo' },
+                { label: 'Orthographe', subItems: [
+                    { label: 'Vérification orthographique', action: 'todo' },
+                    { label: 'Dictionnaire personnel', action: 'todo' }
+                ] },
+                { label: 'Commandes des suggestions', subItems: [{label: 'Activer la suggestion automatique', action: 'todo'}] },
+                { label: 'Notifications conditionnelles', action: 'todo' },
+                { sep: true },
+                { label: 'Paramètres de notification', subItems: [
+                    { label: 'M\'informer des modifications', action: 'todo' }
+                ] },
+                { label: 'Accessibilité', action: 'todo' },
+                { sep: true },
+                { label: 'Tableau de bord des activités', action: 'todo' }
+            ]
+        },
+        {
+            id: 'gemini', label: 'Gemini', items: [
+                { label: 'Analyser les données', action: 'todo' },
+                { sep: true },
+                { label: 'Générer des graphiques', action: 'todo' },
+                { label: 'Générer un tableau croisé dynamique', action: 'todo' },
+                { label: 'Générer un tableau', action: 'todo' },
+                { label: 'Générer une image', action: 'todo' },
+                { label: 'Générer une formule', action: 'todo' },
+                { sep: true },
+                { label: 'Résumer du texte', action: 'todo' },
+                { label: 'Classer du texte', action: 'todo' },
+                { label: 'Analyser les sentiments du texte', action: 'todo' },
+                { label: 'Générer du texte', action: 'todo' },
+                { sep: true },
+                { label: 'Poser une autre question', action: 'todo' }
+            ]
+        },
+        {
+            id: 'extensions', label: 'Extensions', items: [
+                { label: 'Modules complémentaires', subItems: [{label: 'Télécharger des modules complémentaires', action: 'todo'} ] },
+                { label: 'Macros', subItems: [{label: 'Enregistrer une macro', action: 'todo'} ] },
+                { label: 'Apps Script', action: 'todo' },
+                { label: 'AppSheet', subItems: [{label: 'Créer une application', action: 'todo'} ] }
+            ]
+        },
+        {
+            id: 'help', label: 'Aide', items: [
+                { label: 'Rechercher dans les menus', shortcut: 'Alt+/' },
+                { sep: true },
+                { label: 'Demandez de l\'aide à Gemini', action: 'gemini' },
+                { label: 'Aide de Sheets', action: 'todo' },
+                { label: 'Aidez-nous à améliorer Sheets', action: 'todo' },
+                { sep: true },
+                { label: 'Liste des fonctions', action: 'todo' },
+                { label: 'Raccourcis clavier', shortcut: 'Ctrl+/' }
+            ]
+        }
+    ]} onAction={(action, label) => {
+                const NATIVE_ACTIONS = ['new', 'open', 'import', 'export_xlsx', 'export_csv', 'print', 'rename', 'trash', 'fullScreen', 'copyFile', 'undo', 'redo', 'cut', 'copy', 'paste', 'find', 'toggleGridlines', 'freezeRow', 'freezeCol', 'insertRowAbove', 'insertRowBelow', 'insertColLeft', 'insertColRight', 'chart', 'link', 'comment', 'bold', 'italic', 'underline', 'strikethrough', 'alignLeft', 'alignCenter', 'alignRight', 'clearFormat', 'unfreezeRow', 'unfreezeCol', 'zoom100', 'insertSum', 'insertAvg', 'insertCount', 'insertMax', 'insertMin', 'condFormat', 'bandedRows', 'sortAsc', 'sortDesc', 'filter', 'validation', 'gemini', 'toggle_read_only', 'insertCheckbox', 'wrapText', 'overflowText', 'mergeCellsAll', 'mergeCellsHoriz', 'mergeCellsVert', 'unmergeCellsAction'];
+                
+                if (action === 'todo' || !NATIVE_ACTIONS.includes(action)) {
+                    setActiveModal({ id: action, label });
+                    return;
+                }
+
+                if (action === 'insertCheckbox') {
+                    if (selectionBounds) {
+                        for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++) {
+                            for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++) {
+                                setCellValidation(r, c, { type: 'boolean' });
+                                if (!data[`${r},${c}`]?.value) setCell(r, c, 'FALSE');
+                            }
+                        }
+                    } else if (activeCell) {
+                        setCellValidation(activeCell.r, activeCell.c, { type: 'boolean' });
+                        if (!data[`${activeCell.r},${activeCell.c}`]?.value) setCell(activeCell.r, activeCell.c, 'FALSE');
+                    }
+                    return;
+                }
+                if (action === 'wrapText') { applyToSelection({ wrap: true }); return; }
+                if (action === 'overflowText') { applyToSelection({ wrap: false }); return; }
+                if (action === 'mergeCellsAll') { handleMerge(); return; }
+                if (action === 'mergeCellsHoriz') {
+                    if (selectionBounds) {
+                        for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++) {
+                            mergeCells(r, r, selectionBounds.minC, selectionBounds.maxC);
+                        }
+                        toast.success('Fusion horizontale');
+                    }
+                    return;
+                }
+                if (action === 'mergeCellsVert') {
+                    if (selectionBounds) {
+                        for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++) {
+                            mergeCells(selectionBounds.minR, selectionBounds.maxR, c, c);
+                        }
+                        toast.success('Fusion verticale');
+                    }
+                    return;
+                }
+                if (action === 'unmergeCellsAction') {
+                    if (selectionBounds) {
+                        unmergeCells(selectionBounds.minR, selectionBounds.minC);
+                        toast.info('Défusionné');
+                    }
+                    return;
+                }
+
                 if (action === 'new') window.open('/sheets', '_blank')
                 if (action === 'open') toast.info("Rendez-vous sur l'accueil Drive pour ouvrir un fichier.")
-                if (action === 'import') csvInputRef.current?.click()
-                if (action === 'export') exportCSV()
+                if (action === 'import') fileInputRef.current?.click()
+                if (action === 'export_xlsx') exportXLSX('xlsx')
+                if (action === 'export_csv') exportXLSX('csv')
                 if (action === 'print') window.print()
+                if (action === 'toggle_read_only') {
+                    setIsReadOnly(r => {
+                        const newR = !r;
+                        toast.info(newR ? "Mode Lecture seule activé" : "Mode Édition activé");
+                        return newR;
+                    })
+                }
                 if (action === 'rename') {
                      const name = prompt("Nouveau nom du fichier:", "Document sans titre");
                      if (name) toast.success(`Fichier renommé en "${name}"`);
+                }
+                if (action === 'trash') {
+                     if (confirm("Voulez-vous placer ce fichier dans la corbeille ?")) {
+                          toast.success("Fichier placé dans la corbeille.");
+                          window.location.href = '/drive';
+                     }
+                }
+                if (action === 'fullScreen') {
+                     if (!document.fullscreenElement) {
+                          document.documentElement.requestFullscreen().catch(() => toast.error("Le plein écran est bloqué."));
+                     } else {
+                          document.exitFullscreen();
+                     }
                 }
                 if (action === 'copyFile') {
                      toast.success("Document dupliqué avec succès.");
@@ -1729,7 +1813,7 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                 if (action === 'insertColLeft') handleContextAction('insertColLeft')
                 if (action === 'insertColRight') handleContextAction('insertColRight')
                 if (action === 'chart') setShowChartPicker(true)
-                if (action === 'link') { const url = prompt("URL:"); if (url && activeCell) { setCell(activeCell.r, activeCell.c, url); toast.success("Lien ins\u00E9r\u00E9") } }
+                if (action === 'link') { const url = prompt("URL:"); if (url && activeCell) { setCell(activeCell.r, activeCell.c, url); toast.success("Lien inséré") } }
                 if (action === 'comment') { if (activeCell) { const existing = data[`${activeCell.r},${activeCell.c}`]?.comment || ''; const c = prompt("Commentaire:", existing); if (c !== null) { setCellComment(activeCell.r, activeCell.c, c || undefined); toast.success(c ? 'Commentaire ajouté' : 'Commentaire supprimé') } } }
                 if (action === 'bold') toggleBoolFormat('bold')
                 if (action === 'italic') toggleBoolFormat('italic')
@@ -1739,9 +1823,9 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                 if (action === 'alignCenter') applyToSelection({ align: 'center' })
                 if (action === 'alignRight') applyToSelection({ align: 'right' })
                 if (action === 'clearFormat') applyToSelection({ bold: false, italic: false, underline: false, strikethrough: false, textColor: undefined, fillColor: undefined, align: undefined, verticalAlign: undefined, fontFamily: undefined, fontSize: undefined, numberFormat: "auto" })
-                if (action === 'unfreezeRow') { setFreezeRows(0); toast.info('Lignes lib\u00E9r\u00E9es') }
-                if (action === 'unfreezeCol') { setFreezeCols(0); toast.info('Colonnes lib\u00E9r\u00E9es') }
-                if (action === 'zoom100') toast.success('Zoom \u00E0 100%')
+                if (action === 'unfreezeRow') { setFreezeRows(0); toast.info('Lignes libérées') }
+                if (action === 'unfreezeCol') { setFreezeCols(0); toast.info('Colonnes libérées') }
+                if (action === 'zoom100') toast.success('Zoom à 100%')
                 if (action === 'insertSum') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=SUM()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
                 if (action === 'insertAvg') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=AVERAGE()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
                 if (action === 'insertCount') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=COUNT()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
@@ -1754,6 +1838,7 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                 if (action === 'filter') toggleFilter()
                 if (action === 'validation') { if (!activeCell) return; const vals = prompt("Valeurs de la liste (séparées par des virgules):"); if (vals) { setCellValidation(activeCell.r, activeCell.c, { type: 'list', values: vals.split(',').map(v => v.trim()) }); toast.success('Validation ajoutée') } }
             }} />
+            </div>
 
             {/* ===== TOOLBAR ===== */}
             <div className="border-b border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] shrink-0 px-4 py-2">
@@ -1890,8 +1975,8 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                     <TBtn onClick={toggleFilter} active={filterCol !== null} title="Filtre"><Filter className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={toggleFreeze} active={freezeRows > 0 || freezeCols > 0} title="Figer lignes/colonnes"><Snowflake className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => setShowCondFormat(true)} active={condRules.length > 0} title="Mise en forme conditionnelle"><Palette className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={exportCSV} title="Exporter CSV"><Download className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => csvInputRef.current?.click()} title="Importer CSV"><Upload className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => exportXLSX('csv')} title="Exporter CSV"><Download className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => fileInputRef.current?.click()} title="Importer (CSV/XLSX)"><Upload className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => { if (!activeCell) return; const vals = prompt("Valeurs de la liste (séparées par des virgules):"); if (vals) { setCellValidation(activeCell.r, activeCell.c, { type: 'list', values: vals.split(',').map(v => v.trim()) }); toast.success('Validation ajoutée') } }} title="Validation des données"><ListChecks className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => setBandedRows(!bandedRows)} active={bandedRows} title="Couleurs alternées"><StretchHorizontal className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => { if (!selectionBounds) return; const isLocked = activeCellStyle.locked; applyToSelection({ locked: !isLocked }); toast.success(isLocked ? 'Cellules d\u00E9verrouill\u00E9es' : 'Cellules verrouill\u00E9es') }} active={!!activeCellStyle.locked} title={activeCellStyle.locked ? "D\u00E9verrouiller" : "Verrouiller"}>{activeCellStyle.locked ? <Lock className="w-[18px] h-[18px]" /> : <Unlock className="w-[18px] h-[18px]" />}</TBtn>
@@ -2053,6 +2138,7 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                                     const isLocked = !!style?.locked
                                     const hasComment = !!cellData?.comment
                                     const hasValidation = !!cellData?.validation
+                                    const isCheckbox = cellData?.validation?.type === 'boolean'
 
                                     const cellStyle: React.CSSProperties = {
                                         width: cellW, minWidth: cellW, maxWidth: cellW, height: cellH,
@@ -2093,11 +2179,11 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                                                 isCurrentFind && "ring-2 ring-inset ring-orange-500"
                                             )}
                                             style={cellStyle}
-                                            onMouseDown={(e) => handleCellMouseDown(r, c, e)}
-                                            onMouseEnter={() => { handleCellMouseEnter(r, c); if (hasComment) setHoveredComment({ r, c, x: ROW_HEADER_WIDTH + colOffsets[c] + cellW, y: COL_HEADER_HEIGHT + rowOffsets[r] }) }}
+                                            onMouseDown={(e) => { if (!isReadOnly) handleCellMouseDown(r, c, e) }}
+                                            onMouseEnter={() => { if (!isReadOnly) handleCellMouseEnter(r, c); if (hasComment) setHoveredComment({ r, c, x: ROW_HEADER_WIDTH + colOffsets[c] + cellW, y: COL_HEADER_HEIGHT + rowOffsets[r] }) }}
                                             onMouseLeave={() => { if (hoveredComment?.r === r && hoveredComment?.c === c) setHoveredComment(null) }}
-                                            onDoubleClick={() => handleDoubleClick(r, c)}
-                                            onContextMenu={(e) => handleContextMenu(r, c, e)}
+                                            onDoubleClick={() => { if (!isReadOnly) handleDoubleClick(r, c) }}
+                                            onContextMenu={(e) => { if (!isReadOnly) handleContextMenu(r, c, e) }}
                                         >
                                             {/* Comment indicator triangle */}
                                             {hasComment && <div className="absolute top-0 right-0 w-0 h-0 z-[6]" style={{ borderLeft: '6px solid transparent', borderTop: '6px solid #ff9900' }} />}
@@ -2121,6 +2207,10 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                                             {isActive && <div className="absolute inset-[-1px] border-2 border-[#1a73e8] z-20 pointer-events-none" />}
                                             {isActive && isEditing ? (
                                                 <input ref={inputRef} className="w-full h-full border-none outline-none bg-white dark:bg-[#2d2e30] px-0.5 m-0 text-[13px] z-30 relative text-[#202124] dark:text-white" value={editValue} onChange={(e) => setEditValue(e.target.value)} onBlur={commitEdit} spellCheck={false} />
+                                            ) : isCheckbox ? (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <input type="checkbox" className="w-[15px] h-[15px] cursor-pointer accent-[#1a73e8]" checked={rawValue === 'TRUE'} onChange={(e) => { e.stopPropagation(); setCell(r, c, e.target.checked ? 'TRUE' : 'FALSE') }} onMouseDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()} />
+                                                </div>
                                             ) : isSparkline ? (
                                                 <SparklineCell value={evaluated} width={cellW - 4} height={cellH - 4} />
                                             ) : isUrl ? (
@@ -2162,10 +2252,10 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                             <div className="absolute bottom-10 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36" onClick={(e) => e.stopPropagation()}>
                                 <div className="grid grid-cols-5 gap-1 mb-1">
                                     {TAB_COLORS.map(color => (
-                                        <button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { setSheetColor(i, color); setShowTabColorPicker(null) }} />
+                                        <button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { setSheetColor(sheet.id, color); setShowTabColorPicker(null) }} />
                                     ))}
                                 </div>
-                                <button className="text-[10px] text-[#1a73e8] hover:underline" onClick={() => { setSheetColor(i, undefined); setShowTabColorPicker(null) }}>Aucune</button>
+                                <button className="text-[10px] text-[#1a73e8] hover:underline" onClick={() => { setSheetColor(sheet.id, undefined); setShowTabColorPicker(null) }}>Aucune</button>
                             </div>
                         )}
                     </div>
@@ -2229,7 +2319,7 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                 const y = rect.top + COL_HEADER_HEIGHT + rowOffsets[validationDropdown.r] + getRowHeight(validationDropdown.r) - gridRef.current!.scrollTop
                 return (
                     <div className="fixed z-[250] bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[140px] text-[13px]" style={{ left: x, top: y }}>
-                        {cellData.validation.values.map((val) => (
+                        {cellData.validation.type === 'list' && cellData.validation.values.map((val: string) => (
                             <button key={val} className={cn("w-full text-left px-3 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]", cellData.value === val && "bg-[#e8f0fe] dark:bg-[#3c4043] font-medium")} onClick={() => { setCell(validationDropdown.r, validationDropdown.c, val); setValidationDropdown(null) }}>
                                 {val}
                             </button>
@@ -2254,8 +2344,15 @@ export function Spreadsheet({ documentId = 'default-sheet', initialData }: { doc
                 </div>
             )}
 
-            {/* Hidden CSV import input */}
-            <input ref={csvInputRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={importCSV} />
+            {/* Hidden CSV/XLSX import input */}
+            <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" className="hidden" onChange={importFile} />
+            
+            <GenericFeatureModal 
+                isOpen={!!activeModal} 
+                actionId={activeModal?.id || null} 
+                actionLabel={activeModal?.label}
+                onClose={() => setActiveModal(null)} 
+            />
         </div>
     )
 }

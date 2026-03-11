@@ -4,17 +4,16 @@ import { identityApiClient } from './core';
 export const authApi = {
     login: (credentials: LoginRequest) =>
         identityApiClient.post<LoginResponse>('/auth/login', credentials),
-    refresh: (refreshToken: string) =>
-        identityApiClient.post<RefreshResponse>('/auth/refresh', {
-            refresh_token: refreshToken,
-        }),
+    register: (userData: any) =>
+        identityApiClient.post('/auth/register', userData),
     logout: () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('auth-storage');
-        document.cookie = 'auth-storage=; path=/; max-age=0';
-        window.location.href = '/login';
-        return Promise.resolve();
+        return identityApiClient.post('/auth/logout').finally(() => {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('auth-storage');
+            document.cookie = 'auth-storage=; path=/; max-age=0';
+            window.location.href = '/login';
+        });
     },
     me: () => identityApiClient.get<User>('/auth/me'),
     mfaVerify: (sessionToken: string, code: string) =>
@@ -22,12 +21,10 @@ export const authApi = {
             session_token: sessionToken,
             code,
         }),
-    ldapLogin: (username: string, password: string, rememberMe?: boolean) =>
-        identityApiClient.post<LoginResponse>('/auth/ldap/login', {
-            username,
-            password,
-            remember_me: rememberMe,
-        }),
+    mfaDisable: () => identityApiClient.post('/auth/mfa/disable'),
+    mfaStatus: () => identityApiClient.get('/auth/mfa/status'),
+    // LDAP Configuration
+
     getLdapConfig: () => identityApiClient.get<LdapConfig>('/auth/ldap/config'),
     updateLdapConfig: (config: LdapConfig) =>
         identityApiClient.put<LdapConfig>('/auth/ldap/config', config),
@@ -111,6 +108,20 @@ export const usersApi = {
     update: (id: string, data: Partial<CreateUserRequest>) =>
         identityApiClient.put<User>(`/users/${id}`, data),
     delete: (id: string) => identityApiClient.delete(`/users/${id}`),
+    
+    // Rôles
+    getRoles: () => identityApiClient.get('/roles'),
+    createRole: (data: any) => identityApiClient.post('/roles', data),
+    updateRole: (id: string, data: any) => identityApiClient.put(`/roles/${id}`, data),
+    deleteRole: (id: string) => identityApiClient.delete(`/roles/${id}`),
+    
+    // Webhooks
+    getWebhooks: () => identityApiClient.get('/webhooks'),
+    createWebhook: (data: any) => identityApiClient.post('/webhooks', data),
+    getWebhook: (id: string) => identityApiClient.get(`/webhooks/${id}`),
+    updateWebhook: (id: string, data: any) => identityApiClient.put(`/webhooks/${id}`, data),
+    deleteWebhook: (id: string) => identityApiClient.delete(`/webhooks/${id}`),
+    testWebhook: (id: string) => identityApiClient.post(`/webhooks/${id}/test`),
 };
 
 export interface UserListResponse {

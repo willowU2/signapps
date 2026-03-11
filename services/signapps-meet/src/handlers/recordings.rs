@@ -49,7 +49,9 @@ pub async fn list_recordings(
                 ended_at: r.ended_at,
                 duration_seconds: r.duration_seconds,
                 file_size_bytes: r.file_size_bytes,
-                download_url: r.storage_path.map(|p| format!("/api/v1/storage/files/{}", p)),
+                download_url: r
+                    .storage_path
+                    .map(|p| format!("/api/v1/storage/files/{}", p)),
             })
             .collect(),
     ))
@@ -134,13 +136,12 @@ pub async fn get_recording(
     State(state): State<AppState>,
     Path(recording_id): Path<Uuid>,
 ) -> Result<Json<RecordingResponse>, (StatusCode, String)> {
-    let recording =
-        sqlx::query_as::<_, Recording>("SELECT * FROM meet.recordings WHERE id = $1")
-            .bind(recording_id)
-            .fetch_optional(&state.pool)
-            .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-            .ok_or((StatusCode::NOT_FOUND, "Recording not found".to_string()))?;
+    let recording = sqlx::query_as::<_, Recording>("SELECT * FROM meet.recordings WHERE id = $1")
+        .bind(recording_id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Recording not found".to_string()))?;
 
     Ok(Json(RecordingResponse {
         id: recording.id,
@@ -162,13 +163,12 @@ pub async fn stop_recording(
     Extension(claims): Extension<Claims>,
     Path(recording_id): Path<Uuid>,
 ) -> Result<Json<RecordingResponse>, (StatusCode, String)> {
-    let recording =
-        sqlx::query_as::<_, Recording>("SELECT * FROM meet.recordings WHERE id = $1")
-            .bind(recording_id)
-            .fetch_optional(&state.pool)
-            .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-            .ok_or((StatusCode::NOT_FOUND, "Recording not found".to_string()))?;
+    let recording = sqlx::query_as::<_, Recording>("SELECT * FROM meet.recordings WHERE id = $1")
+        .bind(recording_id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Recording not found".to_string()))?;
 
     if recording.status != "recording" {
         return Err((
@@ -226,13 +226,12 @@ pub async fn delete_recording(
     Extension(claims): Extension<Claims>,
     Path(recording_id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let recording =
-        sqlx::query_as::<_, Recording>("SELECT * FROM meet.recordings WHERE id = $1")
-            .bind(recording_id)
-            .fetch_optional(&state.pool)
-            .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-            .ok_or((StatusCode::NOT_FOUND, "Recording not found".to_string()))?;
+    let recording = sqlx::query_as::<_, Recording>("SELECT * FROM meet.recordings WHERE id = $1")
+        .bind(recording_id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Recording not found".to_string()))?;
 
     // Check if user is the one who started the recording
     if recording.started_by != claims.sub {

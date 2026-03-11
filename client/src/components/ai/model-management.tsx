@@ -181,7 +181,7 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
           setAvailableModels(res.data.models);
         }
       } catch (err) {
-        console.error('Failed to search HuggingFace models:', err);
+        console.debug('Failed to search HuggingFace models:', err);
       } finally {
         setIsSearching(false);
       }

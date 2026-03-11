@@ -41,7 +41,11 @@ export async function fetchAndParseDocument(bucket: string, fileKey: string, fil
     if (['md', 'txt'].includes(ext)) {
         return parseText(arrayBuffer);
     }
-    
+
+    if (['signslides', 'json'].includes(ext)) {
+        return parseSlides(arrayBuffer, fileName);
+    }
+
     throw new Error(`Unsupported file type: ${ext}`);
 }
 
@@ -79,4 +83,41 @@ async function parseDocx(buffer: ArrayBuffer) {
 async function parseText(buffer: ArrayBuffer) {
     const text = new TextDecoder().decode(buffer);
     return { type: 'document', text: text };
+}
+
+interface SlideObject {
+    id: string;
+    [key: string]: any;
+}
+
+interface SlideFileData {
+    id: string;
+    title: string;
+    objects: SlideObject[];
+}
+
+export interface SlidesFileFormat {
+    version: number;
+    slides: SlideFileData[];
+    metadata?: {
+        createdAt?: string;
+        updatedAt?: string;
+        author?: string;
+    };
+}
+
+async function parseSlides(buffer: ArrayBuffer, fileName: string): Promise<{ type: 'slides'; data: SlidesFileFormat }> {
+    try {
+        const text = new TextDecoder().decode(buffer);
+        const data = JSON.parse(text) as SlidesFileFormat;
+
+        // Validate structure
+        if (!data.slides || !Array.isArray(data.slides)) {
+            throw new Error("Invalid slides file format: missing slides array");
+        }
+
+        return { type: 'slides', data };
+    } catch (e: any) {
+        throw new Error(`Failed to parse slides file: ${e.message}`);
+    }
 }

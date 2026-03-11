@@ -117,6 +117,37 @@ test.describe('Tasks Layout', () => {
       const content = taskTree.or(page.getByText(/aucune liste de tâches/i));
       await expect(content).toBeVisible({ timeout: 10000 });
     });
+
+    test('should allow adding a subtask from a task node', async ({ page }) => {
+      // Wait for task tree to load
+      await page.waitForTimeout(1000);
+      
+      const firstTask = page.locator('.border-b.border-\\[\\#f1f3f4\\]').first();
+      
+      if (await firstTask.isVisible({ timeout: 5000 })) {
+        // Hover over the task to reveal action buttons
+        await firstTask.hover();
+        
+        // Find the subtask button
+        const subtaskButton = firstTask.getByRole('button', { name: /sous-tâche/i });
+        
+        if (await subtaskButton.isVisible()) {
+          await subtaskButton.click();
+          
+          // TaskForm dialog should appear with "Create a subtask" description
+          const dialog = page.getByRole('dialog');
+          await expect(dialog).toBeVisible({ timeout: 5000 });
+          await expect(dialog.getByText(/create a subtask/i)).toBeVisible();
+          
+          // Check that due_date exists
+          const dateInput = dialog.locator('input[type="date"]');
+          await expect(dateInput).toBeVisible();
+          
+          // Close it back
+          await dialog.getByRole('button', { name: /annuler|cancel|fermer|close/i }).click();
+        }
+      }
+    });
   });
 
   test.describe('Export Dialog', () => {

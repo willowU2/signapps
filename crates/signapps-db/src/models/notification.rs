@@ -1,6 +1,5 @@
 /// Notification system models
 /// Handles email, SMS, and push notification preferences and history
-
 use chrono::{DateTime, NaiveTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;

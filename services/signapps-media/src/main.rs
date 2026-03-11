@@ -169,10 +169,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ocr: Arc<dyn OcrBackend> =
         if !config.ocr_url.is_empty() && config.ocr_url.starts_with("http") {
             info!("OCR: using HTTP backend at {}", config.ocr_url);
-            Arc::new(ocr::HttpOcrBackend::new(
-                &config.ocr_url,
-                ocr::http::OcrProvider::default(),
-            ))
+
+            let provider = if config.ocr_url.contains("chat/completions") {
+                ocr::http::OcrProvider::OpenAIVision
+            } else {
+                ocr::http::OcrProvider::default()
+            };
+
+            Arc::new(ocr::HttpOcrBackend::new(&config.ocr_url, provider))
         } else {
             #[cfg(feature = "native-ocr")]
             {

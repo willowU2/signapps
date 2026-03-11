@@ -39,7 +39,7 @@ export default function ITAssetsDashboard() {
             }))
             setHardwareList(mapped)
         } catch (error) {
-            console.error("Failed to load hardware:", error)
+            console.debug("Failed to load hardware:", error)
         }
     }
 
@@ -59,7 +59,7 @@ export default function ITAssetsDashboard() {
             setNewDevice({ hardware_type: "laptop", status: "active" })
             loadHardware()
         } catch (error) {
-            console.error("Failed to create", error)
+            console.debug("Failed to create", error)
             alert("Failed to create device. Check if backend is running.")
         }
     }

@@ -23,10 +23,9 @@ export interface CellStyle {
     rotation?: number
 }
 
-export interface CellValidation {
-    type: 'list'
-    values: string[]
-}
+export type CellValidation = 
+    | { type: 'list', values: string[] }
+    | { type: 'boolean' }
 
 export interface CellData {
     value: string
@@ -44,6 +43,7 @@ export interface SelectionBounds {
 }
 
 export interface SheetInfo {
+    id: string
     name: string
     color?: string
 }

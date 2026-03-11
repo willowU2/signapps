@@ -66,9 +66,12 @@ export function GlobalHeader() {
     } else if (pathname.startsWith('/mail')) {
         headerTitle = "Mail";
         HeaderIcon = <Mail className="h-5 w-5 text-blue-500" />;
-    } else if (pathname.startsWith('/storage')) {
+    } else if (pathname.startsWith('/drive')) {
         headerTitle = "Drive";
         HeaderIcon = <HardDrive className="h-5 w-5 text-indigo-500" />;
+    } else if (pathname.startsWith('/storage')) {
+        headerTitle = "Storage (Infra)";
+        HeaderIcon = <HardDrive className="h-5 w-5 text-gray-500" />;
     } else if (pathname.startsWith('/tasks')) {
         headerTitle = "Tasks";
         HeaderIcon = <CheckSquare className="h-5 w-5 text-green-500" />;

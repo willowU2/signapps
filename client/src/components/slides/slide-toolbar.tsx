@@ -15,6 +15,7 @@ interface SlideToolbarProps {
     onAddText: () => void
     onAddShape: () => void
     onExport: () => void
+    onExportPPTX?: () => void
     canUndo: boolean
     canRedo: boolean
     onUndo: () => void
@@ -38,6 +39,7 @@ export function SlideToolbar({
     onAddText,
     onAddShape,
     onExport,
+    onExportPPTX,
     canUndo,
     canRedo,
     onUndo,
@@ -210,9 +212,15 @@ export function SlideToolbar({
 
                 <button
                     onClick={onExport}
-                    className="flex items-center gap-1.5 px-4 py-1.5 bg-black hover:bg-gray-800 text-white rounded-xl text-sm font-medium shadow-sm transition-colors"
+                    className="flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium shadow-sm transition-colors border border-gray-200"
                 >
-                    <Download className="w-4 h-4" /> Export HD
+                    <Download className="w-4 h-4" /> PNG
+                </button>
+                <button
+                    onClick={onExportPPTX}
+                    className="flex items-center gap-1.5 px-4 py-1.5 bg-[#db4437] hover:bg-[#c53929] text-white rounded-xl text-sm font-medium shadow-sm transition-colors"
+                >
+                    <Download className="w-4 h-4" /> PPTX
                 </button>
             </div>
         </div>

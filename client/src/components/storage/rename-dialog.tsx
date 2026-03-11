@@ -53,7 +53,7 @@ export function RenameDialog({
             onOpenChange(false);
         } catch (error) {
             // Error handling is done in parent or here?
-            console.error(error);
+            console.debug(error);
         } finally {
             setLoading(false);
         }

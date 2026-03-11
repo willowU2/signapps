@@ -54,7 +54,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
                 const update = new Uint8Array(event.data)
                 Y.applyUpdate(doc, update)
             } catch (e) {
-                console.error('Failed to apply update', e)
+                console.debug('Failed to apply update', e)
             }
         }
 

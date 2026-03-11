@@ -11,8 +11,8 @@ export default function AdminDashboard() {
     const [metrics, setMetrics] = useState<SystemMetrics | null>(null)
 
     useEffect(() => {
-        getUsers().then(setUsers).catch(console.error)
-        getSystemMetrics().then(setMetrics).catch(console.error)
+        getUsers().then(setUsers).catch(err => console.debug(err))
+        getSystemMetrics().then(setMetrics).catch(err => console.debug(err))
     }, [])
 
     return (

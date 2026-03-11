@@ -39,13 +39,24 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from '@/components/ui/command';
+import { VoiceInput } from '@/components/ui/voice-input';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [interimSearch, setInterimSearch] = useState('');
   const router = useRouter();
   const pathname = usePathname();
   const { logout } = useAuthStore();
+
+  const handleTranscription = useCallback((text: string, isFinal: boolean) => {
+    if (isFinal) {
+      setSearch((prev) => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + text + ' ');
+      setInterimSearch('');
+    } else {
+      setInterimSearch(text);
+    }
+  }, []);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -76,9 +87,18 @@ export function CommandPalette() {
     >
       <CommandInput
         placeholder="Type a command or search..."
-        value={search}
-        onValueChange={setSearch}
+        value={search + (interimSearch ? (search && !search.endsWith(' ') ? ' ' : '') + interimSearch : '')}
+        onValueChange={(v) => {
+          setSearch(v);
+          setInterimSearch('');
+        }}
       />
+      <div className="absolute right-3 top-2.5 z-10">
+        <VoiceInput 
+          onTranscription={handleTranscription} 
+          className="h-7 w-7 [&>svg]:w-3.5 [&>svg]:h-3.5 bg-background border shadow-sm"
+        />
+      </div>
       <CommandList className="custom-scrollbar">
         <CommandEmpty className="py-6 text-center text-sm">
           <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
@@ -200,10 +220,7 @@ export function CommandPalette() {
             <Share2 className="mr-2 h-4 w-4" />
             <span>Shared Links</span>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => router.push('/media'))}>
-            <Mic className="mr-2 h-4 w-4" />
-            <span>Media Processing</span>
-          </CommandItem>
+
           <CommandItem onSelect={() => runCommand(() => router.push('/ai'))}>
             <MessageSquare className="mr-2 h-4 w-4" />
             <span>AI Assistant</span>

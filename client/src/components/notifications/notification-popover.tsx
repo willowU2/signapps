@@ -78,7 +78,7 @@ export function NotificationPopover() {
       const mapped = response.data.notifications.map(mapApiToNotification);
       setNotifications(mapped);
     } catch (err) {
-      console.error('Failed to load notifications:', err);
+      console.debug('Failed to load notifications:', err);
       // Keep empty on error - database is source of truth
       setNotifications([]);
     } finally {

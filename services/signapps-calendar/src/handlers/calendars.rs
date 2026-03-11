@@ -7,10 +7,7 @@ use axum::{
 };
 use serde::Deserialize;
 use signapps_common::Claims;
-use signapps_db::{
-    models::*,
-    CalendarMemberRepository, CalendarRepository,
-};
+use signapps_db::{models::*, CalendarMemberRepository, CalendarRepository};
 use uuid::Uuid;
 
 use crate::{AppState, CalendarError};

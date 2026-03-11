@@ -1,0 +1,34 @@
+# ATTENTION:
+# L'image officielle vLLM ROCm pour AMD nécessite un accès GPU physique Linux.
+# Sous Windows, Docker Desktop ne sait pas translater de /dev/dri /dev/kfd pour les cartes AMD (contrairement à WSL2 nvidia-container-toolkit).
+# Si vous obtenez "Failed to infer device type", utilisez un environnement Python natif sous Windows, 
+# ou utilisez WSL2 avec l'hyperviseur ROCm officiellement configuré.
+
+
+services:
+  vllm:
+    image: rocm/vllm:latest
+    container_name: signapps-vllm
+    ports:
+      - "8000:8000"
+    ipc: host
+    # devices:
+    #   - /dev/kfd:/dev/kfd
+    #   - /dev/dri:/dev/dri
+    group_add:
+      - video
+    volumes:
+      - ./data/models:/root/.cache/huggingface
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN:-}
+      - HIP_VISIBLE_DEVICES=0,1
+      - HSA_OVERRIDE_GFX_VERSION=10.3.0 # Optionnel: à adapter selon la compatibilité R9700 stricte
+    command: >
+      python3 -m vllm.entrypoints.openai.api_server
+      --model qwen3.5-35b-a3b
+      --tensor-parallel-size 2
+      --host 0.0.0.0
+      --port 8000
+      --trust-remote-code
+      --max-model-len 4096
+      --gpu-memory-utilization 0.90

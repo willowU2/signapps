@@ -23,7 +23,7 @@ import { MailList } from "@/components/mail/mail-list"
 import { MailNav } from "@/components/mail/mail-nav"
 import { ComposeAiDialog } from "@/components/mail/compose-ai-dialog"
 import { MailAddons } from "@/components/mail/mail-addons"
-import { WorkspaceRail } from "@/components/mail/workspace-rail"
+
 import { WorkspaceHeader } from "@/components/mail/workspace-header"
 import type { Mail } from "@/lib/data/mail"
 import {
@@ -79,7 +79,7 @@ export default function MailPage() {
                 }))
                 setMailList(uiMails)
             } catch (err) {
-                console.error('Failed to fetch mail data:', err)
+                console.debug('Failed to fetch mail data:', err)
                 // Keep empty list on error - database is source of truth
                 setMailList([])
             }
@@ -138,8 +138,6 @@ export default function MailPage() {
             <WorkspaceShell
                 className="bg-[#f2f6fc] dark:bg-[#111111] text-foreground font-sans"
                 header={<WorkspaceHeader />}
-                leftRail={<WorkspaceRail activeApp="mail" />}
-                rightRail={<MailAddons />}
                 sidebar={
                     <div className="w-[256px] shrink-0 flex flex-col gap-2 px-4 pt-4 overflow-y-auto">
                         {/* Compose Button */}

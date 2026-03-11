@@ -55,8 +55,7 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("Database connected");
 
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "dev-secret-change-me".into());
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
 
     let jwt_config = JwtConfig {
         secret: jwt_secret,

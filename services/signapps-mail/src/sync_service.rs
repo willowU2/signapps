@@ -121,7 +121,9 @@ pub async fn sync_account(
     // Fetch full messages for new UIDs
     for uid in uids_to_fetch.iter().take(20) {
         // Limit to 20 per sync
-        let full_msg_stream = session.fetch(uid.to_string(), "(BODY.PEEK[] FLAGS)").await?;
+        let full_msg_stream = session
+            .fetch(uid.to_string(), "(BODY.PEEK[] FLAGS)")
+            .await?;
         let mut fm_stream = full_msg_stream;
 
         if let Some(fm) = fm_stream.next().await {
@@ -148,7 +150,9 @@ pub async fn sync_account(
                             .map(|t| t.chars().take(200).collect::<String>());
 
                         // Check if read (from FLAGS)
-                        let is_read = m.flags().any(|f| matches!(f, async_imap::types::Flag::Seen));
+                        let is_read = m
+                            .flags()
+                            .any(|f| matches!(f, async_imap::types::Flag::Seen));
 
                         // Parse received date
                         let received_at = date_str
@@ -171,7 +175,7 @@ pub async fn sync_account(
                         .bind(*uid as i64)
                         .bind(&message_id)
                         .bind(&in_reply_to)
-                        .bind(&sender_email.unwrap_or(from.clone().unwrap_or_default()))
+                        .bind(sender_email.unwrap_or(from.clone().unwrap_or_default()))
                         .bind(&sender_name)
                         .bind(&to)
                         .bind(&cc)
@@ -281,10 +285,7 @@ fn parse_address(addr: &Option<String>) -> (Option<String>, Option<String>) {
         if let Some(end) = addr.find('>') {
             let name = addr[..start].trim().trim_matches('"').to_string();
             let email = addr[start + 1..end].trim().to_string();
-            return (
-                if name.is_empty() { None } else { Some(name) },
-                Some(email),
-            );
+            return (if name.is_empty() { None } else { Some(name) }, Some(email));
         }
     }
 
@@ -298,10 +299,7 @@ fn extract_body(parsed: &mailparse::ParsedMail) -> (Option<String>, Option<Strin
 
     if parsed.subparts.is_empty() {
         // Single part message
-        let content_type = parsed
-            .ctype
-            .mimetype
-            .to_lowercase();
+        let content_type = parsed.ctype.mimetype.to_lowercase();
 
         if let Ok(body) = parsed.get_body() {
             if content_type.contains("text/html") {
@@ -326,7 +324,7 @@ fn extract_body(parsed: &mailparse::ParsedMail) -> (Option<String>, Option<Strin
             }
 
             // Recurse into nested multipart
-            if part.subparts.len() > 0 {
+            if !part.subparts.is_empty() {
                 let (nested_text, nested_html) = extract_body(part);
                 if text_body.is_none() {
                     text_body = nested_text;

@@ -262,7 +262,7 @@ async fn process_speech_turn(
         match state.tts.synthesize(tts_req).await {
             Ok(result) => {
                 // Send audio as binary frame
-                let _ = tx.send(Message::Binary(result.audio_data.into())).await;
+                let _ = tx.send(Message::Binary(result.audio_data)).await;
             },
             Err(e) => {
                 tracing::warn!("TTS failed for sentence: {}", e);

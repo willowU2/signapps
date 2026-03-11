@@ -51,7 +51,7 @@ export function MoveToDialog({
             await onMove(selectedPath);
             onOpenChange(false);
         } catch (error) {
-            console.error(error);
+            console.debug(error);
         } finally {
             setLoading(false);
         }

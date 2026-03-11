@@ -384,3 +384,22 @@ export interface InstallEvent {
     message?: string;
     progress?: number;
 }
+
+// Networks API
+export const networksApi = {
+    list: () => containersApiClient.get('/networks'),
+    get: (id: string) => containersApiClient.get(`/networks/${id}`),
+    create: (data: any) => containersApiClient.post('/networks', data),
+    delete: (id: string) => containersApiClient.delete(`/networks/${id}`),
+    connect: (id: string, containerId: string) => containersApiClient.post(`/networks/${id}/connect`, { container: containerId }),
+    disconnect: (id: string, containerId: string) => containersApiClient.post(`/networks/${id}/disconnect`, { container: containerId }),
+};
+
+// Volumes API
+export const volumesApi = {
+    list: () => containersApiClient.get('/volumes'),
+    get: (id: string) => containersApiClient.get(`/volumes/${id}`),
+    create: (data: any) => containersApiClient.post('/volumes', data),
+    delete: (id: string) => containersApiClient.delete(`/volumes/${id}`),
+    prune: () => containersApiClient.post('/volumes/prune'),
+};

@@ -17,7 +17,7 @@ mod jobs;
 mod storage;
 
 use handlers::{
-    buckets, external, favorites, files, health, mounts, permissions, preview, quotas, raid,
+    buckets, drive, external, favorites, files, health, mounts, permissions, preview, quotas, raid,
     search, shares, stats, storage_settings, trash,
 };
 use storage::StorageBackend;
@@ -154,6 +154,17 @@ fn create_router(state: AppState) -> Router {
         .route("/buckets", post(buckets::create))
         .route("/buckets/:name", get(buckets::get))
         .route("/buckets/:name", delete(buckets::delete));
+
+    // Protected Drive VFS routes
+    let drive_routes = Router::new()
+        .route(
+            "/drive/nodes",
+            post(drive::create_node).get(drive::list_nodes),
+        )
+        .route("/drive/nodes/root", get(drive::list_nodes))
+        .route("/drive/nodes/:id/children", get(drive::list_nodes))
+        .route("/drive/nodes/:id", put(drive::update_node))
+        .route("/drive/nodes/:id", delete(drive::delete_node));
 
     // Protected RAID routes (arrays)
     let raid_array_routes = Router::new()
@@ -349,6 +360,7 @@ fn create_router(state: AppState) -> Router {
     let protected_routes = Router::new()
         .merge(file_routes)
         .merge(bucket_routes)
+        .merge(drive_routes)
         .merge(raid_array_routes)
         .merge(raid_disk_routes)
         .merge(raid_other_routes)
