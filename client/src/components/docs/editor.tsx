@@ -794,6 +794,17 @@ const Editor = ({
                         else if (key === 'x') { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }
                     } else if (key === '5') {
                         e.preventDefault(); editor.chain().focus().toggleStrike().run();
+                    } else if (key === 'k') {
+                        // Ctrl+K: Insert/edit link
+                        e.preventDefault();
+                        const previousUrl = editor.getAttributes('link').href;
+                        const url = window.prompt('URL du lien:', previousUrl || '');
+                        if (url === null) return; // Cancelled
+                        if (url === '') {
+                            editor.chain().focus().unsetLink().run();
+                        } else {
+                            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+                        }
                     }
                 }
             }

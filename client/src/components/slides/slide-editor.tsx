@@ -365,6 +365,18 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             const canvas = fabricCanvasRef.current;
             if (!canvas || isTyping) return;
 
+            // Escape: Deselect all objects or close omnibox
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                if (omniboxMenu.isOpen) {
+                    setOmniboxMenu({ isOpen: false, x: 0, y: 0 });
+                } else {
+                    canvas.discardActiveObject();
+                    canvas.requestRenderAll();
+                }
+                return;
+            }
+
             const activeObject = canvas.getActiveObject();
             if (!activeObject || (activeObject as any).isEditing) return;
 
@@ -492,7 +504,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 // Move selection box
                 activeObject.set({ left: (activeObject.left || 0) + dx, top: (activeObject.top || 0) + dy });
                 activeObject.setCoords();
-                
+
                 isUpdatingRef.current = true;
                 objs.forEach((obj: any) => {
                     // Update object inside group correctly handled by Fabric magically, or we trigger full update
@@ -500,6 +512,75 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 });
                 isUpdatingRef.current = false;
                 canvas.requestRenderAll();
+                return;
+            }
+
+            // 7. Cut (Ctrl+X / Cmd+X)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
+                e.preventDefault();
+                activeObject.clone().then((cloned: any) => {
+                    clipboardRef.current = cloned;
+                    isUpdatingRef.current = true;
+                    if (activeObject.type === 'activeSelection') {
+                        const groupItems = (activeObject as any).getObjects();
+                        groupItems.forEach((item: any) => {
+                            canvas.remove(item);
+                            removeObject(item.id);
+                        });
+                        canvas.discardActiveObject();
+                    } else {
+                        canvas.remove(activeObject);
+                        removeObject((activeObject as any).id);
+                    }
+                    isUpdatingRef.current = false;
+                    canvas.requestRenderAll();
+                });
+                return;
+            }
+
+            // 8. Bold (Ctrl+B / Cmd+B) - for text objects
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                if (activeObject.type === 'i-text' || activeObject.type === 'textbox') {
+                    const textObj = activeObject as fabric.IText;
+                    const currentWeight = textObj.fontWeight;
+                    textObj.set('fontWeight', currentWeight === 'bold' ? 'normal' : 'bold');
+                    canvas.requestRenderAll();
+                    isUpdatingRef.current = true;
+                    updateObject((activeObject as any).id, activeObject.toObject());
+                    isUpdatingRef.current = false;
+                }
+                return;
+            }
+
+            // 9. Italic (Ctrl+I / Cmd+I) - for text objects
+            if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                e.preventDefault();
+                if (activeObject.type === 'i-text' || activeObject.type === 'textbox') {
+                    const textObj = activeObject as fabric.IText;
+                    const currentStyle = textObj.fontStyle;
+                    textObj.set('fontStyle', currentStyle === 'italic' ? 'normal' : 'italic');
+                    canvas.requestRenderAll();
+                    isUpdatingRef.current = true;
+                    updateObject((activeObject as any).id, activeObject.toObject());
+                    isUpdatingRef.current = false;
+                }
+                return;
+            }
+
+            // 10. Underline (Ctrl+U / Cmd+U) - for text objects
+            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+                if (activeObject.type === 'i-text' || activeObject.type === 'textbox') {
+                    const textObj = activeObject as fabric.IText;
+                    const currentUnderline = textObj.underline;
+                    textObj.set('underline', !currentUnderline);
+                    canvas.requestRenderAll();
+                    isUpdatingRef.current = true;
+                    updateObject((activeObject as any).id, activeObject.toObject());
+                    isUpdatingRef.current = false;
+                }
+                return;
             }
         }
 
@@ -512,7 +593,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
         window.addEventListener("keydown", handleKeyDown)
         return () => window.removeEventListener("keydown", handleKeyDown)
-    }, [])
+    }, [omniboxMenu.isOpen, removeObject, updateObject])
 
     // Define a stable object modification pipeline
     const handleUpdateActiveObject = useCallback((id: string, updates: any) => {
