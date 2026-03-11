@@ -7,8 +7,8 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::models::{
-    CreatePxeProfileRequest, PxeAsset, PxeProfile, RegisterPxeAssetRequest,
-    UpdatePxeAssetRequest, UpdatePxeProfileRequest,
+    CreatePxeProfileRequest, PxeAsset, PxeProfile, RegisterPxeAssetRequest, UpdatePxeAssetRequest,
+    UpdatePxeProfileRequest,
 };
 use crate::AppState;
 
@@ -330,7 +330,7 @@ pub async fn generate_ipxe_script(
                     .await
                     .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "".to_string()))?;
             dev.map(|row| row.id)
-        }
+        },
     };
 
     if let Some(pid) = active_profile_id {

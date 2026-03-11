@@ -25,9 +25,9 @@
 
 pub mod auth;
 pub mod config;
-pub mod traits;
 pub mod error;
 pub mod middleware;
+pub mod traits;
 pub mod types;
 
 // Re-export commonly used items
