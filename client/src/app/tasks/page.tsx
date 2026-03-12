@@ -68,7 +68,7 @@ export default function TasksPage() {
   return (
     <AppLayout>
       <div className="flex h-[calc(100vh-8rem)] w-full bg-background">
-        <div className="w-full bg-white border rounded-[24px] shadow-sm flex flex-col overflow-hidden relative">
+        <div className="w-full bg-background border rounded-[24px] shadow-sm flex flex-col overflow-hidden relative">
           
           <TasksHeader 
             calendars={calendars}

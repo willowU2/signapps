@@ -165,7 +165,7 @@ export function GlobalHeader() {
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                         placeholder="Rechercher dans les messages"
-                        className="w-full pl-12 pr-12 h-12 bg-[#f1f3f4] dark:bg-[#1f1f1f] border-transparent hover:bg-white hover:dark:bg-[#202124] hover:shadow-sm focus-visible:bg-white focus-visible:dark:bg-[#202124] focus-visible:ring-0 focus-visible:shadow-md transition-all rounded-full text-base"
+                        className="w-full pl-12 pr-12 h-12 bg-[#f1f3f4] dark:bg-[#1f1f1f] border-transparent hover:bg-background hover:dark:bg-[#202124] hover:shadow-sm focus-visible:bg-background focus-visible:dark:bg-[#202124] focus-visible:ring-0 focus-visible:shadow-md transition-all rounded-full text-base"
                     />
                     <SlidersHorizontal className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground cursor-pointer hover:text-foreground" />
                 </div>

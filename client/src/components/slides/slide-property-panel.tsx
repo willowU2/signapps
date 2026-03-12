@@ -115,8 +115,8 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
     }
 
     return (
-        <div className="w-72 flex-shrink-0 border-l border-gray-100 bg-white h-full flex flex-col overflow-y-auto custom-scrollbar shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.05)]">
-            <div className="px-5 py-4 border-b border-gray-100 sticky top-0 bg-white/80 backdrop-blur-md z-10 flex items-center justify-between">
+        <div className="w-72 flex-shrink-0 border-l border-gray-100 bg-background h-full flex flex-col overflow-y-auto custom-scrollbar shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.05)]">
+            <div className="px-5 py-4 border-b border-gray-100 sticky top-0 bg-background/80 backdrop-blur-md z-10 flex items-center justify-between">
                 <h3 className="font-semibold text-gray-800 text-sm">Design</h3>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
                     {activeObject.type}
@@ -181,28 +181,28 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                 <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200">
                                     <button
                                         onClick={() => handlePropertyChange('fontWeight', (activeObject as any).fontWeight === 'bold' ? 'normal' : 'bold')}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).fontWeight === 'bold' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).fontWeight === 'bold' ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
                                         title="Bold"
                                     >
                                         <Bold className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => handlePropertyChange('fontStyle', (activeObject as any).fontStyle === 'italic' ? 'normal' : 'italic')}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).fontStyle === 'italic' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).fontStyle === 'italic' ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
                                         title="Italic"
                                     >
                                         <Italic className="w-4 h-4 ml-1 mr-1" />
                                     </button>
                                     <button
                                         onClick={() => handlePropertyChange('underline', !(activeObject as any).underline)}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).underline ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).underline ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
                                         title="Underline"
                                     >
                                         <Underline className="w-4 h-4 ml-1 mr-1" />
                                     </button>
                                     <button
                                         onClick={() => handlePropertyChange('linethrough', !(activeObject as any).linethrough)}
-                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).linethrough ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`flex - 1 flex justify - center py - 1.5 rounded - md transition - colors ${(activeObject as any).linethrough ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
                                         title="Strikethrough"
                                     >
                                         <Strikethrough className="w-4 h-4 ml-1 mr-1" />
@@ -232,7 +232,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                             <button
                                                 key={align}
                                                 onClick={() => handlePropertyChange('textAlign', align)}
-                                                className={`flex-1 flex justify-center py-1.5 rounded-md transition-colors ${isActive ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                                className={`flex-1 flex justify-center py-1.5 rounded-md transition-colors ${isActive ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
                                                 title={`Align ${align}`}
                                             >
                                                 <Icon className="w-4 h-4" />
@@ -244,21 +244,21 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                 <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-200">
                                     <button
                                         onClick={() => toggleListStyle('bullet')}
-                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${((activeObject as any).text as string || '').startsWith('• ') ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${((activeObject as any).text as string || '').startsWith('• ') ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
                                         title="Bulleted List"
                                     >
                                         <List className="w-4 h-4" />
                                     </button>
                                     <button
                                         onClick={() => toggleListStyle('check')}
-                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${(((activeObject as any).text as string || '').startsWith('☐ ') || ((activeObject as any).text as string || '').startsWith('✅ ')) ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${(((activeObject as any).text as string || '').startsWith('☐ ') || ((activeObject as any).text as string || '').startsWith('✅ ')) ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
                                         title="Checklist"
                                     >
                                         <CheckSquare className="w-4 h-4 ml-0.5 mr-0.5" />
                                     </button>
                                     <button
                                         onClick={() => toggleListStyle('number')}
-                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${/^\d+\./.test(((activeObject as any).text as string || '')) ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
+                                        className={`w-8 h-8 flex justify-center items-center rounded-md transition-colors ${/^\d+\./.test(((activeObject as any).text as string || '')) ? 'bg-background shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'} `}
                                         title="Numbered List"
                                     >
                                         <ListOrdered className="w-4 h-4" />
@@ -402,7 +402,7 @@ export function SlidePropertyPanel({ activeObject, updateObjectRemotely, canvasR
                                 />
                                 <input
                                     type="text"
-                                    className="flex-1 bg-white border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none font-mono"
+                                    className="flex-1 bg-background border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none font-mono"
                                     value={((activeObject as import("fabric").Group).getObjects()[0].fill as string) || '#ffffff'}
                                     onChange={(e) => handleSmartChipChange(e.target.value)}
                                 />

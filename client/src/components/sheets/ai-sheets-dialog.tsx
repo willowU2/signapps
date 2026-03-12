@@ -70,7 +70,7 @@ export function AiSheetsDialog({ onClose, selectionBounds, data, onApplyResult, 
     };
 
     return (
-        <div className="absolute top-12 right-4 w-96 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
+        <div className="absolute top-12 right-4 w-96 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/40 dark:to-indigo-900/40 border-b border-[#dadce0] dark:border-[#5f6368]">
                 <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300 font-semibold">
                     <Sparkles className="w-4 h-4" />

@@ -1331,7 +1331,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
                 <div className="flex-1 w-full flex items-stretch min-h-0 relative">
                     {/* Outline Sidebar (Left) */}
-                    <div className="w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] hidden md:block z-10">
+                    <div className="w-64 border-r border-gray-200 dark:border-gray-800 bg-background dark:bg-[#1a1a1a] hidden md:block z-10">
                         <DocumentOutline canvasRef={fabricCanvasRef} />
                     </div>
 

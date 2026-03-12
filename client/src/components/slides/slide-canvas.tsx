@@ -339,7 +339,7 @@ export function SlideCanvas({
         <div className="w-full h-full bg-[#f8f9fa] dark:bg-[#1f1f1f] flex justify-center overflow-auto p-8 relative">
             <div
                 ref={wrapperRef}
-                className={`bg-white shadow-[0_4px_24px_-8px_rgba(0,0,0,0.15)] rounded-sm overflow-hidden relative transition-all duration-300 mx-auto shrink-0`}
+                className={`bg-background shadow-[0_4px_24px_-8px_rgba(0,0,0,0.15)] rounded-sm overflow-hidden relative transition-all duration-300 mx-auto shrink-0`}
                 style={{
                     width: pageConfig.orientation === 'landscape' ? '1056px' : '816px',
                     height: pageConfig.orientation === 'landscape' ? '816px' : '1056px',

@@ -86,7 +86,7 @@ export function SlideEditor({ docId }: SlideEditorProps) {
                             className={`p-3 border-2 rounded cursor-pointer transition ${
                                 currentSlideIndex === idx
                                     ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-300 bg-white hover:border-gray-400'
+                                    : 'border-gray-300 bg-background hover:border-gray-400'
                             }`}
                         >
                             <p className="text-xs font-semibold text-gray-900">
@@ -108,7 +108,7 @@ export function SlideEditor({ docId }: SlideEditorProps) {
             </div>
 
             {/* Main editor */}
-            <div className="flex-1 bg-white rounded-lg border border-gray-200 flex flex-col">
+            <div className="flex-1 bg-background rounded-lg border border-gray-200 flex flex-col">
                 {/* Toolbar */}
                 <div className="border-b border-gray-200 p-3 flex justify-between items-center bg-gray-50">
                     <div>

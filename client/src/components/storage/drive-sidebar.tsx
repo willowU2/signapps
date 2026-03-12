@@ -47,10 +47,10 @@ export function DriveSidebar({
     const usagePercent = quota && quota.total > 0 ? Math.min(100, Math.round((quota.used / quota.total) * 100)) : 0;
 
     return (
-        <div className={cn("w-[256px] flex flex-col h-full bg-white dark:bg-[#1a1a1a] pb-4 gap-2", className)}>
+        <div className={cn("w-[256px] flex flex-col h-full bg-background dark:bg-[#1a1a1a] pb-4 gap-2", className)}>
             <div className="px-4 py-3">
                 <Button
-                    className="w-auto h-14 px-4 rounded-2xl bg-white hover:bg-[#f8f9fa] shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] dark:bg-[#1a1a1a] dark:hover:bg-[#303134] dark:shadow-[0_1px_2px_0_rgba(0,0,0,0.6),0_1px_3px_1px_rgba(0,0,0,0.3)] transition-all flex items-center gap-3 text-[#3c4043] dark:text-[#e8eaed]"
+                    className="w-auto h-14 px-4 rounded-2xl bg-background hover:bg-[#f8f9fa] shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] dark:bg-[#1a1a1a] dark:hover:bg-[#303134] dark:shadow-[0_1px_2px_0_rgba(0,0,0,0.6),0_1px_3px_1px_rgba(0,0,0,0.3)] transition-all flex items-center gap-3 text-[#3c4043] dark:text-[#e8eaed]"
                     onClick={onNewClick}
                 >
                     <svg width="24" height="24" viewBox="0 0 36 36"><path fill="#34A853" d="M16 16v14h4V20z"/><path fill="#4285F4" d="M30 16H20l-4 4h14z"/><path fill="#FBBC05" d="M6 16v4h10l4-4z"/><path fill="#EA4335" d="M20 16V2h-4v14z"/><path fill="none" d="M0 0h36v36H0z"/></svg>

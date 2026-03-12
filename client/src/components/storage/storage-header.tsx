@@ -44,7 +44,7 @@ export function StorageHeader({
   if (driveView === 'home') return null;
 
   return (
-    <div className="flex justify-between items-center px-6 py-3 bg-white dark:bg-[#202124]">
+    <div className="flex justify-between items-center px-6 py-3 bg-background dark:bg-[#202124]">
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <div className="flex items-center text-[22px] font-normal text-[#1f1f1f] dark:text-[#e3e3e3] overflow-hidden">
           {currentBucket ? (
@@ -102,13 +102,13 @@ export function StorageHeader({
           </div>
           <Input
             placeholder="Rechercher dans Drive"
-            className="w-full bg-[#f1f3f4] dark:bg-[#303134] border-transparent hover:bg-white hover:border-[#dadce0] hover:shadow-sm focus:bg-white dark:hover:bg-[#3c4043] dark:focus:bg-[#3c4043] focus:border-[#1a73e8] dark:focus:border-[#8ab4f8] rounded-full pl-11 h-12 text-base transition-all"
+            className="w-full bg-[#f1f3f4] dark:bg-[#303134] border-transparent hover:bg-background hover:border-[#dadce0] hover:shadow-sm focus:bg-background dark:hover:bg-[#3c4043] dark:focus:bg-[#3c4043] focus:border-[#1a73e8] dark:focus:border-[#8ab4f8] rounded-full pl-11 h-12 text-base transition-all"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
         
-        <div className="flex items-center gap-1 border border-[#dadce0] dark:border-[#5f6368] rounded-full p-1 bg-white dark:bg-[#202124]">
+        <div className="flex items-center gap-1 border border-[#dadce0] dark:border-[#5f6368] rounded-full p-1 bg-background dark:bg-[#202124]">
           <Button
             variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
             size="icon"

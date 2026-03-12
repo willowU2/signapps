@@ -68,7 +68,7 @@ export function EditorMenu({ menus, onAction, className = '' }: EditorMenuProps)
                 
                 {/* Submenu rendering via CSS hover */}
                 {hasSubMenu && (
-                    <div className="absolute top-0 left-full -mt-1 hidden group-hover/sub:block bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded shadow-lg z-50 py-1 min-w-[220px]">
+                    <div className="absolute top-0 left-full -mt-1 hidden group-hover/sub:block bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded shadow-lg z-50 py-1 min-w-[220px]">
                         {item.subItems!.map((subItem, sIdx) => renderMenuItem(subItem, sIdx, level + 1))}
                     </div>
                 )}
@@ -93,7 +93,7 @@ export function EditorMenu({ menus, onAction, className = '' }: EditorMenuProps)
                         {menu.label}
                     </button>
                     {openMenu === menu.id && (
-                        <div className="absolute top-full left-0 mt-1 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded shadow-lg z-50 py-1 min-w-[220px]">
+                        <div className="absolute top-full left-0 mt-1 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded shadow-lg z-50 py-1 min-w-[220px]">
                             {menu.items.map((item, idx) => renderMenuItem(item, idx))}
                         </div>
                     )}

@@ -418,7 +418,7 @@ export function FilePreviewDialog({
 
       case 'markdown':
         return (
-          <div className="w-full h-[75vh] border rounded-lg overflow-hidden bg-white dark:bg-[#1f1f1f] relative">
+          <div className="w-full h-[75vh] border rounded-lg overflow-hidden bg-background dark:bg-[#1f1f1f] relative">
             {parsedDocsContent !== null ? (
                 <Editor documentId={file.key.replace(/[/.]/g, '-')} initialContent={parsedDocsContent} className="h-full" />
             ) : (
@@ -429,7 +429,7 @@ export function FilePreviewDialog({
 
       case 'spreadsheet':
         return (
-          <div className="w-full h-[75vh] border rounded-lg overflow-hidden bg-white dark:bg-[#1f1f1f] relative">
+          <div className="w-full h-[75vh] border rounded-lg overflow-hidden bg-background dark:bg-[#1f1f1f] relative">
             {parsedSheetsData !== null ? (
                 <Spreadsheet documentId={file.key.replace(/[/.]/g, '-')} initialData={parsedSheetsData} />
             ) : (
@@ -440,7 +440,7 @@ export function FilePreviewDialog({
 
       case 'slides':
         return (
-          <div className="w-full h-[75vh] border rounded-lg overflow-hidden bg-white relative">
+          <div className="w-full h-[75vh] border rounded-lg overflow-hidden bg-background relative">
             <SlidesContent />
           </div>
         );

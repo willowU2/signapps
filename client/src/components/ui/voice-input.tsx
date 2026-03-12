@@ -183,7 +183,7 @@ export function VoiceInput({
         "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors",
         active 
           ? "bg-red-500/20 text-red-500 hover:bg-red-500/30 animate-pulse" 
-          : "text-slate-400 hover:bg-white/10 hover:text-white",
+          : "text-slate-400 hover:bg-background/10 hover:text-white",
         className
       )}
       title={active ? "Arrêter la dictée" : title}

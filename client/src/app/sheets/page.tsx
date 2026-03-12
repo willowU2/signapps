@@ -48,7 +48,7 @@ function SheetsContent() {
         <EditorLayout documentId={id} documentName={name || 'Sans titre'} icon={<Table className="w-5 h-5 text-green-600" />}>
             <div className="flex flex-col h-full relative">
                 {loading && (
-                    <div className="absolute inset-0 z-50 bg-white/80 dark:bg-black/80 flex items-center justify-center">
+                    <div className="absolute inset-0 z-50 bg-background/80 dark:bg-black/80 flex items-center justify-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
                     </div>
                 )}

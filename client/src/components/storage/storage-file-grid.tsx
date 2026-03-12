@@ -37,7 +37,7 @@ export function StorageFileGrid({
   }
 
   return (
-    <div className="space-y-1 bg-white dark:bg-[#202124] rounded-2xl border border-[#dadce0] dark:border-[#5f6368] overflow-hidden">
+    <div className="space-y-1 bg-background dark:bg-[#202124] rounded-2xl border border-[#dadce0] dark:border-[#5f6368] overflow-hidden">
       <div className="grid grid-cols-12 px-4 py-3 text-xs font-semibold text-[#5f6368] dark:text-[#9aa0a6] border-b border-[#dadce0] dark:border-[#5f6368]">
         <div className="col-span-6 ml-9">Nom</div>
         <div className="col-span-3 hidden sm:block">Date de modification</div>

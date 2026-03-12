@@ -122,7 +122,7 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
     return (
         <div
             ref={menuRef}
-            className="fixed z-50 w-80 bg-white/95 backdrop-blur-xl border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col"
+            className="fixed z-50 w-80 bg-background/95 backdrop-blur-xl border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col"
             style={{ left: safeX, top: safeY, maxHeight: 400 }}
         >
             <div className="p-3 border-b border-gray-100 bg-gray-50/50">
@@ -130,7 +130,7 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
                     ref={inputRef}
                     type="text"
                     placeholder="Type to filter..."
-                    className="w-full bg-white border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none shadow-sm"
+                    className="w-full bg-background border border-gray-200 text-gray-800 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 block p-2 outline-none shadow-sm"
                     value={query}
                     onChange={(e) => {
                         setQuery(e.target.value)
@@ -196,10 +196,10 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
 
             <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-400">
                 <div className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-white border border-gray-200 font-sans shadow-sm">↑↓</kbd> to navigate
+                    <kbd className="px-1.5 py-0.5 rounded bg-background border border-gray-200 font-sans shadow-sm">↑↓</kbd> to navigate
                 </div>
                 <div className="flex items-center gap-1">
-                    <kbd className="px-1.5 py-0.5 rounded bg-white border border-gray-200 font-sans shadow-sm">Enter</kbd> to select
+                    <kbd className="px-1.5 py-0.5 rounded bg-background border border-gray-200 font-sans shadow-sm">Enter</kbd> to select
                 </div>
             </div>
         </div>

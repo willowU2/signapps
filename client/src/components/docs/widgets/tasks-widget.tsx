@@ -55,7 +55,7 @@ export function TasksWidget() {
                 <input
                     type="text"
                     placeholder="Add a new task..."
-                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-2.5 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+                    className="w-full bg-background dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-2.5 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                 />
@@ -70,7 +70,7 @@ export function TasksWidget() {
                         key={task.id}
                         className={`group flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:shadow-sm ${task.completed
                             ? 'bg-gray-50/50 dark:bg-gray-900/20 border-transparent'
-                            : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700/50 hover:border-indigo-200'
+                            : 'bg-background dark:bg-gray-800 border-gray-100 dark:border-gray-700/50 hover:border-indigo-200'
                             }`}
                         onClick={() => toggleTask(task.id)}
                     >

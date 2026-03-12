@@ -214,7 +214,7 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
         <div className="flex flex-col h-full overflow-hidden font-sans bg-[#f8f9fa] dark:bg-[#1f1f1f] min-h-0 relative">
             <div className="flex flex-1 overflow-hidden relative min-h-0">
                 {/* Sidebar (Slides List) */}
-                <div className="w-48 border-r border-gray-200 bg-white/50 z-20">
+                <div className="w-48 border-r border-gray-200 bg-background/50 z-20">
                     <SlideSidebar
                         slides={slideState.slides}
                         activeSlideId={slideState.activeSlideId}

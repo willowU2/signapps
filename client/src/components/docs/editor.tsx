@@ -1961,7 +1961,7 @@ const Editor = ({
                             title="Dictée Vocale"
                         />
                         {interimVoiceText && (
-                            <div className="absolute top-10 left-0 bg-white dark:bg-[#1e1f20] border border-gray-200 dark:border-gray-700 shadow-md rounded-md px-3 py-1.5 text-xs whitespace-nowrap z-50 animate-pulse text-gray-500 dark:text-gray-400 pointer-events-none">
+                            <div className="absolute top-10 left-0 bg-background dark:bg-[#1e1f20] border border-gray-200 dark:border-gray-700 shadow-md rounded-md px-3 py-1.5 text-xs whitespace-nowrap z-50 animate-pulse text-gray-500 dark:text-gray-400 pointer-events-none">
                                 🎤 {interimVoiceText}...
                             </div>
                         )}
@@ -1992,7 +1992,7 @@ const Editor = ({
                     <ToolbarDivider />
 
                     {/* Font Styles */}
-                    <div className="flex border border-[#c7c7c7] dark:border-[#5f6368] rounded overflow-hidden h-[28px] mx-1 items-center bg-white dark:bg-[#202124]">
+                    <div className="flex border border-[#c7c7c7] dark:border-[#5f6368] rounded overflow-hidden h-[28px] mx-1 items-center bg-background dark:bg-[#202124]">
                         <span className="px-3 text-[13px] text-[#444746] dark:text-[#e3e3e3] border-r border-[#c7c7c7] dark:border-[#5f6368] flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-[#303134]">Inter</span>
                         <div className="flex items-center">
                             <span
@@ -2033,7 +2033,7 @@ const Editor = ({
                             <Palette className="w-[18px] h-[18px]" />
                         </ToolbarButton>
                         {showColorPicker && (
-                            <div className="absolute top-10 left-0 bg-white dark:bg-[#2d2e30] border border-gray-200 dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
+                            <div className="absolute top-10 left-0 bg-background dark:bg-[#2d2e30] border border-gray-200 dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
                                 {['#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
                                     '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
                                 ].map(color => (
@@ -2058,7 +2058,7 @@ const Editor = ({
                             <Highlighter className="w-[18px] h-[18px]" />
                         </ToolbarButton>
                         {showHighlightPicker && (
-                            <div className="absolute top-10 left-0 bg-white dark:bg-[#2d2e30] border border-gray-200 dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
+                            <div className="absolute top-10 left-0 bg-background dark:bg-[#2d2e30] border border-gray-200 dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
                                 {['#fce8e6', '#fce8b2', '#fff2cc', '#e6f4ea', '#e8f0fe', '#f3e8fd', '#ffffff',
                                 ].map(color => (
                                     <button
@@ -2159,21 +2159,21 @@ const Editor = ({
                             <>
                                 <button
                                     onClick={handleSummarize}
-                                    className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center"
+                                    className="px-3 py-1.5 bg-background dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center"
                                 >
                                     <FileText className="w-3.5 h-3.5 mr-1.5" /> Summarize Document
                                 </button>
                                 <button
                                     onClick={() => handleAiAction('improve')}
                                     disabled={editor.state.selection.empty}
-                                    className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-3 py-1.5 bg-background dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Improve Selection
                                 </button>
                                 <button
                                     onClick={() => handleAiAction('fix')}
                                     disabled={editor.state.selection.empty}
-                                    className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-3 py-1.5 bg-background dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <CheckCheck className="w-3.5 h-3.5 mr-1.5" /> Fix Selection
                                 </button>
@@ -2188,7 +2188,7 @@ const Editor = ({
                 <div className="flex-1 min-w-0 max-w-[816px]">
                         {/* Main Content Area constrained like Google Docs (A4 Paper) */}
                         <div 
-                            className="w-[816px] shrink-0 min-h-[1056px] bg-white dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10 mx-auto px-20 pt-16"
+                            className="w-[816px] shrink-0 min-h-[1056px] bg-background dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10 mx-auto px-20 pt-16"
                             onKeyDown={(e) => {
                                 if (!editor) return;
                                 if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
@@ -2211,7 +2211,7 @@ const Editor = ({
                                     placement: 'top',
                                     offset: 6,
                                 }}
-                                className="bg-white/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-200/50 dark:border-gray-700/50 rounded-[8px] overflow-hidden flex divide-x divide-gray-100 dark:divide-gray-800 pl-1"
+                                className="bg-background/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-200/50 dark:border-gray-700/50 rounded-[8px] overflow-hidden flex divide-x divide-gray-100 dark:divide-gray-800 pl-1"
                             >
                                 <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
                                     <Bold className="w-[16px] h-[16px]" />
@@ -2263,7 +2263,7 @@ const Editor = ({
                                     placement: 'bottom-start',
                                     offset: 6,
                                 }}
-                                className="bg-white/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-200 dark:border-[#5f6368] rounded-[8px] overflow-hidden min-w-[220px]"
+                                className="bg-background/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-200 dark:border-[#5f6368] rounded-[8px] overflow-hidden min-w-[220px]"
                             >
                                 {floatingMode === 'menu' && (
                                     <div className="flex flex-col py-1.5 min-w-[200px]">
@@ -2359,7 +2359,7 @@ const Editor = ({
                         <EditorContent editor={editor} />
 
                         {/* Character/Word Count Footer */}
-                        <div className="flex items-center justify-end px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800/50 bg-white dark:bg-[#1f1f1f]">
+                        <div className="flex items-center justify-end px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800/50 bg-background dark:bg-[#1f1f1f]">
                             <span className="mr-4">
                                 {editor.storage.characterCount?.words() || 0} mots
                             </span>
@@ -2415,7 +2415,7 @@ const Editor = ({
                                         className={`p-3 rounded-lg border text-sm transition-all relative group
                                             ${activeCommentId === comment.id
                                                 ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 shadow-sm'
-                                                : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-[#202124] hover:border-gray-300 dark:hover:border-gray-700'
+                                                : 'border-gray-200 dark:border-gray-800 bg-background dark:bg-[#202124] hover:border-gray-300 dark:hover:border-gray-700'
                                             }
                                         `}
                                         onClick={() => setActiveCommentId(comment.id)}

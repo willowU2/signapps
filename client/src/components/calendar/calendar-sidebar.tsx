@@ -20,7 +20,7 @@ export function CalendarSidebar({
         <div className="w-64 h-full shrink-0 border-r border-transparent flex flex-col py-3 pb-8 px-2 pl-3 z-10 overflow-y-auto no-scrollbar">
           
           <Button 
-            className="w-auto ml-2 h-[48px] px-4 pr-5 rounded-full shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] bg-white hover:bg-[#f6f9fe] hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),0_4px_8px_3px_rgba(60,64,67,0.15)] transition-all font-medium text-[#3c4043] self-start border-none justify-start flex gap-3 z-20 group"
+            className="w-auto ml-2 h-[48px] px-4 pr-5 rounded-full shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] bg-background hover:bg-[#f6f9fe] hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),0_4px_8px_3px_rgba(60,64,67,0.15)] transition-all font-medium text-[#3c4043] self-start border-none justify-start flex gap-3 z-20 group"
             onClick={onCreateEvent}
           >
             <div className="relative w-6 h-6 flex items-center justify-center -ml-1">
@@ -52,7 +52,7 @@ export function CalendarSidebar({
                 <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#5f6368] pointer-events-none" />
                 <Input 
                    placeholder="Rechercher des co..." 
-                   className="pl-9 h-9 border-none bg-gray-100/50 hover:bg-gray-100 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded text-sm placeholder:text-[#5f6368] shadow-none"
+                   className="pl-9 h-9 border-none bg-gray-100/50 hover:bg-gray-100 focus:bg-background focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded text-sm placeholder:text-[#5f6368] shadow-none"
                 />
              </div>
           </div>

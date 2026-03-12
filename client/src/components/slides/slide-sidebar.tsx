@@ -21,7 +21,7 @@ interface SlideSidebarProps {
 export function SlideSidebar({ slides, activeSlideId, onSelectSlide, onAddSlide, onRemoveSlide, onDuplicateSlide, onSaveToDrive, onExportPPTX }: SlideSidebarProps) {
     return (
         <div className="flex flex-col h-full bg-gray-50/50 border-r border-gray-200">
-            <div className="p-4 border-b border-gray-100 bg-white/50 backdrop-blur-sm sticky top-0 z-10 flex justify-between items-center">
+            <div className="p-4 border-b border-gray-100 bg-background/50 backdrop-blur-sm sticky top-0 z-10 flex justify-between items-center">
                 <h3 className="text-sm font-semibold text-gray-700">Slides</h3>
                 <div className="flex items-center gap-1">
                     {onSaveToDrive && (
@@ -69,7 +69,7 @@ export function SlideSidebar({ slides, activeSlideId, onSelectSlide, onAddSlide,
 
                             {/* Thumbnail Container */}
                             <div className={cn(
-                                "flex-1 aspect-video bg-white rounded-lg shadow-sm border transition-all relative overflow-hidden flex items-center justify-center text-xs text-muted-foreground",
+                                "flex-1 aspect-video bg-background rounded-lg shadow-sm border transition-all relative overflow-hidden flex items-center justify-center text-xs text-muted-foreground",
                                 isActive ? "ring-2 ring-indigo-500 border-transparent shadow-md" : "border-gray-200 group-hover:border-indigo-300"
                             )}>
                                 <SlideThumbnail slideId={slide.id} presentationId="demo-presentation-1" />
@@ -82,7 +82,7 @@ export function SlideSidebar({ slides, activeSlideId, onSelectSlide, onAddSlide,
                                                 e.stopPropagation();
                                                 onDuplicateSlide(slide.id);
                                             }}
-                                            className="p-1.5 bg-white/80 hover:bg-indigo-50 hover:text-indigo-600 text-gray-500 rounded-md backdrop-blur-sm shadow-sm transition-colors"
+                                            className="p-1.5 bg-background/80 hover:bg-indigo-50 hover:text-indigo-600 text-gray-500 rounded-md backdrop-blur-sm shadow-sm transition-colors"
                                             title="Dupliquer la diapositive"
                                         >
                                             <Copy className="w-3.5 h-3.5" />
@@ -94,7 +94,7 @@ export function SlideSidebar({ slides, activeSlideId, onSelectSlide, onAddSlide,
                                                 e.stopPropagation();
                                                 onRemoveSlide(slide.id);
                                             }}
-                                            className="p-1.5 bg-white/80 hover:bg-rose-50 hover:text-rose-600 text-gray-500 rounded-md backdrop-blur-sm shadow-sm transition-colors"
+                                            className="p-1.5 bg-background/80 hover:bg-rose-50 hover:text-rose-600 text-gray-500 rounded-md backdrop-blur-sm shadow-sm transition-colors"
                                             title="Supprimer la diapositive"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />

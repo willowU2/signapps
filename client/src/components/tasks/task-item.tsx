@@ -71,7 +71,7 @@ export function TaskItem({ task, onToggle, onRemove }: TaskItemProps) {
             className={cn(
                 "group flex items-start gap-3 py-3 px-4 transition-all cursor-grab active:cursor-grabbing border-l-2 border-l-transparent border-b border-b-[#f1f3f4]",
                 isOver ? "bg-[#e8f0fe] border-l-[#1a73e8]" : "hover:bg-[#f8f9fa]",
-                isDragging && "opacity-50 shadow-lg bg-white border-l-gray-300"
+                isDragging && "opacity-50 shadow-lg bg-background border-l-gray-300"
             )}
         >
             {/* Google Tasks Style Radio Checkbox - Rounded circle with border */}

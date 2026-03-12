@@ -28,7 +28,7 @@ export function TasksHeader({
 }: TasksHeaderProps) {
     return (
         <>
-            <div className="flex flex-col px-4 pt-6 pb-2 shrink-0 bg-white z-10 sticky top-0">
+            <div className="flex flex-col px-4 pt-6 pb-2 shrink-0 bg-background z-10 sticky top-0">
                 <div className="flex items-center justify-between mb-2">
                     <div className="text-[11px] font-bold text-[#5f6368] tracking-widest uppercase">
                         TASKS

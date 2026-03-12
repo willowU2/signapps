@@ -24,7 +24,7 @@ function DroppableDay({ day, isCurrentMonth, isTodayDate, dayEvents, selectedEve
     <div
       ref={setNodeRef}
       className={`border-r border-gray-200 p-1 flex flex-col relative transition-colors ${
-        !isCurrentMonth ? "bg-gray-50/50" : "bg-white"
+        !isCurrentMonth ? "bg-gray-50/50" : "bg-background"
       } ${isOver ? "bg-blue-50 ring-2 ring-blue-500 z-10" : ""}`}
     >
       {/* Day number */}
@@ -123,7 +123,7 @@ export function MonthCalendar({ selectedCalendarId }: MonthCalendarProps) {
   const weeks = Array.from({ length: 6 }, (_, i) => calendarDays.slice(i * 7, (i + 1) * 7));
 
   return (
-    <div className="flex flex-col h-full bg-white relative">
+    <div className="flex flex-col h-full bg-background relative">
       {/* Day headers */}
       <div className="grid grid-cols-7 border-b border-gray-200">
         {weekDays.map((day) => (
@@ -161,7 +161,7 @@ export function MonthCalendar({ selectedCalendarId }: MonthCalendarProps) {
       </div>
 
       {isLoading && (
-        <div className="absolute inset-0 bg-white/50 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 bg-background/50 flex items-center justify-center pointer-events-none">
           <span className="text-[#5f6368] text-sm">Loading events...</span>
         </div>
       )}

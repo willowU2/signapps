@@ -38,7 +38,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: 
         // --- 1. Version History Fake UI ---
         if (actionId === 'version_history') {
             return (
-                <div className="flex bg-white dark:bg-[#1f1f1f] h-[400px] border rounded-md overflow-hidden mt-4">
+                <div className="flex bg-background dark:bg-[#1f1f1f] h-[400px] border rounded-md overflow-hidden mt-4">
                     <div className="flex-1 p-8 flex flex-col items-center justify-center text-center border-r border-gray-200 dark:border-gray-800">
                         <Clock className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
                         <h3 className="text-lg font-medium">Aperçu de la version</h3>
@@ -51,7 +51,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: 
                         <ScrollArea className="flex-1">
                             <div className="p-2 space-y-1">
                                 {[1, 2, 3].map((_, i) => (
-                                    <button key={i} className="w-full text-left p-3 hover:bg-white dark:hover:bg-[#1f1f1f] rounded-md transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-800 flex items-start gap-3">
+                                    <button key={i} className="w-full text-left p-3 hover:bg-background dark:hover:bg-[#1f1f1f] rounded-md transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-800 flex items-start gap-3">
                                         <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
                                         <div>
                                             <div className="text-sm font-medium">{14 - i * 2}:30</div>
@@ -62,7 +62,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: 
                                 <div className="p-4 border-b border-t border-gray-200 dark:border-gray-800 flex justify-between items-center mt-4">
                                     <span className="font-medium text-gray-600 dark:text-gray-400">Hier</span>
                                 </div>
-                                <button className="w-full text-left p-3 hover:bg-white dark:hover:bg-[#1f1f1f] rounded-md transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-800 flex items-start gap-3">
+                                <button className="w-full text-left p-3 hover:bg-background dark:hover:bg-[#1f1f1f] rounded-md transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-800 flex items-start gap-3">
                                         <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
                                         <div>
                                             <div className="text-sm font-medium">10:15</div>
@@ -92,7 +92,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: 
                                 { name: "Advanced Analytics", desc: "Statistiques de lecture du document", color: "bg-green-100 dark:bg-green-900/30 text-green-600", icon: <Activity className="w-6 h-6" /> },
                                 { name: "Security Scanner", desc: "Audit DLP et conformité RGPD", color: "bg-red-100 dark:bg-red-900/30 text-red-600", icon: <ShieldAlert className="w-6 h-6" /> },
                             ].map((app, i) => (
-                                <div key={i} className="flex gap-4 p-4 border rounded-lg hover:border-blue-500 transition-colors bg-white dark:bg-[#1f1f1f]">
+                                <div key={i} className="flex gap-4 p-4 border rounded-lg hover:border-blue-500 transition-colors bg-background dark:bg-[#1f1f1f]">
                                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${app.color}`}>
                                         {app.icon}
                                     </div>

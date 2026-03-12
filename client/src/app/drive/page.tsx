@@ -247,15 +247,15 @@ export default function GlobalDrivePage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-white dark:bg-[#1a1a1a]">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-background dark:bg-[#1a1a1a]">
         
         {/* Sidebar */}
-        <div className="w-full md:w-[256px] flex flex-col h-full bg-white dark:bg-[#1a1a1a] pb-4 gap-2 border-r border-[#dadce0] dark:border-[#3c4043]">
+        <div className="w-full md:w-[256px] flex flex-col h-full bg-background dark:bg-[#1a1a1a] pb-4 gap-2 border-r border-[#dadce0] dark:border-[#3c4043]">
           <div className="px-4 py-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  className="w-full md:w-auto h-14 px-4 rounded-2xl bg-white hover:bg-[#f8f9fa] shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] dark:bg-[#1a1a1a] dark:hover:bg-[#303134] dark:shadow-[0_1px_2px_0_rgba(0,0,0,0.6),0_1px_3px_1px_rgba(0,0,0,0.3)] transition-all flex items-center justify-start gap-3 text-[#3c4043] dark:text-[#e8eaed]"
+                  className="w-full md:w-auto h-14 px-4 rounded-2xl bg-background hover:bg-[#f8f9fa] shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] dark:bg-[#1a1a1a] dark:hover:bg-[#303134] dark:shadow-[0_1px_2px_0_rgba(0,0,0,0.6),0_1px_3px_1px_rgba(0,0,0,0.3)] transition-all flex items-center justify-start gap-3 text-[#3c4043] dark:text-[#e8eaed]"
                 >
                   <Plus className="h-6 w-6 text-blue-500" />
                   <span className="font-medium text-[14px]">Nouveau</span>
@@ -287,14 +287,14 @@ export default function GlobalDrivePage() {
 
         {/* Main Content */}
         <div 
-          className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#202124] rounded-tl-2xl overflow-hidden shadow-sm border-t md:border-t-0 md:border-l border-[#e3e3e3] dark:border-[#3c4043] relative"
+          className="flex-1 flex flex-col min-w-0 bg-background dark:bg-[#202124] rounded-tl-2xl overflow-hidden shadow-sm border-t md:border-t-0 md:border-l border-[#e3e3e3] dark:border-[#3c4043] relative"
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           {isDragging && (
             <div className="absolute inset-0 z-50 bg-blue-500/10 backdrop-blur-[2px] border-2 border-dashed border-blue-500 flex flex-col items-center justify-center rounded-tl-2xl">
-              <div className="bg-white dark:bg-[#202124] p-6 rounded-2xl shadow-xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200">
+              <div className="bg-background dark:bg-[#202124] p-6 rounded-2xl shadow-xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200">
                 <div className="h-16 w-16 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center">
                   <UploadCloud className="h-8 w-8" />
                 </div>
@@ -309,7 +309,7 @@ export default function GlobalDrivePage() {
           )}
           
           {/* Header & Breadcrumb */}
-          <div className="h-16 border-b border-[#dadce0] dark:border-[#3c4043] flex items-center justify-between px-6 shrink-0 bg-white dark:bg-[#202124]">
+          <div className="h-16 border-b border-[#dadce0] dark:border-[#3c4043] flex items-center justify-between px-6 shrink-0 bg-background dark:bg-[#202124]">
             <div className="flex items-center text-[18px] text-[#202124] dark:text-[#e8eaed]">
               <button onClick={() => handleBreadcrumbClick(-1)} className="hover:bg-muted p-1.5 rounded-md transition-colors font-medium">
                 Mon Drive
@@ -410,7 +410,7 @@ export default function GlobalDrivePage() {
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 rounded-full">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 bg-black/5 hover:bg-black/10 dark:bg-background/10 dark:hover:bg-background/20 rounded-full">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>

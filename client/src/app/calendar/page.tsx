@@ -108,7 +108,7 @@ export default function CalendarPage() {
 
   return (
     <AppLayout>
-      <div className="h-[calc(100vh-8rem)] w-full flex flex-col bg-white text-[#3c4043] overflow-hidden font-sans rounded-xl border shadow-sm">
+      <div className="h-[calc(100vh-8rem)] w-full flex flex-col bg-background text-[#3c4043] overflow-hidden font-sans rounded-xl border shadow-sm">
         {/* Full viewport Classic Calendar Layout */}
         
         {/* 1. Top Header */}
@@ -125,7 +125,7 @@ export default function CalendarPage() {
         />
 
         {/* 3. Main Calendar View Area */}
-        <div className="flex-1 h-full overflow-hidden relative bg-white">
+        <div className="flex-1 h-full overflow-hidden relative bg-background">
           {isLoading ? (
             <div className="flex h-full w-full items-center justify-center text-[#5f6368]">
               Loading calendar grid...

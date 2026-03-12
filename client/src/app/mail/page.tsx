@@ -241,7 +241,7 @@ export default function MailPage() {
                 }
             >
                 {/* Content Area (List + Display) */}
-                <div className="flex-1 flex flex-col bg-white dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative">
+                <div className="flex-1 flex flex-col bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative">
                     {!selectedId ? (
                         <MailList
                             items={mailList}
@@ -253,7 +253,7 @@ export default function MailPage() {
                         />
                     ) : (
                         <div className="flex flex-col h-full">
-                            <div className="p-2 border-b flex items-center bg-white dark:bg-[#1f1f1f] sticky top-0 z-10 w-full">
+                            <div className="p-2 border-b flex items-center bg-background dark:bg-[#1f1f1f] sticky top-0 z-10 w-full">
                                 <Button
                                     variant="ghost"
                                     size="sm"

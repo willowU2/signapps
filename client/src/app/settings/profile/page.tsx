@@ -403,7 +403,7 @@ export default function ProfilePage() {
           {mfaSetupData && (
             <div className="space-y-4">
               {/* QR Code */}
-              <div className="flex justify-center p-4 bg-white rounded-lg">
+              <div className="flex justify-center p-4 bg-background rounded-lg">
                 <img
                   src={mfaSetupData.qr_code_url}
                   alt="QR Code"

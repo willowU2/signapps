@@ -200,7 +200,7 @@ export function CollaborativeEditor({
 
             {/* Document Canvas Area */}
             <div className="flex-1 overflow-y-auto w-full flex justify-center py-6 px-4 cursor-text bg-[#f8f9fa] dark:bg-[#1f1f1f]">
-                <div className="w-[816px] shrink-0 min-h-[1056px] bg-white dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10">
+                <div className="w-[816px] shrink-0 min-h-[1056px] bg-background dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10">
                     <EditorContent
                         editor={editor}
                         className="prose prose-sm md:prose-base dark:prose-invert max-w-none px-[96px] py-[96px] min-h-full focus:outline-none focus-visible:outline-none placeholder:text-[#5f6368] dark:placeholder:text-[#9aa0a6] text-[11pt]"
@@ -226,7 +226,7 @@ export function CollaborativeEditor({
                             </Button>
                             <Button 
                                 variant="secondary" 
-                                className="bg-white hover:bg-gray-50 text-[#444746] rounded-full shadow-sm ring-1 ring-[#dadce0] font-medium h-[36px] px-4 pointer-events-auto transition-colors"
+                                className="bg-background hover:bg-gray-50 text-[#444746] rounded-full shadow-sm ring-1 ring-[#dadce0] font-medium h-[36px] px-4 pointer-events-auto transition-colors"
                             >
                                 <PanelRightOpen className="h-[18px] w-[18px] mb-0.5 mr-2" />
                                 Plus
@@ -236,7 +236,7 @@ export function CollaborativeEditor({
 
                     {/* Floating Right Page Action Buttons */}
                     <div className="absolute top-[300px] -right-12 hidden xl:flex flex-col gap-2 items-center">
-                        <div className="bg-white dark:bg-[#202124] rounded-full shadow-sm ring-1 ring-[#dadce0] dark:ring-[#5f6368] p-1.5 flex flex-col items-center">
+                        <div className="bg-background dark:bg-[#202124] rounded-full shadow-sm ring-1 ring-[#dadce0] dark:ring-[#5f6368] p-1.5 flex flex-col items-center">
                             <Button variant="ghost" size="icon" className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]">
                                 <PencilLine className="h-[18px] w-[18px]" />
                             </Button>

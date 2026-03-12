@@ -174,7 +174,7 @@ function ContextMenu({ x, y, onAction, onClose }: {
     ]
 
     return (
-        <div className="fixed bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl z-[100] py-1 min-w-[220px] text-[13px]" style={{ left: x, top: y }} onMouseDown={(e) => e.stopPropagation()}>
+        <div className="fixed bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl z-[100] py-1 min-w-[220px] text-[13px]" style={{ left: x, top: y }} onMouseDown={(e) => e.stopPropagation()}>
             {items.map((item, i) => (
                 <div key={item.action}>
                     {item.sep && i > 0 && <div className="h-px bg-[#e3e3e3] dark:bg-[#5f6368] my-1" />}
@@ -199,7 +199,7 @@ function BorderPicker({ onSelect, onClose }: { onSelect: (type: string) => void,
         { type: 'right', label: 'Droite', icon: <Columns className="w-4 h-4 rotate-180" /> },
     ]
     return (
-        <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-48">
+        <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-48">
             <div className="flex items-center justify-between mb-1 px-1">
                 <span className="font-medium text-[12px]">Bordures</span>
                 <button onClick={onClose}><X className="w-3 h-3" /></button>
@@ -225,7 +225,7 @@ function MiniChart({ type, values, onClose }: { type: 'bar' | 'line' | 'pie', va
 
     return (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[200]" onClick={onClose}>
-            <div className="bg-white dark:bg-[#2d2e30] rounded-xl shadow-2xl p-4" onClick={e => e.stopPropagation()}>
+            <div className="bg-background dark:bg-[#2d2e30] rounded-xl shadow-2xl p-4" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-sm">{type === 'bar' ? 'Graphique en barres' : type === 'line' ? 'Graphique en ligne' : 'Graphique circulaire'}</span>
                     <button onClick={onClose}><X className="w-4 h-4" /></button>
@@ -277,7 +277,7 @@ function FindReplaceBar({ findText, replaceText, matchCount, currentMatch, showR
     onToggleReplace: () => void, onClose: () => void
 }) {
     return (
-        <div className="absolute top-0 right-4 z-50 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-b-lg shadow-lg p-2 flex flex-col gap-1.5 w-[340px]">
+        <div className="absolute top-0 right-4 z-50 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-b-lg shadow-lg p-2 flex flex-col gap-1.5 w-[340px]">
             <div className="flex items-center gap-1.5">
                 <button onClick={onToggleReplace} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded shrink-0" title={showReplace ? "Masquer remplacer" : "Afficher remplacer"}>
                     {showReplace ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -318,7 +318,7 @@ function CondFormatDialog({ rules, onAdd, onRemove, onClose }: {
 
     return (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[200]" onClick={onClose}>
-            <div className="bg-white dark:bg-[#2d2e30] rounded-xl shadow-2xl p-4 w-[380px] max-h-[70vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="bg-background dark:bg-[#2d2e30] rounded-xl shadow-2xl p-4 w-[380px] max-h-[70vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-3">
                     <span className="font-medium text-sm">Mise en forme conditionnelle</span>
                     <button onClick={onClose}><X className="w-4 h-4" /></button>
@@ -431,7 +431,7 @@ function FilterDialog({ col, data, onApply, onClose }: {
 
     return (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-[200]" onClick={onClose}>
-            <div className="bg-white dark:bg-[#2d2e30] rounded-xl shadow-2xl p-4 w-[300px] max-h-[60vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="bg-background dark:bg-[#2d2e30] rounded-xl shadow-2xl p-4 w-[300px] max-h-[60vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-3">
                     <span className="font-medium text-sm">Filtrer colonne {indexToCol(col)}</span>
                     <button onClick={onClose}><X className="w-4 h-4" /></button>
@@ -1452,7 +1452,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     const { startC, endC } = visibleCols
 
     return (
-        <div ref={mainContainerRef} className={cn("w-full h-full flex flex-col bg-white dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none", paintFormat && "cursor-cell")} tabIndex={0} onKeyDown={handleKeyDown}>
+        <div ref={mainContainerRef} className={cn("w-full h-full flex flex-col bg-background dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none", paintFormat && "cursor-cell")} tabIndex={0} onKeyDown={handleKeyDown}>
 
             {/* ===== MENU BAR ===== */}
             <div className="-ml-1.5 flex flex-col pt-0.5">
@@ -1856,7 +1856,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     <div className="relative" data-popover>
                         <TBtn onClick={() => setShowNumberFormat(!showNumberFormat)} title="Format num\u00E9rique"><Hash className="w-[18px] h-[18px]" /></TBtn>
                         {showNumberFormat && (
-                            <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 py-1 w-44">
+                            <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 py-1 w-44">
                                 {([
                                     { fmt: 'auto', label: 'Automatique' },
                                     { fmt: 'number', label: 'Nombre (1 000,00)' },
@@ -1875,12 +1875,12 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     <Sep />
                     {/* Font Picker */}
                     <div className="relative" data-popover>
-                        <button className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] border border-transparent hover:border-[#c7c7c7] hover:bg-white rounded flex items-center cursor-pointer h-7 w-24 justify-between mx-0.5" onClick={() => setShowFontPicker(!showFontPicker)}>
+                        <button className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] border border-transparent hover:border-[#c7c7c7] hover:bg-background rounded flex items-center cursor-pointer h-7 w-24 justify-between mx-0.5" onClick={() => setShowFontPicker(!showFontPicker)}>
                             <span className="truncate">{activeCellStyle.fontFamily || 'Arial'}</span>
                             <ChevronDown className="w-3 h-3 ml-1 shrink-0" />
                         </button>
                         {showFontPicker && (
-                            <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 w-48 max-h-48 overflow-y-auto py-1">
+                            <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 w-48 max-h-48 overflow-y-auto py-1">
                                 {FONTS.map(font => (
                                     <button key={font} className={cn("w-full px-3 py-1.5 text-left text-[13px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]", activeCellStyle.fontFamily === font && "bg-[#e8f0fe]")} style={{ fontFamily: font }} onClick={() => { applyToSelection({ fontFamily: font }); setShowFontPicker(false) }}>{font}</button>
                                 ))}
@@ -1888,7 +1888,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                         )}
                     </div>
                     {/* Font Size */}
-                    <div className="flex items-center border border-transparent hover:border-[#c7c7c7] rounded h-7 ml-0.5 bg-transparent hover:bg-white transition-colors">
+                    <div className="flex items-center border border-transparent hover:border-[#c7c7c7] rounded h-7 ml-0.5 bg-transparent hover:bg-background transition-colors">
                         <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 h-full flex items-center" onClick={() => changeFontSize(-1)}><Minus className="w-[14px] h-[14px]" /></button>
                         <input className="px-1 text-[13px] text-[#444746] dark:text-[#e3e3e3] w-8 text-center bg-transparent outline-none" value={activeCellStyle.fontSize || 10} onChange={(e) => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 6 && v <= 72) applyToSelection({ fontSize: v }) }} onMouseDown={(e) => e.stopPropagation()} />
                         <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 h-full flex items-center" onClick={() => changeFontSize(1)}><Plus className="w-[14px] h-[14px]" /></button>
@@ -1905,7 +1905,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                             <div className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm" style={{ backgroundColor: activeCellStyle.textColor || '#000000' }} />
                         </button>
                         {showTextColor && (
-                            <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-[220px]">
+                            <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-[220px]">
                                 <div className="grid grid-cols-10 gap-1">
                                     {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ textColor: color }); setShowTextColor(false) }} />))}
                                 </div>
@@ -1920,7 +1920,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                             <div className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm" style={{ backgroundColor: activeCellStyle.fillColor || 'transparent' }} />
                         </button>
                         {showFillColor && (
-                            <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-[220px]">
+                            <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-[220px]">
                                 <div className="grid grid-cols-10 gap-1">
                                     {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ fillColor: color }); setShowFillColor(false) }} />))}
                                 </div>
@@ -1944,7 +1944,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     <div className="relative" data-popover>
                         <TBtn onClick={() => setShowRotationInput(!showRotationInput)} active={!!activeCellStyle.rotation} title="Rotation du texte"><RotateCw className="w-[18px] h-[18px]" /></TBtn>
                         {showRotationInput && (
-                            <div className="absolute top-8 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-3 w-48">
+                            <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-3 w-48">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-[12px] font-medium">Angle</span>
                                     <button onClick={() => setShowRotationInput(false)}><X className="w-3 h-3" /></button>
@@ -1965,7 +1965,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     <div className="relative" data-popover>
                         <TBtn onClick={() => setShowChartPicker(!showChartPicker)} title="Graphique"><BarChart2 className="w-[18px] h-[18px]" /></TBtn>
                         {showChartPicker && (
-                            <div className="absolute top-8 right-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36">
+                            <div className="absolute top-8 right-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36">
                                 <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => openChart('bar')}>Barres</button>
                                 <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => openChart('line')}>Ligne</button>
                                 <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => openChart('pie')}>Circulaire</button>
@@ -1984,7 +1984,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     <div className="relative" data-popover>
                         <TBtn onClick={() => setShowFunctionHelper(!showFunctionHelper)} title="Fonctions"><Sigma className="w-[18px] h-[18px]" /></TBtn>
                         {showFunctionHelper && (
-                            <div className="absolute top-8 right-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-3 w-64 max-h-72 overflow-y-auto">
+                            <div className="absolute top-8 right-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-3 w-64 max-h-72 overflow-y-auto">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="font-medium text-[13px]">Fonctions</span>
                                     <button onClick={() => setShowFunctionHelper(false)}><X className="w-4 h-4" /></button>
@@ -2031,7 +2031,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             </div>
 
             {/* ===== FORMULA BAR ===== */}
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-white dark:bg-[#1a1a1a] shrink-0 h-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10">
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-background dark:bg-[#1a1a1a] shrink-0 h-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10">
                 <div className="w-12 h-6 flex items-center justify-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded font-medium text-[12px] shrink-0 tracking-wide select-text border border-[#e3e3e3] dark:border-[#5f6368]">
                     {activeCell ? `${indexToCol(activeCell.c)}${activeCell.r + 1}` : ''}
                 </div>
@@ -2043,7 +2043,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             </div>
 
             {/* ===== GRID (Virtualized) ===== */}
-            <div ref={gridRef} className="relative flex-1 overflow-auto bg-white dark:bg-[#1f1f1f] will-change-transform" onScroll={handleScroll}>
+            <div ref={gridRef} className="relative flex-1 overflow-auto bg-background dark:bg-[#1f1f1f] will-change-transform" onScroll={handleScroll}>
 
                 {/* Find & Replace */}
                 {showFind && (
@@ -2173,7 +2173,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                             className={cn(
                                                 "border-r border-b text-[13px] px-1 flex items-center outline-none relative shrink-0 overflow-hidden",
                                                 showGridlines ? "border-[#e3e3e3] dark:border-[#5f6368]" : "border-transparent",
-                                                !style?.fillColor && !condColor && !inRect && !inDragFill && !bandedBg && "bg-white dark:bg-[#1a1a1a]",
+                                                !style?.fillColor && !condColor && !inRect && !inDragFill && !bandedBg && "bg-background dark:bg-[#1a1a1a]",
                                                 inDragFill && "bg-[#e8f0fe]/40",
                                                 isFindMatch && !isCurrentFind && "ring-1 ring-inset ring-yellow-400",
                                                 isCurrentFind && "ring-2 ring-inset ring-orange-500"
@@ -2206,7 +2206,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                             )}
                                             {isActive && <div className="absolute inset-[-1px] border-2 border-[#1a73e8] z-20 pointer-events-none" />}
                                             {isActive && isEditing ? (
-                                                <input ref={inputRef} className="w-full h-full border-none outline-none bg-white dark:bg-[#2d2e30] px-0.5 m-0 text-[13px] z-30 relative text-[#202124] dark:text-white" value={editValue} onChange={(e) => setEditValue(e.target.value)} onBlur={commitEdit} spellCheck={false} />
+                                                <input ref={inputRef} className="w-full h-full border-none outline-none bg-background dark:bg-[#2d2e30] px-0.5 m-0 text-[13px] z-30 relative text-[#202124] dark:text-white" value={editValue} onChange={(e) => setEditValue(e.target.value)} onBlur={commitEdit} spellCheck={false} />
                                             ) : isCheckbox ? (
                                                 <div className="w-full h-full flex items-center justify-center">
                                                     <input type="checkbox" className="w-[15px] h-[15px] cursor-pointer accent-[#1a73e8]" checked={rawValue === 'TRUE'} onChange={(e) => { e.stopPropagation(); setCell(r, c, e.target.checked ? 'TRUE' : 'FALSE') }} onMouseDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()} />
@@ -2240,7 +2240,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     <Plus className="w-5 h-5" />
                 </button>
                 {sheets.map((sheet, i) => (
-                    <div key={i} className={cn("px-5 py-2.5 text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto relative group", i === activeSheetIndex ? "bg-white dark:bg-[#1f1f1f] text-[#1a73e8] dark:text-[#8ab4f8] border-x border-t border-[#e3e3e3] dark:border-[#3c4043] shadow-[0_-1px_3px_rgba(0,0,0,0.05)] rounded-t-sm" : "text-[#5f6368] hover:bg-[#e8eaed] dark:hover:bg-[#303134] cursor-pointer")} style={sheet.color ? { borderBottom: `3px solid ${sheet.color}` } : undefined} onClick={() => setActiveSheetIndex(i)} onDoubleClick={() => { setEditingTabIndex(i); setEditingTabName(sheet.name) }} onContextMenu={(e) => { e.preventDefault(); setShowTabColorPicker(showTabColorPicker === i ? null : i) }}>
+                    <div key={i} className={cn("px-5 py-2.5 text-[13px] font-medium transition-colors h-10 flex items-center mb-0 mt-auto relative group", i === activeSheetIndex ? "bg-background dark:bg-[#1f1f1f] text-[#1a73e8] dark:text-[#8ab4f8] border-x border-t border-[#e3e3e3] dark:border-[#3c4043] shadow-[0_-1px_3px_rgba(0,0,0,0.05)] rounded-t-sm" : "text-[#5f6368] hover:bg-[#e8eaed] dark:hover:bg-[#303134] cursor-pointer")} style={sheet.color ? { borderBottom: `3px solid ${sheet.color}` } : undefined} onClick={() => setActiveSheetIndex(i)} onDoubleClick={() => { setEditingTabIndex(i); setEditingTabName(sheet.name) }} onContextMenu={(e) => { e.preventDefault(); setShowTabColorPicker(showTabColorPicker === i ? null : i) }}>
                         {editingTabIndex === i ? (
                             <input className="bg-transparent outline-none text-[13px] w-20 text-center" value={editingTabName} onChange={(e) => setEditingTabName(e.target.value)} onBlur={() => { renameSheet(i, editingTabName); setEditingTabIndex(null) }} onKeyDown={(e) => { if (e.key === 'Enter') { renameSheet(i, editingTabName); setEditingTabIndex(null) } }} autoFocus />
                         ) : sheet.name}
@@ -2249,7 +2249,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                         )}
                         {/* Tab color picker */}
                         {showTabColorPicker === i && (
-                            <div className="absolute bottom-10 left-0 bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36" onClick={(e) => e.stopPropagation()}>
+                            <div className="absolute bottom-10 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36" onClick={(e) => e.stopPropagation()}>
                                 <div className="grid grid-cols-5 gap-1 mb-1">
                                     {TAB_COLORS.map(color => (
                                         <button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { setSheetColor(sheet.id, color); setShowTabColorPicker(null) }} />
@@ -2318,7 +2318,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 const x = rect.left + ROW_HEADER_WIDTH + colOffsets[validationDropdown.c] - gridRef.current!.scrollLeft
                 const y = rect.top + COL_HEADER_HEIGHT + rowOffsets[validationDropdown.r] + getRowHeight(validationDropdown.r) - gridRef.current!.scrollTop
                 return (
-                    <div className="fixed z-[250] bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[140px] text-[13px]" style={{ left: x, top: y }}>
+                    <div className="fixed z-[250] bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[140px] text-[13px]" style={{ left: x, top: y }}>
                         {cellData.validation.type === 'list' && cellData.validation.values.map((val: string) => (
                             <button key={val} className={cn("w-full text-left px-3 py-1.5 hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]", cellData.value === val && "bg-[#e8f0fe] dark:bg-[#3c4043] font-medium")} onClick={() => { setCell(validationDropdown.r, validationDropdown.c, val); setValidationDropdown(null) }}>
                                 {val}
@@ -2330,7 +2330,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
 
             {/* Formula Autocomplete Dropdown */}
             {isEditing && autocompleteSuggestions.length > 0 && activeCell && (
-                <div className="fixed z-[300] bg-white dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[280px] text-[13px]" style={{ left: (() => { if (!gridRef.current) return 100; const rect = gridRef.current.getBoundingClientRect(); return rect.left + ROW_HEADER_WIDTH + colOffsets[activeCell.c] - gridRef.current.scrollLeft })(), top: (() => { if (!gridRef.current) return 100; const rect = gridRef.current.getBoundingClientRect(); return rect.top + COL_HEADER_HEIGHT + rowOffsets[activeCell.r] + getRowHeight(activeCell.r) - gridRef.current.scrollTop })() }}>
+                <div className="fixed z-[300] bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-xl py-1 min-w-[280px] text-[13px]" style={{ left: (() => { if (!gridRef.current) return 100; const rect = gridRef.current.getBoundingClientRect(); return rect.left + ROW_HEADER_WIDTH + colOffsets[activeCell.c] - gridRef.current.scrollLeft })(), top: (() => { if (!gridRef.current) return 100; const rect = gridRef.current.getBoundingClientRect(); return rect.top + COL_HEADER_HEIGHT + rowOffsets[activeCell.r] + getRowHeight(activeCell.r) - gridRef.current.scrollTop })() }}>
                     {autocompleteSuggestions.map((fn, i) => {
                         const fnInfo = ALL_FUNCTIONS.find(f => f.name === fn)
                         return (

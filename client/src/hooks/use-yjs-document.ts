@@ -27,11 +27,13 @@ export function useYjsDocument(
     options: UseYjsDocumentOptions = {}
 ) {
     const {
-        wsUrl = process.env.NEXT_PUBLIC_DOCS_URL || 'ws://localhost:3010',
+        wsUrl = process.env.NEXT_PUBLIC_COLLAB_URL || 'ws://localhost:4444',
         awareness: enableAwareness = true,
         onSync,
         onError,
     } = options;
+
+    const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true';
 
     const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
@@ -53,11 +55,15 @@ export function useYjsDocument(
                 }
             );
 
-            // Check if server is reachable before connecting
-            const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
-            fetch(httpUrl, { method: 'HEAD' })
-                .then(() => wsProvider.connect())
-                .catch(() => console.debug(`[useYjsDocument] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
+            // Only connect if collaboration server is explicitly enabled
+            if (collabServerEnabled) {
+                const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
+                fetch(httpUrl, { method: 'HEAD' })
+                    .then(() => wsProvider.connect())
+                    .catch(() => console.debug(`[useYjsDocument] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
+            } else {
+                console.debug('[useYjsDocument] Running in local-only mode (NEXT_PUBLIC_COLLAB_ENABLED not set)');
+            }
 
             // Listen for sync events
             wsProvider.on('sync', (isSynced: boolean) => {

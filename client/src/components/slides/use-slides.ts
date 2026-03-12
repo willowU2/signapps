@@ -33,14 +33,20 @@ export function useSlides(docId: string = 'slides-demo') {
     const initializedRef = useRef(false)
 
     useEffect(() => {
-        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/slide'
+        // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
+        const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true'
+        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4444'
         const wsUrl = `${baseUrl}/${docId}`
         const webrtcProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
 
-        // Check health endpoint before connecting (WS paths don't support HTTP methods)
-        fetch('http://localhost:3010/health', { method: 'GET', mode: 'no-cors' })
-            .then(() => webrtcProvider.connect())
-            .catch(() => console.debug(`[useSlides] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`))
+        // Only attempt to connect if collaboration server is explicitly enabled
+        if (collabServerEnabled) {
+            fetch(baseUrl.replace('ws://', 'http://').replace('wss://', 'https://'), { method: 'HEAD', mode: 'no-cors' })
+                .then(() => webrtcProvider.connect())
+                .catch(() => console.debug(`[useSlides] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`))
+        } else {
+            console.debug('[useSlides] Running in local-only mode (NEXT_PUBLIC_COLLAB_ENABLED not set)')
+        }
 
         setProvider(webrtcProvider)
 

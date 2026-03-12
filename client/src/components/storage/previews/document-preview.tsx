@@ -110,7 +110,7 @@ export function DocumentPreview({
 
       {/* Office Viewer Iframe */}
       {isOfficeDocument() && publicUrl && (
-        <div className="w-full h-[60vh] border rounded-lg overflow-hidden bg-white">
+        <div className="w-full h-[60vh] border rounded-lg overflow-hidden bg-background">
           <iframe
             src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(publicUrl)}`}
             width="100%"

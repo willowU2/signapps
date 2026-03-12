@@ -42,7 +42,7 @@ export const CommandList = forwardRef((props: CommandListProps, ref) => {
     }));
 
     return (
-        <div className="bg-white dark:bg-[#202124] rounded-lg shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col w-72">
+        <div className="bg-background dark:bg-[#202124] rounded-lg shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col w-72">
             {props.items.length > 0 ? (
                 props.items.map((item, index) => (
                     <button

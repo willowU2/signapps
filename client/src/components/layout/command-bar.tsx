@@ -29,7 +29,7 @@ export function CommandBar() {
 
     return (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/50 backdrop-blur-sm transition-all" onClick={() => setOpen(false)}>
-            <div className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden animate-in fade-in zoom-in-95 duration-100" onClick={(e) => e.stopPropagation()}>
+            <div className="w-full max-w-2xl bg-background dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden animate-in fade-in zoom-in-95 duration-100" onClick={(e) => e.stopPropagation()}>
                 <Command label="Global Command Menu" className="w-full">
                     <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
                         <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />

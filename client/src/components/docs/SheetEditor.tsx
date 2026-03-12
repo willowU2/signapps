@@ -53,13 +53,13 @@ export function SheetEditor({ docId }: SheetEditorProps) {
 
     return (
         <div className="p-6">
-            <div className="bg-white rounded-lg border border-gray-200">
+            <div className="bg-background rounded-lg border border-gray-200">
                 {/* Toolbar */}
                 <div className="border-b border-gray-200 p-3 flex gap-2 bg-gray-50">
-                    <button className="px-3 py-1 rounded bg-white hover:bg-gray-100">
+                    <button className="px-3 py-1 rounded bg-background hover:bg-gray-100">
                         Insert Row
                     </button>
-                    <button className="px-3 py-1 rounded bg-white hover:bg-gray-100">
+                    <button className="px-3 py-1 rounded bg-background hover:bg-gray-100">
                         Insert Column
                     </button>
                     <div className="ml-auto flex items-center gap-2">

@@ -20,7 +20,7 @@ export function MeetInfoCard({ roomId, onClose }: MeetInfoCardProps) {
     }
 
     return (
-        <div className="absolute top-4 left-4 z-20 w-[360px] bg-white dark:bg-[#1f1f1f] rounded-xl shadow-lg border border-[#e2e2e2] dark:border-[#ffffff1a] overflow-hidden flex flex-col p-6 animate-in fade-in slide-in-from-left-4 duration-300">
+        <div className="absolute top-4 left-4 z-20 w-[360px] bg-background dark:bg-[#1f1f1f] rounded-xl shadow-lg border border-[#e2e2e2] dark:border-[#ffffff1a] overflow-hidden flex flex-col p-6 animate-in fade-in slide-in-from-left-4 duration-300">
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-medium text-[#1f1f1f] dark:text-[#e8eaed]">Votre réunion est prête</h3>
                 {onClose && (

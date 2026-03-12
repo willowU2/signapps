@@ -115,7 +115,7 @@ export function BoardEditor({ docId }: BoardEditorProps) {
                         className="flex-shrink-0 w-80 bg-gray-50 rounded-lg border border-gray-200"
                     >
                         {/* Column header */}
-                        <div className="p-4 border-b border-gray-200 bg-white">
+                        <div className="p-4 border-b border-gray-200 bg-background">
                             <h3 className="font-semibold text-gray-900">{column.title}</h3>
                             <p className="text-xs text-gray-600 mt-1">
                                 {column.cards.length} cards
@@ -133,7 +133,7 @@ export function BoardEditor({ docId }: BoardEditorProps) {
                                     key={card.id}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, card.id, column.id)}
-                                    className="p-3 bg-white rounded border border-gray-200 hover:shadow-md cursor-move transition"
+                                    className="p-3 bg-background rounded border border-gray-200 hover:shadow-md cursor-move transition"
                                 >
                                     <h4 className="font-semibold text-gray-900 text-sm">
                                         {card.title}

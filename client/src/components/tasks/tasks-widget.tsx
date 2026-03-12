@@ -57,7 +57,7 @@ export function TasksWidget() {
     const formattedDate = dueDate ? format(parseISO(dueDate), "d MMM", { locale: fr }) : null;
 
     return (
-        <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-white">
+        <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-background">
             {/* Google Tasks Style Header - Clean white design */}
             <div className="px-4 pt-5 pb-3 border-b border-[#f1f3f4]">
                 {/* TASKS label */}
@@ -112,7 +112,7 @@ export function TasksWidget() {
             </div>
 
             {/* Tasks List - Google Tasks clean white style */}
-            <ScrollArea className="flex-1 bg-white">
+            <ScrollArea className="flex-1 bg-background">
                 <div className="py-1">
                     {filteredTasks.length === 0 ? (
                         <div className="text-center py-16 px-4">
@@ -168,7 +168,7 @@ export function TasksWidget() {
             </ScrollArea>
 
             {/* Add Task Form - Google Tasks Style */}
-            <div className="p-4 border-t border-[#f1f3f4] bg-white">
+            <div className="p-4 border-t border-[#f1f3f4] bg-background">
                 <form onSubmit={handleAddTask} className="space-y-3">
                     <div className="flex items-center gap-3">
                         {/* Plus icon like Google Tasks */}

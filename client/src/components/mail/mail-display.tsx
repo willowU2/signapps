@@ -200,13 +200,13 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
     }, [mail, handleSummarize, generateSmartReplies]);
 
     return (
-        <div className="flex h-full flex-col bg-white dark:bg-gray-950 relative">
+        <div className="flex h-full flex-col bg-background dark:bg-gray-950 relative">
             {/* Top Action Bar */}
-            <div className="flex items-center p-3 px-4 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/40 dark:bg-gray-950/40 backdrop-blur-xl sticky top-0 z-20">
+            <div className="flex items-center p-3 px-4 border-b border-gray-200/50 dark:border-gray-800/50 bg-background/40 dark:bg-gray-950/40 backdrop-blur-xl sticky top-0 z-20">
                 <div className="flex items-center gap-2">
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-background/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
                                 <Archive className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Archive</span>
                             </Button>
@@ -215,7 +215,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-background/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
                                 <ArchiveX className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Move to junk</span>
                             </Button>
@@ -289,7 +289,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                     )}
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-background/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
                                 <Reply className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Reply</span>
                             </Button>
@@ -298,7 +298,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-background/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
                                 <ReplyAll className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Reply all</span>
                             </Button>
@@ -307,7 +307,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
+                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-background/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
                                 <Forward className="h-[18px] w-[18px]" />
                                 <span className="sr-only">Forward</span>
                             </Button>
@@ -319,7 +319,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
             {mail ? (
                 <div className="flex flex-1 flex-col overflow-y-auto">
                     {/* Email Header */}
-                    <div className="flex flex-col px-8 pt-6 pb-2 bg-white dark:bg-[#1f1f1f]">
+                    <div className="flex flex-col px-8 pt-6 pb-2 bg-background dark:bg-[#1f1f1f]">
                         <div className="flex items-center gap-3 mb-6 w-full flex-wrap">
                             <h2 className="font-normal text-[22px] leading-tight text-[#1f1f1f] dark:text-[#e3e3e3]">{mail.subject}</h2>
                             <span className="bg-[#fef7e0] text-[#b06000] text-xs px-2 py-0.5 rounded border border-[#fbdc8e] font-medium leading-none flex items-center h-5">Externe</span>
@@ -412,7 +412,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="text-sm font-semibold text-purple-700 dark:text-purple-400 border-purple-200/80 dark:border-purple-800/60 bg-white/80 dark:bg-gray-900/80 hover:bg-purple-50 dark:hover:bg-purple-900/40 rounded-xl shadow-sm transition-all h-9 px-4"
+                                    className="text-sm font-semibold text-purple-700 dark:text-purple-400 border-purple-200/80 dark:border-purple-800/60 bg-background/80 dark:bg-gray-900/80 hover:bg-purple-50 dark:hover:bg-purple-900/40 rounded-xl shadow-sm transition-all h-9 px-4"
                                     onClick={generateSmartReplies}
                                     disabled={isRepliesLoading}
                                 >
@@ -428,7 +428,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                     <button
                                         key={i}
                                         onClick={() => setReplyText(reply)}
-                                        className="whitespace-nowrap rounded-xl border border-purple-200/80 dark:border-purple-800/60 bg-white/95 dark:bg-gray-900/95 shadow-sm px-5 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-900/40 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200 transform hover:-translate-y-0.5"
+                                        className="whitespace-nowrap rounded-xl border border-purple-200/80 dark:border-purple-800/60 bg-background/95 dark:bg-gray-900/95 shadow-sm px-5 py-2 text-sm font-semibold text-gray-800 dark:text-gray-200 hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-900/40 hover:text-purple-700 dark:hover:text-purple-300 transition-all duration-200 transform hover:-translate-y-0.5"
                                     >
                                         {reply}
                                     </button>
@@ -438,7 +438,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                         <form className="mt-2">
                             <div className="grid gap-3 relative">
                                 <Textarea
-                                    className="p-4 pt-5 pb-14 min-h-[140px] resize-none border border-gray-200/80 dark:border-gray-800/80 bg-white/80 dark:bg-gray-950/80 focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:border-transparent rounded-2xl shadow-sm transition-all text-[15px] leading-relaxed block w-full placeholder:text-gray-400"
+                                    className="p-4 pt-5 pb-14 min-h-[140px] resize-none border border-gray-200/80 dark:border-gray-800/80 bg-background/80 dark:bg-gray-950/80 focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:border-transparent rounded-2xl shadow-sm transition-all text-[15px] leading-relaxed block w-full placeholder:text-gray-400"
                                     placeholder={`Write your reply to ${mail.name}...`}
                                     value={replyText + (interimReplyText ? (replyText && !replyText.endsWith(' ') ? ' ' : '') + interimReplyText : '')}
                                     onChange={(e) => {
@@ -452,7 +452,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                         <span>AI available via '/'</span>
                                     </div>
                                     {sending ? (
-                                        <div className="flex items-center gap-3 bg-white/90 dark:bg-gray-900/90 py-1.5 px-2 rounded-xl border border-gray-100 dark:border-gray-800 backdrop-blur-md shadow-sm pointer-events-auto">
+                                        <div className="flex items-center gap-3 bg-background/90 dark:bg-gray-900/90 py-1.5 px-2 rounded-xl border border-gray-100 dark:border-gray-800 backdrop-blur-md shadow-sm pointer-events-auto">
                                             <span className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-2">
                                                 Sending in {countdown}s
                                             </span>
@@ -476,7 +476,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                                         setInterimReplyText(text)
                                                     }
                                                 }}
-                                                className="bg-white hover:bg-gray-100 text-gray-500 shadow-sm border border-gray-100 h-9 w-9 [&>svg]:w-4 [&>svg]:h-4 mr-1"
+                                                className="bg-background hover:bg-gray-100 text-gray-500 shadow-sm border border-gray-100 h-9 w-9 [&>svg]:w-4 [&>svg]:h-4 mr-1"
                                                 title="Dicter la réponse"
                                             />
                                             <DropdownMenu>

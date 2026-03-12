@@ -626,7 +626,7 @@ export default function StoragePage() {
     <AppLayout>
       <>
       {activeTab === 'files' ? (
-        <div className="flex h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-white dark:bg-[#1a1a1a]">
+        <div className="flex h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-background dark:bg-[#1a1a1a]">
           <DriveSidebar
             currentView={driveView}
             onViewChange={setDriveView}
@@ -637,7 +637,7 @@ export default function StoragePage() {
             onNewClick={() => setUploadDialogOpen(true)}
           />
 
-          <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#202124] rounded-tl-2xl overflow-hidden shadow-sm border border-[#e3e3e3] dark:border-[#3c4043]">
+          <div className="flex-1 flex flex-col min-w-0 bg-background dark:bg-[#202124] rounded-tl-2xl overflow-hidden shadow-sm border border-[#e3e3e3] dark:border-[#3c4043]">
             {/* Drive Header / Toolbar */}
             <StorageHeader
               driveView={driveView}
@@ -719,7 +719,7 @@ export default function StoragePage() {
                         <div>
                           <div className="flex items-center justify-between mb-4">
                              <h3 className="text-[14px] font-medium text-[#5f6368] dark:text-[#9aa0a6]">Récents</h3>
-                             <div className="flex items-center border border-[#dadce0] dark:border-[#5f6368] rounded-md p-1 bg-white dark:bg-[#1a1a1a]">
+                             <div className="flex items-center border border-[#dadce0] dark:border-[#5f6368] rounded-md p-1 bg-background dark:bg-[#1a1a1a]">
                                <Button variant={viewMode === 'grid' ? "secondary" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setViewMode('grid')}>
                                  <LayoutGrid className="h-4 w-4" />
                                </Button>

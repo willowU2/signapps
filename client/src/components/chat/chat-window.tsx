@@ -260,7 +260,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6 text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full -mt-1 -mr-1"
+                                            className="h-6 w-6 text-muted-foreground hover:bg-black/5 dark:hover:bg-background/5 rounded-full -mt-1 -mr-1"
                                             onClick={() => {
                                                 if (aiCard.status === 'generating') stop();
                                                 setAiCard(null);

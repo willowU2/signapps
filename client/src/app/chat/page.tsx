@@ -39,7 +39,7 @@ export default function ChatPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <div className="hidden md:flex items-center bg-white px-3 py-1.5 rounded-full border shadow-sm mr-2 cursor-pointer hover:bg-gray-50">
+                        <div className="hidden md:flex items-center bg-background px-3 py-1.5 rounded-full border shadow-sm mr-2 cursor-pointer hover:bg-gray-50">
                             <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
                             <span className="text-sm font-medium text-[#444746]">Actif</span>
                             <ChevronDown className="h-4 w-4 text-[#444746] ml-2" />
@@ -65,7 +65,7 @@ export default function ChatPage() {
                 </div>
             }
         >
-            <div className="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col min-w-0 mt-2 mb-2">
+            <div className="flex-1 bg-background rounded-2xl shadow-sm overflow-hidden flex flex-col min-w-0 mt-2 mb-2">
                 {selectedChannel ? (
                     <ChatWindow channelId={selectedChannel} />
                 ) : (

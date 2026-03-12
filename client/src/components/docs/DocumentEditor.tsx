@@ -16,7 +16,7 @@ export function DocumentEditor({ docId, docType, docName }: DocumentEditorProps)
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="border-b border-gray-200 p-4 bg-white">
+            <div className="border-b border-gray-200 p-4 bg-background">
                 <h2 className="text-lg font-semibold text-gray-900">{docName || 'Untitled'}</h2>
                 <p className="text-sm text-gray-600">Type: {docType}</p>
             </div>

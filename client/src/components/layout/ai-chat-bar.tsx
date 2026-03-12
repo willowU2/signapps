@@ -430,7 +430,7 @@ export function AiChatBar() {
           {messages.length > 0 && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-background/10 hover:text-white"
               title={expanded ? 'Réduire' : 'Voir la conversation'}
             >
               {expanded ? (
@@ -461,7 +461,7 @@ export function AiChatBar() {
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-full transition-all',
                   value.trim()
-                    ? 'bg-white/20 text-white hover:bg-white/30'
+                    ? 'bg-background/20 text-white hover:bg-background/30'
                     : 'text-slate-500'
                 )}
               >

@@ -35,7 +35,7 @@ export function Ruler({ width, unitInPixels = 37.8 }: RulerProps) { // default 3
 
     return (
         <div
-            className="h-7 bg-white dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 relative overflow-hidden flex shrink-0 shadow-sm z-10"
+            className="h-7 bg-background dark:bg-gray-900 border-b border-gray-300 dark:border-gray-700 relative overflow-hidden flex shrink-0 shadow-sm z-10"
             style={{ width: `${width}px`, marginLeft: 'auto', marginRight: 'auto' }}
         >
             {/* Left Margin Indicator */}

@@ -93,7 +93,7 @@ export function DayCalendar({ selectedCalendarId }: DayCalendarProps) {
             <div className="flex-1 overflow-y-auto relative">
                 <div className="flex min-h-[1440px]">
                     {/* Time Axes */}
-                    <div className="flex min-w-max border-r bg-muted/30 z-10 bg-white dark:bg-gray-950">
+                    <div className="flex min-w-max border-r bg-muted/30 z-10 bg-background dark:bg-gray-950">
                         {timezones.map((tz, i) => (
                             <div key={tz} className={`w-16 ${i > 0 ? 'border-l border-gray-200/50 dark:border-gray-800/50' : ''}`}>
                                 {hours.map((hour) => {

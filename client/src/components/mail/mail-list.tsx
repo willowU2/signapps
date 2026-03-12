@@ -52,8 +52,8 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
                                 "group relative flex items-center gap-2 px-1 py-0 h-10 text-left text-sm transition-all duration-150 outline-none w-full border-b border-gray-200/60 dark:border-gray-800/60 select-none cursor-pointer hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] hover:z-10",
                                 selectedId === item.id
                                     ? "bg-[#c2e7ff] text-[#001d35] dark:bg-[#004a77] dark:text-[#c2e7ff]"
-                                    : "bg-white dark:bg-[#1f1f1f] hover:bg-gray-50/80 dark:hover:bg-[#202124]",
-                                !item.read && "bg-white dark:bg-[#1f1f1f]"
+                                    : "bg-background dark:bg-[#1f1f1f] hover:bg-gray-50/80 dark:hover:bg-[#202124]",
+                                !item.read && "bg-background dark:bg-[#1f1f1f]"
                             )}
                             onClick={() => onSelect(item.id)}
                         >
@@ -90,7 +90,7 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
                             </div>
 
                             {/* Hover Actions (Gmail style overlay on right edge) */}
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 bg-white dark:bg-[#202124] pl-2 pr-1 py-1">
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 bg-background dark:bg-[#202124] pl-2 pr-1 py-1">
                                 <div className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" title="Archive" onClick={(e) => { e.stopPropagation(); onArchive?.(item.id) }}>
                                     <Archive className="w-5 h-5" />
                                 </div>

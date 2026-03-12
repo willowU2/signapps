@@ -2,7 +2,7 @@
 
 export function EmptyChatState() {
     return (
-        <div className="flex h-full items-center justify-center flex-col bg-white">
+        <div className="flex h-full items-center justify-center flex-col bg-background">
             <div className="w-64 h-64 flex items-center justify-center relative mb-6">
                 <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M120 150H80C50 150 40 140 40 110V80C40 50 50 40 80 40H110V20L150 50V110C150 140 140 150 120 150Z" fill="#F8F9FA" stroke="#DADCE0" strokeWidth="2"/>

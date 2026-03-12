@@ -48,7 +48,7 @@ function SlidesPageContent() {
         >
             <div className="h-full overflow-hidden relative">
                 {loading && (
-                    <div className="absolute inset-0 z-50 bg-white/80 dark:bg-black/80 flex items-center justify-center">
+                    <div className="absolute inset-0 z-50 bg-background/80 dark:bg-black/80 flex items-center justify-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500"></div>
                     </div>
                 )}

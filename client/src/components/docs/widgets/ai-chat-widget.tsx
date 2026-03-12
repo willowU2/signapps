@@ -66,7 +66,7 @@ export function AiChatWidget() {
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 dark:bg-black/20 animate-fade-in-up">
-            <div className="p-3 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+            <div className="p-3 border-b border-gray-200/50 dark:border-gray-800/50 bg-background/50 dark:bg-gray-900/50 backdrop-blur-sm">
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                     <Bot className="w-4 h-4 text-indigo-500" />
                     Document Assistant
@@ -84,7 +84,7 @@ export function AiChatWidget() {
                         )}
                         <div className={`p-3 rounded-2xl text-sm leading-relaxed overflow-hidden break-words ${msg.role === 'user'
                             ? 'bg-indigo-600 text-white rounded-br-sm'
-                            : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 text-gray-800 dark:text-gray-200 shadow-sm rounded-tl-sm'
+                            : 'bg-background dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 text-gray-800 dark:text-gray-200 shadow-sm rounded-tl-sm'
                             }`}>
                             {msg.content}
                         </div>
@@ -97,7 +97,7 @@ export function AiChatWidget() {
                         <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0 mt-0.5">
                             <Loader2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 animate-spin" />
                         </div>
-                        <div className="p-3 rounded-2xl text-sm leading-relaxed bg-white dark:bg-gray-800 border border-indigo-100 dark:border-indigo-900/50 text-gray-800 dark:text-gray-200 shadow-sm rounded-tl-sm border-l-2 border-l-indigo-500">
+                        <div className="p-3 rounded-2xl text-sm leading-relaxed bg-background dark:bg-gray-800 border border-indigo-100 dark:border-indigo-900/50 text-gray-800 dark:text-gray-200 shadow-sm rounded-tl-sm border-l-2 border-l-indigo-500">
                             {currentStream || "Thinking..."}
                             <span className="inline-block w-1.5 h-4 ml-1 align-middle bg-indigo-500 animate-pulse rounded-full"></span>
                         </div>
@@ -106,7 +106,7 @@ export function AiChatWidget() {
                 <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200/50 dark:border-gray-800/50 shrink-0">
+            <div className="p-3 bg-background/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200/50 dark:border-gray-800/50 shrink-0">
                 <form onSubmit={handleSend} className="relative">
                     <input
                         type="text"

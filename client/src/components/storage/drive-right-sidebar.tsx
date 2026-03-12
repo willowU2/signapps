@@ -150,10 +150,10 @@ export function DriveRightSidebar() {
     const completedTasks = tasks.filter(t => t.completed);
 
     return (
-        <div className="flex h-full border-l border-[#e3e3e3] dark:border-[#3c4043] bg-white dark:bg-[#1a1a1a]">
+        <div className="flex h-full border-l border-[#e3e3e3] dark:border-[#3c4043] bg-background dark:bg-[#1a1a1a]">
             {/* Expanded App Drawer */}
             {activeApp && (
-                <div className="w-[300px] flex flex-col border-r border-[#e3e3e3] dark:border-[#3c4043] bg-white dark:bg-[#1a1a1a]">
+                <div className="w-[300px] flex flex-col border-r border-[#e3e3e3] dark:border-[#3c4043] bg-background dark:bg-[#1a1a1a]">
                     <div className="flex items-center justify-between p-3 border-b border-[#e3e3e3] dark:border-[#3c4043]">
                         <h2 className="text-[14px] font-medium text-[#202124] dark:text-[#e8eaed] flex items-center gap-2 uppercase tracking-wider">
                             {activeApp === 'calendar' && <><CalendarIcon className="w-4 h-4 text-blue-600" /> Agenda</>}
@@ -179,7 +179,7 @@ export function DriveRightSidebar() {
                                         <span className="text-[13px] font-medium">Créer une note...</span>
                                     </div>
                                 ) : (
-                                    <div className="border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-md overflow-hidden bg-white dark:bg-[#202124]">
+                                    <div className="border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-md overflow-hidden bg-background dark:bg-[#202124]">
                                         <Input 
                                             placeholder="Titre" 
                                             value={newNoteTitle}
@@ -202,11 +202,11 @@ export function DriveRightSidebar() {
 
                                 <div className="space-y-3 mt-4">
                                     {notes.map(note => (
-                                        <div key={note.id} className="group border border-[#dadce0] dark:border-[#5f6368] rounded-lg p-3 hover:shadow-md transition-shadow relative bg-white dark:bg-[#202124]">
+                                        <div key={note.id} className="group border border-[#dadce0] dark:border-[#5f6368] rounded-lg p-3 hover:shadow-md transition-shadow relative bg-background dark:bg-[#202124]">
                                             {note.title && <h4 className="font-medium text-[14px] text-[#202124] dark:text-[#e8eaed] mb-1">{note.title}</h4>}
                                             <p className="text-[13px] text-[#444746] dark:text-[#bdc1c6] whitespace-pre-wrap">{note.content}</p>
                                             <button 
-                                                className="absolute top-2 right-2 p-1.5 bg-white dark:bg-[#202124] rounded-full opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-[#3c4043] transition-all"
+                                                className="absolute top-2 right-2 p-1.5 bg-background dark:bg-[#202124] rounded-full opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-[#3c4043] transition-all"
                                                 onClick={() => handleDeleteNote(note.id)}
                                             >
                                                 <Trash2 className="w-3.5 h-3.5 text-[#5f6368]" />
@@ -349,7 +349,7 @@ export function DriveRightSidebar() {
             )}
 
             {/* App Icons Sidebar */}
-            <div className="w-[56px] flex flex-col items-center py-4 bg-white dark:bg-[#1a1a1a] shadow-sm z-10 shrink-0 border-l border-[#e3e3e3] dark:border-[#3c4043]">
+            <div className="w-[56px] flex flex-col items-center py-4 bg-background dark:bg-[#1a1a1a] shadow-sm z-10 shrink-0 border-l border-[#e3e3e3] dark:border-[#3c4043]">
                 <div className="flex flex-col gap-4">
                     <AppIcon 
                         icon={<CalendarIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />} 

@@ -24,15 +24,19 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
 
     // WebSocket + IndexedDB providers (once)
     useEffect(() => {
-        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/sheet'
+        // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
+        const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true'
+        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4444'
         const wsUrl = `${baseUrl}/${docId}`
         const wsProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
         const idbProvider = new IndexeddbPersistence(docId, doc)
 
-        // Check health endpoint (WS paths don't support HTTP methods)
-        fetch('http://localhost:3010/health', { method: 'GET', mode: 'no-cors' })
-            .then(() => wsProvider.connect())
-            .catch(() => { })
+        // Only attempt to connect if collaboration server is explicitly enabled
+        if (collabServerEnabled) {
+            fetch(baseUrl.replace('ws://', 'http://').replace('wss://', 'https://'), { method: 'HEAD', mode: 'no-cors' })
+                .then(() => wsProvider.connect())
+                .catch(() => { })
+        }
 
         wsProvider.on('status', (event: any) => {
             setIsConnected(event.status === 'connected')

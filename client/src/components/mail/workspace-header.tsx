@@ -16,7 +16,7 @@ export function WorkspaceHeader() {
             {/* Left: Logo */}
             <div className="flex items-center gap-2 w-[200px] shrink-0 pl-0">
                 <div className="flex items-center gap-2 px-2 select-none cursor-pointer">
-                    <div className="w-8 h-8 rounded shrink-0 bg-white flex items-center justify-center">
+                    <div className="w-8 h-8 rounded shrink-0 bg-background flex items-center justify-center">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M4 6H20C21.1 6 22 6.9 22 8V16C22 17.1 21.1 18 20 18H4C2.9 18 2 17.1 2 16V8C2 6.9 2.9 6 4 6Z" fill="#EA4335"/>
                             <path d="M4 8L12 13L20 8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -35,7 +35,7 @@ export function WorkspaceHeader() {
                 </div>
                 <Input
                     placeholder="Rechercher dans les messages"
-                    className="w-full pl-14 pr-14 h-12 bg-[#eaf1fb] dark:bg-[#1f1f1f] border-transparent hover:bg-white hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] focus-visible:bg-white focus-visible:ring-0 focus-visible:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] transition-all duration-200 rounded-full text-base dark:hover:bg-[#28292a] dark:focus-visible:bg-[#28292a] text-[#1f1f1f] dark:text-[#e3e3e3] placeholder:text-[#5f6368] dark:placeholder:text-gray-400"
+                    className="w-full pl-14 pr-14 h-12 bg-[#eaf1fb] dark:bg-[#1f1f1f] border-transparent hover:bg-background hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] focus-visible:bg-background focus-visible:ring-0 focus-visible:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] transition-all duration-200 rounded-full text-base dark:hover:bg-[#28292a] dark:focus-visible:bg-[#28292a] text-[#1f1f1f] dark:text-[#e3e3e3] placeholder:text-[#5f6368] dark:placeholder:text-gray-400"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200/60 dark:hover:bg-gray-700/50 rounded-full cursor-pointer transition-colors">
                     <SlidersHorizontal className="h-5 w-5 text-[#5f6368] dark:text-gray-400" />

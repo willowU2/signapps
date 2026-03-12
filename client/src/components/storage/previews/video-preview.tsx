@@ -138,7 +138,7 @@ export function VideoPreview({ src, fileName }: VideoPreviewProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute h-16 w-16 rounded-full hover:bg-white/20"
+            className="absolute h-16 w-16 rounded-full hover:bg-background/20"
             onClick={handlePlayPause}
           >
             <Play className="h-8 w-8 text-white fill-white" />

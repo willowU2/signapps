@@ -34,7 +34,7 @@ export function CalendarWidget() {
                     <div className="absolute top-11 left-0 w-8 h-px bg-red-400"></div>
 
                     {events.map((event) => (
-                        <div key={event.id} className="relative group p-3 bg-white dark:bg-gray-800/80 rounded-xl shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-700/50 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all hover:shadow-md cursor-pointer">
+                        <div key={event.id} className="relative group p-3 bg-background dark:bg-gray-800/80 rounded-xl shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-700/50 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all hover:shadow-md cursor-pointer">
                             <div className="absolute top-1/2 -left-[21px] -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-[#1a1a1a] group-hover:bg-indigo-500 transition-colors"></div>
 
                             <div className="flex justify-between items-start mb-1">

@@ -36,8 +36,11 @@ import {
   Server,
   Terminal,
   MonitorSmartphone,
-  FolderOpen
+  FolderOpen,
+  Sun,
+  Moon
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -312,15 +315,69 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="border-t p-4 shrink-0">
+        {/* Footer with Theme Toggle */}
+        <div className="border-t p-2 shrink-0">
+          <ThemeToggleButton isCollapsed={isCollapsed} />
           {!isCollapsed && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground text-center mt-2">
               SignApps Platform v0.1.0
             </p>
           )}
         </div>
       </aside>
     </TooltipProvider>
+  );
+}
+
+function ThemeToggleButton({ isCollapsed }: { isCollapsed: boolean }) {
+  const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className={cn('flex items-center gap-2 rounded-lg p-2', isCollapsed ? 'justify-center' : 'px-3')}>
+        <Sun className="h-4 w-4" />
+        {!isCollapsed && <span className="text-sm">Theme</span>}
+      </div>
+    );
+  }
+
+  const isDark = resolvedTheme === 'dark';
+
+  if (isCollapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-full h-10"
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+          >
+            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          {isDark ? 'Light mode' : 'Dark mode'}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      className="w-full justify-start gap-3 px-3"
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+    >
+      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 ml-0" />
+      <span className="ml-4">{isDark ? 'Light mode' : 'Dark mode'}</span>
+    </Button>
   );
 }

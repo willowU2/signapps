@@ -12,13 +12,17 @@ export function useSlideObjects(docId: string, slideId: string) {
         // For performance in a real app, a Y.Doc Provider Context should wrap the whole app.
 
         const doc = new Y.Doc()
-        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010/api/v1/docs/slide'
+        // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
+        const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true'
+        const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4444'
         const provider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
 
-        // Check health endpoint before connecting (WS paths don't support HTTP methods)
-        fetch('http://localhost:3010/health', { method: 'GET', mode: 'no-cors' })
-            .then(() => provider.connect())
-            .catch(() => {})
+        // Only attempt to connect if collaboration server is explicitly enabled
+        if (collabServerEnabled) {
+            fetch(wsUrl.replace('ws://', 'http://').replace('wss://', 'https://'), { method: 'HEAD', mode: 'no-cors' })
+                .then(() => provider.connect())
+                .catch(() => {})
+        }
 
         const slideObjectsMap = doc.getMap<string>(`objects-${slideId}`)
 

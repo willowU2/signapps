@@ -20,7 +20,7 @@ export default function DocumentsPage() {
                 </div>
 
                 {/* Document Editor */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="bg-background rounded-lg shadow-sm p-6">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">
                         Untitled Document
                     </h2>
