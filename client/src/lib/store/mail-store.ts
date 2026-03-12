@@ -18,6 +18,7 @@ interface MailState {
 
   // UI State
   composeAiOpen: boolean;
+  composeRichOpen: boolean;
   labelsExpanded: boolean;
 
   // Data Actions
@@ -33,6 +34,8 @@ interface MailState {
   // UI Actions
   setComposeAiOpen: (open: boolean) => void;
   toggleComposeAi: () => void;
+  setComposeRichOpen: (open: boolean) => void;
+  toggleComposeRich: () => void;
   setLabelsExpanded: (expanded: boolean) => void;
   toggleLabelsExpanded: () => void;
 }
@@ -48,6 +51,7 @@ export const useMailStore = create<MailState>()(
       mailList: [],
       selectedId: null,
       composeAiOpen: false,
+      composeRichOpen: false,
       labelsExpanded: true,
 
       // ========================================
@@ -87,6 +91,9 @@ export const useMailStore = create<MailState>()(
 
       setComposeAiOpen: (open) => set({ composeAiOpen: open }),
       toggleComposeAi: () => set((state) => ({ composeAiOpen: !state.composeAiOpen })),
+
+      setComposeRichOpen: (open) => set({ composeRichOpen: open }),
+      toggleComposeRich: () => set((state) => ({ composeRichOpen: !state.composeRichOpen })),
 
       setLabelsExpanded: (expanded) => set({ labelsExpanded: expanded }),
       toggleLabelsExpanded: () => set((state) => ({ labelsExpanded: !state.labelsExpanded })),
@@ -130,6 +137,7 @@ export const useMailUIState = () =>
   useMailStore(
     useShallow((state) => ({
       composeAiOpen: state.composeAiOpen,
+      composeRichOpen: state.composeRichOpen,
       labelsExpanded: state.labelsExpanded,
     }))
   );
@@ -139,6 +147,8 @@ export const useMailUIActions = () =>
     useShallow((state) => ({
       setComposeAiOpen: state.setComposeAiOpen,
       toggleComposeAi: state.toggleComposeAi,
+      setComposeRichOpen: state.setComposeRichOpen,
+      toggleComposeRich: state.toggleComposeRich,
       setLabelsExpanded: state.setLabelsExpanded,
       toggleLabelsExpanded: state.toggleLabelsExpanded,
     }))

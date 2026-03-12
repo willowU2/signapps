@@ -13,6 +13,7 @@ import {
     Plus,
     Pencil,
     Tag,
+    Sparkles,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -22,6 +23,7 @@ import { MailDisplay } from "@/components/mail/mail-display"
 import { MailList } from "@/components/mail/mail-list"
 import { MailNav } from "@/components/mail/mail-nav"
 import { ComposeAiDialog } from "@/components/mail/compose-ai-dialog"
+import { ComposeRichDialog } from "@/components/mail/compose-rich-dialog"
 import { MailAddons } from "@/components/mail/mail-addons"
 
 import { WorkspaceHeader } from "@/components/mail/workspace-header"
@@ -44,8 +46,8 @@ export default function MailPage() {
     const mailList = useMailList()
     const selectedId = useSelectedMailId()
     const selectedMail = useSelectedMail()
-    const { composeAiOpen, labelsExpanded } = useMailUIState()
-    const { setComposeAiOpen, toggleLabelsExpanded } = useMailUIActions()
+    const { composeAiOpen, composeRichOpen, labelsExpanded } = useMailUIState()
+    const { setComposeAiOpen, setComposeRichOpen, toggleLabelsExpanded } = useMailUIActions()
     const { setSelectedId, clearSelection } = useMailSelectionActions()
     const { setMailList, removeMail } = useMailDataActions()
 
@@ -140,14 +142,24 @@ export default function MailPage() {
                 header={<WorkspaceHeader />}
                 sidebar={
                     <div className="w-[256px] shrink-0 flex flex-col gap-2 px-4 pt-4 overflow-y-auto">
-                        {/* Compose Button */}
-                        <Button
-                            className="w-fit gap-4 rounded-2xl h-14 shadow-lg font-medium bg-[#c2e7ff] hover:bg-[#a8d8f8] hover:shadow-xl text-[#001d35] transition-all duration-200 justify-start px-6 text-[15px] border-0"
-                            onClick={() => setComposeAiOpen(true)}
-                        >
-                            <Pencil className="h-6 w-6 text-[#1a73e8]" />
-                            Nouveau message
-                        </Button>
+                        {/* Compose Buttons */}
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                className="w-fit gap-4 rounded-2xl h-14 shadow-lg font-medium bg-[#c2e7ff] hover:bg-[#a8d8f8] hover:shadow-xl text-[#001d35] transition-all duration-200 justify-start px-6 text-[15px] border-0"
+                                onClick={() => setComposeRichOpen(true)}
+                            >
+                                <Pencil className="h-6 w-6 text-[#1a73e8]" />
+                                Nouveau message
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                className="w-fit gap-2 rounded-xl h-9 text-sm text-muted-foreground hover:text-foreground justify-start px-4"
+                                onClick={() => setComposeAiOpen(true)}
+                            >
+                                <Sparkles className="h-4 w-4 text-purple-500" />
+                                Rédiger avec l&apos;IA
+                            </Button>
+                        </div>
 
                         {/* Navigation Links */}
                         <MailNav isCollapsed={false} links={[
@@ -277,6 +289,7 @@ export default function MailPage() {
             </WorkspaceShell>
 
             <ComposeAiDialog open={composeAiOpen} onOpenChange={setComposeAiOpen} />
+            <ComposeRichDialog open={composeRichOpen} onOpenChange={setComposeRichOpen} />
         </TooltipProvider>
     )
 }
