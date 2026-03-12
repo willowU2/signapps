@@ -49,6 +49,19 @@ export function ScheduleXCalendar({ selectedCalendarId }: ScheduleXCalendarProps
     // Fetch events
     const { events, fetchEvents } = useEvents(selectedCalendarId);
 
+    // Ensure currentDate is a valid Date object and format it
+    const formattedDate = useMemo(() => {
+        try {
+            const date = currentDate instanceof Date ? currentDate : new Date(currentDate);
+            if (isNaN(date.getTime())) {
+                return format(new Date(), "yyyy-MM-dd");
+            }
+            return format(date, "yyyy-MM-dd");
+        } catch {
+            return format(new Date(), "yyyy-MM-dd");
+        }
+    }, [currentDate]);
+
     // Convert events to Schedule-X format
     const scheduleXEvents = useMemo((): ScheduleXEvent[] => {
         return events.map((event: CalendarEvent) => ({
@@ -71,7 +84,7 @@ export function ScheduleXCalendar({ selectedCalendarId }: ScheduleXCalendarProps
             createViewMonthAgenda(),
         ],
         defaultView: viewModeMap[viewMode] || "month-grid",
-        selectedDate: format(currentDate, "yyyy-MM-dd"),
+        selectedDate: formattedDate,
         events: scheduleXEvents,
         locale: "fr-FR",
         firstDayOfWeek: 1, // Monday
@@ -166,17 +179,18 @@ export function ScheduleXCalendar({ selectedCalendarId }: ScheduleXCalendarProps
 
     // Update selected date when store changes
     useEffect(() => {
-        if (calendarApp) {
-            calendarApp.setDate(format(currentDate, "yyyy-MM-dd"));
+        if (calendarApp && formattedDate) {
+            calendarApp.setDate(formattedDate);
         }
-    }, [calendarApp, currentDate]);
+    }, [calendarApp, formattedDate]);
 
     // Fetch events on mount and when calendar changes
     useEffect(() => {
         if (selectedCalendarId) {
-            const start = new Date(currentDate);
+            const date = currentDate instanceof Date ? currentDate : new Date(currentDate || Date.now());
+            const start = new Date(date);
             start.setMonth(start.getMonth() - 1);
-            const end = new Date(currentDate);
+            const end = new Date(date);
             end.setMonth(end.getMonth() + 1);
             fetchEvents(start, end);
         }
