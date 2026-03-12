@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { ScheduleXCalendar as SXCalendar, useNextCalendarApp } from "@schedule-x/react";
 import {
     createViewDay,
@@ -33,6 +33,27 @@ const viewModeMap: Record<string, string> = {
     agenda: "month-agenda",
 };
 
+// Helper to safely format date
+function safeFormatDate(dateInput: Date | string | null | undefined): string {
+    try {
+        if (!dateInput) {
+            return format(new Date(), "yyyy-MM-dd");
+        }
+        const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+        if (isNaN(date.getTime())) {
+            return format(new Date(), "yyyy-MM-dd");
+        }
+        return format(date, "yyyy-MM-dd");
+    } catch {
+        return format(new Date(), "yyyy-MM-dd");
+    }
+}
+
+// Get initial date synchronously for hook initialization
+function getInitialDate(): string {
+    return format(new Date(), "yyyy-MM-dd");
+}
+
 interface ScheduleXCalendarProps {
     selectedCalendarId?: string;
 }
@@ -49,19 +70,6 @@ export function ScheduleXCalendar({ selectedCalendarId }: ScheduleXCalendarProps
     // Fetch events
     const { events, fetchEvents } = useEvents(selectedCalendarId);
 
-    // Ensure currentDate is a valid Date object and format it
-    const formattedDate = useMemo(() => {
-        try {
-            const date = currentDate instanceof Date ? currentDate : new Date(currentDate);
-            if (isNaN(date.getTime())) {
-                return format(new Date(), "yyyy-MM-dd");
-            }
-            return format(date, "yyyy-MM-dd");
-        } catch {
-            return format(new Date(), "yyyy-MM-dd");
-        }
-    }, [currentDate]);
-
     // Convert events to Schedule-X format
     const scheduleXEvents = useMemo((): ScheduleXEvent[] => {
         return events.map((event: CalendarEvent) => ({
@@ -75,7 +83,17 @@ export function ScheduleXCalendar({ selectedCalendarId }: ScheduleXCalendarProps
         }));
     }, [events]);
 
+    // Callbacks for Schedule-X - use useCallback to avoid recreating on each render
+    const handleEventClick = useCallback((event: ScheduleXEvent) => {
+        selectEvent(event.id);
+    }, [selectEvent]);
+
+    const handleDateClick = useCallback((date: string) => {
+        setCurrentDate(new Date(date));
+    }, [setCurrentDate]);
+
     // Create calendar app using Schedule-X hook for Next.js
+    // Use a static initial date to avoid SSR issues
     const calendarApp = useNextCalendarApp({
         views: [
             createViewMonthGrid(),
@@ -84,8 +102,8 @@ export function ScheduleXCalendar({ selectedCalendarId }: ScheduleXCalendarProps
             createViewMonthAgenda(),
         ],
         defaultView: viewModeMap[viewMode] || "month-grid",
-        selectedDate: formattedDate,
-        events: scheduleXEvents,
+        selectedDate: getInitialDate(), // Use static date for initialization
+        events: [],
         locale: "fr-FR",
         firstDayOfWeek: 1, // Monday
         dayBoundaries: {
@@ -101,15 +119,9 @@ export function ScheduleXCalendar({ selectedCalendarId }: ScheduleXCalendarProps
             nEventsPerDay: 4,
         },
         callbacks: {
-            onEventClick: (event: ScheduleXEvent) => {
-                selectEvent(event.id);
-            },
-            onClickDate: (date: string) => {
-                setCurrentDate(new Date(date));
-            },
-            onSelectedDateUpdate: (date: string) => {
-                setCurrentDate(new Date(date));
-            },
+            onEventClick: handleEventClick,
+            onClickDate: handleDateClick,
+            onSelectedDateUpdate: handleDateClick,
         },
         calendars: {
             default: {
@@ -154,9 +166,22 @@ export function ScheduleXCalendar({ selectedCalendarId }: ScheduleXCalendarProps
         },
     });
 
+    // Handle client-side mounting
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Sync date from store to calendar after mount
+    useEffect(() => {
+        if (calendarApp && mounted) {
+            const formattedDate = safeFormatDate(currentDate);
+            calendarApp.setDate(formattedDate);
+        }
+    }, [calendarApp, currentDate, mounted]);
+
     // Update calendar when events change
     useEffect(() => {
-        if (calendarApp && scheduleXEvents.length > 0) {
+        if (calendarApp && mounted) {
             // Clear existing events
             const existingEvents = calendarApp.events.getAll();
             existingEvents.forEach((event: ScheduleXEvent) => {
@@ -167,26 +192,19 @@ export function ScheduleXCalendar({ selectedCalendarId }: ScheduleXCalendarProps
                 calendarApp.events.add(event);
             });
         }
-    }, [calendarApp, scheduleXEvents]);
+    }, [calendarApp, scheduleXEvents, mounted]);
 
     // Update view mode when store changes
     useEffect(() => {
-        if (calendarApp) {
+        if (calendarApp && mounted) {
             const scheduleXView = viewModeMap[viewMode] || "month-grid";
             calendarApp.setView(scheduleXView);
         }
-    }, [calendarApp, viewMode]);
-
-    // Update selected date when store changes
-    useEffect(() => {
-        if (calendarApp && formattedDate) {
-            calendarApp.setDate(formattedDate);
-        }
-    }, [calendarApp, formattedDate]);
+    }, [calendarApp, viewMode, mounted]);
 
     // Fetch events on mount and when calendar changes
     useEffect(() => {
-        if (selectedCalendarId) {
+        if (selectedCalendarId && mounted) {
             const date = currentDate instanceof Date ? currentDate : new Date(currentDate || Date.now());
             const start = new Date(date);
             start.setMonth(start.getMonth() - 1);
@@ -194,12 +212,7 @@ export function ScheduleXCalendar({ selectedCalendarId }: ScheduleXCalendarProps
             end.setMonth(end.getMonth() + 1);
             fetchEvents(start, end);
         }
-    }, [selectedCalendarId, currentDate, fetchEvents]);
-
-    // Handle client-side mounting
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+    }, [selectedCalendarId, currentDate, fetchEvents, mounted]);
 
     if (!mounted || !calendarApp) {
         return (
