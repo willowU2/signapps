@@ -141,6 +141,31 @@ fn node_to_html(node: &TiptapNode) -> Result<String, ConversionError> {
         "hardBreak" => {
             html.push_str("<br>");
         }
+        "pageBreak" => {
+            html.push_str("<div data-page-break class=\"page-break\"></div>");
+        }
+        "tableOfContents" => {
+            html.push_str("<div data-toc class=\"table-of-contents\"></div>");
+        }
+        "footnote" => {
+            let number = node
+                .attrs
+                .as_ref()
+                .and_then(|a| a.get("number"))
+                .and_then(|n| n.as_u64())
+                .unwrap_or(1);
+            let content = node
+                .attrs
+                .as_ref()
+                .and_then(|a| a.get("content"))
+                .and_then(|c| c.as_str())
+                .unwrap_or("");
+            html.push_str(&format!(
+                "<sup data-footnote data-content=\"{}\" class=\"footnote-ref\">[{}]</sup>",
+                escape_html(content),
+                number
+            ));
+        }
         "image" => {
             let src = node
                 .attrs
@@ -272,6 +297,10 @@ fn apply_mark(text: &str, mark: &TiptapMark) -> String {
                 if let Some(font_size) = attrs.get("fontSize").and_then(|f| f.as_str()) {
                     style.push_str(&format!("font-size: {};", font_size));
                 }
+                // Sprint 3: Background color support
+                if let Some(bg_color) = attrs.get("backgroundColor").and_then(|b| b.as_str()) {
+                    style.push_str(&format!("background-color: {};", bg_color));
+                }
             }
             if style.is_empty() {
                 text.to_string()
@@ -303,6 +332,16 @@ fn get_paragraph_style(attrs: &Option<Value>) -> String {
     if let Some(attrs) = attrs {
         if let Some(align) = attrs.get("textAlign").and_then(|a| a.as_str()) {
             styles.push(format!("text-align: {}", align));
+        }
+        // Sprint 3: Line height support
+        if let Some(line_height) = attrs.get("lineHeight").and_then(|l| l.as_str()) {
+            styles.push(format!("line-height: {}", line_height));
+        }
+        // Sprint 3: Indent support
+        if let Some(indent) = attrs.get("indent").and_then(|i| i.as_u64()) {
+            if indent > 0 {
+                styles.push(format!("margin-left: {}px", indent * 40));
+            }
         }
     }
 

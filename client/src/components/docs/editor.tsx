@@ -24,6 +24,25 @@ import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
 import { SlashCommands, getSuggestionOptions } from './slash-commands';
 import { Comment } from './extensions/comment';
+// Sprint 1: Foundation Polish
+import Typography from '@tiptap/extension-typography';
+import Dropcursor from '@tiptap/extension-dropcursor';
+import Gapcursor from '@tiptap/extension-gapcursor';
+import Focus from '@tiptap/extension-focus';
+import { TrailingNode } from './extensions/trailing-node';
+// Sprint 2: Collaboration Polish
+import { UniqueID } from './extensions/unique-id';
+import { FileHandler, insertImageFromFile } from './extensions/file-handler';
+// Sprint 3: Professional Formatting
+import { LineHeight } from './extensions/line-height';
+import { Indent } from './extensions/indent';
+import { PageBreak } from './extensions/page-break';
+import { BackgroundColor } from './extensions/background-color';
+// Sprint 4: Advanced Content
+import { TableOfContents } from './extensions/table-of-contents';
+import { Footnote } from './extensions/footnote';
+// Sprint 6: Media
+import Youtube from '@tiptap/extension-youtube';
 import { useCommentsStore } from '@/stores/comments-store';
 import { v4 as uuidv4 } from 'uuid';
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -430,7 +449,9 @@ const Editor = ({
     const pendingVoiceBlocksRef = useRef<string[]>([]);
 
     useEffect(() => {
-        const baseUrl = process.env.NEXT_PUBLIC_DOCS_WS_URL || 'ws://localhost:3010/api/v1/docs/text';
+        // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
+        const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true';
+        const baseUrl = process.env.NEXT_PUBLIC_DOCS_WS_URL || 'ws://localhost:4444';
         const wsUrl = `${baseUrl}/${documentId}`;
 
         const wsProvider = new WebsocketProvider(wsUrl, documentId, ydoc, {
@@ -443,9 +464,14 @@ const Editor = ({
             color: getRandomColor(),
         });
 
-        // Directly connect the WebSocket provider
-        // Tiptap's Hocuspocus/y-websocket provider handles reconnections automatically
-        wsProvider.connect();
+        // Only connect if collaboration server is explicitly enabled
+        if (collabServerEnabled) {
+            wsProvider.connect();
+        } else {
+            console.debug('[Editor] Running in local-only mode (NEXT_PUBLIC_COLLAB_ENABLED not set)');
+            // Set status to disconnected but allow local editing
+            setStatus('disconnected');
+        }
 
         wsProvider.on('status', async (event: {
             status: 'connecting' | 'connected' | 'disconnected'
@@ -530,6 +556,72 @@ const Editor = ({
             StarterKit.configure({
                 undoRedo: false, // Turn off Prosemirror history as Yjs handles it (renamed from 'history' in v3)
             }),
+            // Sprint 1: Foundation Polish
+            Typography.configure({
+                emDash: true,        // -- → —
+                ellipsis: true,      // ... → …
+                openDoubleQuote: '«', // French quotes
+                closeDoubleQuote: '»',
+                openSingleQuote: '\u2018', // '
+                closeSingleQuote: '\u2019', // '
+            }),
+            Dropcursor.configure({
+                color: '#3b82f6', // blue-500
+                width: 2,
+            }),
+            Gapcursor,
+            TrailingNode.configure({
+                node: 'paragraph',
+            }),
+            Focus.configure({
+                className: 'has-focus',
+                mode: 'all',
+            }),
+            // Sprint 2: Collaboration Polish
+            UniqueID.configure({
+                types: ['paragraph', 'heading', 'blockquote', 'codeBlock', 'listItem', 'taskItem', 'table', 'image', 'pageBreak'],
+            }),
+            FileHandler.configure({
+                allowedMimeTypes: ['image/*', 'application/pdf', 'text/plain', 'text/markdown'],
+                maxFileSize: 10 * 1024 * 1024, // 10MB
+                onDrop: (editor, files, pos) => {
+                    files.forEach(file => {
+                        if (file.type.startsWith('image/')) {
+                            insertImageFromFile(editor, file, pos);
+                        }
+                    });
+                },
+                onPaste: (editor, files) => {
+                    files.forEach(file => {
+                        if (file.type.startsWith('image/')) {
+                            insertImageFromFile(editor, file);
+                        }
+                    });
+                },
+            }),
+            // Sprint 3: Professional Formatting
+            LineHeight.configure({
+                types: ['paragraph', 'heading'],
+                defaultLineHeight: '1.5',
+            }),
+            Indent.configure({
+                types: ['paragraph', 'heading'],
+                minLevel: 0,
+                maxLevel: 8,
+            }),
+            PageBreak,
+            BackgroundColor,
+            // Sprint 4: Advanced Content
+            TableOfContents,
+            Footnote,
+            // Sprint 6: Media
+            Youtube.configure({
+                controls: true,
+                nocookie: true,
+                allowFullscreen: true,
+                modestBranding: true,
+            }),
+            // Core Formatting
             Underline,
             TextAlign.configure({
                 types: ['heading', 'paragraph'],

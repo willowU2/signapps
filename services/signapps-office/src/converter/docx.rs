@@ -85,10 +85,21 @@ fn process_element(docx: &mut Docx, elem: &scraper::ElementRef) -> Result<(), Co
             *docx = std::mem::take(docx).add_paragraph(para);
         }
         "div" => {
-            // Process children of div
-            for child in elem.children() {
-                if let Some(child_elem) = scraper::ElementRef::wrap(child) {
-                    process_element(docx, &child_elem)?;
+            // Check for page break
+            if elem.value().attr("data-page-break").is_some() {
+                let para = Paragraph::new().add_run(Run::new().add_break(BreakType::Page));
+                *docx = std::mem::take(docx).add_paragraph(para);
+            } else if elem.value().attr("data-toc").is_some() {
+                // Table of Contents placeholder
+                let para = Paragraph::new()
+                    .add_run(Run::new().add_text("Table of Contents").bold().size(28));
+                *docx = std::mem::take(docx).add_paragraph(para);
+            } else {
+                // Process children of div
+                for child in elem.children() {
+                    if let Some(child_elem) = scraper::ElementRef::wrap(child) {
+                        process_element(docx, &child_elem)?;
+                    }
                 }
             }
         }
@@ -139,7 +150,7 @@ fn create_paragraph_from_element(
 ) -> Result<Paragraph, ConversionError> {
     let mut paragraph = Paragraph::new();
 
-    // Check for text alignment
+    // Check for text alignment, line height, and indent
     if let Some(style) = elem.value().attr("style") {
         if style.contains("text-align: center") {
             paragraph = paragraph.align(AlignmentType::Center);
@@ -147,6 +158,20 @@ fn create_paragraph_from_element(
             paragraph = paragraph.align(AlignmentType::Right);
         } else if style.contains("text-align: justify") {
             paragraph = paragraph.align(AlignmentType::Both);
+        }
+
+        // Sprint 3: Line height support
+        if let Some(line_height) = extract_line_height_from_style(style) {
+            // DOCX line spacing: 240 twips = single line (100%)
+            let spacing = (line_height * 240.0) as i32;
+            paragraph = paragraph.line_spacing(LineSpacing::new().line(spacing));
+        }
+
+        // Sprint 3: Indent support
+        if let Some(indent_px) = extract_margin_left_from_style(style) {
+            // Convert px to twips (1 inch = 1440 twips, 1 inch ≈ 96px)
+            let indent_twips = (indent_px as f32 * 1440.0 / 96.0) as i32;
+            paragraph = paragraph.indent(Some(indent_twips), None, None, None);
         }
     }
 
@@ -396,6 +421,32 @@ fn parse_rgb(rgb_str: &str) -> Option<String> {
         let g: u8 = values[1].trim().parse().ok()?;
         let b: u8 = values[2].trim().parse().ok()?;
         return Some(format!("{:02X}{:02X}{:02X}", r, g, b));
+    }
+    None
+}
+
+/// Extract line-height value from CSS style string
+fn extract_line_height_from_style(style: &str) -> Option<f32> {
+    if let Some(start) = style.find("line-height:") {
+        let rest = &style[start + 12..];
+        let end = rest.find(';').unwrap_or(rest.len());
+        let value = rest[..end].trim();
+        // Parse numeric value (e.g., "1.5", "2", "1.15")
+        value.parse::<f32>().ok()
+    } else {
+        None
+    }
+}
+
+/// Extract margin-left value in pixels from CSS style string
+fn extract_margin_left_from_style(style: &str) -> Option<i32> {
+    if let Some(start) = style.find("margin-left:") {
+        let rest = &style[start + 12..];
+        let end = rest.find(';').unwrap_or(rest.len());
+        let value = rest[..end].trim();
+        if let Some(px) = value.strip_suffix("px") {
+            return px.trim().parse::<i32>().ok();
+        }
     }
     None
 }
