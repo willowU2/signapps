@@ -137,6 +137,7 @@ export const Comment = Mark.create<CommentOptions>({
 
     addProseMirrorPlugins() {
         const { onCommentActivated } = this.options;
+        let lastActiveCommentId: string | null = null;
 
         return [
             new Plugin({
@@ -162,8 +163,11 @@ export const Comment = Mark.create<CommentOptions>({
                             }
                         });
 
-                        if (onCommentActivated) {
-                            onCommentActivated(activeCommentId);
+                        // Only call callback if value changed to prevent infinite loops
+                        if (onCommentActivated && activeCommentId !== lastActiveCommentId) {
+                            lastActiveCommentId = activeCommentId;
+                            // Use setTimeout to avoid calling setState during render
+                            setTimeout(() => onCommentActivated(activeCommentId), 0);
                         }
 
                         return DecorationSet.create(doc, decorations);

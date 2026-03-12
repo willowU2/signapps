@@ -330,23 +330,29 @@ export function Sidebar() {
 }
 
 function ThemeToggleButton({ isCollapsed }: { isCollapsed: boolean }) {
-  const { setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { setTheme, theme } = useTheme();
+  const [currentTheme, setCurrentTheme] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setCurrentTheme(theme);
+  }, [theme]);
 
-  if (!mounted) {
+  const toggleTheme = () => {
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+  };
+
+  // SSR placeholder
+  if (currentTheme === undefined) {
     return (
-      <div className={cn('flex items-center gap-2 rounded-lg p-2', isCollapsed ? 'justify-center' : 'px-3')}>
+      <div className={cn('flex items-center gap-2 rounded-lg p-2 h-10', isCollapsed ? 'justify-center' : 'px-3')}>
         <Sun className="h-4 w-4" />
         {!isCollapsed && <span className="text-sm">Theme</span>}
       </div>
     );
   }
 
-  const isDark = resolvedTheme === 'dark';
+  const isDark = currentTheme === 'dark';
 
   if (isCollapsed) {
     return (
@@ -356,10 +362,9 @@ function ThemeToggleButton({ isCollapsed }: { isCollapsed: boolean }) {
             variant="ghost"
             size="icon"
             className="w-full h-10"
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            onClick={toggleTheme}
           >
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
         </TooltipTrigger>
         <TooltipContent side="right">
@@ -372,12 +377,11 @@ function ThemeToggleButton({ isCollapsed }: { isCollapsed: boolean }) {
   return (
     <Button
       variant="ghost"
-      className="w-full justify-start gap-3 px-3"
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="w-full justify-start gap-3 px-3 h-10"
+      onClick={toggleTheme}
     >
-      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 ml-0" />
-      <span className="ml-4">{isDark ? 'Light mode' : 'Dark mode'}</span>
+      {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+      <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
     </Button>
   );
 }
