@@ -1,29 +1,30 @@
 'use client';
 
-import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Collaboration from '@tiptap/extension-collaboration';
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Subscript from '@tiptap/extension-subscript';
 import Superscript from '@tiptap/extension-superscript';
-import TextStyle from '@tiptap/extension-text-style';
+import { TextStyle } from '@tiptap/extension-text-style';
+import FontFamily from '@tiptap/extension-font-family';
+import { FontSize } from './extensions/font-size';
+import CharacterCount from '@tiptap/extension-character-count';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
-import Table from '@tiptap/extension-table';
-import TableRow from '@tiptap/extension-table-row';
-import TableHeader from '@tiptap/extension-table-header';
-import TableCell from '@tiptap/extension-table-cell';
+import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
 import { SlashCommands, getSuggestionOptions } from './slash-commands';
-import { Comment } from './comment-extension';
+import { Comment } from './extensions/comment';
+import { useCommentsStore } from '@/stores/comments-store';
 import { v4 as uuidv4 } from 'uuid';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
@@ -90,6 +91,7 @@ import mammoth from 'mammoth';
 import { Document as DocxDocument, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from 'file-saver';
 import VerEx from 'verbal-expressions';
+import { htmlToMarkdown, markdownToHtml, isMarkdown } from '@/lib/markdown';
 
 const lowlight = createLowlight(common);
 
@@ -395,6 +397,9 @@ const Editor = ({
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
     const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
 
+    // Comments state
+    const { setActiveComment, sidebarOpen, setSidebarOpen } = useCommentsStore();
+
     // AI state
     const {
         stream,
@@ -430,6 +435,12 @@ const Editor = ({
 
         const wsProvider = new WebsocketProvider(wsUrl, documentId, ydoc, {
             connect: false
+        });
+
+        // Set user awareness for collaborative cursors (Tiptap v3)
+        wsProvider.awareness.setLocalStateField('user', {
+            name: userName || 'Anonymous',
+            color: getRandomColor(),
         });
 
         // Directly connect the WebSocket provider
@@ -513,10 +524,11 @@ const Editor = ({
     } | null>(null);
 
     const editor = useEditor({
+        immediatelyRender: false, // Required for SSR compatibility with Next.js
         editable: !isReadOnly,
         extensions: [
             StarterKit.configure({
-                history: false, // Turn off Prosemirror history as Yjs handles it
+                undoRedo: false, // Turn off Prosemirror history as Yjs handles it (renamed from 'history' in v3)
             }),
             Underline,
             TextAlign.configure({
@@ -525,9 +537,18 @@ const Editor = ({
             Subscript,
             Superscript,
             TextStyle,
+            FontFamily.configure({
+                types: ['textStyle'],
+            }),
+            FontSize.configure({
+                types: ['textStyle'],
+            }),
             Color,
             Highlight.configure({
                 multicolor: true,
+            }),
+            CharacterCount.configure({
+                limit: null, // No limit by default
             }),
             TaskList,
             TaskItem.configure({
@@ -692,24 +713,38 @@ const Editor = ({
                 placeholder: 'Type \'/\' for commands or start writing...',
                 emptyEditorClass: 'is-editor-empty',
             }),
-            Comment,
+            Comment.configure({
+                onCommentActivated: (commentId) => {
+                    setActiveComment(commentId);
+                },
+            }),
             Collaboration.configure({
                 document: ydoc || undefined,
+                provider: provider || undefined,
             }),
-            ...(provider ? [
-                CollaborationCursor.configure({
-                    provider: provider,
-                    user: {
-                        name: userName || 'Anonymous',
-                        color: getRandomColor(),
-                    },
-                })
-            ] : []),
         ],
         content: initialContent || '',
         editorProps: {
             attributes: {
                 class: 'prose prose-slate dark:prose-invert max-w-none focus:outline-none min-h-[500px] transition-colors font-sans text-[11pt] leading-[1.6]',
+            },
+            handlePaste: (view, event) => {
+                const text = event.clipboardData?.getData('text/plain');
+                // If the pasted text looks like Markdown, convert it to HTML first
+                if (text && isMarkdown(text)) {
+                    const html = markdownToHtml(text);
+                    // Insert HTML content
+                    const { state } = view;
+                    const tr = state.tr;
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const content = doc.body.innerHTML;
+                    // Let the editor handle the HTML paste instead
+                    event.preventDefault();
+                    view.pasteHTML(content);
+                    return true;
+                }
+                return false;
             },
         },
         onUpdate: ({
@@ -1074,6 +1109,26 @@ const Editor = ({
         }
         toast.success(`Exporté en ${type.toUpperCase()}`);
     }, [editor, documentName]);
+
+    // Export to Markdown
+    const exportToMarkdown = useCallback(() => {
+        if (!editor) return;
+        const htmlString = editor.getHTML();
+        const markdown = htmlToMarkdown(htmlString);
+
+        // Create and download markdown file
+        const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+        saveAs(blob, `${documentName.replace(/\.(docx|md)$/, '') || 'document'}.md`);
+        toast.success('Exporté en Markdown');
+    }, [editor, documentName]);
+
+    // Import Markdown content
+    const importMarkdown = useCallback((markdownText: string) => {
+        if (!editor) return;
+        const html = markdownToHtml(markdownText);
+        editor.commands.setContent(html);
+        toast.success('Markdown importé');
+    }, [editor]);
 
     // ---- Save To Drive ----
     const saveToDrive = useCallback(async () => {
@@ -2060,7 +2115,10 @@ const Editor = ({
                         {editor && (
                             <BubbleMenu
                                 editor={editor}
-                                tippyOptions={{ duration: 150, animation: 'fade' }}
+                                options={{
+                                    placement: 'top',
+                                    offset: 6,
+                                }}
                                 className="bg-white/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-200/50 dark:border-gray-700/50 rounded-[8px] overflow-hidden flex divide-x divide-gray-100 dark:divide-gray-800 pl-1"
                             >
                                 <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
@@ -2109,14 +2167,9 @@ const Editor = ({
                         {editor && (
                             <FloatingMenu
                                 editor={editor}
-                                tippyOptions={{
-                                    duration: 150,
-                                    animation: 'shift-toward',
+                                options={{
                                     placement: 'bottom-start',
-                                    onHide: () => {
-                                        setFloatingMode('menu');
-                                        setPromptValue('');
-                                    },
+                                    offset: 6,
                                 }}
                                 className="bg-white/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-200 dark:border-[#5f6368] rounded-[8px] overflow-hidden min-w-[220px]"
                             >
@@ -2212,6 +2265,16 @@ const Editor = ({
                         )}
 
                         <EditorContent editor={editor} />
+
+                        {/* Character/Word Count Footer */}
+                        <div className="flex items-center justify-end px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800/50 bg-white dark:bg-[#1f1f1f]">
+                            <span className="mr-4">
+                                {editor.storage.characterCount?.words() || 0} mots
+                            </span>
+                            <span>
+                                {editor.storage.characterCount?.characters() || 0} caractères
+                            </span>
+                        </div>
                         </div>
                     </div>
 

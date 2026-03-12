@@ -189,3 +189,137 @@
 .dark .ProseMirror p.is-editor-empty:first-child::before {
   color: var(--muted-foreground);
 }
+
+/* Comment Marks Styling */
+.ProseMirror mark[data-comment] {
+  background-color: oklch(0.9 0.1 90 / 40%);
+  border-bottom: 2px solid oklch(0.7 0.15 90);
+  padding: 0.1em 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.ProseMirror mark[data-comment]:hover {
+  background-color: oklch(0.85 0.12 90 / 60%);
+}
+
+.ProseMirror mark[data-comment].active {
+  background-color: oklch(0.8 0.15 90 / 70%);
+  border-bottom-width: 3px;
+}
+
+.ProseMirror mark[data-comment].resolved {
+  background-color: oklch(0.9 0.05 150 / 30%);
+  border-bottom-color: oklch(0.6 0.1 150);
+}
+
+.dark .ProseMirror mark[data-comment] {
+  background-color: oklch(0.4 0.1 90 / 40%);
+  border-bottom-color: oklch(0.6 0.12 90);
+}
+
+.dark .ProseMirror mark[data-comment]:hover {
+  background-color: oklch(0.45 0.12 90 / 60%);
+}
+
+.dark .ProseMirror mark[data-comment].active {
+  background-color: oklch(0.5 0.15 90 / 70%);
+}
+
+.dark .ProseMirror mark[data-comment].resolved {
+  background-color: oklch(0.35 0.05 150 / 30%);
+  border-bottom-color: oklch(0.5 0.1 150);
+}
+
+/* Mention Node Styling */
+.ProseMirror span[data-mention] {
+  background-color: oklch(0.95 0.08 250 / 60%);
+  color: oklch(0.4 0.15 250);
+  padding: 0.1em 0.3em;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.ProseMirror span[data-mention]:hover {
+  background-color: oklch(0.9 0.1 250 / 80%);
+}
+
+.dark .ProseMirror span[data-mention] {
+  background-color: oklch(0.35 0.08 250 / 60%);
+  color: oklch(0.8 0.12 250);
+}
+
+.dark .ProseMirror span[data-mention]:hover {
+  background-color: oklch(0.4 0.1 250 / 80%);
+}
+
+/* Mention Suggestions Dropdown */
+.mention-suggestions {
+  @apply bg-popover border border-border rounded-lg shadow-lg overflow-hidden;
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.mention-suggestion-item {
+  @apply px-3 py-2 cursor-pointer flex items-center gap-2 text-sm;
+  transition: background-color 0.1s ease;
+}
+
+.mention-suggestion-item:hover,
+.mention-suggestion-item.is-selected {
+  @apply bg-accent text-accent-foreground;
+}
+
+.mention-suggestion-item .avatar {
+  @apply w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium;
+}
+
+/* Track Changes Styling */
+.ProseMirror ins.track-insertion {
+  background-color: oklch(0.9 0.12 145 / 50%);
+  color: oklch(0.35 0.15 145);
+  text-decoration: none;
+  border-bottom: 2px solid oklch(0.5 0.15 145);
+  padding: 0.1em 0;
+}
+
+.ProseMirror del.track-deletion {
+  background-color: oklch(0.9 0.12 25 / 50%);
+  color: oklch(0.45 0.15 25);
+  text-decoration: line-through;
+  text-decoration-color: oklch(0.5 0.2 25);
+  padding: 0.1em 0;
+}
+
+.dark .ProseMirror ins.track-insertion {
+  background-color: oklch(0.35 0.1 145 / 50%);
+  color: oklch(0.8 0.12 145);
+  border-bottom-color: oklch(0.6 0.12 145);
+}
+
+.dark .ProseMirror del.track-deletion {
+  background-color: oklch(0.35 0.1 25 / 50%);
+  color: oklch(0.75 0.12 25);
+  text-decoration-color: oklch(0.6 0.15 25);
+}
+
+/* Track Changes hover states */
+.ProseMirror ins.track-insertion:hover,
+.ProseMirror del.track-deletion:hover {
+  cursor: pointer;
+  filter: brightness(0.95);
+}
+
+/* Track Changes - hidden mode */
+.track-changes-hidden ins.track-insertion {
+  background-color: transparent;
+  border-bottom: none;
+  color: inherit;
+}
+
+.track-changes-hidden del.track-deletion {
+  display: none;
+}

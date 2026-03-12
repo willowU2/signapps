@@ -27,6 +27,7 @@ members = [
     "services/signapps-it-assets",
     "services/signapps-remote",
     "services/signapps-meet",
+    "services/signapps-office",
 ]
 
 [workspace.package]

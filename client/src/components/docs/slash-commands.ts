@@ -1,7 +1,7 @@
 import { Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
 import { ReactRenderer } from '@tiptap/react';
-import tippy, { Instance as TippyInstance } from 'tippy.js';
+import { computePosition, flip, shift, offset } from '@floating-ui/dom';
 import { CommandList } from './command-list';
 
 export interface CommandItem {
@@ -42,7 +42,27 @@ export const getSuggestionOptions = (items: CommandItem[]) => ({
 
     render: () => {
         let component: ReactRenderer;
-        let popup: TippyInstance[];
+        let floatingElement: HTMLDivElement | null = null;
+
+        const updatePosition = (clientRect: (() => DOMRect) | null) => {
+            if (!floatingElement || !clientRect) return;
+
+            const virtualEl = {
+                getBoundingClientRect: clientRect,
+            };
+
+            computePosition(virtualEl, floatingElement, {
+                placement: 'bottom-start',
+                middleware: [offset(6), flip(), shift({ padding: 8 })],
+            }).then(({ x, y }) => {
+                if (floatingElement) {
+                    Object.assign(floatingElement.style, {
+                        left: `${x}px`,
+                        top: `${y}px`,
+                    });
+                }
+            });
+        };
 
         return {
             onStart: (props: any) => {
@@ -55,32 +75,26 @@ export const getSuggestionOptions = (items: CommandItem[]) => ({
                     return;
                 }
 
-                popup = tippy('body', {
-                    getReferenceClientRect: props.clientRect,
-                    appendTo: () => document.body,
-                    content: component.element,
-                    showOnCreate: true,
-                    interactive: true,
-                    trigger: 'manual',
-                    placement: 'bottom-start',
-                });
+                // Create floating element
+                floatingElement = document.createElement('div');
+                floatingElement.style.position = 'absolute';
+                floatingElement.style.zIndex = '9999';
+                floatingElement.appendChild(component.element);
+                document.body.appendChild(floatingElement);
+
+                updatePosition(props.clientRect);
             },
 
             onUpdate(props: any) {
                 component.updateProps(props);
-
-                if (!props.clientRect) {
-                    return;
-                }
-
-                popup[0].setProps({
-                    getReferenceClientRect: props.clientRect,
-                });
+                updatePosition(props.clientRect);
             },
 
             onKeyDown(props: any) {
                 if (props.event.key === 'Escape') {
-                    popup[0].hide();
+                    if (floatingElement) {
+                        floatingElement.style.display = 'none';
+                    }
                     return true;
                 }
 
@@ -88,7 +102,10 @@ export const getSuggestionOptions = (items: CommandItem[]) => ({
             },
 
             onExit() {
-                popup[0].destroy();
+                if (floatingElement) {
+                    floatingElement.remove();
+                    floatingElement = null;
+                }
                 component.destroy();
             },
         };

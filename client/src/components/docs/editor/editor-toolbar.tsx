@@ -43,7 +43,7 @@ import {
     RemoveFormatting,
     MoveVertical
 } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 
 interface EditorToolbarProps {
     editor: Editor | null;
@@ -54,6 +54,42 @@ interface EditorToolbarProps {
     stopAi?: () => void;
 }
 
+// Font families available in the editor
+const FONT_FAMILIES = [
+    { value: 'Arial', label: 'Arial' },
+    { value: 'Times New Roman', label: 'Times New Roman' },
+    { value: 'Georgia', label: 'Georgia' },
+    { value: 'Verdana', label: 'Verdana' },
+    { value: 'Courier New', label: 'Courier New' },
+    { value: 'Trebuchet MS', label: 'Trebuchet MS' },
+    { value: 'Palatino Linotype', label: 'Palatino' },
+];
+
+// Font sizes available in the editor (in pt)
+const FONT_SIZES = ['8', '10', '11', '12', '14', '18', '24', '36', '48', '72'];
+
+// Text colors available in the editor
+const TEXT_COLORS = [
+    { value: '#000000', label: 'Noir' },
+    { value: '#444444', label: 'Gris foncé' },
+    { value: '#EA4335', label: 'Rouge' },
+    { value: '#FF9900', label: 'Orange' },
+    { value: '#FBBC04', label: 'Jaune' },
+    { value: '#34A853', label: 'Vert' },
+    { value: '#4285F4', label: 'Bleu' },
+    { value: '#9334E6', label: 'Violet' },
+];
+
+// Highlight colors available in the editor
+const HIGHLIGHT_COLORS = [
+    { value: '#FFFF00', label: 'Jaune' },
+    { value: '#00FF00', label: 'Vert' },
+    { value: '#00FFFF', label: 'Cyan' },
+    { value: '#FF69B4', label: 'Rose' },
+    { value: '#FFA500', label: 'Orange' },
+    { value: '#E6E6FA', label: 'Lavande' },
+];
+
 export function EditorToolbar({
     editor,
     isStreaming,
@@ -63,6 +99,73 @@ export function EditorToolbar({
     stopAi,
 }: EditorToolbarProps) {
     const [isAiOpen, setIsAiOpen] = useState(false);
+
+    // Get current font family from editor
+    const currentFontFamily = useMemo(() => {
+        if (!editor) return 'Arial';
+        const attrs = editor.getAttributes('textStyle');
+        return attrs.fontFamily || 'Arial';
+    }, [editor?.state.selection]);
+
+    // Get current font size from editor
+    const currentFontSize = useMemo(() => {
+        if (!editor) return '11';
+        const attrs = editor.getAttributes('textStyle');
+        // Extract numeric value from fontSize (e.g., '14pt' -> '14')
+        const size = attrs.fontSize?.replace(/[^\d]/g, '') || '11';
+        return size;
+    }, [editor?.state.selection]);
+
+    // Handle font family change
+    const handleFontFamilyChange = useCallback((fontFamily: string) => {
+        if (!editor) return;
+        editor.chain().focus().setFontFamily(fontFamily).run();
+    }, [editor]);
+
+    // Handle font size change
+    const handleFontSizeChange = useCallback((size: string) => {
+        if (!editor) return;
+        editor.chain().focus().setFontSize(`${size}pt`).run();
+    }, [editor]);
+
+    // Increment/decrement font size
+    const adjustFontSize = useCallback((delta: number) => {
+        if (!editor) return;
+        const currentIndex = FONT_SIZES.indexOf(currentFontSize);
+        const newIndex = Math.max(0, Math.min(FONT_SIZES.length - 1, currentIndex + delta));
+        const newSize = FONT_SIZES[newIndex];
+        editor.chain().focus().setFontSize(`${newSize}pt`).run();
+    }, [editor, currentFontSize]);
+
+    // Get current text color
+    const currentTextColor = useMemo(() => {
+        if (!editor) return '#000000';
+        const color = editor.getAttributes('textStyle').color;
+        return color || '#000000';
+    }, [editor?.state.selection]);
+
+    // Get current highlight color
+    const currentHighlightColor = useMemo(() => {
+        if (!editor) return null;
+        const highlight = editor.getAttributes('highlight').color;
+        return highlight || null;
+    }, [editor?.state.selection]);
+
+    // Handle text color change
+    const handleTextColorChange = useCallback((color: string) => {
+        if (!editor) return;
+        editor.chain().focus().setColor(color).run();
+    }, [editor]);
+
+    // Handle highlight color change
+    const handleHighlightChange = useCallback((color: string | null) => {
+        if (!editor) return;
+        if (color) {
+            editor.chain().focus().toggleHighlight({ color }).run();
+        } else {
+            editor.chain().focus().unsetHighlight().run();
+        }
+    }, [editor]);
 
     if (!editor) return null;
 
@@ -157,27 +260,50 @@ export function EditorToolbar({
 
                 <Separator orientation="vertical" className="h-5 mx-0.5" />
 
-                <Select defaultValue="arial">
-                    <SelectTrigger className="h-7 w-[95px] border-transparent bg-transparent hover:bg-muted focus:ring-0 text-sm font-medium text-[#444746] dark:text-[#e8eaed]">
+                <Select value={currentFontFamily} onValueChange={handleFontFamilyChange}>
+                    <SelectTrigger className="h-7 w-[120px] border-transparent bg-transparent hover:bg-muted focus:ring-0 text-sm font-medium text-[#444746] dark:text-[#e8eaed]">
                         <SelectValue placeholder="Arial" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="arial">Arial</SelectItem>
-                        <SelectItem value="times">Times New Roman</SelectItem>
-                        <SelectItem value="courier">Courier New</SelectItem>
+                        {FONT_FAMILIES.map((font) => (
+                            <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                                {font.label}
+                            </SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
 
                 <Separator orientation="vertical" className="h-5 mx-0.5" />
 
                 <div className="flex items-center -space-x-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-6 rounded-r-none text-[#444746] hover:bg-muted">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-6 rounded-r-none text-[#444746] hover:bg-muted"
+                        onClick={() => adjustFontSize(-1)}
+                        title="Diminuer la taille"
+                    >
                         <Minus className="h-3 w-3" />
                     </Button>
-                    <div className="flex items-center justify-center h-7 w-8 border border-transparent hover:border-border text-xs font-medium cursor-text text-[#444746] dark:text-[#e8eaed]">
-                        11
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-6 rounded-l-none text-[#444746] hover:bg-muted">
+                    <Select value={currentFontSize} onValueChange={handleFontSizeChange}>
+                        <SelectTrigger className="h-7 w-[50px] border-transparent bg-transparent hover:bg-muted focus:ring-0 text-xs font-medium text-[#444746] dark:text-[#e8eaed] rounded-none px-1">
+                            <SelectValue placeholder="11" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {FONT_SIZES.map((size) => (
+                                <SelectItem key={size} value={size}>
+                                    {size}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-6 rounded-l-none text-[#444746] hover:bg-muted"
+                        onClick={() => adjustFontSize(1)}
+                        title="Augmenter la taille"
+                    >
                         <Plus className="h-3 w-3" />
                     </Button>
                 </div>
@@ -214,12 +340,68 @@ export function EditorToolbar({
                 >
                     <UnderlineIcon className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
-                    <Baseline className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
-                    <Highlighter className="h-4 w-4" />
-                </Button>
+                {/* Text Color Picker */}
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]" title="Couleur du texte">
+                            <div className="flex flex-col items-center">
+                                <Baseline className="h-4 w-4" />
+                                <div className="w-4 h-1 mt-0.5 rounded-sm" style={{ backgroundColor: currentTextColor }} />
+                            </div>
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2" align="start">
+                        <div className="grid grid-cols-4 gap-1">
+                            {TEXT_COLORS.map((color) => (
+                                <button
+                                    key={color.value}
+                                    className="w-6 h-6 rounded-sm border border-gray-200 hover:scale-110 transition-transform"
+                                    style={{ backgroundColor: color.value }}
+                                    onClick={() => handleTextColorChange(color.value)}
+                                    title={color.label}
+                                />
+                            ))}
+                        </div>
+                    </PopoverContent>
+                </Popover>
+                {/* Highlight Color Picker */}
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${currentHighlightColor ? 'bg-primary/20' : ''}`}
+                            title="Surlignage"
+                        >
+                            <div className="flex flex-col items-center">
+                                <Highlighter className="h-4 w-4" />
+                                {currentHighlightColor && (
+                                    <div className="w-4 h-1 mt-0.5 rounded-sm" style={{ backgroundColor: currentHighlightColor }} />
+                                )}
+                            </div>
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2" align="start">
+                        <div className="grid grid-cols-3 gap-1">
+                            {HIGHLIGHT_COLORS.map((color) => (
+                                <button
+                                    key={color.value}
+                                    className={`w-6 h-6 rounded-sm border hover:scale-110 transition-transform ${currentHighlightColor === color.value ? 'ring-2 ring-primary' : 'border-gray-200'}`}
+                                    style={{ backgroundColor: color.value }}
+                                    onClick={() => handleHighlightChange(color.value)}
+                                    title={color.label}
+                                />
+                            ))}
+                            <button
+                                className="w-6 h-6 rounded-sm border border-gray-200 hover:scale-110 transition-transform flex items-center justify-center text-xs"
+                                onClick={() => handleHighlightChange(null)}
+                                title="Supprimer le surlignage"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </PopoverContent>
+                </Popover>
             </div>
 
             <Separator orientation="vertical" className="h-5 mx-1" />
