@@ -14,8 +14,19 @@ use axum::{
     response::Response,
 };
 
+use uuid::Uuid;
+
 use crate::auth::JwtConfig;
 use crate::{Claims, Error};
+
+/// Tenant context for multi-tenant isolation.
+#[derive(Debug, Clone)]
+pub struct TenantContext {
+    /// The tenant ID for the current request.
+    pub tenant_id: Uuid,
+    /// Workspace IDs the user has access to (if any).
+    pub workspace_ids: Vec<Uuid>,
+}
 
 /// Trait for application state that supports authentication.
 ///
@@ -123,6 +134,81 @@ pub async fn require_user(request: Request, next: Next) -> Result<Response, Erro
     Ok(next.run(request).await)
 }
 
+/// Extract tenant context from authenticated request.
+///
+/// This middleware should be applied AFTER `auth_middleware`.
+/// It extracts the tenant_id from the JWT claims and injects a `TenantContext`
+/// into the request extensions for use by handlers and repositories.
+///
+/// Returns Forbidden if the user doesn't have a tenant_id (not yet assigned to a tenant).
+pub async fn tenant_context_middleware(request: Request, next: Next) -> Result<Response, Error> {
+    let claims = request
+        .extensions()
+        .get::<Claims>()
+        .ok_or(Error::Unauthorized)?;
+
+    let tenant_id = claims
+        .tenant_id
+        .ok_or_else(|| Error::Forbidden("User not assigned to any tenant".to_string()))?;
+
+    let workspace_ids = claims.workspace_ids.clone().unwrap_or_default();
+
+    let context = TenantContext {
+        tenant_id,
+        workspace_ids,
+    };
+
+    let mut request = request;
+    request.extensions_mut().insert(context);
+
+    Ok(next.run(request).await)
+}
+
+/// Optional tenant context middleware.
+///
+/// If claims contain a tenant_id, injects `TenantContext` into request extensions.
+/// If not, continues without tenant context (for super-admin or system endpoints).
+pub async fn optional_tenant_context_middleware(request: Request, next: Next) -> Response {
+    let context = request.extensions().get::<Claims>().and_then(|claims| {
+        claims.tenant_id.map(|tenant_id| TenantContext {
+            tenant_id,
+            workspace_ids: claims.workspace_ids.clone().unwrap_or_default(),
+        })
+    });
+
+    let mut request = request;
+    if let Some(ctx) = context {
+        request.extensions_mut().insert(ctx);
+    }
+
+    next.run(request).await
+}
+
+/// Require access to a specific workspace.
+///
+/// Checks if the user has access to the workspace_id provided in the path.
+/// This middleware should be used for workspace-specific endpoints.
+pub async fn require_workspace_access(request: Request, next: Next) -> Result<Response, Error> {
+    let context = request
+        .extensions()
+        .get::<TenantContext>()
+        .ok_or_else(|| Error::Forbidden("Tenant context required".to_string()))?;
+
+    // Extract workspace_id from path if present
+    // This is a simplified version - actual implementation would need to
+    // extract from path params based on route definition
+    let workspace_id = request.extensions().get::<Uuid>().copied();
+
+    if let Some(ws_id) = workspace_id {
+        // Check if user has access to this workspace
+        if !context.workspace_ids.contains(&ws_id) {
+            return Err(Error::Forbidden("No access to this workspace".to_string()));
+        }
+    }
+
+    Ok(next.run(request).await)
+}
+
 /// Log request details with tracing.
 pub async fn logging_middleware(request: Request, next: Next) -> Response {
     use tracing::Instrument;
@@ -221,6 +307,18 @@ pub trait RequestClaimsExt {
 
     /// Get claims or return Unauthorized error.
     fn claims_required(&self) -> Result<&Claims, Error>;
+
+    /// Get tenant context from request extensions.
+    fn tenant_context(&self) -> Option<&TenantContext>;
+
+    /// Get tenant context or return Forbidden error.
+    fn tenant_context_required(&self) -> Result<&TenantContext, Error>;
+
+    /// Get tenant ID from claims or context.
+    fn tenant_id(&self) -> Option<Uuid>;
+
+    /// Get tenant ID or return Forbidden error.
+    fn tenant_id_required(&self) -> Result<Uuid, Error>;
 }
 
 impl RequestClaimsExt for Request<Body> {
@@ -230,6 +328,26 @@ impl RequestClaimsExt for Request<Body> {
 
     fn claims_required(&self) -> Result<&Claims, Error> {
         self.claims().ok_or(Error::Unauthorized)
+    }
+
+    fn tenant_context(&self) -> Option<&TenantContext> {
+        self.extensions().get::<TenantContext>()
+    }
+
+    fn tenant_context_required(&self) -> Result<&TenantContext, Error> {
+        self.tenant_context()
+            .ok_or_else(|| Error::Forbidden("Tenant context required".to_string()))
+    }
+
+    fn tenant_id(&self) -> Option<Uuid> {
+        self.tenant_context()
+            .map(|ctx| ctx.tenant_id)
+            .or_else(|| self.claims().and_then(|c| c.tenant_id))
+    }
+
+    fn tenant_id_required(&self) -> Result<Uuid, Error> {
+        self.tenant_id()
+            .ok_or_else(|| Error::Forbidden("Tenant ID required".to_string()))
     }
 }
 

@@ -34,7 +34,7 @@ pub mod types;
 pub use auth::{Claims, JwtConfig, TokenPair};
 pub use config::AppConfig;
 pub use error::{Error, ProblemDetails, Result};
-pub use middleware::{AuthState, RequestClaimsExt};
+pub use middleware::{AuthState, RequestClaimsExt, TenantContext};
 pub use types::{Email, Password, PasswordHash, UserId, Username};
 
 /// Crate version from Cargo.toml

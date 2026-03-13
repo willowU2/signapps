@@ -46,3 +46,10 @@ pub use storage_tier2_repository::StorageTier2Repository;
 
 pub mod storage_tier3_repository;
 pub use storage_tier3_repository::StorageTier3Repository;
+
+pub mod tenant_repository;
+pub use tenant_repository::{
+    LabelRepository, ProjectRepository, ReservationRepository, ResourceTypeRepository,
+    TemplateRepository, TenantCalendarRepository, TenantRepository, TenantResourceRepository,
+    TenantTaskRepository, WorkspaceRepository,
+};

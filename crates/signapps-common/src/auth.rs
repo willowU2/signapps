@@ -12,12 +12,32 @@ pub struct Claims {
     pub username: String,
     /// User role
     pub role: i16,
+    /// Tenant ID for multi-tenant isolation (optional for backwards compatibility)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tenant_id: Option<Uuid>,
+    /// Workspace IDs the user has access to (optional)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub workspace_ids: Option<Vec<Uuid>>,
     /// Expiration timestamp (Unix time)
     pub exp: i64,
     /// Issued at timestamp (Unix time)
     pub iat: i64,
     /// Token type ("access" or "refresh")
     pub token_type: String,
+}
+
+impl Claims {
+    /// Get the tenant ID, returning None if not set.
+    pub fn tenant_id(&self) -> Option<Uuid> {
+        self.tenant_id
+    }
+
+    /// Check if the user has access to a specific workspace.
+    pub fn has_workspace_access(&self, workspace_id: Uuid) -> bool {
+        self.workspace_ids
+            .as_ref()
+            .is_some_and(|ids| ids.contains(&workspace_id))
+    }
 }
 
 /// JWT configuration for token generation and validation.

@@ -38,7 +38,9 @@ import {
   MonitorSmartphone,
   FolderOpen,
   Sun,
-  Moon
+  Moon,
+  DoorOpen,
+  Building2
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
@@ -60,6 +62,7 @@ const navGroups = [
       { href: '/mail', icon: Mail, label: 'Mail' },
       { href: '/calendar', icon: Calendar, label: 'Calendar' },
       { href: '/tasks', icon: CheckSquare, label: 'Tasks' },
+      { href: '/resources', icon: DoorOpen, label: 'Resources' },
     ]
   },
   {
@@ -107,6 +110,8 @@ const navGroups = [
     items: [
       { href: '/admin', icon: ShieldCheck, label: 'Admin' },
       { href: '/admin/users', icon: Users, label: 'Users' },
+      { href: '/admin/workspaces', icon: Building2, label: 'Workspaces' },
+      { href: '/admin/resources', icon: DoorOpen, label: 'Resources' },
       { href: '/admin/storage', icon: HardDrive, label: 'Storage Config' },
       { href: '/settings', icon: Settings, label: 'Settings' },
     ]

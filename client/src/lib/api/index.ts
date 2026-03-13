@@ -18,3 +18,5 @@ export * from './remote';
 export * from './pxe';
 export * from './it-assets';
 export * from './keep';
+export * from './tenant';
+export * from './resources';

@@ -13,7 +13,8 @@ use axum::{
     Router,
 };
 use signapps_common::middleware::{
-    auth_middleware, logging_middleware, request_id_middleware, require_admin, AuthState,
+    auth_middleware, logging_middleware, request_id_middleware, require_admin,
+    tenant_context_middleware, AuthState,
 };
 use signapps_common::JwtConfig;
 use signapps_db::{create_pool, run_migrations, DatabasePool};
@@ -142,8 +143,52 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // Tenant-scoped routes (auth + tenant context required)
+    let tenant_routes = Router::new()
+        // Tenant info
+        .route("/api/v1/tenant", get(handlers::tenants::get_my_tenant))
+        // Workspaces
+        .route("/api/v1/workspaces", get(handlers::tenants::list_workspaces))
+        .route("/api/v1/workspaces", post(handlers::tenants::create_workspace))
+        .route("/api/v1/workspaces/mine", get(handlers::tenants::list_my_workspaces))
+        .route("/api/v1/workspaces/:id", get(handlers::tenants::get_workspace))
+        .route("/api/v1/workspaces/:id", put(handlers::tenants::update_workspace))
+        .route("/api/v1/workspaces/:id", delete(handlers::tenants::delete_workspace))
+        .route("/api/v1/workspaces/:id/members", get(handlers::tenants::list_workspace_members))
+        .route("/api/v1/workspaces/:id/members", post(handlers::tenants::add_workspace_member))
+        .route("/api/v1/workspaces/:id/members/:uid", put(handlers::tenants::update_workspace_member_role))
+        .route("/api/v1/workspaces/:id/members/:uid", delete(handlers::tenants::remove_workspace_member))
+        // Resource types
+        .route("/api/v1/resource-types", get(handlers::resources::list_resource_types))
+        .route("/api/v1/resource-types", post(handlers::resources::create_resource_type))
+        .route("/api/v1/resource-types/:id", delete(handlers::resources::delete_resource_type))
+        // Resources (rooms, equipment, etc.)
+        .route("/api/v1/resources", get(handlers::resources::list_resources))
+        .route("/api/v1/resources", post(handlers::resources::create_resource))
+        .route("/api/v1/resources/:id", get(handlers::resources::get_resource))
+        .route("/api/v1/resources/:id", put(handlers::resources::update_resource))
+        .route("/api/v1/resources/:id", delete(handlers::resources::delete_resource))
+        // Reservations
+        .route("/api/v1/reservations", get(handlers::resources::list_reservations))
+        .route("/api/v1/reservations", post(handlers::resources::create_reservation))
+        .route("/api/v1/reservations/mine", get(handlers::resources::list_my_reservations))
+        .route("/api/v1/reservations/pending", get(handlers::resources::list_pending_reservations))
+        .route("/api/v1/reservations/:id", get(handlers::resources::get_reservation))
+        .route("/api/v1/reservations/:id/status", put(handlers::resources::update_reservation_status))
+        .layer(middleware::from_fn(tenant_context_middleware))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
     // Admin routes (auth + admin role required)
     let admin_routes = Router::new()
+        // Tenant management (super-admin)
+        .route("/api/v1/tenants", get(handlers::tenants::list_tenants))
+        .route("/api/v1/tenants", post(handlers::tenants::create_tenant))
+        .route("/api/v1/tenants/:id", get(handlers::tenants::get_tenant))
+        .route("/api/v1/tenants/:id", put(handlers::tenants::update_tenant))
+        .route("/api/v1/tenants/:id", delete(handlers::tenants::delete_tenant))
         // User management
         .route("/api/v1/users", get(handlers::users::list))
         .route("/api/v1/users", post(handlers::users::create))
@@ -202,6 +247,7 @@ fn create_router(state: AppState) -> Router {
     Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .merge(tenant_routes)
         .merge(admin_routes)
         .layer(middleware::from_fn(logging_middleware))
         .layer(middleware::from_fn(request_id_middleware))
