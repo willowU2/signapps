@@ -50,7 +50,10 @@ async fn main() -> anyhow::Result<()> {
     // Load configuration
     dotenvy::dotenv().ok();
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+        tracing::warn!("JWT_SECRET not set, using insecure default");
+        "dev_secret_change_in_production_32chars".to_string()
+    });
 
     // Create database pool
     let pool = create_pool(&database_url).await?;
@@ -120,7 +123,7 @@ async fn main() -> anyhow::Result<()> {
     // Start server
     let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
     let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3000".to_string())
+        .unwrap_or_else(|_| "3002".to_string())
         .parse()
         .expect("Invalid SERVER_PORT");
 

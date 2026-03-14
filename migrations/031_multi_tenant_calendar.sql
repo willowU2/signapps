@@ -8,7 +8,7 @@
 -- ============================================================================
 
 -- Tenants table (each enterprise/organization is a tenant)
-CREATE TABLE identity.tenants (
+CREATE TABLE IF NOT EXISTS identity.tenants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(100) UNIQUE NOT NULL,  -- URL-friendly identifier
@@ -24,30 +24,48 @@ CREATE TABLE identity.tenants (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_tenants_slug ON identity.tenants(slug);
-CREATE INDEX idx_tenants_domain ON identity.tenants(domain) WHERE domain IS NOT NULL;
-CREATE INDEX idx_tenants_is_active ON identity.tenants(is_active);
+CREATE INDEX IF NOT EXISTS idx_tenants_slug ON identity.tenants(slug);
+CREATE INDEX IF NOT EXISTS idx_tenants_domain ON identity.tenants(domain) WHERE domain IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tenants_is_active ON identity.tenants(is_active);
 
--- Add tenant_id to users
-ALTER TABLE identity.users
-    ADD COLUMN tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE,
-    ADD COLUMN department VARCHAR(100),
-    ADD COLUMN job_title VARCHAR(100),
-    ADD COLUMN phone VARCHAR(50),
-    ADD COLUMN timezone VARCHAR(50) DEFAULT 'Europe/Paris',
-    ADD COLUMN locale VARCHAR(10) DEFAULT 'fr',
-    ADD COLUMN avatar_url TEXT,
-    ADD COLUMN user_settings JSONB DEFAULT '{}';
+-- Add tenant_id to users (using IF NOT EXISTS for idempotency)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'identity' AND table_name = 'users' AND column_name = 'tenant_id') THEN
+        ALTER TABLE identity.users ADD COLUMN tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'identity' AND table_name = 'users' AND column_name = 'department') THEN
+        ALTER TABLE identity.users ADD COLUMN department VARCHAR(100);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'identity' AND table_name = 'users' AND column_name = 'job_title') THEN
+        ALTER TABLE identity.users ADD COLUMN job_title VARCHAR(100);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'identity' AND table_name = 'users' AND column_name = 'phone') THEN
+        ALTER TABLE identity.users ADD COLUMN phone VARCHAR(50);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'identity' AND table_name = 'users' AND column_name = 'timezone') THEN
+        ALTER TABLE identity.users ADD COLUMN timezone VARCHAR(50) DEFAULT 'Europe/Paris';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'identity' AND table_name = 'users' AND column_name = 'locale') THEN
+        ALTER TABLE identity.users ADD COLUMN locale VARCHAR(10) DEFAULT 'fr';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'identity' AND table_name = 'users' AND column_name = 'avatar_url') THEN
+        ALTER TABLE identity.users ADD COLUMN avatar_url TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'identity' AND table_name = 'users' AND column_name = 'user_settings') THEN
+        ALTER TABLE identity.users ADD COLUMN user_settings JSONB DEFAULT '{}';
+    END IF;
+END $$;
 
-CREATE INDEX idx_users_tenant_id ON identity.users(tenant_id);
-CREATE INDEX idx_users_tenant_email ON identity.users(tenant_id, email);
+CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON identity.users(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_users_tenant_email ON identity.users(tenant_id, email);
 
 -- ============================================================================
 -- PHASE 2: WORKSPACES (Groups within a tenant)
 -- ============================================================================
 
 -- Workspaces table (groups/teams within a tenant)
-CREATE TABLE identity.workspaces (
+CREATE TABLE IF NOT EXISTS identity.workspaces (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
@@ -61,11 +79,11 @@ CREATE TABLE identity.workspaces (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_workspaces_tenant_id ON identity.workspaces(tenant_id);
-CREATE INDEX idx_workspaces_is_default ON identity.workspaces(tenant_id, is_default);
+CREATE INDEX IF NOT EXISTS idx_workspaces_tenant_id ON identity.workspaces(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_workspaces_is_default ON identity.workspaces(tenant_id, is_default);
 
 -- Workspace members (users can belong to multiple workspaces)
-CREATE TABLE identity.workspace_members (
+CREATE TABLE IF NOT EXISTS identity.workspace_members (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workspace_id UUID NOT NULL REFERENCES identity.workspaces(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
@@ -74,8 +92,8 @@ CREATE TABLE identity.workspace_members (
     UNIQUE(workspace_id, user_id)
 );
 
-CREATE INDEX idx_workspace_members_workspace ON identity.workspace_members(workspace_id);
-CREATE INDEX idx_workspace_members_user ON identity.workspace_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_members_workspace ON identity.workspace_members(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_members_user ON identity.workspace_members(user_id);
 
 -- ============================================================================
 -- PHASE 3: ENHANCED CALENDAR SCHEMA (Multi-tenant)
@@ -94,31 +112,47 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- Add tenant_id and new columns to calendars
-ALTER TABLE calendar.calendars
-    ADD COLUMN tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE,
-    ADD COLUMN workspace_id UUID REFERENCES identity.workspaces(id) ON DELETE SET NULL,
-    ADD COLUMN calendar_type VARCHAR(30) DEFAULT 'personal',
-    ADD COLUMN resource_id UUID,  -- Will reference calendar.resources after update
-    ADD COLUMN is_default BOOLEAN DEFAULT FALSE;
+-- Add tenant_id and new columns to calendars (using IF NOT EXISTS for idempotency)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'calendars' AND column_name = 'tenant_id') THEN
+        ALTER TABLE calendar.calendars ADD COLUMN tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'calendars' AND column_name = 'workspace_id') THEN
+        ALTER TABLE calendar.calendars ADD COLUMN workspace_id UUID REFERENCES identity.workspaces(id) ON DELETE SET NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'calendars' AND column_name = 'calendar_type') THEN
+        ALTER TABLE calendar.calendars ADD COLUMN calendar_type VARCHAR(30) DEFAULT 'personal';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'calendars' AND column_name = 'resource_id') THEN
+        ALTER TABLE calendar.calendars ADD COLUMN resource_id UUID;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'calendars' AND column_name = 'is_default') THEN
+        ALTER TABLE calendar.calendars ADD COLUMN is_default BOOLEAN DEFAULT FALSE;
+    END IF;
+END $$;
 
-CREATE INDEX idx_calendars_tenant_id ON calendar.calendars(tenant_id);
-CREATE INDEX idx_calendars_workspace_id ON calendar.calendars(workspace_id);
-CREATE INDEX idx_calendars_calendar_type ON calendar.calendars(calendar_type);
+CREATE INDEX IF NOT EXISTS idx_calendars_tenant_id ON calendar.calendars(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_calendars_workspace_id ON calendar.calendars(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_calendars_calendar_type ON calendar.calendars(calendar_type);
 
 -- Add tenant_id to events (denormalized for efficient queries)
-ALTER TABLE calendar.events
-    ADD COLUMN tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'events' AND column_name = 'tenant_id') THEN
+        ALTER TABLE calendar.events ADD COLUMN tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
-CREATE INDEX idx_events_tenant_id ON calendar.events(tenant_id);
-CREATE INDEX idx_events_tenant_calendar_date ON calendar.events(tenant_id, calendar_id, start_time, end_time);
+CREATE INDEX IF NOT EXISTS idx_events_tenant_id ON calendar.events(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_events_tenant_calendar_date ON calendar.events(tenant_id, calendar_id, start_time, end_time);
 
 -- ============================================================================
 -- PHASE 4: ENHANCED RESOURCES (Rooms, Equipment with tenant isolation)
 -- ============================================================================
 
 -- Resource types (configurable per tenant)
-CREATE TABLE calendar.resource_types (
+CREATE TABLE IF NOT EXISTS calendar.resource_types (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,  -- 'room', 'equipment', 'vehicle', 'desk'
@@ -129,33 +163,60 @@ CREATE TABLE calendar.resource_types (
     UNIQUE(tenant_id, name)
 );
 
-CREATE INDEX idx_resource_types_tenant ON calendar.resource_types(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_resource_types_tenant ON calendar.resource_types(tenant_id);
 
--- Add tenant_id and enhance resources table
-ALTER TABLE calendar.resources
-    ADD COLUMN tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE,
-    ADD COLUMN resource_type_id UUID REFERENCES calendar.resource_types(id),
-    ADD COLUMN floor VARCHAR(50),
-    ADD COLUMN building VARCHAR(100),
-    ADD COLUMN amenities TEXT[],  -- ['projector', 'whiteboard', 'video_conference']
-    ADD COLUMN photo_urls TEXT[],
-    ADD COLUMN calendar_id UUID REFERENCES calendar.calendars(id),
-    ADD COLUMN availability_rules JSONB DEFAULT '{}',
-    ADD COLUMN booking_rules JSONB DEFAULT '{}',  -- min/max duration, advance notice
-    ADD COLUMN requires_approval BOOLEAN DEFAULT FALSE,
-    ADD COLUMN approver_ids UUID[];
+-- Add tenant_id and enhance resources table (using IF NOT EXISTS for idempotency)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'tenant_id') THEN
+        ALTER TABLE calendar.resources ADD COLUMN tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'resource_type_id') THEN
+        ALTER TABLE calendar.resources ADD COLUMN resource_type_id UUID REFERENCES calendar.resource_types(id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'floor') THEN
+        ALTER TABLE calendar.resources ADD COLUMN floor VARCHAR(50);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'building') THEN
+        ALTER TABLE calendar.resources ADD COLUMN building VARCHAR(100);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'amenities') THEN
+        ALTER TABLE calendar.resources ADD COLUMN amenities TEXT[];
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'photo_urls') THEN
+        ALTER TABLE calendar.resources ADD COLUMN photo_urls TEXT[];
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'calendar_id') THEN
+        ALTER TABLE calendar.resources ADD COLUMN calendar_id UUID REFERENCES calendar.calendars(id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'availability_rules') THEN
+        ALTER TABLE calendar.resources ADD COLUMN availability_rules JSONB DEFAULT '{}';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'booking_rules') THEN
+        ALTER TABLE calendar.resources ADD COLUMN booking_rules JSONB DEFAULT '{}';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'requires_approval') THEN
+        ALTER TABLE calendar.resources ADD COLUMN requires_approval BOOLEAN DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'resources' AND column_name = 'approver_ids') THEN
+        ALTER TABLE calendar.resources ADD COLUMN approver_ids UUID[];
+    END IF;
+END $$;
 
-CREATE INDEX idx_resources_tenant_id ON calendar.resources(tenant_id);
-CREATE INDEX idx_resources_resource_type_id ON calendar.resources(resource_type_id);
-CREATE INDEX idx_resources_tenant_type ON calendar.resources(tenant_id, resource_type);
+CREATE INDEX IF NOT EXISTS idx_resources_tenant_id ON calendar.resources(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_resources_resource_type_id ON calendar.resources(resource_type_id);
+CREATE INDEX IF NOT EXISTS idx_resources_tenant_type ON calendar.resources(tenant_id, resource_type);
 
 -- Now add foreign key for calendar.calendars.resource_id
-ALTER TABLE calendar.calendars
-    ADD CONSTRAINT fk_calendars_resource
-    FOREIGN KEY (resource_id) REFERENCES calendar.resources(id) ON DELETE SET NULL;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_calendars_resource') THEN
+        ALTER TABLE calendar.calendars ADD CONSTRAINT fk_calendars_resource FOREIGN KEY (resource_id) REFERENCES calendar.resources(id) ON DELETE SET NULL;
+    END IF;
+END $$;
 
 -- Reservations (booking system with approval workflow)
-CREATE TABLE calendar.reservations (
+CREATE TABLE IF NOT EXISTS calendar.reservations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     resource_id UUID NOT NULL REFERENCES calendar.resources(id) ON DELETE CASCADE,
@@ -170,10 +231,10 @@ CREATE TABLE calendar.reservations (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_reservations_tenant ON calendar.reservations(tenant_id);
-CREATE INDEX idx_reservations_resource ON calendar.reservations(tenant_id, resource_id);
-CREATE INDEX idx_reservations_status ON calendar.reservations(tenant_id, status);
-CREATE INDEX idx_reservations_requested_by ON calendar.reservations(requested_by);
+CREATE INDEX IF NOT EXISTS idx_reservations_tenant ON calendar.reservations(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_reservations_resource ON calendar.reservations(tenant_id, resource_id);
+CREATE INDEX IF NOT EXISTS idx_reservations_status ON calendar.reservations(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_reservations_requested_by ON calendar.reservations(requested_by);
 
 -- ============================================================================
 -- PHASE 5: PROJECTS
@@ -193,7 +254,7 @@ EXCEPTION
 END $$;
 
 -- Projects table
-CREATE TABLE calendar.projects (
+CREATE TABLE IF NOT EXISTS calendar.projects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     workspace_id UUID REFERENCES identity.workspaces(id) ON DELETE SET NULL,
@@ -213,14 +274,14 @@ CREATE TABLE calendar.projects (
     deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_projects_tenant ON calendar.projects(tenant_id);
-CREATE INDEX idx_projects_workspace ON calendar.projects(tenant_id, workspace_id);
-CREATE INDEX idx_projects_status ON calendar.projects(tenant_id, status);
-CREATE INDEX idx_projects_owner ON calendar.projects(owner_id);
-CREATE INDEX idx_projects_deleted ON calendar.projects(tenant_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_projects_tenant ON calendar.projects(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_projects_workspace ON calendar.projects(tenant_id, workspace_id);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON calendar.projects(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_projects_owner ON calendar.projects(owner_id);
+CREATE INDEX IF NOT EXISTS idx_projects_deleted ON calendar.projects(tenant_id) WHERE deleted_at IS NULL;
 
 -- Project members
-CREATE TABLE calendar.project_members (
+CREATE TABLE IF NOT EXISTS calendar.project_members (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     project_id UUID NOT NULL REFERENCES calendar.projects(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
@@ -229,8 +290,8 @@ CREATE TABLE calendar.project_members (
     UNIQUE(project_id, user_id)
 );
 
-CREATE INDEX idx_project_members_project ON calendar.project_members(project_id);
-CREATE INDEX idx_project_members_user ON calendar.project_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_project_members_project ON calendar.project_members(project_id);
+CREATE INDEX IF NOT EXISTS idx_project_members_user ON calendar.project_members(user_id);
 
 -- ============================================================================
 -- PHASE 6: ENHANCED TASKS (with project support)
@@ -261,21 +322,35 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- Add tenant_id, project_id and enhance tasks table
-ALTER TABLE calendar.tasks
-    ADD COLUMN tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE,
-    ADD COLUMN project_id UUID REFERENCES calendar.projects(id) ON DELETE CASCADE,
-    ADD COLUMN event_id UUID REFERENCES calendar.events(id) ON DELETE SET NULL,
-    ADD COLUMN position INTEGER DEFAULT 0,
-    ADD COLUMN estimated_hours DECIMAL(5,2),
-    ADD COLUMN template_id UUID;
+-- Add tenant_id, project_id and enhance tasks table (using IF NOT EXISTS for idempotency)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'tasks' AND column_name = 'tenant_id') THEN
+        ALTER TABLE calendar.tasks ADD COLUMN tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'tasks' AND column_name = 'project_id') THEN
+        ALTER TABLE calendar.tasks ADD COLUMN project_id UUID REFERENCES calendar.projects(id) ON DELETE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'tasks' AND column_name = 'event_id') THEN
+        ALTER TABLE calendar.tasks ADD COLUMN event_id UUID REFERENCES calendar.events(id) ON DELETE SET NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'tasks' AND column_name = 'position') THEN
+        ALTER TABLE calendar.tasks ADD COLUMN position INTEGER DEFAULT 0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'tasks' AND column_name = 'estimated_hours') THEN
+        ALTER TABLE calendar.tasks ADD COLUMN estimated_hours DECIMAL(5,2);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'calendar' AND table_name = 'tasks' AND column_name = 'template_id') THEN
+        ALTER TABLE calendar.tasks ADD COLUMN template_id UUID;
+    END IF;
+END $$;
 
 -- Update indexes for tasks
-CREATE INDEX idx_tasks_tenant_id ON calendar.tasks(tenant_id);
-CREATE INDEX idx_tasks_tenant_project ON calendar.tasks(tenant_id, project_id);
-CREATE INDEX idx_tasks_tenant_calendar ON calendar.tasks(tenant_id, calendar_id);
-CREATE INDEX idx_tasks_position ON calendar.tasks(project_id, position);
-CREATE INDEX idx_tasks_event ON calendar.tasks(event_id) WHERE event_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tasks_tenant_id ON calendar.tasks(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_tenant_project ON calendar.tasks(tenant_id, project_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_tenant_calendar ON calendar.tasks(tenant_id, calendar_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_position ON calendar.tasks(project_id, position);
+CREATE INDEX IF NOT EXISTS idx_tasks_event ON calendar.tasks(event_id) WHERE event_id IS NOT NULL;
 
 -- ============================================================================
 -- PHASE 7: TEMPLATES
@@ -294,7 +369,7 @@ EXCEPTION
 END $$;
 
 -- Templates table
-CREATE TABLE calendar.templates (
+CREATE TABLE IF NOT EXISTS calendar.templates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID REFERENCES identity.tenants(id) ON DELETE CASCADE,  -- NULL = global template
     workspace_id UUID REFERENCES identity.workspaces(id) ON DELETE SET NULL,
@@ -312,26 +387,28 @@ CREATE TABLE calendar.templates (
     deleted_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_templates_tenant ON calendar.templates(tenant_id);
-CREATE INDEX idx_templates_type ON calendar.templates(tenant_id, template_type);
-CREATE INDEX idx_templates_public ON calendar.templates(is_public) WHERE is_public = TRUE;
-CREATE INDEX idx_templates_deleted ON calendar.templates(tenant_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_templates_tenant ON calendar.templates(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_templates_type ON calendar.templates(tenant_id, template_type);
+CREATE INDEX IF NOT EXISTS idx_templates_public ON calendar.templates(is_public) WHERE is_public = TRUE;
+CREATE INDEX IF NOT EXISTS idx_templates_deleted ON calendar.templates(tenant_id) WHERE deleted_at IS NULL;
 
 -- Add foreign keys for template references
-ALTER TABLE calendar.projects
-    ADD CONSTRAINT fk_projects_template
-    FOREIGN KEY (template_id) REFERENCES calendar.templates(id) ON DELETE SET NULL;
-
-ALTER TABLE calendar.tasks
-    ADD CONSTRAINT fk_tasks_template
-    FOREIGN KEY (template_id) REFERENCES calendar.templates(id) ON DELETE SET NULL;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_projects_template') THEN
+        ALTER TABLE calendar.projects ADD CONSTRAINT fk_projects_template FOREIGN KEY (template_id) REFERENCES calendar.templates(id) ON DELETE SET NULL;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'fk_tasks_template') THEN
+        ALTER TABLE calendar.tasks ADD CONSTRAINT fk_tasks_template FOREIGN KEY (template_id) REFERENCES calendar.templates(id) ON DELETE SET NULL;
+    END IF;
+END $$;
 
 -- ============================================================================
 -- PHASE 8: LABELS (for categorization)
 -- ============================================================================
 
 -- Labels table
-CREATE TABLE calendar.labels (
+CREATE TABLE IF NOT EXISTS calendar.labels (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES identity.tenants(id) ON DELETE CASCADE,
     workspace_id UUID REFERENCES identity.workspaces(id) ON DELETE SET NULL,
@@ -341,11 +418,11 @@ CREATE TABLE calendar.labels (
     UNIQUE(tenant_id, workspace_id, name)
 );
 
-CREATE INDEX idx_labels_tenant ON calendar.labels(tenant_id);
-CREATE INDEX idx_labels_workspace ON calendar.labels(tenant_id, workspace_id);
+CREATE INDEX IF NOT EXISTS idx_labels_tenant ON calendar.labels(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_labels_workspace ON calendar.labels(tenant_id, workspace_id);
 
 -- Entity labels (polymorphic junction table)
-CREATE TABLE calendar.entity_labels (
+CREATE TABLE IF NOT EXISTS calendar.entity_labels (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     label_id UUID NOT NULL REFERENCES calendar.labels(id) ON DELETE CASCADE,
     entity_type VARCHAR(50) NOT NULL,  -- 'event', 'task', 'project'
@@ -354,8 +431,8 @@ CREATE TABLE calendar.entity_labels (
     UNIQUE(label_id, entity_type, entity_id)
 );
 
-CREATE INDEX idx_entity_labels_label ON calendar.entity_labels(label_id);
-CREATE INDEX idx_entity_labels_entity ON calendar.entity_labels(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_labels_label ON calendar.entity_labels(label_id);
+CREATE INDEX IF NOT EXISTS idx_entity_labels_entity ON calendar.entity_labels(entity_type, entity_id);
 
 -- ============================================================================
 -- PHASE 9: ROW LEVEL SECURITY
