@@ -11,6 +11,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { RightSidebar } from '@/components/layout/right-sidebar';
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { GlobalModals } from '@/components/global-modals';
 
 function LoadingFallback() {
   return (
@@ -53,6 +54,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <CommandBar />
           <Sidebar />
           <RightSidebar />
+          <GlobalModals />
           <Toaster />
           <NotificationPermissionDialog />
         </TooltipProvider>

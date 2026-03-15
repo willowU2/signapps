@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
 import {
   Table,
   TableBody,
@@ -102,7 +103,7 @@ export default function BackupsPage() {
       <AppLayout>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold">Backups</h1>
-          <Skeleton className="h-64" />
+          <DataTableSkeleton count={4} />
         </div>
       </AppLayout>
     );

@@ -9,6 +9,7 @@ import { TasksHeader } from "@/components/tasks/tasks-header";
 import { ExportDialog } from "@/components/calendar/ExportDialog";
 import { ImportDialog } from "@/components/calendar/ImportDialog";
 import { calendarApi } from "@/lib/api";
+import { useEntityStore } from "@/stores/entity-hub-store";
 import { AppLayout } from "@/components/layout/app-layout";
 import {
   DropdownMenu,
@@ -27,6 +28,14 @@ export default function TasksPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [parentTaskId, setParentTaskId] = useState<string | undefined>();
   const [treeKey, setTreeKey] = useState(0);
+
+  // Unified Entity Hub sync
+  const { fetchTasks, fetchProjects } = useEntityStore();
+
+  useEffect(() => {
+    fetchTasks();
+    fetchProjects();
+  }, [fetchTasks, fetchProjects]);
 
   // Load calendars on mount
   useEffect(() => {
@@ -67,8 +76,8 @@ export default function TasksPage() {
 
   return (
     <AppLayout>
-      <div className="flex h-[calc(100vh-8rem)] w-full bg-background">
-        <div className="w-full bg-background border rounded-[24px] shadow-sm flex flex-col overflow-hidden relative">
+      <div className="flex h-[calc(100vh-8rem)] w-full bg-background p-4 pl-0">
+        <div className="w-full glass-panel border border-border/50 rounded-2xl shadow-premium flex flex-col overflow-hidden relative">
           
           <TasksHeader 
             calendars={calendars}

@@ -49,6 +49,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
 import { GenericFeatureModal } from '@/components/editor/generic-feature-modal';
 import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu';
+import { Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup } from '@/components/editor/toolbar';
 import {
     Sparkles,
     Wand2,
@@ -558,8 +559,8 @@ const Editor = ({
             }),
             // Sprint 1: Foundation Polish
             Typography.configure({
-                emDash: true,        // -- → —
-                ellipsis: true,      // ... → …
+                emDash: '—',        // -- → —
+                ellipsis: '…',      // ... → …
                 openDoubleQuote: '«', // French quotes
                 closeDoubleQuote: '»',
                 openSingleQuote: '\u2018', // '
@@ -1833,31 +1834,6 @@ const Editor = ({
         return <div className="flex items-center justify-center p-8 text-gray-500">Initializing editor...</div>;
     }
 
-    const ToolbarButton = ({
-        onClick,
-        isActive = false,
-        disabled = false,
-        children,
-        title
-    }: {
-        onClick: () => void,
-        isActive ? : boolean,
-        disabled ? : boolean,
-        children: React.ReactNode,
-        title ? : string
-    }) => (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            title={title}
-            className={`p-1.5 min-w-[32px] rounded flex items-center justify-center transition-all ${disabled ? 'opacity-40 cursor-not-allowed' : ''} ${isActive ? 'bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8] dark:text-[#8ab4f8]' : 'text-[#444746] dark:text-[#e3e3e3] hover:bg-[#f1f3f4] dark:hover:bg-[#303134]'}`}
-        >
-            {children}
-        </button>
-    );
-
-    const ToolbarDivider = () => <div className="w-px h-5 bg-[#e3e3e3] dark:bg-[#5f6368] mx-1 self-center" />;
-
     return (
         <div className={`flex flex-col h-full bg-[#f8f9fa] dark:bg-[#1a1a1a] overflow-hidden ${className}`}>
             {/* Top Bar (Title & Main Menus) */}
@@ -1904,7 +1880,7 @@ const Editor = ({
             </div>
 
             {/* Formatting Ribbon */}
-            <div className="flex flex-wrap items-center gap-0.5 px-4 py-1.5 w-full bg-[#edf2fa] dark:bg-[#3c4043] shrink-0 border-b border-transparent dark:border-[#5f6368]">
+            <Toolbar>
                     {/* Undo/Redo */}
                     <div className="flex items-center mx-1 relative">
                         <VoiceInput
@@ -2139,7 +2115,7 @@ const Editor = ({
                         <Bot className="w-4 h-4" />
                         <span className="text-[12px] font-medium hidden sm:inline">AI Tools</span>
                     </button>
-                </div>
+                </Toolbar>
 
                 {/* AI Auxiliary Toolbar */}
                 {showAiToolbar && (

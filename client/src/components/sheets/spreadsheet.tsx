@@ -10,6 +10,7 @@ import { fetchAndParseDocument } from '@/lib/file-parsers'
 import * as XLSX from 'xlsx'
 import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu'
 import { GenericFeatureModal } from '@/components/editor/generic-feature-modal'
+import { Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup } from '@/components/editor/toolbar'
 import { storageApi } from '@/lib/api'
 import {
     AlignLeft, AlignCenter, AlignRight, Sparkles,
@@ -124,25 +125,16 @@ function formatDisplayValue(value: string, style?: CellStyle): string {
 
 // ---- Toolbar Button ----
 function TBtn({ onClick, active, title, children, className }: {
-    onClick: () => void, active?: boolean, title: string, children: React.ReactNode, className?: string
+    onClick: () => void, active?: boolean, title?: string, children: React.ReactNode, className?: string
 }) {
     return (
-        <button
-            className={cn(
-                "p-1 px-1.5 rounded flex items-center justify-center transition-colors shrink-0",
-                active
-                    ? "bg-[#d3e3fd] dark:bg-[#004a77] text-[#1a73e8] dark:text-[#8ab4f8]"
-                    : "hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3]",
-                className
-            )}
-            title={title}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={onClick}
-        >{children}</button>
+        <ToolbarButton onClick={onClick} isActive={active} title={title} className={className} onMouseDown={(e) => e.preventDefault()}>
+            {children}
+        </ToolbarButton>
     )
 }
 
-const Sep = () => <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1 shrink-0" />
+const Sep = () => <ToolbarDivider />
 
 // ---- Context Menu ----
 function ContextMenu({ x, y, onAction, onClose }: {
@@ -1841,8 +1833,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             </div>
 
             {/* ===== TOOLBAR ===== */}
-            <div className="border-b border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] shrink-0 px-4 py-2">
-                <div className="flex items-center gap-0.5 px-3 py-1.5 bg-[#edf2fa] dark:bg-[#2d2e30] rounded-full shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] overflow-x-auto">
+            <Toolbar className="overflow-x-auto custom-scrollbar flex-nowrap min-h-[44px]">
                     <TBtn onClick={undo} title="Annuler (Ctrl+Z)"><Undo className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={redo} title="R\u00E9tablir (Ctrl+Y)"><Redo className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => window.print()} title="Imprimer (Ctrl+P)"><Printer className="w-[18px] h-[18px]" /></TBtn>
@@ -2027,8 +2018,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                             <Sparkles className={cn("w-3.5 h-3.5", showAiDialog ? "animate-pulse" : "")} /> Tools IA
                         </button>
                     </div>
-                </div>
-            </div>
+            </Toolbar>
 
             {/* ===== FORMULA BAR ===== */}
             <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-background dark:bg-[#1a1a1a] shrink-0 h-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10">

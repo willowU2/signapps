@@ -11,12 +11,11 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
-use std::net::SocketAddr;
+use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod dns;
 mod handlers;
@@ -100,17 +99,9 @@ impl Config {
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "signapps_securelink=info,tower_http=info".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
-
-    // Load .env file
-    dotenvy::dotenv().ok();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_securelink");
+    load_env();
 
     // Load configuration
     let config = Config::from_env();
@@ -173,7 +164,7 @@ async fn main() -> std::io::Result<()> {
     let app = create_router(state);
 
     // Start server
-    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", config.port).parse().unwrap();
     tracing::info!("✅ SecureLink ready at http://localhost:{}", config.port);
     tracing::info!("   Health: http://localhost:{}/health", config.port);
     tracing::info!("   API: http://localhost:{}/api/v1/tunnels", config.port);

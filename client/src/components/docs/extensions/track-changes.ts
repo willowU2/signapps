@@ -1,4 +1,4 @@
-import { Mark, mergeAttributes } from '@tiptap/core';
+﻿import { Mark as TiptapMark, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 
 export type ChangeType = 'insertion' | 'deletion' | 'format';
@@ -62,7 +62,7 @@ export const trackChangesPluginKey = new PluginKey('trackChanges');
 /**
  * Insertion mark - used to mark added text
  */
-export const Insertion = Mark.create({
+export const Insertion = TiptapMark.create({
     name: 'insertion',
 
     addOptions() {
@@ -126,7 +126,7 @@ export const Insertion = Mark.create({
 /**
  * Deletion mark - used to mark removed text (shown as strikethrough)
  */
-export const Deletion = Mark.create({
+export const Deletion = TiptapMark.create({
     name: 'deletion',
 
     addOptions() {
@@ -190,7 +190,7 @@ export const Deletion = Mark.create({
 /**
  * TrackChanges extension - manages track changes mode
  */
-export const TrackChanges = Mark.create<TrackChangesOptions>({
+export const TrackChanges = TiptapMark.create<TrackChangesOptions>({
     name: 'trackChanges',
 
     addOptions() {
@@ -217,13 +217,13 @@ export const TrackChanges = Mark.create<TrackChangesOptions>({
             enableTrackChanges:
                 () =>
                 ({ editor }) => {
-                    editor.storage.trackChanges.enabled = true;
+                    (editor.storage as Record<string, any>).trackChanges.enabled = true;
                     return true;
                 },
             disableTrackChanges:
                 () =>
                 ({ editor }) => {
-                    editor.storage.trackChanges.enabled = false;
+                    (editor.storage as Record<string, any>).trackChanges.enabled = false;
                     return true;
                 },
             acceptChange:
@@ -313,14 +313,14 @@ export const TrackChanges = Mark.create<TrackChangesOptions>({
                         pos: number;
                         size: number;
                         type: 'insertion' | 'deletion';
-                        mark: typeof state.schema.marks.insertion;
+                        mark: any;
                     }> = [];
 
                     doc.descendants((node, pos) => {
                         if (!node.isText) return;
 
                         const insertionMark = node.marks.find(
-                            (mark) => mark.type.name === 'insertion'
+                            (m: any) => m.type.name === 'insertion'
                         );
                         if (insertionMark) {
                             changes.push({
@@ -332,7 +332,7 @@ export const TrackChanges = Mark.create<TrackChangesOptions>({
                         }
 
                         const deletionMark = node.marks.find(
-                            (mark) => mark.type.name === 'deletion'
+                            (m: any) => m.type.name === 'deletion'
                         );
                         if (deletionMark) {
                             changes.push({
@@ -373,7 +373,7 @@ export const TrackChanges = Mark.create<TrackChangesOptions>({
                         pos: number;
                         size: number;
                         type: 'insertion' | 'deletion';
-                        mark: typeof state.schema.marks.deletion;
+                        mark: any;
                     }> = [];
 
                     doc.descendants((node, pos) => {

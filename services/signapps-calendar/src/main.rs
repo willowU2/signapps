@@ -3,13 +3,13 @@
 
 use axum::{extract::DefaultBodyLimit, http::StatusCode, middleware, routing::get, Router};
 use dashmap::DashMap;
+use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::JwtConfig;
-use signapps_db::{create_pool, DatabasePool};
+use signapps_db::DatabasePool;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tower_http::trace::TraceLayer;
-use tracing::info;
 use yrs::Doc;
 
 use crate::services::presence::PresenceManager;
@@ -44,32 +44,20 @@ impl AuthState for AppState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .init();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_calendar");
+    load_env();
 
-    info!("Starting signapps-calendar service");
-
-    // Get configuration
-    dotenvy::dotenv().ok();
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://signapps:password@localhost:5432/signapps".to_string());
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "dev_secret_change_in_production_32chars".to_string());
-    let server_port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3011".to_string())
-        .parse::<u16>()?;
+    let config = ServiceConfig::from_env("signapps-calendar", 3011);
+    config.log_startup();
 
     // Initialize database
-    let pool = create_pool(&database_url).await?;
-    // run_migrations(&pool).await?;
+    let pool = signapps_db::create_pool(&config.database_url).await?;
+    tracing::info!("Database initialized successfully");
 
-    info!("Database initialized successfully");
-
-    // Create JWT config
+    // Create JWT config (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
-        secret: jwt_secret,
+        secret: config.jwt_secret.clone(),
         issuer: "signapps".to_string(),
         audience: "signapps".to_string(),
         access_expiration: 900,
@@ -85,8 +73,8 @@ async fn main() -> anyhow::Result<()> {
         ai_client: Arc::new(crate::services::ai_service::AiServiceClient::new()),
     };
 
-    info!("Real-time collaboration system initialized");
-    info!("Presence tracking system initialized");
+    tracing::info!("Real-time collaboration system initialized");
+    tracing::info!("Presence tracking system initialized");
 
     // Initialize and spawn notification scheduler
     let scheduler_config = SchedulerConfig::new();
@@ -94,19 +82,15 @@ async fn main() -> anyhow::Result<()> {
 
     // Spawn scheduler in background
     tokio::spawn(async move {
-        info!("Notification scheduler started");
+        tracing::info!("Notification scheduler started");
         scheduler.run().await;
     });
 
     // Build router
     let app = build_router(state);
 
-    // Start server
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", server_port)).await?;
-    info!("Calendar service listening on port {}", server_port);
-
-    axum::serve(listener, app).await?;
-    Ok(())
+    // Start server using bootstrap helper
+    signapps_common::bootstrap::run_server(app, &config).await
 }
 
 fn build_router(state: AppState) -> Router {

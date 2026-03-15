@@ -9,7 +9,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useDashboardData } from '@/hooks/use-dashboard';
 import { useDashboardEditMode, useDashboardEditActions } from '@/stores/dashboard-store';
 import { WidgetGrid } from '@/components/dashboard/widget-grid';
-import { AddWidgetDialog } from '@/components/dashboard/add-widget-dialog';
+import { AddWidgetSheet } from '@/components/dashboard/add-widget-sheet';
+import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
@@ -23,13 +24,10 @@ export default function DashboardPage() {
     return (
       <AppLayout>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32" />
-            ))}
-          </div>
-          <Skeleton className="h-48" />
+          <h1 className="text-3xl font-bold tracking-tight mb-2 text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mb-8">Welcome back. Here's an overview of your systems.</p>
+          <CardGridSkeleton count={4} />
+          <Skeleton className="h-48 w-full rounded-2xl mt-4" />
         </div>
       </AppLayout>
     );
@@ -38,8 +36,11 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">Welcome back. Here's an overview of your systems.</p>
+          </div>
           <div className="flex items-center gap-2">
             {editMode && (
               <>
@@ -86,7 +87,7 @@ export default function DashboardPage() {
 
         <WidgetGrid />
 
-        <AddWidgetDialog open={addWidgetOpen} onOpenChange={setAddWidgetOpen} />
+        <AddWidgetSheet open={addWidgetOpen} onOpenChange={setAddWidgetOpen} />
       </div>
     </AppLayout>
   );

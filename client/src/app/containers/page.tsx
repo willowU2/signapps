@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,9 +34,9 @@ import {
 } from 'lucide-react';
 import { cn, getContainerUrl } from '@/lib/utils';
 import { LogsDialog } from '@/components/containers/logs-dialog';
-import { ContainerDialog } from '@/components/containers/container-dialog';
+import { ContainerSheet } from '@/components/containers/container-sheet';
 import { ContainerTerminal } from '@/components/containers/container-terminal';
-import { ComposeImportDialog } from '@/components/containers/compose-import-dialog';
+import { ComposeImportSheet } from '@/components/containers/compose-import-sheet';
 import { ContainerDetailsSheet } from '@/components/containers/container-details-sheet';
 import { RouteDialog } from '@/components/routes/route-dialog';
 import { useContainers, useContainerAction, Container } from '@/hooks/use-containers';
@@ -174,11 +175,7 @@ export default function ContainersPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Containers</h1>
           </div>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-24" />
-            ))}
-          </div>
+          <DataTableSkeleton count={8} />
         </div>
       </AppLayout>
     );
@@ -468,15 +465,15 @@ export default function ContainersPage() {
           containerName={logsDialog.name}
         />
 
-        {/* Create Container Dialog */}
-        <ContainerDialog
+        {/* Create Container Sheet */}
+        <ContainerSheet
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ['containers'] })}
         />
 
-        {/* Compose Import Dialog */}
-        <ComposeImportDialog
+        {/* Import Compose Sheet */}
+        <ComposeImportSheet
           open={composeDialogOpen}
           onOpenChange={setComposeDialogOpen}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ['containers'] })}

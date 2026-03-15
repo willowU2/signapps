@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
 import {
   Plus,
   Lock,
@@ -208,12 +209,7 @@ export default function RoutesPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Routes & Domaines</h1>
           </div>
-          <div className="grid gap-4 md:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24" />
-            ))}
-          </div>
-          <Skeleton className="h-64" />
+          <DataTableSkeleton count={8} />
         </div>
       </AppLayout>
     );

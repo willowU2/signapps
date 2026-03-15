@@ -68,11 +68,13 @@ impl ProviderRegistry {
     /// Get human-readable name for a provider type.
     pub fn provider_name(provider_type: &LlmProviderType) -> &'static str {
         match provider_type {
-            LlmProviderType::Ollama => "Ollama (Local)",
             LlmProviderType::Vllm => "vLLM (Local GPU)",
+            LlmProviderType::LmStudio => "LM Studio (Local)",
+            LlmProviderType::Gemini => "Google Gemini",
             LlmProviderType::OpenAI => "OpenAI",
             LlmProviderType::Anthropic => "Anthropic Claude",
             LlmProviderType::OpenAICompatible => "OpenAI Compatible",
+            LlmProviderType::Ollama => "Ollama (Local)",
             LlmProviderType::LlamaCpp => "LlamaCpp (Native GGUF)",
         }
     }

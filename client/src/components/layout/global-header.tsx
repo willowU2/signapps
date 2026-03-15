@@ -22,6 +22,15 @@ import { useEffect, useState } from 'react';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
 import { NotificationBadge } from '@/components/notifications/notification-badge';
 import { useTheme } from 'next-themes';
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import Link from 'next/link';
 
 export function GlobalHeader() {
     const { user, logout } = useAuthStore();
@@ -98,6 +107,19 @@ export function GlobalHeader() {
         HeaderIcon = <Users className="h-5 w-5 text-cyan-500" />;
     }
 
+    // Generate Contextual Breadcrumbs
+    const pathSegments = pathname.split('/').filter(Boolean);
+    const breadcrumbItems = pathSegments.map((segment, index) => {
+        const url = `/${pathSegments.slice(0, index + 1).join('/')}`;
+        const isLast = index === pathSegments.length - 1;
+        const label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+        
+        // Shorten long IDs
+        const displayLabel = label.length > 20 && index > 0 ? `${label.substring(0, 8)}...` : label;
+
+        return { label: displayLabel, url, isLast };
+    });
+
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
             <div className="flex items-center gap-4">
@@ -131,6 +153,31 @@ export function GlobalHeader() {
                         </div>
                     )}
                     <div className="flex flex-col">
+                        {/* Dynamic Breadcrumbs */}
+                        <Breadcrumb className="mb-0.5 hidden sm:block">
+                            <BreadcrumbList className="gap-1 sm:gap-1.5 min-h-[20px]">
+                                <BreadcrumbItem>
+                                    <BreadcrumbLink asChild>
+                                        <Link href="/dashboard" className="text-xs">Home</Link>
+                                    </BreadcrumbLink>
+                                </BreadcrumbItem>
+                                {breadcrumbItems.map((item, index) => (
+                                    <div key={item.url} className="flex items-center gap-1 sm:gap-1.5">
+                                        <BreadcrumbSeparator className="[&>svg]:size-3" />
+                                        <BreadcrumbItem>
+                                            {item.isLast ? (
+                                                <BreadcrumbPage className="text-xs font-semibold">{item.label}</BreadcrumbPage>
+                                            ) : (
+                                                <BreadcrumbLink asChild>
+                                                    <Link href={item.url} className="text-xs">{item.label}</Link>
+                                                </BreadcrumbLink>
+                                            )}
+                                        </BreadcrumbItem>
+                                    </div>
+                                ))}
+                            </BreadcrumbList>
+                        </Breadcrumb>
+
                         {showDocActions ? (
                             <input
                                 type="text"
@@ -138,7 +185,7 @@ export function GlobalHeader() {
                                 className="text-lg font-semibold text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/50 rounded px-1 -ml-1 hover:bg-accent transition-colors w-full max-w-[300px]"
                             />
                         ) : (
-                            <span className="text-lg font-semibold text-foreground px-1 -ml-1">
+                            <span className="text-lg font-bold tracking-tight text-foreground px-1 -ml-1">
                                 {headerTitle}
                             </span>
                         )}

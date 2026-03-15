@@ -1,5 +1,15 @@
+/**
+ * Storage API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
 import axios from 'axios';
-import { storageApiClient, STORAGE_URL } from './core';
+import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+
+// Get the storage service client (cached)
+const storageClient = getClient(ServiceName.STORAGE);
+const STORAGE_URL = getServiceBaseUrl(ServiceName.STORAGE);
 
 export interface Bucket {
     name: string;
@@ -17,23 +27,23 @@ export interface UploadResponse {
 // Storage API
 // Backend routes: /files/:bucket, /files/:bucket/*key, /permissions/:bucket/*key, /buckets
 export const storageApi = {
-    listBuckets: () => storageApiClient.get<Bucket[]>('/buckets'),
-    getBucket: (name: string) => storageApiClient.get<Bucket>(`/buckets/${name}`),
-    createBucket: (name: string) => storageApiClient.post<Bucket>('/buckets', { name }),
-    deleteBucket: (name: string) => storageApiClient.delete(`/buckets/${name}`),
+    listBuckets: () => storageClient.get<Bucket[]>('/buckets'),
+    getBucket: (name: string) => storageClient.get<Bucket>(`/buckets/${name}`),
+    createBucket: (name: string) => storageClient.post<Bucket>('/buckets', { name }),
+    deleteBucket: (name: string) => storageClient.delete(`/buckets/${name}`),
     
     // Drive Nodes
-    getNodes: () => storageApiClient.get('/drive/nodes'),
-    getRootNodes: () => storageApiClient.get('/drive/nodes/root'),
-    getNodeChildren: (id: string) => storageApiClient.get(`/drive/nodes/${id}/children`),
+    getNodes: () => storageClient.get('/drive/nodes'),
+    getRootNodes: () => storageClient.get('/drive/nodes/root'),
+    getNodeChildren: (id: string) => storageClient.get(`/drive/nodes/${id}/children`),
 
     listFiles: (bucket: string, prefix: string = '', delimiter?: string) =>
-        storageApiClient.get<ListObjectsResponse>(`/files/${bucket}`, { params: { prefix, delimiter } }),
+        storageClient.get<ListObjectsResponse>(`/files/${bucket}`, { params: { prefix, delimiter } }),
 
     uploadFile: (bucket: string, file: File, onProgress?: (percent: number) => void) => {
         const formData = new FormData();
         formData.append('file', file);
-        return storageApiClient.post<UploadResponse[]>(`/files/${bucket}`, formData, {
+        return storageClient.post<UploadResponse[]>(`/files/${bucket}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             onUploadProgress: (progressEvent) => {
                 if (onProgress && progressEvent.total) {
@@ -50,42 +60,42 @@ export const storageApi = {
         if (path) {
             formData.append('path', path);
         }
-        return storageApiClient.post<UploadResponse[]>(`/files/${bucket}`, formData, {
+        return storageClient.post<UploadResponse[]>(`/files/${bucket}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
     },
 
     deleteFile: (bucket: string, key: string) =>
-        storageApiClient.delete(`/files/${bucket}/${encodeURIComponent(key)}`),
+        storageClient.delete(`/files/${bucket}/${encodeURIComponent(key)}`),
 
     // Alias for deleteFile
     delete: (bucket: string, key: string) =>
-        storageApiClient.delete(`/files/${bucket}/${encodeURIComponent(key)}`),
+        storageClient.delete(`/files/${bucket}/${encodeURIComponent(key)}`),
 
     // Update an existing file by its exact key
     uploadWithKey: (bucket: string, key: string, file: File | Blob) => {
         const url = `/files/${bucket}/${key}`;
         // Since the backend upload_with_key route accepts the raw body for the file content
         // and expects content-type header, we will send the blob directly.
-        return storageApiClient.put<UploadResponse>(url, file, {
+        return storageClient.put<UploadResponse>(url, file, {
             headers: { 'Content-Type': file.type || 'application/octet-stream' },
         });
     },
 
     // Download a file
     download: (bucket: string, key: string) =>
-        storageApiClient.get(`/files/${bucket}/${encodeURIComponent(key)}`, {
+        storageClient.get(`/files/${bucket}/${encodeURIComponent(key)}`, {
             responseType: 'arraybuffer',
         }),
 
     // Create folder (virtual) - uses PUT with empty body to create a key ending with /
     createFolder: (bucket: string, path: string) =>
-        storageApiClient.put(`/files/${bucket}/${encodeURIComponent(path + '/')}`, new Uint8Array(0), {
+        storageClient.put(`/files/${bucket}/${encodeURIComponent(path + '/')}`, new Uint8Array(0), {
             headers: { 'Content-Type': 'application/x-directory' },
         }),
 
     copy: (sourceBucket: string, sourceKey: string, destBucket: string, destKey: string) =>
-        storageApiClient.post<ObjectInfo>('/files/copy', {
+        storageClient.post<ObjectInfo>('/files/copy', {
             source_bucket: sourceBucket,
             source_key: sourceKey,
             dest_bucket: destBucket,
@@ -93,7 +103,7 @@ export const storageApi = {
         }),
 
     move: (sourceBucket: string, sourceKey: string, destBucket: string, destKey: string) =>
-        storageApiClient.post<ObjectInfo>('/files/move', {
+        storageClient.post<ObjectInfo>('/files/move', {
             source_bucket: sourceBucket,
             source_key: sourceKey,
             dest_bucket: destBucket,
@@ -102,29 +112,29 @@ export const storageApi = {
 
     // Get file info
     getFileInfo: (bucket: string, key: string) =>
-        storageApiClient.get<ObjectInfo>(`/files/${bucket}/info/${encodeURIComponent(key)}`),
+        storageClient.get<ObjectInfo>(`/files/${bucket}/info/${encodeURIComponent(key)}`),
 
     // Permissions
     getPermissions: (bucket: string, key: string) =>
-        storageApiClient.get<FilePermissions>(`/permissions/${bucket}/${encodeURIComponent(key)}`),
+        storageClient.get<FilePermissions>(`/permissions/${bucket}/${encodeURIComponent(key)}`),
 
     setPermissions: (bucket: string, key: string, data: { mode: number }) =>
-        storageApiClient.put(`/permissions/${bucket}/${encodeURIComponent(key)}`, data),
+        storageClient.put(`/permissions/${bucket}/${encodeURIComponent(key)}`, data),
 
     // Tags
-    getTags: () => storageApiClient.get<any[]>('/tags'),
-    createTag: (data: any) => storageApiClient.post('/tags', data),
-    updateTag: (id: string, data: any) => storageApiClient.put(`/tags/${id}`, data),
-    deleteTag: (id: string) => storageApiClient.delete(`/tags/${id}`),
+    getTags: () => storageClient.get<any[]>('/tags'),
+    createTag: (data: any) => storageClient.post('/tags', data),
+    updateTag: (id: string, data: any) => storageClient.put(`/tags/${id}`, data),
+    deleteTag: (id: string) => storageClient.delete(`/tags/${id}`),
 
     // File Tags
-    getFileTags: (fileId: string) => storageApiClient.get<any[]>(`/files/${fileId}/tags`),
-    addFileTag: (fileId: string, tagId: string) => storageApiClient.post(`/files/${fileId}/tags/${tagId}`),
-    removeFileTag: (fileId: string, tagId: string) => storageApiClient.delete(`/files/${fileId}/tags/${tagId}`),
+    getFileTags: (fileId: string) => storageClient.get<any[]>(`/files/${fileId}/tags`),
+    addFileTag: (fileId: string, tagId: string) => storageClient.post(`/files/${fileId}/tags/${tagId}`),
+    removeFileTag: (fileId: string, tagId: string) => storageClient.delete(`/files/${fileId}/tags/${tagId}`),
 
     // Versions
-    getFileVersions: (fileId: string) => storageApiClient.get<any[]>(`/files/${fileId}/versions`),
-    restoreFileVersion: (fileId: string, versionId: string) => storageApiClient.post(`/files/${fileId}/versions/${versionId}/restore`),
+    getFileVersions: (fileId: string) => storageClient.get<any[]>(`/files/${fileId}/versions`),
+    restoreFileVersion: (fileId: string, versionId: string) => storageClient.post(`/files/${fileId}/versions/${versionId}/restore`),
 };
 
 export interface Bucket {
@@ -175,18 +185,18 @@ export interface FilePermissions {
 // Shares API
 export const sharesApi = {
     list: (bucket?: string, activeOnly?: boolean) =>
-        storageApiClient.get<ShareListResponse>('/shares', { params: { bucket, active_only: activeOnly } }),
+        storageClient.get<ShareListResponse>('/shares', { params: { bucket, active_only: activeOnly } }),
     create: (data: CreateShareRequest) =>
-        storageApiClient.post<CreateShareResponse>('/shares', data),
-    get: (id: string) => storageApiClient.get<ShareLink>(`/shares/${id}`),
+        storageClient.post<CreateShareResponse>('/shares', data),
+    get: (id: string) => storageClient.get<ShareLink>(`/shares/${id}`),
     update: (id: string, data: UpdateShareRequest) =>
-        storageApiClient.put<ShareLink>(`/shares/${id}`, data),
-    delete: (id: string) => storageApiClient.delete(`/shares/${id}`),
+        storageClient.put<ShareLink>(`/shares/${id}`, data),
+    delete: (id: string) => storageClient.delete(`/shares/${id}`),
     // Public access (no auth)
     access: (token: string, password?: string) =>
         axios.post<ShareAccessResponse>(`${STORAGE_URL}/shares/${token}/access`, { password }),
     download: (token: string) =>
-        storageApiClient.get(`/shares/${token}/download`, { responseType: 'blob' }),
+        storageClient.get(`/shares/${token}/download`, { responseType: 'blob' }),
     downloadUrl: (token: string) =>
         `${STORAGE_URL}/shares/${token}/download`,
 };
@@ -248,18 +258,18 @@ export interface ShareAccessResponse {
 // Trash API
 export const trashApi = {
     list: (bucket?: string, search?: string, limit?: number, offset?: number) =>
-        storageApiClient.get<TrashListResponse>('/trash', {
+        storageClient.get<TrashListResponse>('/trash', {
             params: { bucket, search, limit, offset }
         }),
-    get: (id: string) => storageApiClient.get<TrashItem>(`/trash/${id}`),
+    get: (id: string) => storageClient.get<TrashItem>(`/trash/${id}`),
     moveToTrash: (bucket: string, keys: string[]) =>
-        storageApiClient.post<MoveToTrashResponse>('/trash', { bucket, keys }),
+        storageClient.post<MoveToTrashResponse>('/trash', { bucket, keys }),
     restore: (items: string[], destination?: { bucket: string; prefix?: string }) =>
-        storageApiClient.post<RestoreResponse>('/trash/restore', { items, destination }),
-    delete: (id: string) => storageApiClient.delete(`/trash/${id}`),
+        storageClient.post<RestoreResponse>('/trash/restore', { items, destination }),
+    delete: (id: string) => storageClient.delete(`/trash/${id}`),
     empty: (items?: string[]) =>
-        storageApiClient.delete('/trash', { data: items }),
-    stats: () => storageApiClient.get<TrashStats>('/trash/stats'),
+        storageClient.delete('/trash', { data: items }),
+    stats: () => storageClient.get<TrashStats>('/trash/stats'),
 };
 
 export interface TrashItem {
@@ -301,21 +311,21 @@ export interface TrashStats {
 // Favorites API
 export const favoritesApi = {
     list: (bucket?: string, foldersOnly?: boolean) =>
-        storageApiClient.get<FavoritesListResponse>('/favorites', {
+        storageClient.get<FavoritesListResponse>('/favorites', {
             params: { bucket, folders_only: foldersOnly }
         }),
     add: (data: AddFavoriteRequest) =>
-        storageApiClient.post<Favorite>('/favorites', data),
-    get: (id: string) => storageApiClient.get<FavoriteWithInfo>(`/favorites/${id}`),
+        storageClient.post<Favorite>('/favorites', data),
+    get: (id: string) => storageClient.get<FavoriteWithInfo>(`/favorites/${id}`),
     update: (id: string, data: UpdateFavoriteRequest) =>
-        storageApiClient.put<Favorite>(`/favorites/${id}`, data),
-    remove: (id: string) => storageApiClient.delete(`/favorites/${id}`),
+        storageClient.put<Favorite>(`/favorites/${id}`, data),
+    remove: (id: string) => storageClient.delete(`/favorites/${id}`),
     removeByPath: (bucket: string, key: string) =>
-        storageApiClient.delete(`/favorites/path/${bucket}/${encodeURIComponent(key)}`),
+        storageClient.delete(`/favorites/path/${bucket}/${encodeURIComponent(key)}`),
     check: (bucket: string, key: string) =>
-        storageApiClient.get<boolean>(`/favorites/check/${bucket}/${encodeURIComponent(key)}`),
+        storageClient.get<boolean>(`/favorites/check/${bucket}/${encodeURIComponent(key)}`),
     reorder: (order: string[]) =>
-        storageApiClient.post('/favorites/reorder', { order }),
+        storageClient.post('/favorites/reorder', { order }),
 };
 
 export interface Favorite {
@@ -359,17 +369,17 @@ export interface UpdateFavoriteRequest {
 // Search API
 export const searchApi = {
     search: (query: string, options?: SearchOptions) =>
-        storageApiClient.get<SearchResponse>('/search', {
+        storageClient.get<SearchResponse>('/search', {
             params: { q: query, ...options }
         }),
     quickSearch: (query: string, limit?: number) =>
-        storageApiClient.get<QuickSearchResponse>('/search/quick', {
+        storageClient.get<QuickSearchResponse>('/search/quick', {
             params: { q: query, limit }
         }),
     recent: (limit?: number) =>
-        storageApiClient.get<QuickSearchResult[]>('/search/recent', { params: { limit } }),
+        storageClient.get<QuickSearchResult[]>('/search/recent', { params: { limit } }),
     suggest: (query: string) =>
-        storageApiClient.get<string[]>('/search/suggest', { params: { q: query } }),
+        storageClient.get<string[]>('/search/suggest', { params: { q: query } }),
 };
 
 export interface SearchOptions {
@@ -433,18 +443,18 @@ export interface QuickSearchResult {
 
 // Quotas API
 export const quotasApi = {
-    getMyQuota: () => storageApiClient.get<QuotaUsage>('/quotas/me'),
-    getAlerts: () => storageApiClient.get<QuotaAlert[]>('/quotas/me/alerts'),
+    getMyQuota: () => storageClient.get<QuotaUsage>('/quotas/me'),
+    getAlerts: () => storageClient.get<QuotaAlert[]>('/quotas/me/alerts'),
     getUserQuota: (userId: string) =>
-        storageApiClient.get<QuotaUsage>(`/quotas/users/${userId}`),
+        storageClient.get<QuotaUsage>(`/quotas/users/${userId}`),
     setUserQuota: (userId: string, quota: SetQuotaRequest) =>
-        storageApiClient.put<StorageQuota>(`/quotas/users/${userId}`, quota),
+        storageClient.put<StorageQuota>(`/quotas/users/${userId}`, quota),
     deleteUserQuota: (userId: string) =>
-        storageApiClient.delete(`/quotas/users/${userId}`),
+        storageClient.delete(`/quotas/users/${userId}`),
     recalculate: (userId: string) =>
-        storageApiClient.post<QuotaUsage>(`/quotas/users/${userId}/recalculate`),
+        storageClient.post<QuotaUsage>(`/quotas/users/${userId}/recalculate`),
     getUsersOverLimit: () =>
-        storageApiClient.get<QuotaUsage[]>('/quotas/over-limit'),
+        storageClient.get<QuotaUsage[]>('/quotas/over-limit'),
 };
 
 export interface StorageQuota {
@@ -497,7 +507,7 @@ export interface QuotaAlert {
 // Preview API
 export const previewApi = {
     getInfo: (bucket: string, key: string) =>
-        storageApiClient.get<PreviewInfo>(`/preview/info/${bucket}/${encodeURIComponent(key)}`),
+        storageClient.get<PreviewInfo>(`/preview/info/${bucket}/${encodeURIComponent(key)}`),
     getThumbnailUrl: (bucket: string, key: string, size?: 'small' | 'medium' | 'large') =>
         `${STORAGE_URL}/preview/thumbnail/${bucket}/${encodeURIComponent(key)}?size=${size || 'medium'}`,
     getPreviewUrl: (bucket: string, key: string) =>
@@ -517,29 +527,29 @@ export interface PreviewInfo {
 // RAID API
 export const raidApi = {
     // Arrays
-    listArrays: () => storageApiClient.get<RaidArray[]>('/raid/arrays'),
-    getArray: (id: string) => storageApiClient.get<RaidArray>(`/raid/arrays/${id}`),
-    getArrayByName: (name: string) => storageApiClient.get<RaidArray>(`/raid/arrays/name/${name}`),
+    listArrays: () => storageClient.get<RaidArray[]>('/raid/arrays'),
+    getArray: (id: string) => storageClient.get<RaidArray>(`/raid/arrays/${id}`),
+    getArrayByName: (name: string) => storageClient.get<RaidArray>(`/raid/arrays/name/${name}`),
     createArray: (data: CreateRaidArrayRequest) =>
-        storageApiClient.post<RaidArray>('/raid/arrays', data),
-    deleteArray: (id: string) => storageApiClient.delete(`/raid/arrays/${id}`),
-    rebuildArray: (id: string) => storageApiClient.post(`/raid/arrays/${id}/rebuild`),
+        storageClient.post<RaidArray>('/raid/arrays', data),
+    deleteArray: (id: string) => storageClient.delete(`/raid/arrays/${id}`),
+    rebuildArray: (id: string) => storageClient.post(`/raid/arrays/${id}/rebuild`),
     addDiskToArray: (arrayId: string, diskId: string) =>
-        storageApiClient.post(`/raid/arrays/${arrayId}/disks`, { disk_id: diskId }),
+        storageClient.post(`/raid/arrays/${arrayId}/disks`, { disk_id: diskId }),
     removeDiskFromArray: (arrayId: string, diskId: string) =>
-        storageApiClient.delete(`/raid/arrays/${arrayId}/disks/${diskId}`),
+        storageClient.delete(`/raid/arrays/${arrayId}/disks/${diskId}`),
     getArrayEvents: (arrayId: string, limit?: number) =>
-        storageApiClient.get<RaidEvent[]>(`/raid/arrays/${arrayId}/events`, { params: { limit } }),
+        storageClient.get<RaidEvent[]>(`/raid/arrays/${arrayId}/events`, { params: { limit } }),
 
     // Disks
-    listDisks: () => storageApiClient.get<DiskInfo[]>('/raid/disks'),
-    getDisk: (id: string) => storageApiClient.get<DiskInfo>(`/raid/disks/${id}`),
-    scanDisks: () => storageApiClient.post<DiskInfo[]>('/raid/disks/scan'),
+    listDisks: () => storageClient.get<DiskInfo[]>('/raid/disks'),
+    getDisk: (id: string) => storageClient.get<DiskInfo>(`/raid/disks/${id}`),
+    scanDisks: () => storageClient.post<DiskInfo[]>('/raid/disks/scan'),
 
     // Events & Health
     listEvents: (limit?: number, severity?: string) =>
-        storageApiClient.get<RaidEvent[]>('/raid/events', { params: { limit, severity } }),
-    getHealth: () => storageApiClient.get<RaidHealth>('/raid/health'),
+        storageClient.get<RaidEvent[]>('/raid/events', { params: { limit, severity } }),
+    getHealth: () => storageClient.get<RaidHealth>('/raid/health'),
 };
 
 export interface RaidArray {
@@ -614,7 +624,7 @@ export interface CreateRaidArrayRequest {
 
 // Storage Stats API
 export const storageStatsApi = {
-    getStats: () => storageApiClient.get<StorageStats>('/stats'),
+    getStats: () => storageClient.get<StorageStats>('/stats'),
 };
 
 export interface StorageStats {
@@ -629,28 +639,28 @@ export interface StorageStats {
 
 // Mounts API (requires backend implementation)
 export const mountsApi = {
-    list: () => storageApiClient.get<MountPoint[]>('/mounts'),
-    mount: (data: MountRequest) => storageApiClient.post('/mounts', data),
+    list: () => storageClient.get<MountPoint[]>('/mounts'),
+    mount: (data: MountRequest) => storageClient.post('/mounts', data),
     unmount: (mountPoint: string) =>
-        storageApiClient.delete(`/mounts/${encodeURIComponent(mountPoint)}`),
+        storageClient.delete(`/mounts/${encodeURIComponent(mountPoint)}`),
     getInfo: (mountPoint: string) =>
-        storageApiClient.get<MountPoint>(`/mounts/${encodeURIComponent(mountPoint)}`),
+        storageClient.get<MountPoint>(`/mounts/${encodeURIComponent(mountPoint)}`),
 };
 
 // Indexing & Storage Rules API
 export const rulesApi = {
-    getStorageRules: () => storageApiClient.get('/storage_rules'),
-    createStorageRule: (data: any) => storageApiClient.post('/storage_rules', data),
-    updateStorageRule: (id: string, data: any) => storageApiClient.put(`/storage_rules/${id}`, data),
-    deleteStorageRule: (id: string) => storageApiClient.delete(`/storage_rules/${id}`),
+    getStorageRules: () => storageClient.get('/storage_rules'),
+    createStorageRule: (data: any) => storageClient.post('/storage_rules', data),
+    updateStorageRule: (id: string, data: any) => storageClient.put(`/storage_rules/${id}`, data),
+    deleteStorageRule: (id: string) => storageClient.delete(`/storage_rules/${id}`),
 
-    getIndexingRules: () => storageApiClient.get('/indexing_rules'),
-    createIndexingRule: (data: any) => storageApiClient.post('/indexing_rules', data),
-    updateIndexingRule: (id: string, data: any) => storageApiClient.put(`/indexing_rules/${id}`, data),
-    deleteIndexingRule: (id: string) => storageApiClient.delete(`/indexing_rules/${id}`),
+    getIndexingRules: () => storageClient.get('/indexing_rules'),
+    createIndexingRule: (data: any) => storageClient.post('/indexing_rules', data),
+    updateIndexingRule: (id: string, data: any) => storageClient.put(`/indexing_rules/${id}`, data),
+    deleteIndexingRule: (id: string) => storageClient.delete(`/indexing_rules/${id}`),
     
-    getSettings: (key: string) => storageApiClient.get(`/settings/${key}`),
-    updateSettings: (key: string, data: any) => storageApiClient.put(`/settings/${key}`, data),
+    getSettings: (key: string) => storageClient.get(`/settings/${key}`),
+    updateSettings: (key: string, data: any) => storageClient.put(`/settings/${key}`, data),
 };
 
 export interface MountPoint {
@@ -675,13 +685,13 @@ export interface MountRequest {
 
 // External Storage API (USB, NAS, Cloud)
 export const externalStorageApi = {
-    list: () => storageApiClient.get<ExternalStorage[]>('/external'),
-    detect: () => storageApiClient.post<ExternalStorage[]>('/external/detect'),
+    list: () => storageClient.get<ExternalStorage[]>('/external'),
+    detect: () => storageClient.post<ExternalStorage[]>('/external/detect'),
     connect: (data: ConnectExternalRequest) =>
-        storageApiClient.post<ExternalStorage>('/external', data),
-    disconnect: (id: string) => storageApiClient.delete(`/external/${id}`),
-    getStatus: (id: string) => storageApiClient.get<ExternalStorage>(`/external/${id}`),
-    eject: (id: string) => storageApiClient.post(`/external/${id}/eject`),
+        storageClient.post<ExternalStorage>('/external', data),
+    disconnect: (id: string) => storageClient.delete(`/external/${id}`),
+    getStatus: (id: string) => storageClient.get<ExternalStorage>(`/external/${id}`),
+    eject: (id: string) => storageClient.post(`/external/${id}/eject`),
 };
 
 export interface ExternalStorage {

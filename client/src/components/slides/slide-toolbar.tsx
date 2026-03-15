@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup } from '@/components/editor/toolbar'
 
 interface SlideToolbarProps {
     isConnected: boolean
@@ -57,108 +58,76 @@ export function SlideToolbar({
     onPageConfigChange
 }: SlideToolbarProps) {
     return (
-        <div className="flex items-center gap-2 mx-4 my-2 px-5 py-1.5 bg-[#edf2fa] dark:bg-[#3c4043] rounded-full shrink-0 shadow-sm border border-transparent dark:border-[#5f6368] sticky top-2 z-10 w-auto self-center animate-fade-in text-[#444746] dark:text-[#e8eaed]">
-            <div className="flex items-center gap-2">
+        <Toolbar className="overflow-x-auto custom-scrollbar flex-nowrap min-h-[44px]">
+            <ToolbarGroup>
                 <div
                     className={cn("h-2 w-2 rounded-full", isConnected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-red-500")}
                     title={isConnected ? "Connected" : "Disconnected"}
                 />
+            </ToolbarGroup>
 
-                <div className="w-px h-5 bg-[#c7c7c7] dark:bg-[#5f6368] mx-1" />
+            <ToolbarDivider />
 
-                {/* History */}
-                <div className="flex items-center gap-1 bg-gray-50/50 p-1 rounded-lg border border-gray-200/50">
-                    <button
-                        onClick={onUndo}
-                        disabled={!canUndo}
-                        className="p-1.5 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
-                        title="Undo"
-                    >
-                        <Undo2 className="w-4 h-4 text-gray-700" />
-                    </button>
-                    <button
-                        onClick={onRedo}
-                        disabled={!canRedo}
-                        className="p-1.5 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
-                        title="Redo"
-                    >
-                        <Redo2 className="w-4 h-4 text-gray-700" />
-                    </button>
-                </div>
+            {/* History */}
+            <ToolbarGroup>
+                <ToolbarButton onClick={onUndo} disabled={!canUndo} title="Annuler">
+                    <Undo2 className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton onClick={onRedo} disabled={!canRedo} title="Rétablir">
+                    <Redo2 className="w-4 h-4" />
+                </ToolbarButton>
+            </ToolbarGroup>
 
-                <div className="w-px h-6 bg-gray-200 mx-1" />
+            <ToolbarDivider />
 
-                {/* Addition Tools removed (Magic layout is now floating) */}
+            {/* Precision Tools */}
+            <ToolbarGroup>
+                <ToolbarButton onClick={onToggleGrid} isActive={showGrid} title="Afficher la grille">
+                    <Grid className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton onClick={onToggleSnap} isActive={snapToGrid} title="Aligner sur la grille">
+                    <Magnet className="w-4 h-4" />
+                </ToolbarButton>
+            </ToolbarGroup>
 
-                {/* Precision Tools */}
-                <div className="flex items-center gap-1 bg-gray-50/50 p-1 rounded-lg border border-gray-200/50">
-                    <button
-                        onClick={onToggleGrid}
-                        className={cn("p-1.5 rounded-md transition-colors", showGrid ? "bg-indigo-100/80 text-indigo-700" : "hover:bg-gray-200 text-gray-500")}
-                        title="Toggle Grid View"
-                    >
-                        <Grid className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={onToggleSnap}
-                        className={cn("p-1.5 rounded-md transition-colors", snapToGrid ? "bg-indigo-100/80 text-indigo-700" : "hover:bg-gray-200 text-gray-500")}
-                        title="Snap to Grid"
-                    >
-                        <Magnet className="w-4 h-4" />
-                    </button>
-                </div>
+            <ToolbarDivider />
 
-                <button
-                    onClick={onToggleFormatPainter}
-                    className={cn(
-                        "hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
-                        isFormatPainting
-                            ? "bg-indigo-50 text-indigo-600 border-indigo-200 shadow-sm"
-                            : "bg-gray-50/50 hover:bg-gray-100/80 text-gray-700 border-gray-200/50"
-                    )}
-                    title={isFormatPainting ? "Format Painter Active (Click to cancel)" : "Format Painter"}
-                >
-                    <Paintbrush className="w-4 h-4" /> Formats
-                </button>
-                <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block" />
+            <ToolbarGroup>
+                <ToolbarButton onClick={onToggleFormatPainter} isActive={isFormatPainting} title="Reproduire le format">
+                    <Paintbrush className="w-4 h-4" />
+                </ToolbarButton>
+            </ToolbarGroup>
+            
+            <ToolbarDivider className="hidden sm:block" />
 
-                <button
-                    onClick={onAddText}
-                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gray-50/50 hover:bg-gray-100/80 rounded-lg text-sm font-medium text-gray-700 transition-colors border border-gray-200/50"
-                >
-                    <Type className="w-4 h-4" /> Text
-                </button>
-                <button
-                    onClick={onAddShape}
-                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-gray-50/50 hover:bg-gray-100/80 rounded-lg text-sm font-medium text-gray-700 transition-colors border border-gray-200/50"
-                >
-                    <Square className="w-4 h-4" /> Shape
-                </button>
-                <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block" />
-                <button
-                    onClick={onToggleListen}
-                    className={cn(
-                        "hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
-                        isListening
-                            ? "bg-red-50 text-red-600 border-red-200 animate-pulse shadow-sm"
-                            : "bg-gray-50/50 hover:bg-gray-100/80 text-gray-700 border-gray-200/50"
-                    )}
-                    title={isListening ? "Listening... (Click to stop)" : "Voice Typing (Dictation)"}
-                >
+            <ToolbarGroup className="hidden sm:flex">
+                <ToolbarButton onClick={onAddText} title="Texte">
+                    <Type className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton onClick={onAddShape} title="Forme">
+                    <Square className="w-4 h-4" />
+                </ToolbarButton>
+            </ToolbarGroup>
+            
+            <ToolbarDivider className="hidden sm:block" />
+            
+            <ToolbarGroup className="hidden sm:flex">
+                <ToolbarButton onClick={onToggleListen} isActive={isListening} title={isListening ? "Écoute..." : "Saisie vocale"}>
                     <Mic className="w-4 h-4" />
-                </button>
-            </div>
+                </ToolbarButton>
+            </ToolbarGroup>
 
             {/* Actions Toolbar */}
-            <div className="flex items-center gap-2">
+            <ToolbarGroup className="ml-auto">
                 {pageConfig && onPageConfigChange && (
                     <Popover>
                         <PopoverTrigger asChild>
                             <button
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50/50 hover:bg-gray-100/80 text-gray-700 rounded-lg text-sm font-medium transition-colors border border-gray-200/50"
-                                title="Page Setup"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50/50 hover:bg-gray-100/80 text-gray-700 rounded-lg text-[13px] font-medium transition-colors border border-gray-200/50"
+                                title="Mise en page"
                             >
-                                <Settings2 className="w-4 h-4" /> Setup
+                                <Settings2 className="w-4 h-4" />
+                                <span className="hidden lg:inline">Mise en page</span>
                             </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-64 p-4 shadow-premium rounded-xl" align="end">
@@ -170,12 +139,12 @@ export function SlideToolbar({
                                         value={pageConfig.orientation}
                                         onValueChange={(v: 'portrait' | 'landscape') => onPageConfigChange({ ...pageConfig, orientation: v })}
                                     >
-                                        <SelectTrigger className="h-8 text-sm">
+                                        <SelectTrigger className="h-8 text-[13px]">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="portrait">Portrait</SelectItem>
-                                            <SelectItem value="landscape">Landscape</SelectItem>
+                                            <SelectItem value="landscape">Paysage</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -190,7 +159,7 @@ export function SlideToolbar({
                                         />
                                         <Input
                                             type="text"
-                                            className="h-8 text-sm flex-1"
+                                            className="h-8 text-[13px] flex-1"
                                             value={pageConfig.backgroundColor}
                                             onChange={(e) => onPageConfigChange({ ...pageConfig, backgroundColor: e.target.value })}
                                         />
@@ -201,28 +170,25 @@ export function SlideToolbar({
                     </Popover>
                 )}
 
-                <div className="w-px h-6 bg-gray-200 mx-1" />
+                <ToolbarDivider />
 
-                <button
-                    onClick={onClear}
-                    className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-rose-50 hover:text-rose-600 rounded-lg text-sm font-medium text-gray-500 transition-colors"
-                >
-                    <Trash2 className="w-4 h-4" /> Clear
-                </button>
+                <ToolbarButton onClick={onClear} title="Vider">
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                </ToolbarButton>
 
-                <button
-                    onClick={onExport}
-                    className="flex items-center gap-1.5 px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium shadow-sm transition-colors border border-gray-200"
-                >
-                    <Download className="w-4 h-4" /> PNG
-                </button>
-                <button
-                    onClick={onExportPPTX}
-                    className="flex items-center gap-1.5 px-4 py-1.5 bg-[#db4437] hover:bg-[#c53929] text-white rounded-xl text-sm font-medium shadow-sm transition-colors"
-                >
-                    <Download className="w-4 h-4" /> PPTX
-                </button>
-            </div>
-        </div>
+                <div className="flex items-center gap-1">
+                    <ToolbarButton onClick={onExport} title="Exporter PNG">
+                        <Download className="w-4 h-4" />
+                        <span className="text-[12px] font-medium">PNG</span>
+                    </ToolbarButton>
+                    <button
+                        onClick={onExportPPTX}
+                        className="flex items-center gap-1 px-2.5 py-1 bg-[#db4437] hover:bg-[#c53929] text-white rounded text-[12px] font-medium shadow-sm transition-colors"
+                    >
+                        <Download className="w-3.5 h-3.5" /> PPTX
+                    </button>
+                </div>
+            </ToolbarGroup>
+        </Toolbar>
     )
 }

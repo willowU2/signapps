@@ -1,19 +1,28 @@
-import { metricsApiClient } from './core';
+/**
+ * Monitoring API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the metrics service client (cached)
+const metricsClient = getClient(ServiceName.METRICS);
 
 // Metrics API
 export const metricsApi = {
-    all: () => metricsApiClient.get<SystemMetrics>('/metrics'),
-    summary: () => metricsApiClient.get<SystemMetrics>('/metrics/summary'),
-    health: () => metricsApiClient.get('/health'),
-    cpu: () => metricsApiClient.get<CpuMetrics>('/metrics/cpu'),
-    memory: () => metricsApiClient.get<MemoryMetrics>('/metrics/memory'),
-    disk: () => metricsApiClient.get<DiskMetrics[]>('/metrics/disk'),
-    network: () => metricsApiClient.get<NetworkMetrics>('/metrics/network'),
+    all: () => metricsClient.get<SystemMetrics>('/metrics'),
+    summary: () => metricsClient.get<SystemMetrics>('/metrics/summary'),
+    health: () => metricsClient.get('/health'),
+    cpu: () => metricsClient.get<CpuMetrics>('/metrics/cpu'),
+    memory: () => metricsClient.get<MemoryMetrics>('/metrics/memory'),
+    disk: () => metricsClient.get<DiskMetrics[]>('/metrics/disk'),
+    network: () => metricsClient.get<NetworkMetrics>('/metrics/network'),
     // Alias for backward compatibility
-    system: () => metricsApiClient.get<SystemMetrics>('/metrics/summary'),
+    system: () => metricsClient.get<SystemMetrics>('/metrics/summary'),
     // History for charts
     history: (period: '5m' | '15m' | '1h' | '24h') =>
-        metricsApiClient.get<MetricHistoryPoint[]>('/metrics/history', { params: { period } }),
+        metricsClient.get<MetricHistoryPoint[]>('/metrics/history', { params: { period } }),
 };
 
 export interface SystemMetrics {
@@ -87,23 +96,23 @@ export interface MetricHistoryPoint {
 // Alerts API - synced with backend /api/v1/alerts routes
 export const alertsApi = {
     // Alert configurations (CRUD on /alerts)
-    listConfigs: () => metricsApiClient.get<AlertConfig[]>('/alerts'),
-    getConfig: (id: string) => metricsApiClient.get<AlertConfig>(`/alerts/${id}`),
+    listConfigs: () => metricsClient.get<AlertConfig[]>('/alerts'),
+    getConfig: (id: string) => metricsClient.get<AlertConfig>(`/alerts/${id}`),
     createConfig: (data: CreateAlertConfigRequest) =>
-        metricsApiClient.post<AlertConfig>('/alerts', data),
+        metricsClient.post<AlertConfig>('/alerts', data),
     updateConfig: (id: string, data: Partial<CreateAlertConfigRequest>) =>
-        metricsApiClient.put<AlertConfig>(`/alerts/${id}`, data),
-    deleteConfig: (id: string) => metricsApiClient.delete(`/alerts/${id}`),
+        metricsClient.put<AlertConfig>(`/alerts/${id}`, data),
+    deleteConfig: (id: string) => metricsClient.delete(`/alerts/${id}`),
     toggleConfig: (id: string, enabled: boolean) =>
-        metricsApiClient.put<AlertConfig>(`/alerts/${id}`, { enabled }),
+        metricsClient.put<AlertConfig>(`/alerts/${id}`, { enabled }),
     // Active alerts (currently firing)
-    listActive: () => metricsApiClient.get<AlertEvent[]>('/alerts/active'),
+    listActive: () => metricsClient.get<AlertEvent[]>('/alerts/active'),
     // Alert event history
     listHistory: (limit?: number, offset?: number) =>
-        metricsApiClient.get<AlertEvent[]>('/alerts/events', { params: { limit, status: undefined } }),
+        metricsClient.get<AlertEvent[]>('/alerts/events', { params: { limit, status: undefined } }),
     // Acknowledge an active alert event
     acknowledge: (id: string, acknowledged_by: string = 'admin') =>
-        metricsApiClient.post(`/alerts/${id}/acknowledge`, { acknowledged_by }),
+        metricsClient.post(`/alerts/${id}/acknowledge`, { acknowledged_by }),
 };
 
 // Alert severity levels

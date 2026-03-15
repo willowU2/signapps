@@ -71,12 +71,22 @@ interface UIState {
   theme: 'light' | 'dark' | 'system';
   rightSidebarOpen: boolean;
   activeRightWidget: RightWidgetType;
+
+  // Global Modals State
+  createWorkspaceModalOpen: boolean;
+  createProjectModalOpen: boolean;
+  createTaskModalOpen: boolean;
+
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   toggleRightSidebar: () => void;
   setRightSidebarOpen: (isOpen: boolean) => void;
   setActiveRightWidget: (widget: RightWidgetType) => void;
+
+  setCreateWorkspaceModalOpen: (isOpen: boolean) => void;
+  setCreateProjectModalOpen: (isOpen: boolean) => void;
+  setCreateTaskModalOpen: (isOpen: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -87,12 +97,21 @@ export const useUIStore = create<UIState>()(
       theme: 'system',
       rightSidebarOpen: true,
       activeRightWidget: 'chat',
+
+      createWorkspaceModalOpen: false,
+      createProjectModalOpen: false,
+      createTaskModalOpen: false,
+
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       setTheme: (theme) => set({ theme }),
       toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
       setRightSidebarOpen: (isOpen) => set({ rightSidebarOpen: isOpen }),
       setActiveRightWidget: (widget) => set({ activeRightWidget: widget, rightSidebarOpen: true }),
+
+      setCreateWorkspaceModalOpen: (isOpen) => set({ createWorkspaceModalOpen: isOpen }),
+      setCreateProjectModalOpen: (isOpen) => set({ createProjectModalOpen: isOpen }),
+      setCreateTaskModalOpen: (isOpen) => set({ createTaskModalOpen: isOpen }),
     }),
     {
       name: 'ui-storage',

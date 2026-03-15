@@ -1,4 +1,13 @@
-import { storageApiClient } from './core';
+/**
+ * Keep API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the storage service client (cached)
+const storageClient = getClient(ServiceName.STORAGE);
 
 // Keep API - Uses storage service with a dedicated bucket for notes
 // Notes are stored as JSON files in the "keep" bucket
@@ -41,7 +50,7 @@ export interface KeepData {
 // Helper to read JSON data from storage
 async function readKeepData(): Promise<KeepData> {
   try {
-    const response = await storageApiClient.get(`/files/${KEEP_BUCKET}/${NOTES_KEY}`, {
+    const response = await storageClient.get(`/files/${KEEP_BUCKET}/${NOTES_KEY}`, {
       responseType: 'text',
     });
     return JSON.parse(response.data as string);
@@ -57,7 +66,7 @@ async function writeKeepData(data: KeepData): Promise<void> {
   const formData = new FormData();
   formData.append('file', blob, NOTES_KEY);
 
-  await storageApiClient.post(`/files/${KEEP_BUCKET}`, formData, {
+  await storageClient.post(`/files/${KEEP_BUCKET}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 }
@@ -65,9 +74,9 @@ async function writeKeepData(data: KeepData): Promise<void> {
 // Ensure bucket exists
 async function ensureBucket(): Promise<void> {
   try {
-    await storageApiClient.get(`/buckets`);
+    await storageClient.get(`/buckets`);
     // Try to create if doesn't exist (will fail silently if exists)
-    await storageApiClient.post('/buckets', { name: KEEP_BUCKET }).catch(() => {});
+    await storageClient.post('/buckets', { name: KEEP_BUCKET }).catch(() => {});
   } catch {
     // Ignore errors - bucket may already exist
   }

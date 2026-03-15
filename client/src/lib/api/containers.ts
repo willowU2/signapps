@@ -1,29 +1,39 @@
-import { containersApiClient, CONTAINERS_URL } from './core';
+/**
+ * Containers API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+
+// Get the containers service client (cached)
+const containersClient = getClient(ServiceName.CONTAINERS);
+const CONTAINERS_URL = getServiceBaseUrl(ServiceName.CONTAINERS);
 
 // App Store API
 export const storeApi = {
     listApps: (category?: string, search?: string) =>
-        containersApiClient.get<StoreApp[]>('/store/apps', { params: { category, search } }),
-    getApp: (id: string) => containersApiClient.get<StoreApp>(`/store/apps/${id}`),
+        containersClient.get<StoreApp[]>('/store/apps', { params: { category, search } }),
+    getApp: (id: string) => containersClient.get<StoreApp>(`/store/apps/${id}`),
     installApp: (id: string, config?: Record<string, unknown>) =>
-        containersApiClient.post(`/store/apps/${id}/install`, { config }),
-    getCategories: () => containersApiClient.get<string[]>('/store/categories'),
+        containersClient.post(`/store/apps/${id}/install`, { config }),
+    getCategories: () => containersClient.get<string[]>('/store/categories'),
     getAppDetails: (sourceId: string | undefined, appId: string) =>
-        containersApiClient.get<AppDetails>(`/store/sources/${sourceId}/apps/${appId}/details`),
+        containersClient.get<AppDetails>(`/store/sources/${sourceId}/apps/${appId}/details`),
     install: (data: InstallRequest) =>
-        containersApiClient.post<InstallResponse>('/store/install', data),
+        containersClient.post<InstallResponse>('/store/install', data),
     installMulti: (data: InstallMultiRequest) =>
-        containersApiClient.post<{ install_id: string }>('/store/install-multi', data),
+        containersClient.post<{ install_id: string }>('/store/install-multi', data),
     checkPorts: (ports: number[]) =>
-        containersApiClient.post<PortConflict[]>('/store/check-ports', { ports }),
-    refreshAll: () => containersApiClient.post('/store/refresh'),
-    listSources: () => containersApiClient.get<AppSource[]>('/store/sources'),
+        containersClient.post<PortConflict[]>('/store/check-ports', { ports }),
+    refreshAll: () => containersClient.post('/store/refresh'),
+    listSources: () => containersClient.get<AppSource[]>('/store/sources'),
     addSource: (data: { name: string; url: string }) =>
-        containersApiClient.post<AppSource>('/store/sources', data),
+        containersClient.post<AppSource>('/store/sources', data),
     validateSource: (data: { name: string; url: string }) =>
-        containersApiClient.post<{ valid: boolean; app_count?: number; error?: string }>('/store/sources/validate', data),
-    deleteSource: (id: string) => containersApiClient.delete(`/store/sources/${id}`),
-    refreshSource: (id: string) => containersApiClient.post(`/store/sources/${id}/refresh`),
+        containersClient.post<{ valid: boolean; app_count?: number; error?: string }>('/store/sources/validate', data),
+    deleteSource: (id: string) => containersClient.delete(`/store/sources/${id}`),
+    refreshSource: (id: string) => containersClient.post(`/store/sources/${id}/refresh`),
 };
 
 export interface StoreApp {
@@ -118,25 +128,25 @@ export interface InstallMultiRequest {
 
 // Docker Compose API
 export const composeApi = {
-    listProjects: () => containersApiClient.get<ComposeProject[]>('/compose/projects'),
-    getProject: (name: string) => containersApiClient.get<ComposeProject>(`/compose/projects/${name}`),
+    listProjects: () => containersClient.get<ComposeProject[]>('/compose/projects'),
+    getProject: (name: string) => containersClient.get<ComposeProject>(`/compose/projects/${name}`),
     createProject: (name: string, content: string) =>
-        containersApiClient.post<ComposeProject>('/compose/projects', { name, content }),
+        containersClient.post<ComposeProject>('/compose/projects', { name, content }),
     updateProject: (name: string, content: string) =>
-        containersApiClient.put<ComposeProject>(`/compose/projects/${name}`, { content }),
+        containersClient.put<ComposeProject>(`/compose/projects/${name}`, { content }),
     deleteProject: (name: string, removeVolumes: boolean = false) =>
-        containersApiClient.delete(`/compose/projects/${name}`, { params: { remove_volumes: removeVolumes } }),
-    startProject: (name: string) => containersApiClient.post(`/compose/projects/${name}/start`),
-    stopProject: (name: string) => containersApiClient.post(`/compose/projects/${name}/stop`),
-    restartProject: (name: string) => containersApiClient.post(`/compose/projects/${name}/restart`),
-    pullProject: (name: string) => containersApiClient.post(`/compose/projects/${name}/pull`),
+        containersClient.delete(`/compose/projects/${name}`, { params: { remove_volumes: removeVolumes } }),
+    startProject: (name: string) => containersClient.post(`/compose/projects/${name}/start`),
+    stopProject: (name: string) => containersClient.post(`/compose/projects/${name}/stop`),
+    restartProject: (name: string) => containersClient.post(`/compose/projects/${name}/restart`),
+    pullProject: (name: string) => containersClient.post(`/compose/projects/${name}/pull`),
     logs: (name: string, service?: string, lines: number = 100) =>
-        containersApiClient.get<string>(`/compose/projects/${name}/logs`, { params: { service, lines } }),
-    validate: (content: string) => containersApiClient.post('/compose/validate', { content }),
+        containersClient.get<string>(`/compose/projects/${name}/logs`, { params: { service, lines } }),
+    validate: (content: string) => containersClient.post('/compose/validate', { content }),
     preview: (content: string) =>
-        containersApiClient.post<ComposePreviewResponse>('/compose/preview', { content }),
+        containersClient.post<ComposePreviewResponse>('/compose/preview', { content }),
     import: (content: string, autoStart: boolean = true) =>
-        containersApiClient.post<ComposeProject[]>('/compose/import', { content, auto_start: autoStart }),
+        containersClient.post<ComposeProject[]>('/compose/import', { content, auto_start: autoStart }),
 };
 
 export interface ComposeProject {
@@ -171,36 +181,36 @@ export interface ComposePreviewResponse {
 // Containers API
 export const containersApi = {
     list: (all: boolean = false) =>
-        containersApiClient.get<ContainerInfo[]>('/containers', { params: { all } }),
-    get: (id: string) => containersApiClient.get<ContainerInfo>(`/containers/${id}`),
-    create: (data: CreateContainerRequest) => containersApiClient.post<ContainerInfo>('/containers', data),
-    start: (id: string) => containersApiClient.post(`/containers/${id}/start`),
-    stop: (id: string) => containersApiClient.post(`/containers/${id}/stop`),
-    restart: (id: string) => containersApiClient.post(`/containers/${id}/restart`),
+        containersClient.get<ContainerInfo[]>('/containers', { params: { all } }),
+    get: (id: string) => containersClient.get<ContainerInfo>(`/containers/${id}`),
+    create: (data: CreateContainerRequest) => containersClient.post<ContainerInfo>('/containers', data),
+    start: (id: string) => containersClient.post(`/containers/${id}/start`),
+    stop: (id: string) => containersClient.post(`/containers/${id}/stop`),
+    restart: (id: string) => containersClient.post(`/containers/${id}/restart`),
     delete: (id: string, force: boolean = false) =>
-        containersApiClient.delete(`/containers/${id}`, { params: { force } }),
+        containersClient.delete(`/containers/${id}`, { params: { force } }),
     logs: (id: string, tail: number = 100) =>
-        containersApiClient.get<string>(`/containers/${id}/logs`, { params: { tail } }),
-    stats: (id: string) => containersApiClient.get<ContainerStats>(`/containers/${id}/stats`),
+        containersClient.get<string>(`/containers/${id}/logs`, { params: { tail } }),
+    stats: (id: string) => containersClient.get<ContainerStats>(`/containers/${id}/stats`),
     exec: (id: string, cmd: string[]) =>
-        containersApiClient.post(`/containers/${id}/exec`, { cmd }),
-    prune: () => containersApiClient.post('/containers/prune'),
+        containersClient.post(`/containers/${id}/exec`, { cmd }),
+    prune: () => containersClient.post('/containers/prune'),
     // Update container to latest image
-    update: (id: string) => containersApiClient.post(`/containers/${id}/update`),
+    update: (id: string) => containersClient.post(`/containers/${id}/update`),
     // Remove container (alias for delete)
     remove: (id: string, force: boolean = false) =>
-        containersApiClient.delete(`/containers/${id}`, { params: { force } }),
+        containersClient.delete(`/containers/${id}`, { params: { force } }),
     // Docker-specific operations
     startDocker: (dockerId: string) =>
-        containersApiClient.post(`/containers/docker/${dockerId}/start`),
+        containersClient.post(`/containers/docker/${dockerId}/start`),
     stopDocker: (dockerId: string) =>
-        containersApiClient.post(`/containers/docker/${dockerId}/stop`),
+        containersClient.post(`/containers/docker/${dockerId}/stop`),
     restartDocker: (dockerId: string) =>
-        containersApiClient.post(`/containers/docker/${dockerId}/restart`),
+        containersClient.post(`/containers/docker/${dockerId}/restart`),
     removeDocker: (dockerId: string, force: boolean = false) =>
-        containersApiClient.delete(`/containers/docker/${dockerId}`, { params: { force } }),
+        containersClient.delete(`/containers/docker/${dockerId}`, { params: { force } }),
     inspectDocker: (dockerId: string) =>
-        containersApiClient.get<ContainerInfo>(`/containers/docker/${dockerId}/inspect`),
+        containersClient.get<ContainerInfo>(`/containers/docker/${dockerId}/inspect`),
 };
 
 export interface CreateContainerRequest {
@@ -275,39 +285,39 @@ export interface ContainerStats {
 
 // Backups API
 export const backupsApi = {
-    listProfiles: () => containersApiClient.get<BackupProfile[]>('/backups/profiles'),
-    getProfile: (id: string) => containersApiClient.get<BackupProfile>(`/backups/profiles/${id}`),
+    listProfiles: () => containersClient.get<BackupProfile[]>('/backups/profiles'),
+    getProfile: (id: string) => containersClient.get<BackupProfile>(`/backups/profiles/${id}`),
     createProfile: (data: CreateBackupProfileRequest) =>
-        containersApiClient.post<BackupProfile>('/backups/profiles', data),
+        containersClient.post<BackupProfile>('/backups/profiles', data),
     updateProfile: (id: string, data: Partial<CreateBackupProfileRequest>) =>
-        containersApiClient.put<BackupProfile>(`/backups/profiles/${id}`, data),
-    deleteProfile: (id: string) => containersApiClient.delete(`/backups/profiles/${id}`),
+        containersClient.put<BackupProfile>(`/backups/profiles/${id}`, data),
+    deleteProfile: (id: string) => containersClient.delete(`/backups/profiles/${id}`),
 
     listBackups: (profileId?: string) =>
-        containersApiClient.get<BackupItem[]>('/backups/list', { params: { profile_id: profileId } }),
+        containersClient.get<BackupItem[]>('/backups/list', { params: { profile_id: profileId } }),
     createBackup: (profileId: string) =>
-        containersApiClient.post<BackupItem>(`/backups/profiles/${profileId}/run`),
+        containersClient.post<BackupItem>(`/backups/profiles/${profileId}/run`),
     restoreBackup: (backupId: string) =>
-        containersApiClient.post(`/backups/${backupId}/restore`),
-    deleteBackup: (backupId: string) => containersApiClient.delete(`/backups/${backupId}`),
+        containersClient.post(`/backups/${backupId}/restore`),
+    deleteBackup: (backupId: string) => containersClient.delete(`/backups/${backupId}`),
     downloadBackup: (backupId: string) =>
-        containersApiClient.get(`/backups/${backupId}/download`, { responseType: 'blob' }),
+        containersClient.get(`/backups/${backupId}/download`, { responseType: 'blob' }),
 
     // Aliases used by the UI
-    list: () => containersApiClient.get<{ profiles: BackupProfile[] }>('/backups/profiles'),
+    list: () => containersClient.get<{ profiles: BackupProfile[] }>('/backups/profiles'),
     create: (data: CreateBackupProfileRequest) =>
-        containersApiClient.post<BackupProfile>('/backups/profiles', data),
+        containersClient.post<BackupProfile>('/backups/profiles', data),
     update: (id: string, data: Partial<BackupProfile>) =>
-        containersApiClient.put<BackupProfile>(`/backups/profiles/${id}`, data),
-    remove: (id: string) => containersApiClient.delete(`/backups/profiles/${id}`),
+        containersClient.put<BackupProfile>(`/backups/profiles/${id}`, data),
+    remove: (id: string) => containersClient.delete(`/backups/profiles/${id}`),
     run: (profileId: string) =>
-        containersApiClient.post(`/backups/profiles/${profileId}/run`),
+        containersClient.post(`/backups/profiles/${profileId}/run`),
     snapshots: (profileId: string) =>
-        containersApiClient.get<{ snapshots: BackupSnapshot[] }>(`/backups/profiles/${profileId}/snapshots`),
+        containersClient.get<{ snapshots: BackupSnapshot[] }>(`/backups/profiles/${profileId}/snapshots`),
     restore: (profileId: string, snapshotId: string, targetPath?: string) =>
-        containersApiClient.post(`/backups/profiles/${profileId}/restore`, { snapshot_id: snapshotId, target_path: targetPath }),
+        containersClient.post(`/backups/profiles/${profileId}/restore`, { snapshot_id: snapshotId, target_path: targetPath }),
     runs: (profileId: string) =>
-        containersApiClient.get<{ runs: BackupRun[] }>(`/backups/profiles/${profileId}/runs`),
+        containersClient.get<{ runs: BackupRun[] }>(`/backups/profiles/${profileId}/runs`),
 };
 
 export interface BackupProfile {
@@ -387,19 +397,19 @@ export interface InstallEvent {
 
 // Networks API
 export const networksApi = {
-    list: () => containersApiClient.get('/networks'),
-    get: (id: string) => containersApiClient.get(`/networks/${id}`),
-    create: (data: any) => containersApiClient.post('/networks', data),
-    delete: (id: string) => containersApiClient.delete(`/networks/${id}`),
-    connect: (id: string, containerId: string) => containersApiClient.post(`/networks/${id}/connect`, { container: containerId }),
-    disconnect: (id: string, containerId: string) => containersApiClient.post(`/networks/${id}/disconnect`, { container: containerId }),
+    list: () => containersClient.get('/networks'),
+    get: (id: string) => containersClient.get(`/networks/${id}`),
+    create: (data: any) => containersClient.post('/networks', data),
+    delete: (id: string) => containersClient.delete(`/networks/${id}`),
+    connect: (id: string, containerId: string) => containersClient.post(`/networks/${id}/connect`, { container: containerId }),
+    disconnect: (id: string, containerId: string) => containersClient.post(`/networks/${id}/disconnect`, { container: containerId }),
 };
 
 // Volumes API
 export const volumesApi = {
-    list: () => containersApiClient.get('/volumes'),
-    get: (id: string) => containersApiClient.get(`/volumes/${id}`),
-    create: (data: any) => containersApiClient.post('/volumes', data),
-    delete: (id: string) => containersApiClient.delete(`/volumes/${id}`),
-    prune: () => containersApiClient.post('/volumes/prune'),
+    list: () => containersClient.get('/volumes'),
+    get: (id: string) => containersClient.get(`/volumes/${id}`),
+    create: (data: any) => containersClient.post('/volumes', data),
+    delete: (id: string) => containersClient.delete(`/volumes/${id}`),
+    prune: () => containersClient.post('/volumes/prune'),
 };

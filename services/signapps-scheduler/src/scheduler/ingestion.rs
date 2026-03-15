@@ -1,20 +1,26 @@
-use reqwest::Client;
-use serde_json::json;
+use signapps_common::AiIndexerClient;
 use signapps_common::traits::crawler::DatabaseCrawler;
 use signapps_db::DatabasePool;
 use std::sync::Arc;
 use tokio::time::{interval, Duration};
 
 use crate::crawlers::calendar::CalendarCrawler;
+use crate::crawlers::chat::ChatCrawler;
+use crate::crawlers::docs::DocsCrawler;
+use crate::crawlers::mail::MailCrawler;
+use crate::crawlers::storage::StorageCrawler;
 
 pub async fn start_ingestion_loop(pool: DatabasePool) {
     let crawlers: Vec<Arc<dyn DatabaseCrawler>> = vec![
         Arc::new(CalendarCrawler),
-        // Add more crawlers here in the future
+        Arc::new(MailCrawler),
+        Arc::new(DocsCrawler),
+        Arc::new(StorageCrawler),
+        Arc::new(ChatCrawler),
     ];
 
     let mut check_interval = interval(Duration::from_secs(300)); // Run every 5 minutes
-    let http_client = Client::new();
+    let indexer = AiIndexerClient::from_env();
 
     loop {
         check_interval.tick().await;
@@ -35,34 +41,27 @@ pub async fn start_ingestion_loop(pool: DatabasePool) {
                     for record_id in records {
                         match crawler.crawl_record(&pool, record_id).await {
                             Ok(Some(doc)) => {
-                                // Push to AI service
-                                let payload = json!({
-                                    "content": doc.content,
-                                    "filename": format!("{}-{}", doc.source_table, doc.record_id),
-                                    "path": format!("/{}/{}", doc.source_table, doc.record_id),
-                                    "collection": doc.source_table,
-                                    "security_tags": doc.security_tags
-                                });
-
-                                let res = http_client
-                                    .post("http://signapps-ai:8006/ai/index") // Assume internal DNS
-                                    .json(&payload)
-                                    .send()
+                                // Push to AI service via AiIndexerClient
+                                let result = indexer
+                                    .index_text(
+                                        &doc.source_table,
+                                        doc.record_id,
+                                        &format!("{}-{}", doc.source_table, doc.record_id),
+                                        &format!("/{}/{}", doc.source_table, doc.record_id),
+                                        &doc.content,
+                                    )
                                     .await;
 
-                                match res {
-                                    Ok(response) if response.status().is_success() => {
+                                match result {
+                                    Ok(()) => {
                                         let _ = crawler.mark_as_processed(&pool, record_id).await;
                                     },
-                                    Ok(response) => {
+                                    Err(e) => {
                                         tracing::error!(
                                             "Failed to ingest {}: {}",
                                             record_id,
-                                            response.status()
+                                            e
                                         );
-                                    },
-                                    Err(e) => {
-                                        tracing::error!("Failed to connect to AI service: {}", e);
                                     },
                                 }
                             },

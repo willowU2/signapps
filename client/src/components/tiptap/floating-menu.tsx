@@ -1,6 +1,7 @@
 'use client';
 
-import { FloatingMenu as TiptapFloatingMenu, Editor } from '@tiptap/react';
+import { FloatingMenu as TiptapFloatingMenu } from '@tiptap/react/menus';
+import type { Editor } from '@tiptap/react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,7 +30,6 @@ export function FloatingMenu({ editor, className }: FloatingMenuProps) {
     return (
         <TiptapFloatingMenu
             editor={editor}
-            tippyOptions={{ duration: 100 }}
             className={cn(
                 'flex flex-col gap-1 p-2 rounded-lg border bg-background shadow-lg min-w-[200px]',
                 className

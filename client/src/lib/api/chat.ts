@@ -1,4 +1,13 @@
-import { docsApiClient } from './core';
+/**
+ * Chat API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+
+// Get the docs service client (chat is served by docs service)
+const docsClient = getClient(ServiceName.DOCS);
 
 // ============================================================================
 // Types
@@ -60,23 +69,23 @@ export interface CreateDmRequest {
 export const chatApi = {
     // List all channels
     getChannels: () =>
-        docsApiClient.get<Channel[]>('/channels'),
+        docsClient.get<Channel[]>('/channels'),
 
     // Get a single channel
     getChannel: (id: string) =>
-        docsApiClient.get<Channel>(`/channels/${id}`),
+        docsClient.get<Channel>(`/channels/${id}`),
 
     // Create a new channel
     createChannel: (data: CreateChannelRequest) =>
-        docsApiClient.post<Channel>('/docs/chat', data),
+        docsClient.post<Channel>('/docs/chat', data),
 
     // Update a channel
     updateChannel: (id: string, data: UpdateChannelRequest) =>
-        docsApiClient.put<Channel>(`/channels/${id}`, data),
+        docsClient.put<Channel>(`/channels/${id}`, data),
 
     // Delete a channel
     deleteChannel: (id: string) =>
-        docsApiClient.delete(`/channels/${id}`),
+        docsClient.delete(`/channels/${id}`),
 
     // ========================================================================
     // Channel Members
@@ -84,15 +93,15 @@ export const chatApi = {
 
     // Get channel members
     getMembers: (channelId: string) =>
-        docsApiClient.get<ChannelMember[]>(`/channels/${channelId}/members`),
+        docsClient.get<ChannelMember[]>(`/channels/${channelId}/members`),
 
     // Add a member to a channel
     addMember: (channelId: string, data: AddMemberRequest) =>
-        docsApiClient.post<ChannelMember>(`/channels/${channelId}/members`, data),
+        docsClient.post<ChannelMember>(`/channels/${channelId}/members`, data),
 
     // Remove a member from a channel
     removeMember: (channelId: string, userId: string) =>
-        docsApiClient.delete(`/channels/${channelId}/members/${userId}`),
+        docsClient.delete(`/channels/${channelId}/members/${userId}`),
 
     // ========================================================================
     // Direct Messages
@@ -100,11 +109,11 @@ export const chatApi = {
 
     // Get direct messages for current user
     getDirectMessages: () =>
-        docsApiClient.get<DirectMessage[]>('/dms'),
+        docsClient.get<DirectMessage[]>('/dms'),
 
     // Create a direct message conversation
     createDirectMessage: (data: CreateDmRequest) =>
-        docsApiClient.post<DirectMessage>('/dms', data),
+        docsClient.post<DirectMessage>('/dms', data),
 
     // ========================================================================
     // WebSocket URL helper

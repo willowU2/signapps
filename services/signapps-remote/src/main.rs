@@ -3,11 +3,11 @@ mod models;
 
 use axum::{routing::get, Router};
 use signapps_common::auth::JwtConfig;
+use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     logging_middleware, optional_auth_middleware, request_id_middleware,
 };
-use signapps_db::{create_pool, DatabasePool};
-use std::net::SocketAddr;
+use signapps_db::DatabasePool;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
@@ -29,29 +29,24 @@ pub async fn health_check() -> &'static str {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
-    tracing::info!("Starting SignApps Remote Connection Server");
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_remote");
+    load_env();
 
-    dotenvy::dotenv().ok();
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://signapps:signapps_dev@127.0.0.1:5432/signapps".to_string());
-    let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3017".to_string())
-        .parse()
-        .unwrap_or(3017);
+    let config = ServiceConfig::from_env("signapps-remote", 3017);
+    config.log_startup();
 
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "dev_secret_change_in_production_32chars".to_string());
-
+    // JWT configuration (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
-        secret: jwt_secret,
+        secret: config.jwt_secret.clone(),
         issuer: "signapps".to_string(),
         audience: "signapps".to_string(),
         access_expiration: 900,
         refresh_expiration: 604800,
     };
 
-    let db_pool = create_pool(&database_url).await?;
+    // Database
+    let db_pool = signapps_db::create_pool(&config.database_url).await?;
     let app_state = AppState {
         db: db_pool,
         jwt_config,
@@ -83,10 +78,6 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(request_id_middleware))
         .with_state(app_state);
 
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("Listening on {}", addr);
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
-
-    Ok(())
+    // Start server using bootstrap helper
+    signapps_common::bootstrap::run_server(app, &config).await
 }

@@ -12,45 +12,29 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
     tenant_context_middleware, AuthState,
 };
 use signapps_common::JwtConfig;
 use signapps_db::{create_pool, run_migrations, DatabasePool};
-use std::net::SocketAddr;
 use tower_http::{
     cors::{Any, CorsLayer},
     trace::TraceLayer,
 };
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info,signapps=debug,sqlx=warn".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_identity");
+    load_env();
 
-    tracing::info!(
-        "Starting SignApps Identity Service v{}",
-        env!("CARGO_PKG_VERSION")
-    );
-
-    // Load configuration
-    dotenvy::dotenv().ok();
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        tracing::warn!("JWT_SECRET not set, using insecure default");
-        "dev_secret_change_in_production_32chars".to_string()
-    });
+    let config = ServiceConfig::from_env("signapps-identity", 3001);
+    config.log_startup();
 
     // Create database pool
-    let pool = create_pool(&database_url).await?;
+    let pool = create_pool(&config.database_url).await?;
 
     // Run global database migrations orchestrator
     run_migrations(&pool).await?;
@@ -61,9 +45,9 @@ async fn main() -> anyhow::Result<()> {
         std::time::Duration::from_secs(900), // 15min default (matches access token TTL)
     );
 
-    // Create JWT config
+    // Create JWT config (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
-        secret: jwt_secret.clone(),
+        secret: config.jwt_secret.clone(),
         issuer: "signapps".to_string(),
         audience: "signapps".to_string(),
         access_expiration: 900,
@@ -73,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
     // Create application state
     let state = AppState {
         pool,
-        jwt_secret,
+        jwt_secret: config.jwt_secret.clone(),
         jwt_config,
         cache,
     };
@@ -81,20 +65,8 @@ async fn main() -> anyhow::Result<()> {
     // Build router
     let app = create_router(state);
 
-    // Start server
-    let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-    let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3001".to_string())
-        .parse()
-        .expect("Invalid SERVER_PORT");
-
-    let addr: SocketAddr = format!("{}:{}", host, port).parse()?;
-    tracing::info!("Listening on {}", addr);
-
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
-
-    Ok(())
+    // Start server using bootstrap helper
+    signapps_common::bootstrap::run_server(app, &config).await
 }
 
 /// Application state shared across handlers.
@@ -124,7 +96,8 @@ fn create_router(state: AppState) -> Router {
         .route("/health", get(handlers::health::health_check))
         .route("/api/v1/auth/login", post(handlers::auth::login))
         .route("/api/v1/auth/register", post(handlers::auth::register))
-        .route("/api/v1/auth/refresh", post(handlers::auth::refresh));
+        .route("/api/v1/auth/refresh", post(handlers::auth::refresh))
+        .route("/api/v1/bootstrap", post(handlers::auth::bootstrap));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()

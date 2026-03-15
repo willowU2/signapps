@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -82,6 +83,7 @@ import {
   usersApi,
   User,
   CreateUserRequest,
+  UpdateUserRequest,
   auditApi,
   AuditLog,
   AuditAction,
@@ -91,22 +93,11 @@ import {
 } from '@/lib/api';
 import { toast } from 'sonner';
 import { useUsers } from '@/hooks/use-users';
+import { DataTable } from '@/components/ui/data-table';
+import { ColumnDef } from '@tanstack/react-table';
+import { UserSheet } from '@/components/admin/user-sheet';
 
-interface UserDialogData {
-  username: string;
-  email: string;
-  password: string;
-  display_name: string;
-  role: number;
-}
 
-const initialFormData: UserDialogData = {
-  username: '',
-  email: '',
-  password: '',
-  display_name: '',
-  role: 1,
-};
 
 const roleLabels: Record<number, string> = {
   0: 'Admin',
@@ -899,9 +890,8 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const { data: users = [], isLoading: loading } = useUsers();
   const [search, setSearch] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState<UserDialogData>(initialFormData);
   const [saving, setSaving] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; user: User | null }>({
     open: false,
@@ -923,41 +913,25 @@ export default function UsersPage() {
 
   const handleCreate = () => {
     setEditingUser(null);
-    setFormData(initialFormData);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
-    setFormData({
-      username: user.username,
-      email: user.email || '',
-      password: '',
-      display_name: user.display_name || '',
-      role: user.role,
-    });
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (data: CreateUserRequest | UpdateUserRequest) => {
     setSaving(true);
     try {
       if (editingUser) {
-        const updateData: Partial<CreateUserRequest> = {
-          email: formData.email,
-          display_name: formData.display_name,
-          role: formData.role,
-        };
-        if (formData.password) {
-          updateData.password = formData.password;
-        }
-        await usersApi.update(editingUser.id, updateData);
+        await usersApi.update(editingUser.id, data as UpdateUserRequest);
         toast.success('User updated successfully');
       } else {
-        await usersApi.create(formData);
+        await usersApi.create(data as CreateUserRequest);
         toast.success('User created successfully');
       }
-      setDialogOpen(false);
+      setSheetOpen(false);
       refreshUsers();
     } catch {
       toast.error(editingUser ? 'Failed to update user' : 'Failed to create user');
@@ -1006,12 +980,108 @@ export default function UsersPage() {
     setResetPasswordDialog({ open: true, user });
   };
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.username.toLowerCase().includes(search.toLowerCase()) ||
-      (u.email?.toLowerCase() ?? '').includes(search.toLowerCase()) ||
-      (u.display_name?.toLowerCase().includes(search.toLowerCase()) ?? false)
-  );
+  const columns: ColumnDef<User>[] = [
+    {
+      accessorKey: 'username',
+      header: 'User',
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+              <UserIcon className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="font-medium">{user.display_name || user.username}</p>
+              <p className="text-xs text-muted-foreground">@{user.username}</p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.email}</span>,
+    },
+    {
+      accessorKey: 'role',
+      header: 'Role',
+      cell: ({ row }) => {
+        const role = row.original.role;
+        return (
+          <Badge
+            variant={role === 0 ? 'default' : 'secondary'}
+            className={role === 0 ? 'bg-red-500/10 text-red-600' : ''}
+          >
+            {roleLabels[role] || 'Unknown'}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: 'auth_provider',
+      header: 'Provider',
+      cell: ({ row }) => {
+        return row.original.auth_provider === 'ldap' ? (
+          <Badge variant="outline" className="gap-1">
+            <LinkIcon className="h-3 w-3" />
+            LDAP
+          </Badge>
+        ) : (
+          <Badge variant="outline">Local</Badge>
+        );
+      },
+    },
+    {
+      accessorKey: 'mfa_enabled',
+      header: 'MFA',
+      cell: ({ row }) => {
+        return row.original.mfa_enabled ? (
+          <Check className="h-4 w-4 text-green-500" />
+        ) : (
+          <X className="h-4 w-4 text-muted-foreground" />
+        );
+      },
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleEdit(user)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => openResetPasswordDialog(user)}
+                disabled={user.auth_provider === 'ldap'}
+              >
+                <Key className="mr-2 h-4 w-4" />
+                Reset Password
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => setDeleteDialog({ open: true, user })}
+                disabled={user.username === 'admin'}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   const stats = {
     total: users.length,
@@ -1027,10 +1097,10 @@ export default function UsersPage() {
           <h1 className="text-3xl font-bold">Users</h1>
           <div className="grid gap-4 md:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24" />
+              <Skeleton key={i} className="h-24 rounded-xl" />
             ))}
           </div>
-          <Skeleton className="h-96" />
+          <DataTableSkeleton count={8} />
         </div>
       </AppLayout>
     );
@@ -1120,118 +1190,12 @@ export default function UsersPage() {
           </TabsList>
 
           <TabsContent value="users" className="space-y-4">
-            {/* Search */}
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search users..."
-                className="pl-9"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
-            {/* Users Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>All Users</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Provider</TableHead>
-                      <TableHead>MFA</TableHead>
-                      <TableHead className="w-[50px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                              <UserIcon className="h-4 w-4 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-medium">{user.display_name || user.username}</p>
-                              <p className="text-xs text-muted-foreground">@{user.username}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={user.role === 0 ? 'default' : 'secondary'}
-                            className={user.role === 0 ? 'bg-red-500/10 text-red-600' : ''}
-                          >
-                            {roleLabels[user.role] || 'Unknown'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {user.auth_provider === 'ldap' ? (
-                            <Badge variant="outline" className="gap-1">
-                              <LinkIcon className="h-3 w-3" />
-                              LDAP
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline">Local</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {user.mfa_enabled ? (
-                            <Check className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <X className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleEdit(user)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => openResetPasswordDialog(user)}
-                                disabled={user.auth_provider === 'ldap'}
-                              >
-                                <Key className="mr-2 h-4 w-4" />
-                                Reset Password
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => setDeleteDialog({ open: true, user })}
-                                disabled={user.username === 'admin'}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {filteredUsers.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          No users found
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <DataTable 
+              columns={columns} 
+              data={users} 
+              searchKey="username" 
+              searchPlaceholder="Search users by username..."
+            />
           </TabsContent>
 
           <TabsContent value="audit">
@@ -1248,82 +1212,14 @@ export default function UsersPage() {
         existingUsers={users}
       />
 
-      {/* User Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingUser ? 'Edit User' : 'Create User'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                placeholder="john.doe"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                disabled={!!editingUser}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="john@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="display_name">Display Name</Label>
-              <Input
-                id="display_name"
-                placeholder="John Doe"
-                value={formData.display_name}
-                onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                {editingUser ? 'New Password (leave empty to keep current)' : 'Password'}
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="********"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select
-                value={formData.role.toString()}
-                onValueChange={(value) => setFormData({ ...formData, role: parseInt(value) })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Admin</SelectItem>
-                  <SelectItem value="1">User</SelectItem>
-                  <SelectItem value="2">Viewer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editingUser ? 'Update' : 'Create'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* User Sheet Form */}
+      <UserSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        user={editingUser}
+        onSubmit={handleSave}
+        isLoading={saving}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog

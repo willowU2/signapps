@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DataTableSkeleton, CardGridSkeleton } from '@/components/ui/skeleton-loader';
 import { DriveSidebar } from '@/components/storage/drive-sidebar';
 import { driveApi, DriveNode } from '@/lib/api';
 import { storageApi } from '@/lib/api/storage';
@@ -337,12 +338,7 @@ export default function GlobalDrivePage() {
           {/* Files / Folders List */}
           <div className="flex-1 overflow-y-auto p-6">
             {loading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
+              <DataTableSkeleton count={4} />
             ) : nodes.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
                 <Folder className="h-16 w-16 mb-4" />

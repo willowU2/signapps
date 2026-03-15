@@ -6,13 +6,13 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
 };
 use signapps_common::{AuthState, JwtConfig};
 use signapps_db::DatabasePool;
 use signapps_runtime::{HardwareProfile, ModelManager};
-use std::net::SocketAddr;
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
@@ -55,31 +55,18 @@ impl AuthState for AppState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "signapps_ai=debug,tower_http=debug,info".into()),
-        )
-        .init();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_ai");
+    load_env();
 
-    tracing::info!(
-        "Starting SignApps AI Service v{}",
-        env!("CARGO_PKG_VERSION")
-    );
+    let config = ServiceConfig::from_env("signapps-ai", 3005);
+    config.log_startup();
 
-    // Load .env file
-    dotenvy::dotenv().ok();
-
-    // Load configuration
-    let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
-    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
-    let embeddings_url =
-        std::env::var("EMBEDDINGS_URL").unwrap_or_else(|_| "http://localhost:8080".into());
+    // Load AI-specific configuration
+    let embeddings_url = env_or("EMBEDDINGS_URL", "http://localhost:8080");
 
     // Initialize database pool
-    let pool = signapps_db::create_pool(&database_url).await?;
+    let pool = signapps_db::create_pool(&config.database_url).await?;
     tracing::info!("Database connection established");
 
     // Run migrations (non-fatal: pgvector may not be installed)
@@ -196,7 +183,7 @@ async fn main() -> anyhow::Result<()> {
     if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
         if !key.is_empty() {
             let default_model = std::env::var("ANTHROPIC_MODEL")
-                .unwrap_or_else(|_| "claude-3-5-sonnet-20241022".to_string());
+                .unwrap_or_else(|_| "claude-sonnet-4-0-20250514".to_string());
             let config = ProviderConfig {
                 provider_type: LlmProviderType::Anthropic,
                 base_url: "https://api.anthropic.com".to_string(),
@@ -214,6 +201,60 @@ async fn main() -> anyhow::Result<()> {
                 },
                 Err(e) => {
                     tracing::warn!("Failed to create Anthropic provider: {}", e)
+                },
+            }
+        }
+    }
+
+    // Google Gemini
+    if let Ok(key) = std::env::var("GEMINI_API_KEY") {
+        if !key.is_empty() {
+            let default_model = std::env::var("GEMINI_MODEL")
+                .unwrap_or_else(|_| "gemini-2.0-flash".to_string());
+            let config = ProviderConfig {
+                provider_type: LlmProviderType::Gemini,
+                base_url: "https://generativelanguage.googleapis.com".to_string(),
+                api_key: Some(key),
+                default_model,
+                enabled: true,
+            };
+            match create_provider(&config) {
+                Ok(provider) => {
+                    tracing::info!("Registered Gemini provider");
+                    if first_provider_id.is_none() {
+                        first_provider_id = Some("gemini".to_string());
+                    }
+                    registry.register("gemini", config, provider);
+                },
+                Err(e) => {
+                    tracing::warn!("Failed to create Gemini provider: {}", e)
+                },
+            }
+        }
+    }
+
+    // LM Studio (local, OpenAI-compatible)
+    if let Ok(url) = std::env::var("LMSTUDIO_URL") {
+        if !url.is_empty() {
+            let default_model = std::env::var("LMSTUDIO_MODEL")
+                .unwrap_or_else(|_| "default".to_string());
+            let config = ProviderConfig {
+                provider_type: LlmProviderType::LmStudio,
+                base_url: url,
+                api_key: None,
+                default_model,
+                enabled: true,
+            };
+            match create_provider(&config) {
+                Ok(provider) => {
+                    tracing::info!("Registered LM Studio provider");
+                    if first_provider_id.is_none() {
+                        first_provider_id = Some("lmstudio".to_string());
+                    }
+                    registry.register("lmstudio", config, provider);
+                },
+                Err(e) => {
+                    tracing::warn!("Failed to create LM Studio provider: {}", e)
                 },
             }
         }
@@ -259,8 +300,9 @@ async fn main() -> anyhow::Result<()> {
 
     if registry.is_empty() {
         tracing::warn!(
-            "No LLM providers configured! Set VLLM_URL, OLLAMA_URL, \
-             OPENAI_API_KEY, ANTHROPIC_API_KEY, or LLAMACPP_MODEL."
+            "No LLM providers configured! Set VLLM_URL, LMSTUDIO_URL, \
+             OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, \
+             OLLAMA_URL, or LLAMACPP_MODEL."
         );
     } else {
         tracing::info!(
@@ -281,11 +323,11 @@ async fn main() -> anyhow::Result<()> {
     let indexer = IndexPipeline::new(embeddings.clone(), vectors.clone(), ocr_url);
     tracing::info!("Index pipeline initialized");
 
-    // JWT configuration
+    // JWT configuration (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
-        secret: jwt_secret,
+        secret: config.jwt_secret.clone(),
         issuer: "signapps".to_string(),
-        audience: "signapps-ai".to_string(),
+        audience: "signapps".to_string(),
         access_expiration: 900,
         refresh_expiration: 604800,
     };
@@ -306,19 +348,8 @@ async fn main() -> anyhow::Result<()> {
     // Build router
     let app = create_router(state);
 
-    // Start server
-    let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3005".into())
-        .parse()
-        .unwrap_or(3005);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-
-    tracing::info!("Listening on {}", addr);
-
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
-
-    Ok(())
+    // Start server using bootstrap helper
+    signapps_common::bootstrap::run_server(app, &config).await
 }
 
 /// Create the application router with all routes.

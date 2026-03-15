@@ -1,4 +1,14 @@
-import { docsApiClient, DOCS_URL } from './core';
+/**
+ * Docs API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+
+// Get the docs service client (cached)
+const docsClient = getClient(ServiceName.DOCS);
+const DOCS_URL = getServiceBaseUrl(ServiceName.DOCS);
 
 // ============================================================================
 // Types - Base
@@ -111,37 +121,37 @@ export const docsApi = {
     // ========================================================================
 
     createTextDocument: (data: CreateTextDocumentRequest) =>
-        docsApiClient.post<TextDocument>('/docs/text', data),
+        docsClient.post<TextDocument>('/docs/text', data),
 
     // ========================================================================
     // Spreadsheets
     // ========================================================================
 
     createSpreadsheet: (data: CreateSpreadsheetRequest) =>
-        docsApiClient.post<SpreadsheetDocument>('/docs/sheet', data),
+        docsClient.post<SpreadsheetDocument>('/docs/sheet', data),
 
     getSpreadsheetRows: (docId: string) =>
-        docsApiClient.get<RowsResponse>(`/docs/sheet/${docId}/rows`),
+        docsClient.get<RowsResponse>(`/docs/sheet/${docId}/rows`),
 
     // ========================================================================
     // Presentations
     // ========================================================================
 
     createPresentation: (data: CreatePresentationRequest) =>
-        docsApiClient.post<PresentationDocument>('/docs/slide', data),
+        docsClient.post<PresentationDocument>('/docs/slide', data),
 
     getPresentationSlides: (docId: string) =>
-        docsApiClient.get<SlidesResponse>(`/docs/slide/${docId}/slides`),
+        docsClient.get<SlidesResponse>(`/docs/slide/${docId}/slides`),
 
     // ========================================================================
     // Boards
     // ========================================================================
 
     createBoard: (data: CreateBoardRequest) =>
-        docsApiClient.post<BoardDocument>('/docs/board', data),
+        docsClient.post<BoardDocument>('/docs/board', data),
 
     getBoardColumns: (docId: string) =>
-        docsApiClient.get<ColumnsResponse>(`/docs/board/${docId}/columns`),
+        docsClient.get<ColumnsResponse>(`/docs/board/${docId}/columns`),
 
     // ========================================================================
     // WebSocket URL for real-time collaboration (Yjs)

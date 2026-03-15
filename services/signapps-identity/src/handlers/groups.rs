@@ -21,15 +21,27 @@ pub struct GroupResponse {
 }
 
 #[derive(Deserialize)]
+pub struct ListQuery {
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+#[derive(Deserialize)]
 pub struct AddMemberRequest {
     pub user_id: Uuid,
     pub role: Option<String>,
 }
 
+
 /// List all groups.
-pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<GroupResponse>>> {
+pub async fn list(
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<ListQuery>,
+) -> Result<Json<Vec<GroupResponse>>> {
     let repo = GroupRepository::new(&state.pool);
-    let groups = repo.list_groups().await?;
+    let limit = query.limit.unwrap_or(50);
+    let offset = query.offset.unwrap_or(0);
+    let groups = repo.list(limit, offset).await?;
 
     let group_ids: Vec<Uuid> = groups.iter().map(|g| g.id).collect();
     let counts = repo.count_members_batch(&group_ids).await?;
@@ -58,7 +70,7 @@ pub async fn get(
 ) -> Result<Json<GroupResponse>> {
     let repo = GroupRepository::new(&state.pool);
     let group = repo
-        .find_group(id)
+        .find_by_id(id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("Group {}", id)))?;
 
@@ -79,7 +91,7 @@ pub async fn create(
     Json(payload): Json<signapps_db::models::CreateGroup>,
 ) -> Result<Json<GroupResponse>> {
     let repo = GroupRepository::new(&state.pool);
-    let group = repo.create_group(payload).await?;
+    let group = repo.create(payload).await?;
 
     Ok(Json(GroupResponse {
         id: group.id,
@@ -99,11 +111,11 @@ pub async fn update(
     let repo = GroupRepository::new(&state.pool);
 
     // Verify group exists
-    repo.find_group(id)
+    repo.find_by_id(id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("Group {}", id)))?;
 
-    let group = repo.update_group(id, payload).await?;
+    let group = repo.update(id, payload).await?;
     let member_count = repo.count_members(id).await?;
 
     Ok(Json(GroupResponse {
@@ -118,7 +130,7 @@ pub async fn update(
 /// Delete group.
 pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
     let repo = GroupRepository::new(&state.pool);
-    repo.delete_group(id).await?;
+    repo.delete(id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

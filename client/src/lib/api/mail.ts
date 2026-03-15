@@ -1,4 +1,13 @@
-import { mailApiClient } from './core';
+/**
+ * Mail API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the mail service client (cached)
+const mailClient = getClient(ServiceName.MAIL);
 
 // ============================================================================
 // Types
@@ -111,6 +120,7 @@ export interface SendEmailRequest {
     in_reply_to?: string;
     is_draft?: boolean;
     scheduled_send_at?: string;
+    metadata?: string;
 }
 
 export interface UpdateEmailRequest {
@@ -201,85 +211,85 @@ export const mailApi = {
     // ========================================================================
 
     listAccounts: () =>
-        mailApiClient.get<MailAccount[]>('/mail/accounts'),
+        mailClient.get<MailAccount[]>('/mail/accounts'),
 
     getAccount: (id: string) =>
-        mailApiClient.get<MailAccount>(`/mail/accounts/${id}`),
+        mailClient.get<MailAccount>(`/mail/accounts/${id}`),
 
     createAccount: (data: CreateAccountRequest) =>
-        mailApiClient.post<MailAccount>('/mail/accounts', data),
+        mailClient.post<MailAccount>('/mail/accounts', data),
 
     updateAccount: (id: string, data: UpdateAccountRequest) =>
-        mailApiClient.patch<MailAccount>(`/mail/accounts/${id}`, data),
+        mailClient.patch<MailAccount>(`/mail/accounts/${id}`, data),
 
     deleteAccount: (id: string) =>
-        mailApiClient.delete(`/mail/accounts/${id}`),
+        mailClient.delete(`/mail/accounts/${id}`),
 
     syncAccount: (id: string) =>
-        mailApiClient.post<{ status: string }>(`/mail/accounts/${id}/sync`),
+        mailClient.post<{ status: string }>(`/mail/accounts/${id}/sync`),
 
     testAccount: (id: string) =>
-        mailApiClient.post<TestResult>(`/mail/accounts/${id}/test`),
+        mailClient.post<TestResult>(`/mail/accounts/${id}/test`),
 
     // ========================================================================
     // Folders
     // ========================================================================
 
     listFolders: (accountId?: string) =>
-        mailApiClient.get<MailFolder[]>('/mail/folders', {
+        mailClient.get<MailFolder[]>('/mail/folders', {
             params: accountId ? { account_id: accountId } : undefined
         }),
 
     getFolder: (id: string) =>
-        mailApiClient.get<MailFolder>(`/mail/folders/${id}`),
+        mailClient.get<MailFolder>(`/mail/folders/${id}`),
 
     // ========================================================================
     // Emails
     // ========================================================================
 
     listEmails: (params?: EmailQuery) =>
-        mailApiClient.get<Email[]>('/mail/emails', { params }),
+        mailClient.get<Email[]>('/mail/emails', { params }),
 
     getEmail: (id: string) =>
-        mailApiClient.get<Email>(`/mail/emails/${id}`),
+        mailClient.get<Email>(`/mail/emails/${id}`),
 
     sendEmail: (data: SendEmailRequest) =>
-        mailApiClient.post<Email>('/mail/emails', data),
+        mailClient.post<Email>('/mail/emails', data),
 
     updateEmail: (id: string, data: UpdateEmailRequest) =>
-        mailApiClient.patch<Email>(`/mail/emails/${id}`, data),
+        mailClient.patch<Email>(`/mail/emails/${id}`, data),
 
     deleteEmail: (id: string) =>
-        mailApiClient.delete(`/mail/emails/${id}`),
+        mailClient.delete(`/mail/emails/${id}`),
 
     listAttachments: (emailId: string) =>
-        mailApiClient.get<Attachment[]>(`/mail/emails/${emailId}/attachments`),
+        mailClient.get<Attachment[]>(`/mail/emails/${emailId}/attachments`),
 
     // ========================================================================
     // Labels
     // ========================================================================
 
     listLabels: (accountId?: string) =>
-        mailApiClient.get<MailLabel[]>('/mail/labels', {
+        mailClient.get<MailLabel[]>('/mail/labels', {
             params: accountId ? { account_id: accountId } : undefined
         }),
 
     createLabel: (data: CreateLabelRequest) =>
-        mailApiClient.post<MailLabel>('/mail/labels', data),
+        mailClient.post<MailLabel>('/mail/labels', data),
 
     updateLabel: (id: string, data: UpdateLabelRequest) =>
-        mailApiClient.patch<MailLabel>(`/mail/labels/${id}`, data),
+        mailClient.patch<MailLabel>(`/mail/labels/${id}`, data),
 
     deleteLabel: (id: string) =>
-        mailApiClient.delete(`/mail/labels/${id}`),
+        mailClient.delete(`/mail/labels/${id}`),
 
     // ========================================================================
     // Search & Stats
     // ========================================================================
 
     searchEmails: (params: SearchQuery) =>
-        mailApiClient.get<Email[]>('/mail/search', { params }),
+        mailClient.get<Email[]>('/mail/search', { params }),
 
     getStats: () =>
-        mailApiClient.get<MailStats>('/mail/stats'),
+        mailClient.get<MailStats>('/mail/stats'),
 };

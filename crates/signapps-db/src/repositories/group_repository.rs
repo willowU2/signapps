@@ -18,7 +18,7 @@ impl<'a> GroupRepository<'a> {
     // === Groups ===
 
     /// Find group by ID.
-    pub async fn find_group(&self, id: Uuid) -> Result<Option<Group>> {
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<Group>> {
         let group = sqlx::query_as::<_, Group>("SELECT * FROM identity.groups WHERE id = $1")
             .bind(id)
             .fetch_optional(self.pool.inner())
@@ -28,16 +28,20 @@ impl<'a> GroupRepository<'a> {
     }
 
     /// List all groups.
-    pub async fn list_groups(&self) -> Result<Vec<Group>> {
-        let groups = sqlx::query_as::<_, Group>("SELECT * FROM identity.groups ORDER BY name")
-            .fetch_all(self.pool.inner())
-            .await?;
+    pub async fn list(&self, limit: i64, offset: i64) -> Result<Vec<Group>> {
+        let groups = sqlx::query_as::<_, Group>(
+            "SELECT * FROM identity.groups ORDER BY name LIMIT $1 OFFSET $2",
+        )
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(self.pool.inner())
+        .await?;
 
         Ok(groups)
     }
 
     /// Create a new group.
-    pub async fn create_group(&self, group: CreateGroup) -> Result<Group> {
+    pub async fn create(&self, group: CreateGroup) -> Result<Group> {
         let created = sqlx::query_as::<_, Group>(
             r#"
             INSERT INTO identity.groups (name, description, parent_id)
@@ -55,7 +59,7 @@ impl<'a> GroupRepository<'a> {
     }
 
     /// Update an existing group.
-    pub async fn update_group(&self, id: Uuid, group: CreateGroup) -> Result<Group> {
+    pub async fn update(&self, id: Uuid, group: CreateGroup) -> Result<Group> {
         let updated = sqlx::query_as::<_, Group>(
             r#"
             UPDATE identity.groups
@@ -75,7 +79,7 @@ impl<'a> GroupRepository<'a> {
     }
 
     /// Delete a group.
-    pub async fn delete_group(&self, id: Uuid) -> Result<()> {
+    pub async fn delete(&self, id: Uuid) -> Result<()> {
         sqlx::query("DELETE FROM identity.groups WHERE id = $1")
             .bind(id)
             .execute(self.pool.inner())

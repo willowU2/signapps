@@ -233,6 +233,7 @@ export interface SendEmailRequest {
     in_reply_to?: string
     is_draft?: boolean
     scheduled_send_at?: string
+    metadata?: string
 }
 
 export interface UpdateEmailRequest {

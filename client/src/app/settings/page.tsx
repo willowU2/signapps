@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
 import {
   Table,
   TableBody,
@@ -45,6 +47,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { authApi, groupsApi, LdapConfig, Group } from '@/lib/api';
 import { api } from '@/lib/api';
+import { DataTable } from '@/components/ui/data-table';
+import { GroupSheet } from '@/components/settings/group-sheet';
+import { WebhookSheet } from '@/components/settings/webhook-sheet';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface WebhookConfig {
   id: string;
@@ -74,7 +80,6 @@ const WEBHOOK_EVENTS = [
   'route.deleted',
 ];
 import { toast } from 'sonner';
-import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { AiRoutingSettings } from '@/components/settings/ai-routing-settings';
 import { ProfileSettings } from '@/components/settings/profile-settings';
@@ -105,11 +110,9 @@ export default function SettingsPage() {
   const [ldapSaving, setLdapSaving] = useState(false);
   const [ldapTesting, setLdapTesting] = useState(false);
 
-  // Group dialog state
-  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+  // Group sheet state
+  const [groupSheetOpen, setGroupSheetOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
-  const [groupName, setGroupName] = useState('');
-  const [groupDescription, setGroupDescription] = useState('');
   const [groupSaving, setGroupSaving] = useState(false);
   const [deleteGroupDialog, setDeleteGroupDialog] = useState<{ open: boolean; group: Group | null }>({
     open: false,
@@ -119,12 +122,8 @@ export default function SettingsPage() {
   // Webhooks state
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
   const [webhooksLoading, setWebhooksLoading] = useState(true);
-  const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
+  const [webhookSheetOpen, setWebhookSheetOpen] = useState(false);
   const [editingWebhook, setEditingWebhook] = useState<WebhookConfig | null>(null);
-  const [webhookName, setWebhookName] = useState('');
-  const [webhookUrl, setWebhookUrl] = useState('');
-  const [webhookSecret, setWebhookSecret] = useState('');
-  const [webhookEvents, setWebhookEvents] = useState<string[]>([]);
   const [webhookSaving, setWebhookSaving] = useState(false);
   const [deleteWebhookDialog, setDeleteWebhookDialog] = useState<{ open: boolean; webhook: WebhookConfig | null }>({
     open: false,
@@ -200,38 +199,22 @@ export default function SettingsPage() {
     }
   };
 
-  const handleOpenGroupDialog = (group?: Group) => {
-    if (group) {
-      setEditingGroup(group);
-      setGroupName(group.name);
-      setGroupDescription(group.description || '');
-    } else {
-      setEditingGroup(null);
-      setGroupName('');
-      setGroupDescription('');
-    }
-    setGroupDialogOpen(true);
+  const handleOpenGroupSheet = (group?: Group) => {
+    setEditingGroup(group || null);
+    setGroupSheetOpen(true);
   };
 
-  const handleSaveGroup = async () => {
-    if (!groupName.trim()) return;
-
+  const handleSaveGroup = async (data: any) => {
     setGroupSaving(true);
     try {
       if (editingGroup) {
-        await groupsApi.update(editingGroup.id, {
-          name: groupName,
-          description: groupDescription || undefined,
-        });
+        await groupsApi.update(editingGroup.id, data);
         toast.success('Group updated successfully');
       } else {
-        await groupsApi.create({
-          name: groupName,
-          description: groupDescription || undefined,
-        });
+        await groupsApi.create(data);
         toast.success('Group created successfully');
       }
-      setGroupDialogOpen(false);
+      setGroupSheetOpen(false);
       fetchGroups();
     } catch {
       toast.error('Failed to save group');
@@ -239,6 +222,78 @@ export default function SettingsPage() {
       setGroupSaving(false);
     }
   };
+
+  const groupColumns: ColumnDef<Group>[] = [
+    {
+      accessorKey: "name",
+      header: "Group",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{row.original.name}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.description || '-'}</span>,
+    },
+    {
+      accessorKey: "member_count",
+      header: "Members",
+      cell: ({ row }) => (
+        <Badge variant="secondary">
+          {row.original.member_count} member{row.original.member_count !== 1 ? 's' : ''}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "source",
+      header: "Source",
+      cell: ({ row }) => (
+        row.original.ldap_dn ? (
+          <Badge variant="outline">
+            <LinkIcon className="mr-1 h-3 w-3" />
+            LDAP
+          </Badge>
+        ) : (
+          <Badge variant="outline">Local</Badge>
+        )
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const group = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleOpenGroupSheet(group)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+{/* Member management retiré - feature non implémentée (NO DEAD ENDS) */}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => setDeleteGroupDialog({ open: true, group })}
+                disabled={!!group.ldap_dn}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   const handleDeleteGroup = async () => {
     if (!deleteGroupDialog.group) return;
@@ -254,38 +309,14 @@ export default function SettingsPage() {
   };
 
   // Webhook handlers
-  const handleOpenWebhookDialog = (webhook?: WebhookConfig) => {
-    if (webhook) {
-      setEditingWebhook(webhook);
-      setWebhookName(webhook.name);
-      setWebhookUrl(webhook.url);
-      setWebhookSecret(webhook.secret || '');
-      setWebhookEvents(webhook.events);
-    } else {
-      setEditingWebhook(null);
-      setWebhookName('');
-      setWebhookUrl('');
-      setWebhookSecret('');
-      setWebhookEvents([]);
-    }
-    setWebhookDialogOpen(true);
+  const handleOpenWebhookSheet = (webhook?: WebhookConfig) => {
+    setEditingWebhook(webhook || null);
+    setWebhookSheetOpen(true);
   };
 
-  const handleSaveWebhook = async () => {
-    if (!webhookName.trim() || !webhookUrl.trim() || webhookEvents.length === 0) {
-      toast.error('Name, URL and at least one event are required');
-      return;
-    }
-
+  const handleSaveWebhook = async (data: Omit<WebhookConfig, "id" | "enabled" | "last_triggered" | "last_status" | "created_at">) => {
     setWebhookSaving(true);
     try {
-      const data = {
-        name: webhookName,
-        url: webhookUrl,
-        secret: webhookSecret || undefined,
-        events: webhookEvents,
-      };
-
       if (editingWebhook) {
         await api.put(`/webhooks/${editingWebhook.id}`, data);
         toast.success('Webhook updated successfully');
@@ -293,7 +324,7 @@ export default function SettingsPage() {
         await api.post('/webhooks', data);
         toast.success('Webhook created successfully');
       }
-      setWebhookDialogOpen(false);
+      setWebhookSheetOpen(false);
       fetchWebhooks();
     } catch {
       toast.error('Failed to save webhook');
@@ -335,13 +366,118 @@ export default function SettingsPage() {
     }
   };
 
-  const toggleWebhookEvent = (event: string) => {
-    if (webhookEvents.includes(event)) {
-      setWebhookEvents(webhookEvents.filter((e) => e !== event));
-    } else {
-      setWebhookEvents([...webhookEvents, event]);
-    }
-  };
+  const webhookColumns: ColumnDef<WebhookConfig>[] = [
+    {
+      accessorKey: "enabled",
+      header: "Status",
+      cell: ({ row }) => (
+        row.original.enabled ? (
+          <Badge className="bg-green-500/10 text-green-600">Active</Badge>
+        ) : (
+          <Badge variant="secondary">Disabled</Badge>
+        )
+      ),
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Webhook className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{row.original.name}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "url",
+      header: "URL",
+      cell: ({ row }) => (
+        <span className="font-mono text-sm text-muted-foreground block max-w-[200px] truncate">
+          {row.original.url}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "events",
+      header: "Events",
+      cell: ({ row }) => (
+        <Badge variant="outline">
+          {row.original.events.length} event{row.original.events.length !== 1 ? 's' : ''}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "last_triggered",
+      header: "Last Triggered",
+      cell: ({ row }) => {
+        const webhook = row.original;
+        return (
+          <span className="text-muted-foreground whitespace-nowrap">
+            {webhook.last_triggered
+              ? new Date(webhook.last_triggered).toLocaleString('fr-FR')
+              : 'Never'}
+            {webhook.last_status && (
+              <Badge
+                variant="outline"
+                className={`ml-2 ${webhook.last_status >= 200 && webhook.last_status < 300
+                    ? 'text-green-600'
+                    : 'text-red-600'
+                  }`}
+              >
+                {webhook.last_status}
+              </Badge>
+            )}
+          </span>
+        );
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const webhook = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleOpenWebhookSheet(webhook)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleTestWebhook(webhook)}>
+                <TestTube2 className="mr-2 h-4 w-4" />
+                Test
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToggleWebhook(webhook)}>
+                {webhook.enabled ? (
+                  <>
+                    <Pause className="mr-2 h-4 w-4" />
+                    Disable
+                  </>
+                ) : (
+                  <>
+                    <Play className="mr-2 h-4 w-4" />
+                    Enable
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => setDeleteWebhookDialog({ open: true, webhook })}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   return (
     <AppLayout>
@@ -427,7 +563,7 @@ export default function SettingsPage() {
                   Manage user groups and permissions
                 </p>
               </div>
-              <Button onClick={() => handleOpenGroupDialog()}>
+              <Button onClick={() => handleOpenGroupSheet()}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Group
               </Button>
@@ -436,88 +572,13 @@ export default function SettingsPage() {
             <Card>
               <CardContent className="pt-6">
                 {groupsLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
+                  <DataTableSkeleton count={3} />
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Group</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Members</TableHead>
-                        <TableHead>Source</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {groups.map((group) => (
-                        <TableRow key={group.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">{group.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {group.description || '-'}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
-                              {group.member_count} member{group.member_count !== 1 ? 's' : ''}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {group.ldap_dn ? (
-                              <Badge variant="outline">
-                                <LinkIcon className="mr-1 h-3 w-3" />
-                                LDAP
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline">Local</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleOpenGroupDialog(group)}>
-                                  <Pencil className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => toast.info('Member management coming soon')}>
-                                  <Users className="mr-2 h-4 w-4" />
-                                  Manage Members
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => setDeleteGroupDialog({ open: true, group })}
-                                  disabled={!!group.ldap_dn}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {groups.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                            No groups found. Create your first group to get started.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                  <DataTable
+                    columns={groupColumns}
+                    data={groups}
+                    searchKey="name"
+                  />
                 )}
               </CardContent>
             </Card>
@@ -623,7 +684,7 @@ export default function SettingsPage() {
                   Configure HTTP callbacks for system events
                 </p>
               </div>
-              <Button onClick={() => handleOpenWebhookDialog()}>
+              <Button onClick={() => handleOpenWebhookSheet()}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Webhook
               </Button>
@@ -632,114 +693,17 @@ export default function SettingsPage() {
             <Card>
               <CardContent className="pt-6">
                 {webhooksLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
+                  <div className="space-y-4">
+                    <Skeleton className="h-10 w-full rounded-md" />
+                    <Skeleton className="h-12 w-full rounded-md" />
+                    <Skeleton className="h-12 w-full rounded-md" />
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>URL</TableHead>
-                        <TableHead>Events</TableHead>
-                        <TableHead>Last Triggered</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {webhooks.map((webhook) => (
-                        <TableRow key={webhook.id}>
-                          <TableCell>
-                            {webhook.enabled ? (
-                              <Badge className="bg-green-500/10 text-green-600">Active</Badge>
-                            ) : (
-                              <Badge variant="secondary">Disabled</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Webhook className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">{webhook.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-mono text-sm text-muted-foreground max-w-[200px] truncate">
-                            {webhook.url}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {webhook.events.length} event{webhook.events.length !== 1 ? 's' : ''}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {webhook.last_triggered
-                              ? new Date(webhook.last_triggered).toLocaleString('fr-FR')
-                              : 'Never'}
-                            {webhook.last_status && (
-                              <Badge
-                                variant="outline"
-                                className={`ml-2 ${webhook.last_status >= 200 && webhook.last_status < 300
-                                    ? 'text-green-600'
-                                    : 'text-red-600'
-                                  }`}
-                              >
-                                {webhook.last_status}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleOpenWebhookDialog(webhook)}>
-                                  <Pencil className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleTestWebhook(webhook)}>
-                                  <TestTube2 className="mr-2 h-4 w-4" />
-                                  Test
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleToggleWebhook(webhook)}>
-                                  {webhook.enabled ? (
-                                    <>
-                                      <Pause className="mr-2 h-4 w-4" />
-                                      Disable
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Play className="mr-2 h-4 w-4" />
-                                      Enable
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => setDeleteWebhookDialog({ open: true, webhook })}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {webhooks.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                            No webhooks configured. Create one to receive notifications.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                  <DataTable
+                    columns={webhookColumns}
+                    data={webhooks}
+                    searchKey="name"
+                  />
                 )}
               </CardContent>
             </Card>
@@ -768,46 +732,13 @@ export default function SettingsPage() {
         </Tabs>
       </div>
 
-      {/* Group Dialog */}
-      <Dialog open={groupDialogOpen} onOpenChange={setGroupDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingGroup ? 'Edit Group' : 'Create Group'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="groupName">Group Name</Label>
-              <Input
-                id="groupName"
-                placeholder="e.g., Developers"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="groupDescription">Description</Label>
-              <Textarea
-                id="groupDescription"
-                placeholder="Optional description for this group"
-                value={groupDescription}
-                onChange={(e) => setGroupDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setGroupDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveGroup} disabled={groupSaving || !groupName.trim()}>
-              {groupSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editingGroup ? 'Save Changes' : 'Create Group'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GroupSheet
+        open={groupSheetOpen}
+        onOpenChange={setGroupSheetOpen}
+        group={editingGroup}
+        onSubmit={handleSaveGroup}
+        isLoading={groupSaving}
+      />
 
       {/* Delete Group Confirmation */}
       <AlertDialog
@@ -834,81 +765,14 @@ export default function SettingsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Webhook Dialog */}
-      <Dialog open={webhookDialogOpen} onOpenChange={setWebhookDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {editingWebhook ? 'Edit Webhook' : 'Create Webhook'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="webhookName">Name</Label>
-              <Input
-                id="webhookName"
-                placeholder="e.g., Slack Notification"
-                value={webhookName}
-                onChange={(e) => setWebhookName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="webhookUrl">URL</Label>
-              <Input
-                id="webhookUrl"
-                placeholder="https://example.com/webhook"
-                value={webhookUrl}
-                onChange={(e) => setWebhookUrl(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="webhookSecret">Secret (optional)</Label>
-              <Input
-                id="webhookSecret"
-                type="password"
-                placeholder="HMAC signing secret"
-                value={webhookSecret}
-                onChange={(e) => setWebhookSecret(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Used to sign requests with HMAC-SHA256
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label>Events</Label>
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                {WEBHOOK_EVENTS.map((event) => (
-                  <div key={event} className="flex items-center space-x-2">
-                    <Switch
-                      id={`event-${event}`}
-                      checked={webhookEvents.includes(event)}
-                      onCheckedChange={() => toggleWebhookEvent(event)}
-                    />
-                    <Label htmlFor={`event-${event}`} className="text-sm font-normal cursor-pointer">
-                      {event}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {webhookEvents.length} event{webhookEvents.length !== 1 ? 's' : ''} selected
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setWebhookDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveWebhook}
-              disabled={webhookSaving || !webhookName.trim() || !webhookUrl.trim() || webhookEvents.length === 0}
-            >
-              {webhookSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editingWebhook ? 'Save Changes' : 'Create Webhook'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Webhook Sheet */}
+      <WebhookSheet
+        open={webhookSheetOpen}
+        onOpenChange={setWebhookSheetOpen}
+        webhook={editingWebhook}
+        onSubmit={handleSaveWebhook}
+        isLoading={webhookSaving}
+      />
 
       {/* Delete Webhook Confirmation */}
       <AlertDialog

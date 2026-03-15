@@ -22,6 +22,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Toolbar, ToolbarButton, ToolbarGroup, ToolbarDivider } from "@/components/editor/toolbar"
 import {
     Tooltip,
     TooltipContent,
@@ -202,53 +203,29 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
     return (
         <div className="flex h-full flex-col bg-background dark:bg-gray-950 relative">
             {/* Top Action Bar */}
-            <div className="flex items-center p-3 px-4 border-b border-gray-200/50 dark:border-gray-800/50 bg-background/40 dark:bg-gray-950/40 backdrop-blur-xl sticky top-0 z-20">
-                <div className="flex items-center gap-2">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-background/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
-                                <Archive className="h-[18px] w-[18px]" />
-                                <span className="sr-only">Archive</span>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Archive</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-background/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
-                                <ArchiveX className="h-[18px] w-[18px]" />
-                                <span className="sr-only">Move to junk</span>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Move to junk</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground" onClick={() => mail && onArchive?.(mail.id)}>
-                                <Archive className="h-4 w-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Archive</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => mail && onDelete?.(mail.id)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Move to trash</TooltipContent>
-                    </Tooltip>
-                    <Separator orientation="vertical" className="mx-1 h-6" />
-                    <Tooltip>
+            <div className="sticky top-0 z-20 shadow-sm border-b border-gray-200 dark:border-[#5f6368]">
+                <Toolbar className="border-b-0 bg-background/50 backdrop-blur-md">
+                    <ToolbarGroup>
+                        <ToolbarButton disabled={!mail} title="Archive" onClick={() => mail && onArchive?.(mail.id)}>
+                            <Archive className="h-4 w-4" />
+                        </ToolbarButton>
+                        <ToolbarButton disabled={!mail} title="Move to junk">
+                            <ArchiveX className="h-4 w-4" />
+                        </ToolbarButton>
+                        <ToolbarButton disabled={!mail} title="Move to trash" onClick={() => mail && onDelete?.(mail.id)}>
+                            <Trash2 className="h-4 w-4" />
+                        </ToolbarButton>
+                    </ToolbarGroup>
+                    
+                    <ToolbarDivider />
+                    
+                    <ToolbarGroup>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
-                                        <Clock className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
+                                <ToolbarButton disabled={!mail} title="Snooze">
+                                    <Clock className="h-4 w-4" />
+                                </ToolbarButton>
                             </DropdownMenuTrigger>
-                            <TooltipContent>Snooze</TooltipContent>
                             <DropdownMenuContent align="end" className="w-[160px] rounded-xl shadow-xl border-border/50 p-1">
                                 <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Later today")}>
                                     Later today
@@ -264,57 +241,44 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </Tooltip>
-                    <Separator orientation="vertical" className="mx-2 h-5 bg-gray-200/60 dark:bg-gray-800/60" />
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground">
-                        <MoreVertical className="h-4 w-4" />
-                    </Button>
-                </div>
-                <div className="ml-auto flex items-center gap-2">
-                    {mail && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="mr-2 h-9 text-purple-600 dark:text-purple-400 border-purple-200/60 dark:border-purple-800/60 bg-purple-50/60 dark:bg-purple-900/30 hover:bg-purple-100/80 dark:hover:bg-purple-900/50 rounded-xl shadow-sm transition-all font-semibold px-4"
-                            onClick={handleSummarize}
-                            disabled={isStreaming}
-                        >
-                            {isStreaming ? (
-                                <Loader2 className="h-[18px] w-[18px] mr-2 animate-spin text-purple-500" />
-                            ) : (
-                                <Sparkles className="h-[18px] w-[18px] mr-2 text-purple-500" />
-                            )}
-                            Summarize Context
-                        </Button>
-                    )}
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-background/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
-                                <Reply className="h-[18px] w-[18px]" />
-                                <span className="sr-only">Reply</span>
+                    </ToolbarGroup>
+                    
+                    <ToolbarDivider />
+                    
+                    <ToolbarGroup>
+                        <ToolbarButton disabled={!mail} title="More actions">
+                            <MoreVertical className="h-4 w-4" />
+                        </ToolbarButton>
+                    </ToolbarGroup>
+
+                    <ToolbarGroup className="ml-auto">
+                        {mail && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mr-2 h-7 text-purple-600 dark:text-purple-400 border-purple-200/60 dark:border-purple-800/60 bg-purple-50/60 dark:bg-purple-900/30 hover:bg-purple-100/80 dark:hover:bg-purple-900/50 transition-all font-semibold"
+                                onClick={handleSummarize}
+                                disabled={isStreaming}
+                            >
+                                {isStreaming ? (
+                                    <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin text-purple-500" />
+                                ) : (
+                                    <Sparkles className="h-3.5 w-3.5 mr-2 text-purple-500" />
+                                )}
+                                Summarize Context
                             </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Reply</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-background/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
-                                <ReplyAll className="h-[18px] w-[18px]" />
-                                <span className="sr-only">Reply all</span>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Reply all</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={!mail} className="h-9 w-9 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-background/80 dark:hover:bg-gray-800/80 transition-all hover:shadow-sm">
-                                <Forward className="h-[18px] w-[18px]" />
-                                <span className="sr-only">Forward</span>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="rounded-xl px-3 py-1.5 shadow-sm border-gray-100 dark:border-gray-800">Forward</TooltipContent>
-                    </Tooltip>
-                </div>
+                        )}
+                        <ToolbarButton disabled={!mail} title="Reply">
+                            <Reply className="h-4 w-4" />
+                        </ToolbarButton>
+                        <ToolbarButton disabled={!mail} title="Reply all">
+                            <ReplyAll className="h-4 w-4" />
+                        </ToolbarButton>
+                        <ToolbarButton disabled={!mail} title="Forward">
+                            <Forward className="h-4 w-4" />
+                        </ToolbarButton>
+                    </ToolbarGroup>
+                </Toolbar>
             </div>
             {mail ? (
                 <div className="flex flex-1 flex-col overflow-y-auto">

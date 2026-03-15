@@ -1,11 +1,21 @@
-import { mediaApiClient, MEDIA_URL } from './core';
+/**
+ * Media API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+
+// Get the media service client (cached)
+const mediaClient = getClient(ServiceName.MEDIA);
+const MEDIA_URL = getServiceBaseUrl(ServiceName.MEDIA);
 
 // OCR API
 export const ocrApi = {
     extractText: (file: File, options?: OcrOptions) => {
         const formData = new FormData();
         formData.append('file', file);
-        return mediaApiClient.post<OcrResponse>('/ocr', formData, {
+        return mediaClient.post<OcrResponse>('/ocr', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             params: options,
         });
@@ -13,13 +23,13 @@ export const ocrApi = {
     processDocument: (file: File, options?: OcrOptions) => {
         const formData = new FormData();
         formData.append('file', file);
-        return mediaApiClient.post<OcrResponse>('/ocr/document', formData, {
+        return mediaClient.post<OcrResponse>('/ocr/document', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             params: options,
         });
     },
     batchProcess: (files: string[], options?: OcrOptions) =>
-        mediaApiClient.post<BatchOcrResponse>('/ocr/batch', { files, ...options }),
+        mediaClient.post<BatchOcrResponse>('/ocr/batch', { files, ...options }),
 };
 
 export interface OcrOptions {
@@ -59,12 +69,12 @@ export interface BatchOcrResponse {
 // TTS API (Text-to-Speech)
 export const ttsApi = {
     synthesize: (text: string, options?: TtsOptions) =>
-        mediaApiClient.post('/tts/synthesize', { text, ...options }, {
+        mediaClient.post('/tts/synthesize', { text, ...options }, {
             responseType: 'blob',
         }),
     synthesizeStream: (text: string, options?: TtsOptions) =>
         `${MEDIA_URL}/tts/stream`,
-    listVoices: () => mediaApiClient.get<Voice[]>('/tts/voices'),
+    listVoices: () => mediaClient.get<Voice[]>('/tts/voices'),
 };
 
 export interface TtsOptions {
@@ -87,7 +97,7 @@ export const sttApi = {
     transcribe: (file: File, options?: SttOptions) => {
         const formData = new FormData();
         formData.append('file', file);
-        return mediaApiClient.post<TranscribeResponse>('/stt/transcribe', formData, {
+        return mediaClient.post<TranscribeResponse>('/stt/transcribe', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             params: options,
         });
@@ -96,12 +106,12 @@ export const sttApi = {
         const formData = new FormData();
         formData.append('file', file);
         // Returns EventSource URL
-        return mediaApiClient.post('/stt/transcribe/stream', formData, {
+        return mediaClient.post('/stt/transcribe/stream', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             params: options,
         });
     },
-    listModels: () => mediaApiClient.get<SttModel[]>('/stt/models'),
+    listModels: () => mediaClient.get<SttModel[]>('/stt/models'),
 };
 
 export interface SttOptions {
@@ -158,7 +168,7 @@ export interface SttModel {
 // Media Jobs API
 export const mediaJobsApi = {
     getStatus: (jobId: string) =>
-        mediaApiClient.get<MediaJobStatus>(`/jobs/${jobId}`),
+        mediaClient.get<MediaJobStatus>(`/jobs/${jobId}`),
 };
 
 export interface MediaJobStatus {

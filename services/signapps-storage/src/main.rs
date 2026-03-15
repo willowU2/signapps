@@ -5,10 +5,10 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, logging_middleware, request_id_middleware};
-use signapps_common::{AuthState, JwtConfig};
+use signapps_common::{AiIndexerClient, AuthState, JwtConfig};
 use signapps_db::DatabasePool;
-use std::net::SocketAddr;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -28,6 +28,7 @@ pub struct AppState {
     pub pool: DatabasePool,
     pub storage: StorageBackend,
     pub jwt_config: JwtConfig,
+    pub indexer: AiIndexerClient,
 }
 
 impl AuthState for AppState {
@@ -38,30 +39,15 @@ impl AuthState for AppState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "signapps_storage=debug,tower_http=debug,info".into()),
-        )
-        .init();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_storage");
+    load_env();
 
-    tracing::info!(
-        "Starting SignApps Storage Service v{}",
-        env!("CARGO_PKG_VERSION")
-    );
-
-    // Load .env file
-    dotenvy::dotenv().ok();
-
-    // Load configuration
-    let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
-    let storage_mode = std::env::var("STORAGE_MODE").unwrap_or_else(|_| "fs".into());
+    let config = ServiceConfig::from_env("signapps-storage", 3004);
+    config.log_startup();
 
     // Initialize database pool
-    let pool = signapps_db::create_pool(&database_url).await?;
+    let pool = signapps_db::create_pool(&config.database_url).await?;
     tracing::info!("Database connection established");
 
     // Run migrations
@@ -69,21 +55,19 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Database migrations completed");
 
     // Initialize storage backend
+    let storage_mode = env_or("STORAGE_MODE", "fs");
     let storage = match storage_mode.as_str() {
         "s3" => {
-            let endpoint = std::env::var("STORAGE_S3_ENDPOINT")
-                .unwrap_or_else(|_| "http://localhost:9000".into());
-            let access_key =
-                std::env::var("STORAGE_S3_ACCESS_KEY").unwrap_or_else(|_| "minioadmin".into());
-            let secret_key =
-                std::env::var("STORAGE_S3_SECRET_KEY").unwrap_or_else(|_| "minioadmin".into());
-            let region = std::env::var("STORAGE_S3_REGION").unwrap_or_else(|_| "us-east-1".into());
-            let bucket = std::env::var("STORAGE_S3_BUCKET").unwrap_or_else(|_| "signapps".into());
+            let endpoint = env_or("STORAGE_S3_ENDPOINT", "http://localhost:9000");
+            let access_key = env_or("STORAGE_S3_ACCESS_KEY", "minioadmin");
+            let secret_key = env_or("STORAGE_S3_SECRET_KEY", "minioadmin");
+            let region = env_or("STORAGE_S3_REGION", "us-east-1");
+            let bucket = env_or("STORAGE_S3_BUCKET", "signapps");
 
             StorageBackend::new_s3(&endpoint, &access_key, &secret_key, &region, &bucket)?
         },
         _ => {
-            let root = std::env::var("STORAGE_FS_ROOT").unwrap_or_else(|_| "./data/storage".into());
+            let root = env_or("STORAGE_FS_ROOT", "./data/storage");
             // Ensure root directory exists
             std::fs::create_dir_all(&root).ok();
             StorageBackend::new_fs(&root)?
@@ -91,11 +75,11 @@ async fn main() -> anyhow::Result<()> {
     };
     tracing::info!("Storage backend initialized");
 
-    // JWT configuration
+    // JWT configuration (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
-        secret: jwt_secret,
+        secret: config.jwt_secret.clone(),
         issuer: "signapps".to_string(),
-        audience: "signapps-storage".to_string(),
+        audience: "signapps".to_string(),
         access_expiration: 900,
         refresh_expiration: 604800,
     };
@@ -105,6 +89,7 @@ async fn main() -> anyhow::Result<()> {
         pool,
         storage,
         jwt_config,
+        indexer: AiIndexerClient::from_env(),
     };
 
     // Start background jobs
@@ -115,19 +100,8 @@ async fn main() -> anyhow::Result<()> {
     // Build router
     let app = create_router(state);
 
-    // Start server
-    let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3004".into())
-        .parse()
-        .unwrap_or(3004);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-
-    tracing::info!("Listening on {}", addr);
-
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
-
-    Ok(())
+    // Start server using bootstrap helper
+    signapps_common::bootstrap::run_server(app, &config).await
 }
 
 /// Create the application router with all routes.

@@ -1285,33 +1285,14 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             )}
 
             {!isReadOnly && (
-                <OmniboxMenu
-                    isOpen={omniboxMenu.isOpen}
-                    x={omniboxMenu.x}
-                    y={omniboxMenu.y}
-                onClose={() => setOmniboxMenu({ ...omniboxMenu, isOpen: false })}
-                onInsertText={addText}
-                onInsertShape={addShape}
-                onInsertImage={addImage}
-                onInsertMagicLayout={addMagicLayout}
-                onInsertSmartChip={addSmartChip}
-                onInsertWorkflow={addWorkflow}
-                onInsertTable={addTable}
-            />
-            )}
-
-            {/* Main Editor Area */}
-            <div className="flex flex-col w-full h-full gap-4 relative animate-fade-in flex-1 min-h-0">
-                {/* Context Toolbars */}
-                {!isReadOnly && (
-                    <SlideToolbar
-                        isConnected={isConnected}
-                        onAddMagicLayout={addMagicLayout}
-                        onAddText={addText}
-                        onAddShape={() => addShape('rect')}
-                        onExport={exportToPNG}
-                        onExportPPTX={exportToPPTX}
-                        canUndo={canUndo}
+                <SlideToolbar
+                    isConnected={isConnected}
+                    onAddMagicLayout={addMagicLayout}
+                    onAddText={addText}
+                    onAddShape={() => addShape('rect')}
+                    onExport={exportToPNG}
+                    onExportPPTX={exportToPPTX}
+                    canUndo={canUndo}
                     canRedo={canRedo}
                     onUndo={undo}
                     onRedo={redo}
@@ -1324,10 +1305,30 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     snapToGrid={snapToGrid}
                     onToggleGrid={() => setShowGrid(s => !s)}
                     onToggleSnap={() => setSnapToGrid(s => !s)}
-                        pageConfig={pageConfig}
-                        onPageConfigChange={setPageConfig}
-                    />
-                )}
+                    pageConfig={pageConfig}
+                    onPageConfigChange={setPageConfig}
+                />
+            )}
+
+            {!isReadOnly && (
+                <OmniboxMenu
+                    isOpen={omniboxMenu.isOpen}
+                    x={omniboxMenu.x}
+                    y={omniboxMenu.y}
+                    onClose={() => setOmniboxMenu({ ...omniboxMenu, isOpen: false })}
+                    onInsertText={addText}
+                    onInsertShape={addShape}
+                    onInsertImage={addImage}
+                    onInsertMagicLayout={addMagicLayout}
+                    onInsertSmartChip={addSmartChip}
+                    onInsertWorkflow={addWorkflow}
+                    onInsertTable={addTable}
+                />
+            )}
+
+            {/* Main Editor Area */}
+            <div className="flex flex-col w-full h-full relative animate-fade-in flex-1 min-h-0">
+
 
                 <div className="flex-1 w-full flex items-stretch min-h-0 relative">
                     {/* Outline Sidebar (Left) */}

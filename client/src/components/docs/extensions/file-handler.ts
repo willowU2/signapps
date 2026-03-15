@@ -18,7 +18,7 @@ export interface FileHandlerOptions {
     /**
      * Handler for dropped files
      */
-    onDrop: (editor: any, files: File[], pos: number) => void;
+    onDrop: (editor: any, files: File[], pos?: number) => void;
     /**
      * Handler for pasted files
      */

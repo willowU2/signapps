@@ -109,9 +109,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
             },
             onDone: (f) => setAiCard(prev => prev ? { ...prev, content: f || localContent, status: 'done' } : null),
             onError: () => {
-                // Fallback graceful UI if AI backend is down
-                const mockSummary = "• The team discussed the new redesign features.\n• Alice approved the glassmorphism approach.\n• Next step is to implement slash commands."
-                setAiCard({ title, content: mockSummary, type: 'summary', status: 'done' })
+                setAiCard({ title, content: "Impossible de générer le résumé. Vérifiez que le service AI est démarré.", type: 'summary', status: 'done' })
             }
         })
     }

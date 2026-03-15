@@ -24,8 +24,10 @@
 //! ```
 
 pub mod auth;
+pub mod bootstrap;
 pub mod config;
 pub mod error;
+pub mod indexer;
 pub mod middleware;
 pub mod traits;
 pub mod types;
@@ -35,6 +37,7 @@ pub use auth::{Claims, JwtConfig, TokenPair};
 pub use config::AppConfig;
 pub use error::{Error, ProblemDetails, Result};
 pub use middleware::{AuthState, RequestClaimsExt, TenantContext};
+pub use indexer::AiIndexerClient;
 pub use types::{Email, Password, PasswordHash, UserId, Username};
 
 /// Crate version from Cargo.toml

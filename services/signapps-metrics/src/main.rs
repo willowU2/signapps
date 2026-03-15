@@ -10,11 +10,10 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
-use std::net::SocketAddr;
+use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod handlers;
 mod metrics;
@@ -39,52 +38,14 @@ impl AuthState for AppState {
     }
 }
 
-/// Service configuration.
-#[derive(Clone)]
-pub struct Config {
-    pub database_url: String,
-    pub jwt_secret: String,
-    pub jwt_issuer: String,
-    pub jwt_audience: String,
-    pub port: u16,
-}
-
-impl Config {
-    pub fn from_env() -> Self {
-        Self {
-            database_url: std::env::var("DATABASE_URL")
-                .unwrap_or_else(|_| "postgres://signapps:signapps@localhost/signapps".to_string()),
-            jwt_secret: std::env::var("JWT_SECRET")
-                .unwrap_or_else(|_| "dev-secret-change-in-production".to_string()),
-            jwt_issuer: std::env::var("JWT_ISSUER")
-                .unwrap_or_else(|_| "signapps-identity".to_string()),
-            jwt_audience: std::env::var("JWT_AUDIENCE").unwrap_or_else(|_| "signapps".to_string()),
-            port: std::env::var("SERVER_PORT")
-                .ok()
-                .and_then(|p| p.parse().ok())
-                .unwrap_or(3008),
-        }
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize tracing
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "signapps_metrics=debug,tower_http=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_metrics");
+    load_env();
 
-    // Load .env file
-    dotenvy::dotenv().ok();
-
-    // Load configuration
-    let config = Config::from_env();
-
-    tracing::info!("Starting SignApps Metrics Service on port {}", config.port);
+    let config = ServiceConfig::from_env("signapps-metrics", 3008);
+    config.log_startup();
 
     // Create database pool
     let pool = signapps_db::create_pool(&config.database_url).await?;
@@ -95,11 +56,11 @@ async fn main() -> Result<()> {
     // Create Prometheus exporter
     let exporter = Arc::new(PrometheusExporter::new(collector.clone()));
 
-    // Create JWT config
+    // Create JWT config (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
-        secret: config.jwt_secret,
-        issuer: config.jwt_issuer,
-        audience: config.jwt_audience,
+        secret: config.jwt_secret.clone(),
+        issuer: "signapps".to_string(),
+        audience: "signapps".to_string(),
         access_expiration: 3600,
         refresh_expiration: 86400 * 7,
     };
@@ -115,12 +76,8 @@ async fn main() -> Result<()> {
     // Build router
     let app = create_router(state);
 
-    // Start server
-    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
-    tracing::info!("Metrics service listening on {}", addr);
-
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    // Start server using bootstrap helper
+    signapps_common::bootstrap::run_server(app, &config).await?;
 
     Ok(())
 }

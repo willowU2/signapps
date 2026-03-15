@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CardGridSkeleton, DataTableSkeleton } from '@/components/ui/skeleton-loader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
@@ -21,8 +22,8 @@ import { DriveSidebar } from '@/components/storage/drive-sidebar';
 import { DriveView } from '@/components/storage/types';
 import { StorageFileGrid } from '@/components/storage/storage-file-grid';
 import { StorageHeader } from '@/components/storage/storage-header';
-import { RenameDialog } from '@/components/storage/rename-dialog';
-import { MoveToDialog } from '@/components/storage/move-to-dialog';
+import { RenameSheet } from '@/components/storage/rename-sheet';
+import { MoveToSheet } from '@/components/storage/move-to-sheet';
 import {
   Upload,
   Folder,
@@ -62,18 +63,18 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { storageApi, favoritesApi, searchApi, trashApi, sharesApi } from '@/lib/api';
-import { UploadDialog } from '@/components/storage/upload-dialog';
+import { UploadSheet } from '@/components/storage/upload-sheet';
 import { FilePreviewDialog } from '@/components/storage/file-preview-dialog';
 import { FolderTree } from '@/components/storage/folder-tree';
-import { PermissionsDialog } from '@/components/storage/permissions-dialog';
+import { PermissionsSheet } from '@/components/storage/permissions-sheet';
 import { DropZone } from '@/components/storage/drop-zone';
 
-import { ManageTagsDialog } from '@/components/storage/manage-tags-dialog';
-import { FileTagsDialog } from '@/components/storage/file-tags-dialog';
-import { VersionHistoryDialog } from '@/components/storage/version-history-dialog';
+import { ManageTagsSheet } from '@/components/storage/manage-tags-sheet';
+import { FileTagsSheet } from '@/components/storage/file-tags-sheet';
+import { VersionHistorySheet } from '@/components/storage/version-history-sheet';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
-import { ShareDialog } from '@/components/storage/share-dialog';
+import { ShareSheet } from '@/components/storage/share-sheet';
 
 // Import storage components
 import { OverviewStats, AlertsPanel, HealthGauge, QuotaCard } from './components/dashboard';
@@ -695,11 +696,7 @@ export default function StoragePage() {
                       <div>
                         <h3 className="text-[14px] font-medium text-[#5f6368] dark:text-[#9aa0a6] mb-4">Suggérés</h3>
                         {loading ? (
-                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {[...Array(6)].map((_, i) => (
-                              <Skeleton key={i} className="aspect-[4/3] rounded-xl" />
-                            ))}
-                          </div>
+                          <CardGridSkeleton count={6} className="grid-cols-2 md:grid-cols-4 lg:grid-cols-6" />
                         ) : displayFiles.length === 0 ? (
                            <div className="text-sm text-muted-foreground">Aucun fichier suggéré.</div>
                         ) : (
@@ -730,10 +727,7 @@ export default function StoragePage() {
                           </div>
 
                           {loading ? (
-                            <div className="space-y-4 shadow-sm border rounded-xl p-4">
-                              <Skeleton className="h-10 w-full" />
-                              <Skeleton className="h-10 w-full" />
-                            </div>
+                            <DataTableSkeleton count={2} className="shadow-sm border rounded-xl p-4" />
                           ) : (
                             <StorageFileGrid
                               files={displayFiles.slice(6)}
@@ -900,14 +894,16 @@ export default function StoragePage() {
       )}
       
       {/* Dialogs globally accessible */}
-      <ManageTagsDialog
+            {/* Manage Tags Sheet */}
+        <ManageTagsSheet
           open={manageTagsOpen}
           onOpenChange={setManageTagsOpen}
           onTagsUpdated={fetchFiles}
         />
 
+        {/* File Tags Sheet */}
         {tagFile && tagFile.id && (
-          <FileTagsDialog
+          <FileTagsSheet
             open={fileTagsOpen}
             onOpenChange={setFileTagsOpen}
             fileId={tagFile.id}
@@ -916,8 +912,9 @@ export default function StoragePage() {
           />
         )}
 
+        {/* Version History Sheet */}
         {historyFile && historyFile.id && (
-          <VersionHistoryDialog
+          <VersionHistorySheet
             open={historyOpen}
             onOpenChange={setHistoryOpen}
             fileId={historyFile.id}
@@ -926,24 +923,24 @@ export default function StoragePage() {
           />
         )}
 
-        {/* Dialogs */}
-        <UploadDialog
-          open={uploadDialogOpen}
-          onOpenChange={setUploadDialogOpen}
-          bucket={currentBucket}
-          onUploadComplete={fetchFiles}
-        />
+        {/* Dialogs and Modals */}
+      <UploadSheet
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        bucket={currentBucket}
+        onUploadComplete={fetchFiles}
+      />
 
-        {/* Rename Dialog */}
-        <RenameDialog
+        {/* Rename Sheet */}
+        <RenameSheet
           open={renameDialogOpen}
           onOpenChange={setRenameDialogOpen}
           item={renameItem}
           onRename={handleRenameSubmit}
         />
 
-        {/* Move Dialog */}
-        <MoveToDialog
+        {/* Move To Sheet */}
+        <MoveToSheet
           open={moveDialogOpen}
           onOpenChange={setMoveDialogOpen}
           item={moveItem}
@@ -1025,18 +1022,13 @@ export default function StoragePage() {
           }}
         />
 
-        {/* Permissions Dialog */}
+        {/* Permissions Sheet */}
         {permissionsFile && (
-          <PermissionsDialog
+          <PermissionsSheet
             open={permissionsDialogOpen}
-            onOpenChange={(open) => {
-              setPermissionsDialogOpen(open);
-              if (!open) setPermissionsFile(null);
-            }}
+            onOpenChange={setPermissionsDialogOpen}
             bucket={currentBucket}
-            fileKey={currentPath.length > 0
-              ? `${currentPath.join('/')}/${permissionsFile.name}`
-              : permissionsFile.name}
+            fileKey={permissionsFile.key}
             fileName={permissionsFile.name}
           />
         )}
@@ -1076,7 +1068,7 @@ export default function StoragePage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <ShareDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} item={shareItem} />
+        <ShareSheet open={shareDialogOpen} onOpenChange={setShareDialogOpen} item={shareItem} />
       </>
     </AppLayout>
   );

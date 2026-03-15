@@ -1,23 +1,32 @@
-import { schedulerApiClient } from './core';
+/**
+ * Scheduler API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the scheduler service client (cached)
+const schedulerClient = getClient(ServiceName.SCHEDULER);
 
 // Scheduler API
 export const schedulerApi = {
     // Jobs
-    listJobs: () => schedulerApiClient.get<ScheduledJob[]>('/jobs'),
-    getJob: (id: string) => schedulerApiClient.get<ScheduledJob>(`/jobs/${id}`),
+    listJobs: () => schedulerClient.get<ScheduledJob[]>('/jobs'),
+    getJob: (id: string) => schedulerClient.get<ScheduledJob>(`/jobs/${id}`),
     createJob: (data: CreateJobRequest) =>
-        schedulerApiClient.post<ScheduledJob>('/jobs', data),
+        schedulerClient.post<ScheduledJob>('/jobs', data),
     updateJob: (id: string, data: Partial<CreateJobRequest>) =>
-        schedulerApiClient.put<ScheduledJob>(`/jobs/${id}`, data),
-    deleteJob: (id: string) => schedulerApiClient.delete(`/jobs/${id}`),
-    enableJob: (id: string) => schedulerApiClient.post(`/jobs/${id}/enable`),
-    disableJob: (id: string) => schedulerApiClient.post(`/jobs/${id}/disable`),
-    runJob: (id: string) => schedulerApiClient.post(`/jobs/${id}/run`),
+        schedulerClient.put<ScheduledJob>(`/jobs/${id}`, data),
+    deleteJob: (id: string) => schedulerClient.delete(`/jobs/${id}`),
+    enableJob: (id: string) => schedulerClient.post(`/jobs/${id}/enable`),
+    disableJob: (id: string) => schedulerClient.post(`/jobs/${id}/disable`),
+    runJob: (id: string) => schedulerClient.post(`/jobs/${id}/run`),
     // Job runs
     listRuns: (jobId: string) =>
-        schedulerApiClient.get<JobRun[]>(`/jobs/${jobId}/runs`),
+        schedulerClient.get<JobRun[]>(`/jobs/${jobId}/runs`),
     getRunOutput: (jobId: string, runId: string) =>
-        schedulerApiClient.get<JobRun>(`/jobs/${jobId}/runs/${runId}`),
+        schedulerClient.get<JobRun>(`/jobs/${jobId}/runs/${runId}`),
 };
 
 export interface ScheduledJob {

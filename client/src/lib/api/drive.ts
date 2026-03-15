@@ -1,4 +1,13 @@
-import { storageApiClient } from './core';
+/**
+ * Drive API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the storage service client (cached)
+const storageClient = getClient(ServiceName.STORAGE);
 
 export interface DriveNode {
   id: string;
@@ -33,25 +42,25 @@ export const driveApi = {
   // List root nodes or nodes in a folder
   listNodes: async (parentId?: string | null) => {
     const url = parentId ? `/drive/nodes/${parentId}/children` : '/drive/nodes/root';
-    const response = await storageApiClient.get<DriveNode[]>(url);
+    const response = await storageClient.get<DriveNode[]>(url);
     return response.data;
   },
 
   // Create a new node (folder or shortcut to document/file)
   createNode: async (data: CreateDriveNodeRequest) => {
-    const response = await storageApiClient.post<DriveNode>('/drive/nodes', data);
+    const response = await storageClient.post<DriveNode>('/drive/nodes', data);
     return response.data;
   },
 
   // Rename or Move node
   updateNode: async (id: string, data: UpdateDriveNodeRequest) => {
-    const response = await storageApiClient.put<DriveNode>(`/drive/nodes/${id}`, data);
+    const response = await storageClient.put<DriveNode>(`/drive/nodes/${id}`, data);
     return response.data;
   },
 
   // Delete node (soft delete)
   deleteNode: async (id: string) => {
-    await storageApiClient.delete(`/drive/nodes/${id}`);
+    await storageClient.delete(`/drive/nodes/${id}`);
   },
 };
 

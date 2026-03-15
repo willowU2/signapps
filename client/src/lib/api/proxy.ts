@@ -1,27 +1,36 @@
-import { proxyApiClient } from './core';
+/**
+ * Proxy API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the proxy service client (cached)
+const proxyClient = getClient(ServiceName.PROXY);
 
 // Proxy API (Routes)
 export const routesApi = {
-    list: () => proxyApiClient.get<Route[]>('/routes'),
-    get: (id: string) => proxyApiClient.get<Route>(`/routes/${id}`),
-    create: (data: CreateRouteRequest) => proxyApiClient.post<Route>('/routes', data),
+    list: () => proxyClient.get<Route[]>('/routes'),
+    get: (id: string) => proxyClient.get<Route>(`/routes/${id}`),
+    create: (data: CreateRouteRequest) => proxyClient.post<Route>('/routes', data),
     update: (id: string, data: Partial<CreateRouteRequest>) =>
-        proxyApiClient.put<Route>(`/routes/${id}`, data),
-    delete: (id: string) => proxyApiClient.delete(`/routes/${id}`),
+        proxyClient.put<Route>(`/routes/${id}`, data),
+    delete: (id: string) => proxyClient.delete(`/routes/${id}`),
     // Certificates
-    listCertificates: () => proxyApiClient.get<Certificate[]>('/certificates'),
+    listCertificates: () => proxyClient.get<Certificate[]>('/certificates'),
     verifyDomain: (domain: string) =>
-        proxyApiClient.post(`/certificates/verify`, { domain }),
+        proxyClient.post(`/certificates/verify`, { domain }),
     requestCertificate: (domain: string) =>
-        proxyApiClient.post(`/certificates/verify`, { domain }),
+        proxyClient.post(`/certificates/verify`, { domain }),
     renewCertificate: (id: string) =>
-        proxyApiClient.post(`/certificates/${id}/renew`),
+        proxyClient.post(`/certificates/${id}/renew`),
     deleteCertificate: (id: string) =>
-        proxyApiClient.delete(`/certificates/${id}`),
+        proxyClient.delete(`/certificates/${id}`),
     // Shield stats
-    shieldStats: () => proxyApiClient.get<ShieldStats>('/shield/stats'),
+    shieldStats: () => proxyClient.get<ShieldStats>('/shield/stats'),
     // Proxy status
-    proxyStatus: () => proxyApiClient.get<ProxyStatus>('/proxy/status'),
+    proxyStatus: () => proxyClient.get<ProxyStatus>('/proxy/status'),
 };
 
 export interface Route {

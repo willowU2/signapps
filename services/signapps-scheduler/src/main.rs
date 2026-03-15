@@ -10,11 +10,10 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
-use std::net::SocketAddr;
+use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod crawlers;
 mod handlers;
@@ -39,66 +38,25 @@ impl AuthState for AppState {
     }
 }
 
-/// Service configuration.
-#[derive(Clone)]
-pub struct Config {
-    pub database_url: String,
-    pub jwt_secret: String,
-    pub jwt_issuer: String,
-    pub jwt_audience: String,
-    pub job_timeout_seconds: u64,
-    pub port: u16,
-}
-
-impl Config {
-    pub fn from_env() -> Self {
-        Self {
-            database_url: std::env::var("DATABASE_URL")
-                .unwrap_or_else(|_| "postgres://signapps:signapps@localhost/signapps".to_string()),
-            jwt_secret: std::env::var("JWT_SECRET")
-                .unwrap_or_else(|_| "dev-secret-change-in-production".to_string()),
-            jwt_issuer: std::env::var("JWT_ISSUER")
-                .unwrap_or_else(|_| "signapps-identity".to_string()),
-            jwt_audience: std::env::var("JWT_AUDIENCE").unwrap_or_else(|_| "signapps".to_string()),
-            job_timeout_seconds: std::env::var("JOB_TIMEOUT_SECONDS")
-                .ok()
-                .and_then(|s| s.parse().ok())
-                .unwrap_or(300),
-            port: std::env::var("SERVER_PORT")
-                .ok()
-                .and_then(|p| p.parse().ok())
-                .unwrap_or(3007),
-        }
-    }
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize tracing
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "signapps_scheduler=debug,tower_http=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_scheduler");
+    load_env();
 
-    // Load .env file
-    dotenvy::dotenv().ok();
+    let config = ServiceConfig::from_env("signapps-scheduler", 3007);
+    config.log_startup();
 
-    // Load configuration
-    let config = Config::from_env();
-
-    tracing::info!(
-        "Starting SignApps Scheduler Service on port {}",
-        config.port
-    );
+    // Scheduler-specific config
+    let job_timeout_seconds: u64 = env_or("JOB_TIMEOUT_SECONDS", "300")
+        .parse()
+        .unwrap_or(300);
 
     // Create database pool
     let pool = signapps_db::create_pool(&config.database_url).await?;
 
     // Create scheduler service
-    let scheduler = SchedulerService::new(pool.clone(), config.job_timeout_seconds);
+    let scheduler = SchedulerService::new(pool.clone(), job_timeout_seconds);
 
     // Start background scheduler
     let scheduler_clone = Arc::new(scheduler.clone());
@@ -112,11 +70,11 @@ async fn main() -> Result<()> {
         crate::scheduler::ingestion::start_ingestion_loop(ingestion_pool).await;
     });
 
-    // Create JWT config
+    // Create JWT config (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
-        secret: config.jwt_secret,
-        issuer: config.jwt_issuer,
-        audience: config.jwt_audience,
+        secret: config.jwt_secret.clone(),
+        issuer: "signapps".to_string(),
+        audience: "signapps".to_string(),
         access_expiration: 3600,
         refresh_expiration: 86400 * 7,
     };
@@ -131,12 +89,8 @@ async fn main() -> Result<()> {
     // Build router
     let app = create_router(state);
 
-    // Start server
-    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
-    tracing::info!("Scheduler service listening on {}", addr);
-
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    // Start server using bootstrap helper
+    signapps_common::bootstrap::run_server(app, &config).await?;
 
     Ok(())
 }
@@ -169,10 +123,106 @@ fn create_router(state: AppState) -> Router {
     // Health check
     let health_routes = Router::new().route("/", get(handlers::health_check));
 
+    // Tenant routes
+    let tenant_routes = Router::new()
+        .route("/", get(handlers::tenants::list_tenants))
+        .route("/{id}", get(handlers::tenants::get_tenant));
+
+    // Workspace routes (require tenant context)
+    let workspace_routes = Router::new()
+        .route("/", get(handlers::workspaces::list_workspaces))
+        .route("/{id}", get(handlers::workspaces::get_workspace))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // User routes (require tenant context)
+    let user_routes = Router::new()
+        .route("/", get(handlers::users::list_users))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Calendar routes (require tenant context)
+    let calendar_routes = Router::new()
+        .route("/", get(handlers::calendars::list_calendars))
+        .route("/{id}", get(handlers::calendars::get_calendar))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Event routes (require tenant context)
+    let event_routes = Router::new()
+        .route("/", get(handlers::events::list_events))
+        .route("/{id}", get(handlers::events::get_event))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Resource routes (require tenant context)
+    let resource_routes = Router::new()
+        .route("/", get(handlers::resources::list_resources))
+        .route("/{id}", get(handlers::resources::get_resource))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Project routes (require tenant context)
+    let project_routes = Router::new()
+        .route("/", get(handlers::projects::list_projects))
+        .route("/{id}", get(handlers::projects::get_project))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Task routes (require tenant context)
+    let task_routes = Router::new()
+        .route("/", get(handlers::tasks::list_tasks))
+        .route("/{id}", get(handlers::tasks::get_task))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .nest("/api/v1/jobs", job_routes)
         .nest("/api/v1/runs", run_routes)
+        .nest("/api/v1/tenants", tenant_routes)
+        .nest("/api/v1/workspaces", workspace_routes)
+        .nest("/api/v1/users", user_routes)
+        .nest("/api/v1/calendars", calendar_routes)
+        .nest("/api/v1/events", event_routes)
+        .nest("/api/v1/resources", resource_routes)
+        .nest("/api/v1/projects", project_routes)
+        .nest("/api/v1/tasks", task_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

@@ -1,4 +1,14 @@
-import { pxeApiClient, PXE_URL } from './core';
+/**
+ * PXE API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+
+// Get the PXE service client (cached)
+const pxeClient = getClient(ServiceName.PXE);
+const PXE_URL = getServiceBaseUrl(ServiceName.PXE);
 
 // ============================================================================
 // Types
@@ -71,38 +81,38 @@ export const pxeApi = {
     // ========================================================================
 
     listProfiles: () =>
-        pxeApiClient.get<PxeProfile[]>('/pxe/profiles'),
+        pxeClient.get<PxeProfile[]>('/pxe/profiles'),
 
     getProfile: (id: string) =>
-        pxeApiClient.get<PxeProfile>(`/pxe/profiles/${id}`),
+        pxeClient.get<PxeProfile>(`/pxe/profiles/${id}`),
 
     createProfile: (data: CreatePxeProfileRequest) =>
-        pxeApiClient.post<PxeProfile>('/pxe/profiles', data),
+        pxeClient.post<PxeProfile>('/pxe/profiles', data),
 
     updateProfile: (id: string, data: UpdatePxeProfileRequest) =>
-        pxeApiClient.put<PxeProfile>(`/pxe/profiles/${id}`, data),
+        pxeClient.put<PxeProfile>(`/pxe/profiles/${id}`, data),
 
     deleteProfile: (id: string) =>
-        pxeApiClient.delete(`/pxe/profiles/${id}`),
+        pxeClient.delete(`/pxe/profiles/${id}`),
 
     // ========================================================================
     // Assets
     // ========================================================================
 
     listAssets: () =>
-        pxeApiClient.get<PxeAsset[]>('/pxe/assets'),
+        pxeClient.get<PxeAsset[]>('/pxe/assets'),
 
     getAsset: (id: string) =>
-        pxeApiClient.get<PxeAsset>(`/pxe/assets/${id}`),
+        pxeClient.get<PxeAsset>(`/pxe/assets/${id}`),
 
     registerAsset: (data: RegisterPxeAssetRequest) =>
-        pxeApiClient.post<PxeAsset>('/pxe/assets', data),
+        pxeClient.post<PxeAsset>('/pxe/assets', data),
 
     updateAsset: (id: string, data: UpdatePxeAssetRequest) =>
-        pxeApiClient.put<PxeAsset>(`/pxe/assets/${id}`, data),
+        pxeClient.put<PxeAsset>(`/pxe/assets/${id}`, data),
 
     deleteAsset: (id: string) =>
-        pxeApiClient.delete(`/pxe/assets/${id}`),
+        pxeClient.delete(`/pxe/assets/${id}`),
 
     // ========================================================================
     // Boot Script

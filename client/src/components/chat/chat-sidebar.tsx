@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { MessageSquare, Hash, Plus, Loader2, ChevronDown, Users } from "lucide-react"
 import { chatApi, Channel, DirectMessage } from "@/lib/api/chat"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { FEATURES } from "@/lib/features"
 import {
     Dialog,
     DialogContent,
@@ -57,8 +58,9 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                 const dms = (dmsResponse.data || []).map((dm: DirectMessage) => ({
                     id: dm.id,
                     name: dm.participants.map(p => p.username).join(", ") || "Direct Message",
-                    status: 'online' as const, // TODO: Get real status from presence
-                    unread: 0, // TODO: Get real unread count
+                    // Presence/unread features disabled until backend implementation
+                    status: FEATURES.CHAT_PRESENCE ? 'online' as const : 'offline' as const,
+                    unread: FEATURES.CHAT_UNREAD_COUNT ? 0 : 0, // Real count when enabled
                 }))
                 setDirectMessages(dms)
             } catch {
@@ -202,14 +204,14 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                                                 <AvatarFallback className="bg-primary/10 text-primary text-[10px]">{dm.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                         </div>
-                                        {dm.status === "online" && (
+                                        {FEATURES.CHAT_PRESENCE && dm.status === "online" && (
                                             <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500 border border-white" />
                                         )}
                                     </div>
                                     <span className={cn("truncate flex-1 text-left", dm.unread > 0 && selectedChannel !== dm.id ? "font-bold text-foreground" : "")}>
                                         {dm.name}
                                     </span>
-                                    {dm.unread > 0 && selectedChannel !== dm.id && (
+                                    {FEATURES.CHAT_UNREAD_COUNT && dm.unread > 0 && selectedChannel !== dm.id && (
                                         <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1.5">
                                             {dm.unread}
                                         </span>

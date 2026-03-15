@@ -153,25 +153,17 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: 
         }
 
         // --- 4. Default / Generic Fallback UI ---
+        // NO DEAD ENDS: Ce fallback ne devrait pas apparaître si les actions
+        // non-implémentées sont correctement filtrées dans les menus
         return (
             <div className="mt-6 flex flex-col items-center justify-center text-center py-8">
-                <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-full flex items-center justify-center mb-6">
-                    <Settings className="w-8 h-8 animate-pulse" />
+                <div className="w-16 h-16 bg-muted text-muted-foreground rounded-full flex items-center justify-center mb-6">
+                    <Settings className="w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Déploiement en cours</h3>
-                <p className="text-sm text-gray-500 mt-2 max-w-sm">
-                    L'interface complète pour <strong>"{title}"</strong> est actuellement en cours de finalisation par nos ingénieurs. Elle sera activée silencieusement sur votre cluster SignApps prochainement.
+                <h3 className="text-lg font-medium text-foreground">{title}</h3>
+                <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+                    Cette fonctionnalité n'est pas disponible dans cette version.
                 </p>
-                
-                <div className="mt-8 w-full bg-gray-100 dark:bg-[#141414] rounded-lg p-4 text-left border border-gray-200 dark:border-gray-800">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-xs font-mono text-gray-600 dark:text-gray-400">STATUS: PROVISIONING</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500 w-2/3 animate-[pulse_2s_ease-in-out_infinite]" />
-                    </div>
-                </div>
             </div>
         );
     };

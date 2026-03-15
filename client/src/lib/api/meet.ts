@@ -1,4 +1,13 @@
-import { meetApiClient } from './core';
+/**
+ * Meet API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the meet service client (cached)
+const meetClient = getClient(ServiceName.MEET);
 
 // ============================================================================
 // Types
@@ -103,76 +112,76 @@ export const meetApi = {
     // ========================================================================
 
     getConfig: () =>
-        meetApiClient.get<MeetConfig>('/meet/config'),
+        meetClient.get<MeetConfig>('/meet/config'),
 
     // ========================================================================
     // Rooms
     // ========================================================================
 
     listRooms: () =>
-        meetApiClient.get<Room[]>('/meet/rooms'),
+        meetClient.get<Room[]>('/meet/rooms'),
 
     getRoom: (id: string) =>
-        meetApiClient.get<Room>(`/meet/rooms/${id}`),
+        meetClient.get<Room>(`/meet/rooms/${id}`),
 
     createRoom: (data: CreateRoomRequest) =>
-        meetApiClient.post<Room>('/meet/rooms', data),
+        meetClient.post<Room>('/meet/rooms', data),
 
     updateRoom: (id: string, data: UpdateRoomRequest) =>
-        meetApiClient.put<Room>(`/meet/rooms/${id}`, data),
+        meetClient.put<Room>(`/meet/rooms/${id}`, data),
 
     deleteRoom: (id: string) =>
-        meetApiClient.delete(`/meet/rooms/${id}`),
+        meetClient.delete(`/meet/rooms/${id}`),
 
     endRoom: (id: string) =>
-        meetApiClient.post(`/meet/rooms/${id}/end`),
+        meetClient.post(`/meet/rooms/${id}/end`),
 
     // ========================================================================
     // Tokens
     // ========================================================================
 
     getToken: () =>
-        meetApiClient.get<TokenResponse>('/meet/token'),
+        meetClient.get<TokenResponse>('/meet/token'),
 
     getRoomToken: (roomId: string) =>
-        meetApiClient.get<TokenResponse>(`/meet/rooms/${roomId}/token`),
+        meetClient.get<TokenResponse>(`/meet/rooms/${roomId}/token`),
 
     // ========================================================================
     // Participants
     // ========================================================================
 
     listParticipants: (roomId: string) =>
-        meetApiClient.get<Participant[]>(`/meet/rooms/${roomId}/participants`),
+        meetClient.get<Participant[]>(`/meet/rooms/${roomId}/participants`),
 
     kickParticipant: (roomId: string, userId: string) =>
-        meetApiClient.post(`/meet/rooms/${roomId}/participants/${userId}/kick`),
+        meetClient.post(`/meet/rooms/${roomId}/participants/${userId}/kick`),
 
     muteParticipant: (roomId: string, userId: string, data: MuteRequest) =>
-        meetApiClient.post(`/meet/rooms/${roomId}/participants/${userId}/mute`, data),
+        meetClient.post(`/meet/rooms/${roomId}/participants/${userId}/mute`, data),
 
     // ========================================================================
     // Recordings
     // ========================================================================
 
     listRecordings: (roomId: string) =>
-        meetApiClient.get<Recording[]>(`/meet/rooms/${roomId}/recordings`),
+        meetClient.get<Recording[]>(`/meet/rooms/${roomId}/recordings`),
 
     startRecording: (roomId: string) =>
-        meetApiClient.post<Recording>(`/meet/rooms/${roomId}/recordings`),
+        meetClient.post<Recording>(`/meet/rooms/${roomId}/recordings`),
 
     getRecording: (recordingId: string) =>
-        meetApiClient.get<Recording>(`/meet/recordings/${recordingId}`),
+        meetClient.get<Recording>(`/meet/recordings/${recordingId}`),
 
     stopRecording: (recordingId: string) =>
-        meetApiClient.post<Recording>(`/meet/recordings/${recordingId}/stop`),
+        meetClient.post<Recording>(`/meet/recordings/${recordingId}/stop`),
 
     deleteRecording: (recordingId: string) =>
-        meetApiClient.delete(`/meet/recordings/${recordingId}`),
+        meetClient.delete(`/meet/recordings/${recordingId}`),
 
     // ========================================================================
     // History
     // ========================================================================
 
     listHistory: () =>
-        meetApiClient.get<MeetingHistory[]>('/meet/history'),
+        meetClient.get<MeetingHistory[]>('/meet/history'),
 };

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useCalendarStore, useCalendarSelection } from "@/stores/calendar-store";
+import { useEntityStore } from "@/stores/entity-hub-store";
 import { useShallow } from "zustand/react/shallow";
 import { calendarApi } from "@/lib/api";
 import { CalendarView } from "@/components/calendar/CalendarView";
@@ -44,6 +45,15 @@ export default function CalendarPage() {
   const viewMode = useCalendarStore((state) => state.viewMode);
   const setViewMode = useCalendarStore((state) => state.setViewMode);
   const { selectedEventId, selectEvent } = useCalendarSelection();
+
+  // Unified Entity Hub sync
+  const { fetchTasks, fetchProjects } = useEntityStore();
+
+  useEffect(() => {
+    // Sync unified multi-tenant entities in the background for global views
+    fetchTasks();
+    fetchProjects();
+  }, [fetchTasks, fetchProjects]);
 
   const selectedEvent = useMemo(() =>
     events.find((e) => e.id === selectedEventId),
@@ -108,7 +118,7 @@ export default function CalendarPage() {
 
   return (
     <AppLayout>
-      <div className="h-[calc(100vh-8rem)] w-full flex flex-col bg-background text-[#3c4043] overflow-hidden font-sans rounded-xl border shadow-sm">
+      <div className="h-[calc(100vh-8rem)] w-full flex flex-col glass-panel text-foreground overflow-hidden font-sans rounded-2xl border border-border/50 shadow-premium">
         {/* Full viewport Classic Calendar Layout */}
         
         {/* 1. Top Header */}
@@ -125,13 +135,13 @@ export default function CalendarPage() {
         />
 
         {/* 3. Main Calendar View Area */}
-        <div className="flex-1 h-full overflow-hidden relative bg-background">
+        <div className="flex-1 h-full overflow-hidden relative glass-panel ml-4 rounded-xl border border-border/50">
           {isLoading ? (
-            <div className="flex h-full w-full items-center justify-center text-[#5f6368]">
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
               Loading calendar grid...
             </div>
           ) : calendars.length === 0 ? (
-            <div className="flex flex-col h-full w-full items-center justify-center text-[#5f6368]">
+            <div className="flex flex-col h-full w-full items-center justify-center text-muted-foreground">
               <p className="mb-4">No calendars yet. Create your first calendar to get started.</p>
               <Button onClick={() => setEventFormOpen(true)} className="bg-[#1a73e8] hover:bg-blue-700 text-white rounded">
                 Créer un agenda

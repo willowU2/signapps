@@ -1,4 +1,13 @@
-import { identityApiClient } from './core';
+/**
+ * Resources API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the identity service client (cached) - resources are managed by identity service
+const identityClient = getClient(ServiceName.IDENTITY);
 
 // ============================================================================
 // Types
@@ -103,15 +112,15 @@ export interface UpdateReservationStatusRequest {
 export const resourceTypesApi = {
     /** List all resource types for current tenant */
     list: () =>
-        identityApiClient.get<ResourceType[]>('/resource-types'),
+        identityClient.get<ResourceType[]>('/resource-types'),
 
     /** Create a new resource type */
     create: (data: CreateResourceTypeRequest) =>
-        identityApiClient.post<ResourceType>('/resource-types', data),
+        identityClient.post<ResourceType>('/resource-types', data),
 
     /** Delete a resource type */
     delete: (id: string) =>
-        identityApiClient.delete(`/resource-types/${id}`),
+        identityClient.delete(`/resource-types/${id}`),
 };
 
 // ============================================================================
@@ -121,25 +130,25 @@ export const resourceTypesApi = {
 export const resourcesApi = {
     /** List all resources for current tenant */
     list: (resourceType?: ResourceTypeCategory, limit?: number, offset?: number) =>
-        identityApiClient.get<Resource[]>('/resources', {
+        identityClient.get<Resource[]>('/resources', {
             params: { resource_type: resourceType, limit, offset }
         }),
 
     /** Get resource by ID */
     get: (id: string) =>
-        identityApiClient.get<Resource>(`/resources/${id}`),
+        identityClient.get<Resource>(`/resources/${id}`),
 
     /** Create a new resource */
     create: (data: CreateResourceRequest) =>
-        identityApiClient.post<Resource>('/resources', data),
+        identityClient.post<Resource>('/resources', data),
 
     /** Update a resource */
     update: (id: string, data: UpdateResourceRequest) =>
-        identityApiClient.put<Resource>(`/resources/${id}`, data),
+        identityClient.put<Resource>(`/resources/${id}`, data),
 
     /** Delete a resource */
     delete: (id: string) =>
-        identityApiClient.delete(`/resources/${id}`),
+        identityClient.delete(`/resources/${id}`),
 };
 
 // ============================================================================
@@ -149,46 +158,46 @@ export const resourcesApi = {
 export const reservationsApi = {
     /** List reservations for a resource */
     list: (resourceId: string, status?: ReservationStatus) =>
-        identityApiClient.get<Reservation[]>('/reservations', {
+        identityClient.get<Reservation[]>('/reservations', {
             params: { resource_id: resourceId, status }
         }),
 
     /** List current user's reservations */
     listMine: (status?: ReservationStatus) =>
-        identityApiClient.get<Reservation[]>('/reservations/mine', {
+        identityClient.get<Reservation[]>('/reservations/mine', {
             params: { status }
         }),
 
     /** List pending reservations for approval (current user as approver) */
     listPending: () =>
-        identityApiClient.get<Reservation[]>('/reservations/pending'),
+        identityClient.get<Reservation[]>('/reservations/pending'),
 
     /** Get reservation by ID */
     get: (id: string) =>
-        identityApiClient.get<Reservation>(`/reservations/${id}`),
+        identityClient.get<Reservation>(`/reservations/${id}`),
 
     /** Create a new reservation */
     create: (data: CreateReservationRequest) =>
-        identityApiClient.post<Reservation>('/reservations', data),
+        identityClient.post<Reservation>('/reservations', data),
 
     /** Update reservation status (approve/reject/cancel) */
     updateStatus: (id: string, data: UpdateReservationStatusRequest) =>
-        identityApiClient.put<Reservation>(`/reservations/${id}/status`, data),
+        identityClient.put<Reservation>(`/reservations/${id}/status`, data),
 
     /** Approve a reservation */
     approve: (id: string) =>
-        identityApiClient.put<Reservation>(`/reservations/${id}/status`, { status: 'approved' }),
+        identityClient.put<Reservation>(`/reservations/${id}/status`, { status: 'approved' }),
 
     /** Reject a reservation */
     reject: (id: string, reason?: string) =>
-        identityApiClient.put<Reservation>(`/reservations/${id}/status`, {
+        identityClient.put<Reservation>(`/reservations/${id}/status`, {
             status: 'rejected',
             rejection_reason: reason
         }),
 
     /** Cancel a reservation */
     cancel: (id: string) =>
-        identityApiClient.put<Reservation>(`/reservations/${id}/status`, { status: 'cancelled' }),
+        identityClient.put<Reservation>(`/reservations/${id}/status`, { status: 'cancelled' }),
 };
 
 // ============================================================================

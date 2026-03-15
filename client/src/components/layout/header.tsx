@@ -17,12 +17,23 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
 import { NotificationBadge } from '@/components/notifications/notification-badge';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export function Header() {
   const { user, logout } = useAuthStore();
   const { toggleSidebar, sidebarCollapsed } = useUIStore();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -62,8 +73,16 @@ export function Header() {
       .slice(0, 2);
   };
 
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const breadcrumbItems = pathSegments.map((segment, index) => {
+      const url = `/${pathSegments.slice(0, index + 1).join('/')}`;
+      const isLast = index === pathSegments.length - 1;
+      const label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+      return { label, url, isLast };
+  });
+
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -73,6 +92,33 @@ export function Header() {
         >
           <Menu className="h-5 w-5" />
         </Button>
+
+        {/* Dynamic Breadcrumbs */}
+        <div className="flex flex-col ml-0 lg:ml-2">
+            <Breadcrumb className="hidden sm:block">
+                <BreadcrumbList className="gap-1 sm:gap-1.5 min-h-[20px]">
+                    <BreadcrumbItem>
+                        <BreadcrumbLink asChild>
+                            <Link href="/dashboard" className="text-xs">Home</Link>
+                        </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    {breadcrumbItems.map((item, index) => (
+                        <div key={item.url} className="flex items-center gap-1 sm:gap-1.5">
+                            <BreadcrumbSeparator className="[&>svg]:size-3" />
+                            <BreadcrumbItem>
+                                {item.isLast ? (
+                                    <BreadcrumbPage className="text-sm font-semibold">{item.label}</BreadcrumbPage>
+                                ) : (
+                                    <BreadcrumbLink asChild>
+                                        <Link href={item.url} className="text-sm">{item.label}</Link>
+                                    </BreadcrumbLink>
+                                )}
+                            </BreadcrumbItem>
+                        </div>
+                    ))}
+                </BreadcrumbList>
+            </Breadcrumb>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

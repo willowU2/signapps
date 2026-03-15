@@ -59,25 +59,6 @@ export function QuotaCard({ className }: QuotaCardProps) {
         setError(null);
       } catch {
         setError('Impossible de charger les quotas');
-        // Mock data for development
-        setQuota({
-          user_id: 'user-1',
-          storage: {
-            used: 4500000000,
-            limit: 10000000000,
-            percentage: 45,
-          },
-          files: {
-            used: 1250,
-            limit: 10000,
-            percentage: 12.5,
-          },
-          buckets: [
-            { bucket: 'documents', used_bytes: 2000000000, file_count: 500 },
-            { bucket: 'images', used_bytes: 1500000000, file_count: 350 },
-            { bucket: 'backups', used_bytes: 1000000000, file_count: 400 },
-          ],
-        });
       } finally {
         setLoading(false);
       }

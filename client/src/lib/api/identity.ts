@@ -1,13 +1,22 @@
-import { identityApiClient } from './core';
+/**
+ * Identity API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the identity service client (cached)
+const identityClient = getClient(ServiceName.IDENTITY);
 
 // Auth API
 export const authApi = {
     login: (credentials: LoginRequest) =>
-        identityApiClient.post<LoginResponse>('/auth/login', credentials),
+        identityClient.post<LoginResponse>('/auth/login', credentials),
     register: (userData: any) =>
-        identityApiClient.post('/auth/register', userData),
+        identityClient.post('/auth/register', userData),
     logout: () => {
-        return identityApiClient.post('/auth/logout').finally(() => {
+        return identityClient.post('/auth/logout').finally(() => {
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
             localStorage.removeItem('auth-storage');
@@ -15,30 +24,30 @@ export const authApi = {
             window.location.href = '/login';
         });
     },
-    me: () => identityApiClient.get<User>('/auth/me'),
+    me: () => identityClient.get<User>('/auth/me'),
     mfaVerify: (sessionToken: string, code: string) =>
-        identityApiClient.post<LoginResponse>('/auth/mfa/verify', {
+        identityClient.post<LoginResponse>('/auth/mfa/verify', {
             session_token: sessionToken,
             code,
         }),
-    mfaDisable: () => identityApiClient.post('/auth/mfa/disable'),
-    mfaStatus: () => identityApiClient.get('/auth/mfa/status'),
+    mfaDisable: () => identityClient.post('/auth/mfa/disable'),
+    mfaStatus: () => identityClient.get('/auth/mfa/status'),
     // LDAP Configuration
 
-    getLdapConfig: () => identityApiClient.get<LdapConfig>('/auth/ldap/config'),
+    getLdapConfig: () => identityClient.get<LdapConfig>('/auth/ldap/config'),
     updateLdapConfig: (config: LdapConfig) =>
-        identityApiClient.put<LdapConfig>('/auth/ldap/config', config),
+        identityClient.put<LdapConfig>('/auth/ldap/config', config),
     testLdapConnection: (config: LdapConfig) =>
-        identityApiClient.post('/auth/ldap/test', config),
-    syncLdap: () => identityApiClient.post('/auth/ldap/sync'),
+        identityClient.post('/auth/ldap/test', config),
+    syncLdap: () => identityClient.post('/auth/ldap/sync'),
     // MFA
-    mfaSetup: () => identityApiClient.post<{ secret: string; qr_code_url: string; backup_codes: string[] }>('/auth/mfa/setup'),
+    mfaSetup: () => identityClient.post<{ secret: string; qr_code_url: string; backup_codes: string[] }>('/auth/mfa/setup'),
     // Aliases used by settings page
-    ldapGetConfig: () => identityApiClient.get<LdapConfig>('/auth/ldap/config'),
+    ldapGetConfig: () => identityClient.get<LdapConfig>('/auth/ldap/config'),
     ldapUpdateConfig: (config: LdapConfig) =>
-        identityApiClient.put<LdapConfig>('/auth/ldap/config', config),
+        identityClient.put<LdapConfig>('/auth/ldap/config', config),
     ldapTestConnection: (config?: LdapConfig) =>
-        identityApiClient.post<{ success: boolean; message?: string }>('/auth/ldap/test', config),
+        identityClient.post<{ success: boolean; message?: string }>('/auth/ldap/test', config),
 };
 
 export interface LoginRequest {
@@ -102,26 +111,26 @@ export interface LdapConfig {
 // Users API
 export const usersApi = {
     list: (page?: number, limit?: number) =>
-        identityApiClient.get<UserListResponse>('/users', { params: { page, limit } }),
-    get: (id: string) => identityApiClient.get<User>(`/users/${id}`),
-    create: (data: CreateUserRequest) => identityApiClient.post<User>('/users', data),
+        identityClient.get<UserListResponse>('/users', { params: { page, limit } }),
+    get: (id: string) => identityClient.get<User>(`/users/${id}`),
+    create: (data: CreateUserRequest) => identityClient.post<User>('/users', data),
     update: (id: string, data: Partial<CreateUserRequest>) =>
-        identityApiClient.put<User>(`/users/${id}`, data),
-    delete: (id: string) => identityApiClient.delete(`/users/${id}`),
+        identityClient.put<User>(`/users/${id}`, data),
+    delete: (id: string) => identityClient.delete(`/users/${id}`),
     
     // Rôles
-    getRoles: () => identityApiClient.get('/roles'),
-    createRole: (data: any) => identityApiClient.post('/roles', data),
-    updateRole: (id: string, data: any) => identityApiClient.put(`/roles/${id}`, data),
-    deleteRole: (id: string) => identityApiClient.delete(`/roles/${id}`),
+    getRoles: () => identityClient.get('/roles'),
+    createRole: (data: any) => identityClient.post('/roles', data),
+    updateRole: (id: string, data: any) => identityClient.put(`/roles/${id}`, data),
+    deleteRole: (id: string) => identityClient.delete(`/roles/${id}`),
     
     // Webhooks
-    getWebhooks: () => identityApiClient.get('/webhooks'),
-    createWebhook: (data: any) => identityApiClient.post('/webhooks', data),
-    getWebhook: (id: string) => identityApiClient.get(`/webhooks/${id}`),
-    updateWebhook: (id: string, data: any) => identityApiClient.put(`/webhooks/${id}`, data),
-    deleteWebhook: (id: string) => identityApiClient.delete(`/webhooks/${id}`),
-    testWebhook: (id: string) => identityApiClient.post(`/webhooks/${id}/test`),
+    getWebhooks: () => identityClient.get('/webhooks'),
+    createWebhook: (data: any) => identityClient.post('/webhooks', data),
+    getWebhook: (id: string) => identityClient.get(`/webhooks/${id}`),
+    updateWebhook: (id: string, data: any) => identityClient.put(`/webhooks/${id}`, data),
+    deleteWebhook: (id: string) => identityClient.delete(`/webhooks/${id}`),
+    testWebhook: (id: string) => identityClient.post(`/webhooks/${id}/test`),
 };
 
 export interface UserListResponse {
@@ -139,24 +148,31 @@ export interface CreateUserRequest {
     role?: number;
 }
 
+export interface UpdateUserRequest {
+    email?: string;
+    password?: string;
+    display_name?: string;
+    role?: number;
+}
+
 // Groups API
 export const groupsApi = {
-    list: () => identityApiClient.get<Group[]>('/groups'),
-    get: (id: string) => identityApiClient.get<Group>(`/groups/${id}`),
-    create: (data: CreateGroupRequest) => identityApiClient.post<Group>('/groups', data),
+    list: () => identityClient.get<Group[]>('/groups'),
+    get: (id: string) => identityClient.get<Group>(`/groups/${id}`),
+    create: (data: CreateGroupRequest) => identityClient.post<Group>('/groups', data),
     update: (id: string, data: Partial<CreateGroupRequest>) =>
-        identityApiClient.put<Group>(`/groups/${id}`, data),
-    delete: (id: string) => identityApiClient.delete(`/groups/${id}`),
+        identityClient.put<Group>(`/groups/${id}`, data),
+    delete: (id: string) => identityClient.delete(`/groups/${id}`),
     // Members
     addMembers: (id: string, userIds: string[]) =>
-        identityApiClient.post(`/groups/${id}/members`, { user_ids: userIds }),
+        identityClient.post(`/groups/${id}/members`, { user_ids: userIds }),
     removeMember: (id: string, userId: string) =>
-        identityApiClient.delete(`/groups/${id}/members/${userId}`),
+        identityClient.delete(`/groups/${id}/members/${userId}`),
     // Permissions
     getPermissions: (id: string) =>
-        identityApiClient.get<GroupPermissions>(`/groups/${id}/permissions`),
+        identityClient.get<GroupPermissions>(`/groups/${id}/permissions`),
     updatePermissions: (id: string, permissions: GroupPermissions) =>
-        identityApiClient.put(`/groups/${id}/permissions`, permissions),
+        identityClient.put(`/groups/${id}/permissions`, permissions),
 };
 
 export interface Group {
@@ -187,14 +203,14 @@ export interface CreateGroupRequest {
 // Audit Logs API
 export const auditApi = {
     list: (filters?: AuditLogFilters) =>
-        identityApiClient.get<AuditLogListResponse>('/audit-logs', { params: filters }),
-    get: (id: string) => identityApiClient.get<AuditLog>(`/audit-logs/${id}`),
+        identityClient.get<AuditLogListResponse>('/audit-logs', { params: filters }),
+    get: (id: string) => identityClient.get<AuditLog>(`/audit-logs/${id}`),
     getByUser: (userId: string, limit?: number, offset?: number) =>
-        identityApiClient.get<AuditLogListResponse>(`/audit-logs/user/${userId}`, {
+        identityClient.get<AuditLogListResponse>(`/audit-logs/user/${userId}`, {
             params: { limit, offset },
         }),
     export: (filters?: AuditLogFilters) =>
-        identityApiClient.get('/audit-logs/export', {
+        identityClient.get('/audit-logs/export', {
             params: filters,
             responseType: 'blob',
         }),

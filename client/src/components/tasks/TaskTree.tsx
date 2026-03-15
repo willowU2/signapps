@@ -181,21 +181,7 @@ export function TaskTree({
         setIsLoading(true);
         const data = await getTaskTree(calendarId);
         
-        // Ensure we load some mock data if the API is empty to demonstrate the UI
-        if (data.length === 0) {
-           setTree([
-             {
-               task: { id: 'mock-1', title: "Appeler et passer au troc : J'ai le numéro direct du troc quand tu reviens +33 6 25 9...", status: 'pending', priority: 1, due_date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString() },
-               children: []
-             },
-             {
-               task: { id: 'mock-2', title: "Votre Freebox Pro est raccordée, et après?", status: 'pending', priority: 3 },
-               children: []
-             }
-           ]);
-        } else {
-           setTree(data);
-        }
+        setTree(data);
       } catch {
         // ignore
       } finally {

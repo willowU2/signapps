@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DataTableSkeleton, CardGridSkeleton } from '@/components/ui/skeleton-loader';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
@@ -249,12 +250,8 @@ export default function SchedulerPage() {
       <AppLayout>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold">Scheduler</h1>
-          <div className="grid gap-4 md:grid-cols-3">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-24" />
-            ))}
-          </div>
-          <Skeleton className="h-64" />
+          <CardGridSkeleton count={3} className="md:grid-cols-3" />
+          <DataTableSkeleton count={5} />
         </div>
       </AppLayout>
     );

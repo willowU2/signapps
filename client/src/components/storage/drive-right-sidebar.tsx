@@ -380,13 +380,7 @@ export function DriveRightSidebar() {
                     />
                 </div>
 
-                <div className="mt-auto mb-4">
-                    <AppIcon 
-                        icon={<Plus className="w-5 h-5 text-[#5f6368] dark:text-[#e8eaed]" />} 
-                        tooltip="Ajouter des modules" 
-                        onClick={() => {}} 
-                    />
-                </div>
+                {/* Bouton "Ajouter modules" retiré - feature non implémentée (NO DEAD ENDS) */}
             </div>
         </div>
     );

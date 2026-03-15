@@ -114,13 +114,7 @@ export function ArchivePreview({
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-2">
-        <Button className="flex-1" disabled>
-          <Download className="mr-2 h-4 w-4" />
-          Extraire
-        </Button>
-      </div>
+      {/* Bouton "Extraire" retiré - feature non implémentée (NO DEAD ENDS) */}
     </div>
   );
 }

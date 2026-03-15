@@ -65,7 +65,7 @@ export default function ChatPage() {
                 </div>
             }
         >
-            <div className="flex-1 bg-background rounded-2xl shadow-sm overflow-hidden flex flex-col min-w-0 mt-2 mb-2">
+            <div className="flex-1 glass-panel rounded-2xl shadow-premium border border-border/50 overflow-hidden flex flex-col min-w-0 mt-2 mb-2">
                 {selectedChannel ? (
                     <ChatWindow channelId={selectedChannel} />
                 ) : (

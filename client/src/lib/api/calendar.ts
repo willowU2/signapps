@@ -1,6 +1,14 @@
-
-import { calendarApiClient } from './core';
+/**
+ * Calendar API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
 import { Calendar, CreateCalendar, UpdateCalendar, Event, CreateEvent, UpdateEvent, EventAttendee, AddEventAttendee } from '@/types/calendar';
+
+// Get the calendar service client (cached)
+const calendarClient = getClient(ServiceName.CALENDAR);
 
 // Notification types (served by calendar service)
 export interface NotificationRecord {
@@ -41,66 +49,66 @@ export interface UnreadCount {
 
 export const notificationsApi = {
     getPreferences: () =>
-        calendarApiClient.get<NotificationPreferences>("/notifications/preferences"),
+        calendarClient.get<NotificationPreferences>("/notifications/preferences"),
 
     updatePreferences: (data: Partial<NotificationPreferences>) =>
-        calendarApiClient.put<NotificationPreferences>("/notifications/preferences", data),
+        calendarClient.put<NotificationPreferences>("/notifications/preferences", data),
 
     getHistory: (params?: { limit?: number; offset?: number }) =>
-        calendarApiClient.get<NotificationHistoryResponse>("/notifications/history", { params }),
+        calendarClient.get<NotificationHistoryResponse>("/notifications/history", { params }),
 
     getUnreadCount: () =>
-        calendarApiClient.get<UnreadCount>("/notifications/unread-count"),
+        calendarClient.get<UnreadCount>("/notifications/unread-count"),
 
     resend: (notificationId: string) =>
-        calendarApiClient.post(`/notifications/${notificationId}/resend`),
+        calendarClient.post(`/notifications/${notificationId}/resend`),
 
     subscribePush: (subscription: object, browserName?: string) =>
-        calendarApiClient.post("/notifications/subscriptions/push", { subscription, browser_name: browserName }),
+        calendarClient.post("/notifications/subscriptions/push", { subscription, browser_name: browserName }),
 
     listPushSubscriptions: () =>
-        calendarApiClient.get<Array<{ id: string; browser_name?: string; created_at: string }>>("/notifications/subscriptions/push"),
+        calendarClient.get<Array<{ id: string; browser_name?: string; created_at: string }>>("/notifications/subscriptions/push"),
 
     unsubscribePush: (subscriptionId: string) =>
-        calendarApiClient.delete(`/notifications/subscriptions/push/${subscriptionId}`),
+        calendarClient.delete(`/notifications/subscriptions/push/${subscriptionId}`),
 };
 
 export const calendarApi = {
     // Calendars
     createCalendar: (data: CreateCalendar) =>
-        calendarApiClient.post<Calendar>("/calendars", data),
+        calendarClient.post<Calendar>("/calendars", data),
 
     listCalendars: () =>
-        calendarApiClient.get<Calendar[]>("/calendars"),
+        calendarClient.get<Calendar[]>("/calendars"),
 
     getCalendar: (id: string) =>
-        calendarApiClient.get<Calendar>(`/calendars/${id}`),
+        calendarClient.get<Calendar>(`/calendars/${id}`),
 
     updateCalendar: (id: string, data: UpdateCalendar) =>
-        calendarApiClient.put<Calendar>(`/calendars/${id}`, data),
+        calendarClient.put<Calendar>(`/calendars/${id}`, data),
 
     deleteCalendar: (id: string) =>
-        calendarApiClient.delete(`/calendars/${id}`),
+        calendarClient.delete(`/calendars/${id}`),
 
     // Calendar members (sharing)
     listMembers: (calendarId: string) =>
-        calendarApiClient.get(`/calendars/${calendarId}/members`),
+        calendarClient.get(`/calendars/${calendarId}/members`),
 
     addMember: (calendarId: string, userId: string, role: string) =>
-        calendarApiClient.post(`/calendars/${calendarId}/members`, { user_id: userId, role }),
+        calendarClient.post(`/calendars/${calendarId}/members`, { user_id: userId, role }),
 
     removeMember: (calendarId: string, userId: string) =>
-        calendarApiClient.delete(`/calendars/${calendarId}/members/${userId}`),
+        calendarClient.delete(`/calendars/${calendarId}/members/${userId}`),
 
     updateMemberRole: (calendarId: string, userId: string, role: string) =>
-        calendarApiClient.put(`/calendars/${calendarId}/members/${userId}`, { role }),
+        calendarClient.put(`/calendars/${calendarId}/members/${userId}`, { role }),
 
     // Events
     createEvent: (calendarId: string, data: CreateEvent) =>
-        calendarApiClient.post<Event>(`/calendars/${calendarId}/events`, data),
+        calendarClient.post<Event>(`/calendars/${calendarId}/events`, data),
 
     listEvents: (calendarId: string, start?: Date, end?: Date) =>
-        calendarApiClient.get<Event[]>(`/calendars/${calendarId}/events`, {
+        calendarClient.get<Event[]>(`/calendars/${calendarId}/events`, {
             params: {
                 start: start?.toISOString(),
                 end: end?.toISOString(),
@@ -108,61 +116,61 @@ export const calendarApi = {
         }),
 
     getEvent: (id: string) =>
-        calendarApiClient.get<Event>(`/events/${id}`),
+        calendarClient.get<Event>(`/events/${id}`),
 
     updateEvent: (id: string, data: UpdateEvent) =>
-        calendarApiClient.put<Event>(`/events/${id}`, data),
+        calendarClient.put<Event>(`/events/${id}`, data),
 
     deleteEvent: (id: string) =>
-        calendarApiClient.delete(`/events/${id}`),
+        calendarClient.delete(`/events/${id}`),
 
     // Event attendees
     addAttendee: (eventId: string, data: AddEventAttendee) =>
-        calendarApiClient.post<EventAttendee>(`/events/${eventId}/attendees`, data),
+        calendarClient.post<EventAttendee>(`/events/${eventId}/attendees`, data),
 
     listAttendees: (eventId: string) =>
-        calendarApiClient.get<EventAttendee[]>(`/events/${eventId}/attendees`),
+        calendarClient.get<EventAttendee[]>(`/events/${eventId}/attendees`),
 
     updateRsvp: (attendeeId: string, rsvpStatus: string) =>
-        calendarApiClient.put(`/attendees/${attendeeId}/rsvp`, { rsvp_status: rsvpStatus }),
+        calendarClient.put(`/attendees/${attendeeId}/rsvp`, { rsvp_status: rsvpStatus }),
 
     removeAttendee: (attendeeId: string) =>
-        calendarApiClient.delete(`/attendees/${attendeeId}`),
+        calendarClient.delete(`/attendees/${attendeeId}`),
 
     // Raw HTTP access for calendar-specific endpoints
     // Used by components that need custom calendar endpoints (import/export, notifications, etc.)
     get: <T = any>(url: string, config?: any) =>
-        calendarApiClient.get<T>(url, config),
+        calendarClient.get<T>(url, config),
 
     post: <T = any>(url: string, data?: any, config?: any) =>
-        calendarApiClient.post<T>(url, data, config),
+        calendarClient.post<T>(url, data, config),
 
     put: <T = any>(url: string, data?: any, config?: any) =>
-        calendarApiClient.put<T>(url, data, config),
+        calendarClient.put<T>(url, data, config),
 
     delete: <T = any>(url: string, config?: any) =>
-        calendarApiClient.delete<T>(url, config),
+        calendarClient.delete<T>(url, config),
 };
 
 // Tasks API
 export const tasksApi = {
     listTasks: (calendarId: string) =>
-        calendarApiClient.get(`/calendars/${calendarId}/tasks`),
+        calendarClient.get(`/calendars/${calendarId}/tasks`),
     createTask: (calendarId: string, data: any) =>
-        calendarApiClient.post(`/calendars/${calendarId}/tasks`, data),
+        calendarClient.post(`/calendars/${calendarId}/tasks`, data),
     getTask: (taskId: string) =>
-        calendarApiClient.get(`/tasks/${taskId}`),
+        calendarClient.get(`/tasks/${taskId}`),
     updateTask: (taskId: string, data: any) =>
-        calendarApiClient.put(`/tasks/${taskId}`, data),
+        calendarClient.put(`/tasks/${taskId}`, data),
     deleteTask: (taskId: string) =>
-        calendarApiClient.delete(`/tasks/${taskId}`),
+        calendarClient.delete(`/tasks/${taskId}`),
 };
 
 // Timezones API
 export const timezonesApi = {
-    list: () => calendarApiClient.get('/timezones'),
-    getUserTimezone: () => calendarApiClient.get('/timezones/me'),
-    setUserTimezone: (timezone: string) => calendarApiClient.put('/timezones/me', { timezone }),
+    list: () => calendarClient.get('/timezones'),
+    getUserTimezone: () => calendarClient.get('/timezones/me'),
+    setUserTimezone: (timezone: string) => calendarClient.put('/timezones/me', { timezone }),
 };
 
 // Imports & ICS
@@ -170,8 +178,8 @@ export const importApi = {
     importIcs: (calendarId: string, file: File) => {
         const formData = new FormData();
         formData.append('file', file);
-        return calendarApiClient.post(`/calendars/${calendarId}/import`, formData);
+        return calendarClient.post(`/calendars/${calendarId}/import`, formData);
     },
     exportIcs: (calendarId: string) =>
-        calendarApiClient.get(`/calendars/${calendarId}/export`, { responseType: 'blob' }),
+        calendarClient.get(`/calendars/${calendarId}/export`, { responseType: 'blob' }),
 };

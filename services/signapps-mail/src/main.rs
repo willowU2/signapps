@@ -3,17 +3,17 @@ pub mod auth;
 pub mod models;
 pub mod sync_service;
 
+use signapps_common::bootstrap::{init_tracing, load_env, env_or};
 use signapps_common::middleware::{auth_middleware, AuthState};
-use signapps_common::JwtConfig;
+use signapps_common::{AiIndexerClient, JwtConfig};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use std::net::SocketAddr;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Clone)]
 pub struct AppState {
     pub pool: Pool<Postgres>,
     pub jwt_config: JwtConfig,
+    pub indexer: AiIndexerClient,
 }
 
 impl AuthState for AppState {
@@ -24,27 +24,27 @@ impl AuthState for AppState {
 
 #[tokio::main]
 async fn main() {
-    dotenvy::dotenv().ok();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_mail");
+    load_env();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "signapps_mail=info,tower_http=info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    let port: u16 = env_or("SERVER_PORT", "3012").parse().unwrap_or(3012);
+    tracing::info!("🚀 Starting signapps-mail on port {}", port);
 
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    // Database
+    let database_url = env_or("DATABASE_URL", "postgres://signapps:password@localhost:5432/signapps");
     let pool = PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)
         .await
         .expect("Failed to connect to Postgres");
 
+    // JWT configuration (custom: audience="signapps" for all services)
+    let jwt_secret = env_or("JWT_SECRET", "dev-secret-change-me");
     let jwt_config = JwtConfig {
-        secret: std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into()),
-        issuer: std::env::var("JWT_ISSUER").unwrap_or_else(|_| "signapps".into()),
-        audience: std::env::var("JWT_AUDIENCE").unwrap_or_else(|_| "signapps-users".into()),
+        secret: jwt_secret,
+        issuer: "signapps".to_string(),
+        audience: "signapps".to_string(),
         access_expiration: 3600,
         refresh_expiration: 86400 * 7,
     };
@@ -52,6 +52,7 @@ async fn main() {
     let state = AppState {
         pool: pool.clone(),
         jwt_config,
+        indexer: AiIndexerClient::from_env(),
     };
 
     // Start background sync service
@@ -69,12 +70,9 @@ async fn main() {
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
-    let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3012".into())
-        .parse()
-        .unwrap_or(3012);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("Mail service listening on {}", addr);
+    // Start server
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    tracing::info!("✅ signapps-mail ready at http://localhost:{}", port);
     axum::serve(listener, app).await.unwrap();
 }

@@ -2,15 +2,15 @@ use crate::models::BroadcastMessage;
 use axum::{routing::get, Router};
 use signapps_cache::CacheService;
 use signapps_common::auth::JwtConfig;
+use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, optional_auth_middleware, request_id_middleware,
 };
-use signapps_db::{create_pool, DatabasePool};
+use signapps_db::DatabasePool;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::broadcast;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
-use tracing::info;
 
 mod handlers;
 mod models;
@@ -18,6 +18,7 @@ mod utils;
 
 use handlers::health::health_handler;
 use handlers::websocket::websocket_handler;
+use signapps_common::AiIndexerClient;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -26,6 +27,7 @@ pub struct AppState {
     pub cache: Arc<CacheService>,
     pub docs: Arc<dashmap::DashMap<String, yrs::Doc>>,
     pub channels: Arc<dashmap::DashMap<String, broadcast::Sender<BroadcastMessage>>>,
+    pub indexer: AiIndexerClient,
 }
 
 impl signapps_common::middleware::AuthState for AppState {
@@ -36,32 +38,19 @@ impl signapps_common::middleware::AuthState for AppState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::fmt::init();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_collab");
+    load_env();
 
-    // Load .env file
-    dotenvy::dotenv().ok();
-
-    // Get configuration from environment
-    let server_port = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3013".to_string())
-        .parse::<u16>()?;
-
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://signapps:password@localhost:5432/signapps".to_string());
-
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "dev_secret_change_in_production_32chars".to_string());
+    let config = ServiceConfig::from_env("signapps-collab", 3013);
+    config.log_startup();
 
     // Initialize database
-    let pool = create_pool(&database_url).await?;
+    let pool = signapps_db::create_pool(&config.database_url).await?;
 
-    info!("Running migrations...");
-    // signapps_db::run_migrations(&pool).await?;
-
-    // Create JWT config
+    // Create JWT config (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
-        secret: jwt_secret,
+        secret: config.jwt_secret.clone(),
         issuer: "signapps".to_string(),
         audience: "signapps".to_string(),
         access_expiration: 900,
@@ -81,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
         cache,
         docs: Arc::new(dashmap::DashMap::new()),
         channels: Arc::new(dashmap::DashMap::new()),
+        indexer: AiIndexerClient::from_env(),
     };
 
     // Build router
@@ -102,15 +92,14 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn_with_state(app_state.clone(), optional_auth_middleware::<AppState>))
 
         // State
-        .with_state(app_state)
-        .into_make_service_with_connect_info::<SocketAddr>();
+        .with_state(app_state);
 
     // Run server
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", server_port)).await?;
+    tracing::info!("🤝 signapps-collab ready");
 
-    info!("🤝 signapps-collab listening on port {}", server_port);
-
-    axum::serve(listener, app).await?;
-
+    let addr: std::net::SocketAddr = format!("{}:{}", config.host, config.port).parse().unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    tracing::info!("✅ signapps-collab ready at http://localhost:{}", config.port);
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
     Ok(())
 }

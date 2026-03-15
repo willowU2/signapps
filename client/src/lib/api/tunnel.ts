@@ -1,51 +1,60 @@
-import { securelinkApiClient } from './core';
+/**
+ * Tunnel/SecureLink API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the securelink service client (cached)
+const securelinkClient = getClient(ServiceName.SECURELINK);
 
 // Tunnel/SecureLink API (Web Tunnels - VPN sans client)
 export const tunnelApi = {
     // Tunnels
-    listTunnels: () => securelinkApiClient.get<TunnelsListResponse>('/tunnels'),
-    getTunnel: (id: string) => securelinkApiClient.get<Tunnel>(`/tunnels/${id}`),
+    listTunnels: () => securelinkClient.get<TunnelsListResponse>('/tunnels'),
+    getTunnel: (id: string) => securelinkClient.get<Tunnel>(`/tunnels/${id}`),
     createTunnel: (data: CreateTunnelRequest) =>
-        securelinkApiClient.post<Tunnel>('/tunnels', data),
+        securelinkClient.post<Tunnel>('/tunnels', data),
     updateTunnel: (id: string, data: Partial<CreateTunnelRequest>) =>
-        securelinkApiClient.put<Tunnel>(`/tunnels/${id}`, data),
-    deleteTunnel: (id: string) => securelinkApiClient.delete(`/tunnels/${id}`),
-    reconnectTunnel: (id: string) => securelinkApiClient.post(`/tunnels/${id}/reconnect`),
-    getTunnelStats: (id: string) => securelinkApiClient.get<TunnelStats>(`/tunnels/${id}/stats`),
+        securelinkClient.put<Tunnel>(`/tunnels/${id}`, data),
+    deleteTunnel: (id: string) => securelinkClient.delete(`/tunnels/${id}`),
+    reconnectTunnel: (id: string) => securelinkClient.post(`/tunnels/${id}/reconnect`),
+    getTunnelStats: (id: string) => securelinkClient.get<TunnelStats>(`/tunnels/${id}/stats`),
 
     // Relays
-    listRelays: () => securelinkApiClient.get<RelaysListResponse>('/relays'),
-    getRelay: (id: string) => securelinkApiClient.get<Relay>(`/relays/${id}`),
+    listRelays: () => securelinkClient.get<RelaysListResponse>('/relays'),
+    getRelay: (id: string) => securelinkClient.get<Relay>(`/relays/${id}`),
     addRelay: (data: AddRelayRequest) =>
-        securelinkApiClient.post<Relay>('/relays', data),
+        securelinkClient.post<Relay>('/relays', data),
     updateRelay: (id: string, data: Partial<AddRelayRequest>) =>
-        securelinkApiClient.put<Relay>(`/relays/${id}`, data),
-    deleteRelay: (id: string) => securelinkApiClient.delete(`/relays/${id}`),
-    testRelay: (id: string) => securelinkApiClient.post<RelayTestResult>(`/relays/${id}/test`),
-    setPrimaryRelay: (id: string) => securelinkApiClient.post(`/relays/${id}/set-primary`),
+        securelinkClient.put<Relay>(`/relays/${id}`, data),
+    deleteRelay: (id: string) => securelinkClient.delete(`/relays/${id}`),
+    testRelay: (id: string) => securelinkClient.post<RelayTestResult>(`/relays/${id}/test`),
+    setPrimaryRelay: (id: string) => securelinkClient.post(`/relays/${id}/set-primary`),
 
     // DNS & Blocking
-    getDnsConfig: () => securelinkApiClient.get<DnsConfig>('/dns/config'),
+    getDnsConfig: () => securelinkClient.get<DnsConfig>('/dns/config'),
     updateDnsConfig: (data: Partial<DnsConfig>) =>
-        securelinkApiClient.put<DnsConfig>('/dns/config', data),
-    getDnsStats: () => securelinkApiClient.get<DnsStats>('/dns/stats'),
+        securelinkClient.put<DnsConfig>('/dns/config', data),
+    getDnsStats: () => securelinkClient.get<DnsStats>('/dns/stats'),
     addBlocklist: (data: AddBlocklistRequest) =>
-        securelinkApiClient.post<Blocklist>('/dns/blocklists', data),
-    removeBlocklist: (id: string) => securelinkApiClient.delete(`/dns/blocklists/${id}`),
+        securelinkClient.post<Blocklist>('/dns/blocklists', data),
+    removeBlocklist: (id: string) => securelinkClient.delete(`/dns/blocklists/${id}`),
     toggleBlocklist: (id: string, enabled: boolean) =>
-        securelinkApiClient.patch(`/dns/blocklists/${id}`, { enabled }),
+        securelinkClient.patch(`/dns/blocklists/${id}`, { enabled }),
     addDnsRecord: (data: CustomDnsRecord) =>
-        securelinkApiClient.post<CustomDnsRecord>('/dns/records', data),
+        securelinkClient.post<CustomDnsRecord>('/dns/records', data),
     updateDnsRecord: (id: string, data: Partial<CustomDnsRecord>) =>
-        securelinkApiClient.put<CustomDnsRecord>(`/dns/records/${id}`, data),
-    deleteDnsRecord: (id: string) => securelinkApiClient.delete(`/dns/records/${id}`),
+        securelinkClient.put<CustomDnsRecord>(`/dns/records/${id}`, data),
+    deleteDnsRecord: (id: string) => securelinkClient.delete(`/dns/records/${id}`),
 
     // Dashboard stats
-    getDashboardStats: () => securelinkApiClient.get<TunnelDashboardStats>('/dashboard/stats'),
+    getDashboardStats: () => securelinkClient.get<TunnelDashboardStats>('/dashboard/stats'),
     getTrafficHistory: (period: '1h' | '24h' | '7d' | '30d') =>
-        securelinkApiClient.get<TrafficDataPoint[]>('/dashboard/traffic', { params: { period } }),
+        securelinkClient.get<TrafficDataPoint[]>('/dashboard/traffic', { params: { period } }),
     quickConnect: (data?: { local_addr?: string }) =>
-        securelinkApiClient.post<Tunnel>('/tunnels/quick', data || {}),
+        securelinkClient.post<Tunnel>('/tunnels/quick', data || {}),
 };
 
 // Tunnel types

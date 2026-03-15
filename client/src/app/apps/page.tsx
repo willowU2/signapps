@@ -11,6 +11,7 @@ import { storeApi, containersApi } from '@/lib/api';
 import type { StoreApp } from '@/lib/api';
 import type { ContainerPortMapping } from '@/hooks/use-containers';
 import { getContainerUrl } from '@/lib/utils';
+import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
 import { AppCard } from '@/components/apps/app-card';
 import { InstallDialog } from '@/components/apps/install-dialog';
 import { AppDetailDialog } from '@/components/apps/app-detail-dialog';
@@ -205,11 +206,7 @@ export default function AppsPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">App Store</h1>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {[...Array(8)].map((_, i) => (
-              <Skeleton key={i} className="h-48" />
-            ))}
-          </div>
+          <CardGridSkeleton count={8} className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" />
         </div>
       </AppLayout>
     );

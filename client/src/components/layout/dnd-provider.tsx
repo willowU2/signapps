@@ -11,6 +11,7 @@ import {
   DragEndEvent,
 } from '@dnd-kit/core';
 import { toast } from 'sonner';
+import { FEATURES } from '@/lib/features';
 
 interface GlobalDndProviderProps {
   children: React.ReactNode;
@@ -43,33 +44,30 @@ export function GlobalDndProvider({ children }: GlobalDndProviderProps) {
       const activeType = active.data.current?.type;
       const overType = over.data.current?.type;
 
-      // Handle File dropped onto a Task
-      if (activeType === 'file' && overType === 'task') {
+      // Handle File dropped onto a Task (only if feature enabled)
+      if (activeType === 'file' && overType === 'task' && FEATURES.DND_FILE_TO_TASK) {
         const file = active.data.current?.file;
         const task = over.data.current?.task;
-        
-        // Optimistic UI Toast
-        toast.success(`Attached "${file.name}" to task "${task.title}"`);
-        
+
         // TODO: Call actual API endpoint to link file to task in DB
+        toast.success(`Attached "${file.name}" to task "${task.title}"`);
       }
-      
-      // Handle Task dropped onto a Calendar Slot
-      else if (activeType === 'task' && overType === 'calendar-slot') {
+
+      // Handle Task dropped onto a Calendar Slot (only if feature enabled)
+      else if (activeType === 'task' && overType === 'calendar-slot' && FEATURES.DND_TASK_TO_CALENDAR) {
          const task = active.data.current?.task;
          const slotDate = over.data.current?.date;
-         
+
+         // TODO: Open EventForm Modal or directly call API to create an event
          const formattedDate = new Date(slotDate).toLocaleDateString();
          toast.success(`Scheduled task "${task.title}" for ${formattedDate}`);
-         
-        // TODO: Open EventForm Modal or directly call API to create an event
       }
-      
-      // Handle File dropped onto Calendar Day
-       else if (activeType === 'file' && overType === 'calendar-slot') {
+
+      // Handle File dropped onto Calendar Day (only if feature enabled)
+       else if (activeType === 'file' && overType === 'calendar-slot' && FEATURES.DND_TASK_TO_CALENDAR) {
          const file = active.data.current?.file;
          const slotDate = over.data.current?.date;
-         
+
          const formattedDate = new Date(slotDate).toLocaleDateString();
          toast.success(`Started new event for "${file.name}" on ${formattedDate}`);
       }

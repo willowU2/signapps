@@ -1,4 +1,13 @@
-import { identityApiClient } from './core';
+/**
+ * Tenant API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the identity service client (cached)
+const identityClient = getClient(ServiceName.IDENTITY);
 
 // ============================================================================
 // Types
@@ -77,7 +86,7 @@ export interface WorkspaceMember {
 
 export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer';
 
-export interface AddMemberRequest {
+export interface AddWorkspaceMemberRequest {
     user_id: string;
     role?: WorkspaceRole;
 }
@@ -93,23 +102,23 @@ export interface UpdateMemberRoleRequest {
 export const tenantsApi = {
     /** List all tenants (super-admin only) */
     list: (limit?: number, offset?: number) =>
-        identityApiClient.get<Tenant[]>('/tenants', { params: { limit, offset } }),
+        identityClient.get<Tenant[]>('/tenants', { params: { limit, offset } }),
 
     /** Get tenant by ID */
     get: (id: string) =>
-        identityApiClient.get<Tenant>(`/tenants/${id}`),
+        identityClient.get<Tenant>(`/tenants/${id}`),
 
     /** Create a new tenant (super-admin only) */
     create: (data: CreateTenantRequest) =>
-        identityApiClient.post<Tenant>('/tenants', data),
+        identityClient.post<Tenant>('/tenants', data),
 
     /** Update a tenant */
     update: (id: string, data: UpdateTenantRequest) =>
-        identityApiClient.put<Tenant>(`/tenants/${id}`, data),
+        identityClient.put<Tenant>(`/tenants/${id}`, data),
 
     /** Delete (deactivate) a tenant */
     delete: (id: string) =>
-        identityApiClient.delete(`/tenants/${id}`),
+        identityClient.delete(`/tenants/${id}`),
 };
 
 // ============================================================================
@@ -119,7 +128,7 @@ export const tenantsApi = {
 export const tenantApi = {
     /** Get current user's tenant */
     get: () =>
-        identityApiClient.get<Tenant>('/tenant'),
+        identityClient.get<Tenant>('/tenant'),
 };
 
 // ============================================================================
@@ -129,42 +138,42 @@ export const tenantApi = {
 export const workspacesApi = {
     /** List all workspaces in current tenant */
     list: (limit?: number, offset?: number) =>
-        identityApiClient.get<Workspace[]>('/workspaces', { params: { limit, offset } }),
+        identityClient.get<Workspace[]>('/workspaces', { params: { limit, offset } }),
 
     /** List workspaces the current user is a member of */
     mine: () =>
-        identityApiClient.get<Workspace[]>('/workspaces/mine'),
+        identityClient.get<Workspace[]>('/workspaces/mine'),
 
     /** Get workspace by ID */
     get: (id: string) =>
-        identityApiClient.get<Workspace>(`/workspaces/${id}`),
+        identityClient.get<Workspace>(`/workspaces/${id}`),
 
     /** Create a new workspace */
     create: (data: CreateWorkspaceRequest) =>
-        identityApiClient.post<Workspace>('/workspaces', data),
+        identityClient.post<Workspace>('/workspaces', data),
 
     /** Update a workspace */
     update: (id: string, data: UpdateWorkspaceRequest) =>
-        identityApiClient.put<Workspace>(`/workspaces/${id}`, data),
+        identityClient.put<Workspace>(`/workspaces/${id}`, data),
 
     /** Delete a workspace */
     delete: (id: string) =>
-        identityApiClient.delete(`/workspaces/${id}`),
+        identityClient.delete(`/workspaces/${id}`),
 
     // Members
     /** List workspace members */
     listMembers: (workspaceId: string) =>
-        identityApiClient.get<WorkspaceMember[]>(`/workspaces/${workspaceId}/members`),
+        identityClient.get<WorkspaceMember[]>(`/workspaces/${workspaceId}/members`),
 
     /** Add member to workspace */
-    addMember: (workspaceId: string, data: AddMemberRequest) =>
-        identityApiClient.post(`/workspaces/${workspaceId}/members`, data),
+    addMember: (workspaceId: string, data: AddWorkspaceMemberRequest) =>
+        identityClient.post(`/workspaces/${workspaceId}/members`, data),
 
     /** Update member role */
     updateMemberRole: (workspaceId: string, userId: string, data: UpdateMemberRoleRequest) =>
-        identityApiClient.put(`/workspaces/${workspaceId}/members/${userId}`, data),
+        identityClient.put(`/workspaces/${workspaceId}/members/${userId}`, data),
 
     /** Remove member from workspace */
     removeMember: (workspaceId: string, userId: string) =>
-        identityApiClient.delete(`/workspaces/${workspaceId}/members/${userId}`),
+        identityClient.delete(`/workspaces/${workspaceId}/members/${userId}`),
 };

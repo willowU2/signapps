@@ -1,4 +1,13 @@
-import { itAssetsApiClient } from './core';
+/**
+ * IT Assets API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the IT assets service client (cached)
+const itAssetsClient = getClient(ServiceName.IT_ASSETS);
 
 // ============================================================================
 // Types
@@ -48,21 +57,21 @@ export interface UpdateHardwareRequest {
 export const itAssetsApi = {
     // List all hardware assets
     listHardware: () =>
-        itAssetsApiClient.get<HardwareAsset[]>('/it-assets/hardware'),
+        itAssetsClient.get<HardwareAsset[]>('/it-assets/hardware'),
 
     // Get a single hardware asset
     getHardware: (id: string) =>
-        itAssetsApiClient.get<HardwareAsset>(`/it-assets/hardware/${id}`),
+        itAssetsClient.get<HardwareAsset>(`/it-assets/hardware/${id}`),
 
     // Create a new hardware asset
     createHardware: (data: CreateHardwareRequest) =>
-        itAssetsApiClient.post<HardwareAsset>('/it-assets/hardware', data),
+        itAssetsClient.post<HardwareAsset>('/it-assets/hardware', data),
 
     // Update a hardware asset
     updateHardware: (id: string, data: UpdateHardwareRequest) =>
-        itAssetsApiClient.put<HardwareAsset>(`/it-assets/hardware/${id}`, data),
+        itAssetsClient.put<HardwareAsset>(`/it-assets/hardware/${id}`, data),
 
     // Delete a hardware asset
     deleteHardware: (id: string) =>
-        itAssetsApiClient.delete(`/it-assets/hardware/${id}`),
+        itAssetsClient.delete(`/it-assets/hardware/${id}`),
 };

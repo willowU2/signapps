@@ -1,0 +1,275 @@
+/**
+ * API Client Factory - SignApps Platform
+ *
+ * Factory centralisée pour créer des clients API avec:
+ * - Configuration unifiée des services
+ * - Intercepteurs JWT auto-refresh
+ * - Gestion d'erreurs cohérente
+ * - Support des health checks
+ *
+ * Usage:
+ *   import { getClient, ServiceName } from '@/lib/api/factory';
+ *   const client = getClient('identity');
+ *   // ou
+ *   const client = getClient(ServiceName.IDENTITY);
+ */
+
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SERVICE CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+export enum ServiceName {
+  IDENTITY = 'identity',
+  CONTAINERS = 'containers',
+  PROXY = 'proxy',
+  STORAGE = 'storage',
+  AI = 'ai',
+  SECURELINK = 'securelink',
+  SCHEDULER = 'scheduler',
+  METRICS = 'metrics',
+  MEDIA = 'media',
+  DOCS = 'docs',
+  CALENDAR = 'calendar',
+  MAIL = 'mail',
+  COLLAB = 'collab',
+  MEET = 'meet',
+  IT_ASSETS = 'it-assets',
+  PXE = 'pxe',
+  REMOTE = 'remote',
+  OFFICE = 'office',
+}
+
+interface ServiceConfig {
+  port: number;
+  envVar: string;
+  healthPath?: string;
+}
+
+const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
+  [ServiceName.IDENTITY]: { port: 3001, envVar: 'NEXT_PUBLIC_IDENTITY_URL', healthPath: '/health' },
+  [ServiceName.CONTAINERS]: { port: 3002, envVar: 'NEXT_PUBLIC_CONTAINERS_URL', healthPath: '/health' },
+  [ServiceName.PROXY]: { port: 3003, envVar: 'NEXT_PUBLIC_PROXY_URL', healthPath: '/health' },
+  [ServiceName.STORAGE]: { port: 3004, envVar: 'NEXT_PUBLIC_STORAGE_URL', healthPath: '/health' },
+  [ServiceName.AI]: { port: 3005, envVar: 'NEXT_PUBLIC_AI_URL', healthPath: '/health' },
+  [ServiceName.SECURELINK]: { port: 3006, envVar: 'NEXT_PUBLIC_SECURELINK_URL', healthPath: '/health' },
+  [ServiceName.SCHEDULER]: { port: 3007, envVar: 'NEXT_PUBLIC_SCHEDULER_URL', healthPath: '/health' },
+  [ServiceName.METRICS]: { port: 3008, envVar: 'NEXT_PUBLIC_METRICS_URL', healthPath: '/health' },
+  [ServiceName.MEDIA]: { port: 3009, envVar: 'NEXT_PUBLIC_MEDIA_URL', healthPath: '/health' },
+  [ServiceName.DOCS]: { port: 3010, envVar: 'NEXT_PUBLIC_DOCS_URL', healthPath: '/health' },
+  [ServiceName.CALENDAR]: { port: 3011, envVar: 'NEXT_PUBLIC_CALENDAR_URL', healthPath: '/health' },
+  [ServiceName.MAIL]: { port: 3012, envVar: 'NEXT_PUBLIC_MAIL_URL', healthPath: '/health' },
+  [ServiceName.COLLAB]: { port: 3013, envVar: 'NEXT_PUBLIC_COLLAB_URL', healthPath: '/health' },
+  [ServiceName.MEET]: { port: 3014, envVar: 'NEXT_PUBLIC_MEET_URL', healthPath: '/health' },
+  [ServiceName.IT_ASSETS]: { port: 3015, envVar: 'NEXT_PUBLIC_IT_ASSETS_URL', healthPath: '/health' },
+  [ServiceName.PXE]: { port: 3016, envVar: 'NEXT_PUBLIC_PXE_URL', healthPath: '/health' },
+  [ServiceName.REMOTE]: { port: 3017, envVar: 'NEXT_PUBLIC_REMOTE_URL', healthPath: '/health' },
+  [ServiceName.OFFICE]: { port: 3018, envVar: 'NEXT_PUBLIC_OFFICE_URL', healthPath: '/health' },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// URL HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Récupère l'URL de base d'un service
+ */
+export function getServiceUrl(service: ServiceName): string {
+  const config = SERVICE_CONFIG[service];
+  const envValue = typeof window !== 'undefined'
+    ? (process.env[config.envVar] || null)
+    : process.env[config.envVar];
+
+  return envValue || `http://127.0.0.1:${config.port}/api/v1`;
+}
+
+/**
+ * Récupère l'URL de base brute (sans /api/v1) d'un service
+ */
+export function getServiceBaseUrl(service: ServiceName): string {
+  const config = SERVICE_CONFIG[service];
+  const envValue = typeof window !== 'undefined'
+    ? (process.env[config.envVar] || null)
+    : process.env[config.envVar];
+
+  if (envValue) {
+    // Remove /api/v1 suffix if present
+    return envValue.replace(/\/api\/v1\/?$/, '');
+  }
+  return `http://127.0.0.1:${config.port}`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CLIENT CACHE
+// ═══════════════════════════════════════════════════════════════════════════
+
+const clientCache = new Map<ServiceName, AxiosInstance>();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INTERCEPTORS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function addAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+}
+
+async function handleAuthError(error: AxiosError, client: AxiosInstance): Promise<any> {
+  const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+  if (error.response?.status === 401 && !originalRequest._retry) {
+    originalRequest._retry = true;
+
+    if (typeof window !== 'undefined') {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (!refreshToken) {
+        clearAuthAndRedirect();
+        return Promise.reject(error);
+      }
+
+      try {
+        const identityUrl = getServiceUrl(ServiceName.IDENTITY);
+        const response = await axios.post(`${identityUrl}/auth/refresh`, {
+          refresh_token: refreshToken,
+        });
+
+        const { access_token, refresh_token } = response.data;
+        localStorage.setItem('access_token', access_token);
+        localStorage.setItem('refresh_token', refresh_token);
+
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+        return client(originalRequest);
+      } catch (refreshError) {
+        clearAuthAndRedirect();
+        return Promise.reject(refreshError);
+      }
+    }
+  }
+
+  return Promise.reject(error);
+}
+
+function clearAuthAndRedirect(): void {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('auth-storage');
+  document.cookie = 'auth-storage=; path=/; max-age=0';
+  window.location.href = '/login';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CLIENT FACTORY
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Crée un client API pour un service donné
+ * Les clients sont mis en cache pour réutilisation
+ */
+export function getClient(service: ServiceName): AxiosInstance {
+  // Return cached client if exists
+  const cached = clientCache.get(service);
+  if (cached) return cached;
+
+  const baseURL = getServiceUrl(service);
+
+  const client = axios.create({
+    baseURL,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  // Request interceptor
+  client.interceptors.request.use(addAuthHeader);
+
+  // Response interceptor
+  client.interceptors.response.use(
+    (response) => response,
+    (error) => handleAuthError(error, client)
+  );
+
+  // Cache the client
+  clientCache.set(service, client);
+
+  return client;
+}
+
+/**
+ * Alias pour compatibilité avec le code existant
+ */
+export function createServiceClient(service: ServiceName): AxiosInstance {
+  return getClient(service);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HEALTH CHECK
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface HealthCheckResult {
+  service: ServiceName;
+  healthy: boolean;
+  latency?: number;
+  error?: string;
+}
+
+/**
+ * Vérifie la santé d'un service
+ */
+export async function checkServiceHealth(service: ServiceName): Promise<HealthCheckResult> {
+  const config = SERVICE_CONFIG[service];
+  const baseUrl = getServiceBaseUrl(service);
+  const healthUrl = `${baseUrl}${config.healthPath || '/health'}`;
+
+  const start = Date.now();
+
+  try {
+    await axios.get(healthUrl, { timeout: 5000 });
+    return {
+      service,
+      healthy: true,
+      latency: Date.now() - start,
+    };
+  } catch (error) {
+    return {
+      service,
+      healthy: false,
+      latency: Date.now() - start,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Vérifie la santé de tous les services
+ */
+export async function checkAllServicesHealth(): Promise<HealthCheckResult[]> {
+  const services = Object.values(ServiceName);
+  return Promise.all(services.map(checkServiceHealth));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EXPORTS LEGACY (Compatibilité avec core.ts)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Ces exports permettent une migration progressive
+export const identityClient = () => getClient(ServiceName.IDENTITY);
+export const containersClient = () => getClient(ServiceName.CONTAINERS);
+export const proxyClient = () => getClient(ServiceName.PROXY);
+export const storageClient = () => getClient(ServiceName.STORAGE);
+export const aiClient = () => getClient(ServiceName.AI);
+export const securelinkClient = () => getClient(ServiceName.SECURELINK);
+export const schedulerClient = () => getClient(ServiceName.SCHEDULER);
+export const metricsClient = () => getClient(ServiceName.METRICS);
+export const mediaClient = () => getClient(ServiceName.MEDIA);
+export const docsClient = () => getClient(ServiceName.DOCS);
+export const calendarClient = () => getClient(ServiceName.CALENDAR);
+export const mailClient = () => getClient(ServiceName.MAIL);
+export const collabClient = () => getClient(ServiceName.COLLAB);
+export const meetClient = () => getClient(ServiceName.MEET);
+export const officeClient = () => getClient(ServiceName.OFFICE);

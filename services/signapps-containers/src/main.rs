@@ -14,18 +14,17 @@ use axum::{
     Router,
 };
 use dashmap::DashMap;
+use signapps_common::bootstrap::{env_or, init_tracing_with_filter, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin, AuthState,
 };
-use signapps_common::JwtConfig;
+use signapps_common::{AiIndexerClient, JwtConfig};
 use signapps_db::{create_pool, DatabasePool};
-use std::net::SocketAddr;
 use std::sync::Arc;
 use tower_http::{
     cors::{Any, CorsLayer},
     trace::TraceLayer,
 };
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use docker::DockerClient;
 use store::types::InstallEvent;
@@ -33,33 +32,15 @@ use store::StoreManager;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info,signapps=debug,bollard=warn".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Initialize using bootstrap helpers (custom filter for bollard)
+    init_tracing_with_filter("info,signapps=debug,signapps_containers=debug,bollard=warn,sqlx=warn,tower_http=debug");
+    load_env();
 
-    tracing::info!(
-        "Starting SignApps Containers Service v{}",
-        env!("CARGO_PKG_VERSION")
-    );
-
-    // Load configuration
-    dotenvy::dotenv().ok();
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-        tracing::warn!("JWT_SECRET not set, using insecure default");
-        "dev_secret_change_in_production_32chars".to_string()
-    });
+    let config = ServiceConfig::from_env("signapps-containers", 3002);
+    config.log_startup();
 
     // Create database pool
-    let pool = create_pool(&database_url).await?;
-
-    // Run migrations
-    // run_migrations(&pool).await?;
+    let pool = create_pool(&config.database_url).await?;
 
     // Create Docker client
     let docker = DockerClient::new()?;
@@ -72,9 +53,9 @@ async fn main() -> anyhow::Result<()> {
         "Connected to Docker"
     );
 
-    // Create JWT config
+    // Create JWT config (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
-        secret: jwt_secret.clone(),
+        secret: config.jwt_secret.clone(),
         issuer: "signapps".to_string(),
         audience: "signapps".to_string(),
         access_expiration: 900,
@@ -84,18 +65,18 @@ async fn main() -> anyhow::Result<()> {
     // Create store manager
     let store = StoreManager::new(pool.clone());
 
-    let app_data_path =
-        std::env::var("APP_DATA_PATH").unwrap_or_else(|_| "C:/Prog/signapps-data/apps".to_string()); // Default path for Windows dev, should normally be /var/lib/signapps/apps
+    let app_data_path = env_or("APP_DATA_PATH", "C:/Prog/signapps-data/apps");
 
     // Create application state
     let state = AppState {
         pool,
         docker,
-        jwt_secret,
+        jwt_secret: config.jwt_secret.clone(),
         jwt_config,
         store,
         app_data_path,
         install_channels: Arc::new(DashMap::new()),
+        indexer: AiIndexerClient::from_env(),
     };
 
     // Refresh app store catalog in background
@@ -120,20 +101,8 @@ async fn main() -> anyhow::Result<()> {
     // Build router
     let app = create_router(state);
 
-    // Start server
-    let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-    let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3002".to_string())
-        .parse()
-        .expect("Invalid SERVER_PORT");
-
-    let addr: SocketAddr = format!("{}:{}", host, port).parse()?;
-    tracing::info!("Listening on {}", addr);
-
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
-
-    Ok(())
+    // Start server using bootstrap helper
+    signapps_common::bootstrap::run_server(app, &config).await
 }
 
 /// Application state shared across handlers.
@@ -146,6 +115,7 @@ pub struct AppState {
     pub store: StoreManager,
     pub app_data_path: String,
     pub install_channels: Arc<DashMap<uuid::Uuid, tokio::sync::broadcast::Sender<InstallEvent>>>,
+    pub indexer: AiIndexerClient,
 }
 
 impl AuthState for AppState {

@@ -1,4 +1,14 @@
-import { remoteApiClient, REMOTE_URL } from './core';
+/**
+ * Remote API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, getServiceBaseUrl, ServiceName } from './factory';
+
+// Get the remote service client (cached)
+const remoteClient = getClient(ServiceName.REMOTE);
+const REMOTE_URL = getServiceBaseUrl(ServiceName.REMOTE);
 
 // ============================================================================
 // Types
@@ -47,23 +57,23 @@ export interface UpdateConnectionRequest {
 export const remoteApi = {
     // List all remote connections
     listConnections: () =>
-        remoteApiClient.get<RemoteConnection[]>('/remote/connections'),
+        remoteClient.get<RemoteConnection[]>('/remote/connections'),
 
     // Get a single connection
     getConnection: (id: string) =>
-        remoteApiClient.get<RemoteConnection>(`/remote/connections/${id}`),
+        remoteClient.get<RemoteConnection>(`/remote/connections/${id}`),
 
     // Create a new connection
     createConnection: (data: CreateConnectionRequest) =>
-        remoteApiClient.post<RemoteConnection>('/remote/connections', data),
+        remoteClient.post<RemoteConnection>('/remote/connections', data),
 
     // Update a connection
     updateConnection: (id: string, data: UpdateConnectionRequest) =>
-        remoteApiClient.put<RemoteConnection>(`/remote/connections/${id}`, data),
+        remoteClient.put<RemoteConnection>(`/remote/connections/${id}`, data),
 
     // Delete a connection
     deleteConnection: (id: string) =>
-        remoteApiClient.delete(`/remote/connections/${id}`),
+        remoteClient.delete(`/remote/connections/${id}`),
 
     // Get WebSocket URL for remote connection (Guacamole protocol)
     getWebSocketUrl: (connectionId: string): string => {

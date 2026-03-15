@@ -5,12 +5,12 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
 };
 use signapps_common::{AuthState, JwtConfig};
 use signapps_db::DatabasePool;
-use std::net::SocketAddr;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -44,51 +44,22 @@ impl AuthState for AppState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "signapps_proxy=debug,tower_http=debug,info".into()),
-        )
-        .init();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_proxy");
+    load_env();
 
-    tracing::info!(
-        "Starting SignApps Proxy Service v{}",
-        env!("CARGO_PKG_VERSION")
-    );
+    let config = ServiceConfig::from_env("signapps-proxy", 3003);
+    config.log_startup();
 
-    // Load .env file
-    dotenvy::dotenv().ok();
-
-    // Load configuration
-    let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/signapps".into());
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
-    // Proxy configuration
-    let proxy_enabled = std::env::var("PROXY_ENABLED")
-        .unwrap_or_else(|_| "true".into())
-        .parse::<bool>()
-        .unwrap_or(true);
-    let proxy_http_port: u16 = std::env::var("PROXY_HTTP_PORT")
-        .unwrap_or_else(|_| "80".into())
-        .parse()
-        .unwrap_or(80);
-    let proxy_https_port: u16 = std::env::var("PROXY_HTTPS_PORT")
-        .unwrap_or_else(|_| "443".into())
-        .parse()
-        .unwrap_or(443);
-    let route_refresh_secs: u64 = std::env::var("PROXY_ROUTE_REFRESH_SECS")
-        .unwrap_or_else(|_| "5".into())
-        .parse()
-        .unwrap_or(5);
+    // Proxy-specific configuration
+    let proxy_enabled: bool = env_or("PROXY_ENABLED", "true").parse().unwrap_or(true);
+    let proxy_http_port: u16 = env_or("PROXY_HTTP_PORT", "80").parse().unwrap_or(80);
+    let proxy_https_port: u16 = env_or("PROXY_HTTPS_PORT", "443").parse().unwrap_or(443);
+    let route_refresh_secs: u64 = env_or("PROXY_ROUTE_REFRESH_SECS", "5").parse().unwrap_or(5);
 
     // Initialize database pool
-    let pool = signapps_db::create_pool(&database_url).await?;
+    let pool = signapps_db::create_pool(&config.database_url).await?;
     tracing::info!("Database connection established");
-
-    // Run migrations
-    // signapps_db::run_migrations(&pool).await?;
-    tracing::info!("Database migrations completed");
 
     // Initialize SmartShield service (in-process, no Redis needed)
     let shield = ShieldService::new();
@@ -97,11 +68,11 @@ async fn main() -> anyhow::Result<()> {
     // Initialize route cache
     let route_cache = RouteCache::new(pool.clone());
 
-    // JWT configuration
+    // JWT configuration (custom: audience="signapps" for all services)
     let jwt_config = JwtConfig {
-        secret: jwt_secret,
+        secret: config.jwt_secret.clone(),
         issuer: "signapps".to_string(),
-        audience: "signapps-proxy".to_string(),
+        audience: "signapps".to_string(),
         access_expiration: 900,
         refresh_expiration: 604800,
     };
@@ -157,16 +128,11 @@ async fn main() -> anyhow::Result<()> {
         let acme_store = AcmeChallengeStore::new();
 
         // Start ACME auto-renewal if enabled
-        let acme_enabled = std::env::var("ACME_ENABLED")
-            .unwrap_or_else(|_| "false".into())
-            .parse::<bool>()
-            .unwrap_or(false);
+        let acme_enabled: bool = env_or("ACME_ENABLED", "false").parse().unwrap_or(false);
 
         if acme_enabled {
-            let acme_email =
-                std::env::var("ACME_EMAIL").unwrap_or_else(|_| "admin@example.com".into());
-            let acme_directory = std::env::var("ACME_DIRECTORY_URL")
-                .unwrap_or_else(|_| "https://acme-v02.api.letsencrypt.org/directory".into());
+            let acme_email = env_or("ACME_EMAIL", "admin@example.com");
+            let acme_directory = env_or("ACME_DIRECTORY_URL", "https://acme-v02.api.letsencrypt.org/directory");
 
             let acme_service = AcmeService::new(
                 pool.clone(),
@@ -211,19 +177,8 @@ async fn main() -> anyhow::Result<()> {
     // Build management API router
     let app = create_router(state);
 
-    // Start management API server
-    let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3003".into())
-        .parse()
-        .unwrap_or(3003);
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-
-    tracing::info!("Management API listening on {}", addr);
-
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
-
-    Ok(())
+    // Start management API server using bootstrap helper
+    signapps_common::bootstrap::run_server(app, &config).await
 }
 
 /// Create the application router with all routes.

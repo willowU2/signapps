@@ -24,8 +24,8 @@ export function EditorLayout({ documentId, documentName, icon, children }: Edito
             className="bg-background relative"
             header={<GlobalHeader />}
         >
-            <main className="flex-1 overflow-hidden relative">
-                <div className="absolute inset-0">
+            <main className="flex-1 overflow-hidden relative p-4">
+                <div className="absolute inset-4 glass-panel rounded-2xl shadow-premium border border-border/50 overflow-hidden">
                     {children}
                 </div>
             </main>

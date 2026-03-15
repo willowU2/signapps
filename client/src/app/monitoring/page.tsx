@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DataTableSkeleton, CardGridSkeleton } from '@/components/ui/skeleton-loader';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -228,12 +229,8 @@ export default function MonitoringPage() {
       <AppLayout>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold">System Monitoring</h1>
-          <div className="grid gap-4 md:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32" />
-            ))}
-          </div>
-          <Skeleton className="h-80" />
+          <CardGridSkeleton count={4} className="md:grid-cols-4" />
+          <DataTableSkeleton count={4} />
         </div>
       </AppLayout>
     );

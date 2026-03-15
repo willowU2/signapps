@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function DocsPage() {
     return (
         <AppLayout>
-            <div className="flex-1 flex flex-col h-[calc(100vh-8rem)] overflow-hidden bg-background dark:bg-gray-950 rounded-xl border shadow-sm">
+            <div className="flex-1 flex flex-col h-[calc(100vh-8rem)] overflow-hidden glass-panel rounded-2xl shadow-premium border border-border/50">
                 <DocsDashboard />
             </div>
         </AppLayout>

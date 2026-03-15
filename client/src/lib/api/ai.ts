@@ -1,9 +1,18 @@
-import { aiApiClient } from './core';
+/**
+ * AI API Module
+ *
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
+ */
+import { getClient, ServiceName } from './factory';
+
+// Get the AI service client (cached)
+const aiClient = getClient(ServiceName.AI);
 
 // AI API
 export const aiApi = {
     chat: (question: string, options?: { model?: string; provider?: string; conversationId?: string; includesSources?: boolean; collections?: string[]; language?: string; systemPrompt?: string; enableTools?: boolean }) =>
-        aiApiClient.post<ChatResponse>('/ai/chat', {
+        aiClient.post<ChatResponse>('/ai/chat', {
             question,
             model: options?.model,
             provider: options?.provider,
@@ -15,7 +24,7 @@ export const aiApi = {
             enable_tools: options?.enableTools ?? true,
         }),
     chatStream: (question: string, options?: { model?: string; provider?: string; conversationId?: string; collections?: string[]; language?: string; systemPrompt?: string; enableTools?: boolean }) =>
-        aiApiClient.post('/ai/chat/stream', {
+        aiClient.post('/ai/chat/stream', {
             question,
             model: options?.model,
             provider: options?.provider,
@@ -28,34 +37,34 @@ export const aiApi = {
             responseType: 'stream',
         }),
     search: (query: string, limit?: number, collections?: string[]) =>
-        aiApiClient.get<SearchResult[]>('/ai/search', { params: { q: query, limit, collections } }),
+        aiClient.get<SearchResult[]>('/ai/search', { params: { q: query, limit, collections } }),
     index: (documentId: string, content: string, filename: string, path: string, mimeType?: string, collection?: string) =>
-        aiApiClient.post('/ai/index', { document_id: documentId, content, filename, path, mime_type: mimeType, collection }),
+        aiClient.post('/ai/index', { document_id: documentId, content, filename, path, mime_type: mimeType, collection }),
     removeDocument: (documentId: string) =>
-        aiApiClient.delete(`/ai/index/${documentId}`),
-    stats: () => aiApiClient.get<AIStats>('/ai/stats'),
+        aiClient.delete(`/ai/index/${documentId}`),
+    stats: () => aiClient.get<AIStats>('/ai/stats'),
     models: (provider?: string) =>
-        aiApiClient.get<ModelsResponse>('/ai/models', {
+        aiClient.get<ModelsResponse>('/ai/models', {
             params: provider ? { provider } : undefined,
         }),
-    providers: () => aiApiClient.get<ProvidersResponse>('/ai/providers'),
+    providers: () => aiClient.get<ProvidersResponse>('/ai/providers'),
     // Model management
-    localModels: () => aiApiClient.get<{ models: ModelEntry[] }>('/ai/models/local'),
-    availableModels: () => aiApiClient.get<{ models: ModelEntry[] }>('/ai/models/available'),
-    searchModels: (query: string) => aiApiClient.get<{ models: ModelEntry[] }>('/ai/models/search', { params: { q: query } }),
+    localModels: () => aiClient.get<{ models: ModelEntry[] }>('/ai/models/local'),
+    availableModels: () => aiClient.get<{ models: ModelEntry[] }>('/ai/models/available'),
+    searchModels: (query: string) => aiClient.get<{ models: ModelEntry[] }>('/ai/models/search', { params: { q: query } }),
     downloadModel: (modelId: string) =>
-        aiApiClient.post<{ model_id: string; status: string; path?: string }>('/ai/models/download', { model_id: modelId }),
-    deleteModel: (modelId: string) => aiApiClient.delete(`/ai/models/${modelId}`),
-    getModelStatus: (modelId: string) => aiApiClient.get<ModelEntry>(`/ai/models/${encodeURIComponent(modelId)}`),
-    hardware: () => aiApiClient.get<{ hardware: HardwareProfile }>('/ai/hardware'),
+        aiClient.post<{ model_id: string; status: string; path?: string }>('/ai/models/download', { model_id: modelId }),
+    deleteModel: (modelId: string) => aiClient.delete(`/ai/models/${modelId}`),
+    getModelStatus: (modelId: string) => aiClient.get<ModelEntry>(`/ai/models/${encodeURIComponent(modelId)}`),
+    hardware: () => aiClient.get<{ hardware: HardwareProfile }>('/ai/hardware'),
 
     // Knowledge Bases / Collections
-    listCollections: () => aiApiClient.get<CollectionsResponse>('/ai/collections'),
-    getCollection: (name: string) => aiApiClient.get<KnowledgeBase>(`/ai/collections/${name}`),
+    listCollections: () => aiClient.get<CollectionsResponse>('/ai/collections'),
+    getCollection: (name: string) => aiClient.get<KnowledgeBase>(`/ai/collections/${name}`),
     createCollection: (data: CreateCollectionRequest) =>
-        aiApiClient.post<KnowledgeBase>('/ai/collections', data),
-    deleteCollection: (name: string) => aiApiClient.delete(`/ai/collections/${name}`),
-    getCollectionStats: (name: string) => aiApiClient.get<CollectionStats>(`/ai/collections/${name}/stats`),
+        aiClient.post<KnowledgeBase>('/ai/collections', data),
+    deleteCollection: (name: string) => aiClient.delete(`/ai/collections/${name}`),
+    getCollectionStats: (name: string) => aiClient.get<CollectionStats>(`/ai/collections/${name}/stats`),
 };
 
 export interface ChatResponse {

@@ -1,4 +1,6 @@
 export * from './core';
+export * from './factory';
+export * from './entityHub';
 export * from './drive';
 export * from './identity';
 export * from './containers';

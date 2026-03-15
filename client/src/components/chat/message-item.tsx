@@ -36,7 +36,7 @@ export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddR
     const date = new Date(message.timestamp);
     const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Mock quick reactions to add
+    // Quick reaction picker options
     const quickReactions = ["👍", "❤️", "😂", "🎉"];
 
     return (

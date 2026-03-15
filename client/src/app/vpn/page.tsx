@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -556,11 +557,7 @@ export default function VpnPage() {
       <AppLayout>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold">Web Tunnels</h1>
-          <div className="grid gap-4 md:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24" />
-            ))}
-          </div>
+          <CardGridSkeleton count={4} className="md:grid-cols-4" />
           <Skeleton className="h-64" />
         </div>
       </AppLayout>

@@ -59,7 +59,7 @@ export function EmailComposer({
     const handleSave = useCallback(() => {
         if (!emailEditorRef.current?.editor) return;
 
-        emailEditorRef.current.editor.exportHtml((data) => {
+        emailEditorRef.current.editor.exportHtml((data: { html: string; design: any }) => {
             const { html, design } = data;
             onSave?.(html, design);
         });
@@ -68,7 +68,7 @@ export function EmailComposer({
     const handleSend = useCallback(() => {
         if (!emailEditorRef.current?.editor) return;
 
-        emailEditorRef.current.editor.exportHtml((data) => {
+        emailEditorRef.current.editor.exportHtml((data: { html: string; design: any }) => {
             const { html, design } = data;
             onSend?.(html, design);
         });
@@ -77,7 +77,7 @@ export function EmailComposer({
     const handlePreview = useCallback(() => {
         if (!emailEditorRef.current?.editor) return;
 
-        emailEditorRef.current.editor.exportHtml((data) => {
+        emailEditorRef.current.editor.exportHtml((data: { html: string; design: any }) => {
             setPreviewHtml(data.html);
             setPreviewOpen(true);
         });
@@ -86,7 +86,7 @@ export function EmailComposer({
     const handleViewSource = useCallback(() => {
         if (!emailEditorRef.current?.editor) return;
 
-        emailEditorRef.current.editor.exportHtml((data) => {
+        emailEditorRef.current.editor.exportHtml((data: { html: string; design: any }) => {
             setSourceHtml(data.html);
             setSourceOpen(true);
         });

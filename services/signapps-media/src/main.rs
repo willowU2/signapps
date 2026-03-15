@@ -3,12 +3,12 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use signapps_common::bootstrap::{init_tracing, load_env, env_or};
 use signapps_common::{AuthState, JwtConfig};
 use signapps_runtime::ModelManager;
 use sqlx::PgPool;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
-use tracing::{info, Level};
 
 mod audio;
 mod handlers;
@@ -80,27 +80,27 @@ impl AuthState for AppState {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_media");
+    load_env();
 
-    dotenvy::dotenv().ok();
+    let port: u16 = env_or("SERVER_PORT", "3009").parse().unwrap_or(3009);
+    tracing::info!("🚀 Starting signapps-media on port {}", port);
 
     // Database
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://signapps:signapps@localhost:5432/signapps".to_string());
-
+    let database_url = env_or("DATABASE_URL", "postgres://signapps:signapps@localhost:5432/signapps");
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)
         .await?;
-
-    info!("Connected to database");
+    tracing::info!("Connected to database");
 
     // Config
     let config = MediaConfig::from_env();
 
     // Hardware detection + model manager
     let hardware = signapps_runtime::HardwareProfile::detect().await;
-    info!(
+    tracing::info!(
         "Hardware: {} (VRAM: {} MB, CPU: {} cores, RAM: {} MB)",
         hardware.preferred_backend,
         hardware.total_vram_mb,
@@ -113,7 +113,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize STT backend
     let stt: Arc<dyn SttBackend> =
         if !config.stt_url.is_empty() && config.stt_url.starts_with("http") {
-            info!("STT: using HTTP backend at {}", config.stt_url);
+            tracing::info!("STT: using HTTP backend at {}", config.stt_url);
             Arc::new(stt::HttpSttBackend::new(
                 &config.stt_url,
                 &config.stt_model,
@@ -122,7 +122,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         } else {
             #[cfg(feature = "native-stt")]
             {
-                info!(
+                tracing::info!(
                     "STT: using native whisper-rs backend (model: {})",
                     config.stt_model
                 );
@@ -141,7 +141,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize TTS backend
     let tts: Arc<dyn TtsBackend> =
         if !config.tts_url.is_empty() && config.tts_url.starts_with("http") {
-            info!("TTS: using HTTP backend at {}", config.tts_url);
+            tracing::info!("TTS: using HTTP backend at {}", config.tts_url);
             Arc::new(tts::HttpTtsBackend::new(
                 &config.tts_url,
                 &config.tts_default_voice,
@@ -149,7 +149,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         } else {
             #[cfg(feature = "native-tts")]
             {
-                info!(
+                tracing::info!(
                     "TTS: using native piper-rs backend (voice: {})",
                     config.tts_default_voice
                 );
@@ -168,7 +168,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize OCR backend
     let ocr: Arc<dyn OcrBackend> =
         if !config.ocr_url.is_empty() && config.ocr_url.starts_with("http") {
-            info!("OCR: using HTTP backend at {}", config.ocr_url);
+            tracing::info!("OCR: using HTTP backend at {}", config.ocr_url);
 
             let provider = if config.ocr_url.contains("chat/completions") {
                 ocr::http::OcrProvider::OpenAIVision
@@ -180,7 +180,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         } else {
             #[cfg(feature = "native-ocr")]
             {
-                info!("OCR: using native ocrs backend");
+                tracing::info!("OCR: using native ocrs backend");
                 Arc::new(ocr::NativeOcrBackend::new(model_manager.clone()).await?)
             }
             #[cfg(not(feature = "native-ocr"))]
@@ -232,12 +232,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(state);
 
     // Start server
-    let host = std::env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
-    let port = std::env::var("SERVER_PORT").unwrap_or_else(|_| "3009".to_string());
-    let addr = format!("{}:{}", host, port);
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    info!("signapps-media listening on {}", addr);
-
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    tracing::info!("✅ signapps-media ready at http://localhost:{}", port);
     axum::serve(listener, app).await?;
     Ok(())
 }

@@ -1,7 +1,6 @@
 # Generated files
 /target/
 **/*.rs.bk
-Cargo.lock
 
 # IDE
 .idea/
@@ -23,9 +22,6 @@ nul
 # Logs
 *.log
 logs/
-backend_logs.txt
-build_log.txt
-check_log.txt
 
 # Test coverage
 *.lcov
@@ -45,8 +41,6 @@ tmp/
 temp/
 *.tmp
 tmp_*/
-tmp_*.json
-progsignapps-platformtmp_containers.json
 
 # Node.js
 node_modules/
@@ -55,6 +49,16 @@ package-lock.json
 
 # Data & Models (runtime)
 data/
+
+# Archives & backups
+*.zip
+
+# System dumps
+*.xml
+
+# Python virtual envs
+venv/
+__pycache__/
 
 # Screenshots (dev/test)
 *.png
@@ -71,26 +75,6 @@ client/**/all_files.txt
 # Build artifacts
 services/**/build_errors.txt
 services/**/check_output*.txt
-
-# Utility/setup scripts (not part of source)
-install-postgres.ps1
-reset_database.rs
-reset_db.sh
-init_db.sql
-init_admin.rs
-test_db.sql
-fix_hash.sql
-test-websocket*.js
-start_all_services.sh
-start_backend.sh
-launch_all.sh
-Cargo_reset.toml
-
-# Documentation artifacts (session-specific)
-DATABASE_SETUP.md
-DEPLOY_READY.md
-SETUP_COMPLETE.md
-TECH_SUMMARY.txt
 
 # Claude session artifacts
 .claude/BUILD_STATUS.md

@@ -1,77 +1,40 @@
 [package]
 name = "signapps-office"
-version.workspace = true
+version = "0.1.0"
 edition = "2021"
-rust-version.workspace = true
-authors.workspace = true
-license.workspace = true
-description = "Document conversion and export service for SignApps Office Suite"
-
-[[bin]]
-name = "signapps-office"
-path = "src/main.rs"
 
 [dependencies]
-# Internal crates
-signapps-common = { path = "../../crates/signapps-common" }
-signapps-db = { path = "../../crates/signapps-db" }
-signapps-cache = { path = "../../crates/signapps-cache" }
-
 # Web framework
 axum = { workspace = true }
-axum-extra = { workspace = true }
-tower = { workspace = true }
+tokio = { workspace = true }
 tower-http = { workspace = true }
 
-# Async
-tokio = { workspace = true }
-tokio-stream = { workspace = true }
-async-trait = { workspace = true }
-futures = { workspace = true }
-futures-util = { workspace = true }
+# Document formats
+docx-rust = "0.1.11"           # DOCX read/write
+rust_xlsxwriter = "0.79"    # XLSX write
+calamine = "0.26"           # XLSX/XLS/ODS read
+shiva = { version = "1.4", features = ["all"] }  # Multi-format
 
-# Serialization
-serde = { workspace = true }
-serde_json = { workspace = true }
+# PDF
+krilla = "0.6.0"              # PDF generation
+pdf_oxide = "0.3"           # PDF extraction
 
-# Database
-sqlx = { workspace = true }
+# Markdown
+comrak = "0.31"             # CommonMark + GFM
 
-# Document conversion - DOCX
-docx-rs = "0.4"
-
-# Document conversion - PDF
-printpdf = "0.7"
-
-# Document conversion - Markdown
-comrak = "0.31"
-
-# Spreadsheet - XLSX
-rust_xlsxwriter = "0.80"
-calamine = "0.26"
-
-# Presentations - PPTX
-pptx = "0.1"
-
-# HTML parsing
-scraper = "0.20"
-
-# ZIP/DOCX reading
-zip = "2.1"
+# EPUB
+rbook = "0.5"               # EPUB read
 
 # Utilities
+serde = { workspace = true }
+serde_json = { workspace = true }
 uuid = { workspace = true }
-chrono = { workspace = true }
-dotenvy = { workspace = true }
+tempfile = "3"
 bytes = { workspace = true }
 mime_guess = { workspace = true }
-base64 = { workspace = true }
-
-# Observability
+moka = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-anyhow = { workspace = true }
-thiserror = { workspace = true }
 
-[dev-dependencies]
-tokio-test = { workspace = true }
+# Workspace
+signapps-common = { path = "../../crates/signapps-common" }

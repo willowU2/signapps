@@ -288,6 +288,49 @@ pub async fn me(
     }))
 }
 
+/// Bootstrap endpoint - promotes the first user to admin if no admin exists.
+/// This is a one-time operation for initial setup.
+#[tracing::instrument(skip(state))]
+pub async fn bootstrap(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>> {
+    // Check if any admin already exists
+    let users = UserRepository::list(&state.pool, 100, 0).await?;
+    let has_admin = users.iter().any(|u| u.role >= 2);
+
+    if has_admin {
+        return Err(Error::Forbidden(
+            "Bootstrap already completed - an admin user exists".to_string(),
+        ));
+    }
+
+    if users.is_empty() {
+        return Err(Error::NotFound(
+            "No users found. Register a user first via /api/v1/auth/register".to_string(),
+        ));
+    }
+
+    // Promote the first user to admin (role 2)
+    let first_user = &users[0];
+    sqlx::query("UPDATE identity.users SET role = 2 WHERE id = $1")
+        .bind(first_user.id)
+        .execute(&*state.pool)
+        .await
+        .map_err(|e| Error::Internal(format!("Failed to promote user: {}", e)))?;
+
+    tracing::info!(
+        user_id = %first_user.id,
+        username = %first_user.username,
+        "Bootstrap: promoted user to admin"
+    );
+
+    Ok(Json(serde_json::json!({
+        "message": "Bootstrap complete",
+        "admin_user": first_user.username,
+        "admin_id": first_user.id.to_string()
+    })))
+}
+
 /// Verify TOTP code.
 fn verify_totp(secret: &str, code: &str) -> Result<bool> {
     use totp_rs::{Algorithm, TOTP};

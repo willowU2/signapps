@@ -1,0 +1,11 @@
+{
+  "$schema": "https://tiptap.dev/schema.json",
+  "framework": "next",
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "hooks": "@/hooks",
+    "lib": "@/lib"
+  },
+  "componentsPath": "src/components/tiptap"
+}

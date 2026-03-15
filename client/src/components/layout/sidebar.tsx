@@ -1,11 +1,13 @@
 'use client';
 
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/lib/store';
+import { useEntityStore } from '@/stores/entity-hub-store';
+import { FEATURES } from '@/lib/features';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -51,72 +53,84 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-const navGroups = [
+/**
+ * Navigation groups avec feature flags
+ * Les items avec enabled: false sont cachés (règle NO DEAD ENDS)
+ */
+const navGroupsConfig = [
   {
     label: 'Productivity',
     icon: FileText,
     items: [
-      { href: '/docs', icon: FileText, label: 'Docs' },
-      { href: '/sheets', icon: Table, label: 'Sheets' },
-      { href: '/slides', icon: Presentation, label: 'Slides' },
-      { href: '/mail', icon: Mail, label: 'Mail' },
-      { href: '/calendar', icon: Calendar, label: 'Calendar' },
-      { href: '/tasks', icon: CheckSquare, label: 'Tasks' },
-      { href: '/resources', icon: DoorOpen, label: 'Resources' },
+      { href: '/docs', icon: FileText, label: 'Docs', enabled: FEATURES.DOCS },
+      { href: '/sheets', icon: Table, label: 'Sheets', enabled: FEATURES.DOCS },
+      { href: '/slides', icon: Presentation, label: 'Slides', enabled: FEATURES.DOCS },
+      { href: '/mail', icon: Mail, label: 'Mail', enabled: FEATURES.MAIL },
+      { href: '/calendar', icon: Calendar, label: 'Calendar', enabled: FEATURES.CALENDAR },
+      { href: '/tasks', icon: CheckSquare, label: 'Tasks', enabled: FEATURES.SCHEDULER },
+      { href: '/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
     ]
   },
   {
     label: 'Communication',
     icon: MessagesSquare,
     items: [
-      { href: '/chat', icon: MessagesSquare, label: 'Chat' },
-      { href: '/meet', icon: Video, label: 'Meet' },
-
+      { href: '/chat', icon: MessagesSquare, label: 'Chat', enabled: FEATURES.COLLAB },
+      { href: '/meet', icon: Video, label: 'Meet', enabled: FEATURES.MEET },
     ]
   },
   {
     label: 'Infrastructure',
     icon: HardDrive,
     items: [
-      { href: '/containers', icon: Container, label: 'Containers' },
-      { href: '/drive', icon: HardDrive, label: 'Global Drive' },
-      { href: '/routes', icon: Network, label: 'Routes' },
-      { href: '/vpn', icon: Shield, label: 'VPN' },
-      { href: '/backups', icon: Archive, label: 'Backups' },
+      { href: '/containers', icon: Container, label: 'Containers', enabled: FEATURES.CONTAINERS },
+      { href: '/drive', icon: HardDrive, label: 'Global Drive', enabled: FEATURES.STORAGE },
+      { href: '/routes', icon: Network, label: 'Routes', enabled: FEATURES.PROXY },
+      { href: '/vpn', icon: Shield, label: 'VPN', enabled: FEATURES.VPN },
+      { href: '/backups', icon: Archive, label: 'Backups', enabled: FEATURES.CONTAINERS },
     ]
   },
   {
     label: 'IT Management',
     icon: Server,
     items: [
-      { href: '/apps', icon: Store, label: 'App Store' },
-      { href: '/it-assets', icon: Server, label: 'IT Assets' },
-      { href: '/pxe', icon: Terminal, label: 'PXE Deploy' },
-      { href: '/remote', icon: MonitorSmartphone, label: 'Remote Access' },
+      { href: '/apps', icon: Store, label: 'App Store', enabled: FEATURES.CONTAINERS },
+      // Services skeleton - CACHÉS (NO DEAD ENDS)
+      { href: '/it-assets', icon: Server, label: 'IT Assets', enabled: FEATURES.IT_ASSETS },
+      { href: '/pxe', icon: Terminal, label: 'PXE Deploy', enabled: FEATURES.PXE },
+      { href: '/remote', icon: MonitorSmartphone, label: 'Remote Access', enabled: FEATURES.REMOTE },
     ]
   },
   {
     label: 'Operations',
     icon: Activity,
     items: [
-      { href: '/ai', icon: MessageSquare, label: 'AI' },
-      { href: '/scheduler', icon: Clock, label: 'Scheduler' },
-      { href: '/monitoring', icon: Activity, label: 'Monitoring' },
+      { href: '/ai', icon: MessageSquare, label: 'AI', enabled: FEATURES.AI },
+      { href: '/scheduler', icon: Clock, label: 'Scheduler', enabled: FEATURES.SCHEDULER },
+      { href: '/monitoring', icon: Activity, label: 'Monitoring', enabled: FEATURES.METRICS },
     ]
   },
   {
     label: 'Administration',
     icon: ShieldCheck,
     items: [
-      { href: '/admin', icon: ShieldCheck, label: 'Admin' },
-      { href: '/admin/users', icon: Users, label: 'Users' },
-      { href: '/admin/workspaces', icon: Building2, label: 'Workspaces' },
-      { href: '/admin/resources', icon: DoorOpen, label: 'Resources' },
-      { href: '/admin/storage', icon: HardDrive, label: 'Storage Config' },
-      { href: '/settings', icon: Settings, label: 'Settings' },
+      { href: '/admin', icon: ShieldCheck, label: 'Admin', enabled: FEATURES.IDENTITY },
+      { href: '/admin/users', icon: Users, label: 'Users', enabled: FEATURES.IDENTITY },
+      { href: '/admin/workspaces', icon: Building2, label: 'Workspaces', enabled: FEATURES.IDENTITY },
+      { href: '/admin/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
+      { href: '/admin/storage', icon: HardDrive, label: 'Storage Config', enabled: FEATURES.STORAGE },
+      { href: '/settings', icon: Settings, label: 'Settings', enabled: true },
     ]
   }
 ];
+
+// Filtrer les items désactivés et les groupes vides
+const navGroups = navGroupsConfig
+  .map(group => ({
+    ...group,
+    items: group.items.filter(item => item.enabled)
+  }))
+  .filter(group => group.items.length > 0);
 
 const isItemActive = (href: string, pathname: string) => {
   if (href === '/admin' && pathname !== '/admin') return false;
@@ -126,6 +140,7 @@ const isItemActive = (href: string, pathname: string) => {
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, setSidebarCollapsed } = useUIStore();
+  const { workspaces, selectedWorkspaceId, setSelectedWorkspace, fetchWorkspaces, projects } = useEntityStore();
 
   const findActiveGroupIndex = () => {
     const index = navGroups.findIndex(g => g.items.some(item => isItemActive(item.href, pathname)));
@@ -137,7 +152,8 @@ export function Sidebar() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    fetchWorkspaces();
+  }, [fetchWorkspaces]);
 
   useEffect(() => {
     if (mounted && !sidebarCollapsed) {
@@ -163,32 +179,54 @@ export function Sidebar() {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 flex h-screen flex-col border-r bg-sidebar transition-all duration-300',
+          'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-white/10 dark:border-white/5 bg-sidebar/80 backdrop-blur-2xl shadow-glass transition-all duration-300',
           isCollapsed ? 'w-16' : 'w-60'
         )}
       >
-        {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b px-4 shrink-0">
-          {!isCollapsed && (
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <span className="text-lg font-bold text-primary-foreground">S</span>
-              </div>
-              <span className="text-lg font-semibold">SignApps</span>
-            </Link>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarCollapsed(!isCollapsed)}
-            className={cn(isCollapsed && 'mx-auto')}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
+        {/* Logo and Workspace Switcher */}
+        <div className="flex flex-col border-b p-3 shrink-0">
+          <div className="flex h-10 items-center justify-between mb-2">
+            {!isCollapsed && (
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm ring-1 ring-primary/20">
+                  <span className="text-lg font-bold text-primary-foreground">S</span>
+                </div>
+                <span className="text-lg font-bold tracking-tight bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">SignApps</span>
+              </Link>
             )}
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarCollapsed(!isCollapsed)}
+              className={cn(isCollapsed && 'mx-auto h-8 w-8')}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+          
+          {!isCollapsed && (
+             <div className="relative mt-1">
+               <select 
+                 className="w-full bg-sidebar-accent/50 border border-sidebar-border text-sidebar-foreground text-sm rounded-md py-1.5 px-2 focus:ring-1 focus:ring-primary appearance-none outline-none"
+                 value={selectedWorkspaceId || ""}
+                 onChange={(e) => setSelectedWorkspace(e.target.value)}
+                 title="Switch Workspace"
+               >
+                 {workspaces.length === 0 ? (
+                   <option disabled value="">No Workspaces</option>
+                 ) : (
+                   workspaces.map(w => (
+                     <option key={w.id} value={w.id}>{w.name}</option>
+                   ))
+                 )}
+               </select>
+               <ChevronDown className="absolute right-2 top-2.5 h-3 w-3 text-muted-foreground pointer-events-none" />
+             </div>
+          )}
         </div>
 
         {/* Navigation */}
@@ -208,23 +246,42 @@ export function Sidebar() {
                   <LayoutDashboard className="h-5 w-5" />
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right" className="font-semibold">
+              <TooltipContent side="right" className="font-semibold glass shadow-glass">
                 Dashboard
               </TooltipContent>
             </Tooltip>
           ) : (
-            <Link
+             <Link
               href="/dashboard"
               className={cn(
-                'flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-semibold transition-colors mb-2',
+                'group flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-semibold transition-all duration-200 mb-2',
                 pathname === '/dashboard'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground'
+                  ? 'bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20'
+                  : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
               )}
             >
-              <LayoutDashboard className="h-5 w-5" />
+              <LayoutDashboard className={cn("h-5 w-5 transition-transform group-hover:scale-110", pathname === '/dashboard' && "text-primary")} />
               <span>Dashboard</span>
             </Link>
+          )}
+
+          {/* Dynamic Projects Injection */}
+          {!isCollapsed && projects.length > 0 && (
+            <div className="mb-2 space-y-1">
+              <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Projects
+              </div>
+              {projects.map(project => (
+                <Link
+                  key={project.id}
+                  href={`/projects/${project.id}`}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
+                >
+                  <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{project.name}</span>
+                </Link>
+              ))}
+            </div>
           )}
 
           {navGroups.map((group, groupIndex) => {
@@ -243,16 +300,16 @@ export function Sidebar() {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => toggleGroup(groupIndex)}
                       className={cn(
-                        'flex w-full items-center justify-center rounded-lg p-2.5 transition-colors',
+                        'flex w-full items-center justify-center rounded-lg p-2.5 transition-all duration-200',
                         isGroupActive
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                          ? 'bg-primary/10 text-primary ring-1 ring-primary/20 shadow-sm'
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                       )}
                     >
                       <DisplayIcon className="h-5 w-5" />
                     </motion.button>
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="font-semibold">
+                  <TooltipContent side="right" className="font-semibold glass shadow-glass">
                     {group.label}
                   </TooltipContent>
                 </Tooltip>
@@ -264,14 +321,14 @@ export function Sidebar() {
                 <button
                   onClick={() => toggleGroup(groupIndex)}
                   className={cn(
-                    'flex w-full items-center justify-between rounded-lg px-2 py-2 text-sm font-semibold transition-colors',
+                    'group flex w-full items-center justify-between rounded-lg px-2 py-2 text-sm font-semibold transition-all duration-200',
                     isExpanded
                       ? 'text-foreground'
                       : 'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50'
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <group.icon className="h-4 w-4" />
+                    <group.icon className={cn("h-4 w-4 transition-transform group-hover:scale-110", isExpanded && "text-primary/80")} />
                     <span>{group.label}</span>
                   </div>
                   <ChevronDown
@@ -301,10 +358,10 @@ export function Sidebar() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                              'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ml-4 border-l-2',
+                              'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ml-4 border-l-2',
                               isActive
-                                ? 'border-primary bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
-                                : 'border-transparent text-sidebar-foreground hover:border-sidebar-foreground/30 hover:bg-sidebar-accent/50'
+                                ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                                : 'border-transparent text-sidebar-foreground hover:border-sidebar-foreground/30 hover:bg-sidebar-accent/40'
                             )}
                           >
                             <Icon className={cn("h-4 w-4 shrink-0 transition-transform group-hover:scale-110", isActive && "text-primary")} />

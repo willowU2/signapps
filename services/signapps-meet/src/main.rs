@@ -2,12 +2,11 @@
 //! Video conferencing rooms management with LiveKit integration
 
 use axum::{middleware, Router};
+use signapps_common::bootstrap::{init_tracing, load_env, env_or};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::JwtConfig;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use std::net::SocketAddr;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod handlers;
 mod livekit;
@@ -35,28 +34,23 @@ impl AuthState for AppState {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    dotenvy::dotenv().ok();
+    // Initialize using bootstrap helpers
+    init_tracing("signapps_meet");
+    load_env();
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "signapps_meet=info,tower_http=info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    let port: u16 = env_or("SERVER_PORT", "3014").parse().unwrap_or(3014);
+    tracing::info!("🚀 Starting signapps-meet on port {}", port);
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://signapps:password@localhost:5432/signapps".into());
-
+    // Database
+    let database_url = env_or("DATABASE_URL", "postgres://signapps:password@localhost:5432/signapps");
     let pool = PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)
         .await?;
-
     tracing::info!("Database connected");
 
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| "dev-secret-change-me".into());
-
+    // JWT configuration (custom: audience="signapps" for all services)
+    let jwt_secret = env_or("JWT_SECRET", "dev-secret-change-me");
     let jwt_config = JwtConfig {
         secret: jwt_secret,
         issuer: "signapps".to_string(),
@@ -65,10 +59,11 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
+    // LiveKit configuration
     let livekit_config = LiveKitConfig {
-        api_key: std::env::var("LIVEKIT_API_KEY").unwrap_or_else(|_| "devkey".into()),
-        api_secret: std::env::var("LIVEKIT_API_SECRET").unwrap_or_else(|_| "secret".into()),
-        server_url: std::env::var("LIVEKIT_URL").unwrap_or_else(|_| "ws://localhost:7880".into()),
+        api_key: env_or("LIVEKIT_API_KEY", "devkey"),
+        api_secret: env_or("LIVEKIT_API_SECRET", "secret"),
+        server_url: env_or("LIVEKIT_URL", "ws://localhost:7880"),
     };
 
     let state = AppState {
@@ -79,17 +74,11 @@ async fn main() -> anyhow::Result<()> {
 
     let app = build_router(state);
 
-    let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "3013".into())
-        .parse()
-        .unwrap_or(3013);
-
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("Meet service listening on {}", addr);
-
+    // Start server
+    let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
     let listener = tokio::net::TcpListener::bind(addr).await?;
+    tracing::info!("✅ signapps-meet ready at http://localhost:{}", port);
     axum::serve(listener, app).await?;
-
     Ok(())
 }
 

@@ -13,52 +13,52 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Plus, Search, MoreHorizontal, Users, Pencil, Trash2 } from "lucide-react"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTenantStore } from "@/stores/tenant-store"
 import type { Workspace } from "@/lib/api/tenant"
+import { DataTable } from "@/components/ui/data-table"
+import { WorkspaceSheet, type WorkspaceFormValues } from "@/components/admin/workspace-sheet"
+import { ColumnDef } from "@tanstack/react-table"
+import { toast } from "sonner"
+import { Label } from "@/components/ui/label"
+import { Plus, Search, MoreHorizontal, Users, Pencil, Trash2 } from "lucide-react"
+
 
 export default function WorkspacesPage() {
     const { workspaces, workspacesLoading, fetchWorkspaces, createWorkspace, deleteWorkspace } = useTenantStore()
-    const [search, setSearch] = useState("")
-    const [isCreateOpen, setIsCreateOpen] = useState(false)
-    const [newWorkspace, setNewWorkspace] = useState({ name: "", description: "", color: "#3B82F6" })
+    const [isSheetOpen, setIsSheetOpen] = useState(false)
+    const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         fetchWorkspaces()
     }, [fetchWorkspaces])
 
-    const filteredWorkspaces = workspaces.filter(workspace =>
-        workspace.name.toLowerCase().includes(search.toLowerCase()) ||
-        (workspace.description?.toLowerCase() ?? "").includes(search.toLowerCase())
-    )
+    const handleOpenSheet = (workspace?: Workspace) => {
+        setEditingWorkspace(workspace || null)
+        setIsSheetOpen(true)
+    }
 
-    const handleCreate = async () => {
-        if (!newWorkspace.name.trim()) return
+    const handleSubmit = async (values: WorkspaceFormValues) => {
         setIsSubmitting(true)
         try {
-            await createWorkspace(newWorkspace.name, newWorkspace.description || undefined, newWorkspace.color)
-            setIsCreateOpen(false)
-            setNewWorkspace({ name: "", description: "", color: "#3B82F6" })
+            if (editingWorkspace) {
+                // Assuming an update action exists, placeholder for now since createWorkspace is the only one in useTenantStore
+                toast.info("Update workspace API to be implemented")
+            } else {
+                await createWorkspace(values.name, values.description || undefined, values.color)
+                toast.success("Workspace created successfully")
+            }
+            setIsSheetOpen(false)
         } catch (error) {
-            console.error("Failed to create workspace:", error)
+            console.error("Failed to save workspace:", error)
+            toast.error("Failed to save workspace")
         } finally {
             setIsSubmitting(false)
         }
@@ -66,177 +66,125 @@ export default function WorkspacesPage() {
 
     const handleDelete = async (workspace: Workspace) => {
         if (workspace.is_default) {
-            alert("Cannot delete the default workspace")
+            toast.error("Cannot delete the default workspace")
             return
         }
         if (!confirm(`Delete workspace "${workspace.name}"? This action cannot be undone.`)) return
         try {
             await deleteWorkspace(workspace.id)
+            toast.success("Workspace deleted successfully")
         } catch (error) {
             console.error("Failed to delete workspace:", error)
+            toast.error("Failed to delete workspace")
         }
     }
+
+    const workspaceColumns: ColumnDef<Workspace>[] = [
+        {
+            accessorKey: "name",
+            header: "Name",
+            cell: ({ row }) => (
+                <div className="flex items-center gap-2">
+                    <div
+                        className="h-3 w-3 rounded-full"
+                        style={{ backgroundColor: row.original.color || "#3B82F6" }}
+                    />
+                    <span className="font-medium">{row.original.name}</span>
+                </div>
+            ),
+        },
+        {
+            accessorKey: "description",
+            header: "Description",
+            cell: ({ row }) => <span className="text-muted-foreground">{row.original.description || "-"}</span>,
+        },
+        {
+            accessorKey: "is_default",
+            header: "Type",
+            cell: ({ row }) => (
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${row.original.is_default ? "bg-primary/10 text-primary" : "bg-muted"}`}>
+                    {row.original.is_default ? "Default" : "Custom"}
+                </span>
+            ),
+        },
+        {
+            accessorKey: "created_at",
+            header: "Created",
+            cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => {
+                const workspace = row.original
+                return (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => {
+                                navigator.clipboard.writeText(workspace.id)
+                                toast.success("ID copied to clipboard")
+                            }}>
+                                Copy ID
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+{/* Member management retiré - feature non implémentée (NO DEAD ENDS) */}
+                            <DropdownMenuItem onClick={() => handleOpenSheet(workspace)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => handleDelete(workspace)}
+                                disabled={workspace.is_default}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )
+            },
+        },
+    ]
 
     return (
         <AppLayout>
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold tracking-tight">Workspaces</h1>
-                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" /> New Workspace
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Create Workspace</DialogTitle>
-                                <DialogDescription>
-                                    Create a new workspace to organize your projects and resources.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Name</Label>
-                                    <Input
-                                        id="name"
-                                        placeholder="My Workspace"
-                                        value={newWorkspace.name}
-                                        onChange={(e) => setNewWorkspace(prev => ({ ...prev, name: e.target.value }))}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="description">Description</Label>
-                                    <Input
-                                        id="description"
-                                        placeholder="Optional description..."
-                                        value={newWorkspace.description}
-                                        onChange={(e) => setNewWorkspace(prev => ({ ...prev, description: e.target.value }))}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="color">Color</Label>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="color"
-                                            id="color"
-                                            value={newWorkspace.color}
-                                            onChange={(e) => setNewWorkspace(prev => ({ ...prev, color: e.target.value }))}
-                                            className="h-10 w-20 cursor-pointer rounded border"
-                                        />
-                                        <span className="text-sm text-muted-foreground">{newWorkspace.color}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                                    Cancel
-                                </Button>
-                                <Button onClick={handleCreate} disabled={isSubmitting || !newWorkspace.name.trim()}>
-                                    {isSubmitting ? "Creating..." : "Create"}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search workspaces..."
-                            className="pl-8"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
+                    <Button onClick={() => handleOpenSheet()}>
+                        <Plus className="mr-2 h-4 w-4" /> New Workspace
+                    </Button>
                 </div>
 
                 {workspacesLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                        <div className="text-muted-foreground">Loading...</div>
+                    <div className="space-y-4">
+                        <div className="h-10 w-full bg-muted/50 rounded-md animate-pulse" />
+                        <div className="h-12 w-full bg-muted/50 rounded-md animate-pulse" />
+                        <div className="h-12 w-full bg-muted/50 rounded-md animate-pulse" />
                     </div>
                 ) : (
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Description</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Created</TableHead>
-                                    <TableHead className="w-[50px]"></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredWorkspaces.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                            No workspaces found
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filteredWorkspaces.map((workspace) => (
-                                        <TableRow key={workspace.id}>
-                                            <TableCell className="font-medium">
-                                                <div className="flex items-center gap-2">
-                                                    <div
-                                                        className="h-3 w-3 rounded-full"
-                                                        style={{ backgroundColor: workspace.color }}
-                                                    />
-                                                    {workspace.name}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-muted-foreground">
-                                                {workspace.description || "-"}
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${workspace.is_default ? "bg-primary/10 text-primary" : "bg-muted"}`}>
-                                                    {workspace.is_default ? "Default" : "Custom"}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>{new Date(workspace.created_at).toLocaleDateString()}</TableCell>
-                                            <TableCell>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                                            <span className="sr-only">Open menu</span>
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(workspace.id)}>
-                                                            Copy ID
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem>
-                                                            <Users className="mr-2 h-4 w-4" />
-                                                            Manage Members
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem>
-                                                            <Pencil className="mr-2 h-4 w-4" />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            className="text-destructive"
-                                                            onClick={() => handleDelete(workspace)}
-                                                            disabled={workspace.is_default}
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
+                    <DataTable
+                        columns={workspaceColumns}
+                        data={workspaces}
+                        searchKey="name"
+                    />
                 )}
+
+                <WorkspaceSheet
+                    open={isSheetOpen}
+                    onOpenChange={setIsSheetOpen}
+                    workspace={editingWorkspace}
+                    onSubmit={handleSubmit}
+                    isLoading={isSubmitting}
+                />
             </div>
         </AppLayout>
     )
