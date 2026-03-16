@@ -603,6 +603,57 @@ impl<'a> TaskRepository<'a> {
 
         Ok(())
     }
+
+    // =========================================================================
+    // Task Attachments
+    // =========================================================================
+
+    /// Add an attachment to a task.
+    pub async fn add_attachment(
+        &self,
+        task_id: Uuid,
+        file_url: &str,
+        file_name: Option<&str>,
+        file_size_bytes: Option<i32>,
+    ) -> Result<TaskAttachment> {
+        let attachment = sqlx::query_as::<_, TaskAttachment>(
+            r#"
+            INSERT INTO calendar.task_attachments (task_id, file_url, file_name, file_size_bytes)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *
+            "#,
+        )
+        .bind(task_id)
+        .bind(file_url)
+        .bind(file_name)
+        .bind(file_size_bytes)
+        .fetch_one(self.pool.inner())
+        .await?;
+
+        Ok(attachment)
+    }
+
+    /// List all attachments for a task.
+    pub async fn list_attachments(&self, task_id: Uuid) -> Result<Vec<TaskAttachment>> {
+        let attachments = sqlx::query_as::<_, TaskAttachment>(
+            "SELECT * FROM calendar.task_attachments WHERE task_id = $1 ORDER BY created_at DESC",
+        )
+        .bind(task_id)
+        .fetch_all(self.pool.inner())
+        .await?;
+
+        Ok(attachments)
+    }
+
+    /// Delete an attachment.
+    pub async fn delete_attachment(&self, attachment_id: Uuid) -> Result<u64> {
+        let result = sqlx::query("DELETE FROM calendar.task_attachments WHERE id = $1")
+            .bind(attachment_id)
+            .execute(self.pool.inner())
+            .await?;
+
+        Ok(result.rows_affected())
+    }
 }
 
 // ============================================================================

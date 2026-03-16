@@ -12,6 +12,8 @@ import {
 } from '@dnd-kit/core';
 import { toast } from 'sonner';
 import { FEATURES } from '@/lib/features';
+import { taskAttachmentsApi } from '@/lib/api/scheduler';
+import { calendarApi } from '@/lib/api/calendar';
 
 interface GlobalDndProviderProps {
   children: React.ReactNode;
@@ -49,18 +51,61 @@ export function GlobalDndProvider({ children }: GlobalDndProviderProps) {
         const file = active.data.current?.file;
         const task = over.data.current?.task;
 
-        // TODO: Call actual API endpoint to link file to task in DB
-        toast.success(`Attached "${file.name}" to task "${task.title}"`);
+        if (file && task) {
+          // Build storage URL for the file
+          const fileUrl = `/api/v1/files/${file.bucket || 'default'}/${encodeURIComponent(file.key || file.name)}`;
+
+          taskAttachmentsApi
+            .addAttachment(task.id, {
+              file_url: fileUrl,
+              file_name: file.name,
+              file_size_bytes: file.size,
+            })
+            .then(() => {
+              toast.success(`Attached "${file.name}" to task "${task.title}"`);
+            })
+            .catch((err) => {
+              console.error('Failed to attach file to task:', err);
+              toast.error('Failed to attach file to task');
+            });
+        }
       }
 
       // Handle Task dropped onto a Calendar Slot (only if feature enabled)
       else if (activeType === 'task' && overType === 'calendar-slot' && FEATURES.DND_TASK_TO_CALENDAR) {
-         const task = active.data.current?.task;
-         const slotDate = over.data.current?.date;
+        const task = active.data.current?.task;
+        const slotData = over.data.current;
 
-         // TODO: Open EventForm Modal or directly call API to create an event
-         const formattedDate = new Date(slotDate).toLocaleDateString();
-         toast.success(`Scheduled task "${task.title}" for ${formattedDate}`);
+        if (task && slotData) {
+          const slotDate = slotData.date;
+          const calendarId = slotData.calendarId;
+
+          // Calculate event times (1 hour duration)
+          const startTime = new Date(slotDate);
+          const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+
+          if (calendarId) {
+            calendarApi
+              .createEvent(calendarId, {
+                title: task.title || task.label || 'Task Event',
+                description: `Created from task: ${task.id}`,
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString(),
+              })
+              .then(() => {
+                const formattedDate = startTime.toLocaleDateString();
+                toast.success(`Scheduled task "${task.title || task.label}" for ${formattedDate}`);
+              })
+              .catch((err) => {
+                console.error('Failed to create event:', err);
+                toast.error('Failed to create calendar event');
+              });
+          } else {
+            // No calendar ID, just show success message (fallback)
+            const formattedDate = startTime.toLocaleDateString();
+            toast.success(`Scheduled task "${task.title || task.label}" for ${formattedDate}`);
+          }
+        }
       }
 
       // Handle File dropped onto Calendar Day (only if feature enabled)

@@ -53,8 +53,8 @@ export const FEATURES = {
   VERSION_RESTORE: false, // Restauration de versions de fichiers (backend 501)
 
   // Drag & Drop features
-  DND_FILE_TO_TASK: false, // Lier fichier à tâche via drag
-  DND_TASK_TO_CALENDAR: false, // Créer événement via drag de tâche
+  DND_FILE_TO_TASK: true, // Lier fichier à tâche via drag (Sprint 7.1)
+  DND_TASK_TO_CALENDAR: true, // Créer événement via drag de tâche (Sprint 7.2)
 
   // Chat features
   CHAT_PRESENCE: false, // Indicateurs de présence en ligne

@@ -203,6 +203,13 @@ fn create_router(state: AppState) -> Router {
     let task_routes = Router::new()
         .route("/", get(handlers::tasks::list_tasks))
         .route("/{id}", get(handlers::tasks::get_task))
+        // Task attachments
+        .route("/{id}/attachments", get(handlers::tasks::list_attachments))
+        .route("/{id}/attachments", post(handlers::tasks::add_attachment))
+        .route(
+            "/{id}/attachments/{attachment_id}",
+            delete(handlers::tasks::delete_attachment),
+        )
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))

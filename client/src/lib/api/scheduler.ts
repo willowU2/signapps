@@ -62,3 +62,36 @@ export interface CreateJobRequest {
     target_id?: string;
     enabled?: boolean;
 }
+
+// ============================================================================
+// Task Attachments API
+// ============================================================================
+
+export interface TaskAttachment {
+    id: string;
+    task_id: string;
+    file_url: string;
+    file_name?: string;
+    file_size_bytes?: number;
+    created_at: string;
+}
+
+export interface AddAttachmentRequest {
+    file_url: string;
+    file_name?: string;
+    file_size_bytes?: number;
+}
+
+export const taskAttachmentsApi = {
+    /** Add an attachment to a task */
+    addAttachment: (taskId: string, data: AddAttachmentRequest) =>
+        schedulerClient.post<TaskAttachment>(`/tasks/${taskId}/attachments`, data),
+
+    /** List all attachments for a task */
+    listAttachments: (taskId: string) =>
+        schedulerClient.get<TaskAttachment[]>(`/tasks/${taskId}/attachments`),
+
+    /** Delete an attachment */
+    deleteAttachment: (taskId: string, attachmentId: string) =>
+        schedulerClient.delete(`/tasks/${taskId}/attachments/${attachmentId}`),
+};
