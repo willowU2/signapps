@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup } from '@/components/editor/toolbar'
+import { LayoutSelector } from "./slide-layout-picker"
+import { ThemePicker, type SlideTheme } from "./slide-themes"
+import type { SlideLayout } from "./use-slides"
 
 interface SlideToolbarProps {
     isConnected: boolean
@@ -32,6 +35,12 @@ interface SlideToolbarProps {
     onToggleSnap: () => void
     pageConfig?: { orientation: 'portrait' | 'landscape', backgroundColor: string }
     onPageConfigChange?: (config: { orientation: 'portrait' | 'landscape', backgroundColor: string }) => void
+    // Layout support
+    currentLayout?: SlideLayout
+    onLayoutChange?: (layout: SlideLayout) => void
+    // Theme support
+    currentThemeId?: string
+    onThemeChange?: (theme: SlideTheme) => void
 }
 
 export function SlideToolbar({
@@ -55,7 +64,11 @@ export function SlideToolbar({
     onToggleGrid,
     onToggleSnap,
     pageConfig,
-    onPageConfigChange
+    onPageConfigChange,
+    currentLayout,
+    onLayoutChange,
+    currentThemeId,
+    onThemeChange
 }: SlideToolbarProps) {
     return (
         <Toolbar className="overflow-x-auto custom-scrollbar flex-nowrap min-h-[44px]">
@@ -97,7 +110,33 @@ export function SlideToolbar({
                     <Paintbrush className="w-4 h-4" />
                 </ToolbarButton>
             </ToolbarGroup>
-            
+
+            {/* Layout Selector */}
+            {currentLayout && onLayoutChange && (
+                <>
+                    <ToolbarDivider className="hidden sm:block" />
+                    <ToolbarGroup className="hidden sm:flex">
+                        <LayoutSelector
+                            currentLayout={currentLayout}
+                            onLayoutChange={onLayoutChange}
+                        />
+                    </ToolbarGroup>
+                </>
+            )}
+
+            {/* Theme Picker */}
+            {currentThemeId && onThemeChange && (
+                <>
+                    <ToolbarDivider className="hidden sm:block" />
+                    <ToolbarGroup className="hidden sm:flex">
+                        <ThemePicker
+                            currentThemeId={currentThemeId}
+                            onThemeChange={onThemeChange}
+                        />
+                    </ToolbarGroup>
+                </>
+            )}
+
             <ToolbarDivider className="hidden sm:block" />
 
             <ToolbarGroup className="hidden sm:flex">

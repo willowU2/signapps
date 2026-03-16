@@ -6,9 +6,12 @@ use axum::{
     Json,
 };
 
-use crate::presentation::json_to_pptx;
+use crate::presentation::{
+    json_to_pptx, parse_json_to_presentation, presentation_to_pngs, presentation_to_svgs,
+    slide_to_png, slide_to_svg,
+};
 
-/// Export presentation JSON data to PPTX
+/// Export presentation JSON to PPTX
 pub async fn export_pptx(Json(payload): Json<serde_json::Value>) -> Response {
     match json_to_pptx(&payload) {
         Ok(data) => {
@@ -47,18 +50,319 @@ pub async fn export_pptx(Json(payload): Json<serde_json::Value>) -> Response {
     }
 }
 
-/// Get presentation format information
+/// Export presentation to PDF (all slides)
+pub async fn export_slides_pdf(Json(payload): Json<serde_json::Value>) -> Response {
+    // Parse presentation
+    let presentation = match parse_json_to_presentation(&payload) {
+        Ok(p) => p,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Invalid presentation data",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response();
+        }
+    };
+
+    // Generate PDF from slides
+    // For now, we use the existing PDF generator
+    match crate::pdf::generate_slides_pdf(&presentation) {
+        Ok(data) => {
+            let filename = payload
+                .get("filename")
+                .and_then(|f| f.as_str())
+                .unwrap_or("slides.pdf");
+
+            (
+                StatusCode::OK,
+                [
+                    ("Content-Type", "application/pdf"),
+                    (
+                        "Content-Disposition",
+                        &format!("attachment; filename=\"{}\"", filename),
+                    ),
+                ],
+                data,
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!("PDF slides export error: {}", e);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Export failed",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// Export single slide to PNG
+pub async fn export_slide_png(Json(payload): Json<serde_json::Value>) -> Response {
+    let presentation = match parse_json_to_presentation(&payload) {
+        Ok(p) => p,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Invalid presentation data",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response();
+        }
+    };
+
+    let slide_num = payload
+        .get("slide")
+        .and_then(|s| s.as_u64())
+        .unwrap_or(1) as usize;
+
+    if slide_num == 0 || slide_num > presentation.slides.len() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "error": "Invalid slide number",
+                "message": format!("Slide {} does not exist (presentation has {} slides)", slide_num, presentation.slides.len())
+            })),
+        )
+            .into_response();
+    }
+
+    let slide = &presentation.slides[slide_num - 1];
+
+    match slide_to_png(slide, slide_num) {
+        Ok(data) => {
+            let filename = format!("slide_{}.png", slide_num);
+            (
+                StatusCode::OK,
+                [
+                    ("Content-Type", "image/png"),
+                    (
+                        "Content-Disposition",
+                        &format!("attachment; filename=\"{}\"", filename),
+                    ),
+                ],
+                data,
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!("PNG slide export error: {}", e);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Export failed",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// Export single slide to SVG
+pub async fn export_slide_svg(Json(payload): Json<serde_json::Value>) -> Response {
+    let presentation = match parse_json_to_presentation(&payload) {
+        Ok(p) => p,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Invalid presentation data",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response();
+        }
+    };
+
+    let slide_num = payload
+        .get("slide")
+        .and_then(|s| s.as_u64())
+        .unwrap_or(1) as usize;
+
+    if slide_num == 0 || slide_num > presentation.slides.len() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "error": "Invalid slide number",
+                "message": format!("Slide {} does not exist (presentation has {} slides)", slide_num, presentation.slides.len())
+            })),
+        )
+            .into_response();
+    }
+
+    let slide = &presentation.slides[slide_num - 1];
+
+    match slide_to_svg(slide, slide_num) {
+        Ok(data) => {
+            let filename = format!("slide_{}.svg", slide_num);
+            (
+                StatusCode::OK,
+                [
+                    ("Content-Type", "image/svg+xml"),
+                    (
+                        "Content-Disposition",
+                        &format!("attachment; filename=\"{}\"", filename),
+                    ),
+                ],
+                data,
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!("SVG slide export error: {}", e);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Export failed",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// Export all slides as PNG (returns JSON with base64 encoded images)
+pub async fn export_all_slides_png(Json(payload): Json<serde_json::Value>) -> Response {
+    let presentation = match parse_json_to_presentation(&payload) {
+        Ok(p) => p,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Invalid presentation data",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response();
+        }
+    };
+
+    match presentation_to_pngs(&presentation) {
+        Ok(pngs) => {
+            let slides: Vec<serde_json::Value> = pngs
+                .iter()
+                .enumerate()
+                .map(|(i, png)| {
+                    serde_json::json!({
+                        "slide": i + 1,
+                        "data": base64::Engine::encode(&base64::engine::general_purpose::STANDARD, png),
+                        "mime_type": "image/png"
+                    })
+                })
+                .collect();
+
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({
+                    "success": true,
+                    "total_slides": slides.len(),
+                    "slides": slides
+                })),
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!("PNG slides export error: {}", e);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Export failed",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// Export all slides as SVG (returns JSON with SVG strings)
+pub async fn export_all_slides_svg(Json(payload): Json<serde_json::Value>) -> Response {
+    let presentation = match parse_json_to_presentation(&payload) {
+        Ok(p) => p,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Invalid presentation data",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response();
+        }
+    };
+
+    match presentation_to_svgs(&presentation) {
+        Ok(svgs) => {
+            let slides: Vec<serde_json::Value> = svgs
+                .iter()
+                .enumerate()
+                .map(|(i, svg)| {
+                    serde_json::json!({
+                        "slide": i + 1,
+                        "data": svg,
+                        "mime_type": "image/svg+xml"
+                    })
+                })
+                .collect();
+
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({
+                    "success": true,
+                    "total_slides": slides.len(),
+                    "slides": slides
+                })),
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!("SVG slides export error: {}", e);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Export failed",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// Get presentation service info
 pub async fn presentation_info() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "service": "SignApps Office - Presentations",
         "version": "1.0.0",
         "supported_formats": {
-            "export": ["pptx"]
+            "export": ["pptx", "pdf", "png", "svg"]
         },
-        "input_format": "Fabric.js JSON",
         "endpoints": {
-            "export": "POST /api/v1/presentation/export",
+            "export_pptx": "POST /api/v1/presentation/export/pptx",
+            "export_pdf": "POST /api/v1/presentation/export/pdf",
+            "export_png": "POST /api/v1/presentation/export/png",
+            "export_svg": "POST /api/v1/presentation/export/svg",
+            "export_all_png": "POST /api/v1/presentation/export/all/png",
+            "export_all_svg": "POST /api/v1/presentation/export/all/svg",
             "info": "GET /api/v1/presentation/info"
+        },
+        "features": {
+            "slides": true,
+            "speaker_notes": true,
+            "shapes": true,
+            "text": true,
+            "images": true,
+            "per_slide_export": true
         }
     }))
 }

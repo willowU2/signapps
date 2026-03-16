@@ -1,17 +1,20 @@
 import { cn } from "@/lib/utils"
-import { Plus, Trash2, Copy, Save, Download } from "lucide-react"
+import { Trash2, Copy, Save, Download } from "lucide-react"
 import { SlideThumbnail } from "./slide-thumbnail"
+import { SlideLayoutPicker } from "./slide-layout-picker"
+import type { SlideLayout } from "./use-slides"
 
 interface SlideData {
     id: string
     title: string
+    layout?: SlideLayout
 }
 
 interface SlideSidebarProps {
     slides: SlideData[]
     activeSlideId: string | null
     onSelectSlide: (id: string) => void
-    onAddSlide: () => void
+    onAddSlide: (layout?: SlideLayout) => void
     onRemoveSlide: (id: string) => void
     onDuplicateSlide?: (id: string) => void
     onSaveToDrive?: () => void
@@ -42,13 +45,7 @@ export function SlideSidebar({ slides, activeSlideId, onSelectSlide, onAddSlide,
                             <Download className="w-4 h-4" />
                         </button>
                     )}
-                    <button
-                        onClick={onAddSlide}
-                        className="p-1.5 hover:bg-gray-200 rounded-md transition-colors text-gray-500 hover:text-gray-900"
-                        title="Nouvelle diapositive"
-                    >
-                        <Plus className="w-4 h-4" />
-                    </button>
+                    <SlideLayoutPicker onSelectLayout={(layout) => onAddSlide(layout)} />
                 </div>
             </div>
 
@@ -108,8 +105,10 @@ export function SlideSidebar({ slides, activeSlideId, onSelectSlide, onAddSlide,
 
                 {slides.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-32 text-center text-sm text-gray-400">
-                        <p>No slides found.</p>
-                        <button onClick={onAddSlide} className="mt-2 text-indigo-600 font-medium text-xs hover:underline">Click to create one</button>
+                        <p>Aucune diapositive.</p>
+                        <button onClick={() => onAddSlide('title_slide')} className="mt-2 text-indigo-600 font-medium text-xs hover:underline">
+                            Cliquez pour en créer une
+                        </button>
                     </div>
                 )}
             </div>

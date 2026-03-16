@@ -44,15 +44,20 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
         data.slides.forEach((slideData, index) => {
             if (index === 0 && slideState.slides.length > 0) {
                 // Update first slide instead of adding
-                slideState.setActiveSlideId(slideState.slides[0].id)
+                const slideId = slideState.slides[0].id
+                slideState.setActiveSlideId(slideId)
                 // Load objects for this slide
                 slideData.objects.forEach(obj => {
                     slideState.updateObject(obj.id, obj)
                 })
+                // Load speaker notes if present
+                if (slideData.notes) {
+                    slideState.updateSlideNotes(slideId, slideData.notes)
+                }
             } else {
                 // Add new slide
                 slideState.addSlide()
-                // Objects will be loaded when slide becomes active
+                // Objects and notes will be loaded when slide becomes active
             }
         })
 
@@ -80,7 +85,8 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
                     title: slide.title,
                     objects: Object.entries(slide.objects)
                         .filter(([_, obj]) => obj)
-                        .map(([id, obj]) => ({ id, ...obj }))
+                        .map(([id, obj]) => ({ id, ...obj })),
+                    notes: slide.notes || undefined, // Include speaker notes
                 })),
                 metadata: {
                     updatedAt: new Date().toISOString(),
@@ -111,12 +117,28 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
         pres.title = documentName || "Presentation"
         pres.author = "SignApps Platform"
 
+        // Get presentation theme for colors
+        const theme = slideState.presentationTheme
+        const bgColor = theme?.backgroundColor?.replace('#', '') || 'FFFFFF'
+        const primaryColor = theme?.primaryColor?.replace('#', '') || '1e293b'
+        const textColor = theme?.textColor?.replace('#', '') || '334155'
+        const accentColor = theme?.accentColor?.replace('#', '') || '3b82f6'
+        const defaultFont = theme?.headingFont || 'Arial'
+
         // Get all slides with their objects
         const allSlidesData = slideState.getAllSlidesWithObjects()
 
         // Iterate through all slides
         allSlidesData.forEach((slideData) => {
             const pptxSlide = pres.addSlide()
+
+            // Apply theme background color
+            pptxSlide.background = { color: bgColor }
+
+            // Add speaker notes if present
+            if (slideData.notes) {
+                pptxSlide.addNotes(slideData.notes)
+            }
 
             // Get objects for this slide
             const slideObjects = slideData.objects
@@ -135,34 +157,41 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
                     const h = Math.max(0.5, (o.height || 0) * scaleY / 100)
 
                     if (o.type === 'i-text' || o.type === 'textbox' || o.type === 'text') {
+                        // Use theme text color as fallback
+                        const objColor = o.fill?.replace('#', '') || textColor
                         pptxSlide.addText(o.text || '', {
                             x, y, w, h,
                             fontSize: (o.fontSize || 18) * scaleY,
-                            color: o.fill?.replace('#', '') || '000000',
-                            fontFace: o.fontFamily || 'Arial',
+                            color: objColor,
+                            fontFace: o.fontFamily || defaultFont,
                             bold: o.fontWeight === 'bold',
                             italic: o.fontStyle === 'italic',
                         })
                     } else if (o.type === 'rect') {
+                        // Use theme accent color as fallback
+                        const fillColor = o.fill?.replace('#', '') || accentColor
                         pptxSlide.addShape(pres.ShapeType.rect, {
                             x, y, w, h,
-                            fill: { color: o.fill?.replace('#', '') || 'CCCCCC' }
+                            fill: { color: fillColor }
                         })
                     } else if (o.type === 'circle') {
+                        const fillColor = o.fill?.replace('#', '') || accentColor
                         pptxSlide.addShape(pres.ShapeType.ellipse, {
                             x, y, w, h,
-                            fill: { color: o.fill?.replace('#', '') || 'CCCCCC' }
+                            fill: { color: fillColor }
                         })
                     } else if (o.type === 'triangle') {
+                        const fillColor = o.fill?.replace('#', '') || accentColor
                         pptxSlide.addShape(pres.ShapeType.triangle, {
                             x, y, w, h,
-                            fill: { color: o.fill?.replace('#', '') || 'CCCCCC' }
+                            fill: { color: fillColor }
                         })
                     } else if (o.type === 'line') {
                         // Lines use x1,y1,x2,y2 in pptxgen
+                        const strokeColor = o.stroke?.replace('#', '') || primaryColor
                         pptxSlide.addShape(pres.ShapeType.line, {
                             x, y, w, h,
-                            line: { color: o.stroke?.replace('#', '') || '000000', width: o.strokeWidth || 1 }
+                            line: { color: strokeColor, width: o.strokeWidth || 1 }
                         })
                     } else if (o.type === 'image' && o.src) {
                         try {
@@ -176,12 +205,13 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
                     }
                 })
             } else {
-                // Empty slide - add title as placeholder
+                // Empty slide - add title using theme colors
                 pptxSlide.addText(slideData.title || `Slide`, {
                     x: 0.5,
                     y: 0.5,
                     fontSize: 24,
-                    color: '333333'
+                    color: primaryColor,
+                    fontFace: defaultFont
                 })
             }
         })

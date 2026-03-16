@@ -94,6 +94,7 @@ interface SlideFileData {
     id: string;
     title: string;
     objects: SlideObject[];
+    notes?: string; // Speaker notes for presentations
 }
 
 export interface SlidesFileFormat {

@@ -1,8 +1,12 @@
 //! Presentation (PPTX) export module.
 
 mod export;
+mod pptx;
+mod render;
 
 pub use export::*;
+pub use pptx::generate_pptx;
+pub use render::{slide_to_png, slide_to_svg, presentation_to_pngs, presentation_to_svgs};
 
 use thiserror::Error;
 
@@ -17,6 +21,51 @@ pub enum PresentationError {
 
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
+}
+
+/// Slide layout types
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub enum SlideLayout {
+    /// Title slide with centered title and subtitle
+    TitleSlide,
+    /// Title at top with content area below
+    #[default]
+    TitleAndContent,
+    /// Title with two content columns
+    TwoContent,
+    /// Section header (chapter divider)
+    SectionHeader,
+    /// Empty slide
+    Blank,
+    /// Title only (no content placeholders)
+    TitleOnly,
+}
+
+impl SlideLayout {
+    /// Get the layout index (1-based for PPTX)
+    pub fn index(&self) -> usize {
+        match self {
+            SlideLayout::TitleSlide => 1,
+            SlideLayout::TitleAndContent => 2,
+            SlideLayout::TwoContent => 3,
+            SlideLayout::SectionHeader => 4,
+            SlideLayout::Blank => 5,
+            SlideLayout::TitleOnly => 6,
+        }
+    }
+
+    /// Parse layout from string
+    pub fn from_str(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "title" | "title_slide" | "titleslide" => SlideLayout::TitleSlide,
+            "title_and_content" | "titleandcontent" | "content" => SlideLayout::TitleAndContent,
+            "two_content" | "twocontent" | "two_columns" => SlideLayout::TwoContent,
+            "section" | "section_header" | "sectionheader" => SlideLayout::SectionHeader,
+            "blank" | "empty" => SlideLayout::Blank,
+            "title_only" | "titleonly" => SlideLayout::TitleOnly,
+            _ => SlideLayout::TitleAndContent,
+        }
+    }
 }
 
 /// Text alignment for slide content
@@ -77,6 +126,7 @@ pub struct Slide {
     pub contents: Vec<SlideContent>,
     pub notes: Option<String>,
     pub background_color: Option<String>,
+    pub layout: SlideLayout,
 }
 
 impl Slide {

@@ -5,6 +5,7 @@ import { useSlides } from "./use-slides"
 import { SlideToolbar } from "./slide-toolbar"
 import { SlideCanvas } from "./slide-canvas"
 import { SlidePropertyPanel } from "./slide-property-panel"
+import { SpeakerNotesPanel } from "./speaker-notes-panel"
 import { Ruler } from '../docs/ruler'
 import { DocumentOutline } from '../docs/document-outline'
 import { OmniboxMenu } from "./omnibox-menu"
@@ -16,6 +17,9 @@ import { useSimulatedMultiplayer } from "@/hooks/use-simulated-multiplayer"
 import { EditorMenu } from "../editor/editor-menu"
 import { GenericFeatureModal } from "@/components/editor/generic-feature-modal"
 import pptxgen from "pptxgenjs"
+
+import type { SlideLayout, PresentationTheme } from "./use-slides"
+import type { SlideTheme } from "./slide-themes"
 
 // Let's create an interface matching the `useSlides` return type conceptually
 interface SlideEditorProps {
@@ -32,6 +36,12 @@ interface SlideEditorProps {
         undo: () => void;
         redo: () => void;
         clearSlide: () => void;
+        updateSlideNotes?: (id: string, notes: string) => void;
+        getSlideNotes?: (id: string) => string;
+        updateSlideLayout?: (id: string, layout: SlideLayout) => void;
+        getSlideLayout?: (id: string) => SlideLayout;
+        presentationTheme?: PresentationTheme;
+        updatePresentationTheme?: (theme: Partial<PresentationTheme>) => void;
     }
     isReadOnly?: boolean;
 }
@@ -39,7 +49,8 @@ interface SlideEditorProps {
 export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps) {
     const {
         objects, updateObject, removeObject, updateCursor, collaborators, isConnected, activeSlideId,
-        canUndo, canRedo, undo, redo, clearSlide
+        canUndo, canRedo, undo, redo, clearSlide, updateSlideNotes, getSlideNotes,
+        updateSlideLayout, getSlideLayout, presentationTheme, updatePresentationTheme
     } = slideState;
 
     const fabricCanvasRef = useRef<fabric.Canvas | null>(null)
@@ -1307,6 +1318,27 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     onToggleSnap={() => setSnapToGrid(s => !s)}
                     pageConfig={pageConfig}
                     onPageConfigChange={setPageConfig}
+                    currentLayout={activeSlideId && getSlideLayout ? getSlideLayout(activeSlideId) : undefined}
+                    onLayoutChange={activeSlideId && updateSlideLayout
+                        ? (layout) => updateSlideLayout(activeSlideId, layout)
+                        : undefined}
+                    currentThemeId={presentationTheme?.id}
+                    onThemeChange={updatePresentationTheme
+                        ? (theme: SlideTheme) => {
+                            updatePresentationTheme({
+                                id: theme.id,
+                                backgroundColor: theme.colors.background,
+                                primaryColor: theme.colors.primary,
+                                secondaryColor: theme.colors.secondary,
+                                accentColor: theme.colors.accent,
+                                textColor: theme.colors.text,
+                                headingFont: theme.fonts.heading,
+                                bodyFont: theme.fonts.body
+                            })
+                            // Also update canvas background color via page config
+                            setPageConfig(prev => ({ ...prev, backgroundColor: theme.colors.background }))
+                        }
+                        : undefined}
                 />
             )}
 
@@ -1367,6 +1399,20 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     activeObject={activeObject}
                     updateObjectRemotely={handleUpdateActiveObject}
                     canvasRef={fabricCanvasRef}
+                />
+            )}
+
+            {/* Speaker Notes Panel (Bottom) */}
+            {updateSlideNotes && getSlideNotes && (
+                <SpeakerNotesPanel
+                    slideId={activeSlideId}
+                    notes={activeSlideId ? getSlideNotes(activeSlideId) : ''}
+                    onNotesChange={(notes) => {
+                        if (activeSlideId) {
+                            updateSlideNotes(activeSlideId, notes)
+                        }
+                    }}
+                    isReadOnly={isReadOnly}
                 />
             )}
 

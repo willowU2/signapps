@@ -2,9 +2,31 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 
+export type SlideLayout =
+    | 'title_slide'
+    | 'title_and_content'
+    | 'two_content'
+    | 'section_header'
+    | 'blank'
+    | 'title_only'
+
 export interface SlideData {
     id: string
     title: string
+    notes?: string // Speaker notes for presentations
+    layout?: SlideLayout // Slide layout template
+}
+
+// Presentation-level theme (applied to all slides)
+export interface PresentationTheme {
+    id: string
+    backgroundColor: string
+    primaryColor: string
+    secondaryColor: string
+    accentColor: string
+    textColor: string
+    headingFont: string
+    bodyFont: string
 }
 
 export function useSlides(docId: string = 'slides-demo') {
@@ -16,6 +38,18 @@ export function useSlides(docId: string = 'slides-demo') {
     const [activeSlideId, setActiveSlideId] = useState<string | null>(null)
     const [activeObjects, setActiveObjects] = useState<Record<string, any>>({})
     const [isConnected, setIsConnected] = useState(false)
+
+    // Presentation-level theme
+    const [presentationTheme, setPresentationTheme] = useState<PresentationTheme>({
+        id: 'default',
+        backgroundColor: '#ffffff',
+        primaryColor: '#1e293b',
+        secondaryColor: '#475569',
+        accentColor: '#3b82f6',
+        textColor: '#334155',
+        headingFont: 'Inter, sans-serif',
+        bodyFont: 'Inter, sans-serif'
+    })
 
     // History State
     const [canUndo, setCanUndo] = useState(false)
@@ -178,10 +212,14 @@ export function useSlides(docId: string = 'slides-demo') {
 
     // --- Actions ---
 
-    const addSlide = () => {
+    const addSlide = (layout: SlideLayout = 'title_and_content') => {
         const ySlideList = doc.getArray<SlideData>('slide-list')
         const newSlideId = `slide-${Math.random().toString(36).substr(2, 9)}`
-        ySlideList.push([{ id: newSlideId, title: `Slide ${ySlideList.length + 1}` }])
+        ySlideList.push([{
+            id: newSlideId,
+            title: `Slide ${ySlideList.length + 1}`,
+            layout
+        }])
         setActiveSlideId(newSlideId) // Optional: auto switch to new slide
     }
 
@@ -202,27 +240,70 @@ export function useSlides(docId: string = 'slides-demo') {
         const ySlideList = doc.getArray<SlideData>('slide-list')
         const slidesArr = ySlideList.toArray()
         const sourceIndex = slidesArr.findIndex(s => s.id === id)
-        
+
         if (sourceIndex > -1) {
             const sourceSlide = slidesArr[sourceIndex]
             const newSlideId = `slide-${Math.random().toString(36).substr(2, 9)}`
-            
+
             // 1. Insert the new slide directly after the source
-            ySlideList.insert(sourceIndex + 1, [{ id: newSlideId, title: `${sourceSlide.title} (Copie)` }])
-            
+            ySlideList.insert(sourceIndex + 1, [{
+                id: newSlideId,
+                title: `${sourceSlide.title} (Copie)`,
+                notes: sourceSlide.notes,
+                layout: sourceSlide.layout
+            }])
+
             // 2. Copy all objects from the source slide
             const sourceObjectsMap = doc.getMap<string>(`objects-${id}`)
             const targetObjectsMap = doc.getMap<string>(`objects-${newSlideId}`)
-            
+
             doc.transact(() => {
                 sourceObjectsMap.forEach((json, key) => {
                     targetObjectsMap.set(key, json)
                 })
             }, 'duplicate-slide')
-            
+
             setActiveSlideId(newSlideId)
         }
     }
+
+    const updateSlideNotes = (id: string, notes: string) => {
+        const ySlideList = doc.getArray<SlideData>('slide-list')
+        const slidesArr = ySlideList.toArray()
+        const index = slidesArr.findIndex(s => s.id === id)
+
+        if (index > -1) {
+            const slide = slidesArr[index]
+            doc.transact(() => {
+                ySlideList.delete(index, 1)
+                ySlideList.insert(index, [{ ...slide, notes }])
+            }, 'update-notes')
+        }
+    }
+
+    const getSlideNotes = useCallback((slideId: string): string => {
+        const slide = slides.find(s => s.id === slideId)
+        return slide?.notes || ''
+    }, [slides])
+
+    const updateSlideLayout = (id: string, layout: SlideLayout) => {
+        const ySlideList = doc.getArray<SlideData>('slide-list')
+        const slidesArr = ySlideList.toArray()
+        const index = slidesArr.findIndex(s => s.id === id)
+
+        if (index > -1) {
+            const slide = slidesArr[index]
+            doc.transact(() => {
+                ySlideList.delete(index, 1)
+                ySlideList.insert(index, [{ ...slide, layout }])
+            }, 'update-layout')
+        }
+    }
+
+    const getSlideLayout = useCallback((slideId: string): SlideLayout => {
+        const slide = slides.find(s => s.id === slideId)
+        return slide?.layout || 'title_and_content'
+    }, [slides])
 
     const updateObject = (id: string, obj: any) => {
         if (!activeSlideId) return
@@ -277,9 +358,16 @@ export function useSlides(docId: string = 'slides-demo') {
     const getAllSlidesWithObjects = useCallback(() => {
         return slides.map(slide => ({
             ...slide,
-            objects: getSlideObjects(slide.id)
+            objects: getSlideObjects(slide.id),
+            notes: slide.notes || '',
+            layout: slide.layout || 'title_and_content'
         }))
     }, [slides, getSlideObjects])
+
+    // Update presentation theme
+    const updatePresentationTheme = useCallback((theme: Partial<PresentationTheme>) => {
+        setPresentationTheme(prev => ({ ...prev, ...theme }))
+    }, [])
 
     return {
         // App Level
@@ -299,11 +387,23 @@ export function useSlides(docId: string = 'slides-demo') {
         clearSlide,
         updateCursor,
 
+        // Speaker Notes
+        updateSlideNotes,
+        getSlideNotes,
+
+        // Layouts
+        updateSlideLayout,
+        getSlideLayout,
+
         // History
         canUndo,
         canRedo,
         undo,
         redo,
+
+        // Theme
+        presentationTheme,
+        updatePresentationTheme,
 
         // Export helpers
         getSlideObjects,

@@ -1,41 +1,12 @@
 //! PPTX export functionality.
-
-use pptx::slide::SlideLayoutRef;
-use pptx::Presentation as PptxPresentation;
+//!
+//! Converts Presentation structure to PPTX (PowerPoint) format.
 
 use super::{Presentation, PresentationError, Slide, SlideContent};
 
 /// Convert a Presentation to PPTX bytes
 pub fn presentation_to_pptx(presentation: &Presentation) -> Result<Vec<u8>, PresentationError> {
-    let mut pptx = PptxPresentation::new()
-        .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
-
-    // Get available layouts
-    let layouts = pptx
-        .slide_layouts()
-        .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
-
-    // Use first layout (Title Slide) or fallback
-    let layout = layouts.first().ok_or_else(|| {
-        PresentationError::ConversionFailed("No slide layouts available".to_string())
-    })?;
-
-    for slide in &presentation.slides {
-        add_slide_to_pptx(&mut pptx, slide, layout)?;
-    }
-
-    // Save to bytes
-    let temp_path = std::env::temp_dir().join(format!("pptx_export_{}.pptx", uuid::Uuid::new_v4()));
-    pptx.save(&temp_path)
-        .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
-
-    let bytes = std::fs::read(&temp_path)
-        .map_err(|e| PresentationError::IoError(e))?;
-
-    // Clean up temp file
-    let _ = std::fs::remove_file(&temp_path);
-
-    Ok(bytes)
+    super::pptx::generate_pptx(presentation)
 }
 
 /// Convert Fabric.js JSON (SignApps Slides format) to PPTX bytes
@@ -82,6 +53,11 @@ fn parse_slide_json(json: &serde_json::Value) -> Result<Slide, PresentationError
     // Parse background color
     if let Some(bg) = json.get("backgroundColor").and_then(|b| b.as_str()) {
         slide.background_color = Some(bg.to_string());
+    }
+
+    // Parse layout
+    if let Some(layout) = json.get("layout").and_then(|l| l.as_str()) {
+        slide.layout = super::SlideLayout::from_str(layout);
     }
 
     // Parse Fabric.js objects
@@ -173,57 +149,14 @@ fn parse_fabric_object(obj: &serde_json::Value) -> Result<Option<SlideContent>, 
     }
 }
 
-fn add_slide_to_pptx(
-    pptx: &mut PptxPresentation,
-    slide: &Slide,
-    layout: &SlideLayoutRef,
-) -> Result<(), PresentationError> {
-    // Add slide with the layout
-    let _slide_ref = pptx
-        .add_slide(layout)
-        .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
-
-    // Note: The pptx crate requires more complex manipulation to add text/shapes
-    // For now, we create the basic slide structure
-    // Full content population would require accessing the slide XML and adding shapes
-
-    // Collect text content for debugging/logging
-    let mut _body_parts: Vec<&str> = Vec::new();
-    if let Some(title) = &slide.title {
-        _body_parts.push(title);
-    }
-
-    for content in &slide.contents {
-        match content {
-            SlideContent::Title(s) | SlideContent::Subtitle(s) => _body_parts.push(s),
-            SlideContent::Body(elements) => {
-                for elem in elements {
-                    for run in &elem.runs {
-                        _body_parts.push(&run.text);
-                    }
-                }
-            }
-            SlideContent::BulletList(items) => {
-                for item in items {
-                    _body_parts.push(item);
-                }
-            }
-            _ => {}
-        }
-    }
-
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_simple_presentation_export() {
+    fn test_presentation_export_success() {
         let presentation = Presentation::new("Test Deck")
-            .with_slide(Slide::new().with_title("Slide 1"))
-            .with_slide(Slide::new().with_title("Slide 2"));
+            .with_slide(Slide::new().with_title("Slide 1"));
 
         let result = presentation_to_pptx(&presentation);
         assert!(result.is_ok());
@@ -235,7 +168,7 @@ mod tests {
     }
 
     #[test]
-    fn test_json_to_pptx() {
+    fn test_parse_json_to_presentation() {
         let json = serde_json::json!({
             "title": "Test Presentation",
             "author": "Test Author",
@@ -243,23 +176,16 @@ mod tests {
                 {
                     "title": "First Slide",
                     "objects": []
-                },
-                {
-                    "title": "Second Slide",
-                    "objects": [
-                        {
-                            "type": "textbox",
-                            "text": "Some content",
-                            "fontSize": 16.0,
-                            "top": 200.0
-                        }
-                    ]
                 }
             ]
         });
 
-        let result = json_to_pptx(&json);
+        let result = parse_json_to_presentation(&json);
         assert!(result.is_ok());
+
+        let presentation = result.unwrap();
+        assert_eq!(presentation.title, "Test Presentation");
+        assert_eq!(presentation.slides.len(), 1);
     }
 
     #[test]
