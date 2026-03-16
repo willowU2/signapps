@@ -50,7 +50,7 @@ export const FEATURES = {
   // Storage features
   ARCHIVE_EXTRACTION: false, // Extraction de contenu d'archives
   STORAGE_MODULES: false, // Ajout de modules storage
-  VERSION_RESTORE: false, // Restauration de versions de fichiers (backend 501)
+  VERSION_RESTORE: true, // Restauration de versions (Sprint 9 - backend complet)
 
   // Drag & Drop features
   DND_FILE_TO_TASK: true, // Lier fichier à tâche via drag (Sprint 7.1)
