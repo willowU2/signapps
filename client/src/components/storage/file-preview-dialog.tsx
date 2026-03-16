@@ -32,6 +32,7 @@ import { VideoPreview } from './previews/video-preview';
 import { ArchivePreview } from './previews/archive-preview';
 import { DocumentPreview } from './previews/document-preview';
 import { CodePreview } from './previews/code-preview';
+import { PDFPreview } from './previews/pdf-preview';
 import dynamic from 'next/dynamic';
 import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
@@ -391,13 +392,13 @@ export function FilePreviewDialog({
 
       case 'pdf':
         return blobUrl ? (
-          <div className="w-full h-[70vh]">
-            <iframe
-              src={blobUrl}
-              className="w-full h-full border-0 rounded-lg"
-              title={file.name}
-            />
-          </div>
+          <PDFPreview
+            src={blobUrl}
+            className="h-[70vh]"
+            downloadFilename={file.name}
+            showDownload={true}
+            showSearch={true}
+          />
         ) : null;
 
       case 'text':

@@ -1,7 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
+import { IndexeddbPersistence } from 'y-indexeddb';
 import { Awareness } from 'y-protocols/awareness';
+import { usePresenceStore } from '@/stores/presence-store';
 
 interface UseYjsDocumentOptions {
     /**
@@ -13,9 +15,17 @@ interface UseYjsDocumentOptions {
      */
     awareness?: boolean;
     /**
-     * Callback when document synced
+     * Enable IndexedDB persistence for offline support
+     */
+    enableOffline?: boolean;
+    /**
+     * Callback when document synced with server
      */
     onSync?: () => void;
+    /**
+     * Callback when loaded from IndexedDB
+     */
+    onOfflineLoad?: () => void;
     /**
      * Callback on errors
      */
@@ -29,7 +39,9 @@ export function useYjsDocument(
     const {
         wsUrl = process.env.NEXT_PUBLIC_COLLAB_URL || 'ws://localhost:4444',
         awareness: enableAwareness = true,
+        enableOffline = true,
         onSync,
+        onOfflineLoad,
         onError,
     } = options;
 
@@ -39,11 +51,43 @@ export function useYjsDocument(
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
     const [awareness, setAwareness] = useState<Awareness | null>(null);
     const [isSynced, setIsSynced] = useState(false);
+    const [isOfflineLoaded, setIsOfflineLoaded] = useState(false);
+
+    // Store refs
+    const idbProviderRef = useRef<IndexeddbPersistence | null>(null);
+    const pendingUpdateCountRef = useRef(0);
+
+    // Presence store for connection state
+    const setConnectionStatus = usePresenceStore((state) => state.setConnectionStatus);
+    const setSynced = usePresenceStore((state) => state.setSynced);
+    const incrementPendingChanges = usePresenceStore((state) => state.incrementPendingChanges);
+    const clearPendingChanges = usePresenceStore((state) => state.clearPendingChanges);
 
     useEffect(() => {
+        let wsProvider: WebsocketProvider | null = null;
+        let idbProvider: IndexeddbPersistence | null = null;
+
         try {
+            // Set initial connection status
+            setConnectionStatus('connecting');
+
+            // Create IndexedDB persistence for offline support
+            if (enableOffline) {
+                idbProvider = new IndexeddbPersistence(`signapps-doc-${docId}`, ydoc);
+                idbProviderRef.current = idbProvider;
+
+                // Track when local data is loaded
+                idbProvider.on('synced', () => {
+                    setIsOfflineLoaded(true);
+                    if (onOfflineLoad) {
+                        onOfflineLoad();
+                    }
+                    console.debug(`[useYjsDocument] Loaded offline data for ${docId}`);
+                });
+            }
+
             // Create WebSocket provider
-            const wsProvider = new WebsocketProvider(
+            wsProvider = new WebsocketProvider(
                 wsUrl,
                 docId,
                 ydoc,
@@ -55,30 +99,60 @@ export function useYjsDocument(
                 }
             );
 
+            // Track pending changes when offline
+            const handleUpdate = () => {
+                if (wsProvider && !wsProvider.wsconnected) {
+                    pendingUpdateCountRef.current += 1;
+                    incrementPendingChanges();
+                }
+            };
+            ydoc.on('update', handleUpdate);
+
             // Only connect if collaboration server is explicitly enabled
             if (collabServerEnabled) {
                 const httpUrl = wsUrl.replace('ws://', 'http://').replace('wss://', 'https://');
-                fetch(httpUrl, { method: 'HEAD' })
-                    .then(() => wsProvider.connect())
-                    .catch(() => console.debug(`[useYjsDocument] Collaboration server at ${wsUrl} is offline. Running in local-only mode.`));
+                fetch(httpUrl, { method: 'HEAD', mode: 'no-cors' })
+                    .then(() => {
+                        wsProvider?.connect();
+                    })
+                    .catch(() => {
+                        console.debug(`[useYjsDocument] Collaboration server at ${wsUrl} is offline. Running in offline mode.`);
+                        setConnectionStatus('disconnected');
+                    });
             } else {
-                console.debug('[useYjsDocument] Running in local-only mode (NEXT_PUBLIC_COLLAB_ENABLED not set)');
+                console.debug('[useYjsDocument] Running in offline mode (NEXT_PUBLIC_COLLAB_ENABLED not set)');
+                setConnectionStatus('disconnected');
             }
 
             // Listen for sync events
-            wsProvider.on('sync', (isSynced: boolean) => {
-                setIsSynced(isSynced);
-                if (isSynced && onSync) {
-                    onSync();
+            wsProvider.on('sync', (syncedState: boolean) => {
+                setIsSynced(syncedState);
+                setSynced(syncedState);
+                if (syncedState) {
+                    // Clear pending changes after successful sync
+                    pendingUpdateCountRef.current = 0;
+                    clearPendingChanges();
+                    if (onSync) {
+                        onSync();
+                    }
                 }
             });
 
-            // Handle connection state
+            // Handle connection state changes
+            wsProvider.on('status', (event: { status: string }) => {
+                if (event.status === 'connected') {
+                    setConnectionStatus('connected');
+                } else if (event.status === 'disconnected') {
+                    setConnectionStatus('disconnected');
+                }
+            });
+
             wsProvider.on('connection-close', () => {
-                // WebSocket disconnected
+                setConnectionStatus('disconnected');
             });
 
             wsProvider.on('connection-error', (error: Error) => {
+                setConnectionStatus('disconnected');
                 if (onError) {
                     onError(error);
                 }
@@ -88,15 +162,19 @@ export function useYjsDocument(
             setAwareness(wsProvider.awareness || null);
 
             return () => {
-                wsProvider.disconnect();
+                ydoc.off('update', handleUpdate);
+                wsProvider?.disconnect();
+                wsProvider?.destroy();
+                idbProvider?.destroy();
             };
         } catch (error) {
+            setConnectionStatus('disconnected');
             const err = error instanceof Error ? error : new Error(String(error));
             if (onError) {
                 onError(err);
             }
         }
-    }, [docId, wsUrl, enableAwareness, onSync, onError]);
+    }, [docId, wsUrl, enableAwareness, enableOffline, onSync, onOfflineLoad, onError, setConnectionStatus, setSynced, incrementPendingChanges, clearPendingChanges]);
 
     // Helper to update local awareness state (e.g., cursor position)
     const updateAwareness = useCallback(
@@ -135,14 +213,24 @@ export function useYjsDocument(
         [ydoc]
     );
 
+    // Force reconnect attempt
+    const reconnect = useCallback(() => {
+        if (provider && !provider.wsconnected) {
+            setConnectionStatus('reconnecting');
+            provider.connect();
+        }
+    }, [provider, setConnectionStatus]);
+
     return {
         ydoc,
         provider,
         awareness,
         isSynced,
+        isOfflineLoaded,
         updateAwareness,
         getSharedText,
         getSharedMap,
         getSharedArray,
+        reconnect,
     };
 }
