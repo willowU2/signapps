@@ -657,3 +657,148 @@ pub async fn create_direct_message(
         }),
     ))
 }
+
+// ============================================================================
+// Channel Read Status (Unread Count)
+// ============================================================================
+
+#[derive(Serialize, Deserialize)]
+pub struct ChannelReadStatus {
+    pub channel_id: String,
+    pub user_id: String,
+    pub unread_count: i32,
+    pub last_read_at: String,
+}
+
+/// Get read status for a channel (unread count)
+pub async fn get_channel_read_status(
+    State(state): State<AppState>,
+    Path(channel_id): Path<Uuid>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
+) -> Result<Json<ChannelReadStatus>, (StatusCode, String)> {
+    // Try to get existing read status
+    let status = sqlx::query_as::<_, (i32, chrono::DateTime<chrono::Utc>)>(
+        r#"
+        SELECT unread_count, last_read_at
+        FROM channel_read_status
+        WHERE channel_id = $1 AND user_id = $2
+        "#,
+    )
+    .bind(channel_id)
+    .bind(user_id)
+    .fetch_optional(state.pool.inner())
+    .await
+    .map_err(|e| {
+        error!("Failed to get read status: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get read status".to_string())
+    })?;
+
+    let (unread_count, last_read_at) = status.unwrap_or((0, chrono::Utc::now()));
+
+    Ok(Json(ChannelReadStatus {
+        channel_id: channel_id.to_string(),
+        user_id: user_id.to_string(),
+        unread_count,
+        last_read_at: last_read_at.to_rfc3339(),
+    }))
+}
+
+/// Mark channel as read (reset unread count)
+pub async fn mark_channel_read(
+    State(state): State<AppState>,
+    Path(channel_id): Path<Uuid>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
+) -> Result<Json<ChannelReadStatus>, (StatusCode, String)> {
+    let now = chrono::Utc::now();
+
+    // Upsert read status with unread_count = 0
+    sqlx::query(
+        r#"
+        INSERT INTO channel_read_status (channel_id, user_id, unread_count, last_read_at)
+        VALUES ($1, $2, 0, $3)
+        ON CONFLICT (channel_id, user_id)
+        DO UPDATE SET unread_count = 0, last_read_at = $3
+        "#,
+    )
+    .bind(channel_id)
+    .bind(user_id)
+    .bind(now)
+    .execute(state.pool.inner())
+    .await
+    .map_err(|e| {
+        error!("Failed to mark channel read: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to mark as read".to_string())
+    })?;
+
+    info!(channel_id = %channel_id, user_id = %user_id, "Marked channel as read");
+
+    Ok(Json(ChannelReadStatus {
+        channel_id: channel_id.to_string(),
+        user_id: user_id.to_string(),
+        unread_count: 0,
+        last_read_at: now.to_rfc3339(),
+    }))
+}
+
+/// Increment unread count for all channel members except sender
+/// (Called when a new message is sent)
+pub async fn increment_unread_count(
+    State(state): State<AppState>,
+    Path(channel_id): Path<Uuid>,
+    axum::Extension(sender_id): axum::Extension<Uuid>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    // Increment unread for all members except the sender
+    sqlx::query(
+        r#"
+        INSERT INTO channel_read_status (channel_id, user_id, unread_count, last_read_at)
+        SELECT $1, cm.user_id, 1, NOW()
+        FROM channel_members cm
+        WHERE cm.channel_id = $1 AND cm.user_id != $2
+        ON CONFLICT (channel_id, user_id)
+        DO UPDATE SET unread_count = channel_read_status.unread_count + 1
+        "#,
+    )
+    .bind(channel_id)
+    .bind(sender_id)
+    .execute(state.pool.inner())
+    .await
+    .map_err(|e| {
+        error!("Failed to increment unread count: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to update unread".to_string())
+    })?;
+
+    Ok(StatusCode::OK)
+}
+
+/// Get unread counts for all channels for a user
+pub async fn get_all_unread_counts(
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
+) -> Result<Json<Vec<ChannelReadStatus>>, (StatusCode, String)> {
+    let statuses = sqlx::query_as::<_, (Uuid, i32, chrono::DateTime<chrono::Utc>)>(
+        r#"
+        SELECT channel_id, unread_count, last_read_at
+        FROM channel_read_status
+        WHERE user_id = $1 AND unread_count > 0
+        "#,
+    )
+    .bind(user_id)
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| {
+        error!("Failed to get unread counts: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get unread counts".to_string())
+    })?;
+
+    let response: Vec<ChannelReadStatus> = statuses
+        .into_iter()
+        .map(|(channel_id, unread_count, last_read_at)| ChannelReadStatus {
+            channel_id: channel_id.to_string(),
+            user_id: user_id.to_string(),
+            unread_count,
+            last_read_at: last_read_at.to_rfc3339(),
+        })
+        .collect();
+
+    Ok(Json(response))
+}

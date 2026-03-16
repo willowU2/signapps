@@ -57,8 +57,8 @@ export const FEATURES = {
   DND_TASK_TO_CALENDAR: true, // Créer événement via drag de tâche (Sprint 7.2)
 
   // Chat features
-  CHAT_PRESENCE: false, // Indicateurs de présence en ligne
-  CHAT_UNREAD_COUNT: false, // Compteur de messages non lus
+  CHAT_PRESENCE: false, // Indicateurs de présence en ligne (nécessite WebSocket)
+  CHAT_UNREAD_COUNT: true, // Compteur de messages non lus (Sprint 10 - API REST)
 
   // Export features (Epic 2 - Sprint 3)
   DOCS_EXPORT_DOCX: true,

@@ -62,6 +62,13 @@ export interface CreateDmRequest {
     participant_ids: string[];
 }
 
+export interface ChannelReadStatus {
+    channel_id: string;
+    user_id: string;
+    unread_count: number;
+    last_read_at: string;
+}
+
 // ============================================================================
 // Chat API - Channels
 // ============================================================================
@@ -114,6 +121,22 @@ export const chatApi = {
     // Create a direct message conversation
     createDirectMessage: (data: CreateDmRequest) =>
         docsClient.post<DirectMessage>('/dms', data),
+
+    // ========================================================================
+    // Read Status (Unread Counts)
+    // ========================================================================
+
+    // Get read status for a channel (unread count)
+    getChannelReadStatus: (channelId: string) =>
+        docsClient.get<ChannelReadStatus>(`/channels/${channelId}/read-status`),
+
+    // Mark channel as read (reset unread count)
+    markChannelRead: (channelId: string) =>
+        docsClient.post<ChannelReadStatus>(`/channels/${channelId}/read-status`),
+
+    // Get all unread counts for current user
+    getAllUnreadCounts: () =>
+        docsClient.get<ChannelReadStatus[]>('/unread-counts'),
 
     // ========================================================================
     // WebSocket URL helper
