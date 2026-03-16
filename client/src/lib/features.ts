@@ -38,7 +38,7 @@ export const FEATURES = {
   REMOTE: false, // Canvas rendering incomplet
   PXE: false, // Service non implémenté
   IT_ASSETS: false, // Service non implémenté
-  OFFICE: false, // Service conversion non implémenté
+  OFFICE: true, // Service conversion opérationnel (Sprint 3)
 
   // ═══════════════════════════════════════════════════════════════════════════
   // FEATURES SPÉCIFIQUES NON PRÊTES
@@ -60,15 +60,15 @@ export const FEATURES = {
   CHAT_PRESENCE: false, // Indicateurs de présence en ligne
   CHAT_UNREAD_COUNT: false, // Compteur de messages non lus
 
-  // Export features (Epic 2 - backlog)
-  DOCS_EXPORT_DOCX: false,
-  DOCS_EXPORT_PDF: false,
-  SHEETS_EXPORT_XLSX: false,
-  SLIDES_EXPORT_PPTX: false,
+  // Export features (Epic 2 - Sprint 3)
+  DOCS_EXPORT_DOCX: true,
+  DOCS_EXPORT_PDF: true,
+  SHEETS_EXPORT_XLSX: false, // Spreadsheet export not yet implemented
+  SLIDES_EXPORT_PPTX: false, // Slides export not yet implemented
 
-  // Import features (Epic 3 - backlog)
-  DOCS_IMPORT_DOCX: false,
-  SHEETS_IMPORT_XLSX: false,
+  // Import features (Epic 3 - Sprint 3.5)
+  DOCS_IMPORT_DOCX: true,
+  SHEETS_IMPORT_XLSX: false, // Spreadsheet import not yet implemented
 } as const;
 
 /**
