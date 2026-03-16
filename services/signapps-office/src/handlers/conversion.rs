@@ -53,6 +53,26 @@ pub struct ConversionQuery {
     pub filename: Option<String>,
 }
 
+/// Comment data for export
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ExportComment {
+    pub id: String,
+    pub author: String,
+    pub content: String,
+    pub created_at: String,
+    pub resolved: bool,
+    #[serde(default)]
+    pub replies: Vec<ExportCommentReply>,
+}
+
+/// Comment reply for export
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ExportCommentReply {
+    pub author: String,
+    pub content: String,
+    pub created_at: String,
+}
+
 /// Request body for JSON conversion
 #[derive(Debug, Deserialize)]
 pub struct ConversionRequest {
@@ -63,6 +83,9 @@ pub struct ConversionRequest {
     /// Optional document title (reserved for future use)
     #[allow(dead_code)]
     pub title: Option<String>,
+    /// Optional comments to include in export
+    #[serde(default)]
+    pub comments: Option<Vec<ExportComment>>,
 }
 
 /// Response for conversion info
@@ -106,9 +129,41 @@ pub async fn convert_json(
         InputFormat::Markdown => crate::converter::InputFormat::Markdown,
     };
 
+    // Convert external comments to internal format
+    let internal_comments: Option<Vec<crate::converter::comments::Comment>> =
+        request.comments.map(|comments| {
+            comments
+                .into_iter()
+                .map(|c| crate::converter::comments::Comment {
+                    id: c.id,
+                    author: c.author,
+                    author_id: String::new(),
+                    content: c.content,
+                    created_at: c.created_at,
+                    resolved: c.resolved,
+                    replies: c
+                        .replies
+                        .into_iter()
+                        .map(|r| crate::converter::comments::CommentReply {
+                            id: String::new(),
+                            author: r.author,
+                            author_id: String::new(),
+                            content: r.content,
+                            created_at: r.created_at,
+                        })
+                        .collect(),
+                })
+                .collect()
+        });
+
     let result = state
         .converter
-        .convert(&content_str, input_format, query.format.into())
+        .convert_with_comments(
+            &content_str,
+            input_format,
+            query.format.into(),
+            internal_comments.as_deref(),
+        )
         .await?;
 
     let filename = query

@@ -1,7 +1,9 @@
 //! PDF operations: merge, split, text extraction, thumbnails.
 
 use super::PdfError;
-use printpdf::lopdf::{dictionary, Document, Object, ObjectId, Dictionary};
+use crate::presentation::{Presentation, SlideContent};
+use ::lopdf::{Document, Object, ObjectId, Dictionary};
+use printpdf::{BuiltinFont, Color, Mm, PdfDocument, Rect, Rgb};
 use std::collections::BTreeMap;
 use std::io::Cursor;
 
@@ -355,6 +357,153 @@ fn get_number(obj: &Object) -> Option<f32> {
         Object::Real(r) => Some(*r),
         _ => None,
     }
+}
+
+/// Generate PDF from presentation slides
+pub fn generate_slides_pdf(presentation: &Presentation) -> Result<Vec<u8>, PdfError> {
+    // Create PDF document (landscape A4: 297mm x 210mm)
+    let (doc, page1, layer1) = PdfDocument::new(
+        &presentation.title,
+        Mm(297.0),
+        Mm(210.0),
+        "Layer 1",
+    );
+
+    // Add built-in font
+    let font = doc.add_builtin_font(BuiltinFont::Helvetica)
+        .map_err(|e| PdfError::OperationFailed(e.to_string()))?;
+    let font_bold = doc.add_builtin_font(BuiltinFont::HelveticaBold)
+        .map_err(|e| PdfError::OperationFailed(e.to_string()))?;
+
+    let mut current_layer = doc.get_page(page1).get_layer(layer1);
+    let mut is_first_page = true;
+
+    for slide in &presentation.slides {
+        if !is_first_page {
+            // Add new page for each slide after the first
+            let (page, layer) = doc.add_page(Mm(297.0), Mm(210.0), "Layer 1");
+            current_layer = doc.get_page(page).get_layer(layer);
+        }
+        is_first_page = false;
+
+        // Set background color if specified
+        if let Some(bg_color) = &slide.background_color {
+            if let Some(color) = parse_hex_color(bg_color) {
+                current_layer.set_fill_color(color);
+                current_layer.add_rect(Rect::new(
+                    Mm(0.0),
+                    Mm(0.0),
+                    Mm(297.0),
+                    Mm(210.0),
+                ));
+            }
+        }
+
+        let mut y_position = 180.0; // Start from top (210 - 30 margin)
+
+        // Render slide title if present
+        if let Some(title) = &slide.title {
+            current_layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
+            current_layer.use_text(title, 28.0, Mm(20.0), Mm(y_position), &font_bold);
+            y_position -= 15.0;
+        }
+
+        // Render slide contents
+        for content in &slide.contents {
+            match content {
+                SlideContent::Title(text) => {
+                    current_layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
+                    current_layer.use_text(text, 28.0, Mm(20.0), Mm(y_position), &font_bold);
+                    y_position -= 15.0;
+                }
+                SlideContent::Subtitle(text) => {
+                    current_layer.set_fill_color(Color::Rgb(Rgb::new(0.3, 0.3, 0.3, None)));
+                    current_layer.use_text(text, 20.0, Mm(20.0), Mm(y_position), &font);
+                    y_position -= 12.0;
+                }
+                SlideContent::Body(elements) => {
+                    for element in elements {
+                        for run in &element.runs {
+                            let font_to_use = if run.bold { &font_bold } else { &font };
+                            let font_size = run.font_size.unwrap_or(14.0) as f32;
+
+                            if let Some(color) = &run.color {
+                                if let Some(c) = parse_hex_color(color) {
+                                    current_layer.set_fill_color(c);
+                                }
+                            } else {
+                                current_layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
+                            }
+
+                            current_layer.use_text(&run.text, font_size, Mm(20.0), Mm(y_position), font_to_use);
+                            y_position -= font_size / 2.0 + 4.0;
+                        }
+                    }
+                }
+                SlideContent::BulletList(items) => {
+                    current_layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
+                    for item in items {
+                        let bullet_text = format!("• {}", item);
+                        current_layer.use_text(&bullet_text, 14.0, Mm(25.0), Mm(y_position), &font);
+                        y_position -= 8.0;
+                    }
+                }
+                SlideContent::Shape { shape_type: _, width, height, x, y, fill_color } => {
+                    // Convert fabric coordinates to PDF coordinates
+                    let pdf_x = Mm(20.0 + (*x as f32 / 10.0));
+                    let pdf_y = Mm(y_position - (*y as f32 / 10.0));
+                    let pdf_w = Mm(*width as f32 / 10.0);
+                    let pdf_h = Mm(*height as f32 / 10.0);
+
+                    if let Some(color) = fill_color {
+                        if let Some(c) = parse_hex_color(color) {
+                            current_layer.set_fill_color(c);
+                        }
+                    } else {
+                        current_layer.set_fill_color(Color::Rgb(Rgb::new(0.2, 0.4, 0.8, None)));
+                    }
+
+                    let rect = Rect::new(pdf_x, pdf_y, pdf_x + pdf_w, pdf_y + pdf_h);
+                    current_layer.add_rect(rect);
+                }
+                SlideContent::Image { .. } => {
+                    // Image embedding requires loading the image file
+                    // For now, we add a placeholder text
+                    current_layer.set_fill_color(Color::Rgb(Rgb::new(0.5, 0.5, 0.5, None)));
+                    current_layer.use_text("[Image]", 12.0, Mm(20.0), Mm(y_position), &font);
+                    y_position -= 8.0;
+                }
+            }
+        }
+
+        // Add speaker notes at the bottom if present
+        if let Some(notes) = &slide.notes {
+            current_layer.set_fill_color(Color::Rgb(Rgb::new(0.5, 0.5, 0.5, None)));
+            current_layer.use_text("Speaker Notes:", 10.0, Mm(20.0), Mm(25.0), &font_bold);
+            current_layer.use_text(notes, 9.0, Mm(20.0), Mm(18.0), &font);
+        }
+    }
+
+    // Save PDF to bytes
+    let mut buffer = Vec::new();
+    doc.save(&mut std::io::BufWriter::new(&mut buffer))
+        .map_err(|e| PdfError::OperationFailed(format!("Failed to save PDF: {}", e)))?;
+
+    Ok(buffer)
+}
+
+/// Parse hex color string to PDF color
+fn parse_hex_color(hex: &str) -> Option<Color> {
+    let hex = hex.trim_start_matches('#');
+    if hex.len() < 6 {
+        return None;
+    }
+
+    let r = u8::from_str_radix(&hex[0..2], 16).ok()? as f32 / 255.0;
+    let g = u8::from_str_radix(&hex[2..4], 16).ok()? as f32 / 255.0;
+    let b = u8::from_str_radix(&hex[4..6], 16).ok()? as f32 / 255.0;
+
+    Some(Color::Rgb(Rgb::new(r, g, b, None)))
 }
 
 #[cfg(test)]

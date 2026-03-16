@@ -16,9 +16,16 @@ import FontFamily from '@tiptap/extension-font-family';
 import { FontSize } from '../docs/extensions/font-size';
 import CharacterCount from '@tiptap/extension-character-count';
 import Color from '@tiptap/extension-color';
+import Highlight from '@tiptap/extension-highlight';
+import { Comment } from '../docs/extensions/comment';
+import { Mention } from '../docs/extensions/mention';
+import { Insertion, Deletion, TrackChanges } from '../docs/extensions/track-changes';
+import { createMentionSuggestion } from '@/hooks/use-mention-suggestions';
 import { useYjsDocument } from '@/hooks/use-yjs-document';
+import { useCollaborativeComments } from '@/hooks/use-collaborative-comments';
+import { useTrackChanges } from '@/hooks/use-track-changes';
 import { useAuthStore } from '@/lib/store';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Loader2, Sparkles, PencilLine, PanelRightOpen, MessageSquarePlus } from 'lucide-react';
 import { useAiStream } from '@/hooks/use-ai-stream';
 import { toast } from 'sonner';
@@ -27,6 +34,10 @@ import { Button } from '@/components/ui/button';
 import { DocumentHeader } from '../docs/editor/document-header';
 import { EditorMenuBar } from '../docs/editor/editor-menu-bar';
 import { EditorToolbar } from '../docs/editor/editor-toolbar';
+import { CommentsSidebar } from '../docs/comments/comments-sidebar';
+import { TrackChangesSidebar } from '../docs/track-changes/track-changes-sidebar';
+import type { ExportComment } from '@/lib/api/office';
+import type { CommentData } from '../docs/extensions/comment';
 
 interface CollaborativeEditorProps {
     docId: string;
@@ -68,7 +79,7 @@ export function CollaborativeEditor({
         immediatelyRender: false, // Required for SSR compatibility with Next.js
         extensions: [
             StarterKit.configure({
-                undoRedo: false, // Yjs handles undo/redo
+                history: false, // Yjs handles undo/redo
             }),
             Placeholder.configure({ placeholder }),
             Underline,
@@ -89,8 +100,40 @@ export function CollaborativeEditor({
                 types: ['textStyle'],
             }),
             Color,
+            Highlight.configure({
+                multicolor: true,
+            }),
+            Comment.configure({
+                HTMLAttributes: {
+                    class: 'comment-highlight bg-yellow-100 dark:bg-yellow-900/30 border-b-2 border-yellow-400',
+                },
+            }),
+            Mention.configure({
+                HTMLAttributes: {
+                    class: 'mention bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded px-1 font-medium',
+                },
+                suggestion: createMentionSuggestion(),
+            }),
             CharacterCount.configure({
                 limit: null,
+            }),
+            // Track Changes extensions
+            Insertion.configure({
+                HTMLAttributes: {
+                    class: 'track-insertion',
+                },
+            }),
+            Deletion.configure({
+                HTMLAttributes: {
+                    class: 'track-deletion',
+                },
+            }),
+            TrackChanges.configure({
+                enabled: false,
+                currentUser: {
+                    id: user?.id || 'unknown',
+                    name: user?.username || 'Anonyme',
+                },
             }),
             ydoc ? Collaboration.configure({
                 document: ydoc,
@@ -109,6 +152,56 @@ export function CollaborativeEditor({
             setEditorReady(true);
         }
     }, [editor, isSynced, editorReady]);
+
+    // Collaborative comments with real-time sync
+    const {
+        comments,
+        activeCommentId,
+        sidebarOpen,
+        toggleSidebar,
+        setSidebarOpen,
+        addComment,
+        deleteComment,
+        resolveComment,
+        reopenComment,
+        addReply,
+        setActiveComment,
+        goToComment,
+    } = useCollaborativeComments({
+        ydoc,
+        documentId: docId,
+        editor,
+    });
+
+    // Track Changes
+    const {
+        enabled: trackChangesEnabled,
+        showChanges: trackChangesShowChanges,
+        pendingChanges: trackChangesPendingChanges,
+        allChanges: trackChangesAllChanges,
+        activeChangeId: trackChangesActiveChangeId,
+        toggleEnabled: toggleTrackChanges,
+        toggleShowChanges,
+        acceptChange,
+        rejectChange,
+        acceptAllChanges,
+        rejectAllChanges,
+        goToChange: goToTrackChange,
+    } = useTrackChanges({
+        editor,
+        documentId: docId,
+    });
+
+    // Track Changes Sidebar state
+    const [trackChangesSidebarOpen, setTrackChangesSidebarOpen] = useState(false);
+    const toggleTrackChangesSidebar = useCallback(() => {
+        setTrackChangesSidebarOpen((prev) => !prev);
+    }, []);
+
+    // Handle reply from sidebar (with current user context)
+    const handleReply = useCallback((commentId: string, content: string) => {
+        addReply(commentId, content);
+    }, [addReply]);
 
     const handleAiGenerate = useCallback(async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -187,69 +280,140 @@ export function CollaborativeEditor({
                     awarenessStates={awareness ? Array.from(awareness.getStates().values() as unknown as any[]) : []}
                     menuBar={<EditorMenuBar editor={editor} />}
                 />
-                
-                <EditorToolbar 
+
+                <EditorToolbar
                     editor={editor}
+                    documentTitle={docTitle}
                     isStreaming={isStreaming}
                     aiQuery={aiQuery}
                     setAiQuery={setAiQuery}
                     onAiGenerate={handleAiGenerate}
-                    stopAi={stopAi} 
+                    stopAi={stopAi}
+                    onAddComment={addComment}
+                    onToggleSidebar={toggleSidebar}
+                    commentCount={comments.filter(c => !c.resolved).length}
+                    exportComments={convertToExportComments(comments)}
+                    // Track Changes
+                    trackChangesEnabled={trackChangesEnabled}
+                    trackChangesShowChanges={trackChangesShowChanges}
+                    trackChangesPendingChanges={trackChangesPendingChanges}
+                    onToggleTrackChanges={toggleTrackChanges}
+                    onToggleShowChanges={toggleShowChanges}
+                    onAcceptAllChanges={acceptAllChanges}
+                    onRejectAllChanges={rejectAllChanges}
+                    onAcceptChange={acceptChange}
+                    onRejectChange={rejectChange}
+                    onToggleTrackChangesSidebar={toggleTrackChangesSidebar}
                 />
             </div>
 
-            {/* Document Canvas Area */}
-            <div className="flex-1 overflow-y-auto w-full flex justify-center py-6 px-4 cursor-text bg-[#f8f9fa] dark:bg-[#1f1f1f]">
-                <div className="w-[816px] shrink-0 min-h-[1056px] bg-background dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10">
-                    <EditorContent
-                        editor={editor}
-                        className="prose prose-sm md:prose-base dark:prose-invert max-w-none px-[96px] py-[96px] min-h-full focus:outline-none focus-visible:outline-none placeholder:text-[#5f6368] dark:placeholder:text-[#9aa0a6] text-[11pt]"
-                        onClick={() => editor.commands.focus()}
-                    />
-                    
-                    {/* Floating Canvas AI Buttons (visible when empty) */}
-                    {editor.isEmpty && (
-                        <div className="absolute top-[300px] left-0 right-0 flex items-center justify-center gap-2 z-10 select-none pointer-events-none">
-                            <Button 
-                                variant="secondary" 
-                                className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full shadow-sm font-medium h-[36px] px-5 pointer-events-auto transition-colors"
-                            >
-                                <Sparkles className="h-[18px] w-[18px] mb-0.5 mr-2 text-[#0b57d0]" fill="#0b57d0" />
-                                Générer un document
-                            </Button>
-                            <Button 
-                                variant="secondary" 
-                                className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full shadow-sm font-medium h-[36px] px-5 pointer-events-auto transition-colors"
-                            >
-                                <PencilLine className="h-[18px] w-[18px] mb-0.5 mr-2 text-[#0b57d0]" fill="#0b57d0" />
-                                M'aider à écrire
-                            </Button>
-                            <Button 
-                                variant="secondary" 
-                                className="bg-background hover:bg-gray-50 text-[#444746] rounded-full shadow-sm ring-1 ring-[#dadce0] font-medium h-[36px] px-4 pointer-events-auto transition-colors"
-                            >
-                                <PanelRightOpen className="h-[18px] w-[18px] mb-0.5 mr-2" />
-                                Plus
-                            </Button>
-                        </div>
-                    )}
+            {/* Main Content Area with Sidebar */}
+            <div className="flex-1 flex overflow-hidden">
+                {/* Document Canvas Area */}
+                <div className="flex-1 overflow-y-auto w-full flex justify-center py-6 px-4 cursor-text bg-[#f8f9fa] dark:bg-[#1f1f1f]">
+                    <div className="w-[816px] shrink-0 min-h-[1056px] bg-background dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10">
+                        <EditorContent
+                            editor={editor}
+                            className="prose prose-sm md:prose-base dark:prose-invert max-w-none px-[96px] py-[96px] min-h-full focus:outline-none focus-visible:outline-none placeholder:text-[#5f6368] dark:placeholder:text-[#9aa0a6] text-[11pt] [&_.comment-highlight]:bg-yellow-100 [&_.comment-highlight]:dark:bg-yellow-900/30 [&_.comment-highlight]:border-b-2 [&_.comment-highlight]:border-yellow-400"
+                            onClick={() => editor.commands.focus()}
+                        />
 
-                    {/* Floating Right Page Action Buttons */}
-                    <div className="absolute top-[300px] -right-12 hidden xl:flex flex-col gap-2 items-center">
-                        <div className="bg-background dark:bg-[#202124] rounded-full shadow-sm ring-1 ring-[#dadce0] dark:ring-[#5f6368] p-1.5 flex flex-col items-center">
-                            <Button variant="ghost" size="icon" className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]">
-                                <PencilLine className="h-[18px] w-[18px]" />
-                            </Button>
-                            <div className="h-[1px] w-6 bg-[#dadce0] dark:bg-[#5f6368] my-0.5" />
-                            <Button variant="ghost" size="icon" className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]">
-                                <MessageSquarePlus className="h-[18px] w-[18px]" />
-                            </Button>
+                        {/* Floating Canvas AI Buttons (visible when empty) */}
+                        {editor.isEmpty && (
+                            <div className="absolute top-[300px] left-0 right-0 flex items-center justify-center gap-2 z-10 select-none pointer-events-none">
+                                <Button
+                                    variant="secondary"
+                                    className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full shadow-sm font-medium h-[36px] px-5 pointer-events-auto transition-colors"
+                                >
+                                    <Sparkles className="h-[18px] w-[18px] mb-0.5 mr-2 text-[#0b57d0]" fill="#0b57d0" />
+                                    Générer un document
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full shadow-sm font-medium h-[36px] px-5 pointer-events-auto transition-colors"
+                                >
+                                    <PencilLine className="h-[18px] w-[18px] mb-0.5 mr-2 text-[#0b57d0]" fill="#0b57d0" />
+                                    M'aider à écrire
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    className="bg-background hover:bg-gray-50 text-[#444746] rounded-full shadow-sm ring-1 ring-[#dadce0] font-medium h-[36px] px-4 pointer-events-auto transition-colors"
+                                >
+                                    <PanelRightOpen className="h-[18px] w-[18px] mb-0.5 mr-2" />
+                                    Plus
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Floating Right Page Action Buttons */}
+                        <div className="absolute top-[300px] -right-12 hidden xl:flex flex-col gap-2 items-center">
+                            <div className="bg-background dark:bg-[#202124] rounded-full shadow-sm ring-1 ring-[#dadce0] dark:ring-[#5f6368] p-1.5 flex flex-col items-center">
+                                <Button variant="ghost" size="icon" className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]">
+                                    <PencilLine className="h-[18px] w-[18px]" />
+                                </Button>
+                                <div className="h-[1px] w-6 bg-[#dadce0] dark:bg-[#5f6368] my-0.5" />
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]"
+                                    onClick={toggleSidebar}
+                                >
+                                    <MessageSquarePlus className="h-[18px] w-[18px]" />
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Comments Sidebar */}
+                {sidebarOpen && (
+                    <CommentsSidebar
+                        comments={comments}
+                        activeCommentId={activeCommentId}
+                        onCommentClick={goToComment}
+                        onResolve={resolveComment}
+                        onReopen={reopenComment}
+                        onReply={handleReply}
+                        onDelete={deleteComment}
+                        className="w-[320px] shrink-0"
+                    />
+                )}
+
+                {/* Track Changes Sidebar */}
+                {trackChangesSidebarOpen && (
+                    <TrackChangesSidebar
+                        changes={trackChangesAllChanges}
+                        activeChangeId={trackChangesActiveChangeId}
+                        onChangeClick={goToTrackChange}
+                        onAcceptChange={acceptChange}
+                        onRejectChange={rejectChange}
+                        onAcceptAll={acceptAllChanges}
+                        onRejectAll={rejectAllChanges}
+                        onClose={toggleTrackChangesSidebar}
+                        className="w-[320px] shrink-0"
+                    />
+                )}
             </div>
         </div>
     );
+}
+
+/**
+ * Convert internal CommentData to ExportComment format for DOCX export
+ */
+function convertToExportComments(comments: CommentData[]): ExportComment[] {
+    return comments.map((c) => ({
+        id: c.id,
+        author: c.author,
+        content: c.content,
+        created_at: c.createdAt,
+        resolved: c.resolved,
+        replies: c.replies?.map((r) => ({
+            author: r.author,
+            content: r.content,
+            created_at: r.createdAt,
+        })),
+    }));
 }
 
 /**

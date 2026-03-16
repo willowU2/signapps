@@ -1,13 +1,14 @@
 //! Spreadsheet import/export HTTP handlers.
 
 use axum::{
-    extract::Multipart,
+    extract::{Multipart, Query},
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
+use serde::Deserialize;
 
-use crate::spreadsheet::{json_to_xlsx, xlsx_to_json};
+use crate::spreadsheet::{csv_to_spreadsheet, json_to_csv, json_to_ods, json_to_xlsx, spreadsheet_to_json, xlsx_to_json};
 
 /// Export spreadsheet JSON data to XLSX
 pub async fn export_xlsx(Json(payload): Json<serde_json::Value>) -> Response {
@@ -126,12 +127,293 @@ pub async fn spreadsheet_info() -> Json<serde_json::Value> {
         "service": "SignApps Office - Spreadsheet",
         "version": "1.0.0",
         "supported_formats": {
-            "import": ["xlsx", "xls"],
-            "export": ["xlsx"]
+            "import": ["xlsx", "xls", "csv", "tsv", "ods"],
+            "export": ["xlsx", "csv", "ods"]
         },
         "endpoints": {
-            "export": "POST /api/v1/spreadsheet/export",
-            "import": "POST /api/v1/spreadsheet/import"
+            "export": "POST /api/v1/spreadsheet/export?format=xlsx|csv|ods",
+            "export_csv": "POST /api/v1/spreadsheet/export/csv",
+            "export_ods": "POST /api/v1/spreadsheet/export/ods",
+            "import": "POST /api/v1/spreadsheet/import",
+            "import_csv": "POST /api/v1/spreadsheet/import/csv"
         }
     }))
+}
+
+/// Query params for export format
+#[derive(Debug, Deserialize)]
+pub struct ExportParams {
+    pub format: Option<String>,
+}
+
+/// Export spreadsheet JSON data to specified format (XLSX or CSV)
+pub async fn export_spreadsheet(
+    Query(params): Query<ExportParams>,
+    Json(payload): Json<serde_json::Value>,
+) -> Response {
+    let format = params.format.as_deref().unwrap_or("xlsx");
+
+    match format {
+        "xlsx" => export_xlsx(Json(payload)).await,
+        "csv" => export_csv_handler(Json(payload)).await,
+        "ods" => export_ods_handler(Json(payload)).await,
+        _ => (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "error": "Unsupported format",
+                "message": format!("Format '{}' is not supported. Use 'xlsx', 'csv', or 'ods'.", format)
+            })),
+        )
+            .into_response(),
+    }
+}
+
+/// Export spreadsheet JSON data to CSV
+pub async fn export_csv_handler(Json(payload): Json<serde_json::Value>) -> Response {
+    let delimiter = payload
+        .get("delimiter")
+        .and_then(|d| d.as_str())
+        .and_then(|d| d.chars().next())
+        .unwrap_or(',');
+
+    match json_to_csv(&payload, Some(delimiter)) {
+        Ok(data) => {
+            let filename = payload
+                .get("filename")
+                .and_then(|f| f.as_str())
+                .unwrap_or("spreadsheet.csv");
+
+            (
+                StatusCode::OK,
+                [
+                    ("Content-Type", "text/csv; charset=utf-8"),
+                    (
+                        "Content-Disposition",
+                        &format!("attachment; filename=\"{}\"", filename),
+                    ),
+                ],
+                data,
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!("CSV export error: {}", e);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Export failed",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// Export spreadsheet JSON data to ODS (OpenDocument Spreadsheet)
+pub async fn export_ods_handler(Json(payload): Json<serde_json::Value>) -> Response {
+    match json_to_ods(&payload) {
+        Ok(data) => {
+            let filename = payload
+                .get("filename")
+                .and_then(|f| f.as_str())
+                .unwrap_or("spreadsheet.ods");
+
+            (
+                StatusCode::OK,
+                [
+                    (
+                        "Content-Type",
+                        "application/vnd.oasis.opendocument.spreadsheet",
+                    ),
+                    (
+                        "Content-Disposition",
+                        &format!("attachment; filename=\"{}\"", filename),
+                    ),
+                ],
+                data,
+            )
+                .into_response()
+        }
+        Err(e) => {
+            tracing::error!("ODS export error: {}", e);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Export failed",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// Import CSV from text content
+#[derive(Debug, Deserialize)]
+pub struct CsvImportRequest {
+    pub content: String,
+    pub delimiter: Option<String>,
+    pub has_headers: Option<bool>,
+}
+
+pub async fn import_csv_text(Json(payload): Json<CsvImportRequest>) -> Response {
+    let delimiter = payload
+        .delimiter
+        .as_ref()
+        .and_then(|d| d.chars().next());
+
+    let has_headers = payload.has_headers.unwrap_or(true);
+
+    match csv_to_spreadsheet(payload.content.as_bytes(), delimiter, has_headers) {
+        Ok(spreadsheet) => match spreadsheet_to_json(&spreadsheet) {
+            Ok(json) => (
+                StatusCode::OK,
+                Json(serde_json::json!({
+                    "success": true,
+                    "detected_format": "csv",
+                    "spreadsheet": json
+                })),
+            )
+                .into_response(),
+            Err(e) => (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Conversion failed",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response(),
+        },
+        Err(e) => {
+            tracing::error!("CSV import error: {}", e);
+            (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Import failed",
+                    "message": e.to_string()
+                })),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// Import XLSX or CSV file to JSON (auto-detect format)
+pub async fn import_spreadsheet(mut multipart: Multipart) -> Response {
+    while let Ok(Some(field)) = multipart.next_field().await {
+        let name = field.name().unwrap_or("").to_string();
+
+        if name == "file" {
+            let filename = field.file_name().unwrap_or("upload").to_string();
+
+            match field.bytes().await {
+                Ok(data) => {
+                    let filename_lower = filename.to_lowercase();
+
+                    // Detect format and process accordingly
+                    if filename_lower.ends_with(".csv") || filename_lower.ends_with(".tsv") {
+                        let delimiter = if filename_lower.ends_with(".tsv") {
+                            Some('\t')
+                        } else {
+                            None // Auto-detect
+                        };
+
+                        match csv_to_spreadsheet(&data, delimiter, true) {
+                            Ok(spreadsheet) => match spreadsheet_to_json(&spreadsheet) {
+                                Ok(json) => {
+                                    return (
+                                        StatusCode::OK,
+                                        Json(serde_json::json!({
+                                            "success": true,
+                                            "filename": filename,
+                                            "detected_format": "csv",
+                                            "spreadsheet": json
+                                        })),
+                                    )
+                                        .into_response();
+                                }
+                                Err(e) => {
+                                    return (
+                                        StatusCode::BAD_REQUEST,
+                                        Json(serde_json::json!({
+                                            "error": "Conversion failed",
+                                            "message": e.to_string()
+                                        })),
+                                    )
+                                        .into_response();
+                                }
+                            },
+                            Err(e) => {
+                                tracing::error!("CSV import error: {}", e);
+                                return (
+                                    StatusCode::BAD_REQUEST,
+                                    Json(serde_json::json!({
+                                        "error": "Import failed",
+                                        "message": e.to_string()
+                                    })),
+                                )
+                                    .into_response();
+                            }
+                        }
+                    } else if filename_lower.ends_with(".xlsx") || filename_lower.ends_with(".xls") {
+                        match xlsx_to_json(&data) {
+                            Ok(json) => {
+                                return (
+                                    StatusCode::OK,
+                                    Json(serde_json::json!({
+                                        "success": true,
+                                        "filename": filename,
+                                        "detected_format": if filename_lower.ends_with(".xlsx") { "xlsx" } else { "xls" },
+                                        "spreadsheet": json
+                                    })),
+                                )
+                                    .into_response();
+                            }
+                            Err(e) => {
+                                tracing::error!("XLSX import error: {}", e);
+                                return (
+                                    StatusCode::BAD_REQUEST,
+                                    Json(serde_json::json!({
+                                        "error": "Import failed",
+                                        "message": e.to_string()
+                                    })),
+                                )
+                                    .into_response();
+                            }
+                        }
+                    } else {
+                        return (
+                            StatusCode::BAD_REQUEST,
+                            Json(serde_json::json!({
+                                "error": "Unsupported file type",
+                                "message": "Supported formats: .xlsx, .xls, .csv, .tsv"
+                            })),
+                        )
+                            .into_response();
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to read upload: {}", e);
+                    return (
+                        StatusCode::BAD_REQUEST,
+                        Json(serde_json::json!({
+                            "error": "Upload failed",
+                            "message": e.to_string()
+                        })),
+                    )
+                        .into_response();
+                }
+            }
+        }
+    }
+
+    (
+        StatusCode::BAD_REQUEST,
+        Json(serde_json::json!({
+            "error": "No file provided",
+            "message": "Please provide a file with field name 'file'"
+        })),
+    )
+        .into_response()
 }

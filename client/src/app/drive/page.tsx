@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ShareDialog } from '@/components/drive/ShareDialog';
+import { RenameSheet } from '@/components/storage/rename-sheet';
 
 export default function GlobalDrivePage() {
   const router = useRouter();
@@ -32,6 +33,9 @@ export default function GlobalDrivePage() {
 
   const [shareNode, setShareNode] = useState<DriveNode | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+
+  const [renameNode, setRenameNode] = useState<DriveNode | null>(null);
+  const [renameOpen, setRenameOpen] = useState(false);
 
   const fetchNodes = useCallback(async () => {
     setLoading(true);
@@ -176,6 +180,19 @@ export default function GlobalDrivePage() {
       fetchNodes();
     } catch {
       toast.error('Erreur lors de la suppression');
+    }
+  };
+
+  const handleRename = async (newName: string) => {
+    if (!renameNode) return;
+    try {
+      // Use driveApi to update node name
+      await driveApi.updateNode(renameNode.id, { name: newName });
+      toast.success(`Renommé en "${newName}"`);
+      fetchNodes();
+    } catch {
+      toast.error('Erreur lors du renommage');
+      throw new Error('Rename failed');
     }
   };
 
@@ -379,7 +396,7 @@ export default function GlobalDrivePage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem onClick={() => handleNavigate(node)}>Ouvrir</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => alert('Renommer (TODO)')}>Renommer</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { setRenameNode(node); setRenameOpen(true); }}>Renommer</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setShareNode(node); setShareOpen(true); }}>Partager</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={(e) => handleDownload(node, e)} className="gap-2 focus:bg-[#f1f3f4] dark:focus:bg-[#3c4043] cursor-pointer">
@@ -439,6 +456,12 @@ export default function GlobalDrivePage() {
         </div>
       </div>
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} node={shareNode} />
+      <RenameSheet
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        item={renameNode ? { key: renameNode.id, name: renameNode.name, type: renameNode.node_type as 'folder' | 'file' } : null}
+        onRename={handleRename}
+      />
     </AppLayout>
   );
 }

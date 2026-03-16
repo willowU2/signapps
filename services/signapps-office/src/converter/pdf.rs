@@ -28,7 +28,7 @@ pub fn html_to_pdf(html: &str) -> Result<Vec<u8>, ConversionError> {
         .next()
         .ok_or_else(|| ConversionError::InvalidInput("No body element found".to_string()))?;
 
-    // Create PDF document
+    // Create PDF document - printpdf 0.7 API
     let (doc, page1, layer1) = PdfDocument::new(
         "Document",
         Mm(PAGE_WIDTH_MM),

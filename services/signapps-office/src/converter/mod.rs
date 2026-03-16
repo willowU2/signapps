@@ -65,6 +65,18 @@ impl DocumentConverter {
         input_format: InputFormat,
         output_format: ConversionFormat,
     ) -> Result<ConversionResult, ConversionError> {
+        self.convert_with_comments(content, input_format, output_format, None)
+            .await
+    }
+
+    /// Convert document with optional comments
+    pub async fn convert_with_comments(
+        &self,
+        content: &str,
+        input_format: InputFormat,
+        output_format: ConversionFormat,
+        external_comments: Option<&[comments::Comment]>,
+    ) -> Result<ConversionResult, ConversionError> {
         // Step 1: Parse input to intermediate HTML representation
         let html = match input_format {
             InputFormat::TiptapJson => tiptap::tiptap_to_html(content)?,
@@ -75,7 +87,11 @@ impl DocumentConverter {
         // Step 2: Convert HTML to output format
         match output_format {
             ConversionFormat::Docx => {
-                let data = docx::html_to_docx(&html)?;
+                let data = if let Some(comments_data) = external_comments {
+                    docx::html_to_docx_with_comments(&html, comments_data)?
+                } else {
+                    docx::html_to_docx(&html)?
+                };
                 Ok(ConversionResult {
                     data,
                     mime_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

@@ -11,6 +11,7 @@ import {
     ChevronDown,
     User,
     Clock,
+    PanelRightOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,6 +40,7 @@ interface TrackChangesToolbarProps {
     onRejectAll: () => void;
     onAcceptChange: (changeId: string) => void;
     onRejectChange: (changeId: string) => void;
+    onToggleSidebar?: () => void;
     className?: string;
 }
 
@@ -52,6 +54,7 @@ export function TrackChangesToolbar({
     onRejectAll,
     onAcceptChange,
     onRejectChange,
+    onToggleSidebar,
     className,
 }: TrackChangesToolbarProps) {
     const [isOpen, setIsOpen] = useState(false);
@@ -112,6 +115,25 @@ export function TrackChangesToolbar({
                         <p>{showChanges ? 'Masquer les modifications' : 'Afficher les modifications'}</p>
                     </TooltipContent>
                 </Tooltip>
+
+                {/* Open Sidebar Button */}
+                {onToggleSidebar && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={onToggleSidebar}
+                                className="gap-1"
+                            >
+                                <PanelRightOpen className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Ouvrir le panneau des modifications</p>
+                        </TooltipContent>
+                    </Tooltip>
+                )}
 
                 {/* Changes Count & Actions Dropdown */}
                 {pendingChanges.length > 0 && (

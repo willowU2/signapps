@@ -10,20 +10,30 @@ tokio = { workspace = true }
 tower-http = { workspace = true }
 
 # Document formats
-docx-rust = "0.1.11"           # DOCX read/write
-rust_xlsxwriter = "0.79"    # XLSX write
-calamine = "0.26"           # XLSX/XLS/ODS read
+docx-rs = "0.4"                # DOCX read/write (imported as docx_rs)
+chrono = { version = "0.4", default-features = false, features = ["std"] }
+rust_xlsxwriter = "0.79"       # XLSX write
+calamine = "0.26"              # XLSX/XLS/ODS read
 shiva = { version = "1.4", features = ["all"] }  # Multi-format
 
 # PDF
-krilla = "0.6.0"              # PDF generation
-pdf_oxide = "0.3"           # PDF extraction
+printpdf = "0.7"               # PDF generation (0.7 for compatible API)
+lopdf = "0.33"                 # PDF parsing and manipulation
 
-# Markdown
-comrak = "0.31"             # CommonMark + GFM
+# Markdown & HTML
+comrak = "0.31"                # CommonMark + GFM
+scraper = "0.20"               # HTML parsing
 
 # EPUB
-rbook = "0.5"               # EPUB read
+rbook = "0.5"                  # EPUB read
+
+# PowerPoint
+# pptx-rs = "0.1"              # PPTX support (disabled - not fully ready)
+
+# Image rendering (for slide export)
+resvg = "0.44"                 # SVG to PNG rendering
+usvg = "0.44"                  # SVG processing
+tiny-skia = "0.11"             # 2D rendering backend
 
 # Utilities
 serde = { workspace = true }
@@ -35,6 +45,9 @@ mime_guess = { workspace = true }
 moka = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+thiserror = { workspace = true }
+base64 = "0.22"
+zip = { version = "2.0", default-features = false, features = ["deflate"] }
 
 # Workspace
 signapps-common = { path = "../../crates/signapps-common" }

@@ -432,7 +432,7 @@ export const TrackChanges = TiptapMark.create<TrackChangesOptions>({
         return [
             new Plugin({
                 key: trackChangesPluginKey,
-                appendTransaction(transactions, _oldState, newState) {
+                appendTransaction(transactions, oldState, newState) {
                     if (!extension.storage.enabled) {
                         return null;
                     }
@@ -445,12 +445,113 @@ export const TrackChanges = TiptapMark.create<TrackChangesOptions>({
                         return null;
                     }
 
-                    // Process changes would be handled here
-                    // For now, we just mark transactions as processed
+                    // Skip if already processed
+                    const lastTr = transactions[transactions.length - 1];
+                    if (lastTr.getMeta('trackChangesProcessed')) {
+                        return null;
+                    }
+
+                    // Skip if this is an accept/reject operation
+                    if (lastTr.getMeta('trackChangesAcceptReject')) {
+                        return null;
+                    }
+
                     const tr = newState.tr;
+                    const { currentUser, onChangeDetected } = extension.options;
+
+                    // Process each step in each transaction
+                    for (const transaction of transactions) {
+                        if (!transaction.docChanged) continue;
+                        if (transaction.getMeta('trackChangesProcessed')) continue;
+
+                        transaction.steps.forEach((step, stepIndex) => {
+                            const stepMap = step.getMap();
+                            const invertedStep = step.invert(
+                                stepIndex === 0
+                                    ? oldState.doc
+                                    : transaction.docs[stepIndex] || oldState.doc
+                            );
+
+                            stepMap.forEach((oldStart, oldEnd, newStart, newEnd) => {
+                                const changeId = `change-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+                                const timestamp = new Date().toISOString();
+
+                                // Handle deletions (old content that was removed)
+                                if (oldEnd > oldStart) {
+                                    // Get deleted content from old state
+                                    const deletedContent = oldState.doc.textBetween(oldStart, oldEnd, ' ');
+
+                                    if (deletedContent && deletedContent.trim()) {
+                                        // Insert deletion mark with the deleted text
+                                        const deletionMark = newState.schema.marks.deletion.create({
+                                            changeId,
+                                            author: currentUser.name,
+                                            authorId: currentUser.id,
+                                            timestamp,
+                                        });
+
+                                        // For deletions, we need to re-insert the text with deletion mark
+                                        // But this is complex - for now, record the change
+                                        const change: TrackChange = {
+                                            id: changeId,
+                                            type: 'deletion',
+                                            author: currentUser.name,
+                                            authorId: currentUser.id,
+                                            timestamp,
+                                            originalContent: deletedContent,
+                                        };
+
+                                        extension.storage.changes.push(change);
+
+                                        if (onChangeDetected) {
+                                            onChangeDetected(change);
+                                        }
+                                    }
+                                }
+
+                                // Handle insertions (new content that was added)
+                                if (newEnd > newStart) {
+                                    const insertedContent = newState.doc.textBetween(newStart, newEnd, ' ');
+
+                                    if (insertedContent && insertedContent.trim()) {
+                                        const insertionMark = newState.schema.marks.insertion.create({
+                                            changeId,
+                                            author: currentUser.name,
+                                            authorId: currentUser.id,
+                                            timestamp,
+                                        });
+
+                                        // Add insertion mark to the new content
+                                        tr.addMark(newStart, newEnd, insertionMark);
+
+                                        const change: TrackChange = {
+                                            id: changeId,
+                                            type: 'insertion',
+                                            author: currentUser.name,
+                                            authorId: currentUser.id,
+                                            timestamp,
+                                            newContent: insertedContent,
+                                        };
+
+                                        extension.storage.changes.push(change);
+
+                                        if (onChangeDetected) {
+                                            onChangeDetected(change);
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    }
+
                     tr.setMeta('trackChangesProcessed', true);
 
-                    return tr;
+                    // Only return if we made changes
+                    if (tr.steps.length > 0) {
+                        return tr;
+                    }
+
+                    return null;
                 },
             }),
         ];

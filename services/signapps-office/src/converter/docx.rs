@@ -1,11 +1,20 @@
 //! DOCX generation from HTML.
 
+use super::comments::Comment;
 use super::ConversionError;
 use docx_rs::*;
 use scraper::{Html, Selector};
 
 /// Convert HTML to DOCX
 pub fn html_to_docx(html: &str) -> Result<Vec<u8>, ConversionError> {
+    html_to_docx_with_comments(html, &[])
+}
+
+/// Convert HTML to DOCX with comments appendix
+pub fn html_to_docx_with_comments(
+    html: &str,
+    comments: &[Comment],
+) -> Result<Vec<u8>, ConversionError> {
     let document = Html::parse_document(html);
     let body_selector = Selector::parse("body").unwrap();
 
@@ -23,6 +32,11 @@ pub fn html_to_docx(html: &str) -> Result<Vec<u8>, ConversionError> {
         }
     }
 
+    // Add comments appendix if there are comments
+    if !comments.is_empty() {
+        docx = add_comments_appendix(docx, comments);
+    }
+
     // Generate DOCX bytes
     let mut buffer = Vec::new();
     docx.build()
@@ -30,6 +44,81 @@ pub fn html_to_docx(html: &str) -> Result<Vec<u8>, ConversionError> {
         .map_err(|e| ConversionError::ConversionFailed(format!("Failed to generate DOCX: {}", e)))?;
 
     Ok(buffer)
+}
+
+/// Add a comments appendix section to the document
+fn add_comments_appendix(mut docx: Docx, comments: &[Comment]) -> Docx {
+    // Page break before comments
+    let page_break = Paragraph::new().add_run(Run::new().add_break(BreakType::Page));
+    docx = docx.add_paragraph(page_break);
+
+    // Header "Comments"
+    let header = Paragraph::new().add_run(
+        Run::new()
+            .add_text("Commentaires")
+            .bold()
+            .size(36), // 18pt
+    );
+    docx = docx.add_paragraph(header);
+
+    // Add each comment
+    for (index, comment) in comments.iter().enumerate() {
+        // Comment header with author and date
+        let status = if comment.resolved { " [Résolu]" } else { "" };
+        let comment_header = Paragraph::new()
+            .add_run(
+                Run::new()
+                    .add_text(format!(
+                        "{}. {} - {}{}",
+                        index + 1,
+                        comment.author,
+                        format_date(&comment.created_at),
+                        status
+                    ))
+                    .bold()
+                    .size(22), // 11pt
+            )
+            .indent(Some(360), None, None, None);
+        docx = docx.add_paragraph(comment_header);
+
+        // Comment content
+        let comment_content = Paragraph::new()
+            .add_run(Run::new().add_text(&comment.content).size(22))
+            .indent(Some(720), None, None, None);
+        docx = docx.add_paragraph(comment_content);
+
+        // Add replies
+        for reply in &comment.replies {
+            let reply_para = Paragraph::new()
+                .add_run(
+                    Run::new()
+                        .add_text(format!(
+                            "↳ {} ({}): {}",
+                            reply.author,
+                            format_date(&reply.created_at),
+                            reply.content
+                        ))
+                        .size(20) // 10pt
+                        .italic(),
+                )
+                .indent(Some(1080), None, None, None);
+            docx = docx.add_paragraph(reply_para);
+        }
+
+        // Spacing between comments
+        let spacer = Paragraph::new();
+        docx = docx.add_paragraph(spacer);
+    }
+
+    docx
+}
+
+/// Format ISO date string to readable format
+fn format_date(iso_date: &str) -> String {
+    // Try to parse ISO 8601 date
+    chrono::DateTime::parse_from_rfc3339(iso_date)
+        .map(|dt| dt.format("%d/%m/%Y %H:%M").to_string())
+        .unwrap_or_else(|_| iso_date.to_string())
 }
 
 fn process_element(docx: &mut Docx, elem: &scraper::ElementRef) -> Result<(), ConversionError> {

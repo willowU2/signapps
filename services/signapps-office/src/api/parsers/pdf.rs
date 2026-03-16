@@ -1,9 +1,9 @@
-use krilla::document::Document;
+//! PDF parsing utilities (placeholder module).
+//!
+//! Note: PDF generation is handled by converter/pdf.rs using printpdf.
+//! This module is reserved for future PDF parsing needs.
 
+/// Generate PDF placeholder - actual implementation in converter/pdf.rs
 pub fn generate_pdf() -> Result<Vec<u8>, &'static str> {
-    // PDF Generation Logic with Krilla
-    // Placeholder to satisfy module structure
-    let _doc = Document::new();
-    
-    Ok(vec![])
+    Err("Use converter::pdf::html_to_pdf instead")
 }

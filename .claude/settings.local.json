@@ -259,7 +259,9 @@
       "Bash(.yaml)",
       "Bash(.json \")",
       "Skill(bmad-party-mode)",
-      "mcp__context-mode__ctx_execute"
+      "mcp__context-mode__ctx_execute",
+      "Bash(unzip:*)",
+      "mcp__context-mode__ctx_execute_file"
     ]
   },
   "contextWindow": 1000000

@@ -31,7 +31,7 @@ import { Plus, Search, MoreHorizontal, Users, Pencil, Trash2 } from "lucide-reac
 
 
 export default function WorkspacesPage() {
-    const { workspaces, workspacesLoading, fetchWorkspaces, createWorkspace, deleteWorkspace } = useTenantStore()
+    const { workspaces, workspacesLoading, fetchWorkspaces, createWorkspace, updateWorkspace, deleteWorkspace } = useTenantStore()
     const [isSheetOpen, setIsSheetOpen] = useState(false)
     const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -49,13 +49,18 @@ export default function WorkspacesPage() {
         setIsSubmitting(true)
         try {
             if (editingWorkspace) {
-                // Assuming an update action exists, placeholder for now since createWorkspace is the only one in useTenantStore
-                toast.info("Update workspace API to be implemented")
+                await updateWorkspace(editingWorkspace.id, {
+                    name: values.name,
+                    description: values.description || undefined,
+                    color: values.color
+                })
+                toast.success("Workspace updated successfully")
             } else {
                 await createWorkspace(values.name, values.description || undefined, values.color)
                 toast.success("Workspace created successfully")
             }
             setIsSheetOpen(false)
+            setEditingWorkspace(null)
         } catch (error) {
             console.error("Failed to save workspace:", error)
             toast.error("Failed to save workspace")

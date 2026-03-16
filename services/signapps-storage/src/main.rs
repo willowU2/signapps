@@ -234,6 +234,14 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/preview/thumbnail/:bucket/*key",
             get(preview::get_thumbnail),
+        )
+        .route(
+            "/preview/archive/:bucket/*key",
+            get(preview::get_archive_listing),
+        )
+        .route(
+            "/preview/document/:bucket/*key/metadata",
+            get(preview::get_document_metadata),
         );
 
     // Permissions routes

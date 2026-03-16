@@ -38,3 +38,12 @@ once_cell = { workspace = true }
 bcrypt = "0.18.0"
 reqwest = { version = "0.11", features = ["json"] }
 tokio-cron-scheduler = "0.13.0"
+
+# Image processing for thumbnails/previews
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif"] }
+
+# PDF metadata extraction
+lopdf = "0.33"
+
+# Archive listing (ZIP)
+zip = { version = "2.1", default-features = false, features = ["deflate"] }

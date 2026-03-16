@@ -30,7 +30,6 @@ import {
     Image as ImageIcon,
     Code,
     Sparkles,
-    MessageSquarePlus,
     Minus,
     Plus,
     Search,
@@ -41,17 +40,42 @@ import {
     IndentDecrease,
     IndentIncrease,
     RemoveFormatting,
-    MoveVertical
+    MoveVertical,
+    MessageSquare
 } from 'lucide-react';
 import { useCallback, useState, useMemo } from 'react';
+import { ExportMenu } from './export-menu';
+import { ImportMenu } from './import-menu';
+import { AddCommentButton } from './add-comment-button';
+import { TrackChangesToolbar } from '../track-changes/track-changes-toolbar';
+import { ExportComment } from '@/lib/api/office';
+import type { TrackChange } from '../extensions/track-changes';
 
 interface EditorToolbarProps {
     editor: Editor | null;
+    documentTitle?: string;
     isStreaming?: boolean;
     aiQuery?: string;
     setAiQuery?: (v: string) => void;
     onAiGenerate?: (e?: React.FormEvent) => void;
     stopAi?: () => void;
+    // Comments
+    onAddComment?: (content: string) => void;
+    onToggleSidebar?: () => void;
+    commentCount?: number;
+    /** Comments to include in DOCX export */
+    exportComments?: ExportComment[];
+    // Track Changes
+    trackChangesEnabled?: boolean;
+    trackChangesShowChanges?: boolean;
+    trackChangesPendingChanges?: TrackChange[];
+    onToggleTrackChanges?: () => void;
+    onToggleShowChanges?: () => void;
+    onAcceptAllChanges?: () => void;
+    onRejectAllChanges?: () => void;
+    onAcceptChange?: (changeId: string) => void;
+    onRejectChange?: (changeId: string) => void;
+    onToggleTrackChangesSidebar?: () => void;
 }
 
 // Font families available in the editor
@@ -92,11 +116,26 @@ const HIGHLIGHT_COLORS = [
 
 export function EditorToolbar({
     editor,
+    documentTitle = 'document',
     isStreaming,
     aiQuery = '',
     setAiQuery,
     onAiGenerate,
     stopAi,
+    onAddComment,
+    onToggleSidebar,
+    commentCount = 0,
+    exportComments,
+    trackChangesEnabled = false,
+    trackChangesShowChanges = true,
+    trackChangesPendingChanges = [],
+    onToggleTrackChanges,
+    onToggleShowChanges,
+    onAcceptAllChanges,
+    onRejectAllChanges,
+    onAcceptChange,
+    onRejectChange,
+    onToggleTrackChangesSidebar,
 }: EditorToolbarProps) {
     const [isAiOpen, setIsAiOpen] = useState(false);
 
@@ -206,6 +245,8 @@ export function EditorToolbar({
                 >
                     <Printer className="h-4 w-4" />
                 </Button>
+                <ExportMenu editor={editor} documentTitle={documentTitle} comments={exportComments} />
+                <ImportMenu editor={editor} />
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-[#444746] dark:text-muted-foreground ml-0.5">
                     <SpellCheck2 className="h-4 w-4" />
                 </Button>
@@ -410,13 +451,51 @@ export function EditorToolbar({
                 <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
                     <LinkIcon className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
-                    <MessageSquarePlus className="h-4 w-4" />
-                </Button>
+                {onAddComment ? (
+                    <AddCommentButton
+                        editor={editor}
+                        onAddComment={onAddComment}
+                    />
+                ) : null}
+                {onToggleSidebar && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] relative"
+                        onClick={onToggleSidebar}
+                        title="Afficher les commentaires"
+                    >
+                        <MessageSquare className="h-4 w-4" />
+                        {commentCount > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-primary text-[10px] text-primary-foreground rounded-full flex items-center justify-center font-medium">
+                                {commentCount > 9 ? '9+' : commentCount}
+                            </span>
+                        )}
+                    </Button>
+                )}
                 <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
                     <ImageIcon className="h-4 w-4" />
                 </Button>
             </div>
+
+            {/* Track Changes */}
+            {onToggleTrackChanges && (
+                <>
+                    <Separator orientation="vertical" className="h-5 mx-1" />
+                    <TrackChangesToolbar
+                        enabled={trackChangesEnabled}
+                        showChanges={trackChangesShowChanges}
+                        pendingChanges={trackChangesPendingChanges}
+                        onToggleEnabled={onToggleTrackChanges}
+                        onToggleShowChanges={onToggleShowChanges || (() => {})}
+                        onAcceptAll={onAcceptAllChanges || (() => {})}
+                        onRejectAll={onRejectAllChanges || (() => {})}
+                        onAcceptChange={onAcceptChange || (() => {})}
+                        onRejectChange={onRejectChange || (() => {})}
+                        onToggleSidebar={onToggleTrackChangesSidebar}
+                    />
+                </>
+            )}
 
             <Separator orientation="vertical" className="h-5 mx-1" />
 
