@@ -26,18 +26,28 @@ export function SendNotificationAdmin() {
 
     setLoading(true);
     try {
-      await calendarApi.post('/notifications/push/send', {
-        channel,
-        type,
+      const response = await calendarApi.post('/notifications/push/send', {
         title,
-        message,
+        body: message, // API expects "body"
+        notification_type: type,
+        channel,
         recipient: 'self', // Send to current user
+        send_to_all: true,
       });
-      toast.success('Test notification queued successfully');
+      const result = response.data;
+      if (result.successful > 0) {
+        toast.success(`Notification sent to ${result.successful} subscription(s)`);
+      } else if (result.failed > 0) {
+        toast.warning(`No notifications delivered. ${result.failed} failed.`);
+      } else {
+        toast.info('Notification queued');
+      }
       setTitle('');
       setMessage('');
-    } catch {
-      toast.error('Failed to send test notification or endpoint not implemented');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      const errorMsg = err?.response?.data?.error || 'Failed to send notification';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

@@ -291,6 +291,9 @@ struct TestResult {
     smtp_ok: bool,
     imap_error: Option<String>,
     smtp_error: Option<String>,
+    imap_folders: Option<Vec<String>>,
+    imap_server: Option<String>,
+    smtp_server: Option<String>,
 }
 
 async fn test_account(
@@ -313,13 +316,18 @@ async fn test_account(
 
     // Test SMTP
     let (smtp_ok, smtp_error) = test_smtp_connection(&account).await;
-    // Test IMAP would be similar
+
+    // Test IMAP
+    let (imap_ok, imap_error, imap_folders) = test_imap_connection(&account).await;
 
     Json(TestResult {
-        imap_ok: true, // TODO: implement IMAP test
+        imap_ok,
         smtp_ok,
-        imap_error: None,
+        imap_error,
         smtp_error,
+        imap_folders,
+        imap_server: account.imap_server.clone(),
+        smtp_server: account.smtp_server.clone(),
     })
     .into_response()
 }
@@ -346,6 +354,70 @@ async fn test_smtp_connection(account: &MailAccount) -> (bool, Option<String>) {
         },
         Err(e) => (false, Some(e.to_string())),
     }
+}
+
+async fn test_imap_connection(account: &MailAccount) -> (bool, Option<String>, Option<Vec<String>>) {
+    use futures_util::StreamExt;
+
+    let Some(ref imap_server) = account.imap_server else {
+        return (false, Some("IMAP server not configured".to_string()), None);
+    };
+    let Some(ref password) = account.app_password else {
+        return (false, Some("App password not set".to_string()), None);
+    };
+
+    let imap_port = account.imap_port.unwrap_or(993) as u16;
+
+    // Build TLS connector
+    let tls_result = native_tls::TlsConnector::builder()
+        .danger_accept_invalid_certs(true)
+        .danger_accept_invalid_hostnames(true)
+        .build();
+
+    let tls = match tls_result {
+        Ok(tls) => tokio_native_tls::TlsConnector::from(tls),
+        Err(e) => return (false, Some(format!("TLS error: {}", e)), None),
+    };
+
+    // Connect to IMAP server
+    let tcp_stream = match tokio::net::TcpStream::connect((imap_server.as_str(), imap_port)).await {
+        Ok(stream) => stream,
+        Err(e) => return (false, Some(format!("Connection failed: {}", e)), None),
+    };
+
+    let tls_stream = match tls.connect(imap_server.as_str(), tcp_stream).await {
+        Ok(stream) => stream,
+        Err(e) => return (false, Some(format!("TLS handshake failed: {}", e)), None),
+    };
+
+    let client = async_imap::Client::new(tls_stream);
+
+    // Try to login
+    let mut session = match client.login(&account.email_address, password).await {
+        Ok(session) => session,
+        Err((e, _)) => return (false, Some(format!("Login failed: {}", e)), None),
+    };
+
+    // List folders to verify connection works
+    let stream = match session.list(None, Some("*")).await {
+        Ok(s) => s,
+        Err(e) => {
+            // Connection will be dropped automatically
+            return (false, Some(format!("Failed to list folders: {}", e)), None);
+        }
+    };
+
+    let folder_names: Vec<String> = stream
+        .filter_map(|item| async move {
+            item.ok().map(|f| f.name().to_string())
+        })
+        .collect()
+        .await;
+
+    // Stream is consumed, now we can logout
+    let _ = session.logout().await;
+
+    (true, None, Some(folder_names))
 }
 
 // ============================================================================

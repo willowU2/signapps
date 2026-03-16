@@ -47,6 +47,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { authApi, groupsApi, LdapConfig, Group } from '@/lib/api';
 import { api } from '@/lib/api';
+import { tenantApi, tenantsApi, Tenant } from '@/lib/api/tenant';
 import { DataTable } from '@/components/ui/data-table';
 import { GroupSheet } from '@/components/settings/group-sheet';
 import { WebhookSheet } from '@/components/settings/webhook-sheet';
@@ -87,8 +88,10 @@ import { AppearanceSettings } from '@/components/settings/appearance-settings';
 
 export default function SettingsPage() {
   // General tab state
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [siteName, setSiteName] = useState('SignApps');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [generalSaving, setGeneralSaving] = useState(false);
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
@@ -130,6 +133,19 @@ export default function SettingsPage() {
     webhook: null,
   });
 
+  const fetchTenant = useCallback(async () => {
+    try {
+      const response = await tenantApi.get();
+      if (response.data) {
+        setTenant(response.data);
+        setSiteName(response.data.name);
+        setMaintenanceMode(!response.data.is_active);
+      }
+    } catch {
+      // Tenant might not exist yet
+    }
+  }, []);
+
   const fetchLdapConfig = useCallback(async () => {
     try {
       const response = await authApi.ldapGetConfig();
@@ -166,10 +182,11 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
+    fetchTenant();
     fetchLdapConfig();
     fetchGroups();
     fetchWebhooks();
-  }, [fetchLdapConfig, fetchGroups, fetchWebhooks]);
+  }, [fetchTenant, fetchLdapConfig, fetchGroups, fetchWebhooks]);
 
   const handleLdapSave = async () => {
     setLdapSaving(true);
@@ -196,6 +213,26 @@ export default function SettingsPage() {
       toast.error('Failed to test LDAP connection');
     } finally {
       setLdapTesting(false);
+    }
+  };
+
+  const handleGeneralSave = async () => {
+    if (!tenant) {
+      toast.error('Tenant not loaded');
+      return;
+    }
+    setGeneralSaving(true);
+    try {
+      const response = await tenantsApi.update(tenant.id, {
+        name: siteName,
+        is_active: !maintenanceMode,
+      });
+      setTenant(response.data);
+      toast.success('General settings saved successfully');
+    } catch {
+      toast.error('Failed to save general settings');
+    } finally {
+      setGeneralSaving(false);
     }
   };
 
@@ -530,7 +567,8 @@ export default function SettingsPage() {
                     onCheckedChange={setMaintenanceMode}
                   />
                 </div>
-                <Button onClick={() => toast.info('General settings API not yet implemented')}>
+                <Button onClick={handleGeneralSave} disabled={generalSaving}>
+                  {generalSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Save Changes
                 </Button>
               </CardContent>

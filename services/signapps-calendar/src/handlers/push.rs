@@ -22,10 +22,18 @@ use crate::{
 pub struct SendPushRequest {
     /// Notification title
     pub title: String,
-    /// Notification body/message
+    /// Notification body/message (accepts both "body" and "message" from frontend)
+    #[serde(alias = "message")]
     pub body: String,
     /// Notification type (event_reminder, task_due, etc.)
-    pub _notification_type: String,
+    #[serde(alias = "type", default)]
+    pub notification_type: Option<String>,
+    /// Channel (push, email, sms) - for frontend compatibility
+    #[serde(default)]
+    pub channel: Option<String>,
+    /// Recipient (self, user_id) - for frontend compatibility
+    #[serde(default)]
+    pub recipient: Option<String>,
     /// Optional icon URL
     pub icon: Option<String>,
     /// Optional badge URL
@@ -218,7 +226,9 @@ mod tests {
         let req = SendPushRequest {
             title: "Test".to_string(),
             body: "Test notification".to_string(),
-            _notification_type: "event_reminder".to_string(),
+            notification_type: Some("event_reminder".to_string()),
+            channel: Some("push".to_string()),
+            recipient: Some("self".to_string()),
             icon: Some("https://example.com/icon.png".to_string()),
             badge: None,
             tag: Some("test-tag".to_string()),
@@ -230,6 +240,24 @@ mod tests {
         let json = serde_json::to_string(&req).unwrap();
         assert!(json.contains("Test"));
         assert!(json.contains("event_reminder"));
+    }
+
+    #[test]
+    fn test_send_push_request_deserialization_with_aliases() {
+        // Test that frontend format with "message" and "type" works
+        let frontend_json = r#"{
+            "title": "Test Title",
+            "message": "Test message body",
+            "type": "event_reminder",
+            "channel": "push",
+            "recipient": "self"
+        }"#;
+
+        let req: SendPushRequest = serde_json::from_str(frontend_json).unwrap();
+        assert_eq!(req.title, "Test Title");
+        assert_eq!(req.body, "Test message body"); // "message" mapped to "body"
+        assert_eq!(req.notification_type, Some("event_reminder".to_string())); // "type" mapped
+        assert_eq!(req.channel, Some("push".to_string()));
     }
 
     #[test]

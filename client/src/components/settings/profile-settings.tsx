@@ -6,45 +6,59 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/store';
+import { usersApi } from '@/lib/api/identity';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 export function ProfileSettings() {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const [displayName, setDisplayName] = useState(user?.display_name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
 
   const handleSaveProfile = async () => {
-    setSaving(true);
+    if (!user) return;
+    setSavingProfile(true);
     try {
-      // Simulation of an API call to update profile
-      await new Promise(r => setTimeout(r, 600));
+      const response = await usersApi.update(user.id, {
+        display_name: displayName,
+        email: email,
+      });
+      // Update the user in auth store
+      setUser(response.data);
       toast.success('Profil mis à jour avec succès');
     } catch {
       toast.error('Erreur lors de la mise à jour du profil');
     } finally {
-      setSaving(false);
+      setSavingProfile(false);
     }
   };
 
   const handleUpdatePassword = async () => {
+    if (!user) return;
     if (!currentPassword || !newPassword) {
       toast.error('Veuillez remplir les champs de mot de passe');
       return;
     }
-    setSaving(true);
+    if (newPassword.length < 8) {
+      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+    setSavingPassword(true);
     try {
-      // Simulation of an API call to update password
-      await new Promise(r => setTimeout(r, 600));
+      await usersApi.update(user.id, {
+        password: newPassword,
+      });
       toast.success('Mot de passe mis à jour avec succès');
       setCurrentPassword('');
       setNewPassword('');
     } catch {
       toast.error('Erreur lors de la mise à jour du mot de passe');
     } finally {
-      setSaving(false);
+      setSavingPassword(false);
     }
   };
 
@@ -73,7 +87,8 @@ export function ProfileSettings() {
               placeholder="ex: jane@example.com" 
             />
           </div>
-          <Button onClick={handleSaveProfile} disabled={saving}>
+          <Button onClick={handleSaveProfile} disabled={savingProfile}>
+            {savingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Enregistrer les modifications
           </Button>
         </CardContent>
@@ -101,7 +116,8 @@ export function ProfileSettings() {
               onChange={(e) => setNewPassword(e.target.value)} 
             />
           </div>
-          <Button onClick={handleUpdatePassword} variant="secondary" disabled={saving}>
+          <Button onClick={handleUpdatePassword} variant="secondary" disabled={savingPassword}>
+            {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Mettre à jour le mot de passe
           </Button>
         </CardContent>
