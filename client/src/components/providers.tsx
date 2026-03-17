@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/components/auth/auth-provider';
+import { PermissionsProvider } from '@/lib/permissions';
 
 import { NotificationPermissionDialog } from '@/components/notifications/notification-permission-dialog';
 import { CommandBar } from '@/components/layout/command-bar';
@@ -48,13 +49,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <TooltipProvider>
           <Suspense fallback={<LoadingFallback />}>
             <AuthProvider>
-              {children}
+              <PermissionsProvider>
+                {children}
+                <CommandBar />
+                <Sidebar />
+                <RightSidebar />
+                <GlobalModals />
+              </PermissionsProvider>
             </AuthProvider>
           </Suspense>
-          <CommandBar />
-          <Sidebar />
-          <RightSidebar />
-          <GlobalModals />
           <Toaster />
           <NotificationPermissionDialog />
         </TooltipProvider>

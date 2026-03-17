@@ -66,6 +66,7 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { usePermissions, type Resource, type ResourceAction } from "@/lib/permissions";
 
 import type {
   EntityConfig,
@@ -77,12 +78,37 @@ import type {
 import { renderCell } from "./cells";
 
 // ============================================================================
+// Permission Helper
+// ============================================================================
+
+/**
+ * Parse une permission au format "resource:action" et vérifie si l'utilisateur l'a.
+ * @example parsePermission("users:read", can) → can("users", "read")
+ */
+function checkPermission(
+  requiredPermission: string | undefined,
+  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean
+): boolean {
+  if (!requiredPermission) return true; // Pas de permission requise = visible
+
+  const parts = requiredPermission.split(":");
+  if (parts.length !== 2) {
+    console.warn(`Invalid permission format: ${requiredPermission}. Expected "resource:action"`);
+    return true;
+  }
+
+  const [resource, action] = parts as [Resource, ResourceAction];
+  return can(resource, action);
+}
+
+// ============================================================================
 // Column Definition Builder
 // ============================================================================
 
 function buildColumnDefs<TData>(
   config: EntityConfig<TData>,
-  actions?: ActionConfig<TData>[]
+  actions: ActionConfig<TData>[] | undefined,
+  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean
 ): ColumnDef<TData>[] {
   const columns: ColumnDef<TData>[] = [];
 
@@ -115,8 +141,12 @@ function buildColumnDefs<TData>(
     });
   }
 
-  // Data columns
-  for (const colConfig of config.columns) {
+  // Data columns - filter by permission
+  const visibleColumns = config.columns.filter((col) =>
+    checkPermission(col.requiredPermission, can)
+  );
+
+  for (const colConfig of visibleColumns) {
     const col: ColumnDef<TData> = {
       id: colConfig.id,
       accessorKey: colConfig.accessorKey,
@@ -154,13 +184,17 @@ function buildColumnDefs<TData>(
     columns.push(col);
   }
 
-  // Actions column
+  // Actions column - filter actions by permission
   const rowActions = actions ?? config.actions;
-  if (rowActions && rowActions.length > 0) {
+  const permittedActions = rowActions?.filter((action) =>
+    checkPermission(action.requiredPermission, can)
+  );
+
+  if (permittedActions && permittedActions.length > 0) {
     columns.push({
       id: "actions",
       header: () => <span className="sr-only">Actions</span>,
-      cell: ({ row }) => <ActionsCell row={row} actions={rowActions} />,
+      cell: ({ row }) => <ActionsCell row={row} actions={permittedActions} />,
       enableSorting: false,
       enableHiding: false,
       size: 60,
@@ -376,6 +410,9 @@ export function GenericDataTable<TData>({
   toolbarActions,
   className,
 }: GenericDataTableProps<TData>) {
+  // Permissions hook
+  const { can } = usePermissions();
+
   // State
   const [internalViewMode, setInternalViewMode] = React.useState<ViewMode>(
     config.defaultViewMode ?? "table"
@@ -415,10 +452,10 @@ export function GenericDataTable<TData>({
     }
   };
 
-  // Build columns
+  // Build columns with permission filtering
   const columns = React.useMemo(
-    () => buildColumnDefs(config, actions),
-    [config, actions]
+    () => buildColumnDefs(config, actions, can),
+    [config, actions, can]
   );
 
   // Table instance

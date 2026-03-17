@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useUIStore } from '@/lib/store';
 import { useEntityStore } from '@/stores/entity-hub-store';
 import { FEATURES } from '@/lib/features';
+import { usePermissions } from '@/lib/permissions';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -54,13 +55,15 @@ import {
 } from '@/components/ui/tooltip';
 
 /**
- * Navigation groups avec feature flags
+ * Navigation groups avec feature flags et permissions
  * Les items avec enabled: false sont cachés (règle NO DEAD ENDS)
+ * Les groupes avec adminOnly: true ne sont visibles que pour les admins
  */
 const navGroupsConfig = [
   {
     label: 'Productivity',
     icon: FileText,
+    adminOnly: false,
     items: [
       { href: '/docs', icon: FileText, label: 'Docs', enabled: FEATURES.DOCS },
       { href: '/sheets', icon: Table, label: 'Sheets', enabled: FEATURES.DOCS },
@@ -74,6 +77,7 @@ const navGroupsConfig = [
   {
     label: 'Communication',
     icon: MessagesSquare,
+    adminOnly: false,
     items: [
       { href: '/chat', icon: MessagesSquare, label: 'Chat', enabled: FEATURES.COLLAB },
       { href: '/meet', icon: Video, label: 'Meet', enabled: FEATURES.MEET },
@@ -82,6 +86,7 @@ const navGroupsConfig = [
   {
     label: 'Infrastructure',
     icon: HardDrive,
+    adminOnly: true, // Admin only - containers et routes sont des fonctions admin
     items: [
       { href: '/containers', icon: Container, label: 'Containers', enabled: FEATURES.CONTAINERS },
       { href: '/drive', icon: HardDrive, label: 'Global Drive', enabled: FEATURES.STORAGE },
@@ -93,6 +98,7 @@ const navGroupsConfig = [
   {
     label: 'IT Management',
     icon: Server,
+    adminOnly: true, // Admin only
     items: [
       { href: '/apps', icon: Store, label: 'App Store', enabled: FEATURES.CONTAINERS },
       // Services skeleton - CACHÉS (NO DEAD ENDS)
@@ -104,6 +110,7 @@ const navGroupsConfig = [
   {
     label: 'Operations',
     icon: Activity,
+    adminOnly: true, // Admin only - scheduler et monitoring
     items: [
       { href: '/ai', icon: MessageSquare, label: 'AI', enabled: FEATURES.AI },
       { href: '/scheduler', icon: Clock, label: 'Scheduler', enabled: FEATURES.SCHEDULER },
@@ -113,6 +120,7 @@ const navGroupsConfig = [
   {
     label: 'Administration',
     icon: ShieldCheck,
+    adminOnly: true, // Admin only - section administration
     items: [
       { href: '/admin', icon: ShieldCheck, label: 'Admin', enabled: FEATURES.IDENTITY },
       { href: '/admin/users', icon: Users, label: 'Users', enabled: FEATURES.IDENTITY },
@@ -124,13 +132,18 @@ const navGroupsConfig = [
   }
 ];
 
-// Filtrer les items désactivés et les groupes vides
-const navGroups = navGroupsConfig
-  .map(group => ({
-    ...group,
-    items: group.items.filter(item => item.enabled)
-  }))
-  .filter(group => group.items.length > 0);
+/**
+ * Filtre les groupes de navigation selon les features et les permissions
+ */
+function filterNavGroups(isUserAdmin: boolean) {
+  return navGroupsConfig
+    .filter(group => !group.adminOnly || isUserAdmin) // Filter by admin permission
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => item.enabled)
+    }))
+    .filter(group => group.items.length > 0);
+}
 
 const isItemActive = (href: string, pathname: string) => {
   if (href === '/admin' && pathname !== '/admin') return false;
@@ -141,6 +154,10 @@ export function Sidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, setSidebarCollapsed } = useUIStore();
   const { workspaces, selectedWorkspaceId, setSelectedWorkspace, fetchWorkspaces, projects } = useEntityStore();
+  const { isAdmin } = usePermissions();
+
+  // Filtrer les groupes de navigation selon les permissions utilisateur
+  const navGroups = useMemo(() => filterNavGroups(isAdmin()), [isAdmin]);
 
   const findActiveGroupIndex = () => {
     const index = navGroups.findIndex(g => g.items.some(item => isItemActive(item.href, pathname)));
