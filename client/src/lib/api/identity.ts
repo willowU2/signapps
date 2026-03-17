@@ -117,20 +117,67 @@ export const usersApi = {
     update: (id: string, data: Partial<CreateUserRequest>) =>
         identityClient.put<User>(`/users/${id}`, data),
     delete: (id: string) => identityClient.delete(`/users/${id}`),
-    
-    // Rôles
-    getRoles: () => identityClient.get('/roles'),
-    createRole: (data: any) => identityClient.post('/roles', data),
-    updateRole: (id: string, data: any) => identityClient.put(`/roles/${id}`, data),
-    deleteRole: (id: string) => identityClient.delete(`/roles/${id}`),
-    
-    // Webhooks
-    getWebhooks: () => identityClient.get('/webhooks'),
-    createWebhook: (data: any) => identityClient.post('/webhooks', data),
-    getWebhook: (id: string) => identityClient.get(`/webhooks/${id}`),
-    updateWebhook: (id: string, data: any) => identityClient.put(`/webhooks/${id}`, data),
-    deleteWebhook: (id: string) => identityClient.delete(`/webhooks/${id}`),
-    testWebhook: (id: string) => identityClient.post(`/webhooks/${id}/test`),
+};
+
+// Roles API (RBAC)
+export const rolesApi = {
+    list: () => identityClient.get<Role[]>('/roles'),
+    get: (id: string) => identityClient.get<Role>(`/roles/${id}`),
+    create: (data: CreateRoleRequest) => identityClient.post<Role>('/roles', data),
+    update: (id: string, data: CreateRoleRequest) => identityClient.put<Role>(`/roles/${id}`, data),
+    delete: (id: string) => identityClient.delete(`/roles/${id}`),
+};
+
+export interface Role {
+    id: string;
+    name: string;
+    description?: string;
+    permissions: RolePermissions;
+    is_system: boolean;
+    created_at?: string;
+}
+
+export interface RolePermissions {
+    [resource: string]: string[];  // e.g., { "containers": ["read", "write"], "storage": ["read"] }
+}
+
+export interface CreateRoleRequest {
+    name: string;
+    description?: string;
+    permissions: RolePermissions;
+}
+
+// Webhooks API
+export const webhooksApi = {
+    list: () => identityClient.get<Webhook[]>('/webhooks'),
+    get: (id: string) => identityClient.get<Webhook>(`/webhooks/${id}`),
+    create: (data: CreateWebhookRequest) => identityClient.post<Webhook>('/webhooks', data),
+    update: (id: string, data: Partial<CreateWebhookRequest>) =>
+        identityClient.put<Webhook>(`/webhooks/${id}`, data),
+    delete: (id: string) => identityClient.delete(`/webhooks/${id}`),
+    test: (id: string) => identityClient.post<{ success: boolean; status_code?: number }>(`/webhooks/${id}/test`),
+};
+
+export interface Webhook {
+    id: string;
+    name: string;
+    url: string;
+    events: string[];
+    headers: Record<string, string>;
+    enabled: boolean;
+    last_triggered?: string;
+    last_status?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateWebhookRequest {
+    name: string;
+    url: string;
+    secret?: string;
+    events: string[];
+    headers?: Record<string, string>;
+    enabled?: boolean;
 };
 
 export interface UserListResponse {
