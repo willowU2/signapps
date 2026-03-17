@@ -2,6 +2,14 @@
 /target/
 **/*.rs.bk
 
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+livekit-server/*.exe
+livekit-server/*.zip
+
 # IDE
 .idea/
 .vscode/
