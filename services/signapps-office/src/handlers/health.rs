@@ -1,5 +1,7 @@
 //! Health check handler.
 
+#![allow(dead_code)]
+
 use axum::Json;
 use serde::Serialize;
 

@@ -58,7 +58,7 @@ pub fn check_conflicts(
 }
 
 /// Check for all resources conflicts
-#[allow(dead_code)]
+#[allow(dead_code, clippy::type_complexity)]
 pub fn check_all_conflicts(
     resources: &[(Uuid, String)],
     start_time: DateTime<Utc>,

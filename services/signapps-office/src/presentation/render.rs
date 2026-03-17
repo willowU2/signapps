@@ -3,7 +3,7 @@
 //! Converts slide content to SVG format for vector output,
 //! and can rasterize to PNG using resvg.
 
-use super::{Presentation, PresentationError, Slide, SlideContent, SlideLayout};
+use super::{Presentation, PresentationError, Slide, SlideContent};
 
 /// Slide dimensions (16:9 aspect ratio in pixels)
 const SLIDE_WIDTH: f64 = 1920.0;

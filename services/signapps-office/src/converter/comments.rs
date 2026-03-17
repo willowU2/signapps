@@ -1,5 +1,7 @@
 //! Comment handling for document conversion.
 
+#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
 
 /// A comment in a document

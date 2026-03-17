@@ -51,12 +51,12 @@ impl std::str::FromStr for ShareAccessType {
     }
 }
 
-impl ToString for ShareAccessType {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for ShareAccessType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ShareAccessType::View => "view".to_string(),
-            ShareAccessType::Download => "download".to_string(),
-            ShareAccessType::Edit => "edit".to_string(),
+            ShareAccessType::View => write!(f, "view"),
+            ShareAccessType::Download => write!(f, "download"),
+            ShareAccessType::Edit => write!(f, "edit"),
         }
     }
 }

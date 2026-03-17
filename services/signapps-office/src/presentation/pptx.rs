@@ -18,49 +18,49 @@ pub fn generate_pptx(presentation: &Presentation) -> Result<Vec<u8>, Presentatio
     zip.start_file("[Content_Types].xml", options)
         .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
     zip.write_all(generate_content_types(presentation).as_bytes())
-        .map_err(|e| PresentationError::IoError(e))?;
+        .map_err(PresentationError::IoError)?;
 
     // 2. _rels/.rels
     zip.start_file("_rels/.rels", options)
         .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
     zip.write_all(RELS_RELS.as_bytes())
-        .map_err(|e| PresentationError::IoError(e))?;
+        .map_err(PresentationError::IoError)?;
 
     // 3. docProps/app.xml
     zip.start_file("docProps/app.xml", options)
         .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
     zip.write_all(generate_app_xml(presentation).as_bytes())
-        .map_err(|e| PresentationError::IoError(e))?;
+        .map_err(PresentationError::IoError)?;
 
     // 4. docProps/core.xml
     zip.start_file("docProps/core.xml", options)
         .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
     zip.write_all(generate_core_xml(presentation).as_bytes())
-        .map_err(|e| PresentationError::IoError(e))?;
+        .map_err(PresentationError::IoError)?;
 
     // 5. ppt/presentation.xml
     zip.start_file("ppt/presentation.xml", options)
         .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
     zip.write_all(generate_presentation_xml(presentation).as_bytes())
-        .map_err(|e| PresentationError::IoError(e))?;
+        .map_err(PresentationError::IoError)?;
 
     // 6. ppt/_rels/presentation.xml.rels
     zip.start_file("ppt/_rels/presentation.xml.rels", options)
         .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
     zip.write_all(generate_presentation_rels(presentation.slides.len()).as_bytes())
-        .map_err(|e| PresentationError::IoError(e))?;
+        .map_err(PresentationError::IoError)?;
 
     // 7. ppt/slideMasters/slideMaster1.xml
     zip.start_file("ppt/slideMasters/slideMaster1.xml", options)
         .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
     zip.write_all(SLIDE_MASTER.as_bytes())
-        .map_err(|e| PresentationError::IoError(e))?;
+        .map_err(PresentationError::IoError)?;
 
     // 8. ppt/slideMasters/_rels/slideMaster1.xml.rels
     zip.start_file("ppt/slideMasters/_rels/slideMaster1.xml.rels", options)
         .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
     zip.write_all(SLIDE_MASTER_RELS.as_bytes())
-        .map_err(|e| PresentationError::IoError(e))?;
+        .map_err(PresentationError::IoError)?;
 
     // 9. Generate all 6 slide layouts
     let all_layouts = [
@@ -78,21 +78,21 @@ pub fn generate_pptx(presentation: &Presentation) -> Result<Vec<u8>, Presentatio
         zip.start_file(&layout_path, options)
             .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
         zip.write_all(generate_layout_xml(layout).as_bytes())
-            .map_err(|e| PresentationError::IoError(e))?;
+            .map_err(PresentationError::IoError)?;
 
         // Layout rels
         let rels_path = format!("ppt/slideLayouts/_rels/slideLayout{}.xml.rels", layout_num);
         zip.start_file(&rels_path, options)
             .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
         zip.write_all(SLIDE_LAYOUT_RELS.as_bytes())
-            .map_err(|e| PresentationError::IoError(e))?;
+            .map_err(PresentationError::IoError)?;
     }
 
     // 11. ppt/theme/theme1.xml
     zip.start_file("ppt/theme/theme1.xml", options)
         .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
     zip.write_all(THEME_XML.as_bytes())
-        .map_err(|e| PresentationError::IoError(e))?;
+        .map_err(PresentationError::IoError)?;
 
     // 12. Generate each slide
     for (i, slide) in presentation.slides.iter().enumerate() {
@@ -103,14 +103,14 @@ pub fn generate_pptx(presentation: &Presentation) -> Result<Vec<u8>, Presentatio
         zip.start_file(&slide_path, options)
             .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
         zip.write_all(generate_slide_xml(slide, slide_num).as_bytes())
-            .map_err(|e| PresentationError::IoError(e))?;
+            .map_err(PresentationError::IoError)?;
 
         // Slide rels (with notes reference if present)
         let rels_path = format!("ppt/slides/_rels/slide{}.xml.rels", slide_num);
         zip.start_file(&rels_path, options)
             .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
         zip.write_all(generate_slide_rels(slide, slide_num).as_bytes())
-            .map_err(|e| PresentationError::IoError(e))?;
+            .map_err(PresentationError::IoError)?;
 
         // Notes if present
         if slide.notes.is_some() {
@@ -118,14 +118,14 @@ pub fn generate_pptx(presentation: &Presentation) -> Result<Vec<u8>, Presentatio
             zip.start_file(&notes_path, options)
                 .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
             zip.write_all(generate_notes_xml(slide, slide_num).as_bytes())
-                .map_err(|e| PresentationError::IoError(e))?;
+                .map_err(PresentationError::IoError)?;
 
             // Notes rels
             let notes_rels_path = format!("ppt/notesSlides/_rels/notesSlide{}.xml.rels", slide_num);
             zip.start_file(&notes_rels_path, options)
                 .map_err(|e| PresentationError::ConversionFailed(e.to_string()))?;
             zip.write_all(generate_notes_rels(slide_num).as_bytes())
-                .map_err(|e| PresentationError::IoError(e))?;
+                .map_err(PresentationError::IoError)?;
         }
     }
 

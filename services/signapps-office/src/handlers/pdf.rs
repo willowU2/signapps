@@ -8,10 +8,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::pdf::{
-    extract_text, get_page_dimensions, get_pdf_info, merge_pdfs, split_pdf, PageInfo, PdfError,
-    PdfInfo,
-};
+use crate::pdf::{extract_text, get_page_dimensions, get_pdf_info, merge_pdfs, split_pdf, PdfError};
 
 /// PDF info response
 #[derive(Debug, Serialize)]
@@ -175,6 +172,7 @@ pub async fn get_pdf_pages(mut multipart: Multipart) -> Response {
 
 /// Merge request for JSON-based merge
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct MergeRequest {
     /// Base64-encoded PDF files
     pub files: Vec<String>,
@@ -238,6 +236,7 @@ pub async fn merge_pdf_files(mut multipart: Multipart) -> Response {
 
 /// Split request
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 pub struct SplitRequest {
     /// Page ranges to extract (1-based)
     pub ranges: Vec<(u32, u32)>,

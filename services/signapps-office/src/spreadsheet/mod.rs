@@ -1,5 +1,7 @@
 //! Spreadsheet conversion module for XLSX/CSV/ODS import/export.
 
+#![allow(dead_code)]
+
 mod csv;
 mod export;
 mod import;
@@ -29,8 +31,9 @@ pub enum SpreadsheetError {
 }
 
 /// Cell value type
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum CellValue {
+    #[default]
     Empty,
     String(String),
     Number(f64),
@@ -38,12 +41,6 @@ pub enum CellValue {
     Formula(String),
     Date(String), // ISO 8601 date string
     Error(String),
-}
-
-impl Default for CellValue {
-    fn default() -> Self {
-        CellValue::Empty
-    }
 }
 
 /// Cell style information

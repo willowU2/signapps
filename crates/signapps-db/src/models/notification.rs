@@ -125,7 +125,7 @@ impl NotificationType {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s {
             "event_reminder" => Some(NotificationType::EventReminder),
             "event_invitation" => Some(NotificationType::EventInvitation),
@@ -159,7 +159,7 @@ impl NotificationChannel {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s {
             "email" => Some(NotificationChannel::Email),
             "sms" => Some(NotificationChannel::Sms),
@@ -201,7 +201,7 @@ impl NotificationStatus {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s {
             "pending" => Some(NotificationStatus::Pending),
             "sent" => Some(NotificationStatus::Sent),
@@ -244,15 +244,15 @@ pub struct NotificationSent {
 
 impl NotificationSent {
     pub fn notification_type(&self) -> Option<NotificationType> {
-        NotificationType::from_str(&self.notification_type)
+        NotificationType::parse(&self.notification_type)
     }
 
     pub fn channel(&self) -> Option<NotificationChannel> {
-        NotificationChannel::from_str(&self.channel)
+        NotificationChannel::parse(&self.channel)
     }
 
     pub fn status(&self) -> Option<NotificationStatus> {
-        NotificationStatus::from_str(&self.status)
+        NotificationStatus::parse(&self.status)
     }
 }
 
@@ -301,11 +301,11 @@ pub struct NotificationTemplate {
 
 impl NotificationTemplate {
     pub fn notification_type(&self) -> Option<NotificationType> {
-        NotificationType::from_str(&self.notification_type)
+        NotificationType::parse(&self.notification_type)
     }
 
     pub fn channel(&self) -> Option<NotificationChannel> {
-        NotificationChannel::from_str(&self.channel)
+        NotificationChannel::parse(&self.channel)
     }
 }
 
@@ -341,7 +341,7 @@ pub struct NotificationDigest {
 
 impl NotificationDigest {
     pub fn status(&self) -> Option<NotificationStatus> {
-        NotificationStatus::from_str(&self.status)
+        NotificationStatus::parse(&self.status)
     }
 }
 
@@ -353,7 +353,7 @@ mod tests {
     fn test_notification_type_conversion() {
         assert_eq!(NotificationType::EventReminder.as_str(), "event_reminder");
         assert_eq!(
-            NotificationType::from_str("event_reminder"),
+            NotificationType::parse("event_reminder"),
             Some(NotificationType::EventReminder)
         );
     }
@@ -362,7 +362,7 @@ mod tests {
     fn test_notification_channel_conversion() {
         assert_eq!(NotificationChannel::Email.as_str(), "email");
         assert_eq!(
-            NotificationChannel::from_str("email"),
+            NotificationChannel::parse("email"),
             Some(NotificationChannel::Email)
         );
     }
@@ -371,7 +371,7 @@ mod tests {
     fn test_notification_status_conversion() {
         assert_eq!(NotificationStatus::Pending.as_str(), "pending");
         assert_eq!(
-            NotificationStatus::from_str("pending"),
+            NotificationStatus::parse("pending"),
             Some(NotificationStatus::Pending)
         );
     }

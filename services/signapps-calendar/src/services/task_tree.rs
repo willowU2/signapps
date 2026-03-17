@@ -73,6 +73,7 @@ pub fn validate_parent_change(
 /// Get maximum depth of task hierarchy
 ///
 /// Returns depth count starting from 1 for root tasks
+#[allow(clippy::while_let_loop)]
 pub fn get_tree_depth(
     task_id: Option<Uuid>,
     existing_parents: &std::collections::HashMap<Uuid, Option<Uuid>>,

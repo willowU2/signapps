@@ -11,7 +11,7 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
-use signapps_common::bootstrap::{env_or, init_tracing, load_env};
+use signapps_common::bootstrap::{init_tracing, load_env};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};

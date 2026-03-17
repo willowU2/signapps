@@ -160,12 +160,12 @@ async fn generate_image_thumbnail(
 
     let bytes = buffer.into_inner();
 
-    Ok(Response::builder()
+    Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, content_type)
         .header(header::CACHE_CONTROL, "public, max-age=86400") // Cache 24h
         .body(Body::from(bytes))
-        .map_err(|e| Error::Internal(e.to_string()))?)
+        .map_err(|e| Error::Internal(e.to_string()))
 }
 
 /// Generate preview for an image file (resized for display).
@@ -207,12 +207,12 @@ async fn generate_image_preview(
 
     let bytes = buffer.into_inner();
 
-    Ok(Response::builder()
+    Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "image/webp")
         .header(header::CACHE_CONTROL, "public, max-age=3600") // Cache 1h
         .body(Body::from(bytes))
-        .map_err(|e| Error::Internal(e.to_string()))?)
+        .map_err(|e| Error::Internal(e.to_string()))
 }
 
 /// Calculate thumbnail dimensions preserving aspect ratio.
@@ -586,6 +586,7 @@ async fn get_pdf_metadata(
 }
 
 /// Extract metadata from PDF Info dictionary.
+#[allow(clippy::type_complexity)]
 fn extract_pdf_info_dict(doc: &PdfDocument) -> (Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>) {
     let trailer = &doc.trailer;
 

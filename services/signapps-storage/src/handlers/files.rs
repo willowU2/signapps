@@ -92,7 +92,6 @@ async fn trigger_ai_indexing(
     .unwrap_or_default();
 
     let mut should_index = global_index_all;
-    let mut matched_collection: Option<String> = None;
 
     // 3. Evaluate rules
     for r in rules {
@@ -118,15 +117,15 @@ async fn trigger_ai_indexing(
 
             if !allowed_exts.is_empty() && !allowed_exts.contains(&ext) {
                 should_index = false; // Excluded by rule
-                matched_collection = None;
+                // Note: matched_collection will be overwritten later for GED documents
             } else {
                 should_index = true; // explicitly included
-                matched_collection = r.collection_name.clone();
+                // Note: matched_collection will be overwritten later for GED documents
             }
         } else {
             // Matched a rule with no specific extension limit
             should_index = true;
-            matched_collection = r.collection_name.clone();
+            // Note: matched_collection will be overwritten later for GED documents
         }
 
         // Stop matching after first valid folder rule is applied
@@ -138,7 +137,7 @@ async fn trigger_ai_indexing(
     }
 
     // OVERRIDE: Enforce the private user collection for all GED documents
-    matched_collection = Some(format!("user_{}", user_id));
+    let matched_collection = Some(format!("user_{}", user_id));
 
     // Send HTTP request to AI service in the background
     let target_bucket = bucket.to_string();

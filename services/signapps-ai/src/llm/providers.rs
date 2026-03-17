@@ -937,6 +937,7 @@ struct GeminiModelsResponse {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct GeminiModelInfo {
     name: String,
     #[serde(default)]
@@ -1157,10 +1158,10 @@ impl LlmProvider for GeminiProvider {
                                 if let Ok(chunk) = serde_json::from_str::<GeminiResponse>(data) {
                                     if let Some(candidate) = chunk.candidates.first() {
                                         for part in &candidate.content.parts {
-                                            if !part.text.is_empty() {
-                                                if tx.send(Ok(part.text.clone())).await.is_err() {
-                                                    return;
-                                                }
+                                            if !part.text.is_empty()
+                                                && tx.send(Ok(part.text.clone())).await.is_err()
+                                            {
+                                                return;
                                             }
                                         }
                                     }

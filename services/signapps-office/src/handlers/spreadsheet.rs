@@ -1,5 +1,7 @@
 //! Spreadsheet import/export HTTP handlers.
 
+#![allow(dead_code)]
+
 use axum::{
     extract::{Multipart, Query},
     http::StatusCode,

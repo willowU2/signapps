@@ -64,7 +64,7 @@ impl VectorService {
     /// Search for similar documents.
     pub async fn search(
         &self,
-        query_vector: &Vec<f32>, // Borrow it instead to match pipeline
+        query_vector: &[f32], // Slice instead of Vec reference
         limit: i64,
         score_threshold: Option<f32>,
         collections: Option<&[String]>,

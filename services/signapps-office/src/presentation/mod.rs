@@ -1,12 +1,13 @@
 //! Presentation (PPTX) export module.
 
+#![allow(dead_code)]
+
 mod export;
 mod pptx;
 mod render;
 
 pub use export::*;
-pub use pptx::generate_pptx;
-pub use render::{slide_to_png, slide_to_svg, presentation_to_pngs, presentation_to_svgs};
+pub use render::{presentation_to_pngs, presentation_to_svgs, slide_to_png, slide_to_svg};
 
 use thiserror::Error;
 

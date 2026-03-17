@@ -11,5 +11,3 @@ pub mod users;
 pub mod workspaces;
 
 pub use jobs::*;
-
-pub use jobs::*;

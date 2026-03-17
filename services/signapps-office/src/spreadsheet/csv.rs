@@ -8,7 +8,7 @@ use super::{Cell, CellStyle, CellValue, Sheet, Spreadsheet, SpreadsheetError};
 pub fn csv_to_spreadsheet(
     data: &[u8],
     delimiter: Option<char>,
-    has_headers: bool,
+    _has_headers: bool,
 ) -> Result<Spreadsheet, SpreadsheetError> {
     let content = String::from_utf8(data.to_vec())
         .map_err(|e| SpreadsheetError::InvalidInput(format!("Invalid UTF-8: {}", e)))?;
@@ -20,7 +20,7 @@ pub fn csv_to_spreadsheet(
     let reader = BufReader::new(Cursor::new(content));
 
     for line_result in reader.lines() {
-        let line = line_result.map_err(|e| SpreadsheetError::IoError(e))?;
+        let line = line_result.map_err(SpreadsheetError::IoError)?;
 
         if line.trim().is_empty() {
             continue;
@@ -71,7 +71,7 @@ pub fn spreadsheet_to_csv(
             .collect();
 
         writeln!(output, "{}", cells.join(&delimiter.to_string()))
-            .map_err(|e| SpreadsheetError::IoError(e))?;
+            .map_err(SpreadsheetError::IoError)?;
     }
 
     Ok(output)

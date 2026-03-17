@@ -28,6 +28,7 @@ pub struct ImportResult {
 
 /// Export calendar to iCalendar format (RFC 5545)
 #[tracing::instrument(skip_all)]
+#[allow(clippy::type_complexity)]
 pub async fn export_calendar(
     State(state): State<AppState>,
     Path(calendar_id): Path<Uuid>,

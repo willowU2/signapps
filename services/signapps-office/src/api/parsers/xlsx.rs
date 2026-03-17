@@ -1,5 +1,6 @@
 use rust_xlsxwriter::Workbook;
 
+#[allow(dead_code)]
 pub fn generate_xlsx() -> Result<Vec<u8>, rust_xlsxwriter::XlsxError> {
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();

@@ -1,5 +1,7 @@
 //! PDF operations: merge, split, text extraction, thumbnails.
 
+#![allow(dead_code)]
+
 use super::PdfError;
 use crate::presentation::{Presentation, SlideContent};
 use ::lopdf::{Document, Object, ObjectId, Dictionary};
@@ -218,7 +220,7 @@ pub fn split_pdf(pdf_data: &[u8], ranges: &[(u32, u32)]) -> Result<Vec<Vec<u8>>,
 
         for page_num in all_pages.iter().rev() {
             if !pages_to_keep.contains(page_num) {
-                let _ = new_doc.delete_pages(&[*page_num]);
+                new_doc.delete_pages(&[*page_num]);
             }
         }
 
@@ -272,16 +274,14 @@ pub fn get_pdf_info(pdf_data: &[u8]) -> Result<PdfInfo, PdfError> {
     let mut producer = None;
 
     // Try to get the Info dictionary
-    if let Ok(trailer) = doc.trailer.get(b"Info") {
-        if let Object::Reference(info_ref) = trailer {
-            if let Ok(Object::Dictionary(info_dict)) = doc.get_object(*info_ref) {
-                title = extract_string_from_dict(info_dict, b"Title");
-                author = extract_string_from_dict(info_dict, b"Author");
-                subject = extract_string_from_dict(info_dict, b"Subject");
-                keywords = extract_string_from_dict(info_dict, b"Keywords");
-                creator = extract_string_from_dict(info_dict, b"Creator");
-                producer = extract_string_from_dict(info_dict, b"Producer");
-            }
+    if let Ok(Object::Reference(info_ref)) = doc.trailer.get(b"Info") {
+        if let Ok(Object::Dictionary(info_dict)) = doc.get_object(*info_ref) {
+            title = extract_string_from_dict(info_dict, b"Title");
+            author = extract_string_from_dict(info_dict, b"Author");
+            subject = extract_string_from_dict(info_dict, b"Subject");
+            keywords = extract_string_from_dict(info_dict, b"Keywords");
+            creator = extract_string_from_dict(info_dict, b"Creator");
+            producer = extract_string_from_dict(info_dict, b"Producer");
         }
     }
 

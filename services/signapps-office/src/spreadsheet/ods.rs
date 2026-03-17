@@ -18,31 +18,31 @@ pub fn spreadsheet_to_ods(spreadsheet: &Spreadsheet) -> Result<Vec<u8>, Spreadsh
     zip.start_file("mimetype", SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored))
         .map_err(|e| SpreadsheetError::ConversionFailed(e.to_string()))?;
     zip.write_all(b"application/vnd.oasis.opendocument.spreadsheet")
-        .map_err(|e| SpreadsheetError::IoError(e))?;
+        .map_err(SpreadsheetError::IoError)?;
 
     // 2. META-INF/manifest.xml
     zip.start_file("META-INF/manifest.xml", options)
         .map_err(|e| SpreadsheetError::ConversionFailed(e.to_string()))?;
     zip.write_all(generate_manifest().as_bytes())
-        .map_err(|e| SpreadsheetError::IoError(e))?;
+        .map_err(SpreadsheetError::IoError)?;
 
     // 3. meta.xml
     zip.start_file("meta.xml", options)
         .map_err(|e| SpreadsheetError::ConversionFailed(e.to_string()))?;
     zip.write_all(generate_meta().as_bytes())
-        .map_err(|e| SpreadsheetError::IoError(e))?;
+        .map_err(SpreadsheetError::IoError)?;
 
     // 4. styles.xml
     zip.start_file("styles.xml", options)
         .map_err(|e| SpreadsheetError::ConversionFailed(e.to_string()))?;
     zip.write_all(generate_styles().as_bytes())
-        .map_err(|e| SpreadsheetError::IoError(e))?;
+        .map_err(SpreadsheetError::IoError)?;
 
     // 5. content.xml (main data)
     zip.start_file("content.xml", options)
         .map_err(|e| SpreadsheetError::ConversionFailed(e.to_string()))?;
     zip.write_all(generate_content(spreadsheet).as_bytes())
-        .map_err(|e| SpreadsheetError::IoError(e))?;
+        .map_err(SpreadsheetError::IoError)?;
 
     let cursor = zip
         .finish()

@@ -126,68 +126,66 @@ pub async fn sync_account(
             .await?;
         let mut fm_stream = full_msg_stream;
 
-        if let Some(fm) = fm_stream.next().await {
-            if let Ok(m) = fm {
-                if let Some(body) = m.body() {
-                    if let Ok(parsed) = parse_mail(body) {
-                        let subject = get_header(&parsed, "Subject");
-                        let from = get_header(&parsed, "From");
-                        let to = get_header(&parsed, "To");
-                        let cc = get_header(&parsed, "Cc");
-                        let message_id = get_header(&parsed, "Message-ID");
-                        let in_reply_to = get_header(&parsed, "In-Reply-To");
-                        let date_str = get_header(&parsed, "Date");
+        if let Some(Ok(m)) = fm_stream.next().await {
+            if let Some(body) = m.body() {
+                if let Ok(parsed) = parse_mail(body) {
+                    let subject = get_header(&parsed, "Subject");
+                    let from = get_header(&parsed, "From");
+                    let to = get_header(&parsed, "To");
+                    let cc = get_header(&parsed, "Cc");
+                    let message_id = get_header(&parsed, "Message-ID");
+                    let in_reply_to = get_header(&parsed, "In-Reply-To");
+                    let date_str = get_header(&parsed, "Date");
 
-                        // Parse sender name from "Name <email>" format
-                        let (sender_name, sender_email) = parse_address(&from);
+                    // Parse sender name from "Name <email>" format
+                    let (sender_name, sender_email) = parse_address(&from);
 
-                        // Get body content
-                        let (body_text, body_html) = extract_body(&parsed);
+                    // Get body content
+                    let (body_text, body_html) = extract_body(&parsed);
 
-                        // Create snippet
-                        let snippet = body_text
-                            .as_ref()
-                            .map(|t| t.chars().take(200).collect::<String>());
+                    // Create snippet
+                    let snippet = body_text
+                        .as_ref()
+                        .map(|t| t.chars().take(200).collect::<String>());
 
-                        // Check if read (from FLAGS)
-                        let is_read = m
-                            .flags()
-                            .any(|f| matches!(f, async_imap::types::Flag::Seen));
+                    // Check if read (from FLAGS)
+                    let is_read = m
+                        .flags()
+                        .any(|f| matches!(f, async_imap::types::Flag::Seen));
 
-                        // Parse received date
-                        let received_at = date_str
-                            .and_then(|d| chrono::DateTime::parse_from_rfc2822(&d).ok())
-                            .map(|d| d.with_timezone(&Utc));
+                    // Parse received date
+                    let received_at = date_str
+                        .and_then(|d| chrono::DateTime::parse_from_rfc2822(&d).ok())
+                        .map(|d| d.with_timezone(&Utc));
 
-                        // Insert email
-                        let _ = sqlx::query(
-                            r#"
-                            INSERT INTO mail.emails (
-                                account_id, folder_id, imap_uid, message_id, in_reply_to,
-                                sender, sender_name, recipient, cc, subject,
-                                body_text, body_html, snippet, is_read, received_at
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-                            ON CONFLICT DO NOTHING
-                            "#,
-                        )
-                        .bind(account.id)
-                        .bind(inbox_folder.id)
-                        .bind(*uid as i64)
-                        .bind(&message_id)
-                        .bind(&in_reply_to)
-                        .bind(sender_email.unwrap_or(from.clone().unwrap_or_default()))
-                        .bind(&sender_name)
-                        .bind(&to)
-                        .bind(&cc)
-                        .bind(&subject)
-                        .bind(&body_text)
-                        .bind(&body_html)
-                        .bind(&snippet)
-                        .bind(is_read)
-                        .bind(received_at)
-                        .execute(pool)
-                        .await;
-                    }
+                    // Insert email
+                    let _ = sqlx::query(
+                        r#"
+                        INSERT INTO mail.emails (
+                            account_id, folder_id, imap_uid, message_id, in_reply_to,
+                            sender, sender_name, recipient, cc, subject,
+                            body_text, body_html, snippet, is_read, received_at
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                        ON CONFLICT DO NOTHING
+                        "#,
+                    )
+                    .bind(account.id)
+                    .bind(inbox_folder.id)
+                    .bind(*uid as i64)
+                    .bind(&message_id)
+                    .bind(&in_reply_to)
+                    .bind(sender_email.unwrap_or(from.clone().unwrap_or_default()))
+                    .bind(&sender_name)
+                    .bind(&to)
+                    .bind(&cc)
+                    .bind(&subject)
+                    .bind(&body_text)
+                    .bind(&body_html)
+                    .bind(&snippet)
+                    .bind(is_read)
+                    .bind(received_at)
+                    .execute(pool)
+                    .await;
                 }
             }
         }

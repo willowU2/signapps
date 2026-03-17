@@ -4,9 +4,7 @@ use axum::{
 };
 use signapps_common::auth::Claims;
 use signapps_common::Result;
-use signapps_db::models::drive::{
-    CreateDriveNodeRequest, DriveNode, NodeType, UpdateDriveNodeRequest,
-};
+use signapps_db::models::drive::{CreateDriveNodeRequest, DriveNode, UpdateDriveNodeRequest};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -89,12 +87,12 @@ pub async fn create_node(
         RETURNING id, parent_id, name, node_type, target_id, owner_id, size, mime_type, created_at, updated_at, deleted_at
         "#
     )
-    .bind(&payload.parent_id)
+    .bind(payload.parent_id)
     .bind(&payload.name)
     .bind(&payload.node_type)
-    .bind(&payload.target_id)
+    .bind(payload.target_id)
     .bind(user_id)
-    .bind(&payload.size)
+    .bind(payload.size)
     .bind(&payload.mime_type)
     .fetch_one(&*state.pool)
     .await

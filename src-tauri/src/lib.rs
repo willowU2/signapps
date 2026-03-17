@@ -4,10 +4,7 @@
 //! Demonstrates full integration with SeaORM for database operations.
 
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use tauri::{Manager, State};
-use tokio::sync::Mutex;
-use uuid::Uuid;
 
 /// Application state
 pub struct AppState {

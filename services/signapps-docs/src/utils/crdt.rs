@@ -5,7 +5,6 @@ use yrs::Doc;
 /// Note: In Yrs 0.17, Y.js types (Text, Map, Array) are created on-demand.
 /// Structure is typically initialized by the Y.js client via Awareness protocol.
 /// These functions are placeholders for future structured initialization.
-
 /// Initialize a text document structure
 #[allow(dead_code)]
 pub fn init_text_structure(_doc: &Doc) {

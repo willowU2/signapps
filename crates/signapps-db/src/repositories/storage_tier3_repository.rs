@@ -8,6 +8,7 @@ pub struct StorageTier3Repository;
 
 impl StorageTier3Repository {
     /// Create a new share link
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_share(
         _pool: &PgPool,
         _user_id: Uuid,
