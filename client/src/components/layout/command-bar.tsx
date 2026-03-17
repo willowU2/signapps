@@ -6,21 +6,22 @@ import { Command } from 'cmdk';
 import { Search, FileText, Mail, User, Mic, Monitor, Calendar, LayoutDashboard, Building2, FolderOpen, Plus, CheckSquare } from 'lucide-react';
 import { useEntityStore } from '@/stores/entity-hub-store';
 import { useUIStore } from '@/lib/store';
+import { useCommandBarStore } from '@/stores/command-bar-store';
 
 export function CommandBar() {
     const router = useRouter();
-    const [open, setOpen] = React.useState(false);
+    const { isOpen: open, setOpen, toggle } = useCommandBarStore();
 
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {
             if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
-                setOpen((open) => !open);
+                toggle();
             }
         };
         document.addEventListener('keydown', down);
         return () => document.removeEventListener('keydown', down);
-    }, []);
+    }, [toggle]);
 
     const runCommand = React.useCallback((command: () => void) => {
         setOpen(false);
