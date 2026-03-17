@@ -21,12 +21,22 @@ export const schedulerApi = {
     deleteJob: (id: string) => schedulerClient.delete(`/jobs/${id}`),
     enableJob: (id: string) => schedulerClient.post(`/jobs/${id}/enable`),
     disableJob: (id: string) => schedulerClient.post(`/jobs/${id}/disable`),
-    runJob: (id: string) => schedulerClient.post(`/jobs/${id}/run`),
+    runJob: (id: string) => schedulerClient.post<RunJobResponse>(`/jobs/${id}/run`),
+
     // Job runs
-    listRuns: (jobId: string) =>
-        schedulerClient.get<JobRun[]>(`/jobs/${jobId}/runs`),
-    getRunOutput: (jobId: string, runId: string) =>
-        schedulerClient.get<JobRun>(`/jobs/${jobId}/runs/${runId}`),
+    listRuns: (jobId: string, limit?: number) =>
+        schedulerClient.get<JobRun[]>(`/jobs/${jobId}/runs`, { params: { limit } }),
+    getRun: (runId: string) =>
+        schedulerClient.get<JobRun>(`/runs/${runId}`),
+
+    // Stats & monitoring
+    getStats: () => schedulerClient.get<JobStats>('/stats'),
+    getRunning: () => schedulerClient.get<RunningJob[]>('/running'),
+    getHealth: () => schedulerClient.get<HealthResponse>('/health'),
+
+    // Maintenance
+    cleanupRuns: (days?: number) =>
+        schedulerClient.post<CleanupResponse>('/cleanup', { days: days ?? 30 }),
 };
 
 export interface ScheduledJob {
@@ -61,6 +71,41 @@ export interface CreateJobRequest {
     target_type: 'container' | 'host';
     target_id?: string;
     enabled?: boolean;
+}
+
+export interface RunJobResponse {
+    status: string;
+    output?: string;
+    error?: string;
+    duration_ms: number;
+}
+
+export interface JobStats {
+    total_jobs: number;
+    enabled_jobs: number;
+    disabled_jobs: number;
+    total_runs: number;
+    successful_runs: number;
+    failed_runs: number;
+    average_duration_ms: number;
+}
+
+export interface RunningJob {
+    job_id: string;
+    job_name: string;
+    started_at: string;
+    elapsed_ms: number;
+}
+
+export interface HealthResponse {
+    status: string;
+    total_jobs: number;
+    enabled_jobs: number;
+    running_jobs: number;
+}
+
+export interface CleanupResponse {
+    deleted_runs: number;
 }
 
 // ============================================================================

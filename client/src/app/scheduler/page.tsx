@@ -65,12 +65,14 @@ import {
   XCircle,
   History,
 } from 'lucide-react';
-import { schedulerApi, ScheduledJob, JobRun } from '@/lib/api';
+import { schedulerApi, ScheduledJob, JobRun, JobStats, RunningJob } from '@/lib/api';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 
 export default function SchedulerPage() {
   const [jobs, setJobs] = useState<ScheduledJob[]>([]);
+  const [stats, setStats] = useState<JobStats | null>(null);
+  const [runningJobs, setRunningJobs] = useState<RunningJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<ScheduledJob | null>(null);
@@ -103,8 +105,14 @@ export default function SchedulerPage() {
   const fetchJobs = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await schedulerApi.listJobs();
-      setJobs(response.data || []);
+      const [jobsRes, statsRes, runningRes] = await Promise.all([
+        schedulerApi.listJobs(),
+        schedulerApi.getStats().catch(() => null),
+        schedulerApi.getRunning().catch(() => ({ data: [] })),
+      ]);
+      setJobs(jobsRes.data || []);
+      if (statsRes?.data) setStats(statsRes.data);
+      setRunningJobs(runningRes?.data || []);
     } catch {
       setJobs([]);
     } finally {
@@ -145,7 +153,7 @@ export default function SchedulerPage() {
 
   const handleSave = async () => {
     if (!formData.name.trim() || !formData.cron_expression.trim() || !formData.command.trim()) {
-      toast.error('Please fill in all required fields');
+      toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
@@ -153,15 +161,15 @@ export default function SchedulerPage() {
     try {
       if (editingJob) {
         await schedulerApi.updateJob(editingJob.id, formData);
-        toast.success('Job updated successfully');
+        toast.success('Tâche mise à jour avec succès');
       } else {
         await schedulerApi.createJob(formData);
-        toast.success('Job created successfully');
+        toast.success('Tâche créée avec succès');
       }
       setDialogOpen(false);
       fetchJobs();
     } catch {
-      toast.error('Failed to save job');
+      toast.error('Échec de la sauvegarde');
     } finally {
       setSaving(false);
     }
@@ -171,24 +179,24 @@ export default function SchedulerPage() {
     try {
       if (job.enabled) {
         await schedulerApi.disableJob(job.id);
-        toast.success('Job disabled');
+        toast.success('Tâche désactivée');
       } else {
         await schedulerApi.enableJob(job.id);
-        toast.success('Job enabled');
+        toast.success('Tâche activée');
       }
       fetchJobs();
     } catch {
-      toast.error('Failed to update job');
+      toast.error('Échec de la mise à jour');
     }
   };
 
   const handleRunNow = async (job: ScheduledJob) => {
     try {
       await schedulerApi.runJob(job.id);
-      toast.success('Job started');
+      toast.success('Tâche lancée');
       setTimeout(fetchJobs, 1000);
     } catch {
-      toast.error('Failed to run job');
+      toast.error('Échec du lancement');
     }
   };
 
@@ -201,7 +209,7 @@ export default function SchedulerPage() {
         runs: response.data || [],
       });
     } catch {
-      toast.error('Failed to fetch job runs');
+      toast.error('Échec du chargement de l\'historique');
     }
   };
 
@@ -210,11 +218,11 @@ export default function SchedulerPage() {
 
     try {
       await schedulerApi.deleteJob(deleteDialog.job.id);
-      toast.success('Job deleted');
+      toast.success('Tâche supprimée');
       setDeleteDialog({ open: false, job: null });
       fetchJobs();
     } catch {
-      toast.error('Failed to delete job');
+      toast.error('Échec de la suppression');
     }
   };
 
@@ -237,12 +245,12 @@ export default function SchedulerPage() {
   };
 
   const cronPresets = [
-    { label: 'Every minute', value: '* * * * *' },
-    { label: 'Every 5 minutes', value: '*/5 * * * *' },
-    { label: 'Every hour', value: '0 * * * *' },
-    { label: 'Every day at midnight', value: '0 0 * * *' },
-    { label: 'Every week (Sunday)', value: '0 0 * * 0' },
-    { label: 'Every month (1st)', value: '0 0 1 * *' },
+    { label: 'Chaque minute', value: '* * * * *' },
+    { label: 'Toutes les 5 min', value: '*/5 * * * *' },
+    { label: 'Chaque heure', value: '0 * * * *' },
+    { label: 'Chaque jour minuit', value: '0 0 * * *' },
+    { label: 'Chaque semaine (dim)', value: '0 0 * * 0' },
+    { label: 'Chaque mois (1er)', value: '0 0 1 * *' },
   ];
 
   if (loading) {
@@ -257,39 +265,44 @@ export default function SchedulerPage() {
     );
   }
 
-  const stats = {
-    total: jobs.length,
-    enabled: jobs.filter((j) => j.enabled).length,
-    lastRunSuccess: jobs.filter((j) => j.last_status === 'success').length,
+  // Fallback stats if backend stats not available
+  const displayStats = stats || {
+    total_jobs: jobs.length,
+    enabled_jobs: jobs.filter((j) => j.enabled).length,
+    successful_runs: jobs.filter((j) => j.last_status === 'success').length,
+    failed_runs: jobs.filter((j) => j.last_status === 'failed').length,
+    total_runs: 0,
+    disabled_jobs: jobs.filter((j) => !j.enabled).length,
+    average_duration_ms: 0,
   };
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Scheduler</h1>
+          <h1 className="text-3xl font-bold">Planificateur</h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={fetchJobs}>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
+              Actualiser
             </Button>
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="mr-2 h-4 w-4" />
-              New Job
+              Nouvelle Tâche
             </Button>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4 p-6">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Clock className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Jobs</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-sm text-muted-foreground">Total Tâches</p>
+                <p className="text-2xl font-bold">{displayStats.total_jobs}</p>
               </div>
             </CardContent>
           </Card>
@@ -299,8 +312,8 @@ export default function SchedulerPage() {
                 <Play className="h-6 w-6 text-green-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active Jobs</p>
-                <p className="text-2xl font-bold">{stats.enabled}</p>
+                <p className="text-sm text-muted-foreground">Tâches Actives</p>
+                <p className="text-2xl font-bold">{displayStats.enabled_jobs}</p>
               </div>
             </CardContent>
           </Card>
@@ -310,8 +323,23 @@ export default function SchedulerPage() {
                 <CheckCircle className="h-6 w-6 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Last Run Success</p>
-                <p className="text-2xl font-bold">{stats.lastRunSuccess}</p>
+                <p className="text-sm text-muted-foreground">Exécutions Réussies</p>
+                <p className="text-2xl font-bold">{displayStats.successful_runs}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${runningJobs.length > 0 ? 'bg-amber-500/10' : 'bg-muted'}`}>
+                {runningJobs.length > 0 ? (
+                  <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
+                ) : (
+                  <Server className="h-6 w-6 text-muted-foreground" />
+                )}
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">En Cours</p>
+                <p className="text-2xl font-bold">{runningJobs.length}</p>
               </div>
             </CardContent>
           </Card>
@@ -320,18 +348,18 @@ export default function SchedulerPage() {
         {/* Jobs Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Scheduled Jobs</CardTitle>
+            <CardTitle>Tâches Planifiées</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Schedule</TableHead>
-                  <TableHead>Target</TableHead>
-                  <TableHead>Last Run</TableHead>
-                  <TableHead>Last Status</TableHead>
+                  <TableHead>État</TableHead>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>Planification</TableHead>
+                  <TableHead>Cible</TableHead>
+                  <TableHead>Dernière Exécution</TableHead>
+                  <TableHead>Dernier Statut</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -385,15 +413,15 @@ export default function SchedulerPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleRunNow(job)}>
                             <Play className="mr-2 h-4 w-4" />
-                            Run Now
+                            Exécuter Maintenant
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleViewRuns(job)}>
                             <History className="mr-2 h-4 w-4" />
-                            View History
+                            Historique
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleOpenDialog(job)}>
                             <Pencil className="mr-2 h-4 w-4" />
-                            Edit
+                            Modifier
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -401,7 +429,7 @@ export default function SchedulerPage() {
                             onClick={() => setDeleteDialog({ open: true, job })}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                            Supprimer
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -411,7 +439,7 @@ export default function SchedulerPage() {
                 {jobs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No scheduled jobs. Click &quot;New Job&quot; to create one.
+                      Aucune tâche planifiée. Cliquez sur &quot;Nouvelle Tâche&quot; pour en créer une.
                     </TableCell>
                   </TableRow>
                 )}
@@ -425,14 +453,14 @@ export default function SchedulerPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingJob ? 'Edit Job' : 'Create Job'}</DialogTitle>
+            <DialogTitle>{editingJob ? 'Modifier la Tâche' : 'Nouvelle Tâche'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Job Name</Label>
+              <Label htmlFor="name">Nom de la Tâche</Label>
               <Input
                 id="name"
-                placeholder="Backup database"
+                placeholder="Sauvegarde base de données"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -442,14 +470,14 @@ export default function SchedulerPage() {
               <Label htmlFor="description">Description</Label>
               <Input
                 id="description"
-                placeholder="Optional description of this job"
+                placeholder="Description optionnelle de cette tâche"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cron">CRON Expression</Label>
+              <Label htmlFor="cron">Expression CRON</Label>
               <Input
                 id="cron"
                 placeholder="0 0 * * *"
@@ -473,7 +501,7 @@ export default function SchedulerPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="command">Command</Label>
+              <Label htmlFor="command">Commande</Label>
               <Textarea
                 id="command"
                 placeholder="pg_dump -U postgres mydb > backup.sql"
@@ -485,7 +513,7 @@ export default function SchedulerPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Target Type</Label>
+                <Label>Type de Cible</Label>
                 <Select
                   value={formData.target_type}
                   onValueChange={(value: 'container' | 'host') =>
@@ -496,18 +524,18 @@ export default function SchedulerPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="host">Host</SelectItem>
-                    <SelectItem value="container">Container</SelectItem>
+                    <SelectItem value="host">Hôte</SelectItem>
+                    <SelectItem value="container">Conteneur</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {formData.target_type === 'container' && (
                 <div className="space-y-2">
-                  <Label htmlFor="targetId">Container ID/Name</Label>
+                  <Label htmlFor="targetId">ID/Nom du Conteneur</Label>
                   <Input
                     id="targetId"
-                    placeholder="my-container"
+                    placeholder="mon-conteneur"
                     value={formData.target_id}
                     onChange={(e) => setFormData({ ...formData, target_id: e.target.value })}
                   />
@@ -517,9 +545,9 @@ export default function SchedulerPage() {
 
             <div className="flex items-center justify-between">
               <div>
-                <Label>Enabled</Label>
+                <Label>Activée</Label>
                 <p className="text-xs text-muted-foreground">
-                  Job will run according to schedule
+                  La tâche s'exécutera selon la planification
                 </p>
               </div>
               <Switch
@@ -530,11 +558,11 @@ export default function SchedulerPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
+              Annuler
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editingJob ? 'Update' : 'Create'}
+              {editingJob ? 'Enregistrer' : 'Créer'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -544,12 +572,12 @@ export default function SchedulerPage() {
       <Dialog open={runsDialog.open} onOpenChange={(open) => setRunsDialog({ ...runsDialog, open })}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Run History: {runsDialog.job?.name}</DialogTitle>
+            <DialogTitle>Historique : {runsDialog.job?.name}</DialogTitle>
           </DialogHeader>
           <div className="max-h-96 overflow-y-auto">
             {runsDialog.runs.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">
-                No runs recorded yet
+                Aucune exécution enregistrée
               </p>
             ) : (
               <div className="space-y-3">
@@ -576,7 +604,7 @@ export default function SchedulerPage() {
                       </pre>
                     )}
                     {run.error && (
-                      <pre className="mt-2 text-xs bg-red-50 text-red-600 p-2 rounded overflow-x-auto">
+                      <pre className="mt-2 text-xs bg-red-50 text-red-600 dark:bg-red-950/50 p-2 rounded overflow-x-auto">
                         {run.error}
                       </pre>
                     )}
@@ -587,7 +615,7 @@ export default function SchedulerPage() {
           </div>
           <DialogFooter>
             <Button onClick={() => setRunsDialog({ ...runsDialog, open: false })}>
-              Close
+              Fermer
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -600,19 +628,19 @@ export default function SchedulerPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Job</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer la Tâche</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{deleteDialog.job?.name}&quot;?
-              This action cannot be undone.
+              Êtes-vous sûr de vouloir supprimer &quot;{deleteDialog.job?.name}&quot; ?
+              Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground"
             >
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
