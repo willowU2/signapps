@@ -20,6 +20,16 @@ pub struct GroupResponse {
     pub member_count: i32,
 }
 
+#[derive(Serialize)]
+pub struct GroupMemberResponse {
+    pub user_id: Uuid,
+    pub username: String,
+    pub email: Option<String>,
+    pub full_name: Option<String>,
+    pub role: String,
+    pub added_at: chrono::DateTime<chrono::Utc>,
+}
+
 #[derive(Deserialize)]
 pub struct ListQuery {
     pub limit: Option<i64>,
@@ -158,4 +168,33 @@ pub async fn remove_member(
     let repo = GroupRepository::new(&state.pool);
     repo.remove_member(group_id, user_id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// List group members with user details.
+pub async fn list_members(
+    State(state): State<AppState>,
+    Path(group_id): Path<Uuid>,
+) -> Result<Json<Vec<GroupMemberResponse>>> {
+    let repo = GroupRepository::new(&state.pool);
+
+    // Verify group exists
+    repo.find_by_id(group_id)
+        .await?
+        .ok_or_else(|| Error::NotFound(format!("Group {}", group_id)))?;
+
+    let members = repo.list_members_with_users(group_id).await?;
+
+    let response: Vec<GroupMemberResponse> = members
+        .into_iter()
+        .map(|m| GroupMemberResponse {
+            user_id: m.user_id,
+            username: m.username,
+            email: m.email,
+            full_name: m.full_name,
+            role: m.role,
+            added_at: m.added_at,
+        })
+        .collect();
+
+    Ok(Json(response))
 }

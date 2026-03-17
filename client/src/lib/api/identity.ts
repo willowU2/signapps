@@ -164,8 +164,10 @@ export const groupsApi = {
         identityClient.put<Group>(`/groups/${id}`, data),
     delete: (id: string) => identityClient.delete(`/groups/${id}`),
     // Members
-    addMembers: (id: string, userIds: string[]) =>
-        identityClient.post(`/groups/${id}/members`, { user_ids: userIds }),
+    listMembers: (id: string) =>
+        identityClient.get<GroupMember[]>(`/groups/${id}/members`),
+    addMember: (id: string, userId: string, role?: string) =>
+        identityClient.post(`/groups/${id}/members`, { user_id: userId, role }),
     removeMember: (id: string, userId: string) =>
         identityClient.delete(`/groups/${id}/members/${userId}`),
     // Permissions
@@ -184,6 +186,15 @@ export interface Group {
     member_count: number;
     created_at: string;
     updated_at: string;
+}
+
+export interface GroupMember {
+    user_id: string;
+    username: string;
+    email?: string;
+    full_name?: string;
+    role: string;
+    added_at: string;
 }
 
 export interface GroupPermissions {

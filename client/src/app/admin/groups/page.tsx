@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Users } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, UserPlus } from 'lucide-react';
 import { useGroupList, Group } from '@/hooks/use-groups';
 import { GroupSheet } from '@/components/admin/group-sheet';
 import { GroupDeleteDialog } from '@/components/admin/group-delete-dialog';
+import { GroupMembersSheet } from '@/components/admin/group-members-sheet';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -20,6 +21,7 @@ export default function GroupsPage() {
   
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [membersSheetOpen, setMembersSheetOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
   const handleCreate = () => {
@@ -35,6 +37,11 @@ export default function GroupsPage() {
   const handleDelete = (group: Group) => {
     setSelectedGroup(group);
     setDeleteDialogOpen(true);
+  };
+
+  const handleManageMembers = (group: Group) => {
+    setSelectedGroup(group);
+    setMembersSheetOpen(true);
   };
 
   return (
@@ -101,6 +108,15 @@ export default function GroupsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => handleManageMembers(group)}
+                        className="h-8 w-8 text-green-500 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/50"
+                        title="Gérer les membres"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleEdit(group)}
                         className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50"
                       >
@@ -132,6 +148,12 @@ export default function GroupsPage() {
       <GroupDeleteDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
+        group={selectedGroup}
+      />
+
+      <GroupMembersSheet
+        open={membersSheetOpen}
+        onOpenChange={setMembersSheetOpen}
         group={selectedGroup}
       />
     </div>

@@ -34,6 +34,17 @@ pub struct GroupMember {
     pub added_at: DateTime<Utc>,
 }
 
+/// Group member with user details (for listing).
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct GroupMemberWithUser {
+    pub user_id: Uuid,
+    pub username: String,
+    pub email: Option<String>,
+    pub full_name: Option<String>,
+    pub role: String,
+    pub added_at: DateTime<Utc>,
+}
+
 /// Role entity for RBAC.
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Role {

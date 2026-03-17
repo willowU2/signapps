@@ -2,19 +2,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, Users } from "lucide-react";
 import { Calendar } from "@/types/calendar";
+import { MiniCalendar } from "./mini-calendar";
 
 interface CalendarSidebarProps {
   calendars: Calendar[];
   selectedCalendarId: string | null;
   onSelectCalendar: (calendarId: string) => void;
   onCreateEvent: () => void;
+  selectedDate?: Date;
+  onSelectDate?: (date: Date) => void;
 }
 
 export function CalendarSidebar({
   calendars,
   selectedCalendarId,
   onSelectCalendar,
-  onCreateEvent
+  onCreateEvent,
+  selectedDate,
+  onSelectDate,
 }: CalendarSidebarProps) {
   return (
         <div className="w-64 h-full shrink-0 border-r border-transparent flex flex-col py-3 pb-8 px-2 pl-3 z-10 overflow-y-auto no-scrollbar">
@@ -43,7 +48,10 @@ export function CalendarSidebar({
 
           {/* Mini Calendar Section */}
           <div className="mt-4 px-3 relative z-10">
-              {/* TODO: Add a proper MiniCalendar component here instead of the full MonthCalendar */}
+              <MiniCalendar
+                selectedDate={selectedDate}
+                onSelectDate={onSelectDate}
+              />
           </div>
 
           {/* Search Contacts input */}

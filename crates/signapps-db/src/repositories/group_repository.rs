@@ -1,6 +1,8 @@
 //! Group repository for RBAC operations.
 
-use crate::models::{CreateGroup, CreateRole, CreateWebhook, Group, GroupMember, Role, Webhook};
+use crate::models::{
+    CreateGroup, CreateRole, CreateWebhook, Group, GroupMember, GroupMemberWithUser, Role, Webhook,
+};
 use crate::DatabasePool;
 use signapps_common::Result;
 use uuid::Uuid;
@@ -121,6 +123,27 @@ impl<'a> GroupRepository<'a> {
     pub async fn list_members(&self, group_id: Uuid) -> Result<Vec<GroupMember>> {
         let members = sqlx::query_as::<_, GroupMember>(
             "SELECT * FROM identity.group_members WHERE group_id = $1",
+        )
+        .bind(group_id)
+        .fetch_all(self.pool.inner())
+        .await?;
+
+        Ok(members)
+    }
+
+    /// List group members with user details.
+    pub async fn list_members_with_users(
+        &self,
+        group_id: Uuid,
+    ) -> Result<Vec<GroupMemberWithUser>> {
+        let members = sqlx::query_as::<_, GroupMemberWithUser>(
+            r#"
+            SELECT gm.user_id, u.username, u.email, u.full_name, gm.role, gm.added_at
+            FROM identity.group_members gm
+            INNER JOIN identity.users u ON gm.user_id = u.id
+            WHERE gm.group_id = $1
+            ORDER BY gm.added_at DESC
+            "#,
         )
         .bind(group_id)
         .fetch_all(self.pool.inner())

@@ -192,6 +192,10 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/groups/:id", delete(handlers::groups::delete))
         .route(
             "/api/v1/groups/:id/members",
+            get(handlers::groups::list_members),
+        )
+        .route(
+            "/api/v1/groups/:id/members",
             post(handlers::groups::add_member),
         )
         .route(
