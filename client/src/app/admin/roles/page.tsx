@@ -1,26 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Shield, Lock } from 'lucide-react';
+import { Plus, Edit2, Trash2, Lock } from 'lucide-react';
 import { useRoleList, type Role } from '@/hooks/use-roles';
 import { RoleSheet } from '@/components/admin/role-sheet';
 import { RoleDeleteDialog } from '@/components/admin/role-delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  GenericDataTable,
+  roleConfig,
+  extendEntityConfig,
+  type RoleEntity,
+  type ActionConfig,
+} from '@/lib/data-table';
 
 export default function RolesPage() {
   const { data: roles, isLoading, error } = useRoleList();
@@ -44,18 +42,51 @@ export default function RolesPage() {
     setDeleteDialogOpen(true);
   };
 
-  const getPermissionCount = (role: Role): number => {
-    if (!role.permissions) return 0;
-    return Object.values(role.permissions).reduce(
-      (acc, actions) => acc + (Array.isArray(actions) ? actions.length : 0),
-      0
-    );
-  };
+  // Extend role config with custom actions
+  const actions: ActionConfig<RoleEntity>[] = [
+    {
+      id: 'edit',
+      label: 'Modifier',
+      icon: Edit2,
+      onClick: (row) => handleEdit(row as Role),
+    },
+    {
+      id: 'delete',
+      label: 'Supprimer',
+      icon: Trash2,
+      variant: 'destructive',
+      onClick: (row) => handleDelete(row as Role),
+      visible: (row) => !row.is_system,
+    },
+  ];
 
-  const getResourceCount = (role: Role): number => {
-    if (!role.permissions) return 0;
-    return Object.keys(role.permissions).length;
-  };
+  // Custom cell for the name column to show system role indicator
+  const extendedConfig = extendEntityConfig<RoleEntity>('roles', {
+    columns: roleConfig.columns.map((col) =>
+      col.id === 'name'
+        ? {
+            ...col,
+            cell: ({ row }) => (
+              <div className="flex items-center gap-2 font-medium">
+                {row.name}
+                {row.is_system && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Lock className="h-3 w-3 text-amber-500" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Rôle système (non modifiable)
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+            ),
+          }
+        : col
+    ),
+  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -72,98 +103,21 @@ export default function RolesPage() {
         </Button>
       </div>
 
-      <div className="border rounded-md bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Rôle</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="w-[140px] text-center">Ressources</TableHead>
-              <TableHead className="w-[140px] text-center">Permissions</TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                  Chargement des rôles...
-                </TableCell>
-              </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-red-500">
-                  Erreur lors du chargement des rôles.
-                </TableCell>
-              </TableRow>
-            ) : roles?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                  Aucun rôle trouvé.
-                </TableCell>
-              </TableRow>
-            ) : (
-              roles?.map((role: Role) => (
-                <TableRow key={role.id} className="group">
-                  <TableCell className="font-medium whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-blue-500" />
-                      {role.name}
-                      {role.is_system && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <Lock className="h-3 w-3 text-amber-500" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              Rôle système (non modifiable)
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground max-w-[300px] truncate">
-                    {role.description || <span className="italic">Aucune description</span>}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="outline" className="font-mono">
-                      {getResourceCount(role)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="secondary" className="font-mono">
-                      {getPermissionCount(role)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(role)}
-                        className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      {!role.is_system && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(role)}
-                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <GenericDataTable
+        config={extendedConfig}
+        data={(roles as RoleEntity[]) ?? []}
+        isLoading={isLoading}
+        error={error ? 'Erreur lors du chargement des rôles.' : undefined}
+        actions={actions}
+        emptyState={{
+          title: 'Aucun rôle trouvé',
+          description: "Créez votre premier rôle pour commencer à gérer les permissions.",
+          action: {
+            label: 'Créer un rôle',
+            onClick: handleCreate,
+          },
+        }}
+      />
 
       <RoleSheet
         open={sheetOpen}
