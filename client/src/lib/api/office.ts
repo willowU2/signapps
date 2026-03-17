@@ -316,6 +316,276 @@ export async function splitPdf(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// SPREADSHEET OPERATIONS (Epic 6)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type SpreadsheetFormat = 'xlsx' | 'csv' | 'ods';
+
+export interface SpreadsheetInfo {
+  supported_formats: string[];
+  max_rows: number;
+  max_cols: number;
+  version: string;
+}
+
+export interface SpreadsheetData {
+  sheets: {
+    name: string;
+    data: (string | number | null)[][];
+    styles?: Record<string, any>;
+  }[];
+}
+
+/**
+ * Get spreadsheet service info
+ */
+export async function getSpreadsheetInfo(): Promise<SpreadsheetInfo> {
+  const response = await officeClient().get('/spreadsheet/info');
+  return response.data;
+}
+
+/**
+ * Export spreadsheet data to XLSX
+ */
+export async function exportSpreadsheet(
+  data: SpreadsheetData,
+  format: SpreadsheetFormat = 'xlsx'
+): Promise<Blob> {
+  const response = await officeClient().post(
+    '/spreadsheet/export',
+    { data, format },
+    { responseType: 'blob' }
+  );
+  return response.data;
+}
+
+/**
+ * Export spreadsheet data to CSV
+ */
+export async function exportSpreadsheetCsv(
+  data: (string | number | null)[][],
+  options?: { delimiter?: string; filename?: string }
+): Promise<Blob> {
+  const response = await officeClient().post(
+    '/spreadsheet/export/csv',
+    { data, ...options },
+    { responseType: 'blob' }
+  );
+  return response.data;
+}
+
+/**
+ * Export spreadsheet data to ODS
+ */
+export async function exportSpreadsheetOds(data: SpreadsheetData): Promise<Blob> {
+  const response = await officeClient().post(
+    '/spreadsheet/export/ods',
+    { data },
+    { responseType: 'blob' }
+  );
+  return response.data;
+}
+
+/**
+ * Import spreadsheet from file (XLSX, CSV, ODS)
+ */
+export async function importSpreadsheet(file: File): Promise<SpreadsheetData> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await officeClient().post('/spreadsheet/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+}
+
+/**
+ * Import CSV from text
+ */
+export async function importCsvText(
+  content: string,
+  options?: { delimiter?: string; has_headers?: boolean }
+): Promise<SpreadsheetData> {
+  const response = await officeClient().post('/spreadsheet/import/csv', {
+    content,
+    ...options,
+  });
+  return response.data;
+}
+
+/**
+ * Download spreadsheet
+ */
+export async function downloadSpreadsheet(
+  data: SpreadsheetData,
+  format: SpreadsheetFormat,
+  filename: string
+): Promise<void> {
+  const blob = await exportSpreadsheet(data, format);
+  const extension = format;
+  const fullFilename = filename.endsWith(`.${extension}`)
+    ? filename
+    : `${filename}.${extension}`;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fullFilename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRESENTATION OPERATIONS (Epic 7)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type PresentationExportFormat = 'pptx' | 'pdf' | 'png' | 'svg';
+
+export interface PresentationInfo {
+  supported_formats: string[];
+  max_slides: number;
+  version: string;
+}
+
+export interface SlideElement {
+  type: 'text' | 'image' | 'shape' | 'chart';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  content?: string;
+  style?: Record<string, any>;
+}
+
+export interface Slide {
+  id: string;
+  elements: SlideElement[];
+  background?: string;
+  notes?: string;
+  layout?: string;
+}
+
+export interface PresentationData {
+  title: string;
+  slides: Slide[];
+  theme?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    fontFamily?: string;
+  };
+}
+
+/**
+ * Get presentation service info
+ */
+export async function getPresentationInfo(): Promise<PresentationInfo> {
+  const response = await officeClient().get('/presentation/info');
+  return response.data;
+}
+
+/**
+ * Export presentation to PPTX
+ */
+export async function exportPresentationPptx(data: PresentationData): Promise<Blob> {
+  const response = await officeClient().post(
+    '/presentation/export/pptx',
+    data,
+    { responseType: 'blob' }
+  );
+  return response.data;
+}
+
+/**
+ * Export presentation to PDF
+ */
+export async function exportPresentationPdf(data: PresentationData): Promise<Blob> {
+  const response = await officeClient().post(
+    '/presentation/export/pdf',
+    data,
+    { responseType: 'blob' }
+  );
+  return response.data;
+}
+
+/**
+ * Export single slide to PNG
+ */
+export async function exportSlidePng(
+  slide: Slide,
+  options?: { width?: number; height?: number }
+): Promise<Blob> {
+  const response = await officeClient().post(
+    '/presentation/export/png',
+    { slide, ...options },
+    { responseType: 'blob' }
+  );
+  return response.data;
+}
+
+/**
+ * Export single slide to SVG
+ */
+export async function exportSlideSvg(slide: Slide): Promise<string> {
+  const response = await officeClient().post('/presentation/export/svg', { slide });
+  return response.data;
+}
+
+/**
+ * Export all slides to PNG (zip archive)
+ */
+export async function exportAllSlidesPng(
+  data: PresentationData,
+  options?: { width?: number; height?: number }
+): Promise<Blob> {
+  const response = await officeClient().post(
+    '/presentation/export/all/png',
+    { ...data, ...options },
+    { responseType: 'blob' }
+  );
+  return response.data;
+}
+
+/**
+ * Export all slides to SVG (zip archive)
+ */
+export async function exportAllSlidesSvg(data: PresentationData): Promise<Blob> {
+  const response = await officeClient().post(
+    '/presentation/export/all/svg',
+    data,
+    { responseType: 'blob' }
+  );
+  return response.data;
+}
+
+/**
+ * Download presentation
+ */
+export async function downloadPresentation(
+  data: PresentationData,
+  format: 'pptx' | 'pdf',
+  filename: string
+): Promise<void> {
+  const blob = format === 'pptx'
+    ? await exportPresentationPptx(data)
+    : await exportPresentationPdf(data);
+
+  const fullFilename = filename.endsWith(`.${format}`)
+    ? filename
+    : `${filename}.${format}`;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fullFilename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // HEALTH CHECK
 // ═══════════════════════════════════════════════════════════════════════════
 

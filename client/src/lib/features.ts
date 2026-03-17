@@ -64,7 +64,7 @@ export const FEATURES = {
   DOCS_EXPORT_DOCX: true,
   DOCS_EXPORT_PDF: true,
   SHEETS_EXPORT_XLSX: true, // Local xlsx lib - functional
-  SLIDES_EXPORT_PPTX: false, // Slides export not yet implemented
+  SLIDES_EXPORT_PPTX: true, // Backend API ready on port 3018
 
   // Import features (Epic 3 - Sprint 3.5)
   DOCS_IMPORT_DOCX: true,
