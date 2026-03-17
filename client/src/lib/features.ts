@@ -45,7 +45,7 @@ export const FEATURES = {
   // ═══════════════════════════════════════════════════════════════════════════
 
   // Admin features
-  MEMBER_MANAGEMENT: false, // Gestion des membres workspace
+  MEMBER_MANAGEMENT: true, // Gestion des membres workspace (Sprint 11)
 
   // Storage features
   ARCHIVE_EXTRACTION: false, // Extraction de contenu d'archives
@@ -63,12 +63,12 @@ export const FEATURES = {
   // Export features (Epic 2 - Sprint 3)
   DOCS_EXPORT_DOCX: true,
   DOCS_EXPORT_PDF: true,
-  SHEETS_EXPORT_XLSX: false, // Spreadsheet export not yet implemented
+  SHEETS_EXPORT_XLSX: true, // Local xlsx lib - functional
   SLIDES_EXPORT_PPTX: false, // Slides export not yet implemented
 
   // Import features (Epic 3 - Sprint 3.5)
   DOCS_IMPORT_DOCX: true,
-  SHEETS_IMPORT_XLSX: false, // Spreadsheet import not yet implemented
+  SHEETS_IMPORT_XLSX: true, // Local xlsx lib - functional
 } as const;
 
 /**

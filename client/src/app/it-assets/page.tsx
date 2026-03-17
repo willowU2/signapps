@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Server, MonitorSmartphone, Target, Cpu, HardDrive, Network, Plus, ShieldCheck, Download, Trash, Webhook } from "lucide-react"
 import { itAssetsApi, HardwareAsset, CreateHardwareRequest } from "@/lib/api/it-assets"
+import { FEATURES } from "@/lib/features"
 
 // Extended type for UI compatibility
 interface HardwareDisplay extends HardwareAsset {
@@ -128,17 +129,19 @@ export default function ITAssetsDashboard() {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-border/50 bg-card overflow-hidden relative group">
-                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-500 to-amber-500 transform translate-y-1 group-hover:translate-y-0 transition-transform"></div>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">PXE Deployments</CardTitle>
-                            <Download className="h-4 w-4 text-muted-foreground group-hover:text-amber-500 transition-colors" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-3xl font-bold">0</div>
-                            <p className="text-xs text-muted-foreground mt-1">Pending automated installs</p>
-                        </CardContent>
-                    </Card>
+                    {FEATURES.PXE && (
+                        <Card className="border-border/50 bg-card overflow-hidden relative group">
+                            <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-500 to-amber-500 transform translate-y-1 group-hover:translate-y-0 transition-transform"></div>
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <CardTitle className="text-sm font-medium">PXE Deployments</CardTitle>
+                                <Download className="h-4 w-4 text-muted-foreground group-hover:text-amber-500 transition-colors" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-3xl font-bold">0</div>
+                                <p className="text-xs text-muted-foreground mt-1">Pending automated installs</p>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
 
                 {isCreating && (
@@ -237,12 +240,16 @@ export default function ITAssetsDashboard() {
                                                 <div className="text-xs text-muted-foreground font-mono">{device.mac_address || "No MAC"}</div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Remote Connect">
-                                                    <Webhook className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" title="PXE Deploy">
-                                                    <Download className="h-4 w-4" />
-                                                </Button>
+                                                {FEATURES.REMOTE && (
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Remote Connect">
+                                                        <Webhook className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                                {FEATURES.PXE && (
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" title="PXE Deploy">
+                                                        <Download className="h-4 w-4" />
+                                                    </Button>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}

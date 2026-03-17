@@ -24,10 +24,12 @@ import { useTenantStore } from "@/stores/tenant-store"
 import type { Workspace } from "@/lib/api/tenant"
 import { DataTable } from "@/components/ui/data-table"
 import { WorkspaceSheet, type WorkspaceFormValues } from "@/components/admin/workspace-sheet"
+import { WorkspaceMembersSheet } from "@/components/admin/workspace-members-sheet"
 import { ColumnDef } from "@tanstack/react-table"
 import { toast } from "sonner"
 import { Label } from "@/components/ui/label"
 import { Plus, Search, MoreHorizontal, Users, Pencil, Trash2 } from "lucide-react"
+import { FEATURES } from "@/lib/features"
 
 
 export default function WorkspacesPage() {
@@ -35,6 +37,13 @@ export default function WorkspacesPage() {
     const [isSheetOpen, setIsSheetOpen] = useState(false)
     const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isMembersSheetOpen, setIsMembersSheetOpen] = useState(false)
+    const [membersWorkspace, setMembersWorkspace] = useState<Workspace | null>(null)
+
+    const handleOpenMembersSheet = (workspace: Workspace) => {
+        setMembersWorkspace(workspace)
+        setIsMembersSheetOpen(true)
+    }
 
     useEffect(() => {
         fetchWorkspaces()
@@ -138,7 +147,12 @@ export default function WorkspacesPage() {
                                 Copy ID
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-{/* Member management retiré - feature non implémentée (NO DEAD ENDS) */}
+                            {FEATURES.MEMBER_MANAGEMENT && (
+                                <DropdownMenuItem onClick={() => handleOpenMembersSheet(workspace)}>
+                                    <Users className="mr-2 h-4 w-4" />
+                                    Manage Members
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => handleOpenSheet(workspace)}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit
@@ -190,6 +204,14 @@ export default function WorkspacesPage() {
                     onSubmit={handleSubmit}
                     isLoading={isSubmitting}
                 />
+
+                {FEATURES.MEMBER_MANAGEMENT && (
+                    <WorkspaceMembersSheet
+                        open={isMembersSheetOpen}
+                        onOpenChange={setIsMembersSheetOpen}
+                        workspace={membersWorkspace}
+                    />
+                )}
             </div>
         </AppLayout>
     )

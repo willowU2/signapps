@@ -240,7 +240,7 @@ fn create_router(state: AppState) -> Router {
             get(preview::get_archive_listing),
         )
         .route(
-            "/preview/document/:bucket/*key/metadata",
+            "/preview/document-metadata/:bucket/*key",
             get(preview::get_document_metadata),
         );
 
