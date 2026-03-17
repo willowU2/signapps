@@ -509,6 +509,7 @@ fn parse_hex_color(hex: &str) -> Option<Color> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use lopdf::dictionary;
 
     // Create a minimal valid PDF for testing
     fn create_test_pdf() -> Vec<u8> {

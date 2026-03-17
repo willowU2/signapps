@@ -40,6 +40,7 @@ impl TextChunker {
 
     /// Split text into chunks.
     pub fn chunk(&self, text: &str) -> Vec<String> {
+        let text = text.trim();
         if text.is_empty() {
             return vec![];
         }
