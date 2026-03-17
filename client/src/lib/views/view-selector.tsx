@@ -103,9 +103,8 @@ export function ViewSelector({
     setActiveView(entityType, viewId);
   };
 
-  const handleCreateFromTemplate = (templateId: string) => {
+  const handleCreateFromTemplate = (_templateId: string) => {
     // This would typically open a dialog to confirm creation
-    console.log("Create view from template:", templateId);
     onCreateView?.();
   };
 
