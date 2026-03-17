@@ -4,10 +4,10 @@
  * API client for syncing user preferences with the backend.
  */
 
-import { createApiClient, ServiceName } from "@/lib/api/factory";
+import { createServiceClient, ServiceName } from "@/lib/api/factory";
 import type { UserPreferences, PreferencesSection } from "./types";
 
-const client = createApiClient(ServiceName.IDENTITY);
+const client = createServiceClient(ServiceName.IDENTITY);
 
 // ============================================================================
 // Types

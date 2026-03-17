@@ -32,6 +32,8 @@ import {
   History,
   Keyboard,
   X,
+  SlidersHorizontal,
+  Palette,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -230,6 +232,13 @@ export function CommandBarEnhanced() {
         icon: Settings,
         action: () => router.push("/settings"),
       },
+      {
+        id: "nav-preferences",
+        label: "Préférences",
+        description: "Thème, layout, notifications",
+        icon: SlidersHorizontal,
+        action: () => router.push("/settings/preferences"),
+      },
     ],
     [router]
   );
@@ -273,6 +282,14 @@ export function CommandBarEnhanced() {
               icon: Box,
               adminOnly: true,
               action: () => router.push("/containers"),
+            },
+            {
+              id: "admin-tenant",
+              label: "Paramètres Tenant",
+              description: "Branding, features, sécurité",
+              icon: Palette,
+              adminOnly: true,
+              action: () => router.push("/admin/tenant"),
             },
           ]
         : [],

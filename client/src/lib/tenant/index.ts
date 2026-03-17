@@ -42,7 +42,7 @@ export {
 // Branding Components
 export {
   BrandingStyles,
-  TenantLogo,
+  TenantLogo as TenantLogoComponent,
   TenantFavicon,
   TenantTitle,
   BrandingProvider,
@@ -61,7 +61,7 @@ export {
 export {
   BrandingSettings,
   FeatureTogglesSettings,
-  LocalizationSettings,
-  SecuritySettings,
+  LocalizationSettings as LocalizationSettingsPanel,
+  SecuritySettings as SecuritySettingsPanel,
   TenantSettingsPage,
 } from "./admin-settings";

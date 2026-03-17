@@ -5,6 +5,8 @@ import { useState, Suspense } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { PermissionsProvider } from '@/lib/permissions';
+import { TenantProvider } from '@/lib/tenant';
+import { PreferencesProvider } from '@/lib/preferences';
 
 import { NotificationPermissionDialog } from '@/components/notifications/notification-permission-dialog';
 import { CommandBar } from '@/components/layout/command-bar';
@@ -49,13 +51,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <TooltipProvider>
           <Suspense fallback={<LoadingFallback />}>
             <AuthProvider>
-              <PermissionsProvider>
-                {children}
-                <CommandBar />
-                <Sidebar />
-                <RightSidebar />
-                <GlobalModals />
-              </PermissionsProvider>
+              <TenantProvider>
+                <PreferencesProvider>
+                  <PermissionsProvider>
+                    {children}
+                    <CommandBar />
+                    <Sidebar />
+                    <RightSidebar />
+                    <GlobalModals />
+                  </PermissionsProvider>
+                </PreferencesProvider>
+              </TenantProvider>
             </AuthProvider>
           </Suspense>
           <Toaster />
