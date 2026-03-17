@@ -17,6 +17,28 @@ export {
   renderCell,
 } from "./cells";
 
+// Column customization
+export {
+  ColumnSelector,
+  useColumnPreferences,
+  applyPreferencesToVisibility,
+  getOrderedColumnIds,
+  type ColumnPreference,
+  type ColumnSelectorProps,
+} from "./column-selector";
+
+// Filters
+export {
+  FilterChip,
+  FilterChips,
+  operatorLabels,
+} from "./filter-chip";
+
+export {
+  FilterBuilder,
+  type FilterBuilderProps,
+} from "./filter-builder";
+
 // Types
 export type {
   ViewMode,

@@ -24,7 +24,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
-  SlidersHorizontal,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -50,7 +49,6 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -76,6 +74,12 @@ import type {
   GenericDataTableProps,
 } from "./types";
 import { renderCell } from "./cells";
+import {
+  ColumnSelector,
+  useColumnPreferences,
+  applyPreferencesToVisibility,
+  type ColumnPreference,
+} from "./column-selector";
 
 // ============================================================================
 // Permission Helper
@@ -108,7 +112,8 @@ function checkPermission(
 function buildColumnDefs<TData>(
   config: EntityConfig<TData>,
   actions: ActionConfig<TData>[] | undefined,
-  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean
+  can: (resource: Resource, action: ResourceAction | ResourceAction[]) => boolean,
+  columnOrder?: string[]
 ): ColumnDef<TData>[] {
   const columns: ColumnDef<TData>[] = [];
 
@@ -142,9 +147,19 @@ function buildColumnDefs<TData>(
   }
 
   // Data columns - filter by permission
-  const visibleColumns = config.columns.filter((col) =>
+  let visibleColumns = config.columns.filter((col) =>
     checkPermission(col.requiredPermission, can)
   );
+
+  // Sort columns by custom order if provided
+  if (columnOrder && columnOrder.length > 0) {
+    const orderMap = new Map(columnOrder.map((id, index) => [id, index]));
+    visibleColumns = [...visibleColumns].sort((a, b) => {
+      const orderA = orderMap.get(a.id) ?? 999;
+      const orderB = orderMap.get(b.id) ?? 999;
+      return orderA - orderB;
+    });
+  }
 
   for (const colConfig of visibleColumns) {
     const col: ColumnDef<TData> = {
@@ -413,6 +428,12 @@ export function GenericDataTable<TData>({
   // Permissions hook
   const { can } = usePermissions();
 
+  // Column preferences (persisted to localStorage)
+  const [columnPreferences, setColumnPreferences] = useColumnPreferences(
+    config.entityType,
+    config.columns
+  );
+
   // State
   const [internalViewMode, setInternalViewMode] = React.useState<ViewMode>(
     config.defaultViewMode ?? "table"
@@ -422,18 +443,32 @@ export function GenericDataTable<TData>({
     config.defaultSort ? [config.defaultSort] : []
   );
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(
-    () => {
-      const visibility: VisibilityState = {};
-      config.columns.forEach((col) => {
-        if (col.defaultVisible === false) {
-          visibility[col.id] = false;
-        }
-      });
-      return visibility;
-    }
-  );
   const [rowSelection, setRowSelection] = React.useState({});
+
+  // Derive visibility from preferences
+  const columnVisibility = React.useMemo<VisibilityState>(
+    () => applyPreferencesToVisibility(columnPreferences),
+    [columnPreferences]
+  );
+
+  // Handle visibility change from table
+  const handleColumnVisibilityChange = React.useCallback(
+    (updaterOrValue: VisibilityState | ((old: VisibilityState) => VisibilityState)) => {
+      const newVisibility =
+        typeof updaterOrValue === "function"
+          ? updaterOrValue(columnVisibility)
+          : updaterOrValue;
+
+      // Update preferences to match new visibility
+      const newPreferences = columnPreferences.map((pref) => ({
+        ...pref,
+        visible: newVisibility[pref.id] ?? pref.visible,
+      }));
+
+      setColumnPreferences(newPreferences);
+    },
+    [columnVisibility, columnPreferences, setColumnPreferences]
+  );
 
   // Controlled vs uncontrolled
   const viewMode = controlledViewMode ?? internalViewMode;
@@ -452,10 +487,16 @@ export function GenericDataTable<TData>({
     }
   };
 
-  // Build columns with permission filtering
+  // Get column order from preferences
+  const columnOrder = React.useMemo(
+    () => columnPreferences.sort((a, b) => a.order - b.order).map((p) => p.id),
+    [columnPreferences]
+  );
+
+  // Build columns with permission filtering and custom order
   const columns = React.useMemo(
-    () => buildColumnDefs(config, actions, can),
-    [config, actions, can]
+    () => buildColumnDefs(config, actions, can, columnOrder),
+    [config, actions, can, columnOrder]
   );
 
   // Table instance
@@ -468,7 +509,7 @@ export function GenericDataTable<TData>({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: handleColumnVisibilityChange,
     onRowSelectionChange: setRowSelection,
     getRowId: config.getRowId,
     initialState: {
@@ -530,33 +571,13 @@ export function GenericDataTable<TData>({
             />
           )}
 
-          {/* Column visibility */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="bg-background/50">
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Colonnes
-                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  const colConfig = config.columns.find((c) => c.id === column.id);
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                    >
-                      {colConfig?.label ?? column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Column customization */}
+          <ColumnSelector
+            columns={config.columns}
+            preferences={columnPreferences}
+            onPreferencesChange={setColumnPreferences}
+            entityType={config.entityType}
+          />
         </div>
       </div>
 
