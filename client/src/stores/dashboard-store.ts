@@ -9,7 +9,15 @@ export type WidgetType =
   | 'quick-actions'
   | 'network-traffic'
   | 'bookmarks'
-  | 'proxy-status';
+  | 'proxy-status'
+  | 'recent-tasks'
+  | 'upcoming-events'
+  | 'recent-files'
+  | 'team-activity'
+  | 'recent-activity'
+  | 'notifications'
+  | 'storage-usage'
+  | 'performance-chart';
 
 export interface WidgetConfig {
   id: string;
@@ -36,14 +44,27 @@ const DEFAULT_WIDGETS: WidgetConfig[] = [
   { id: 'network-traffic', type: 'network-traffic', x: 0, y: 10, w: 12, h: 2 },
 ];
 
-export const WIDGET_CATALOG: { type: WidgetType; label: string; description: string; defaultW: number; defaultH: number }[] = [
-  { type: 'stat-cards', label: 'Statistiques', description: 'Containers, Storage, Routes, Uptime', defaultW: 12, defaultH: 2 },
-  { type: 'installed-apps', label: 'Apps installees', description: 'Grille des applications en cours', defaultW: 12, defaultH: 3 },
-  { type: 'system-health', label: 'Sante systeme', description: 'CPU, RAM, Disk et status des services', defaultW: 8, defaultH: 5 },
-  { type: 'quick-actions', label: 'Actions rapides', description: 'Boutons raccourcis', defaultW: 4, defaultH: 5 },
-  { type: 'network-traffic', label: 'Trafic reseau', description: 'Statistiques RX/TX', defaultW: 12, defaultH: 2 },
-  { type: 'bookmarks', label: 'Bookmarks', description: 'Liens rapides personnalises', defaultW: 6, defaultH: 3 },
-  { type: 'proxy-status', label: 'Reverse Proxy', description: 'Status proxy, routes, certificats, SmartShield', defaultW: 4, defaultH: 4 },
+export const WIDGET_CATALOG: { type: WidgetType; label: string; description: string; defaultW: number; defaultH: number; category?: string }[] = [
+  // Analytics
+  { type: 'stat-cards', label: 'Statistiques', description: 'Containers, Storage, Routes, Uptime', defaultW: 12, defaultH: 2, category: 'analytics' },
+  { type: 'network-traffic', label: 'Trafic réseau', description: 'Statistiques RX/TX', defaultW: 12, defaultH: 2, category: 'analytics' },
+  { type: 'storage-usage', label: 'Utilisation Stockage', description: 'Espace disque et quotas', defaultW: 4, defaultH: 3, category: 'analytics' },
+  { type: 'performance-chart', label: 'Performance', description: 'Graphique CPU/RAM/Disque', defaultW: 6, defaultH: 4, category: 'analytics' },
+  // Productivity
+  { type: 'recent-tasks', label: 'Tâches Récentes', description: 'Vos tâches en cours et à venir', defaultW: 6, defaultH: 4, category: 'productivity' },
+  { type: 'upcoming-events', label: 'Événements à Venir', description: 'Calendrier des prochains événements', defaultW: 6, defaultH: 4, category: 'productivity' },
+  { type: 'quick-actions', label: 'Actions rapides', description: 'Boutons raccourcis', defaultW: 4, defaultH: 5, category: 'productivity' },
+  { type: 'bookmarks', label: 'Favoris', description: 'Liens rapides personnalisés', defaultW: 6, defaultH: 3, category: 'productivity' },
+  // Content
+  { type: 'recent-files', label: 'Fichiers Récents', description: 'Derniers fichiers consultés', defaultW: 6, defaultH: 4, category: 'content' },
+  { type: 'recent-activity', label: 'Activité Récente', description: 'Votre activité récente', defaultW: 4, defaultH: 4, category: 'content' },
+  // System
+  { type: 'installed-apps', label: 'Applications', description: 'Grille des applications en cours', defaultW: 12, defaultH: 3, category: 'system' },
+  { type: 'system-health', label: 'Santé système', description: 'CPU, RAM, Disk et status des services', defaultW: 8, defaultH: 5, category: 'system' },
+  { type: 'proxy-status', label: 'Reverse Proxy', description: 'Status proxy, routes, certificats', defaultW: 4, defaultH: 4, category: 'system' },
+  // Social
+  { type: 'team-activity', label: 'Activité Équipe', description: 'Activité récente de l\'équipe', defaultW: 6, defaultH: 4, category: 'social' },
+  { type: 'notifications', label: 'Notifications', description: 'Dernières notifications', defaultW: 4, defaultH: 3, category: 'social' },
 ];
 
 interface DashboardStore {

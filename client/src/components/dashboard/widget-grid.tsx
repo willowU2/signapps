@@ -14,12 +14,23 @@ import { WidgetQuickActions } from './widget-quick-actions';
 import { WidgetNetworkTraffic } from './widget-network-traffic';
 import { WidgetBookmarks } from './widget-bookmarks';
 import { WidgetProxyStatus } from './widget-proxy-status';
+import { WidgetRecentTasks } from './widgets/widget-recent-tasks';
+import { WidgetUpcomingEvents } from './widgets/widget-upcoming-events';
+import { WidgetRecentFiles } from './widgets/widget-recent-files';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
-function WidgetRenderer({ type }: { type: WidgetConfig['type'] }) {
-  switch (type) {
+function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
+  const renderProps = {
+    widget: {
+      ...widget,
+      config: widget.config || {},
+    },
+    isEditing: false,
+  };
+
+  switch (widget.type) {
     case 'stat-cards':
       return <WidgetStatCards />;
     case 'installed-apps':
@@ -34,8 +45,14 @@ function WidgetRenderer({ type }: { type: WidgetConfig['type'] }) {
       return <WidgetBookmarks />;
     case 'proxy-status':
       return <WidgetProxyStatus />;
+    case 'recent-tasks':
+      return <WidgetRecentTasks {...renderProps} />;
+    case 'upcoming-events':
+      return <WidgetUpcomingEvents {...renderProps} />;
+    case 'recent-files':
+      return <WidgetRecentFiles {...renderProps} />;
     default:
-      return <div>Unknown widget</div>;
+      return <div className="p-4 text-muted-foreground text-center">Widget inconnu: {widget.type}</div>;
   }
 }
 
@@ -135,7 +152,7 @@ export function WidgetGrid() {
                 </>
               )}
               <div className={editMode ? 'pt-6 h-full' : 'h-full'}>
-                <WidgetRenderer type={widget.type} />
+                <WidgetRenderer widget={widget} />
               </div>
             </div>
           ))}
