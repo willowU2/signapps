@@ -1,6 +1,6 @@
 # SignApps Platform - Next Steps
 
-> **Dernière mise à jour:** 2026-03-17
+> **Dernière mise à jour:** 2026-03-18
 > **Pour reprendre:** "Reprends le nextstep.md"
 
 ---
@@ -27,6 +27,7 @@
 | 23 | Epic 15 - Tenant Config & Branding | 2026-03-17 |
 | 24 | Epic 16 - User Preferences Sync | 2026-03-17 |
 | 25 | Intégration Finale (Providers, Routes, CommandBar) | 2026-03-17 |
+| 26 | **Unified Scheduling UI** - Phase 1-4 (46 stories, 233 pts) | 2026-03-18 |
 
 ### Builds Vérifiés
 
@@ -35,103 +36,62 @@
 
 ---
 
-## Epics Restants - Office Suite
+## État Office Suite - Epics Complétés ✅
 
-### Epic 1: Tiptap v3 Migration
-**Priorité:** HAUTE (fondation pour Epic 4 et 5)
-**Stories:** 8
-**Contenu:**
-- Migration Tiptap v2 → v3
-- Nouveaux packages (@tiptap/pm, @tiptap/html)
-- Gestion breaking changes (extension configs)
-- Tests de régression éditeur
+| Epic | Titre | État | Détails |
+|------|-------|------|---------|
+| 1 | Tiptap v3 Migration | ✅ | v3.20.1, tous extensions actifs |
+| 2 | Document Export Backend | ✅ | DOCX/PDF/MD/HTML via signapps-office |
+| 3 | Document Import Backend | ✅ | DOCX/MD/HTML import |
+| 4 | Comments System | ✅ | Inline comments, replies, resolve |
+| 5 | Track Changes | ✅ | Insert/delete marks, accept/reject |
+| 6 | Spreadsheet Import/Export | ✅ | XLSX/CSV/ODS via calamine |
+| 7 | Slides Export | ✅ | PPTX, PNG, PDF export |
+| 8 | PDF Operations | ✅ | Viewer, merge, split, thumbnails |
+| 9 | Real-time Collaboration | ✅ | Yjs, cursors, presence, offline |
 
-### Epic 4: Comments System
-**Priorité:** MOYENNE
-**Stories:** 7
-**Dépend de:** Epic 1
-**Contenu:**
-- Commentaires inline sur sélection
-- Threads de réponses
-- Résolution/fermeture threads
-- Mentions @username
-- Export commentaires vers DOCX
+## Prochaines Améliorations Potentielles
 
-### Epic 5: Track Changes System
-**Priorité:** MOYENNE
-**Stories:** 7
-**Dépend de:** Epic 1
-**Contenu:**
-- Mode Track Changes toggle
-- Marquage insertions (vert)
-- Marquage suppressions (rouge barré)
-- Accept/Reject individuel et bulk
-- Préservation auteur/timestamp
+### Option A: Qualité & Polish
+- Tests E2E complets pour Office Suite
+- Amélioration UX commentaires/track changes
+- Performance exports grands documents
 
-### Epic 6: Spreadsheet Import/Export
-**Priorité:** MOYENNE
-**Stories:** 6
-**Contenu:**
-- Import XLSX/XLS/CSV/TSV/ODS
-- Export XLSX/CSV/ODS
-- Préservation formules basiques
-- Préservation formatage cellules
-- Support multi-sheets
+### Option B: Nouvelles Features
+- Templates de documents prédéfinis
+- Version history avec diff visuel
+- Export vers Google Docs/Sheets
 
-### Epic 7: Slides Export Enhancement
-**Priorité:** BASSE
-**Stories:** 5
-**Contenu:**
-- Export PPTX
-- Export PNG/SVG par slide
-- Export PDF all slides
-- Speaker notes
-- Master templates et thèmes
-
-### Epic 8: PDF Operations
-**Priorité:** MOYENNE
-**Stories:** 6
-**Contenu:**
-- Viewer PDF in-browser
-- Extraction texte PDF
-- Merge multiple PDFs
-- Split PDF en pages
-- Génération thumbnails
-
-### Epic 9: Real-time Collaboration
-**Priorité:** HAUTE
-**Stories:** 7
-**Contenu:**
-- Édition simultanée (Yjs CRDT)
-- Curseurs collaborateurs temps réel
-- Indicateurs de présence
-- Sync automatique sans save
-- Mode offline + sync reconnexion
-- Résolution conflits automatique
+### Option C: Infrastructure
+- Cache distribué pour conversions
+- Queue de jobs pour exports lourds
+- Metrics & monitoring Office
 
 ---
 
 ## Recommandation de Prochains Sprints
 
-### Option A: Foundation First (Recommandé)
+**Office Suite complète!** Options pour continuer:
+
+### Option A: Tests & Polish (Recommandé)
 ```
-Sprint 26: Epic 1 - Tiptap v3 Migration
-Sprint 27: Epic 4 - Comments System
-Sprint 28: Epic 5 - Track Changes
-Sprint 29: Epic 9 - Real-time Collaboration
+Sprint 27: Tests E2E Office Suite (Docs, Sheets, Slides, PDF)
+Sprint 28: Performance optimization exports
+Sprint 29: UX polish commentaires/track changes
 ```
 
-### Option B: Quick Wins
+### Option B: Nouvelles Fonctionnalités
 ```
-Sprint 26: Epic 8 - PDF Operations (indépendant)
-Sprint 27: Epic 6 - Spreadsheet Import/Export
-Sprint 28: Epic 1 - Tiptap v3 Migration
+Sprint 27: Document Templates System
+Sprint 28: Version History avec Diff visuel
+Sprint 29: Intégration Google Workspace
 ```
 
-### Option C: Collaboration Focus
+### Option C: Backend Infrastructure
 ```
-Sprint 26: Epic 9 - Real-time Collaboration (Yjs)
-Sprint 27: Epic 1 - Tiptap v3 + Epic 4 Comments
+Sprint 27: Conversion Queue (jobs async)
+Sprint 28: Caching layer pour exports
+Sprint 29: Monitoring & Metrics Office
 ```
 
 ---
