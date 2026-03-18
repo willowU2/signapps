@@ -19,3 +19,11 @@ export {
   previewAutoSchedule,
   findBestSlotForTask,
 } from './auto-scheduler';
+
+export {
+  analyzeConflictPatterns,
+  analyzeSpecificConflict,
+  generateWeeklyConflictReport,
+  type ConflictInsightResult,
+  type ConflictInsightOptions,
+} from './conflict-insights';
