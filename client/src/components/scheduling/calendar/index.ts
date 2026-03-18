@@ -10,3 +10,4 @@ export { DayColumn, DayHeader } from './DayColumn';
 export { EventBlock, AllDayEventBlock, EventPreview } from './EventBlock';
 export { DraggableEventBlock } from './DraggableEventBlock';
 export { EventSheet } from './EventSheet';
+export { ConflictWarning, ConflictBadge } from './ConflictWarning';
