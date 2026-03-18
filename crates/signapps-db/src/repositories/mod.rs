@@ -59,3 +59,6 @@ pub use external_sync_repository::{
     EventMappingRepository, ExternalCalendarRepository, OAuthStateRepository,
     ProviderConnectionRepository, SyncConfigRepository, SyncConflictRepository, SyncLogRepository,
 };
+
+pub mod user_preferences_repository;
+pub use user_preferences_repository::UserPreferencesRepository;

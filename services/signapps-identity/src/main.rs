@@ -111,6 +111,14 @@ fn create_router(state: AppState) -> Router {
         // User profile (self)
         .route("/api/v1/users/me", get(handlers::users::get_me))
         .route("/api/v1/users/me", put(handlers::users::update_me))
+        // User preferences
+        .route("/api/v1/users/me/preferences", get(handlers::preferences::get_preferences))
+        .route("/api/v1/users/me/preferences/sync", post(handlers::preferences::sync_preferences))
+        .route("/api/v1/users/me/preferences/:section", axum::routing::patch(handlers::preferences::patch_preferences))
+        .route("/api/v1/users/me/preferences/conflicts", get(handlers::preferences::check_conflicts))
+        .route("/api/v1/users/me/preferences/reset", post(handlers::preferences::reset_preferences))
+        .route("/api/v1/users/me/preferences/export", get(handlers::preferences::export_preferences))
+        .route("/api/v1/users/me/preferences/import", post(handlers::preferences::import_preferences))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

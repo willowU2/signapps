@@ -18,6 +18,7 @@ pub mod storage_tier2;
 pub mod storage_tier3;
 pub mod tenant;
 pub mod user;
+pub mod user_preferences;
 
 pub use backup::*;
 pub use calendar::*;
@@ -36,3 +37,4 @@ pub use route::*;
 pub use storage_tier3::*;
 pub use tenant::*;
 pub use user::*;
+pub use user_preferences::*;

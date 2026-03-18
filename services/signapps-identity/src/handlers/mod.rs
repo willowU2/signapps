@@ -10,3 +10,4 @@ pub mod resources;
 pub mod tenants;
 pub mod users;
 pub mod webhooks;
+pub mod preferences;
