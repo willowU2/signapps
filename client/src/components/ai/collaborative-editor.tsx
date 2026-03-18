@@ -79,7 +79,7 @@ export function CollaborativeEditor({
         immediatelyRender: false, // Required for SSR compatibility with Next.js
         extensions: [
             StarterKit.configure({
-                history: false, // Yjs handles undo/redo
+                undoRedo: false, // Yjs handles undo/redo
             }),
             Placeholder.configure({ placeholder }),
             Underline,

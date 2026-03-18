@@ -450,7 +450,7 @@ export function InlineLinkInserter({
           </div>
 
           <EntityPicker
-            entityType={targetType === "document" ? "document" : targetType}
+            entityType={targetType as "user" | "file" | "task" | "document"}
             value={targetId}
             onChange={(v) => setTargetId(v as string | null)}
             placeholder="Rechercher..."

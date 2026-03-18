@@ -389,7 +389,7 @@ export function DateField({ field, value, onChange, error, disabled }: FieldRend
           <Calendar
             mode="single"
             selected={date}
-            onSelect={(d) => onChange(d?.toISOString())}
+            onSelect={(d: Date | undefined) => onChange(d?.toISOString())}
             locale={fr}
             initialFocus
           />

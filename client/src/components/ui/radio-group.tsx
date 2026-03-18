@@ -8,17 +8,23 @@ const RadioGroup = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement> & {
     value?: string
     onValueChange?: (value: string) => void
+    disabled?: boolean
   }
->(({ className, value, onValueChange, ...props }, ref) => (
+>(({ className, value, onValueChange, disabled, ...props }, ref) => (
   <div
     ref={ref}
     className={cn("grid gap-2", className)}
     role="radiogroup"
+    aria-disabled={disabled}
     {...props}
   >
     {React.Children.map(props.children, (child) => {
       if (!React.isValidElement(child)) return child;
-      return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, { value, onValueChange });
+      return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, {
+        value,
+        onValueChange,
+        disabled: disabled || (child.props as Record<string, unknown>).disabled,
+      });
     })}
   </div>
 ))

@@ -8,7 +8,7 @@
 
 import * as React from "react";
 import { Search, Loader2, Filter, X, ChevronDown } from "lucide-react";
-import Fuse from "fuse.js";
+import Fuse, { type IFuseOptions } from "fuse.js";
 
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ import { getBlockTypeInfo, getAllBlockRegistries, getSearchWeight } from "./regi
 // Fuse.js Configuration
 // ============================================================================
 
-const fuseOptions: Fuse.IFuseOptions<UniversalBlock> = {
+const fuseOptions: IFuseOptions<UniversalBlock> = {
   keys: [
     { name: "title", weight: 1.0 },
     { name: "subtitle", weight: 0.7 },

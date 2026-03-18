@@ -32,7 +32,7 @@ import type { RolePermissions } from "@/lib/api/identity"
 const roleSchema = z.object({
     name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
     description: z.string().optional(),
-    permissions: z.record(z.array(z.string())).default({}),
+    permissions: z.record(z.string(), z.array(z.string())),
 })
 
 type RoleFormValues = z.infer<typeof roleSchema>

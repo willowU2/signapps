@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { schedulerApi } from "@/lib/api/scheduler";
+import { calendarApi, tasksApi } from "@/lib/api/calendar";
 import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
 const statusConfig = {
@@ -55,8 +55,24 @@ export function WidgetRecentTasks({ widget }: WidgetRenderProps) {
   const { data: tasks, isLoading } = useQuery({
     queryKey: ["widget-tasks", limit, showCompleted, filterStatus],
     queryFn: async () => {
-      const response = await schedulerApi.listTasks({ limit: limit * 2 });
-      let items = (response.data || []) as TaskItem[];
+      // First get user's calendars
+      const calendarsResponse = await calendarApi.listCalendars();
+      const calendars = calendarsResponse.data || [];
+      if (calendars.length === 0) return [];
+
+      // Get tasks from all calendars
+      const allTasks: TaskItem[] = [];
+      for (const cal of calendars) {
+        try {
+          const tasksResponse = await tasksApi.listTasks(cal.id);
+          const calTasks = (tasksResponse.data || []) as TaskItem[];
+          allTasks.push(...calTasks);
+        } catch {
+          // Skip calendars that fail to load tasks
+        }
+      }
+
+      let items = allTasks;
 
       // Filter by status
       if (filterStatus !== "all") {

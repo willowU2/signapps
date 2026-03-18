@@ -3,9 +3,9 @@
  * Interacts with signapps-office service for PDF operations
  */
 
-import { createApiClient, SERVICE_URLS, ApiError, handleApiError } from './factory';
+import { getClient, getServiceBaseUrl, ServiceName } from './factory';
 
-const api = createApiClient('OFFICE');
+const api = getClient(ServiceName.OFFICE);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Types
@@ -275,7 +275,7 @@ function downloadBlob(blob: Blob, filename: string): void {
  * Get the base URL for PDF service
  */
 export function getPdfServiceUrl(): string {
-  return SERVICE_URLS.OFFICE;
+  return getServiceBaseUrl(ServiceName.OFFICE);
 }
 
 // Export all functions

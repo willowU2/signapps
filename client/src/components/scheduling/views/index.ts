@@ -8,3 +8,4 @@ export { DayView, ThreeDayView } from './DayView';
 export { WeekView, WeekViewCompact } from './WeekView';
 export { MonthView, MiniMonthView } from './MonthView';
 export { AgendaView } from './AgendaView';
+export { TasksView } from './TasksView';

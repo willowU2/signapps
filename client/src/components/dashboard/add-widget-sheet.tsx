@@ -72,6 +72,7 @@ export function AddWidgetSheet({ open, onOpenChange }: AddWidgetSheetProps) {
     const newWidgets = preset.widgets.map((w, i) => ({
       ...w,
       id: `${w.type}-${Date.now()}-${i}`,
+      type: w.type as WidgetType,
     }));
     setWidgets(newWidgets);
     onOpenChange(false);

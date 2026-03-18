@@ -13,6 +13,7 @@ import { DayView, ThreeDayView } from '@/components/scheduling/views/DayView';
 import { WeekView } from '@/components/scheduling/views/WeekView';
 import { MonthView } from '@/components/scheduling/views/MonthView';
 import { AgendaView } from '@/components/scheduling/views/AgendaView';
+import { TasksView } from '@/components/scheduling/views/TasksView';
 import { CommandPalette } from '@/components/scheduling/command-palette/CommandPalette';
 import { QuickCreate } from '@/components/scheduling/command-palette/QuickCreate';
 import { BottomTabs, BottomTabsSpacer } from '@/components/scheduling/mobile/BottomTabs';
@@ -46,7 +47,7 @@ export default function SchedulingPage() {
       case 'my-day':
         return renderCalendarView();
       case 'tasks':
-        return <TasksPlaceholder />;
+        return <TasksView />;
       case 'resources':
         return <ResourcesPlaceholder />;
       case 'team':

@@ -69,7 +69,9 @@ import { getBlockTypeInfo } from "./registry";
 // Icon Mapping
 // ============================================================================
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+type IconProps = { className?: string; style?: React.CSSProperties };
+
+const iconMap: Record<string, React.ComponentType<IconProps>> = {
   User,
   File,
   Folder,
@@ -80,7 +82,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   // Add more as needed
 };
 
-function getIcon(iconName?: string): React.ComponentType<{ className?: string }> {
+function getIcon(iconName?: string): React.ComponentType<IconProps> {
   if (!iconName) return Box;
   return iconMap[iconName] || Box;
 }

@@ -19,7 +19,7 @@ import {
   type EventEntity,
   type DocumentEntity,
 } from "@/lib/blocks";
-import { identityApi } from "@/lib/api/identity";
+import { usersApi } from "@/lib/api/identity";
 import { storageApi } from "@/lib/api/storage";
 import { schedulerApi } from "@/lib/api/scheduler";
 import { calendarApi } from "@/lib/api/calendar";
@@ -70,7 +70,7 @@ export function useUniversalSearch(
   const usersQuery = useQuery({
     queryKey: ["universal-search", "users"],
     queryFn: async () => {
-      const response = await identityApi.listUsers({ limit: limitPerType });
+      const response = await usersApi.list(undefined, limitPerType);
       return response.data.users || [];
     },
     enabled: includeUsers,
@@ -81,21 +81,21 @@ export function useUniversalSearch(
   const filesQuery = useQuery({
     queryKey: ["universal-search", "files"],
     queryFn: async () => {
-      const response = await storageApi.listFiles("default", "", {
-        limit: limitPerType,
-      });
-      return response.data.files || [];
+      const response = await storageApi.listFiles("default", "");
+      // Limit results client-side since API doesn't support limit
+      return (response.data.objects || []).slice(0, limitPerType);
     },
     enabled: includeFiles,
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch tasks
+  // Fetch tasks (using scheduled jobs as tasks for now)
   const tasksQuery = useQuery({
     queryKey: ["universal-search", "tasks"],
     queryFn: async () => {
-      const response = await schedulerApi.listTasks({ limit: limitPerType });
-      return response.data || [];
+      const response = await schedulerApi.listJobs();
+      // Limit results client-side
+      return (response.data || []).slice(0, limitPerType);
     },
     enabled: includeTasks,
     staleTime: 5 * 60 * 1000,
@@ -105,15 +105,20 @@ export function useUniversalSearch(
   const eventsQuery = useQuery({
     queryKey: ["universal-search", "events"],
     queryFn: async () => {
+      // First get user's calendars, then fetch events from the first one
+      const calendarsResponse = await calendarApi.listCalendars();
+      const calendars = calendarsResponse.data || [];
+      if (calendars.length === 0) return [];
+
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
       const response = await calendarApi.listEvents(
-        undefined,
-        startOfMonth.toISOString(),
-        endOfMonth.toISOString()
+        calendars[0].id,
+        startOfMonth,
+        endOfMonth
       );
-      return response.data || [];
+      return (response.data || []).slice(0, limitPerType);
     },
     enabled: includeEvents,
     staleTime: 5 * 60 * 1000,
@@ -151,15 +156,15 @@ export function useUniversalSearch(
         const fileBlocks = filesQuery.data.map((file: any) =>
           toBlock(file.is_directory ? "folder" : "file", {
             id: file.id || file.key,
-            name: file.name || file.key?.split("/").pop(),
-            key: file.key,
+            name: file.name || file.key?.split("/").pop() || "",
+            key: file.key || "",
             bucket: file.bucket || "default",
-            mimeType: file.mime_type || file.content_type,
-            size: file.size,
-            isDirectory: file.is_directory || false,
-            createdAt: file.created_at,
-            updatedAt: file.updated_at,
-            thumbnailUrl: file.thumbnail_url,
+            content_type: file.mime_type || file.content_type || "application/octet-stream",
+            size: file.size || 0,
+            is_folder: file.is_directory || false,
+            created_at: file.created_at,
+            updated_at: file.updated_at,
+            thumbnail_url: file.thumbnail_url,
           } as FileEntity)
         );
         allBlocks.push(...fileBlocks);
@@ -174,16 +179,16 @@ export function useUniversalSearch(
         const taskBlocks = tasksQuery.data.map((task: any) =>
           toBlock("task", {
             id: task.id,
-            title: task.title,
+            title: task.title || "",
             description: task.description,
             status: task.status || "todo",
             priority: task.priority || "medium",
-            dueDate: task.due_date,
-            assigneeId: task.assignee_id,
-            projectId: task.project_id,
+            due_date: task.due_date,
+            assignee_id: task.assignee_id,
+            project_id: task.project_id,
             tags: task.tags || [],
-            createdAt: task.created_at,
-            updatedAt: task.updated_at,
+            created_at: task.created_at,
+            updated_at: task.updated_at,
           } as TaskEntity)
         );
         allBlocks.push(...taskBlocks);
@@ -198,15 +203,15 @@ export function useUniversalSearch(
         const eventBlocks = eventsQuery.data.map((event: any) =>
           toBlock("event", {
             id: event.id,
-            title: event.title,
+            title: event.title || "",
             description: event.description,
-            startTime: event.start_time,
-            endTime: event.end_time,
+            start_time: event.start_time || new Date().toISOString(),
+            end_time: event.end_time,
             location: event.location,
-            allDay: event.all_day || false,
-            calendarId: event.calendar_id,
+            all_day: event.all_day || false,
+            calendar_id: event.calendar_id,
             attendees: event.attendees || [],
-            createdAt: event.created_at,
+            created_at: event.created_at,
           } as EventEntity)
         );
         allBlocks.push(...eventBlocks);

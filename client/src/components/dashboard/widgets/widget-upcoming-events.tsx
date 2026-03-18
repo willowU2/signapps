@@ -46,15 +46,31 @@ export function WidgetUpcomingEvents({ widget }: WidgetRenderProps) {
   const { data: events, isLoading } = useQuery({
     queryKey: ["widget-events", limit, daysAhead],
     queryFn: async () => {
+      // First get user's calendars
+      const calendarsResponse = await calendarApi.listCalendars();
+      const calendars = calendarsResponse.data || [];
+      if (calendars.length === 0) return [];
+
       const now = new Date();
       const endDate = addDays(now, daysAhead);
-      const response = await calendarApi.listEvents(
-        undefined,
-        now.toISOString(),
-        endDate.toISOString()
-      );
-      const items = (response.data || []) as EventItem[];
-      return items
+
+      // Get events from all calendars
+      const allEvents: EventItem[] = [];
+      for (const cal of calendars) {
+        try {
+          const response = await calendarApi.listEvents(
+            cal.id,
+            now,
+            endDate
+          );
+          const calEvents = (response.data || []) as EventItem[];
+          allEvents.push(...calEvents);
+        } catch {
+          // Skip calendars that fail to load events
+        }
+      }
+
+      return allEvents
         .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
         .slice(0, limit);
     },

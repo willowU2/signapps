@@ -4,14 +4,14 @@ import { ReactRenderer } from '@tiptap/react';
 import tippy, { Instance as TippyInstance } from 'tippy.js';
 import { SuggestionOptions, SuggestionProps, SuggestionKeyDownProps } from '@tiptap/suggestion';
 import { MentionList, MentionListRef, MentionUser } from '@/components/docs/extensions/mention-suggestion';
-import { createServiceClient } from '@/lib/api/factory';
+import { createServiceClient, ServiceName } from '@/lib/api/factory';
 
 /**
  * Fetch users from the identity service for mention suggestions
  */
 async function fetchUsers(query: string): Promise<MentionUser[]> {
   try {
-    const api = createServiceClient('IDENTITY');
+    const api = createServiceClient(ServiceName.IDENTITY);
     const response = await api.get('/users', {
       params: {
         search: query,

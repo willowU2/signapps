@@ -439,10 +439,10 @@ export function PDFPreview({
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
                   }
-                  // Highlight search terms
+                  // Highlight search terms - cast needed because react-pdf types are strict
                   customTextRenderer={
                     searchTerm
-                      ? ({ str }) => {
+                      ? (({ str }: { str: string }) => {
                           if (!searchTerm) return str;
                           const parts = str.split(new RegExp(`(${searchTerm})`, 'gi'));
                           return parts.map((part, i) =>
@@ -454,7 +454,7 @@ export function PDFPreview({
                               part
                             )
                           );
-                        }
+                        }) as unknown as (textItem: { str: string }) => string
                       : undefined
                   }
                 />

@@ -86,12 +86,25 @@ export function WidgetRecentFiles({ widget }: WidgetRenderProps) {
   const { data: files, isLoading } = useQuery({
     queryKey: ["widget-files", limit],
     queryFn: async () => {
-      const response = await storageApi.listFiles("default", "", {
-        limit,
-        sort: "updated_at",
-        order: "desc",
-      });
-      return (response.data.files || []) as FileItem[];
+      const response = await storageApi.listFiles("default", "");
+      // Map ObjectInfo to FileItem and sort by last_modified desc
+      const items: FileItem[] = (response.data.objects || []).map((obj) => ({
+        id: obj.key,
+        name: obj.key.split("/").pop() || obj.key,
+        key: obj.key,
+        bucket: "default",
+        mime_type: obj.content_type ?? undefined,
+        size: obj.size,
+        is_directory: false,
+        updated_at: obj.last_modified ?? undefined,
+      }));
+      return items
+        .sort((a, b) => {
+          const dateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+          const dateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+          return dateB - dateA;
+        })
+        .slice(0, limit);
     },
     staleTime: 60 * 1000,
   });

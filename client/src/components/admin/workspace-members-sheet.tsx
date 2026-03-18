@@ -170,7 +170,7 @@ export function WorkspaceMembersSheet({ open, onOpenChange, workspace }: Workspa
                                     ) : (
                                         availableUsers.map((user) => (
                                             <SelectItem key={user.id} value={user.id}>
-                                                {user.full_name || user.username}
+                                                {user.display_name || user.username}
                                             </SelectItem>
                                         ))
                                     )}
@@ -242,7 +242,7 @@ export function WorkspaceMembersSheet({ open, onOpenChange, workspace }: Workspa
                                                             </Avatar>
                                                             <div className="min-w-0">
                                                                 <p className="font-medium text-sm truncate">
-                                                                    {member.full_name || member.username}
+                                                                    {member.display_name || member.username}
                                                                 </p>
                                                                 {member.email && (
                                                                     <p className="text-xs text-muted-foreground truncate">

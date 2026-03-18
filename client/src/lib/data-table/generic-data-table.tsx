@@ -599,7 +599,13 @@ export function GenericDataTable<TData>({
               emptyState?.description ??
               `Il n'y a pas encore de ${config.pluralName.toLowerCase()}.`
             }
-            action={emptyState?.action}
+            action={
+              emptyState?.action ? (
+                <Button onClick={emptyState.action.onClick}>
+                  {emptyState.action.label}
+                </Button>
+              ) : undefined
+            }
           />
         ) : (
           <CardsView
@@ -671,7 +677,13 @@ export function GenericDataTable<TData>({
                           emptyState?.description ??
                           `Il n'y a pas encore de ${config.pluralName.toLowerCase()}.`
                         }
-                        action={emptyState?.action}
+                        action={
+                          emptyState?.action ? (
+                            <Button onClick={emptyState.action.onClick}>
+                              {emptyState.action.label}
+                            </Button>
+                          ) : undefined
+                        }
                         className="border-none bg-transparent h-full"
                       />
                     </TableCell>
