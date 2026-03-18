@@ -27,3 +27,6 @@ export * from './tasks';
 
 // Resource components
 export * from './resources';
+
+// Team components
+export * from './team';
