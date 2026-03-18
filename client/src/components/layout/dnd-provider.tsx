@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { FEATURES } from '@/lib/features';
 import { taskAttachmentsApi } from '@/lib/api/scheduler';
 import { calendarApi } from '@/lib/api/calendar';
+import { useQuickTasksStore, type AttachedFile } from '@/lib/store';
 
 interface GlobalDndProviderProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ interface GlobalDndProviderProps {
 export function GlobalDndProvider({ children }: GlobalDndProviderProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeData, setActiveData] = useState<any>(null);
+  const { attachFileToTask, linkEventToTask } = useQuickTasksStore();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -55,6 +57,20 @@ export function GlobalDndProvider({ children }: GlobalDndProviderProps) {
           // Build storage URL for the file
           const fileUrl = `/api/v1/files/${file.bucket || 'default'}/${encodeURIComponent(file.key || file.name)}`;
 
+          // Create AttachedFile for local store
+          const attachedFile: AttachedFile = {
+            id: crypto.randomUUID(),
+            name: file.name,
+            path: fileUrl,
+            size: file.size,
+            type: file.contentType,
+            attachedAt: new Date().toISOString(),
+          };
+
+          // Update local store immediately for instant UI feedback
+          attachFileToTask(task.id, attachedFile);
+
+          // Also persist to backend
           taskAttachmentsApi
             .addAttachment(task.id, {
               file_url: fileUrl,
@@ -62,11 +78,11 @@ export function GlobalDndProvider({ children }: GlobalDndProviderProps) {
               file_size_bytes: file.size,
             })
             .then(() => {
-              toast.success(`Attached "${file.name}" to task "${task.title}"`);
+              toast.success(`"${file.name}" attaché à la tâche "${task.title}"`);
             })
             .catch((err) => {
               console.error('Failed to attach file to task:', err);
-              toast.error('Failed to attach file to task');
+              toast.error('Erreur lors de l\'attachement du fichier');
             });
         }
       }
@@ -92,18 +108,24 @@ export function GlobalDndProvider({ children }: GlobalDndProviderProps) {
                 start_time: startTime.toISOString(),
                 end_time: endTime.toISOString(),
               })
-              .then(() => {
-                const formattedDate = startTime.toLocaleDateString();
-                toast.success(`Scheduled task "${task.title || task.label}" for ${formattedDate}`);
+              .then((response) => {
+                // Link the created event to the task in local store
+                if (response?.id) {
+                  linkEventToTask(task.id, response.id);
+                }
+                const formattedDate = startTime.toLocaleDateString('fr-FR');
+                toast.success(`Tâche "${task.title || task.label}" planifiée pour le ${formattedDate}`);
               })
               .catch((err) => {
                 console.error('Failed to create event:', err);
-                toast.error('Failed to create calendar event');
+                toast.error('Erreur lors de la création de l\'événement');
               });
           } else {
-            // No calendar ID, just show success message (fallback)
-            const formattedDate = startTime.toLocaleDateString();
-            toast.success(`Scheduled task "${task.title || task.label}" for ${formattedDate}`);
+            // No calendar ID - create a placeholder event ID and link it
+            const placeholderEventId = `local-event-${crypto.randomUUID()}`;
+            linkEventToTask(task.id, placeholderEventId);
+            const formattedDate = startTime.toLocaleDateString('fr-FR');
+            toast.success(`Tâche "${task.title || task.label}" planifiée pour le ${formattedDate}`);
           }
         }
       }

@@ -3,11 +3,59 @@
 import { useState, useMemo } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useDroppable } from "@dnd-kit/core"
 
 interface MiniCalendarProps {
   selectedDate?: Date
   onSelectDate?: (date: Date) => void
   className?: string
+  calendarId?: string
+}
+
+// Droppable day cell component
+function DroppableDay({
+  day,
+  isCurrentMonth,
+  date,
+  isToday,
+  isSelected,
+  onSelect,
+  calendarId,
+}: {
+  day: number
+  isCurrentMonth: boolean
+  date: Date
+  isToday: boolean
+  isSelected: boolean
+  onSelect: () => void
+  calendarId?: string
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `calendar-slot-${date.toISOString()}`,
+    data: {
+      type: "calendar-slot",
+      date: date.toISOString(),
+      calendarId,
+    },
+  })
+
+  return (
+    <button
+      ref={setNodeRef}
+      onClick={onSelect}
+      className={cn(
+        "h-6 w-6 mx-auto flex items-center justify-center text-xs rounded-full transition-colors",
+        isCurrentMonth
+          ? "text-[#3c4043] hover:bg-gray-100"
+          : "text-[#b0b5b9] hover:bg-gray-50",
+        isToday && "bg-[#1a73e8] text-white hover:bg-[#1557b0]",
+        isSelected && !isToday && "bg-[#e8f0fe] text-[#1a73e8]",
+        isOver && "ring-2 ring-[#1a73e8] ring-offset-1 bg-[#e8f0fe]"
+      )}
+    >
+      {day}
+    </button>
+  )
 }
 
 const DAYS = ["L", "M", "M", "J", "V", "S", "D"]
@@ -16,7 +64,7 @@ const MONTHS = [
   "juillet", "août", "septembre", "octobre", "novembre", "décembre"
 ]
 
-export function MiniCalendar({ selectedDate, onSelectDate, className }: MiniCalendarProps) {
+export function MiniCalendar({ selectedDate, onSelectDate, className, calendarId }: MiniCalendarProps) {
   const [viewDate, setViewDate] = useState(() => selectedDate || new Date())
 
   const { year, month, days } = useMemo(() => {
@@ -127,20 +175,16 @@ export function MiniCalendar({ selectedDate, onSelectDate, className }: MiniCale
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-0">
         {days.map((d, i) => (
-          <button
+          <DroppableDay
             key={i}
-            onClick={() => handleDateClick(d.date)}
-            className={cn(
-              "h-6 w-6 mx-auto flex items-center justify-center text-xs rounded-full transition-colors",
-              d.isCurrentMonth
-                ? "text-[#3c4043] hover:bg-gray-100"
-                : "text-[#b0b5b9] hover:bg-gray-50",
-              isToday(d.date) && "bg-[#1a73e8] text-white hover:bg-[#1557b0]",
-              isSelected(d.date) && !isToday(d.date) && "bg-[#e8f0fe] text-[#1a73e8]"
-            )}
-          >
-            {d.day}
-          </button>
+            day={d.day}
+            isCurrentMonth={d.isCurrentMonth}
+            date={d.date}
+            isToday={isToday(d.date)}
+            isSelected={isSelected(d.date) || false}
+            onSelect={() => handleDateClick(d.date)}
+            calendarId={calendarId}
+          />
         ))}
       </div>
     </div>

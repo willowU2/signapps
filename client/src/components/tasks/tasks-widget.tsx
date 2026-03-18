@@ -26,6 +26,7 @@ export function TasksWidget() {
         addTask,
         toggleTask,
         removeTask,
+        removeFileFromTask,
         setSelectedList,
     } = useQuickTasksStore();
 
@@ -137,6 +138,7 @@ export function TasksWidget() {
                                             task={task}
                                             onToggle={toggleTask}
                                             onRemove={removeTask}
+                                            onRemoveFile={removeFileFromTask}
                                         />
                                     ))}
                                 </div>
@@ -157,6 +159,7 @@ export function TasksWidget() {
                                                 task={task}
                                                 onToggle={toggleTask}
                                                 onRemove={removeTask}
+                                                onRemoveFile={removeFileFromTask}
                                             />
                                         ))}
                                     </div>

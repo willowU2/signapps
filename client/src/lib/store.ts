@@ -168,6 +168,15 @@ export interface TaskList {
   color?: string;
 }
 
+export interface AttachedFile {
+  id: string;
+  name: string;
+  path: string;
+  size?: number;
+  type?: string;
+  attachedAt: string;
+}
+
 export interface QuickTask {
   id: string;
   label: string;
@@ -175,6 +184,8 @@ export interface QuickTask {
   dueDate?: string; // ISO date string
   assignee?: TaskAssignee;
   listId?: string;
+  attachedFiles?: AttachedFile[];  // Files linked to this task
+  linkedEventId?: string;  // Calendar event linked to this task
   createdAt: string;
 }
 
@@ -189,6 +200,11 @@ interface QuickTasksState {
   addList: (name: string) => void;
   removeList: (id: string) => void;
   setSelectedList: (id: string | null) => void;
+  // DnD Integration
+  attachFileToTask: (taskId: string, file: AttachedFile) => void;
+  removeFileFromTask: (taskId: string, fileId: string) => void;
+  linkEventToTask: (taskId: string, eventId: string) => void;
+  unlinkEventFromTask: (taskId: string) => void;
 }
 
 const defaultLists: TaskList[] = [
@@ -236,6 +252,35 @@ export const useQuickTasksStore = create<QuickTasksState>()(
         })),
       setSelectedList: (id) =>
         set({ selectedListId: id }),
+      // DnD Integration methods
+      attachFileToTask: (taskId, file) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === taskId
+              ? { ...t, attachedFiles: [...(t.attachedFiles || []), file] }
+              : t
+          ),
+        })),
+      removeFileFromTask: (taskId, fileId) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === taskId
+              ? { ...t, attachedFiles: (t.attachedFiles || []).filter((f) => f.id !== fileId) }
+              : t
+          ),
+        })),
+      linkEventToTask: (taskId, eventId) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === taskId ? { ...t, linkedEventId: eventId } : t
+          ),
+        })),
+      unlinkEventFromTask: (taskId) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === taskId ? { ...t, linkedEventId: undefined } : t
+          ),
+        })),
     }),
     { name: 'quick-tasks-storage' }
   )
