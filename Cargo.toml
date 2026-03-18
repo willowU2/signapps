@@ -84,8 +84,6 @@ opendal = { version = "0.51", features = ["services-fs", "services-s3"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 prometheus = "0.13"
-opentelemetry = "0.22"
-opentelemetry-otlp = "0.15"
 
 # Error handling
 thiserror = "1.0"
@@ -97,7 +95,6 @@ chrono = { version = "0.4", features = ["serde"] }
 dotenvy = "0.15"
 config = "0.14"
 validator = { version = "0.16", features = ["derive"] }
-derive_more = "0.99"
 async-trait = "0.1"
 futures = "0.3"
 futures-util = "0.3"
@@ -122,7 +119,6 @@ async-tftp = "0.4.2"
 # Reverse proxy
 hyper = { version = "1.4", features = ["full"] }
 hyper-util = { version = "0.1", features = ["tokio", "client-legacy", "http1", "http2"] }
-http-body-util = "0.1"
 arc-swap = "1.7"
 tokio-rustls = "0.26"
 rustls = { version = "0.23", features = ["ring"] }
