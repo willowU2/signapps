@@ -11,3 +11,4 @@ export { EventBlock, AllDayEventBlock, EventPreview } from './EventBlock';
 export { DraggableEventBlock } from './DraggableEventBlock';
 export { EventSheet } from './EventSheet';
 export { ConflictWarning, ConflictBadge } from './ConflictWarning';
+export { LocationSelect } from './LocationSelect';
