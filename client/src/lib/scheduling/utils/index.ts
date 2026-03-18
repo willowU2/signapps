@@ -9,3 +9,4 @@ export * from './overlap-calculator';
 export * from './conflict-detection';
 export * from './availability-finder';
 export * from './search-service';
+export * from './ics-export';
