@@ -16,3 +16,10 @@ export {
   useConflictDetection,
   useConflictDetectionDebounced,
 } from './use-conflict-detection';
+
+export {
+  useAvailabilityFinder,
+  useQuickAvailability,
+  type UseAvailabilityFinderOptions,
+  type UseAvailabilityFinderResult,
+} from './use-availability-finder';

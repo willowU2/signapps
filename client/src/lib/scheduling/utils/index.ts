@@ -7,3 +7,4 @@
 export * from './event-layout';
 export * from './overlap-calculator';
 export * from './conflict-detection';
+export * from './availability-finder';
