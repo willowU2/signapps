@@ -346,3 +346,177 @@ export interface EventLocation {
   resourceId?: string; // If location is a resource (meeting room)
   meetingUrl?: string; // For virtual meetings
 }
+
+// ============================================================================
+// Floor Plan Types
+// ============================================================================
+
+export interface FloorPlanData {
+  id: string;
+  name: string;
+  floor: string;
+  buildingId?: string;
+  svgContent?: string; // Raw SVG or URL
+  width: number;
+  height: number;
+  resources: FloorPlanResource[];
+}
+
+export interface FloorPlanResource {
+  id: string;
+  resourceId: string; // Links to Resource
+  name: string;
+  type: 'room' | 'desk' | 'equipment' | 'zone';
+  path: string; // SVG path or element ID
+  bounds: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  capacity?: number;
+  amenities?: string[];
+}
+
+export interface FloorPlanViewState {
+  zoom: number;
+  panX: number;
+  panY: number;
+  selectedResourceId?: string;
+  highlightedResourceIds?: string[];
+}
+
+// ============================================================================
+// Workload & Analytics Types
+// ============================================================================
+
+export interface WorkloadData {
+  memberId: string;
+  memberName: string;
+  avatarUrl?: string;
+  period: DateRange;
+  scheduledHours: number;
+  capacityHours: number;
+  utilizationPercent: number;
+  breakdown: WorkloadBreakdown;
+  trend: 'up' | 'down' | 'stable';
+  trendPercent?: number;
+}
+
+export interface WorkloadBreakdown {
+  meetings: number;
+  focusTime: number;
+  tasks: number;
+  other: number;
+}
+
+export interface TimeAnalytics {
+  period: DateRange;
+  totalHours: number;
+  breakdown: {
+    category: string;
+    hours: number;
+    percent: number;
+    color: string;
+  }[];
+  comparison?: {
+    previousPeriod: DateRange;
+    changePercent: number;
+  };
+  insights: AnalyticsInsight[];
+}
+
+export interface AnalyticsInsight {
+  id: string;
+  type: 'info' | 'warning' | 'suggestion';
+  title: string;
+  description: string;
+  metric?: {
+    value: number;
+    unit: string;
+    trend?: 'up' | 'down' | 'stable';
+  };
+  actionLabel?: string;
+  action?: () => void;
+}
+
+// ============================================================================
+// AI Suggestions Types
+// ============================================================================
+
+export interface SchedulingSuggestion {
+  id: string;
+  type: 'time-block' | 'reschedule' | 'conflict-resolution' | 'optimization';
+  title: string;
+  description: string;
+  confidence: number; // 0-1
+  impact: 'low' | 'medium' | 'high';
+  suggestedAction: {
+    type: 'create' | 'update' | 'delete' | 'move';
+    targetId?: string;
+    data?: Partial<ScheduleBlock>;
+  };
+  reasoning?: string;
+  alternatives?: SchedulingSuggestion[];
+}
+
+export interface AutoScheduleRequest {
+  tasks: Task[];
+  constraints: AutoScheduleConstraints;
+  preferences?: AutoSchedulePreferences;
+}
+
+export interface AutoScheduleConstraints {
+  dateRange: DateRange;
+  workingHours: { start: number; end: number };
+  excludeDays?: number[]; // 0-6 (Sunday-Saturday)
+  respectDeadlines: boolean;
+  minBlockSize?: number; // minutes
+  maxBlockSize?: number;
+}
+
+export interface AutoSchedulePreferences {
+  preferMorning?: boolean;
+  groupSimilarTasks?: boolean;
+  bufferBetweenTasks?: number; // minutes
+  prioritizeUrgent?: boolean;
+}
+
+export interface AutoScheduleResult {
+  scheduled: Array<{
+    task: Task;
+    suggestedSlot: DateRange;
+    confidence: number;
+  }>;
+  unscheduled: Array<{
+    task: Task;
+    reason: string;
+  }>;
+  conflicts: ConflictInfo[];
+}
+
+export interface ConflictInfo {
+  id: string;
+  type: 'overlap' | 'overload' | 'deadline' | 'preference';
+  severity: 'low' | 'medium' | 'high';
+  blocks: ScheduleBlock[];
+  description: string;
+  suggestions: SchedulingSuggestion[];
+}
+
+// ============================================================================
+// Undo/Redo Types
+// ============================================================================
+
+export interface UndoableAction {
+  id: string;
+  type: 'create' | 'update' | 'delete' | 'move' | 'batch';
+  timestamp: Date;
+  description: string;
+  undo: () => Promise<void>;
+  redo: () => Promise<void>;
+  data: {
+    before?: unknown;
+    after?: unknown;
+  };
+}

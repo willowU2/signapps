@@ -7,3 +7,4 @@
 export { ResourceCard, ResourceCardCompact } from './ResourceCard';
 export { BookingSheet } from './BookingSheet';
 export { ResourcesView } from './ResourcesView';
+export { FloorPlan, generateMockFloorPlan } from './FloorPlan';
