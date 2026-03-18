@@ -5,17 +5,17 @@
  *
  * Single day calendar view with full event details.
  * Uses TimeGrid for rendering with day-specific optimizations.
+ * Supports drag & drop for moving and resizing events.
  */
 
 import * as React from 'react';
-import { format, setHours, setMinutes, addMinutes } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSchedulingNavigation, useSchedulingUI } from '@/stores/scheduling-store';
-import { useEvents, useCreateEvent } from '@/lib/scheduling/api/calendar';
+import { useEvents, useMoveEvent } from '@/lib/scheduling/api/calendar';
 import { TimeGrid, useSlotClickHandler } from '../calendar/TimeGrid';
-import { EventBlock } from '../calendar/EventBlock';
+import { DraggableEventBlock } from '../calendar/DraggableEventBlock';
 import { calculateDayLayouts } from '@/lib/scheduling/utils/event-layout';
+import { useEventDrag, useDragPreview } from '@/lib/scheduling/hooks/use-event-drag';
 import type { ScheduleBlock, EventLayout } from '@/lib/scheduling/types/scheduling';
 
 // ============================================================================
@@ -49,6 +49,28 @@ export function DayView({
     end: dateRange.end,
   });
 
+  // Move event mutation
+  const moveEvent = useMoveEvent();
+
+  // Drag & Drop
+  const { dragState, containerRef, handlers } = useEventDrag({
+    slotHeight,
+    slotDuration: viewConfig.slotDuration,
+    workingHoursStart: viewConfig.workingHoursStart,
+    workingHoursEnd: viewConfig.workingHoursEnd,
+    onEventMove: (eventId, start, end) => {
+      moveEvent.mutate({ eventId, start, end });
+    },
+  });
+
+  // Drag preview
+  const dragPreview = useDragPreview(
+    dragState,
+    slotHeight,
+    viewConfig.slotDuration,
+    viewConfig.workingHoursStart
+  );
+
   // Calculate layouts
   const layouts = React.useMemo(() => {
     return calculateDayLayouts(events, currentDate, {
@@ -63,16 +85,24 @@ export function DayView({
     onCreate: onCreateEvent,
   });
 
-  // Render event
+  // Render event with drag support
   const renderEvent = React.useCallback(
-    (layout: EventLayout) => (
-      <EventBlock
-        key={layout.block.id}
-        layout={layout}
-        onClick={onEventClick}
-      />
-    ),
-    [onEventClick]
+    (layout: EventLayout) => {
+      const isDraggingThis =
+        dragState.isDragging && dragState.eventId === layout.block.id;
+
+      return (
+        <DraggableEventBlock
+          key={layout.block.id}
+          layout={layout}
+          dragState={dragState}
+          previewLayout={isDraggingThis ? dragPreview : null}
+          onClick={onEventClick}
+          onDragStart={handlers.onDragStart}
+        />
+      );
+    },
+    [onEventClick, dragState, dragPreview, handlers.onDragStart]
   );
 
   if (isLoading) {
@@ -87,7 +117,7 @@ export function DayView({
   }
 
   return (
-    <div className={cn('h-full', className)}>
+    <div ref={containerRef} className={cn('h-full', className)}>
       <TimeGrid
         events={events}
         layouts={layouts}
@@ -110,7 +140,7 @@ export function ThreeDayView({
   onEventClick,
   onCreateEvent,
 }: DayViewProps) {
-  const { getDateRange } = useSchedulingNavigation();
+  const { currentDate, getDateRange } = useSchedulingNavigation();
   const { viewConfig } = useSchedulingUI();
   const dateRange = getDateRange();
 
@@ -120,11 +150,61 @@ export function ThreeDayView({
     end: dateRange.end,
   });
 
+  // Move event mutation
+  const moveEvent = useMoveEvent();
+
+  // Drag & Drop
+  const { dragState, containerRef, handlers } = useEventDrag({
+    slotHeight,
+    slotDuration: viewConfig.slotDuration,
+    workingHoursStart: viewConfig.workingHoursStart,
+    workingHoursEnd: viewConfig.workingHoursEnd,
+    onEventMove: (eventId, start, end) => {
+      moveEvent.mutate({ eventId, start, end });
+    },
+  });
+
+  // Drag preview
+  const dragPreview = useDragPreview(
+    dragState,
+    slotHeight,
+    viewConfig.slotDuration,
+    viewConfig.workingHoursStart
+  );
+
+  // Calculate layouts
+  const layouts = React.useMemo(() => {
+    return calculateDayLayouts(events, currentDate, {
+      viewConfig,
+      slotHeight,
+    });
+  }, [events, currentDate, viewConfig, slotHeight]);
+
   // Handle slot click
   const handleSlotClick = useSlotClickHandler({
     defaultDuration: viewConfig.slotDuration,
     onCreate: onCreateEvent,
   });
+
+  // Render event with drag support
+  const renderEvent = React.useCallback(
+    (layout: EventLayout) => {
+      const isDraggingThis =
+        dragState.isDragging && dragState.eventId === layout.block.id;
+
+      return (
+        <DraggableEventBlock
+          key={layout.block.id}
+          layout={layout}
+          dragState={dragState}
+          previewLayout={isDraggingThis ? dragPreview : null}
+          onClick={onEventClick}
+          onDragStart={handlers.onDragStart}
+        />
+      );
+    },
+    [onEventClick, dragState, dragPreview, handlers.onDragStart]
+  );
 
   if (isLoading) {
     return (
@@ -138,12 +218,14 @@ export function ThreeDayView({
   }
 
   return (
-    <div className={cn('h-full', className)}>
+    <div ref={containerRef} className={cn('h-full', className)}>
       <TimeGrid
         events={events}
+        layouts={layouts}
         slotHeight={slotHeight}
         onSlotClick={handleSlotClick}
         onEventClick={onEventClick}
+        renderEvent={renderEvent}
       />
     </div>
   );

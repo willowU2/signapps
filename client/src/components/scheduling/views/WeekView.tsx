@@ -5,6 +5,7 @@
  *
  * Full week calendar view with 7 day columns.
  * Optimized for desktop with responsive adaptations.
+ * Supports drag & drop for moving and resizing events.
  */
 
 import * as React from 'react';
@@ -18,13 +19,14 @@ import {
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useSchedulingNavigation, useSchedulingUI } from '@/stores/scheduling-store';
-import { useEvents } from '@/lib/scheduling/api/calendar';
+import { useEvents, useMoveEvent } from '@/lib/scheduling/api/calendar';
 import { TimeGrid, useSlotClickHandler } from '../calendar/TimeGrid';
-import { EventBlock } from '../calendar/EventBlock';
+import { DraggableEventBlock } from '../calendar/DraggableEventBlock';
 import {
   calculateMultiDayLayouts,
   getAllDayEvents,
 } from '@/lib/scheduling/utils/event-layout';
+import { useEventDrag, useDragPreview } from '@/lib/scheduling/hooks/use-event-drag';
 import type { ScheduleBlock, EventLayout } from '@/lib/scheduling/types/scheduling';
 
 // ============================================================================
@@ -57,6 +59,28 @@ export function WeekView({
     start: dateRange.start,
     end: dateRange.end,
   });
+
+  // Move event mutation
+  const moveEvent = useMoveEvent();
+
+  // Drag & Drop
+  const { dragState, containerRef, handlers } = useEventDrag({
+    slotHeight,
+    slotDuration: viewConfig.slotDuration,
+    workingHoursStart: viewConfig.workingHoursStart,
+    workingHoursEnd: viewConfig.workingHoursEnd,
+    onEventMove: (eventId, start, end) => {
+      moveEvent.mutate({ eventId, start, end });
+    },
+  });
+
+  // Drag preview
+  const dragPreview = useDragPreview(
+    dragState,
+    slotHeight,
+    viewConfig.slotDuration,
+    viewConfig.workingHoursStart
+  );
 
   // Get days of the week
   const days = React.useMemo(() => {
@@ -92,6 +116,26 @@ export function WeekView({
     onCreate: onCreateEvent,
   });
 
+  // Render event with drag support
+  const renderEvent = React.useCallback(
+    (layout: EventLayout) => {
+      const isDraggingThis =
+        dragState.isDragging && dragState.eventId === layout.block.id;
+
+      return (
+        <DraggableEventBlock
+          key={layout.block.id}
+          layout={layout}
+          dragState={dragState}
+          previewLayout={isDraggingThis ? dragPreview : null}
+          onClick={onEventClick}
+          onDragStart={handlers.onDragStart}
+        />
+      );
+    },
+    [onEventClick, dragState, dragPreview, handlers.onDragStart]
+  );
+
   if (isLoading) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
@@ -104,12 +148,13 @@ export function WeekView({
   }
 
   return (
-    <div className={cn('h-full', className)}>
+    <div ref={containerRef} className={cn('h-full', className)}>
       <TimeGrid
         events={events}
         slotHeight={slotHeight}
         onSlotClick={handleSlotClick}
         onEventClick={onEventClick}
+        renderEvent={renderEvent}
       />
     </div>
   );
