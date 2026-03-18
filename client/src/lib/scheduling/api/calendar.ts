@@ -16,6 +16,9 @@ import type {
   DateRange,
   Task,
   TaskStatus,
+  EventTemplate,
+  CreateTemplateInput,
+  UpdateTemplateInput,
 } from '../types/scheduling';
 
 // ============================================================================
@@ -31,6 +34,8 @@ export const schedulingKeys = {
   tasksList: (calendarId: string) => [...schedulingKeys.tasks(), calendarId] as const,
   task: (id: string) => [...schedulingKeys.tasks(), id] as const,
   calendars: () => [...schedulingKeys.all, 'calendars'] as const,
+  templates: () => [...schedulingKeys.all, 'templates'] as const,
+  template: (id: string) => [...schedulingKeys.templates(), id] as const,
 };
 
 // ============================================================================
@@ -351,5 +356,159 @@ export function useCalendars() {
       return response.data;
     },
     staleTime: 60_000, // 1 minute
+  });
+}
+
+// ============================================================================
+// Event Templates (MVP: localStorage)
+// ============================================================================
+
+const TEMPLATES_STORAGE_KEY = 'scheduling_templates';
+
+function getStoredTemplates(): EventTemplate[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem(TEMPLATES_STORAGE_KEY);
+    if (!data) return [];
+    const templates = JSON.parse(data);
+    return templates.map((t: any) => ({
+      ...t,
+      createdAt: new Date(t.createdAt),
+      updatedAt: new Date(t.updatedAt),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function saveTemplates(templates: EventTemplate[]): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(TEMPLATES_STORAGE_KEY, JSON.stringify(templates));
+}
+
+/**
+ * Fetch all templates
+ */
+export async function fetchTemplates(): Promise<EventTemplate[]> {
+  // MVP: localStorage, future: API call
+  return getStoredTemplates();
+}
+
+/**
+ * Create a new template
+ */
+export async function createTemplate(input: CreateTemplateInput): Promise<EventTemplate> {
+  const templates = getStoredTemplates();
+  const newTemplate: EventTemplate = {
+    id: crypto.randomUUID(),
+    ...input,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  templates.push(newTemplate);
+  saveTemplates(templates);
+  return newTemplate;
+}
+
+/**
+ * Update a template
+ */
+export async function updateTemplate(
+  templateId: string,
+  input: UpdateTemplateInput
+): Promise<EventTemplate> {
+  const templates = getStoredTemplates();
+  const index = templates.findIndex((t) => t.id === templateId);
+  if (index === -1) throw new Error('Template not found');
+
+  templates[index] = {
+    ...templates[index],
+    ...input,
+    eventDefaults: {
+      ...templates[index].eventDefaults,
+      ...(input.eventDefaults || {}),
+    },
+    updatedAt: new Date(),
+  };
+  saveTemplates(templates);
+  return templates[index];
+}
+
+/**
+ * Delete a template
+ */
+export async function deleteTemplate(templateId: string): Promise<void> {
+  const templates = getStoredTemplates();
+  const filtered = templates.filter((t) => t.id !== templateId);
+  saveTemplates(filtered);
+}
+
+// ============================================================================
+// Template React Query Hooks
+// ============================================================================
+
+/**
+ * Hook to fetch all templates
+ */
+export function useTemplates() {
+  return useQuery({
+    queryKey: schedulingKeys.templates(),
+    queryFn: fetchTemplates,
+    staleTime: 60_000,
+  });
+}
+
+/**
+ * Hook to create a template
+ */
+export function useCreateTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createTemplate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: schedulingKeys.templates() });
+      toast.success('Modèle créé');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+}
+
+/**
+ * Hook to update a template
+ */
+export function useUpdateTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ templateId, input }: { templateId: string; input: UpdateTemplateInput }) =>
+      updateTemplate(templateId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: schedulingKeys.templates() });
+      toast.success('Modèle mis à jour');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+  });
+}
+
+/**
+ * Hook to delete a template
+ */
+export function useDeleteTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteTemplate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: schedulingKeys.templates() });
+      toast.success('Modèle supprimé');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
   });
 }

@@ -37,6 +37,9 @@ export interface ScheduleBlock {
   status?: BlockStatus;
   priority?: Priority;
   tags?: string[];
+  location?: EventLocation;
+  reminderMinutes?: number;
+  templateId?: string; // If created from a template
   metadata?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
@@ -254,6 +257,9 @@ export interface CreateEventInput {
   attendees?: string[];
   recurrence?: RecurrenceRule;
   color?: string;
+  location?: EventLocation;
+  reminderMinutes?: number;
+  templateId?: string;
 }
 
 export interface UpdateEventInput {
@@ -273,4 +279,59 @@ export interface EventsQueryParams {
   end: Date;
   calendarIds?: string[];
   includeRecurring?: boolean;
+}
+
+// ============================================================================
+// Event Templates
+// ============================================================================
+
+export interface EventTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  eventDefaults: EventTemplateDefaults;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EventTemplateDefaults {
+  title?: string;
+  description?: string;
+  duration: number; // minutes
+  allDay?: boolean;
+  color?: string;
+  attendees?: string[];
+  location?: string;
+  recurrence?: RecurrenceRule;
+  reminderMinutes?: number;
+}
+
+export interface CreateTemplateInput {
+  name: string;
+  description?: string;
+  category?: string;
+  eventDefaults: EventTemplateDefaults;
+}
+
+export interface UpdateTemplateInput {
+  name?: string;
+  description?: string;
+  category?: string;
+  eventDefaults?: Partial<EventTemplateDefaults>;
+}
+
+// ============================================================================
+// Location
+// ============================================================================
+
+export interface EventLocation {
+  name: string;
+  address?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  resourceId?: string; // If location is a resource (meeting room)
+  meetingUrl?: string; // For virtual meetings
 }
