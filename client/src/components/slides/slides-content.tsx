@@ -240,6 +240,31 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [saveToDrive, documentName])
 
+    // Listen for slide actions from editor menu
+    useEffect(() => {
+        const handleAddSlide = () => slideState.addSlide()
+        const handleDuplicateSlide = () => {
+            if (slideState.activeSlideId) {
+                slideState.duplicateSlide(slideState.activeSlideId)
+            }
+        }
+        const handleDeleteSlide = () => {
+            if (slideState.activeSlideId) {
+                slideState.removeSlide(slideState.activeSlideId)
+            }
+        }
+
+        window.addEventListener('slides:addSlide', handleAddSlide)
+        window.addEventListener('slides:duplicateSlide', handleDuplicateSlide)
+        window.addEventListener('slides:deleteSlide', handleDeleteSlide)
+
+        return () => {
+            window.removeEventListener('slides:addSlide', handleAddSlide)
+            window.removeEventListener('slides:duplicateSlide', handleDuplicateSlide)
+            window.removeEventListener('slides:deleteSlide', handleDeleteSlide)
+        }
+    }, [slideState])
+
     return (
         <div className="flex flex-col h-full overflow-hidden font-sans bg-[#f8f9fa] dark:bg-[#1f1f1f] min-h-0 relative">
             <div className="flex flex-1 overflow-hidden relative min-h-0">

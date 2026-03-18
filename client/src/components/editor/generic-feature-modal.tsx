@@ -99,6 +99,57 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: 
             case 'send_feedback': return 'Envoyer des commentaires';
             case 'functions_list': return 'Liste des fonctions';
             case 'keyboard_shortcuts': return 'Raccourcis clavier';
+            // Slides actions
+            case 'slides_templates': return 'Modèles de présentation';
+            case 'slides_import': return 'Importer des diapositives';
+            case 'slides_copy': return 'Créer une copie';
+            case 'slides_share': return 'Partager la présentation';
+            case 'slides_publish': return 'Publier sur le Web';
+            case 'slides_versions': return 'Historique des versions';
+            case 'slides_details': return 'Détails du fichier';
+            case 'slides_find_replace': return 'Rechercher et remplacer';
+            case 'slides_presenter_mode': return 'Mode présentateur';
+            case 'slides_animation_mode': return 'Mode animation';
+            case 'slides_comments': return 'Commentaires';
+            case 'slides_insert_image_local': return 'Importer une image';
+            case 'slides_insert_image_url': return 'Image depuis une URL';
+            case 'slides_insert_image_search': return 'Rechercher des images';
+            case 'slides_insert_image_drive': return 'Images depuis Drive';
+            case 'slides_insert_video': return 'Insérer une vidéo';
+            case 'slides_insert_audio': return 'Insérer un fichier audio';
+            case 'slides_insert_table': return 'Insérer un tableau';
+            case 'slides_insert_chart': return 'Insérer un graphique';
+            case 'slides_insert_diagram': return 'Insérer un diagramme';
+            case 'slides_insert_wordart': return 'WordArt';
+            case 'slides_insert_slide_number': return 'Numéro de diapositive';
+            case 'slides_font_size': return 'Taille de police';
+            case 'slides_text_color': return 'Couleur du texte';
+            case 'slides_text_highlight': return 'Surlignage';
+            case 'slides_borders': return 'Bordures et lignes';
+            case 'slides_shape_options': return 'Options de forme';
+            case 'slides_theme_colors': return 'Thème et couleurs';
+            case 'slides_edit_master': return 'Modifier le modèle maître';
+            case 'slides_change_theme': return 'Changer de thème';
+            case 'slides_change_layout': return 'Changer la mise en page';
+            case 'slides_background': return 'Arrière-plan';
+            case 'slides_transitions': return 'Transitions';
+            case 'slides_animations': return 'Animations';
+            case 'slides_spell_check': return 'Orthographe';
+            case 'slides_explore': return 'Explorer';
+            case 'slides_dictionary': return 'Dictionnaire';
+            case 'slides_qa': return 'Q&R en direct';
+            case 'slides_laser_pointer': return 'Pointeur laser';
+            case 'slides_preferences': return 'Préférences';
+            case 'slides_shortcuts': return 'Raccourcis clavier';
+            case 'slides_add_ons': return 'Modules complémentaires';
+            case 'slides_apps_script': return 'Apps Script';
+            case 'ai_generate_content': return 'Générer du contenu';
+            case 'ai_rephrase': return 'Reformuler le texte';
+            case 'ai_translate': return 'Traduire';
+            case 'slides_help': return 'Aide SignApps Slides';
+            case 'slides_getting_started': return 'Guide de démarrage';
+            case 'slides_report_issue': return 'Signaler un problème';
+            case 'slides_feedback': return 'Envoyer des commentaires';
             default: return 'Fonctionnalité en cours de développement';
         }
     };
@@ -1594,6 +1645,542 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: 
             );
         }
 
+        // =============================================
+        // SLIDES SPECIFIC MODALS
+        // =============================================
+
+        // --- Slides Templates Gallery ---
+        if (actionId === 'slides_templates') {
+            const slideTemplates = [
+                { name: 'Présentation vierge', icon: <FileText className="w-6 h-6" />, color: 'bg-gray-100 dark:bg-gray-800 text-gray-600', desc: 'Commencez de zéro' },
+                { name: 'Pitch Startup', icon: <BarChart3 className="w-6 h-6" />, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600', desc: 'Présentez votre projet' },
+                { name: 'Rapport trimestriel', icon: <PieChart className="w-6 h-6" />, color: 'bg-green-100 dark:bg-green-900/30 text-green-600', desc: 'Analyse de performance' },
+                { name: 'Formation', icon: <Users className="w-6 h-6" />, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600', desc: 'Support pédagogique' },
+                { name: 'Portfolio créatif', icon: <Grid3X3 className="w-6 h-6" />, color: 'bg-pink-100 dark:bg-pink-900/30 text-pink-600', desc: 'Présentez vos travaux' },
+                { name: 'Réunion d\'équipe', icon: <Calendar className="w-6 h-6" />, color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600', desc: 'Ordre du jour structuré' },
+                { name: 'Proposition commerciale', icon: <FileCheck className="w-6 h-6" />, color: 'bg-teal-100 dark:bg-teal-900/30 text-teal-600', desc: 'Devis et offres' },
+                { name: 'Keynote moderne', icon: <Activity className="w-6 h-6" />, color: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600', desc: 'Style Apple-like' },
+            ];
+            return (
+                <div className="mt-4 flex flex-col h-[450px]">
+                    <div className="flex gap-2 mb-4 relative">
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Input placeholder="Rechercher un modèle..." className="flex-1 pl-9" />
+                    </div>
+                    <ScrollArea className="flex-1 -mx-2 px-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-4">
+                            {slideTemplates.map((tpl, i) => (
+                                <button key={i} className="flex gap-3 p-3 border rounded-lg hover:border-blue-500 transition-colors bg-background dark:bg-[#1f1f1f] text-left">
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${tpl.color}`}>
+                                        {tpl.icon}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-medium text-sm">{tpl.name}</h4>
+                                        <p className="text-xs text-gray-500 mt-0.5">{tpl.desc}</p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </div>
+            );
+        }
+
+        // --- Import Slides ---
+        if (actionId === 'slides_import') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
+                        <Download className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                        <h4 className="text-sm font-medium">Glissez un fichier ici</h4>
+                        <p className="text-xs text-gray-500 mt-1">ou cliquez pour parcourir</p>
+                        <input type="file" accept=".pptx,.ppt,.pdf,.key" className="hidden" id="slides-import-input" />
+                        <Button variant="outline" className="mt-4" onClick={() => document.getElementById('slides-import-input')?.click()}>
+                            Parcourir les fichiers
+                        </Button>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs text-gray-500">Formats supportés</Label>
+                        <div className="flex gap-2 flex-wrap">
+                            <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 text-xs rounded">.pptx</span>
+                            <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 text-xs rounded">.pdf</span>
+                            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 text-xs rounded">.key</span>
+                        </div>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                        <p className="text-xs text-blue-700 dark:text-blue-300">
+                            Les diapositives importées seront ajoutées à la fin de votre présentation.
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Create Copy ---
+        if (actionId === 'slides_copy') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label>Nom de la copie</Label>
+                        <Input defaultValue="Copie de Présentation" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs text-gray-500">Emplacement</Label>
+                        <div className="flex gap-2">
+                            <Input readOnly value="Mon Drive" className="flex-1" />
+                            <Button variant="outline">Modifier</Button>
+                        </div>
+                    </div>
+                    <div className="space-y-3">
+                        <Label className="text-xs text-gray-500">Options</Label>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between p-3 border rounded-lg">
+                                <span className="text-sm">Copier les commentaires</span>
+                                <Switch defaultChecked />
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded-lg">
+                                <span className="text-sm">Copier les notes du présentateur</span>
+                                <Switch defaultChecked />
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded-lg">
+                                <span className="text-sm">Partager avec les mêmes personnes</span>
+                                <Switch />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Share Presentation ---
+        if (actionId === 'slides_share') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label>Ajouter des personnes</Label>
+                        <div className="flex gap-2">
+                            <Input placeholder="Adresse e-mail ou nom..." className="flex-1" />
+                            <Button variant="secondary">
+                                <Users className="w-4 h-4 mr-2" />
+                                Ajouter
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center text-purple-600 text-sm font-medium">V</div>
+                                <div>
+                                    <div className="text-sm font-medium">Vous (Propriétaire)</div>
+                                    <div className="text-xs text-gray-500">vous@exemple.com</div>
+                                </div>
+                            </div>
+                            <span className="text-xs text-gray-500">Propriétaire</span>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Lien de partage</Label>
+                        <div className="flex gap-2">
+                            <Input readOnly value="https://signapps.io/slides/abc123..." className="flex-1 text-xs" />
+                            <Button variant="outline" onClick={() => { navigator.clipboard.writeText('https://signapps.io/slides/abc123'); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
+                                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Insert Image Local ---
+        if (actionId === 'slides_insert_image_local') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
+                        <Download className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                        <h4 className="text-sm font-medium">Glissez une image ici</h4>
+                        <p className="text-xs text-gray-500 mt-1">ou cliquez pour parcourir</p>
+                        <input type="file" accept="image/*" className="hidden" id="image-import-input" />
+                        <Button variant="outline" className="mt-4" onClick={() => document.getElementById('image-import-input')?.click()}>
+                            Parcourir les fichiers
+                        </Button>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 text-xs rounded">.png</span>
+                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 text-xs rounded">.jpg</span>
+                        <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 text-xs rounded">.gif</span>
+                        <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 text-xs rounded">.svg</span>
+                        <span className="px-2 py-1 bg-teal-100 dark:bg-teal-900/30 text-teal-600 text-xs rounded">.webp</span>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Insert Image URL ---
+        if (actionId === 'slides_insert_image_url') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label>URL de l'image</Label>
+                        <Input placeholder="https://exemple.com/image.png" />
+                    </div>
+                    <div className="border rounded-lg p-8 text-center bg-gray-50 dark:bg-[#1a1a1a]">
+                        <Globe className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                        <p className="text-xs text-gray-500">Aperçu de l'image</p>
+                    </div>
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                            Assurez-vous que l'URL pointe vers une image accessible publiquement.
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Insert Table ---
+        if (actionId === 'slides_insert_table') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Colonnes</Label>
+                            <Input type="number" min={1} max={10} defaultValue={3} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Lignes</Label>
+                            <Input type="number" min={1} max={20} defaultValue={3} />
+                        </div>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                        <div className="grid grid-cols-3 gap-1">
+                            {Array.from({ length: 9 }).map((_, i) => (
+                                <div key={i} className={`h-8 rounded ${i < 3 ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-800'}`} />
+                            ))}
+                        </div>
+                        <p className="text-xs text-gray-500 text-center mt-2">Aperçu 3x3</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Insert Chart ---
+        if (actionId === 'slides_insert_chart') {
+            const chartTypes = [
+                { name: 'Barres', icon: <BarChart3 className="w-8 h-8" /> },
+                { name: 'Colonnes', icon: <BarChart3 className="w-8 h-8 rotate-90" /> },
+                { name: 'Lignes', icon: <Activity className="w-8 h-8" /> },
+                { name: 'Secteurs', icon: <PieChart className="w-8 h-8" /> },
+            ];
+            return (
+                <div className="mt-4 space-y-4">
+                    <Label>Type de graphique</Label>
+                    <div className="grid grid-cols-4 gap-3">
+                        {chartTypes.map((chart, i) => (
+                            <button key={i} className={`flex flex-col items-center gap-2 p-4 border rounded-lg hover:border-blue-500 transition-colors ${i === 0 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                                <div className="text-gray-600 dark:text-gray-400">{chart.icon}</div>
+                                <span className="text-xs font-medium">{chart.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs text-gray-500">Source de données</Label>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="flex-1">Nouvelle</Button>
+                            <Button variant="outline" size="sm" className="flex-1">Depuis Sheets</Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Transitions ---
+        if (actionId === 'slides_transitions') {
+            const transitions = [
+                { name: 'Aucune', desc: 'Pas de transition' },
+                { name: 'Fondu', desc: 'Apparition progressive' },
+                { name: 'Glisser', desc: 'Déplacement latéral' },
+                { name: 'Zoom', desc: 'Agrandissement' },
+                { name: 'Rotation', desc: 'Effet 3D' },
+            ];
+            return (
+                <div className="mt-4 space-y-4">
+                    <ScrollArea className="h-[200px]">
+                        <div className="space-y-2">
+                            {transitions.map((t, i) => (
+                                <button key={i} className={`w-full flex items-center justify-between p-3 border rounded-lg hover:border-blue-500 transition-colors text-left ${i === 1 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                                    <div>
+                                        <div className="text-sm font-medium">{t.name}</div>
+                                        <div className="text-xs text-gray-500">{t.desc}</div>
+                                    </div>
+                                    {i === 1 && <Check className="w-4 h-4 text-blue-500" />}
+                                </button>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                    <div className="space-y-2">
+                        <Label>Durée</Label>
+                        <div className="flex items-center gap-2">
+                            <Input type="range" min={0} max={2} step={0.1} defaultValue={0.5} className="flex-1" />
+                            <span className="text-sm text-gray-500 w-12">0.5s</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <span className="text-sm">Appliquer à toutes les diapositives</span>
+                        <Switch />
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Animations ---
+        if (actionId === 'slides_animations') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-6 text-center">
+                        <Activity className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                        <h4 className="text-sm font-medium">Sélectionnez un objet</h4>
+                        <p className="text-xs text-gray-500 mt-1">Pour ajouter une animation, sélectionnez d'abord un objet sur la diapositive.</p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Animations disponibles</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button variant="outline" size="sm">Apparaître</Button>
+                            <Button variant="outline" size="sm">Disparaître</Button>
+                            <Button variant="outline" size="sm">Rebondir</Button>
+                            <Button variant="outline" size="sm">Glisser</Button>
+                            <Button variant="outline" size="sm">Zoom</Button>
+                            <Button variant="outline" size="sm">Rotation</Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Background ---
+        if (actionId === 'slides_background') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <Tabs defaultValue="color">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="color">Couleur</TabsTrigger>
+                            <TabsTrigger value="image">Image</TabsTrigger>
+                            <TabsTrigger value="gradient">Dégradé</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="color" className="mt-4">
+                            <div className="grid grid-cols-6 gap-2">
+                                {['#ffffff', '#f8f9fa', '#e9ecef', '#dee2e6', '#1f1f1f', '#000000', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6'].map((color) => (
+                                    <button key={color} className="w-10 h-10 rounded-lg border-2 border-transparent hover:border-blue-500" style={{ backgroundColor: color }} />
+                                ))}
+                            </div>
+                            <div className="mt-4 space-y-2">
+                                <Label>Couleur personnalisée</Label>
+                                <div className="flex gap-2">
+                                    <Input type="color" defaultValue="#ffffff" className="w-12 h-10 p-1" />
+                                    <Input defaultValue="#ffffff" className="flex-1" />
+                                </div>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="image" className="mt-4">
+                            <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-6 text-center">
+                                <Download className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                                <p className="text-xs text-gray-500">Importer une image de fond</p>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="gradient" className="mt-4">
+                            <div className="grid grid-cols-3 gap-2">
+                                <button className="h-16 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 border-2 border-transparent hover:border-blue-500" />
+                                <button className="h-16 rounded-lg bg-gradient-to-r from-orange-500 to-red-500 border-2 border-transparent hover:border-blue-500" />
+                                <button className="h-16 rounded-lg bg-gradient-to-r from-green-500 to-teal-500 border-2 border-transparent hover:border-blue-500" />
+                                <button className="h-16 rounded-lg bg-gradient-to-r from-gray-900 to-gray-600 border-2 border-transparent hover:border-blue-500" />
+                                <button className="h-16 rounded-lg bg-gradient-to-r from-pink-500 to-rose-500 border-2 border-transparent hover:border-blue-500" />
+                                <button className="h-16 rounded-lg bg-gradient-to-r from-indigo-500 to-blue-500 border-2 border-transparent hover:border-blue-500" />
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <span className="text-sm">Appliquer à toutes les diapositives</span>
+                        <Switch />
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Change Theme ---
+        if (actionId === 'slides_change_theme') {
+            const themes = [
+                { name: 'Clair', colors: ['#ffffff', '#f8f9fa', '#3b82f6'] },
+                { name: 'Sombre', colors: ['#1f1f1f', '#2d2d2d', '#818cf8'] },
+                { name: 'Professionnel', colors: ['#f8fafc', '#1e293b', '#0ea5e9'] },
+                { name: 'Coloré', colors: ['#fef3c7', '#f97316', '#ef4444'] },
+                { name: 'Nature', colors: ['#ecfdf5', '#10b981', '#065f46'] },
+                { name: 'Élégant', colors: ['#faf5ff', '#8b5cf6', '#4c1d95'] },
+            ];
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        {themes.map((theme, i) => (
+                            <button key={i} className={`p-3 border rounded-lg hover:border-blue-500 transition-colors text-left ${i === 0 ? 'border-blue-500' : ''}`}>
+                                <div className="flex gap-1 mb-2">
+                                    {theme.colors.map((c, j) => (
+                                        <div key={j} className="w-6 h-6 rounded" style={{ backgroundColor: c }} />
+                                    ))}
+                                </div>
+                                <span className="text-sm font-medium">{theme.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // --- AI Generate Content ---
+        if (actionId === 'ai_generate_content') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label>Décrivez le contenu à générer</Label>
+                        <textarea className="w-full h-24 px-3 py-2 border rounded-md text-sm resize-none dark:bg-[#1f1f1f]" placeholder="Ex: Une diapositive de titre sur les énergies renouvelables avec des statistiques clés..." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs text-gray-500">Type de contenu</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button variant="outline" size="sm">Titre + Sous-titre</Button>
+                            <Button variant="outline" size="sm">Liste à puces</Button>
+                            <Button variant="outline" size="sm">Comparaison</Button>
+                            <Button variant="outline" size="sm">Timeline</Button>
+                        </div>
+                    </div>
+                    <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                        <div className="flex gap-2">
+                            <Cpu className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                            <p className="text-xs text-purple-700 dark:text-purple-300">
+                                L'IA générera du contenu adapté au contexte de votre présentation.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- AI Rephrase ---
+        if (actionId === 'ai_rephrase') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label>Texte sélectionné</Label>
+                        <div className="p-3 bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg text-sm text-gray-600 dark:text-gray-400 italic">
+                            Sélectionnez du texte sur la diapositive pour le reformuler.
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Style de reformulation</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button variant="outline" size="sm">Plus formel</Button>
+                            <Button variant="outline" size="sm">Plus simple</Button>
+                            <Button variant="outline" size="sm">Plus concis</Button>
+                            <Button variant="outline" size="sm">Plus détaillé</Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- AI Translate ---
+        if (actionId === 'ai_translate') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Langue source</Label>
+                            <Input readOnly value="Français (détecté)" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Langue cible</Label>
+                            <select className="w-full h-10 px-3 border rounded-md text-sm dark:bg-[#1f1f1f]">
+                                <option>Anglais</option>
+                                <option>Espagnol</option>
+                                <option>Allemand</option>
+                                <option>Italien</option>
+                                <option>Portugais</option>
+                                <option>Chinois</option>
+                                <option>Japonais</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs text-gray-500">Options</Label>
+                        <div className="flex items-center justify-between p-3 border rounded-lg">
+                            <span className="text-sm">Traduire toutes les diapositives</span>
+                            <Switch />
+                        </div>
+                        <div className="flex items-center justify-between p-3 border rounded-lg">
+                            <span className="text-sm">Conserver la mise en forme</span>
+                            <Switch defaultChecked />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Presenter Mode ---
+        if (actionId === 'slides_presenter_mode') {
+            return (
+                <div className="mt-4 space-y-4">
+                    <div className="bg-gray-50 dark:bg-[#1a1a1a] border rounded-lg p-6 text-center">
+                        <Eye className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                        <h4 className="text-sm font-medium">Mode Présentateur</h4>
+                        <p className="text-xs text-gray-500 mt-1">Affichez vos notes, la diapositive suivante et un chronomètre sur votre écran.</p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs text-gray-500">Options</Label>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between p-3 border rounded-lg">
+                                <span className="text-sm">Afficher le chronomètre</span>
+                                <Switch defaultChecked />
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded-lg">
+                                <span className="text-sm">Afficher les notes</span>
+                                <Switch defaultChecked />
+                            </div>
+                            <div className="flex items-center justify-between p-3 border rounded-lg">
+                                <span className="text-sm">Afficher la diapositive suivante</span>
+                                <Switch defaultChecked />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Keyboard Shortcuts ---
+        if (actionId === 'slides_shortcuts') {
+            const shortcuts = [
+                { key: 'Ctrl+M', desc: 'Nouvelle diapositive' },
+                { key: 'Ctrl+D', desc: 'Dupliquer' },
+                { key: 'Ctrl+G', desc: 'Grouper' },
+                { key: 'Ctrl+Shift+G', desc: 'Dégrouper' },
+                { key: 'Ctrl+B', desc: 'Gras' },
+                { key: 'Ctrl+I', desc: 'Italique' },
+                { key: 'Ctrl+U', desc: 'Souligné' },
+                { key: 'F5', desc: 'Démarrer le diaporama' },
+                { key: 'Échap', desc: 'Quitter le diaporama' },
+                { key: 'Ctrl+S', desc: 'Enregistrer' },
+            ];
+            return (
+                <div className="mt-4">
+                    <ScrollArea className="h-[300px]">
+                        <div className="space-y-1">
+                            {shortcuts.map((s, i) => (
+                                <div key={i} className="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-[#1a1a1a]">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">{s.desc}</span>
+                                    <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">{s.key}</kbd>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </div>
+            );
+        }
+
         // --- 4. Default / Generic Fallback UI ---
         // NO DEAD ENDS: Ce fallback ne devrait pas apparaître si les actions
         // non-implémentées sont correctement filtrées dans les menus
@@ -1611,8 +2198,9 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: 
     };
 
     const getModalWidth = () => {
-        if (actionId === 'version_history') return 'sm:max-w-[900px]';
-        if (actionId === 'templates' || actionId === 'add_ons' || actionId === 'extensions') return 'sm:max-w-[600px]';
+        if (actionId === 'version_history' || actionId === 'slides_versions') return 'sm:max-w-[900px]';
+        if (actionId === 'templates' || actionId === 'add_ons' || actionId === 'extensions' || actionId === 'slides_templates') return 'sm:max-w-[600px]';
+        if (actionId === 'slides_shortcuts') return 'sm:max-w-[500px]';
         return 'sm:max-w-[425px]';
     };
 
@@ -1621,17 +2209,41 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: 
             case 'page_setup':
             case 'file_settings':
             case 'security_limits':
+            case 'slides_background':
+            case 'slides_transitions':
+            case 'slides_animations':
+            case 'slides_change_theme':
                 return <Button onClick={onClose}>Appliquer</Button>;
             case 'share':
+            case 'slides_share':
                 return <Button onClick={onClose}>Partager</Button>;
             case 'publish_web':
+            case 'slides_publish':
                 return <Button onClick={onClose}>Publier</Button>;
             case 'email_send':
                 return <Button onClick={onClose}><Mail className="w-4 h-4 mr-2" />Envoyer</Button>;
             case 'name_version':
-                return <Button onClick={onClose}>Enregistrer</Button>;
             case 'file_details':
+            case 'slides_details':
                 return <Button onClick={onClose}>Enregistrer</Button>;
+            case 'slides_templates':
+                return <Button onClick={onClose}>Créer</Button>;
+            case 'slides_import':
+                return <Button onClick={onClose}>Importer</Button>;
+            case 'slides_copy':
+                return <Button onClick={onClose}>Créer une copie</Button>;
+            case 'slides_insert_image_local':
+            case 'slides_insert_image_url':
+            case 'slides_insert_table':
+            case 'slides_insert_chart':
+                return <Button onClick={onClose}>Insérer</Button>;
+            case 'ai_generate_content':
+            case 'ai_rephrase':
+                return <Button onClick={onClose}>Générer</Button>;
+            case 'ai_translate':
+                return <Button onClick={onClose}>Traduire</Button>;
+            case 'slides_presenter_mode':
+                return <Button onClick={onClose}>Démarrer</Button>;
             default:
                 return null;
         }
