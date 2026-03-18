@@ -560,6 +560,12 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     // Number format dropdown
     const [showNumberFormat, setShowNumberFormat] = useState(false)
 
+    // Zoom level (percentage)
+    const [zoomLevel, setZoomLevel] = useState(100)
+
+    // Formula bar visibility
+    const [showFormulaBar, setShowFormulaBar] = useState(true)
+
     // Virtualization
     const gridRef = useRef<HTMLDivElement>(null)
     const mainContainerRef = useRef<HTMLDivElement>(null)
@@ -1453,36 +1459,36 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             id: 'file', label: 'Fichier', items: [
                 { label: 'Nouveau', subItems: [
                     { label: 'Feuille de calcul', action: 'new' },
-                    { label: 'À partir d\'un modèle', action: 'todo' }
+                    { label: 'À partir d\'un modèle', action: 'templates' }
                 ] },
                 { label: 'Ouvrir', action: 'open', shortcut: 'Ctrl+O' },
                 { label: 'Importer', action: 'import' },
                 { label: 'Créer une copie', action: 'copyFile' },
                 { sep: true },
                 { label: 'Partager', subItems: [
-                    { label: 'Partager avec d\'autres personnes', action: 'todo' },
-                    { label: 'Publier sur le Web', action: 'todo' }
+                    { label: 'Partager avec d\'autres personnes', action: 'share' },
+                    { label: 'Publier sur le Web', action: 'publish_web' }
                 ] },
-                { label: 'Envoyer par e-mail', action: 'todo' },
+                { label: 'Envoyer par e-mail', action: 'email_send' },
                 { label: 'Télécharger', subItems: [
                     { label: 'Microsoft Excel (.xlsx)', action: 'export_xlsx' },
                     { label: 'Valeurs séparées par des virgules (.csv)', action: 'export_csv' },
                     { label: 'Document PDF (.pdf)', action: 'print' }
                 ] },
-                { label: 'Approbations', action: 'todo' },
+                { label: 'Approbations', action: 'approvals' },
                 { sep: true },
                 { label: 'Renommer', action: 'rename' },
                 { label: 'Placer dans la corbeille', action: 'trash' },
                 { sep: true },
                 { label: 'Historique des versions', subItems: [
-                    { label: 'Nommer la version actuelle', action: 'todo' },
-                    { label: 'Afficher l\'historique des versions', action: 'todo' }
+                    { label: 'Nommer la version actuelle', action: 'name_version' },
+                    { label: 'Afficher l\'historique des versions', action: 'version_history' }
                 ] },
-                { label: 'Rendre disponible hors connexion', action: 'todo' },
+                { label: 'Rendre disponible hors connexion', action: 'offline_mode' },
                 { sep: true },
-                { label: 'Détails', action: 'todo' },
-                { label: 'Limites de sécurité', action: 'todo' },
-                { label: 'Paramètres', action: 'todo' }
+                { label: 'Détails', action: 'file_details' },
+                { label: 'Limites de sécurité', action: 'security_limits' },
+                { label: 'Paramètres', action: 'file_settings' }
             ]
         },
         {
@@ -1500,9 +1506,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         {
             id: 'view', label: 'Affichage', items: [
                 { label: 'Afficher', subItems: [
-                    { label: 'Barre de formules', action: 'todo' },
+                    { label: 'Barre de formules', action: 'toggleFormulaBar' },
                     { label: 'Quadrillage', action: 'toggleGridlines' },
-                    { label: 'Plages protégées', action: 'todo' }
+                    { label: 'Plages protégées', action: 'protected_ranges' }
                 ] },
                 { label: 'Figer', subItems: [
                     { label: 'Aucune ligne', action: 'unfreezeRow' },
@@ -1511,17 +1517,20 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     { label: '1 colonne', action: 'freezeCol' }
                 ] },
                 { label: 'Regrouper', subItems: [
-                    { label: 'Associer', action: 'todo' },
-                    { label: 'Dissocier', action: 'todo' }
+                    { label: 'Associer lignes/colonnes', action: 'group_rows_cols' },
+                    { label: 'Dissocier lignes/colonnes', action: 'ungroup_rows_cols' }
                 ] },
-                { label: 'Commentaires', action: 'todo' },
+                { label: 'Commentaires', action: 'show_comments' },
                 { sep: true },
-                { label: 'Feuilles masquées', action: 'todo' },
+                { label: 'Feuilles masquées', action: 'hidden_sheets' },
                 { sep: true },
                 { label: 'Zoom', subItems: [
-                    { label: '50%', action: 'todo' },
+                    { label: '50%', action: 'zoom50' },
+                    { label: '75%', action: 'zoom75' },
                     { label: '100%', action: 'zoom100' },
-                    { label: '150%', action: 'todo' },
+                    { label: '125%', action: 'zoom125' },
+                    { label: '150%', action: 'zoom150' },
+                    { label: '200%', action: 'zoom200' }
                 ] },
                 { label: 'Plein écran', action: 'fullScreen' },
                 { sep: true },
@@ -1531,8 +1540,8 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         {
             id: 'insert', label: 'Insertion', items: [
                 { label: 'Cellules', subItems: [
-                    { label: 'Décaler vers la droite', action: 'todo' },
-                    { label: 'Décaler vers le bas', action: 'todo' }
+                    { label: 'Décaler vers la droite', action: 'shift_cells_right' },
+                    { label: 'Décaler vers le bas', action: 'shift_cells_down' }
                 ] },
                 { label: 'Lignes', subItems: [
                     { label: 'Insérer 1 ligne au-dessus', action: 'insertRowAbove' },
@@ -1542,19 +1551,19 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     { label: 'Insérer 1 colonne à gauche', action: 'insertColLeft' },
                     { label: 'Insérer 1 colonne à droite', action: 'insertColRight' }
                 ] },
-                { label: 'Feuille', action: 'todo', shortcut: 'Maj+F11' },
+                { label: 'Feuille', action: 'insertSheet', shortcut: 'Maj+F11' },
                 { sep: true },
-                { label: 'Générer un tableau', action: 'todo' },
-                { label: 'Tableaux prédéfinis', action: 'todo' },
+                { label: 'Générer un tableau', action: 'generate_table' },
+                { label: 'Tableaux prédéfinis', action: 'preset_tables' },
                 { sep: true },
-                { label: 'Chronologie', action: 'todo' },
+                { label: 'Chronologie', action: 'insert_timeline' },
                 { label: 'Graphique', action: 'chart' },
-                { label: 'Tableau croisé dynamique', action: 'todo' },
+                { label: 'Tableau croisé dynamique', action: 'pivot_table' },
                 { label: 'Image', subItems: [
-                    { label: 'Insérer une image dans la cellule', action: 'todo' },
-                    { label: 'Insérer une image sur les cellules', action: 'todo' }
+                    { label: 'Insérer une image dans la cellule', action: 'image_in_cell' },
+                    { label: 'Insérer une image sur les cellules', action: 'image_over_cells' }
                 ] },
-                { label: 'Dessin', action: 'todo' },
+                { label: 'Dessin', action: 'insert_drawing' },
                 { sep: true },
                 { label: 'Fonction', subItems: [
                     { label: 'SUM', action: 'insertSum' },
@@ -1572,36 +1581,36 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         {
             id: 'format', label: 'Format', items: [
                 { label: 'Nombre', subItems: [
-                    { label: 'Automatique', action: 'todo' },
-                    { label: 'Texte brut', action: 'todo' },
-                    { label: 'Nombre', action: 'todo' },
-                    { label: 'Pourcentage', action: 'todo' },
-                    { label: 'Scientifique', action: 'todo' },
+                    { label: 'Automatique', action: 'formatAuto' },
+                    { label: 'Texte brut', action: 'formatText' },
+                    { label: 'Nombre', action: 'formatNumber' },
+                    { label: 'Pourcentage', action: 'formatPercent' },
+                    { label: 'Scientifique', action: 'formatScientific' },
                     { sep: true },
-                    { label: 'Comptabilité', action: 'todo' },
-                    { label: 'Finances', action: 'todo' },
-                    { label: 'Devise', action: 'todo' },
-                    { label: 'Devise (arrondie)', action: 'todo' },
+                    { label: 'Comptabilité', action: 'formatAccounting' },
+                    { label: 'Finances', action: 'formatFinance' },
+                    { label: 'Devise', action: 'formatCurrency' },
+                    { label: 'Devise (arrondie)', action: 'formatCurrencyRounded' },
                     { sep: true },
-                    { label: 'Date', action: 'todo' },
-                    { label: 'Heure', action: 'todo' },
-                    { label: 'Date et heure', action: 'todo' },
-                    { label: 'Durée', action: 'todo' },
+                    { label: 'Date', action: 'formatDate' },
+                    { label: 'Heure', action: 'formatTime' },
+                    { label: 'Date et heure', action: 'formatDateTime' },
+                    { label: 'Durée', action: 'formatDuration' },
                     { sep: true },
-                    { label: 'Autres formats', action: 'todo' }
+                    { label: 'Autres formats', action: 'format_custom' }
                 ]},
                 { label: 'Retour à la ligne', subItems: [
-                    { label: 'Débordement', action: 'todo' },
+                    { label: 'Débordement', action: 'overflowText' },
                     { label: 'Retour à la ligne', action: 'wrapText' },
-                    { label: 'Tronquer', action: 'todo' }
+                    { label: 'Tronquer', action: 'truncateText' }
                 ]},
                 { label: 'Rotation du texte', subItems: [
-                    { label: 'Aucune', action: 'todo' },
-                    { label: 'Incliner vers le haut', action: 'todo' },
-                    { label: 'Incliner vers le bas', action: 'todo' },
-                    { label: 'Rotation vers le haut', action: 'todo' },
-                    { label: 'Rotation vers le bas', action: 'todo' },
-                    { label: 'Empiler verticalement', action: 'todo' }
+                    { label: 'Aucune', action: 'rotateNone' },
+                    { label: 'Incliner vers le haut', action: 'rotateTiltUp' },
+                    { label: 'Incliner vers le bas', action: 'rotateTiltDown' },
+                    { label: 'Rotation vers le haut', action: 'rotateUp' },
+                    { label: 'Rotation vers le bas', action: 'rotateDown' },
+                    { label: 'Empiler verticalement', action: 'rotateVertical' }
                 ]},
                 { sep: true },
                 { label: 'Fusionner les cellules', subItems: [
@@ -1611,7 +1620,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     { label: 'Annuler la fusion', action: 'unmergeCellsAction' }
                 ] },
                 { sep: true },
-                { label: 'Convertir en tableau', action: 'todo', shortcut: 'Ctrl+Alt+T' },
+                { label: 'Convertir en tableau', action: 'convert_to_table', shortcut: 'Ctrl+Alt+T' },
                 { label: 'Mise en forme conditionnelle', action: 'condFormat' },
                 { label: 'Couleurs en alternance', action: 'bandedRows' },
                 { sep: true },
@@ -1620,7 +1629,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         },
         {
             id: 'data', label: 'Données', items: [
-                { label: 'Analyser les données', action: 'todo' },
+                { label: 'Analyser les données', action: 'analyze_data' },
                 { sep: true },
                 { label: 'Trier une feuille', subItems: [
                     { label: 'Trier la feuille de A à Z', action: 'sortAsc' },
@@ -1632,67 +1641,67 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 ] },
                 { sep: true },
                 { label: 'Créer un filtre', action: 'filter' },
-                { label: 'Créer une vue avec critère de regroupement', subItems: [{label: 'Nouvelle vue de regroupement', action: 'todo'}] },
-                { label: 'Créer une vue filtrée', action: 'todo' },
-                { label: 'Ajouter un segment', action: 'todo' },
+                { label: 'Créer une vue avec critère de regroupement', subItems: [{label: 'Nouvelle vue de regroupement', action: 'group_view'}] },
+                { label: 'Créer une vue filtrée', action: 'filtered_view' },
+                { label: 'Ajouter un segment', action: 'add_slicer' },
                 { sep: true },
-                { label: 'Protéger des feuilles et des plages', action: 'todo' },
-                { label: 'Plages nommées', action: 'todo' },
-                { label: 'Fonctions nommées', action: 'todo' },
-                { label: 'Plage aléatoire', action: 'todo' },
+                { label: 'Protéger des feuilles et des plages', action: 'protect_sheets' },
+                { label: 'Plages nommées', action: 'named_ranges' },
+                { label: 'Fonctions nommées', action: 'named_functions' },
+                { label: 'Plage aléatoire', action: 'random_range' },
                 { sep: true },
-                { label: 'Statistiques de colonne', action: 'todo' },
+                { label: 'Statistiques de colonne', action: 'column_stats' },
                 { label: 'Validation des données', action: 'validation' },
                 { label: 'Nettoyage des données', subItems: [
-                    { label: 'Suggestions de nettoyage', action: 'todo' },
-                    { label: 'Supprimer les doublons', action: 'todo' },
-                    { label: 'Supprimer les espaces', action: 'todo' }
+                    { label: 'Suggestions de nettoyage', action: 'cleanup_suggestions' },
+                    { label: 'Supprimer les doublons', action: 'remove_duplicates' },
+                    { label: 'Supprimer les espaces', action: 'trim_whitespace' }
                 ] },
-                { label: 'Scinder le texte en colonnes', action: 'todo' }
+                { label: 'Scinder le texte en colonnes', action: 'split_text' }
             ]
         },
         {
             id: 'tools', label: 'Outils', items: [
-                { label: 'Créer un formulaire', action: 'todo' },
+                { label: 'Créer un formulaire', action: 'create_form' },
                 { label: 'Orthographe', subItems: [
-                    { label: 'Vérification orthographique', action: 'todo' },
-                    { label: 'Dictionnaire personnel', action: 'todo' }
+                    { label: 'Vérification orthographique', action: 'spell_check' },
+                    { label: 'Dictionnaire personnel', action: 'personal_dictionary' }
                 ] },
-                { label: 'Commandes des suggestions', subItems: [{label: 'Activer la suggestion automatique', action: 'todo'}] },
-                { label: 'Notifications conditionnelles', action: 'todo' },
+                { label: 'Commandes des suggestions', subItems: [{label: 'Activer la suggestion automatique', action: 'auto_complete_settings'}] },
+                { label: 'Notifications conditionnelles', action: 'conditional_notifications' },
                 { sep: true },
                 { label: 'Paramètres de notification', subItems: [
-                    { label: 'M\'informer des modifications', action: 'todo' }
+                    { label: 'M\'informer des modifications', action: 'notify_changes' }
                 ] },
-                { label: 'Accessibilité', action: 'todo' },
+                { label: 'Accessibilité', action: 'accessibility_settings' },
                 { sep: true },
-                { label: 'Tableau de bord des activités', action: 'todo' }
+                { label: 'Tableau de bord des activités', action: 'activity_dashboard' }
             ]
         },
         {
             id: 'gemini', label: 'Gemini', items: [
-                { label: 'Analyser les données', action: 'todo' },
+                { label: 'Analyser les données', action: 'ai_analyze' },
                 { sep: true },
-                { label: 'Générer des graphiques', action: 'todo' },
-                { label: 'Générer un tableau croisé dynamique', action: 'todo' },
-                { label: 'Générer un tableau', action: 'todo' },
-                { label: 'Générer une image', action: 'todo' },
-                { label: 'Générer une formule', action: 'todo' },
+                { label: 'Générer des graphiques', action: 'ai_charts' },
+                { label: 'Générer un tableau croisé dynamique', action: 'ai_pivot' },
+                { label: 'Générer un tableau', action: 'ai_table' },
+                { label: 'Générer une image', action: 'ai_image' },
+                { label: 'Générer une formule', action: 'ai_formula' },
                 { sep: true },
-                { label: 'Résumer du texte', action: 'todo' },
-                { label: 'Classer du texte', action: 'todo' },
-                { label: 'Analyser les sentiments du texte', action: 'todo' },
-                { label: 'Générer du texte', action: 'todo' },
+                { label: 'Résumer du texte', action: 'ai_summarize' },
+                { label: 'Classer du texte', action: 'ai_classify' },
+                { label: 'Analyser les sentiments', action: 'ai_sentiment' },
+                { label: 'Générer du texte', action: 'ai_generate' },
                 { sep: true },
-                { label: 'Poser une autre question', action: 'todo' }
+                { label: 'Poser une question', action: 'gemini' }
             ]
         },
         {
             id: 'extensions', label: 'Extensions', items: [
-                { label: 'Modules complémentaires', subItems: [{label: 'Télécharger des modules complémentaires', action: 'todo'} ] },
-                { label: 'Macros', subItems: [{label: 'Enregistrer une macro', action: 'todo'} ] },
-                { label: 'Apps Script', action: 'todo' },
-                { label: 'AppSheet', subItems: [{label: 'Créer une application', action: 'todo'} ] }
+                { label: 'Modules complémentaires', subItems: [{label: 'Télécharger des modules complémentaires', action: 'add_ons'} ] },
+                { label: 'Macros', subItems: [{label: 'Enregistrer une macro', action: 'record_macro'} ] },
+                { label: 'Apps Script', action: 'apps_script' },
+                { label: 'AppSheet', subItems: [{label: 'Créer une application', action: 'create_app'} ] }
             ]
         },
         {
@@ -1700,15 +1709,15 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 { label: 'Rechercher dans les menus', shortcut: 'Alt+/' },
                 { sep: true },
                 { label: 'Demandez de l\'aide à Gemini', action: 'gemini' },
-                { label: 'Aide de Sheets', action: 'todo' },
-                { label: 'Aidez-nous à améliorer Sheets', action: 'todo' },
+                { label: 'Aide de Sheets', action: 'help_docs' },
+                { label: 'Aidez-nous à améliorer Sheets', action: 'send_feedback' },
                 { sep: true },
-                { label: 'Liste des fonctions', action: 'todo' },
-                { label: 'Raccourcis clavier', shortcut: 'Ctrl+/' }
+                { label: 'Liste des fonctions', action: 'functions_list' },
+                { label: 'Raccourcis clavier', action: 'keyboard_shortcuts' }
             ]
         }
     ]} onAction={(action, label) => {
-                const NATIVE_ACTIONS = ['new', 'open', 'import', 'export_xlsx', 'export_csv', 'print', 'rename', 'trash', 'fullScreen', 'copyFile', 'undo', 'redo', 'cut', 'copy', 'paste', 'find', 'toggleGridlines', 'freezeRow', 'freezeCol', 'insertRowAbove', 'insertRowBelow', 'insertColLeft', 'insertColRight', 'chart', 'link', 'comment', 'bold', 'italic', 'underline', 'strikethrough', 'alignLeft', 'alignCenter', 'alignRight', 'clearFormat', 'unfreezeRow', 'unfreezeCol', 'zoom100', 'insertSum', 'insertAvg', 'insertCount', 'insertMax', 'insertMin', 'condFormat', 'bandedRows', 'sortAsc', 'sortDesc', 'filter', 'validation', 'gemini', 'toggle_read_only', 'insertCheckbox', 'wrapText', 'overflowText', 'mergeCellsAll', 'mergeCellsHoriz', 'mergeCellsVert', 'unmergeCellsAction'];
+                const NATIVE_ACTIONS = ['new', 'open', 'import', 'export_xlsx', 'export_csv', 'print', 'rename', 'trash', 'fullScreen', 'copyFile', 'undo', 'redo', 'cut', 'copy', 'paste', 'find', 'toggleGridlines', 'freezeRow', 'freezeCol', 'insertRowAbove', 'insertRowBelow', 'insertColLeft', 'insertColRight', 'chart', 'link', 'comment', 'bold', 'italic', 'underline', 'strikethrough', 'alignLeft', 'alignCenter', 'alignRight', 'clearFormat', 'unfreezeRow', 'unfreezeCol', 'zoom50', 'zoom75', 'zoom100', 'zoom125', 'zoom150', 'zoom200', 'toggleFormulaBar', 'insertSum', 'insertAvg', 'insertCount', 'insertMax', 'insertMin', 'condFormat', 'bandedRows', 'sortAsc', 'sortDesc', 'filter', 'validation', 'gemini', 'toggle_read_only', 'insertCheckbox', 'wrapText', 'overflowText', 'truncateText', 'mergeCellsAll', 'mergeCellsHoriz', 'mergeCellsVert', 'unmergeCellsAction', 'insertSheet', 'formatAuto', 'formatText', 'formatNumber', 'formatPercent', 'formatScientific', 'formatAccounting', 'formatFinance', 'formatCurrency', 'formatCurrencyRounded', 'formatDate', 'formatTime', 'formatDateTime', 'formatDuration', 'rotateNone', 'rotateTiltUp', 'rotateTiltDown', 'rotateUp', 'rotateDown', 'rotateVertical'];
                 
                 if (action === 'todo' || !NATIVE_ACTIONS.includes(action)) {
                     setActiveModal({ id: action, label });
@@ -1731,6 +1740,28 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 }
                 if (action === 'wrapText') { applyToSelection({ wrap: true }); return; }
                 if (action === 'overflowText') { applyToSelection({ wrap: false }); return; }
+                if (action === 'truncateText') { applyToSelection({ wrap: false, overflow: 'hidden' }); toast.success('Texte tronqué'); return; }
+                // Number formats
+                if (action === 'formatAuto') { applyToSelection({ numberFormat: 'auto' }); toast.success('Format automatique'); return; }
+                if (action === 'formatText') { applyToSelection({ numberFormat: 'text' }); toast.success('Format texte'); return; }
+                if (action === 'formatNumber') { applyToSelection({ numberFormat: 'number' }); toast.success('Format nombre'); return; }
+                if (action === 'formatPercent') { applyToSelection({ numberFormat: 'percent' }); toast.success('Format pourcentage'); return; }
+                if (action === 'formatScientific') { applyToSelection({ numberFormat: 'scientific' }); toast.success('Format scientifique'); return; }
+                if (action === 'formatAccounting') { applyToSelection({ numberFormat: 'accounting' }); toast.success('Format comptabilité'); return; }
+                if (action === 'formatFinance') { applyToSelection({ numberFormat: 'accounting' }); toast.success('Format finances'); return; }
+                if (action === 'formatCurrency') { applyToSelection({ numberFormat: 'currency' }); toast.success('Format devise'); return; }
+                if (action === 'formatCurrencyRounded') { applyToSelection({ numberFormat: 'currency', decimals: 0 }); toast.success('Format devise arrondie'); return; }
+                if (action === 'formatDate') { applyToSelection({ numberFormat: 'date' }); toast.success('Format date'); return; }
+                if (action === 'formatTime') { applyToSelection({ numberFormat: 'time' }); toast.success('Format heure'); return; }
+                if (action === 'formatDateTime') { applyToSelection({ numberFormat: 'datetime' }); toast.success('Format date et heure'); return; }
+                if (action === 'formatDuration') { applyToSelection({ numberFormat: 'duration' }); toast.success('Format durée'); return; }
+                // Text rotation
+                if (action === 'rotateNone') { applyToSelection({ rotation: 0 }); toast.success('Rotation supprimée'); return; }
+                if (action === 'rotateTiltUp') { applyToSelection({ rotation: -45 }); toast.success('Incliné vers le haut'); return; }
+                if (action === 'rotateTiltDown') { applyToSelection({ rotation: 45 }); toast.success('Incliné vers le bas'); return; }
+                if (action === 'rotateUp') { applyToSelection({ rotation: -90 }); toast.success('Rotation vers le haut'); return; }
+                if (action === 'rotateDown') { applyToSelection({ rotation: 90 }); toast.success('Rotation vers le bas'); return; }
+                if (action === 'rotateVertical') { applyToSelection({ rotation: 'vertical' }); toast.success('Texte vertical'); return; }
                 if (action === 'mergeCellsAll') { handleMerge(); return; }
                 if (action === 'mergeCellsHoriz') {
                     if (selectionBounds) {
@@ -1817,7 +1848,13 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 if (action === 'clearFormat') applyToSelection({ bold: false, italic: false, underline: false, strikethrough: false, textColor: undefined, fillColor: undefined, align: undefined, verticalAlign: undefined, fontFamily: undefined, fontSize: undefined, numberFormat: "auto" })
                 if (action === 'unfreezeRow') { setFreezeRows(0); toast.info('Lignes libérées') }
                 if (action === 'unfreezeCol') { setFreezeCols(0); toast.info('Colonnes libérées') }
-                if (action === 'zoom100') toast.success('Zoom à 100%')
+                if (action === 'toggleFormulaBar') { setShowFormulaBar(v => { toast.info(v ? 'Barre de formules masquée' : 'Barre de formules affichée'); return !v }); return }
+                if (action === 'zoom50') { setZoomLevel(50); toast.success('Zoom à 50%'); return }
+                if (action === 'zoom75') { setZoomLevel(75); toast.success('Zoom à 75%'); return }
+                if (action === 'zoom100') { setZoomLevel(100); toast.success('Zoom à 100%'); return }
+                if (action === 'zoom125') { setZoomLevel(125); toast.success('Zoom à 125%'); return }
+                if (action === 'zoom150') { setZoomLevel(150); toast.success('Zoom à 150%'); return }
+                if (action === 'zoom200') { setZoomLevel(200); toast.success('Zoom à 200%'); return }
                 if (action === 'insertSum') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=SUM()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
                 if (action === 'insertAvg') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=AVERAGE()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
                 if (action === 'insertCount') { if (activeCell) { setCell(activeCell.r, activeCell.c, '=COUNT()'); setIsEditing(true); setTimeout(() => formulaBarRef.current?.focus(), 0) } }
@@ -1829,6 +1866,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 if (action === 'sortDesc') handleContextAction('sortDesc')
                 if (action === 'filter') toggleFilter()
                 if (action === 'validation') { if (!activeCell) return; const vals = prompt("Valeurs de la liste (séparées par des virgules):"); if (vals) { setCellValidation(activeCell.r, activeCell.c, { type: 'list', values: vals.split(',').map(v => v.trim()) }); toast.success('Validation ajoutée') } }
+                if (action === 'insertSheet') { addSheet(); toast.success('Nouvelle feuille ajoutée'); return }
             }} />
             </div>
 
@@ -2021,6 +2059,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             </Toolbar>
 
             {/* ===== FORMULA BAR ===== */}
+            {showFormulaBar && (
             <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-background dark:bg-[#1a1a1a] shrink-0 h-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10">
                 <div className="w-12 h-6 flex items-center justify-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded font-medium text-[12px] shrink-0 tracking-wide select-text border border-[#e3e3e3] dark:border-[#5f6368]">
                     {activeCell ? `${indexToCol(activeCell.c)}${activeCell.r + 1}` : ''}
@@ -2031,9 +2070,10 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 </div>
                 <input ref={formulaBarRef} className="flex-1 outline-none text-[13px] bg-transparent font-mono text-[#202124] dark:text-[#e8eaed] placeholder:text-[#9aa0a6] placeholder:font-sans" placeholder={activeCell ? "Saisir une formule ou un texte..." : ""} value={activeCell ? editValue : ''} onChange={(e) => { setEditValue(e.target.value); if (activeCell) setCell(activeCell.r, activeCell.c, e.target.value) }} onFocus={() => { if (activeCell) setIsEditing(true) }} disabled={!activeCell} />
             </div>
+            )}
 
             {/* ===== GRID (Virtualized) ===== */}
-            <div ref={gridRef} className="relative flex-1 overflow-auto bg-background dark:bg-[#1f1f1f] will-change-transform" onScroll={handleScroll}>
+            <div ref={gridRef} className="relative flex-1 overflow-auto bg-background dark:bg-[#1f1f1f] will-change-transform" style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left' }} onScroll={handleScroll}>
 
                 {/* Find & Replace */}
                 {showFind && (
