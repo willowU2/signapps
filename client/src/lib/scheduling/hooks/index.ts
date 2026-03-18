@@ -23,3 +23,10 @@ export {
   type UseAvailabilityFinderOptions,
   type UseAvailabilityFinderResult,
 } from './use-availability-finder';
+
+export {
+  useScheduleSearch,
+  useQuickSearch,
+  type UseScheduleSearchOptions,
+  type UseScheduleSearchResult,
+} from './use-schedule-search';
