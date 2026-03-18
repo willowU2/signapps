@@ -53,3 +53,9 @@ pub use tenant_repository::{
     TemplateRepository, TenantCalendarRepository, TenantRepository, TenantResourceRepository,
     TenantTaskRepository, WorkspaceRepository,
 };
+
+pub mod external_sync_repository;
+pub use external_sync_repository::{
+    EventMappingRepository, ExternalCalendarRepository, OAuthStateRepository,
+    ProviderConnectionRepository, SyncConfigRepository, SyncConflictRepository, SyncLogRepository,
+};

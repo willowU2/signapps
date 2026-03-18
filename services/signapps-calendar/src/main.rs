@@ -96,8 +96,8 @@ async fn main() -> anyhow::Result<()> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, post, put};
     use handlers::{
-        calendars, events, icalendar, notifications, push, recurrence, resources, shares, tasks,
-        timezones, websocket,
+        calendars, events, external_sync, icalendar, notifications, push, recurrence, resources,
+        shares, tasks, timezones, websocket,
     };
 
     // Public routes (no auth required)
@@ -186,6 +186,27 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/notifications/unread-count", get(notifications::get_unread_count))
         // Web Push send (admin)
         .route("/api/v1/notifications/push/send", post(push::send_push))
+        // External Calendar Sync - Provider Connections
+        .route("/api/v1/external-sync/connections", get(external_sync::list_connections))
+        .route("/api/v1/external-sync/connections/:id", get(external_sync::get_connection))
+        .route("/api/v1/external-sync/oauth/init", post(external_sync::init_oauth))
+        .route("/api/v1/external-sync/oauth/callback", post(external_sync::handle_oauth_callback))
+        .route("/api/v1/external-sync/connections/:id/refresh", post(external_sync::refresh_connection))
+        .route("/api/v1/external-sync/connections/:id", delete(external_sync::disconnect_provider))
+        // External Calendar Sync - External Calendars
+        .route("/api/v1/external-sync/connections/:connection_id/calendars", get(external_sync::list_external_calendars))
+        .route("/api/v1/external-sync/connections/:connection_id/discover", post(external_sync::discover_calendars))
+        // External Calendar Sync - Sync Configs
+        .route("/api/v1/external-sync/configs", get(external_sync::list_sync_configs))
+        .route("/api/v1/external-sync/configs", post(external_sync::create_sync_config))
+        .route("/api/v1/external-sync/configs/:id", put(external_sync::update_sync_config))
+        .route("/api/v1/external-sync/configs/:id", delete(external_sync::delete_sync_config))
+        .route("/api/v1/external-sync/configs/:id/sync", post(external_sync::trigger_sync))
+        // External Calendar Sync - Logs & Conflicts
+        .route("/api/v1/external-sync/configs/:config_id/logs", get(external_sync::list_sync_logs))
+        .route("/api/v1/external-sync/configs/:config_id/conflicts", get(external_sync::list_conflicts))
+        .route("/api/v1/external-sync/configs/:config_id/conflicts/:conflict_id", put(external_sync::resolve_conflict))
+        .route("/api/v1/external-sync/configs/:config_id/conflicts/resolve-all", post(external_sync::resolve_all_conflicts))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
