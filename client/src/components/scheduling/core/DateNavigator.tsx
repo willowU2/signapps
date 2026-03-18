@@ -2,6 +2,7 @@
 
 /**
  * DateNavigator Component
+ * Story 1.2.3: Date Navigator
  *
  * Navigation entre dates avec titre contextualisé et mini calendar.
  * Raccourcis: T=today, G=go to date, H/L=prev/next
@@ -12,12 +13,11 @@ import {
   format,
   startOfWeek,
   endOfWeek,
-  startOfMonth,
-  endOfMonth,
   isSameMonth,
   isSameYear,
   isToday,
   addDays,
+  getISOWeek,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, CalendarIcon } from 'lucide-react';
@@ -29,8 +29,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useSchedulingNavigation } from '@/stores/scheduling-store';
-import type { ViewType } from '@/lib/scheduling/types/scheduling';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import type { ViewType } from '@/lib/scheduling/types';
 
 // ============================================================================
 // Types
@@ -48,30 +48,21 @@ interface DateNavigatorProps {
 /**
  * Get the display title based on view and date
  */
-function getDateTitle(view: ViewType, date: Date): string {
+function getDateTitle(view: ViewType, date: Date, weekStartsOn: 0 | 1 = 1): string {
   const locale = { locale: fr };
 
   switch (view) {
     case 'day':
+    case 'focus':
       if (isToday(date)) {
         return "Aujourd'hui";
       }
       return format(date, 'EEEE d MMMM yyyy', locale);
 
-    case '3-day': {
-      const endDate = addDays(date, 2);
-      if (isSameMonth(date, endDate)) {
-        return `${format(date, 'd', locale)} - ${format(endDate, 'd MMMM yyyy', locale)}`;
-      }
-      if (isSameYear(date, endDate)) {
-        return `${format(date, 'd MMM', locale)} - ${format(endDate, 'd MMM yyyy', locale)}`;
-      }
-      return `${format(date, 'd MMM yyyy', locale)} - ${format(endDate, 'd MMM yyyy', locale)}`;
-    }
-
-    case 'week': {
-      const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-      const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+    case 'week':
+    case 'roster': {
+      const weekStart = startOfWeek(date, { weekStartsOn });
+      const weekEnd = endOfWeek(date, { weekStartsOn });
       if (isSameMonth(weekStart, weekEnd)) {
         return format(weekStart, 'MMMM yyyy', locale);
       }
@@ -82,23 +73,22 @@ function getDateTitle(view: ViewType, date: Date): string {
     }
 
     case 'month':
+    case 'heatmap':
       return format(date, 'MMMM yyyy', locale);
 
     case 'agenda':
+    case 'timeline':
+    case 'kanban':
     default:
       return format(date, 'MMMM yyyy', locale);
   }
 }
 
 /**
- * Get week number
+ * Get ISO week number
  */
 function getWeekNumber(date: Date): number {
-  const startOfYear = new Date(date.getFullYear(), 0, 1);
-  const pastDays = Math.floor(
-    (date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000)
-  );
-  return Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+  return getISOWeek(date);
 }
 
 // ============================================================================
@@ -109,16 +99,17 @@ export function DateNavigator({
   className,
   showMiniCalendar = true,
 }: DateNavigatorProps) {
-  const {
-    activeView,
-    currentDate,
-    setCurrentDate,
-    goToToday,
-    navigatePrev,
-    navigateNext,
-  } = useSchedulingNavigation();
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const view = useCalendarStore((state) => state.view);
+  const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
+  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
+  const goToToday = useCalendarStore((state) => state.goToToday);
+  const navigateRelative = useCalendarStore((state) => state.navigateRelative);
 
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
+
+  const navigatePrev = React.useCallback(() => navigateRelative('prev'), [navigateRelative]);
+  const navigateNext = React.useCallback(() => navigateRelative('next'), [navigateRelative]);
 
   // Keyboard shortcuts
   React.useEffect(() => {
@@ -166,8 +157,9 @@ export function DateNavigator({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [goToToday, navigatePrev, navigateNext]);
 
-  const title = getDateTitle(activeView, currentDate);
+  const title = getDateTitle(view, currentDate, weekStartsOn);
   const weekNumber = getWeekNumber(currentDate);
+  const showWeekNumber = view === 'week' || view === 'roster';
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
@@ -221,7 +213,7 @@ export function DateNavigator({
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               <span className="capitalize">{title}</span>
-              {activeView === 'week' && (
+              {showWeekNumber && (
                 <span className="ml-2 text-xs text-muted-foreground">
                   S{weekNumber}
                 </span>
@@ -246,7 +238,7 @@ export function DateNavigator({
       ) : (
         <h2 className="text-lg font-semibold capitalize">
           {title}
-          {activeView === 'week' && (
+          {showWeekNumber && (
             <span className="ml-2 text-sm font-normal text-muted-foreground">
               Semaine {weekNumber}
             </span>
@@ -262,15 +254,16 @@ export function DateNavigator({
 // ============================================================================
 
 export function DateNavigatorCompact({ className }: { className?: string }) {
-  const { currentDate, goToToday, navigatePrev, navigateNext } =
-    useSchedulingNavigation();
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const goToToday = useCalendarStore((state) => state.goToToday);
+  const navigateRelative = useCalendarStore((state) => state.navigateRelative);
 
   return (
     <div className={cn('flex items-center gap-1', className)}>
       <Button
         variant="ghost"
         size="icon"
-        onClick={navigatePrev}
+        onClick={() => navigateRelative('prev')}
         className="h-7 w-7"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -282,18 +275,37 @@ export function DateNavigatorCompact({ className }: { className?: string }) {
         onClick={goToToday}
         className="h-7 px-2 text-xs"
       >
-        {format(currentDate, 'MMM d', { locale: fr })}
+        {format(currentDate, 'd MMM', { locale: fr })}
       </Button>
 
       <Button
         variant="ghost"
         size="icon"
-        onClick={navigateNext}
+        onClick={() => navigateRelative('next')}
         className="h-7 w-7"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
+  );
+}
+
+// ============================================================================
+// Mini Calendar (standalone)
+// ============================================================================
+
+export function MiniCalendar({ className }: { className?: string }) {
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
+
+  return (
+    <Calendar
+      mode="single"
+      selected={currentDate}
+      onSelect={(date) => date && setCurrentDate(date)}
+      locale={fr}
+      className={className}
+    />
   );
 }
 

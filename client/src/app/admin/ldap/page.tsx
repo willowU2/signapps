@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { identityApi } from "@/lib/api"
+import { identityApiClient as identityApi } from "@/lib/api"
 import {
     Server, RefreshCw, Users, Shield, CheckCircle2, XCircle, Loader2,
     FolderTree, Play, Settings, Lock, Eye, EyeOff

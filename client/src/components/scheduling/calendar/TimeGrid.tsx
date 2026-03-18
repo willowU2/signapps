@@ -2,9 +2,10 @@
 
 /**
  * TimeGrid Component
+ * Story 1.3.1: TimeGrid Component
  *
  * Main calendar grid combining TimeGutter with multiple DayColumns.
- * Supports day, 3-day, and week views.
+ * Supports day, week, roster views with TimeItem rendering.
  */
 
 import * as React from 'react';
@@ -16,48 +17,56 @@ import {
   isSameDay,
   setHours,
   setMinutes,
+  parseISO,
 } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useSchedulingUI, useSchedulingNavigation } from '@/stores/scheduling-store';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import { usePreferencesStore } from '@/stores/scheduling/preferences-store';
 import { TimeGutter, TimeGutterCompact } from './TimeGutter';
 import { DayColumn, DayHeader } from './DayColumn';
-import type { ScheduleBlock, EventLayout, ViewType } from '@/lib/scheduling/types/scheduling';
+import { AllDayItemBlock } from './TimeItemBlock';
+import type { TimeItem, ViewType, PositionedItem } from '@/lib/scheduling/types';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface TimeGridProps {
-  events: ScheduleBlock[];
-  layouts?: EventLayout[];
+  items: TimeItem[];
+  positions?: PositionedItem[];
   className?: string;
   slotHeight?: number;
   onSlotClick?: (date: Date, hour: number, minute: number) => void;
-  onEventClick?: (event: ScheduleBlock) => void;
-  renderEvent?: (layout: EventLayout) => React.ReactNode;
+  onItemClick?: (item: TimeItem) => void;
+  onItemDoubleClick?: (item: TimeItem) => void;
+  renderItem?: (item: TimeItem, position: PositionedItem) => React.ReactNode;
 }
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
-function getDaysForView(date: Date, view: ViewType, firstDayOfWeek: 0 | 1 | 6): Date[] {
+function getDaysForView(date: Date, view: ViewType, weekStartsOn: 0 | 1): Date[] {
   switch (view) {
     case 'day':
+    case 'focus':
       return [date];
 
-    case '3-day':
-      return [date, addDays(date, 1), addDays(date, 2)];
-
     case 'week':
+    case 'roster':
       return eachDayOfInterval({
-        start: startOfWeek(date, { weekStartsOn: firstDayOfWeek }),
-        end: endOfWeek(date, { weekStartsOn: firstDayOfWeek }),
+        start: startOfWeek(date, { weekStartsOn }),
+        end: endOfWeek(date, { weekStartsOn }),
       });
 
     default:
       return [date];
   }
+}
+
+function getItemDate(item: TimeItem): Date | null {
+  if (!item.startTime) return null;
+  return typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
 }
 
 // ============================================================================
@@ -66,17 +75,17 @@ function getDaysForView(date: Date, view: ViewType, firstDayOfWeek: 0 | 1 | 6): 
 
 function AllDayRow({
   days,
-  events,
-  onEventClick,
+  items,
+  onItemClick,
 }: {
   days: Date[];
-  events: ScheduleBlock[];
-  onEventClick?: (event: ScheduleBlock) => void;
+  items: TimeItem[];
+  onItemClick?: (item: TimeItem) => void;
 }) {
-  // Filter all-day events
-  const allDayEvents = events.filter((e) => e.allDay);
+  // Filter all-day items
+  const allDayItems = items.filter((item) => item.allDay);
 
-  if (allDayEvents.length === 0) return null;
+  if (allDayItems.length === 0) return null;
 
   return (
     <div className="flex border-b">
@@ -85,31 +94,25 @@ function AllDayRow({
         <span className="text-xs text-muted-foreground">Journée</span>
       </div>
 
-      {/* All-day events for each day */}
+      {/* All-day items for each day */}
       <div className="flex flex-1">
         {days.map((day) => {
-          const dayEvents = allDayEvents.filter((e) => isSameDay(e.start, day));
+          const dayItems = allDayItems.filter((item) => {
+            const itemDate = getItemDate(item);
+            return itemDate && isSameDay(itemDate, day);
+          });
 
           return (
             <div
               key={day.toISOString()}
-              className="flex-1 border-r last:border-r-0 p-1 min-h-[32px]"
+              className="flex-1 border-r last:border-r-0 p-1 min-h-[32px] space-y-0.5"
             >
-              {dayEvents.map((event) => (
-                <button
-                  key={event.id}
-                  onClick={() => onEventClick?.(event)}
-                  className={cn(
-                    'w-full text-left text-xs px-2 py-0.5 rounded truncate',
-                    'hover:opacity-80 transition-opacity'
-                  )}
-                  style={{
-                    backgroundColor: event.color || 'hsl(var(--primary))',
-                    color: 'white',
-                  }}
-                >
-                  {event.title}
-                </button>
+              {dayItems.map((item) => (
+                <AllDayItemBlock
+                  key={item.id}
+                  item={item}
+                  onClick={onItemClick}
+                />
               ))}
             </div>
           );
@@ -124,36 +127,45 @@ function AllDayRow({
 // ============================================================================
 
 export function TimeGrid({
-  events,
-  layouts = [],
+  items,
+  positions = [],
   className,
   slotHeight = 48,
   onSlotClick,
-  onEventClick,
-  renderEvent,
+  onItemClick,
+  onItemDoubleClick,
+  renderItem,
 }: TimeGridProps) {
-  const { viewConfig, filters } = useSchedulingUI();
-  const { activeView, currentDate } = useSchedulingNavigation();
+  const view = useCalendarStore((state) => state.view);
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const hourStart = useCalendarStore((state) => state.hourStart);
+  const hourEnd = useCalendarStore((state) => state.hourEnd);
+  const slotDuration = useCalendarStore((state) => state.slotDuration);
+  const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
+  const showWeekends = useCalendarStore((state) => state.showWeekends);
+  const compactMode = useCalendarStore((state) => state.compactMode);
+
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
   // Get days to display based on view
   const days = React.useMemo(() => {
-    let allDays = getDaysForView(currentDate, activeView, viewConfig.firstDayOfWeek);
+    let allDays = getDaysForView(currentDate, view, weekStartsOn);
 
     // Filter weekends if needed
-    if (!filters.showWeekends) {
+    if (!showWeekends) {
       allDays = allDays.filter((d) => d.getDay() !== 0 && d.getDay() !== 6);
     }
 
     return allDays;
-  }, [currentDate, activeView, viewConfig.firstDayOfWeek, filters.showWeekends]);
+  }, [currentDate, view, weekStartsOn, showWeekends]);
 
-  // Filter events for visible days
-  const visibleEvents = React.useMemo(() => {
-    return events.filter((event) =>
-      days.some((day) => isSameDay(event.start, day))
-    );
-  }, [events, days]);
+  // Filter items for visible days
+  const visibleItems = React.useMemo(() => {
+    return items.filter((item) => {
+      const itemDate = getItemDate(item);
+      return itemDate && days.some((day) => isSameDay(itemDate, day));
+    });
+  }, [items, days]);
 
   // Scroll to current time on mount
   React.useEffect(() => {
@@ -162,18 +174,13 @@ export function TimeGrid({
       const currentHour = now.getHours();
 
       // Calculate scroll position to center current time
-      const slotsPerHour = 60 / viewConfig.slotDuration;
-      const slotIndex = (currentHour - viewConfig.workingHoursStart) * slotsPerHour;
+      const slotsPerHour = 60 / slotDuration;
+      const slotIndex = (currentHour - hourStart) * slotsPerHour;
       const scrollTop = slotIndex * slotHeight - 100; // 100px offset for context
 
       scrollRef.current.scrollTop = Math.max(0, scrollTop);
     }
-  }, [slotHeight, viewConfig.slotDuration, viewConfig.workingHoursStart]);
-
-  // Calculate total height
-  const totalSlots =
-    ((viewConfig.workingHoursEnd - viewConfig.workingHoursStart + 1) * 60) /
-    viewConfig.slotDuration;
+  }, [slotHeight, slotDuration, hourStart]);
 
   return (
     <div className={cn('flex h-full flex-col', className)}>
@@ -195,20 +202,18 @@ export function TimeGrid({
         </div>
       </div>
 
-      {/* All-Day Events Row */}
-      {filters.showAllDay && (
-        <AllDayRow
-          days={days}
-          events={visibleEvents}
-          onEventClick={onEventClick}
-        />
-      )}
+      {/* All-Day Items Row */}
+      <AllDayRow
+        days={days}
+        items={visibleItems}
+        onItemClick={onItemClick}
+      />
 
       {/* Scrollable Grid */}
       <div ref={scrollRef} className="flex flex-1 overflow-auto">
         {/* Time Gutter */}
         <div className="sticky left-0 z-10 w-16 shrink-0 border-r bg-background">
-          {viewConfig.compactMode ? (
+          {compactMode ? (
             <TimeGutterCompact slotHeight={slotHeight} />
           ) : (
             <TimeGutter slotHeight={slotHeight} />
@@ -221,12 +226,13 @@ export function TimeGrid({
             <DayColumn
               key={day.toISOString()}
               date={day}
-              events={visibleEvents}
-              layouts={layouts}
+              items={visibleItems}
+              positions={positions}
               slotHeight={slotHeight}
               onSlotClick={onSlotClick}
-              onEventClick={onEventClick}
-              renderEvent={renderEvent}
+              onItemClick={onItemClick}
+              onItemDoubleClick={onItemDoubleClick}
+              renderItem={renderItem}
             />
           ))}
         </div>
@@ -236,7 +242,7 @@ export function TimeGrid({
 }
 
 // ============================================================================
-// Hook for creating new event from slot click
+// Hook for creating new item from slot click
 // ============================================================================
 
 export function useSlotClickHandler(options?: {
@@ -248,13 +254,50 @@ export function useSlotClickHandler(options?: {
   return React.useCallback(
     (date: Date, hour: number, minute: number) => {
       const start = setMinutes(setHours(date, hour), minute);
-      const end = addDays(start, 0); // Clone date
+      const end = new Date(start);
       end.setMinutes(end.getMinutes() + defaultDuration);
 
       options?.onCreate?.(start, end);
     },
     [defaultDuration, options]
   );
+}
+
+// ============================================================================
+// Current Time Indicator Hook
+// ============================================================================
+
+export function useCurrentTimeIndicator(
+  hourStart: number,
+  hourEnd: number,
+  slotHeight: number,
+  slotDuration: number
+) {
+  const [position, setPosition] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    const updatePosition = () => {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+
+      if (currentHour < hourStart || currentHour >= hourEnd) {
+        setPosition(null);
+        return;
+      }
+
+      const minutesFromStart = (currentHour - hourStart) * 60 + currentMinute;
+      const pixelsPerMinute = slotHeight / slotDuration;
+      setPosition(minutesFromStart * pixelsPerMinute);
+    };
+
+    updatePosition();
+    const interval = setInterval(updatePosition, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [hourStart, hourEnd, slotHeight, slotDuration]);
+
+  return position;
 }
 
 export default TimeGrid;

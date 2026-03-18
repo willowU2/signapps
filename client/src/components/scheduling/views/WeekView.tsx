@@ -2,10 +2,11 @@
 
 /**
  * WeekView Component
+ * Story 1.3.3: WeekView Component
  *
  * Full week calendar view with 7 day columns.
  * Optimized for desktop with responsive adaptations.
- * Supports drag & drop for moving and resizing events.
+ * Supports drag & drop for moving and resizing TimeItems.
  */
 
 import * as React from 'react';
@@ -15,19 +16,16 @@ import {
   eachDayOfInterval,
   isSameDay,
   format,
+  parseISO,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useSchedulingNavigation, useSchedulingUI } from '@/stores/scheduling-store';
-import { useEvents, useMoveEvent } from '@/lib/scheduling/api/calendar';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
 import { TimeGrid, useSlotClickHandler } from '../calendar/TimeGrid';
-import { DraggableEventBlock } from '../calendar/DraggableEventBlock';
-import {
-  calculateMultiDayLayouts,
-  getAllDayEvents,
-} from '@/lib/scheduling/utils/event-layout';
-import { useEventDrag, useDragPreview } from '@/lib/scheduling/hooks/use-event-drag';
-import type { ScheduleBlock, EventLayout } from '@/lib/scheduling/types/scheduling';
+import { TimeItemBlock } from '../calendar/TimeItemBlock';
+import { calculateItemPositions } from '@/lib/scheduling/utils/overlap-calculator';
+import type { TimeItem, PositionedItem } from '@/lib/scheduling/types';
 
 // ============================================================================
 // Types
@@ -36,8 +34,19 @@ import type { ScheduleBlock, EventLayout } from '@/lib/scheduling/types/scheduli
 interface WeekViewProps {
   className?: string;
   slotHeight?: number;
-  onEventClick?: (event: ScheduleBlock) => void;
-  onCreateEvent?: (start: Date, end: Date) => void;
+  items?: TimeItem[];
+  onItemClick?: (item: TimeItem) => void;
+  onItemDoubleClick?: (item: TimeItem) => void;
+  onCreateItem?: (start: Date, end: Date) => void;
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+function getItemDate(item: TimeItem): Date | null {
+  if (!item.startTime) return null;
+  return typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
 }
 
 // ============================================================================
@@ -47,96 +56,61 @@ interface WeekViewProps {
 export function WeekView({
   className,
   slotHeight = 48,
-  onEventClick,
-  onCreateEvent,
+  items: propItems,
+  onItemClick,
+  onItemDoubleClick,
+  onCreateItem,
 }: WeekViewProps) {
-  const { currentDate, getDateRange } = useSchedulingNavigation();
-  const { viewConfig, filters } = useSchedulingUI();
-  const dateRange = getDateRange();
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
+  const showWeekends = useCalendarStore((state) => state.showWeekends);
+  const hourStart = useCalendarStore((state) => state.hourStart);
+  const hourEnd = useCalendarStore((state) => state.hourEnd);
+  const slotDuration = useCalendarStore((state) => state.slotDuration);
+  const getDateRange = useCalendarStore((state) => state.getDateRange);
 
-  // Fetch events
-  const { data: events = [], isLoading } = useEvents({
-    start: dateRange.start,
-    end: dateRange.end,
-  });
+  // Get items from store if not provided
+  const storeItems = useSchedulingStore((state) => state.timeItems);
+  const isLoading = useSchedulingStore((state) => state.isLoading);
+  const fetchTimeItems = useSchedulingStore((state) => state.fetchTimeItems);
 
-  // Move event mutation
-  const moveEvent = useMoveEvent();
+  const items = propItems || storeItems;
 
-  // Drag & Drop
-  const { dragState, containerRef, handlers } = useEventDrag({
-    slotHeight,
-    slotDuration: viewConfig.slotDuration,
-    workingHoursStart: viewConfig.workingHoursStart,
-    workingHoursEnd: viewConfig.workingHoursEnd,
-    onEventMove: (eventId, start, end) => {
-      moveEvent.mutate({ eventId, start, end });
-    },
-  });
-
-  // Drag preview
-  const dragPreview = useDragPreview(
-    dragState,
-    slotHeight,
-    viewConfig.slotDuration,
-    viewConfig.workingHoursStart
-  );
+  // Fetch items on mount
+  React.useEffect(() => {
+    if (!propItems) {
+      const dateRange = getDateRange();
+      fetchTimeItems(dateRange);
+    }
+  }, [propItems, fetchTimeItems, getDateRange]);
 
   // Get days of the week
   const days = React.useMemo(() => {
     let allDays = eachDayOfInterval({
-      start: startOfWeek(currentDate, { weekStartsOn: viewConfig.firstDayOfWeek }),
-      end: endOfWeek(currentDate, { weekStartsOn: viewConfig.firstDayOfWeek }),
+      start: startOfWeek(currentDate, { weekStartsOn }),
+      end: endOfWeek(currentDate, { weekStartsOn }),
     });
 
     // Filter weekends if needed
-    if (!filters.showWeekends) {
+    if (!showWeekends) {
       allDays = allDays.filter((d) => d.getDay() !== 0 && d.getDay() !== 6);
     }
 
     return allDays;
-  }, [currentDate, viewConfig.firstDayOfWeek, filters.showWeekends]);
+  }, [currentDate, weekStartsOn, showWeekends]);
 
-  // Calculate layouts for all days
-  const layoutsByDay = React.useMemo(() => {
-    return calculateMultiDayLayouts(events, days, {
-      viewConfig,
-      slotHeight,
-    });
-  }, [events, days, viewConfig, slotHeight]);
-
-  // Get all-day events
-  const allDayEvents = React.useMemo(() => {
-    return getAllDayEvents(events, days);
-  }, [events, days]);
+  // Calculate positions for all items
+  const positions = React.useMemo(() => {
+    return calculateItemPositions(items, hourStart, hourEnd);
+  }, [items, hourStart, hourEnd]);
 
   // Handle slot click
   const handleSlotClick = useSlotClickHandler({
-    defaultDuration: viewConfig.slotDuration,
-    onCreate: onCreateEvent,
+    defaultDuration: slotDuration,
+    onCreate: onCreateItem,
   });
 
-  // Render event with drag support
-  const renderEvent = React.useCallback(
-    (layout: EventLayout) => {
-      const isDraggingThis =
-        dragState.isDragging && dragState.eventId === layout.block.id;
-
-      return (
-        <DraggableEventBlock
-          key={layout.block.id}
-          layout={layout}
-          dragState={dragState}
-          previewLayout={isDraggingThis ? dragPreview : null}
-          onClick={onEventClick}
-          onDragStart={handlers.onDragStart}
-        />
-      );
-    },
-    [onEventClick, dragState, dragPreview, handlers.onDragStart]
-  );
-
-  if (isLoading) {
+  if (isLoading && items.length === 0) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
         <div className="flex flex-col items-center gap-2">
@@ -148,13 +122,14 @@ export function WeekView({
   }
 
   return (
-    <div ref={containerRef} className={cn('h-full', className)}>
+    <div className={cn('h-full', className)}>
       <TimeGrid
-        events={events}
+        items={items}
+        positions={positions}
         slotHeight={slotHeight}
         onSlotClick={handleSlotClick}
-        onEventClick={onEventClick}
-        renderEvent={renderEvent}
+        onItemClick={onItemClick}
+        onItemDoubleClick={onItemDoubleClick}
       />
     </div>
   );
@@ -166,36 +141,45 @@ export function WeekView({
 
 export function WeekViewCompact({
   className,
-  onEventClick,
+  items: propItems,
+  onItemClick,
 }: {
   className?: string;
-  onEventClick?: (event: ScheduleBlock) => void;
+  items?: TimeItem[];
+  onItemClick?: (item: TimeItem) => void;
 }) {
-  const { currentDate } = useSchedulingNavigation();
-  const { viewConfig, filters } = useSchedulingUI();
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
+  const showWeekends = useCalendarStore((state) => state.showWeekends);
+
+  // Get items from store if not provided
+  const storeItems = useSchedulingStore((state) => state.timeItems);
+  const items = propItems || storeItems;
+
   const dateRange = React.useMemo(
     () => ({
-      start: startOfWeek(currentDate, { weekStartsOn: viewConfig.firstDayOfWeek }),
-      end: endOfWeek(currentDate, { weekStartsOn: viewConfig.firstDayOfWeek }),
+      start: startOfWeek(currentDate, { weekStartsOn }),
+      end: endOfWeek(currentDate, { weekStartsOn }),
     }),
-    [currentDate, viewConfig.firstDayOfWeek]
+    [currentDate, weekStartsOn]
   );
-
-  const { data: events = [] } = useEvents(dateRange);
 
   // Get days
   const days = React.useMemo(() => {
     let allDays = eachDayOfInterval(dateRange);
-    if (!filters.showWeekends) {
+    if (!showWeekends) {
       allDays = allDays.filter((d) => d.getDay() !== 0 && d.getDay() !== 6);
     }
     return allDays;
-  }, [dateRange, filters.showWeekends]);
+  }, [dateRange, showWeekends]);
 
   return (
     <div className={cn('flex flex-col gap-2 p-2', className)}>
       {days.map((day) => {
-        const dayEvents = events.filter((e) => isSameDay(e.start, day));
+        const dayItems = items.filter((item) => {
+          const itemDate = getItemDate(item);
+          return itemDate && isSameDay(itemDate, day);
+        });
 
         return (
           <div key={day.toISOString()} className="rounded-lg border p-2">
@@ -204,37 +188,46 @@ export function WeekViewCompact({
                 {format(day, 'EEEE d', { locale: fr })}
               </span>
               <span className="text-xs text-muted-foreground">
-                {dayEvents.length} événement{dayEvents.length !== 1 ? 's' : ''}
+                {dayItems.length} élément{dayItems.length !== 1 ? 's' : ''}
               </span>
             </div>
 
-            {dayEvents.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Aucun événement</p>
+            {dayItems.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Aucun élément</p>
             ) : (
               <div className="space-y-1">
-                {dayEvents.slice(0, 3).map((event) => (
-                  <button
-                    key={event.id}
-                    onClick={() => onEventClick?.(event)}
-                    className={cn(
-                      'w-full text-left text-xs rounded px-2 py-1',
-                      'hover:bg-accent transition-colors',
-                      'border-l-2'
-                    )}
-                    style={{
-                      borderLeftColor: event.color || 'hsl(var(--primary))',
-                    }}
-                  >
-                    <div className="font-medium truncate">{event.title}</div>
-                    <div className="text-muted-foreground">
-                      {format(event.start, 'HH:mm', { locale: fr })}
-                      {event.end && ` - ${format(event.end, 'HH:mm', { locale: fr })}`}
-                    </div>
-                  </button>
-                ))}
-                {dayEvents.length > 3 && (
+                {dayItems.slice(0, 3).map((item) => {
+                  const startTime = getItemDate(item);
+                  const endTime = item.endTime
+                    ? typeof item.endTime === 'string'
+                      ? parseISO(item.endTime)
+                      : item.endTime
+                    : null;
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => onItemClick?.(item)}
+                      className={cn(
+                        'w-full text-left text-xs rounded px-2 py-1',
+                        'hover:bg-accent transition-colors',
+                        'border-l-2'
+                      )}
+                      style={{
+                        borderLeftColor: item.color || 'hsl(var(--primary))',
+                      }}
+                    >
+                      <div className="font-medium truncate">{item.title}</div>
+                      <div className="text-muted-foreground">
+                        {startTime && format(startTime, 'HH:mm', { locale: fr })}
+                        {endTime && ` - ${format(endTime, 'HH:mm', { locale: fr })}`}
+                      </div>
+                    </button>
+                  );
+                })}
+                {dayItems.length > 3 && (
                   <p className="text-xs text-muted-foreground text-center">
-                    +{dayEvents.length - 3} autres
+                    +{dayItems.length - 3} autres
                   </p>
                 )}
               </div>

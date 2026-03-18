@@ -2,9 +2,10 @@
 
 /**
  * MonthView Component
+ * Story 1.3.5: MonthView Component
  *
- * Full month calendar grid with event indicators.
- * Shows compact event previews in each day cell.
+ * Full month calendar grid with TimeItem indicators.
+ * Shows compact item previews in each day cell.
  */
 
 import * as React from 'react';
@@ -19,15 +20,15 @@ import {
   isToday,
   format,
   addMonths,
+  parseISO,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useSchedulingNavigation, useSchedulingUI } from '@/stores/scheduling-store';
-import { useEvents } from '@/lib/scheduling/api/calendar';
-import { AllDayEventBlock } from '../calendar/EventBlock';
-import type { ScheduleBlock } from '@/lib/scheduling/types/scheduling';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
+import type { TimeItem } from '@/lib/scheduling/types';
 
 // ============================================================================
 // Types
@@ -35,10 +36,20 @@ import type { ScheduleBlock } from '@/lib/scheduling/types/scheduling';
 
 interface MonthViewProps {
   className?: string;
-  maxEventsPerDay?: number;
-  onEventClick?: (event: ScheduleBlock) => void;
+  maxItemsPerDay?: number;
+  items?: TimeItem[];
+  onItemClick?: (item: TimeItem) => void;
   onDayClick?: (date: Date) => void;
-  onCreateEvent?: (date: Date) => void;
+  onCreateItem?: (date: Date) => void;
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+function getItemDate(item: TimeItem): Date | null {
+  if (!item.startTime) return null;
+  return typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
 }
 
 // ============================================================================
@@ -48,28 +59,28 @@ interface MonthViewProps {
 function DayCell({
   date,
   isCurrentMonth,
-  events,
-  maxEvents,
-  onEventClick,
+  items,
+  maxItems,
+  onItemClick,
   onDayClick,
-  onCreateEvent,
+  onCreateItem,
 }: {
   date: Date;
   isCurrentMonth: boolean;
-  events: ScheduleBlock[];
-  maxEvents: number;
-  onEventClick?: (event: ScheduleBlock) => void;
+  items: TimeItem[];
+  maxItems: number;
+  onItemClick?: (item: TimeItem) => void;
   onDayClick?: (date: Date) => void;
-  onCreateEvent?: (date: Date) => void;
+  onCreateItem?: (date: Date) => void;
 }) {
   const today = isToday(date);
-  const visibleEvents = events.slice(0, maxEvents);
-  const hiddenCount = events.length - maxEvents;
+  const visibleItems = items.slice(0, maxItems);
+  const hiddenCount = items.length - maxItems;
 
   return (
     <div
       className={cn(
-        'min-h-[100px] border-b border-r p-1 transition-colors',
+        'min-h-[100px] border-b border-r p-1 transition-colors group',
         'hover:bg-accent/30 cursor-pointer',
         !isCurrentMonth && 'bg-muted/30 text-muted-foreground'
       )}
@@ -86,14 +97,14 @@ function DayCell({
         >
           {format(date, 'd')}
         </span>
-        {onCreateEvent && (
+        {onCreateItem && (
           <Button
             variant="ghost"
             size="icon"
             className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => {
               e.stopPropagation();
-              onCreateEvent(date);
+              onCreateItem(date);
             }}
           >
             <Plus className="h-3 w-3" />
@@ -101,37 +112,41 @@ function DayCell({
         )}
       </div>
 
-      {/* Events */}
+      {/* Items */}
       <div className="space-y-0.5">
-        {visibleEvents.map((event) => (
-          <button
-            key={event.id}
-            onClick={(e) => {
-              e.stopPropagation();
-              onEventClick?.(event);
-            }}
-            className={cn(
-              'w-full text-left text-[11px] px-1.5 py-0.5 rounded truncate',
-              'hover:opacity-80 transition-opacity',
-              event.allDay ? 'text-white' : 'border-l-2'
-            )}
-            style={{
-              backgroundColor: event.allDay
-                ? event.color || 'hsl(var(--primary))'
-                : `${event.color || 'hsl(var(--primary))'}10`,
-              borderLeftColor: !event.allDay
-                ? event.color || 'hsl(var(--primary))'
-                : undefined,
-            }}
-          >
-            {!event.allDay && (
-              <span className="text-muted-foreground mr-1">
-                {format(event.start, 'HH:mm', { locale: fr })}
-              </span>
-            )}
-            <span className={event.allDay ? '' : 'font-medium'}>{event.title}</span>
-          </button>
-        ))}
+        {visibleItems.map((item) => {
+          const startTime = getItemDate(item);
+
+          return (
+            <button
+              key={item.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                onItemClick?.(item);
+              }}
+              className={cn(
+                'w-full text-left text-[11px] px-1.5 py-0.5 rounded truncate',
+                'hover:opacity-80 transition-opacity',
+                item.allDay ? 'text-white' : 'border-l-2'
+              )}
+              style={{
+                backgroundColor: item.allDay
+                  ? item.color || 'hsl(var(--primary))'
+                  : `${item.color || 'hsl(var(--primary))'}10`,
+                borderLeftColor: !item.allDay
+                  ? item.color || 'hsl(var(--primary))'
+                  : undefined,
+              }}
+            >
+              {!item.allDay && startTime && (
+                <span className="text-muted-foreground mr-1">
+                  {format(startTime, 'HH:mm', { locale: fr })}
+                </span>
+              )}
+              <span className={item.allDay ? '' : 'font-medium'}>{item.title}</span>
+            </button>
+          );
+        })}
 
         {hiddenCount > 0 && (
           <button
@@ -155,67 +170,83 @@ function DayCell({
 
 export function MonthView({
   className,
-  maxEventsPerDay = 3,
-  onEventClick,
+  maxItemsPerDay = 3,
+  items: propItems,
+  onItemClick,
   onDayClick,
-  onCreateEvent,
+  onCreateItem,
 }: MonthViewProps) {
-  const { currentDate, setCurrentDate, getDateRange } = useSchedulingNavigation();
-  const { viewConfig, filters } = useSchedulingUI();
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
+  const showWeekends = useCalendarStore((state) => state.showWeekends);
+
+  // Get items from store if not provided
+  const storeItems = useSchedulingStore((state) => state.timeItems);
+  const isLoading = useSchedulingStore((state) => state.isLoading);
+  const fetchTimeItems = useSchedulingStore((state) => state.fetchTimeItems);
+
+  const items = propItems || storeItems;
 
   // Calculate month boundaries with padding for week display
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  const calendarStart = startOfWeek(monthStart, { weekStartsOn: viewConfig.firstDayOfWeek });
-  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: viewConfig.firstDayOfWeek });
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn });
 
-  // Fetch events for the visible range
-  const { data: events = [], isLoading } = useEvents({
-    start: calendarStart,
-    end: calendarEnd,
-  });
+  // Fetch items on mount
+  React.useEffect(() => {
+    if (!propItems) {
+      fetchTimeItems({ start: calendarStart, end: calendarEnd });
+    }
+  }, [propItems, fetchTimeItems, calendarStart, calendarEnd]);
 
   // Generate all days to display
   const days = React.useMemo(() => {
     let allDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
     // Optionally filter weekends
-    if (!filters.showWeekends) {
+    if (!showWeekends) {
       allDays = allDays.filter((d) => d.getDay() !== 0 && d.getDay() !== 6);
     }
 
     return allDays;
-  }, [calendarStart, calendarEnd, filters.showWeekends]);
+  }, [calendarStart, calendarEnd, showWeekends]);
 
-  // Group events by day
-  const eventsByDay = React.useMemo(() => {
-    const grouped = new Map<string, ScheduleBlock[]>();
+  // Group items by day
+  const itemsByDay = React.useMemo(() => {
+    const grouped = new Map<string, TimeItem[]>();
 
     for (const day of days) {
       const dayKey = format(day, 'yyyy-MM-dd');
-      const dayEvents = events.filter((event) => isSameDay(event.start, day));
-      // Sort: all-day events first, then by start time
-      dayEvents.sort((a, b) => {
+      const dayItems = items.filter((item) => {
+        const itemDate = getItemDate(item);
+        return itemDate && isSameDay(itemDate, day);
+      });
+      // Sort: all-day items first, then by start time
+      dayItems.sort((a, b) => {
         if (a.allDay && !b.allDay) return -1;
         if (!a.allDay && b.allDay) return 1;
-        return a.start.getTime() - b.start.getTime();
+        const aDate = getItemDate(a);
+        const bDate = getItemDate(b);
+        if (!aDate || !bDate) return 0;
+        return aDate.getTime() - bDate.getTime();
       });
-      grouped.set(dayKey, dayEvents);
+      grouped.set(dayKey, dayItems);
     }
 
     return grouped;
-  }, [days, events]);
+  }, [days, items]);
 
   // Week day headers
   const weekDays = React.useMemo(() => {
-    const firstWeek = days.slice(0, filters.showWeekends ? 7 : 5);
+    const firstWeek = days.slice(0, showWeekends ? 7 : 5);
     return firstWeek.map((day) => format(day, 'EEE', { locale: fr }));
-  }, [days, filters.showWeekends]);
+  }, [days, showWeekends]);
 
   // Number of columns
-  const columns = filters.showWeekends ? 7 : 5;
+  const columns = showWeekends ? 7 : 5;
 
-  if (isLoading) {
+  if (isLoading && items.length === 0) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
         <div className="flex flex-col items-center gap-2">
@@ -250,18 +281,18 @@ export function MonthView({
       >
         {days.map((day) => {
           const dayKey = format(day, 'yyyy-MM-dd');
-          const dayEvents = eventsByDay.get(dayKey) || [];
+          const dayItems = itemsByDay.get(dayKey) || [];
 
           return (
             <DayCell
               key={dayKey}
               date={day}
               isCurrentMonth={isSameMonth(day, currentDate)}
-              events={dayEvents}
-              maxEvents={maxEventsPerDay}
-              onEventClick={onEventClick}
+              items={dayItems}
+              maxItems={maxItemsPerDay}
+              onItemClick={onItemClick}
               onDayClick={onDayClick}
-              onCreateEvent={onCreateEvent}
+              onCreateItem={onCreateItem}
             />
           );
         })}
@@ -281,13 +312,14 @@ export function MiniMonthView({
   className?: string;
   onDateSelect?: (date: Date) => void;
 }) {
-  const { currentDate, setCurrentDate } = useSchedulingNavigation();
-  const { viewConfig } = useSchedulingUI();
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
+  const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
-  const calendarStart = startOfWeek(monthStart, { weekStartsOn: viewConfig.firstDayOfWeek });
-  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: viewConfig.firstDayOfWeek });
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn });
 
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   const weekDays = days.slice(0, 7).map((d) => format(d, 'EEEEE', { locale: fr }));

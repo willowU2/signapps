@@ -2,9 +2,10 @@
 
 /**
  * AgendaView Component
+ * Story 1.3.6: AgendaView Component
  *
- * Chronological list view of events.
- * Groups events by day with expandable sections.
+ * Chronological list view of TimeItems.
+ * Groups items by day with expandable sections.
  */
 
 import * as React from 'react';
@@ -19,6 +20,7 @@ import {
   endOfDay,
   differenceInMinutes,
   eachDayOfInterval,
+  parseISO,
 } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -29,13 +31,20 @@ import {
   ChevronDown,
   ChevronRight,
   CalendarX,
+  CheckSquare,
+  Calendar,
+  CalendarCheck,
+  UserCog,
+  Flag,
+  Bell,
+  XCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useSchedulingNavigation, useSchedulingUI, useSchedulingSelection } from '@/stores/scheduling-store';
-import { useEvents } from '@/lib/scheduling/api/calendar';
-import type { ScheduleBlock } from '@/lib/scheduling/types/scheduling';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
+import type { TimeItem, TimeItemType } from '@/lib/scheduling/types';
 
 // ============================================================================
 // Types
@@ -44,19 +53,30 @@ import type { ScheduleBlock } from '@/lib/scheduling/types/scheduling';
 interface AgendaViewProps {
   className?: string;
   daysToShow?: number;
-  onEventClick?: (event: ScheduleBlock) => void;
+  items?: TimeItem[];
+  onItemClick?: (item: TimeItem) => void;
 }
 
 interface DayGroupProps {
   date: Date;
-  events: ScheduleBlock[];
+  items: TimeItem[];
   defaultExpanded?: boolean;
-  onEventClick?: (event: ScheduleBlock) => void;
+  onItemClick?: (item: TimeItem) => void;
 }
 
 // ============================================================================
 // Helpers
 // ============================================================================
+
+function getItemDate(item: TimeItem): Date | null {
+  if (!item.startTime) return null;
+  return typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
+}
+
+function getItemEndDate(item: TimeItem): Date | null {
+  if (!item.endTime) return null;
+  return typeof item.endTime === 'string' ? parseISO(item.endTime) : item.endTime;
+}
 
 function getRelativeDayLabel(date: Date): string | null {
   if (isToday(date)) return "Aujourd'hui";
@@ -73,25 +93,73 @@ function formatDuration(minutes: number): string {
   return `${hours}h ${mins}min`;
 }
 
+function getTypeIcon(type: TimeItemType) {
+  switch (type) {
+    case 'task':
+      return CheckSquare;
+    case 'event':
+      return Calendar;
+    case 'booking':
+      return CalendarCheck;
+    case 'shift':
+      return UserCog;
+    case 'milestone':
+      return Flag;
+    case 'reminder':
+      return Bell;
+    case 'blocker':
+      return XCircle;
+    default:
+      return Calendar;
+  }
+}
+
+function getTypeLabel(type: TimeItemType): string {
+  switch (type) {
+    case 'task':
+      return 'Tâche';
+    case 'event':
+      return 'Événement';
+    case 'booking':
+      return 'Réservation';
+    case 'shift':
+      return 'Shift';
+    case 'milestone':
+      return 'Jalon';
+    case 'reminder':
+      return 'Rappel';
+    case 'blocker':
+      return 'Blocage';
+    default:
+      return 'Élément';
+  }
+}
+
 // ============================================================================
-// Event Card Component
+// Item Card Component
 // ============================================================================
 
-function EventCard({
-  event,
+function ItemCard({
+  item,
   onClick,
 }: {
-  event: ScheduleBlock;
+  item: TimeItem;
   onClick?: () => void;
 }) {
-  const { selectedBlockId, selectBlock } = useSchedulingSelection();
-  const isSelected = selectedBlockId === event.id;
-  const duration = event.end
-    ? differenceInMinutes(event.end, event.start)
+  const selectedItem = useSchedulingStore((state) => state.selectedItem);
+  const selectItem = useSchedulingStore((state) => state.selectItem);
+  const isSelected = selectedItem?.id === item.id;
+
+  const startTime = getItemDate(item);
+  const endTime = getItemEndDate(item);
+  const duration = startTime && endTime
+    ? differenceInMinutes(endTime, startTime)
     : 60;
 
+  const TypeIcon = getTypeIcon(item.type);
+
   const handleClick = () => {
-    selectBlock(event.id);
+    selectItem(item);
     onClick?.();
   };
 
@@ -117,73 +185,97 @@ function EventCard({
       {/* Color indicator */}
       <div
         className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
-        style={{ backgroundColor: event.color || 'hsl(var(--primary))' }}
+        style={{ backgroundColor: item.color || 'hsl(var(--primary))' }}
       />
 
       <div className="pl-3">
-        {/* Title and Time */}
+        {/* Title and Type */}
         <div className="flex items-start justify-between gap-2 mb-1">
-          <h4 className="font-medium text-sm leading-tight">
-            {event.title}
-          </h4>
-          {event.status === 'tentative' && (
-            <span className="shrink-0 text-[10px] text-yellow-600 bg-yellow-100 px-1.5 py-0.5 rounded">
-              Provisoire
-            </span>
-          )}
-          {event.status === 'cancelled' && (
-            <span className="shrink-0 text-[10px] text-red-600 bg-red-100 px-1.5 py-0.5 rounded">
-              Annulé
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <TypeIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+            <h4 className="font-medium text-sm leading-tight">
+              {item.title}
+            </h4>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {item.status === 'tentative' && (
+              <span className="text-[10px] text-yellow-600 bg-yellow-100 px-1.5 py-0.5 rounded">
+                Provisoire
+              </span>
+            )}
+            {item.status === 'cancelled' && (
+              <span className="text-[10px] text-red-600 bg-red-100 px-1.5 py-0.5 rounded">
+                Annulé
+              </span>
+            )}
+            {item.status === 'completed' && (
+              <span className="text-[10px] text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
+                Terminé
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Time info */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
           <Clock className="h-3 w-3" />
-          {event.allDay ? (
+          {item.allDay ? (
             <span>Toute la journée</span>
-          ) : (
+          ) : startTime ? (
             <span>
-              {format(event.start, 'HH:mm', { locale: fr })}
-              {event.end && ` - ${format(event.end, 'HH:mm', { locale: fr })}`}
+              {format(startTime, 'HH:mm', { locale: fr })}
+              {endTime && ` - ${format(endTime, 'HH:mm', { locale: fr })}`}
               <span className="ml-1 text-muted-foreground/70">
                 ({formatDuration(duration)})
               </span>
             </span>
+          ) : (
+            <span>Non planifié</span>
           )}
         </div>
 
         {/* Additional info */}
         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-          {event.metadata?.location && (
+          {item.location && (
             <div className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              <span>{event.metadata.location as string}</span>
+              <span>{item.location}</span>
             </div>
           )}
 
-          {event.metadata?.videoConference && (
+          {item.metadata?.videoConference && (
             <div className="flex items-center gap-1">
               <Video className="h-3 w-3" />
               <span>Visio</span>
             </div>
           )}
 
-          {event.attendees && event.attendees.length > 0 && (
+          {item.attendees && item.attendees.length > 0 && (
             <div className="flex items-center gap-1">
               <Users className="h-3 w-3" />
               <span>
-                {event.attendees.length} participant{event.attendees.length > 1 ? 's' : ''}
+                {item.attendees.length} participant{item.attendees.length > 1 ? 's' : ''}
               </span>
+            </div>
+          )}
+
+          {item.priority && item.priority !== 'medium' && (
+            <div className={cn(
+              'flex items-center gap-1 px-1.5 py-0.5 rounded',
+              item.priority === 'urgent' && 'bg-red-100 text-red-700',
+              item.priority === 'high' && 'bg-orange-100 text-orange-700',
+              item.priority === 'low' && 'bg-gray-100 text-gray-600'
+            )}>
+              <Flag className="h-3 w-3" />
+              <span className="capitalize">{item.priority}</span>
             </div>
           )}
         </div>
 
         {/* Description preview */}
-        {event.description && (
+        {item.description && (
           <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
-            {event.description}
+            {item.description}
           </p>
         )}
       </div>
@@ -197,24 +289,27 @@ function EventCard({
 
 function DayGroup({
   date,
-  events,
+  items,
   defaultExpanded = true,
-  onEventClick,
+  onItemClick,
 }: DayGroupProps) {
   const [isExpanded, setIsExpanded] = React.useState(defaultExpanded);
   const relativeLabel = getRelativeDayLabel(date);
   const today = isToday(date);
 
-  // Sort events by time
-  const sortedEvents = React.useMemo(() => {
-    return [...events].sort((a, b) => {
-      // All-day events first
+  // Sort items by time
+  const sortedItems = React.useMemo(() => {
+    return [...items].sort((a, b) => {
+      // All-day items first
       if (a.allDay && !b.allDay) return -1;
       if (!a.allDay && b.allDay) return 1;
       // Then by start time
-      return a.start.getTime() - b.start.getTime();
+      const aDate = getItemDate(a);
+      const bDate = getItemDate(b);
+      if (!aDate || !bDate) return 0;
+      return aDate.getTime() - bDate.getTime();
     });
-  }, [events]);
+  }, [items]);
 
   return (
     <div className="mb-4">
@@ -250,11 +345,11 @@ function DayGroup({
         </div>
 
         <span className="ml-auto text-xs text-muted-foreground">
-          {events.length} événement{events.length > 1 ? 's' : ''}
+          {items.length} élément{items.length > 1 ? 's' : ''}
         </span>
       </button>
 
-      {/* Events */}
+      {/* Items */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -265,11 +360,11 @@ function DayGroup({
             className="overflow-hidden"
           >
             <div className="space-y-2 pl-6">
-              {sortedEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  onClick={() => onEventClick?.(event)}
+              {sortedItems.map((item) => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  onClick={() => onItemClick?.(item)}
                 />
               ))}
             </div>
@@ -287,9 +382,17 @@ function DayGroup({
 export function AgendaView({
   className,
   daysToShow = 30,
-  onEventClick,
+  items: propItems,
+  onItemClick,
 }: AgendaViewProps) {
-  const { currentDate, getDateRange } = useSchedulingNavigation();
+  const currentDate = useCalendarStore((state) => state.currentDate);
+
+  // Get items from store if not provided
+  const storeItems = useSchedulingStore((state) => state.timeItems);
+  const isLoading = useSchedulingStore((state) => state.isLoading);
+  const fetchTimeItems = useSchedulingStore((state) => state.fetchTimeItems);
+
+  const items = propItems || storeItems;
 
   // Calculate date range
   const dateRange = React.useMemo(
@@ -300,25 +403,32 @@ export function AgendaView({
     [currentDate, daysToShow]
   );
 
-  // Fetch events
-  const { data: events = [], isLoading } = useEvents(dateRange);
+  // Fetch items on mount
+  React.useEffect(() => {
+    if (!propItems) {
+      fetchTimeItems(dateRange);
+    }
+  }, [propItems, fetchTimeItems, dateRange]);
 
-  // Group events by day
-  const eventsByDay = React.useMemo(() => {
+  // Group items by day
+  const itemsByDay = React.useMemo(() => {
     const days = eachDayOfInterval(dateRange);
-    const grouped: { date: Date; events: ScheduleBlock[] }[] = [];
+    const grouped: { date: Date; items: TimeItem[] }[] = [];
 
     for (const day of days) {
-      const dayEvents = events.filter((e) => isSameDay(e.start, day));
-      if (dayEvents.length > 0) {
-        grouped.push({ date: day, events: dayEvents });
+      const dayItems = items.filter((item) => {
+        const itemDate = getItemDate(item);
+        return itemDate && isSameDay(itemDate, day);
+      });
+      if (dayItems.length > 0) {
+        grouped.push({ date: day, items: dayItems });
       }
     }
 
     return grouped;
-  }, [events, dateRange]);
+  }, [items, dateRange]);
 
-  if (isLoading) {
+  if (isLoading && items.length === 0) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
         <div className="flex flex-col items-center gap-2">
@@ -329,7 +439,7 @@ export function AgendaView({
     );
   }
 
-  if (eventsByDay.length === 0) {
+  if (itemsByDay.length === 0) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
         <div className="flex flex-col items-center gap-4 text-center p-8">
@@ -337,13 +447,13 @@ export function AgendaView({
             <CalendarX className="h-8 w-8 text-muted-foreground" />
           </div>
           <div>
-            <h3 className="font-semibold text-lg">Aucun événement</h3>
+            <h3 className="font-semibold text-lg">Aucun élément</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Vous n'avez aucun événement prévu pour les {daysToShow} prochains jours
+              Vous n'avez aucun élément prévu pour les {daysToShow} prochains jours
             </p>
           </div>
           <Button variant="outline" size="sm">
-            Créer un événement
+            Créer un élément
           </Button>
         </div>
       </div>
@@ -352,13 +462,13 @@ export function AgendaView({
 
   return (
     <div className={cn('h-full overflow-auto p-4', className)}>
-      {eventsByDay.map(({ date, events }, index) => (
+      {itemsByDay.map(({ date, items: dayItems }, index) => (
         <DayGroup
           key={date.toISOString()}
           date={date}
-          events={events}
+          items={dayItems}
           defaultExpanded={index < 7} // Expand first 7 days by default
-          onEventClick={onEventClick}
+          onItemClick={onItemClick}
         />
       ))}
     </div>

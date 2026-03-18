@@ -2,21 +2,22 @@
 
 /**
  * DayView Component
+ * Story 1.3.4: DayView Component
  *
- * Single day calendar view with full event details.
+ * Single day calendar view with full TimeItem details.
  * Uses TimeGrid for rendering with day-specific optimizations.
- * Supports drag & drop for moving and resizing events.
+ * Supports drag & drop for moving and resizing TimeItems.
  */
 
 import * as React from 'react';
+import { parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useSchedulingNavigation, useSchedulingUI } from '@/stores/scheduling-store';
-import { useEvents, useMoveEvent } from '@/lib/scheduling/api/calendar';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
 import { TimeGrid, useSlotClickHandler } from '../calendar/TimeGrid';
-import { DraggableEventBlock } from '../calendar/DraggableEventBlock';
-import { calculateDayLayouts } from '@/lib/scheduling/utils/event-layout';
-import { useEventDrag, useDragPreview } from '@/lib/scheduling/hooks/use-event-drag';
-import type { ScheduleBlock, EventLayout } from '@/lib/scheduling/types/scheduling';
+import { TimeItemBlock } from '../calendar/TimeItemBlock';
+import { calculateItemPositions } from '@/lib/scheduling/utils/overlap-calculator';
+import type { TimeItem, PositionedItem } from '@/lib/scheduling/types';
 
 // ============================================================================
 // Types
@@ -25,8 +26,19 @@ import type { ScheduleBlock, EventLayout } from '@/lib/scheduling/types/scheduli
 interface DayViewProps {
   className?: string;
   slotHeight?: number;
-  onEventClick?: (event: ScheduleBlock) => void;
-  onCreateEvent?: (start: Date, end: Date) => void;
+  items?: TimeItem[];
+  onItemClick?: (item: TimeItem) => void;
+  onItemDoubleClick?: (item: TimeItem) => void;
+  onCreateItem?: (start: Date, end: Date) => void;
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+function getItemDate(item: TimeItem): Date | null {
+  if (!item.startTime) return null;
+  return typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
 }
 
 // ============================================================================
@@ -36,76 +48,44 @@ interface DayViewProps {
 export function DayView({
   className,
   slotHeight = 48,
-  onEventClick,
-  onCreateEvent,
+  items: propItems,
+  onItemClick,
+  onItemDoubleClick,
+  onCreateItem,
 }: DayViewProps) {
-  const { currentDate, getDateRange } = useSchedulingNavigation();
-  const { viewConfig } = useSchedulingUI();
-  const dateRange = getDateRange();
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const hourStart = useCalendarStore((state) => state.hourStart);
+  const hourEnd = useCalendarStore((state) => state.hourEnd);
+  const slotDuration = useCalendarStore((state) => state.slotDuration);
+  const getDateRange = useCalendarStore((state) => state.getDateRange);
 
-  // Fetch events
-  const { data: events = [], isLoading } = useEvents({
-    start: dateRange.start,
-    end: dateRange.end,
-  });
+  // Get items from store if not provided
+  const storeItems = useSchedulingStore((state) => state.timeItems);
+  const isLoading = useSchedulingStore((state) => state.isLoading);
+  const fetchTimeItems = useSchedulingStore((state) => state.fetchTimeItems);
 
-  // Move event mutation
-  const moveEvent = useMoveEvent();
+  const items = propItems || storeItems;
 
-  // Drag & Drop
-  const { dragState, containerRef, handlers } = useEventDrag({
-    slotHeight,
-    slotDuration: viewConfig.slotDuration,
-    workingHoursStart: viewConfig.workingHoursStart,
-    workingHoursEnd: viewConfig.workingHoursEnd,
-    onEventMove: (eventId, start, end) => {
-      moveEvent.mutate({ eventId, start, end });
-    },
-  });
+  // Fetch items on mount
+  React.useEffect(() => {
+    if (!propItems) {
+      const dateRange = getDateRange();
+      fetchTimeItems(dateRange);
+    }
+  }, [propItems, fetchTimeItems, getDateRange]);
 
-  // Drag preview
-  const dragPreview = useDragPreview(
-    dragState,
-    slotHeight,
-    viewConfig.slotDuration,
-    viewConfig.workingHoursStart
-  );
+  // Calculate positions for all items
+  const positions = React.useMemo(() => {
+    return calculateItemPositions(items, hourStart, hourEnd);
+  }, [items, hourStart, hourEnd]);
 
-  // Calculate layouts
-  const layouts = React.useMemo(() => {
-    return calculateDayLayouts(events, currentDate, {
-      viewConfig,
-      slotHeight,
-    });
-  }, [events, currentDate, viewConfig, slotHeight]);
-
-  // Handle slot click (create new event)
+  // Handle slot click (create new item)
   const handleSlotClick = useSlotClickHandler({
-    defaultDuration: viewConfig.slotDuration,
-    onCreate: onCreateEvent,
+    defaultDuration: slotDuration,
+    onCreate: onCreateItem,
   });
 
-  // Render event with drag support
-  const renderEvent = React.useCallback(
-    (layout: EventLayout) => {
-      const isDraggingThis =
-        dragState.isDragging && dragState.eventId === layout.block.id;
-
-      return (
-        <DraggableEventBlock
-          key={layout.block.id}
-          layout={layout}
-          dragState={dragState}
-          previewLayout={isDraggingThis ? dragPreview : null}
-          onClick={onEventClick}
-          onDragStart={handlers.onDragStart}
-        />
-      );
-    },
-    [onEventClick, dragState, dragPreview, handlers.onDragStart]
-  );
-
-  if (isLoading) {
+  if (isLoading && items.length === 0) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
         <div className="flex flex-col items-center gap-2">
@@ -117,15 +97,102 @@ export function DayView({
   }
 
   return (
-    <div ref={containerRef} className={cn('h-full', className)}>
+    <div className={cn('h-full', className)}>
       <TimeGrid
-        events={events}
-        layouts={layouts}
+        items={items}
+        positions={positions}
         slotHeight={slotHeight}
         onSlotClick={handleSlotClick}
-        onEventClick={onEventClick}
-        renderEvent={renderEvent}
+        onItemClick={onItemClick}
+        onItemDoubleClick={onItemDoubleClick}
       />
+    </div>
+  );
+}
+
+// ============================================================================
+// Focus View (enhanced day view with focus blocks)
+// ============================================================================
+
+export function FocusView({
+  className,
+  slotHeight = 48,
+  items: propItems,
+  onItemClick,
+  onItemDoubleClick,
+  onCreateItem,
+}: DayViewProps) {
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const hourStart = useCalendarStore((state) => state.hourStart);
+  const hourEnd = useCalendarStore((state) => state.hourEnd);
+  const slotDuration = useCalendarStore((state) => state.slotDuration);
+  const getDateRange = useCalendarStore((state) => state.getDateRange);
+
+  // Get items from store if not provided
+  const storeItems = useSchedulingStore((state) => state.timeItems);
+  const isLoading = useSchedulingStore((state) => state.isLoading);
+  const fetchTimeItems = useSchedulingStore((state) => state.fetchTimeItems);
+
+  const items = propItems || storeItems;
+
+  // Fetch items on mount
+  React.useEffect(() => {
+    if (!propItems) {
+      const dateRange = getDateRange();
+      fetchTimeItems(dateRange);
+    }
+  }, [propItems, fetchTimeItems, getDateRange]);
+
+  // Filter focus-relevant items (tasks and blockers)
+  const focusItems = React.useMemo(() => {
+    return items.filter((item) =>
+      item.type === 'task' || item.type === 'blocker' || item.type === 'milestone'
+    );
+  }, [items]);
+
+  // Calculate positions for focus items
+  const positions = React.useMemo(() => {
+    return calculateItemPositions(focusItems, hourStart, hourEnd);
+  }, [focusItems, hourStart, hourEnd]);
+
+  // Handle slot click (create new item)
+  const handleSlotClick = useSlotClickHandler({
+    defaultDuration: slotDuration,
+    onCreate: onCreateItem,
+  });
+
+  if (isLoading && items.length === 0) {
+    return (
+      <div className={cn('flex h-full items-center justify-center', className)}>
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn('h-full flex flex-col', className)}>
+      {/* Focus Header */}
+      <div className="shrink-0 border-b p-4 bg-primary/5">
+        <h2 className="text-lg font-semibold">Mode Focus</h2>
+        <p className="text-sm text-muted-foreground">
+          {focusItems.length} tâche{focusItems.length !== 1 ? 's' : ''} à accomplir
+        </p>
+      </div>
+
+      {/* TimeGrid */}
+      <div className="flex-1 overflow-hidden">
+        <TimeGrid
+          items={focusItems}
+          positions={positions}
+          slotHeight={slotHeight}
+          onSlotClick={handleSlotClick}
+          onItemClick={onItemClick}
+          onItemDoubleClick={onItemDoubleClick}
+        />
+      </div>
     </div>
   );
 }
@@ -137,76 +204,44 @@ export function DayView({
 export function ThreeDayView({
   className,
   slotHeight = 48,
-  onEventClick,
-  onCreateEvent,
+  items: propItems,
+  onItemClick,
+  onItemDoubleClick,
+  onCreateItem,
 }: DayViewProps) {
-  const { currentDate, getDateRange } = useSchedulingNavigation();
-  const { viewConfig } = useSchedulingUI();
-  const dateRange = getDateRange();
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const hourStart = useCalendarStore((state) => state.hourStart);
+  const hourEnd = useCalendarStore((state) => state.hourEnd);
+  const slotDuration = useCalendarStore((state) => state.slotDuration);
+  const getDateRange = useCalendarStore((state) => state.getDateRange);
 
-  // Fetch events
-  const { data: events = [], isLoading } = useEvents({
-    start: dateRange.start,
-    end: dateRange.end,
-  });
+  // Get items from store if not provided
+  const storeItems = useSchedulingStore((state) => state.timeItems);
+  const isLoading = useSchedulingStore((state) => state.isLoading);
+  const fetchTimeItems = useSchedulingStore((state) => state.fetchTimeItems);
 
-  // Move event mutation
-  const moveEvent = useMoveEvent();
+  const items = propItems || storeItems;
 
-  // Drag & Drop
-  const { dragState, containerRef, handlers } = useEventDrag({
-    slotHeight,
-    slotDuration: viewConfig.slotDuration,
-    workingHoursStart: viewConfig.workingHoursStart,
-    workingHoursEnd: viewConfig.workingHoursEnd,
-    onEventMove: (eventId, start, end) => {
-      moveEvent.mutate({ eventId, start, end });
-    },
-  });
+  // Fetch items on mount
+  React.useEffect(() => {
+    if (!propItems) {
+      const dateRange = getDateRange();
+      fetchTimeItems(dateRange);
+    }
+  }, [propItems, fetchTimeItems, getDateRange]);
 
-  // Drag preview
-  const dragPreview = useDragPreview(
-    dragState,
-    slotHeight,
-    viewConfig.slotDuration,
-    viewConfig.workingHoursStart
-  );
+  // Calculate positions for all items
+  const positions = React.useMemo(() => {
+    return calculateItemPositions(items, hourStart, hourEnd);
+  }, [items, hourStart, hourEnd]);
 
-  // Calculate layouts
-  const layouts = React.useMemo(() => {
-    return calculateDayLayouts(events, currentDate, {
-      viewConfig,
-      slotHeight,
-    });
-  }, [events, currentDate, viewConfig, slotHeight]);
-
-  // Handle slot click
+  // Handle slot click (create new item)
   const handleSlotClick = useSlotClickHandler({
-    defaultDuration: viewConfig.slotDuration,
-    onCreate: onCreateEvent,
+    defaultDuration: slotDuration,
+    onCreate: onCreateItem,
   });
 
-  // Render event with drag support
-  const renderEvent = React.useCallback(
-    (layout: EventLayout) => {
-      const isDraggingThis =
-        dragState.isDragging && dragState.eventId === layout.block.id;
-
-      return (
-        <DraggableEventBlock
-          key={layout.block.id}
-          layout={layout}
-          dragState={dragState}
-          previewLayout={isDraggingThis ? dragPreview : null}
-          onClick={onEventClick}
-          onDragStart={handlers.onDragStart}
-        />
-      );
-    },
-    [onEventClick, dragState, dragPreview, handlers.onDragStart]
-  );
-
-  if (isLoading) {
+  if (isLoading && items.length === 0) {
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
         <div className="flex flex-col items-center gap-2">
@@ -218,14 +253,14 @@ export function ThreeDayView({
   }
 
   return (
-    <div ref={containerRef} className={cn('h-full', className)}>
+    <div className={cn('h-full', className)}>
       <TimeGrid
-        events={events}
-        layouts={layouts}
+        items={items}
+        positions={positions}
         slotHeight={slotHeight}
         onSlotClick={handleSlotClick}
-        onEventClick={onEventClick}
-        renderEvent={renderEvent}
+        onItemClick={onItemClick}
+        onItemDoubleClick={onItemDoubleClick}
       />
     </div>
   );
