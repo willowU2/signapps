@@ -11,3 +11,8 @@ export {
   type DragHandlers,
   type UseEventDragOptions,
 } from './use-event-drag';
+
+export {
+  useConflictDetection,
+  useConflictDetectionDebounced,
+} from './use-conflict-detection';
