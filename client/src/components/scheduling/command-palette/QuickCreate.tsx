@@ -37,6 +37,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSchedulingNavigation } from '@/stores/scheduling-store';
+import { useCalendarStore } from '@/stores/calendar-store';
 import { useCreateEvent } from '@/lib/scheduling/api/calendar';
 import type { ParsedInput, RecurrenceRule, Priority, EventTemplate } from '@/lib/scheduling/types/scheduling';
 
@@ -48,6 +49,7 @@ interface QuickCreateProps {
   isOpen: boolean;
   onClose: () => void;
   defaultDate?: Date;
+  calendarId?: string;
   templates?: EventTemplate[];
   className?: string;
 }
@@ -272,6 +274,7 @@ export function QuickCreate({
   isOpen,
   onClose,
   defaultDate,
+  calendarId: propCalendarId,
   templates = [],
   className,
 }: QuickCreateProps) {
@@ -282,7 +285,17 @@ export function QuickCreate({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const { currentDate } = useSchedulingNavigation();
+  const { selectedCalendarIds, calendars } = useCalendarStore();
   const createEvent = useCreateEvent();
+
+  // Resolve the calendar ID: prop > first selected > first available > 'default'
+  const resolvedCalendarId = React.useMemo(() => {
+    if (propCalendarId) return propCalendarId;
+    const selectedIds = Array.from(selectedCalendarIds);
+    if (selectedIds.length > 0) return selectedIds[0];
+    if (calendars.length > 0) return calendars[0].id;
+    return 'default';
+  }, [propCalendarId, selectedCalendarIds, calendars]);
 
   // Filter templates based on input
   const filteredTemplates = React.useMemo(() => {
@@ -352,12 +365,12 @@ export function QuickCreate({
       const end = addHours(start, duration / 60);
 
       await createEvent.mutateAsync({
-        calendarId: 'default', // TODO: Get from context
+        calendarId: resolvedCalendarId,
         input: {
           title: parseResult.title,
           start,
           end,
-          calendarId: 'default',
+          calendarId: resolvedCalendarId,
           recurrence: parseResult.recurrence,
           location: parseResult.location ? { name: parseResult.location } : undefined,
         },

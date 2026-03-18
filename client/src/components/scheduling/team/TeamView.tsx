@@ -8,8 +8,9 @@
  */
 
 import * as React from 'react';
-import { format } from 'date-fns';
+import { format, setHours, setMinutes } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useRouter } from 'next/navigation';
 import {
   Search,
   Filter,
@@ -18,12 +19,17 @@ import {
   Users,
   Video,
   Plus,
+  Mail,
+  Send,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -32,20 +38,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   TeamMemberCard,
   TeamMemberCardCompact,
 } from './TeamMemberCard';
 import { TeamTimeline } from './TeamTimeline';
+import { EventSheet } from '../calendar/EventSheet';
 import {
   useTeamMembers,
   useAvailabilitySlots,
 } from '@/lib/scheduling/api/team';
-import { useEvents } from '@/lib/scheduling/api/calendar';
+import { useEvents, useCreateEvent } from '@/lib/scheduling/api/calendar';
 import type {
   TeamMember,
   AvailabilitySlot,
+  CreateEventInput,
 } from '@/lib/scheduling/types/scheduling';
 
 // ============================================================================
@@ -74,6 +91,8 @@ const statusOptions: { value: AvailabilitySlot['status']; label: string }[] = [
 // ============================================================================
 
 export function TeamView({ className }: TeamViewProps) {
+  const router = useRouter();
+
   // State
   const [viewMode, setViewMode] = React.useState<ViewMode>('grid');
   const [search, setSearch] = React.useState('');
@@ -83,6 +102,18 @@ export function TeamView({ className }: TeamViewProps) {
   const [selectedDepartments, setSelectedDepartments] = React.useState<string[]>([]);
   const [currentDate, setCurrentDate] = React.useState(new Date());
 
+  // Event Sheet State
+  const [showEventSheet, setShowEventSheet] = React.useState(false);
+  const [eventSheetMember, setEventSheetMember] = React.useState<TeamMember | null>(null);
+  const [eventSheetDate, setEventSheetDate] = React.useState<Date | undefined>();
+  const [eventSheetTime, setEventSheetTime] = React.useState<string | undefined>();
+
+  // Message Dialog State
+  const [showMessageDialog, setShowMessageDialog] = React.useState(false);
+  const [messageMember, setMessageMember] = React.useState<TeamMember | null>(null);
+  const [messageContent, setMessageContent] = React.useState('');
+  const [isSendingMessage, setIsSendingMessage] = React.useState(false);
+
   // Data
   const { data: members = [], isLoading: membersLoading } = useTeamMembers();
   const { data: slots = [], isLoading: slotsLoading } = useAvailabilitySlots(currentDate);
@@ -90,6 +121,9 @@ export function TeamView({ className }: TeamViewProps) {
     start: currentDate,
     end: new Date(currentDate.getTime() + 24 * 60 * 60 * 1000),
   });
+
+  // Mutations
+  const createEvent = useCreateEvent();
 
   // Get unique departments
   const departments = React.useMemo(() => {
@@ -149,23 +183,72 @@ export function TeamView({ className }: TeamViewProps) {
 
   // Handlers
   const handleScheduleMeeting = (member: TeamMember) => {
-    // TODO: Open meeting creation dialog with member pre-selected
-    console.log('Schedule meeting with', member.name);
+    // Open meeting creation dialog with member pre-selected
+    setEventSheetMember(member);
+    setEventSheetDate(new Date());
+    setEventSheetTime(undefined);
+    setShowEventSheet(true);
   };
 
   const handleViewCalendar = (member: TeamMember) => {
-    // TODO: Navigate to member's calendar view
-    console.log('View calendar for', member.name);
+    // Navigate to scheduling page filtered by team member
+    router.push(`/scheduling?member=${member.id}&view=week`);
   };
 
   const handleSendMessage = (member: TeamMember) => {
-    // TODO: Open messaging dialog
-    console.log('Send message to', member.name);
+    // Open messaging dialog
+    setMessageMember(member);
+    setMessageContent('');
+    setShowMessageDialog(true);
   };
 
   const handleTimelineSlotClick = (member: TeamMember, time: Date) => {
-    // TODO: Open quick meeting creation with pre-filled time
-    console.log('Create meeting with', member.name, 'at', time);
+    // Open meeting creation with pre-filled time and member
+    setEventSheetMember(member);
+    setEventSheetDate(time);
+    setEventSheetTime(format(time, 'HH:mm'));
+    setShowEventSheet(true);
+  };
+
+  const handleEventSave = async (event: CreateEventInput) => {
+    // Add the selected member as attendee if not already included
+    const attendees = event.attendees || [];
+    if (eventSheetMember && !attendees.includes(eventSheetMember.email)) {
+      attendees.push(eventSheetMember.email);
+    }
+
+    await createEvent.mutateAsync({
+      calendarId: event.calendarId || 'default',
+      input: { ...event, attendees },
+    });
+
+    setShowEventSheet(false);
+    setEventSheetMember(null);
+  };
+
+  const handleSendMessageSubmit = async () => {
+    if (!messageMember || !messageContent.trim()) return;
+
+    setIsSendingMessage(true);
+    try {
+      // Navigate to chat with the member
+      // For now, we'll open a direct message channel
+      router.push(`/chat/dm/${messageMember.id}?message=${encodeURIComponent(messageContent)}`);
+      setShowMessageDialog(false);
+      setMessageMember(null);
+      setMessageContent('');
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const isLoading = membersLoading || slotsLoading;
@@ -328,6 +411,73 @@ export function TeamView({ className }: TeamViewProps) {
           />
         )}
       </div>
+
+      {/* Event Sheet for scheduling meetings */}
+      <EventSheet
+        isOpen={showEventSheet}
+        onClose={() => {
+          setShowEventSheet(false);
+          setEventSheetMember(null);
+        }}
+        defaultDate={eventSheetDate}
+        defaultTime={eventSheetTime}
+        onSave={handleEventSave}
+      />
+
+      {/* Message Dialog */}
+      <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              {messageMember && (
+                <>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={messageMember.avatarUrl} alt={messageMember.name} />
+                    <AvatarFallback>{getInitials(messageMember.name)}</AvatarFallback>
+                  </Avatar>
+                  <span>Message à {messageMember.name}</span>
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              Envoyez un message direct à ce membre de l'équipe.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="message">Message</Label>
+              <Textarea
+                id="message"
+                placeholder="Écrivez votre message..."
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                className="min-h-[120px]"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowMessageDialog(false);
+                setMessageMember(null);
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSendMessageSubmit}
+              disabled={!messageContent.trim() || isSendingMessage}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {isSendingMessage ? 'Envoi...' : 'Envoyer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
