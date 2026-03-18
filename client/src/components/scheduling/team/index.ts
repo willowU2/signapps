@@ -11,3 +11,8 @@ export {
 } from './TeamMemberCard';
 export { TeamTimeline } from './TeamTimeline';
 export { TeamView } from './TeamView';
+export {
+  WorkloadDashboard,
+  WorkloadDetail,
+  generateMockWorkloadData,
+} from './WorkloadDashboard';
