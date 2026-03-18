@@ -107,6 +107,7 @@ pub async fn get_thumbnail(
         PreviewType::Image => generate_image_thumbnail(&state, &bucket, &key, &query).await,
         PreviewType::Pdf => generate_pdf_thumbnail(&state, &bucket, &key, &query).await,
         PreviewType::Video => generate_video_thumbnail(&state, &bucket, &key, &query).await,
+        PreviewType::Audio => generate_audio_waveform(&state, &bucket, &key, &query).await,
         _ => Err(Error::BadRequest(
             "Thumbnails not supported for this file type".to_string(),
         )),
@@ -435,6 +436,125 @@ impl Drop for TempFileCleanup {
     }
 }
 
+/// Generate waveform thumbnail for an audio file.
+async fn generate_audio_waveform(
+    state: &AppState,
+    bucket: &str,
+    key: &str,
+    query: &ThumbnailQuery,
+) -> Result<Response> {
+    // Get the audio data
+    let object = state.storage.get_object(bucket, key).await?;
+    let audio_data = object.data.to_vec();
+
+    // Spawn blocking task for CPU-intensive audio processing
+    let (max_width, max_height) = query.size.dimensions();
+    let format = query.format.clone();
+
+    let result = tokio::task::spawn_blocking(move || {
+        generate_waveform_cli(&audio_data, max_width, max_height, format.as_deref())
+    })
+    .await
+    .map_err(|e| Error::Internal(format!("Audio waveform task failed: {}", e)))??;
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, result.content_type)
+        .header(header::CACHE_CONTROL, "public, max-age=86400") // Cache 24h
+        .body(Body::from(result.data))
+        .map_err(|e| Error::Internal(e.to_string()))
+}
+
+/// Result of waveform generation.
+struct WaveformResult {
+    data: Vec<u8>,
+    content_type: &'static str,
+}
+
+/// Generate waveform using ffmpeg CLI.
+fn generate_waveform_cli(
+    audio_data: &[u8],
+    width: u32,
+    height: u32,
+    format: Option<&str>,
+) -> Result<WaveformResult> {
+    use std::io::Write;
+    use std::process::Command;
+
+    // Check if ffmpeg is available
+    let ffmpeg_check = Command::new("ffmpeg").arg("-version").output();
+    if ffmpeg_check.is_err() {
+        return Err(Error::Internal(
+            "Audio waveforms unavailable: ffmpeg not installed. Install ffmpeg on your system.".to_string(),
+        ));
+    }
+
+    // Create temp files for input and output
+    let temp_dir = std::env::temp_dir();
+    let input_path = temp_dir.join(format!("audio_in_{}.tmp", uuid::Uuid::new_v4()));
+    let output_ext = match format {
+        Some("png") => "png",
+        Some("jpeg") | Some("jpg") => "jpg",
+        _ => "png", // Use PNG for waveforms (better for line graphics)
+    };
+    let output_path = temp_dir.join(format!("waveform_out_{}.{}", uuid::Uuid::new_v4(), output_ext));
+
+    // Write audio data to temp file
+    {
+        let mut file = std::fs::File::create(&input_path)
+            .map_err(|e| Error::Internal(format!("Failed to create temp file: {}", e)))?;
+        file.write_all(audio_data)
+            .map_err(|e| Error::Internal(format!("Failed to write temp file: {}", e)))?;
+    }
+
+    // Clean up temp files on exit
+    let _cleanup_input = TempFileCleanup { path: input_path.clone() };
+    let _cleanup_output = TempFileCleanup { path: output_path.clone() };
+
+    // Build showwavespic filter for waveform visualization
+    // Colors: foreground=#3b82f6 (blue), background transparent for PNG
+    let filter = format!(
+        "showwavespic=s={}x{}:colors=#3b82f6|#60a5fa",
+        width, height
+    );
+
+    // Run ffmpeg to generate waveform image
+    let output = Command::new("ffmpeg")
+        .args([
+            "-y",                           // Overwrite output
+            "-i", input_path.to_str().unwrap_or(""),
+            "-filter_complex", &filter,
+            "-frames:v", "1",
+            output_path.to_str().unwrap_or(""),
+        ])
+        .output();
+
+    let output = output.map_err(|e| Error::Internal(format!("Failed to run ffmpeg: {}", e)))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(Error::Internal(format!("ffmpeg waveform generation failed: {}", stderr)));
+    }
+
+    // Read output file
+    let waveform_data = std::fs::read(&output_path)
+        .map_err(|e| Error::Internal(format!("Failed to read waveform: {}", e)))?;
+
+    if waveform_data.is_empty() {
+        return Err(Error::Internal("ffmpeg produced empty waveform".to_string()));
+    }
+
+    let content_type = match format {
+        Some("jpeg") | Some("jpg") => "image/jpeg",
+        _ => "image/png",
+    };
+
+    Ok(WaveformResult {
+        data: waveform_data,
+        content_type,
+    })
+}
+
 /// Generate preview for an image file (resized for display).
 async fn generate_image_preview(
     state: &AppState,
@@ -601,7 +721,7 @@ pub async fn get_preview_info(
 
     let thumbnail_url = if matches!(
         preview_type,
-        PreviewType::Image | PreviewType::Pdf | PreviewType::Video
+        PreviewType::Image | PreviewType::Pdf | PreviewType::Video | PreviewType::Audio
     ) {
         Some(format!(
             "{}/api/v1/preview/{}/{}/thumbnail",
