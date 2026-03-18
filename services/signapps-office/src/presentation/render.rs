@@ -284,6 +284,7 @@ fn escape_xml_attr(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::presentation::SlideLayout;
 
     #[test]
     fn test_slide_to_svg() {

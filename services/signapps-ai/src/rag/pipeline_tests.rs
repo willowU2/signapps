@@ -45,8 +45,8 @@ mod tests {
 
     #[derive(Debug, Clone)]
     struct MockSearchResult {
-        id: Uuid,
-        document_id: Uuid,
+        _id: Uuid,
+        _document_id: Uuid,
         filename: String,
         content: String,
         score: f32,
@@ -76,8 +76,8 @@ mod tests {
     #[test]
     fn test_build_context_single_result() {
         let results = vec![MockSearchResult {
-            id: Uuid::new_v4(),
-            document_id: Uuid::new_v4(),
+            _id: Uuid::new_v4(),
+            _document_id: Uuid::new_v4(),
             filename: "test.txt".to_string(),
             content: "This is test content.".to_string(),
             score: 0.85,
@@ -94,22 +94,22 @@ mod tests {
     fn test_build_context_multiple_results() {
         let results = vec![
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "doc1.pdf".to_string(),
                 content: "Content from first document.".to_string(),
                 score: 0.9,
             },
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "doc2.pdf".to_string(),
                 content: "Content from second document.".to_string(),
                 score: 0.8,
             },
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "doc3.txt".to_string(),
                 content: "Content from third document.".to_string(),
                 score: 0.7,
@@ -228,10 +228,10 @@ mod tests {
 
     #[derive(Debug, Clone)]
     struct DocumentChunk {
-        id: Uuid,
+        _id: Uuid,
         document_id: Uuid,
         chunk_index: i32,
-        content: String,
+        _content: String,
         filename: String,
         path: String,
         mime_type: Option<String>,
@@ -255,10 +255,10 @@ mod tests {
             .iter()
             .enumerate()
             .map(|(i, content)| DocumentChunk {
-                id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
                 document_id,
                 chunk_index: i as i32,
-                content: content.clone(),
+                _content: content.clone(),
                 filename: filename.to_string(),
                 path: path.to_string(),
                 mime_type: mime_type.map(|s| s.to_string()),
@@ -340,15 +340,15 @@ mod tests {
     fn test_filter_by_score_all_pass() {
         let results = vec![
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "a.txt".to_string(),
                 content: "A".to_string(),
                 score: 0.9,
             },
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "b.txt".to_string(),
                 content: "B".to_string(),
                 score: 0.8,
@@ -363,15 +363,15 @@ mod tests {
     fn test_filter_by_score_some_pass() {
         let results = vec![
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "high.txt".to_string(),
                 content: "High score".to_string(),
                 score: 0.9,
             },
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "low.txt".to_string(),
                 content: "Low score".to_string(),
                 score: 0.3,
@@ -387,15 +387,15 @@ mod tests {
     fn test_filter_by_score_none_pass() {
         let results = vec![
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "low1.txt".to_string(),
                 content: "Low".to_string(),
                 score: 0.2,
             },
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "low2.txt".to_string(),
                 content: "Also low".to_string(),
                 score: 0.3,
@@ -418,8 +418,8 @@ mod tests {
     fn test_limit_results() {
         let results: Vec<MockSearchResult> = (0..10)
             .map(|i| MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: format!("doc{}.txt", i),
                 content: format!("Content {}", i),
                 score: 0.9 - (i as f32 * 0.05),
@@ -433,8 +433,8 @@ mod tests {
     #[test]
     fn test_limit_results_fewer_than_limit() {
         let results = vec![MockSearchResult {
-            id: Uuid::new_v4(),
-            document_id: Uuid::new_v4(),
+            _id: Uuid::new_v4(),
+            _document_id: Uuid::new_v4(),
             filename: "only.txt".to_string(),
             content: "Only one".to_string(),
             score: 0.9,
@@ -450,8 +450,8 @@ mod tests {
 
     #[derive(Debug, Clone)]
     struct TokenUsage {
-        prompt_tokens: i32,
-        completion_tokens: i32,
+        _prompt_tokens: i32,
+        _completion_tokens: i32,
         total_tokens: i32,
     }
 
@@ -465,8 +465,8 @@ mod tests {
     #[test]
     fn test_rag_response_with_sources() {
         let sources = vec![MockSearchResult {
-            id: Uuid::new_v4(),
-            document_id: Uuid::new_v4(),
+            _id: Uuid::new_v4(),
+            _document_id: Uuid::new_v4(),
             filename: "source.txt".to_string(),
             content: "Source content".to_string(),
             score: 0.85,
@@ -476,8 +476,8 @@ mod tests {
             answer: "This is the answer.".to_string(),
             sources,
             usage: Some(TokenUsage {
-                prompt_tokens: 100,
-                completion_tokens: 50,
+                _prompt_tokens: 100,
+                _completion_tokens: 50,
                 total_tokens: 150,
             }),
         };
@@ -523,15 +523,15 @@ mod tests {
     fn test_filter_by_collection() {
         let results = vec![
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "reports/q1.pdf".to_string(),
                 content: "Q1 report".to_string(),
                 score: 0.9,
             },
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "docs/readme.md".to_string(),
                 content: "Documentation".to_string(),
                 score: 0.8,
@@ -547,15 +547,15 @@ mod tests {
     fn test_no_collection_filter() {
         let results = vec![
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "a.txt".to_string(),
                 content: "A".to_string(),
                 score: 0.9,
             },
             MockSearchResult {
-                id: Uuid::new_v4(),
-                document_id: Uuid::new_v4(),
+                _id: Uuid::new_v4(),
+                _document_id: Uuid::new_v4(),
                 filename: "b.txt".to_string(),
                 content: "B".to_string(),
                 score: 0.8,
