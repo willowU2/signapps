@@ -14,6 +14,7 @@ import { WeekView } from '@/components/scheduling/views/WeekView';
 import { MonthView } from '@/components/scheduling/views/MonthView';
 import { AgendaView } from '@/components/scheduling/views/AgendaView';
 import { TasksView } from '@/components/scheduling/views/TasksView';
+import { ResourcesView } from '@/components/scheduling/resources/ResourcesView';
 import { CommandPalette } from '@/components/scheduling/command-palette/CommandPalette';
 import { QuickCreate } from '@/components/scheduling/command-palette/QuickCreate';
 import { BottomTabs, BottomTabsSpacer } from '@/components/scheduling/mobile/BottomTabs';
@@ -49,7 +50,7 @@ export default function SchedulingPage() {
       case 'tasks':
         return <TasksView />;
       case 'resources':
-        return <ResourcesPlaceholder />;
+        return <ResourcesView />;
       case 'team':
         return <TeamPlaceholder />;
       default:

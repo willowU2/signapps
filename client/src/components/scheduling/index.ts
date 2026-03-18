@@ -24,3 +24,6 @@ export * from './quick-actions';
 
 // Task components
 export * from './tasks';
+
+// Resource components
+export * from './resources';
