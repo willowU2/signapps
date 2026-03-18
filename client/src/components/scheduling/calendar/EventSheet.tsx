@@ -62,6 +62,7 @@ import type {
   CreateEventInput,
   RecurrenceRule,
   Attendee,
+  EventTemplate,
 } from '@/lib/scheduling/types/scheduling';
 
 // ============================================================================
@@ -74,6 +75,7 @@ interface EventSheetProps {
   event?: ScheduleBlock | null;
   defaultDate?: Date;
   defaultTime?: string;
+  templates?: EventTemplate[];
   onSave: (event: CreateEventInput) => void;
   onDelete?: () => void;
 }
@@ -158,6 +160,7 @@ export function EventSheet({
   event,
   defaultDate,
   defaultTime,
+  templates = [],
   onSave,
   onDelete,
 }: EventSheetProps) {
@@ -178,13 +181,40 @@ export function EventSheet({
   const [newAttendee, setNewAttendee] = React.useState('');
   const [meetingUrl, setMeetingUrl] = React.useState('');
   const [showAdvanced, setShowAdvanced] = React.useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = React.useState<string>('');
+
+  // Apply template to form
+  const applyTemplate = React.useCallback((template: EventTemplate) => {
+    const defaults = template.eventDefaults;
+    if (defaults.title) setTitle(defaults.title);
+    if (defaults.description) setDescription(defaults.description);
+    if (defaults.location) setLocation(defaults.location);
+    if (defaults.duration) setDuration(defaults.duration);
+    if (defaults.allDay !== undefined) setIsAllDay(defaults.allDay);
+    if (defaults.color) setColor(defaults.color);
+    if (defaults.reminderMinutes !== undefined) setReminder(defaults.reminderMinutes);
+    if (defaults.recurrence) setRecurrence(defaults.recurrence.frequency);
+    if (defaults.attendees) setAttendeeEmails(defaults.attendees);
+  }, []);
+
+  // Handle template selection
+  const handleTemplateChange = React.useCallback((templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (templateId && templateId !== 'none') {
+      const template = templates.find(t => t.id === templateId);
+      if (template) {
+        applyTemplate(template);
+      }
+    }
+  }, [templates, applyTemplate]);
 
   // Initialize form when event changes
   React.useEffect(() => {
     if (event) {
       setTitle(event.title);
       setDescription(event.description ?? '');
-      setLocation(''); // TODO: Add location to ScheduleBlock
+      setLocation(event.location?.name ?? '');
+      setMeetingUrl(event.location?.meetingUrl ?? '');
       setDate(new Date(event.start));
       setStartTime(format(new Date(event.start), 'HH:mm'));
       if (event.end) {
@@ -193,7 +223,9 @@ export function EventSheet({
       }
       setIsAllDay(event.allDay);
       setColor(event.color ?? 'blue');
+      setReminder(event.reminderMinutes ?? 15);
       setAttendeeEmails(event.attendees?.map((a) => a.email) ?? []);
+      setSelectedTemplateId(event.templateId ?? '');
     } else {
       // Reset form for new event
       const now = new Date();
@@ -212,6 +244,7 @@ export function EventSheet({
       setNewAttendee('');
       setMeetingUrl('');
       setShowAdvanced(false);
+      setSelectedTemplateId('');
     }
   }, [event, defaultDate, defaultTime, isOpen]);
 
@@ -261,6 +294,9 @@ export function EventSheet({
         recurrence !== 'none'
           ? { frequency: recurrence, interval: 1 }
           : undefined,
+      location: location.trim() ? { name: location.trim(), meetingUrl: meetingUrl.trim() || undefined } : undefined,
+      reminderMinutes: reminder > 0 ? reminder : undefined,
+      templateId: selectedTemplateId && selectedTemplateId !== 'none' ? selectedTemplateId : undefined,
     };
 
     onSave(eventData);
@@ -281,6 +317,34 @@ export function EventSheet({
         </SheetHeader>
 
         <div className="space-y-6 py-6">
+          {/* Template Selector (only for new events) */}
+          {!isEditing && templates.length > 0 && (
+            <div className="space-y-2">
+              <Label>Utiliser un modèle</Label>
+              <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un modèle (optionnel)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucun modèle</SelectItem>
+                  {templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      <div className="flex items-center gap-2">
+                        {template.eventDefaults.color && (
+                          <span
+                            className="w-3 h-3 rounded-full shrink-0"
+                            style={{ backgroundColor: template.eventDefaults.color }}
+                          />
+                        )}
+                        {template.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Titre *</Label>

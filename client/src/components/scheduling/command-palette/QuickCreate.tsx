@@ -38,7 +38,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSchedulingNavigation } from '@/stores/scheduling-store';
 import { useCreateEvent } from '@/lib/scheduling/api/calendar';
-import type { ParsedInput, RecurrenceRule, Priority } from '@/lib/scheduling/types/scheduling';
+import type { ParsedInput, RecurrenceRule, Priority, EventTemplate } from '@/lib/scheduling/types/scheduling';
 
 // ============================================================================
 // Types
@@ -48,6 +48,7 @@ interface QuickCreateProps {
   isOpen: boolean;
   onClose: () => void;
   defaultDate?: Date;
+  templates?: EventTemplate[];
   className?: string;
 }
 
@@ -271,15 +272,52 @@ export function QuickCreate({
   isOpen,
   onClose,
   defaultDate,
+  templates = [],
   className,
 }: QuickCreateProps) {
   const [input, setInput] = React.useState('');
   const [parseResult, setParseResult] = React.useState<ParseResult | null>(null);
   const [isCreating, setIsCreating] = React.useState(false);
+  const [showTemplates, setShowTemplates] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const { currentDate } = useSchedulingNavigation();
   const createEvent = useCreateEvent();
+
+  // Filter templates based on input
+  const filteredTemplates = React.useMemo(() => {
+    if (!input.trim()) return templates.slice(0, 5);
+    const search = input.toLowerCase();
+    return templates
+      .filter(t =>
+        t.name.toLowerCase().includes(search) ||
+        t.eventDefaults.title?.toLowerCase().includes(search) ||
+        t.category?.toLowerCase().includes(search)
+      )
+      .slice(0, 5);
+  }, [templates, input]);
+
+  // Apply template
+  const handleSelectTemplate = (template: EventTemplate) => {
+    const defaults = template.eventDefaults;
+    const title = defaults.title || template.name;
+    setInput(title);
+
+    // Create parse result from template
+    const start = defaultDate || currentDate;
+    const result: ParseResult = {
+      title,
+      date: start,
+      duration: defaults.duration,
+      location: defaults.location,
+      confidence: 0.9,
+    };
+    if (defaults.recurrence) {
+      result.recurrence = defaults.recurrence;
+    }
+    setParseResult(result);
+    setShowTemplates(false);
+  };
 
   // Parse input on change
   React.useEffect(() => {
@@ -296,9 +334,10 @@ export function QuickCreate({
     if (isOpen) {
       setInput('');
       setParseResult(null);
+      setShowTemplates(templates.length > 0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [isOpen]);
+  }, [isOpen, templates.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -320,6 +359,7 @@ export function QuickCreate({
           end,
           calendarId: 'default',
           recurrence: parseResult.recurrence,
+          location: parseResult.location ? { name: parseResult.location } : undefined,
         },
       });
 
@@ -389,6 +429,44 @@ export function QuickCreate({
                   autoCorrect="off"
                   spellCheck={false}
                 />
+
+                {/* Template Suggestions */}
+                {showTemplates && filteredTemplates.length > 0 && !parseResult && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="mt-4 pt-4 border-t"
+                  >
+                    <p className="text-xs text-muted-foreground mb-2">Modèles suggérés</p>
+                    <div className="space-y-1">
+                      {filteredTemplates.map((template) => (
+                        <button
+                          key={template.id}
+                          type="button"
+                          onClick={() => handleSelectTemplate(template)}
+                          className={cn(
+                            'w-full text-left px-3 py-2 rounded-md text-sm',
+                            'hover:bg-accent transition-colors',
+                            'flex items-center gap-2'
+                          )}
+                        >
+                          {template.eventDefaults.color && (
+                            <span
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: template.eventDefaults.color }}
+                            />
+                          )}
+                          <span className="flex-1">{template.name}</span>
+                          {template.category && (
+                            <Badge variant="outline" className="text-xs">
+                              {template.category}
+                            </Badge>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
 
                 {/* Parse Preview */}
                 {parseResult && (
