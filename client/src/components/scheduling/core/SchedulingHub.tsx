@@ -2,31 +2,35 @@
 
 /**
  * SchedulingHub Component
+ * Story 1.1.3: Scheduling Hub Container
  *
  * Main container for the Unified Scheduling UI.
- * Manages tabs, sidebar, and routes between views.
+ * Manages views, sidebar, scope selection, and keyboard shortcuts.
  * Keyboard shortcut: Cmd/Ctrl+K for command palette
  */
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  CalendarDays,
-  CheckSquare,
-  Users,
-  Building2,
   ChevronLeft,
   ChevronRight,
   Command,
   Plus,
+  User,
+  Users,
+  HandshakeIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useSchedulingStore, useSchedulingNavigation, useSchedulingUI } from '@/stores/scheduling-store';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
+import { usePreferencesStore } from '@/stores/scheduling/preferences-store';
 import { ViewSwitcher, ViewSwitcherDropdown } from './ViewSwitcher';
 import { DateNavigator, DateNavigatorCompact } from './DateNavigator';
-import type { TabType } from '@/lib/scheduling/types/scheduling';
+import { BottomTabs, BottomTabsSpacer, MobileScopeSwitcher } from '../mobile/BottomTabs';
+import { FAB } from '../quick-actions/FAB';
+import type { ScopeType, ViewType } from '@/lib/scheduling/types';
 
 // ============================================================================
 // Types
@@ -35,24 +39,26 @@ import type { TabType } from '@/lib/scheduling/types/scheduling';
 interface SchedulingHubProps {
   children?: React.ReactNode;
   className?: string;
+  onCreateItem?: (type: string) => void;
+  onQuickCreate?: () => void;
 }
 
-interface TabConfig {
-  id: TabType;
+interface ScopeConfig {
+  id: ScopeType;
   label: string;
   icon: React.ElementType;
   shortcut: string;
+  description: string;
 }
 
 // ============================================================================
-// Tab Configuration
+// Scope Configuration (MOI / EUX / NOUS)
 // ============================================================================
 
-const tabs: TabConfig[] = [
-  { id: 'my-day', label: 'Ma Journée', icon: CalendarDays, shortcut: 'D' },
-  { id: 'tasks', label: 'Tâches', icon: CheckSquare, shortcut: 'T' },
-  { id: 'resources', label: 'Ressources', icon: Building2, shortcut: 'R' },
-  { id: 'team', label: 'Équipe', icon: Users, shortcut: 'E' },
+const scopes: ScopeConfig[] = [
+  { id: 'moi', label: 'Moi', icon: User, shortcut: 'M', description: 'Mes événements personnels' },
+  { id: 'eux', label: 'Équipe', icon: Users, shortcut: 'E', description: 'Événements de l\'équipe' },
+  { id: 'nous', label: 'Nous', icon: HandshakeIcon, shortcut: 'N', description: 'Collaboration' },
 ];
 
 // ============================================================================
@@ -66,7 +72,9 @@ function Sidebar({
   collapsed: boolean;
   onToggle: () => void;
 }) {
-  const { activeTab, setActiveTab } = useSchedulingNavigation();
+  const scope = useSchedulingStore((state) => state.scope);
+  const setScope = useSchedulingStore((state) => state.setScope);
+  const openCommandPalette = usePreferencesStore((state) => state.openCommandPalette);
 
   return (
     <motion.aside
@@ -107,17 +115,22 @@ function Sidebar({
         </Button>
       </div>
 
-      {/* Navigation */}
+      {/* Scope Selection (MOI / EUX / NOUS) */}
       <nav className="flex-1 space-y-1 p-2">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
+        <div className="mb-3 px-2">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {collapsed ? '' : 'Portée'}
+          </span>
+        </div>
+        {scopes.map((scopeItem) => {
+          const Icon = scopeItem.icon;
+          const isActive = scope === scopeItem.id;
 
           return (
-            <Tooltip key={tab.id} delayDuration={collapsed ? 100 : 700}>
+            <Tooltip key={scopeItem.id} delayDuration={collapsed ? 100 : 700}>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => setScope(scopeItem.id)}
                   className={cn(
                     'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     'hover:bg-accent hover:text-accent-foreground',
@@ -135,13 +148,13 @@ function Sidebar({
                         exit={{ opacity: 0, width: 0 }}
                         className="overflow-hidden whitespace-nowrap"
                       >
-                        {tab.label}
+                        {scopeItem.label}
                       </motion.span>
                     )}
                   </AnimatePresence>
                   {!collapsed && (
                     <kbd className="ml-auto hidden rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline-block">
-                      {tab.shortcut}
+                      {scopeItem.shortcut}
                     </kbd>
                   )}
                 </button>
@@ -149,9 +162,9 @@ function Sidebar({
               {collapsed && (
                 <TooltipContent side="right">
                   <p>
-                    {tab.label}{' '}
+                    {scopeItem.label}{' '}
                     <kbd className="ml-1 rounded bg-muted px-1 text-[10px]">
-                      {tab.shortcut}
+                      {scopeItem.shortcut}
                     </kbd>
                   </p>
                 </TooltipContent>
@@ -167,6 +180,7 @@ function Sidebar({
           <TooltipTrigger asChild>
             <Button
               variant="outline"
+              onClick={openCommandPalette}
               className={cn(
                 'w-full justify-start gap-2',
                 collapsed && 'justify-center px-0'
@@ -209,17 +223,22 @@ function Sidebar({
 // Header Component
 // ============================================================================
 
-function Header() {
-  const { activeTab } = useSchedulingNavigation();
-  const currentTab = tabs.find((t) => t.id === activeTab);
+function Header({ onCreateItem }: { onCreateItem?: (type: string) => void }) {
+  const scope = useSchedulingStore((state) => state.scope);
+  const currentScope = scopes.find((s) => s.id === scope);
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-background px-4">
-      {/* Left: Tab title (mobile) + Date Navigator */}
+      {/* Left: Scope indicator (mobile) + Date Navigator */}
       <div className="flex items-center gap-4">
-        <h2 className="text-lg font-semibold sm:hidden">
-          {currentTab?.label}
-        </h2>
+        <div className="flex items-center gap-2 md:hidden">
+          {currentScope && (
+            <>
+              <currentScope.icon className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">{currentScope.label}</span>
+            </>
+          )}
+        </div>
         <DateNavigator className="hidden sm:flex" />
         <DateNavigatorCompact className="flex sm:hidden" />
       </div>
@@ -229,9 +248,13 @@ function Header() {
         <ViewSwitcher className="hidden md:inline-flex" />
         <ViewSwitcherDropdown className="inline-flex md:hidden" />
 
-        <Button size="sm" className="gap-1.5">
+        <Button
+          size="sm"
+          className="gap-1.5 hidden sm:flex"
+          onClick={() => onCreateItem?.('event')}
+        >
           <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Nouveau</span>
+          <span>Nouveau</span>
         </Button>
       </div>
     </header>
@@ -242,9 +265,17 @@ function Header() {
 // Main Component
 // ============================================================================
 
-export function SchedulingHub({ children, className }: SchedulingHubProps) {
-  const { isSidebarCollapsed, toggleSidebar, toggleCommandPalette } = useSchedulingUI();
-  const { setActiveTab } = useSchedulingNavigation();
+export function SchedulingHub({
+  children,
+  className,
+  onCreateItem,
+  onQuickCreate,
+}: SchedulingHubProps) {
+  const isSidebarOpen = usePreferencesStore((state) => state.isSidebarOpen);
+  const toggleSidebar = usePreferencesStore((state) => state.toggleSidebar);
+  const toggleCommandPalette = usePreferencesStore((state) => state.toggleCommandPalette);
+  const setScope = useSchedulingStore((state) => state.setScope);
+  const setView = useCalendarStore((state) => state.setView);
 
   // Global keyboard shortcuts
   React.useEffect(() => {
@@ -269,27 +300,19 @@ export function SchedulingHub({ children, className }: SchedulingHubProps) {
         return;
       }
 
-      // Tab shortcuts
+      // Scope shortcuts (MOI / EUX / NOUS)
       switch (e.key.toLowerCase()) {
-        case 'd':
+        case 'm':
           e.preventDefault();
-          setActiveTab('my-day');
-          break;
-        case 'r':
-          e.preventDefault();
-          setActiveTab('resources');
+          setScope('moi');
           break;
         case 'e':
           e.preventDefault();
-          setActiveTab('team');
+          setScope('eux');
           break;
-        // Note: 't' is reserved for "today" in DateNavigator
-        // Tasks tab uses Shift+T
-        case 't':
-          if (e.shiftKey) {
-            e.preventDefault();
-            setActiveTab('tasks');
-          }
+        case 'n':
+          e.preventDefault();
+          setScope('nous');
           break;
         case '[':
           e.preventDefault();
@@ -300,25 +323,40 @@ export function SchedulingHub({ children, className }: SchedulingHubProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setActiveTab, toggleSidebar, toggleCommandPalette]);
+  }, [setScope, toggleSidebar, toggleCommandPalette, setView]);
 
   return (
     <div className={cn('flex h-full bg-background', className)}>
       {/* Sidebar - hidden on mobile */}
       <div className="hidden md:block">
-        <Sidebar collapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
+        <Sidebar collapsed={!isSidebarOpen} onToggle={toggleSidebar} />
       </div>
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-auto">
+        <Header onCreateItem={onCreateItem} />
+
+        {/* Mobile Scope Switcher */}
+        <div className="p-2 md:hidden border-b">
+          <MobileScopeSwitcher />
+        </div>
+
+        <main className="flex-1 overflow-auto pb-16 md:pb-0">
           {children || (
             <div className="flex h-full items-center justify-center text-muted-foreground">
               <p>Sélectionnez une vue pour commencer</p>
             </div>
           )}
         </main>
+
+        {/* Mobile Bottom Tabs */}
+        <BottomTabs />
+
+        {/* Floating Action Button */}
+        <FAB
+          onCreateItem={onCreateItem as (type: any) => void}
+          onQuickCreate={onQuickCreate}
+        />
       </div>
     </div>
   );

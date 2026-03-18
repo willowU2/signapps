@@ -2,6 +2,7 @@
 
 /**
  * QuickCreate Component
+ * Story 1.4.4: QuickCreate Component
  *
  * Natural language event creation with intelligent parsing.
  * Supports quick creation of events, tasks, and bookings.
@@ -22,7 +23,6 @@ import {
 } from 'lucide-react';
 import {
   format,
-  parse,
   addHours,
   setHours,
   setMinutes,
@@ -36,26 +36,41 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useSchedulingNavigation } from '@/stores/scheduling-store';
-import { useCalendarStore } from '@/stores/calendar-store';
-import { useCreateEvent } from '@/lib/scheduling/api/calendar';
-import type { ParsedInput, RecurrenceRule, Priority, EventTemplate } from '@/lib/scheduling/types/scheduling';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
+import { schedulingApi } from '@/lib/scheduling/api';
+import type { RecurrenceRule, Priority, TimeItemType } from '@/lib/scheduling/types';
 
 // ============================================================================
 // Types
 // ============================================================================
 
+interface QuickCreateTemplate {
+  id: string;
+  name: string;
+  category?: string;
+  itemDefaults: {
+    title?: string;
+    type?: TimeItemType;
+    duration?: number;
+    location?: string;
+    color?: string;
+    recurrence?: RecurrenceRule;
+  };
+}
+
 interface QuickCreateProps {
   isOpen: boolean;
   onClose: () => void;
   defaultDate?: Date;
-  calendarId?: string;
-  templates?: EventTemplate[];
+  defaultType?: TimeItemType;
+  templates?: QuickCreateTemplate[];
   className?: string;
 }
 
 interface ParseResult {
   title: string;
+  type?: TimeItemType;
   date?: Date;
   time?: string;
   duration?: number;
@@ -70,14 +85,40 @@ interface ParseResult {
 // NLP Parser (Simplified)
 // ============================================================================
 
-function parseNaturalLanguage(input: string): ParseResult {
+function parseNaturalLanguage(input: string, defaultType?: TimeItemType): ParseResult {
   const result: ParseResult = {
     title: input,
+    type: defaultType,
     confidence: 0.5,
   };
 
   let remaining = input.trim();
   const today = new Date();
+
+  // ---- Type Detection ----
+
+  // Detect item type from input
+  if (/\b(?:tâche|task|todo|faire)\b/i.test(remaining)) {
+    result.type = 'task';
+    remaining = remaining.replace(/\b(?:tâche|task|todo|faire)\b/i, '');
+    result.confidence += 0.05;
+  } else if (/\b(?:réunion|meeting|rdv|rendez-vous)\b/i.test(remaining)) {
+    result.type = 'event';
+    remaining = remaining.replace(/\b(?:réunion|meeting|rdv|rendez-vous)\b/i, '');
+    result.confidence += 0.05;
+  } else if (/\b(?:réservation|réserver|booking|book)\b/i.test(remaining)) {
+    result.type = 'booking';
+    remaining = remaining.replace(/\b(?:réservation|réserver|booking|book)\b/i, '');
+    result.confidence += 0.05;
+  } else if (/\b(?:rappel|reminder)\b/i.test(remaining)) {
+    result.type = 'reminder';
+    remaining = remaining.replace(/\b(?:rappel|reminder)\b/i, '');
+    result.confidence += 0.05;
+  } else if (/\b(?:bloquer|blocage|blocker)\b/i.test(remaining)) {
+    result.type = 'blocker';
+    remaining = remaining.replace(/\b(?:bloquer|blocage|blocker)\b/i, '');
+    result.confidence += 0.05;
+  }
 
   // ---- Date Parsing ----
 
@@ -274,7 +315,7 @@ export function QuickCreate({
   isOpen,
   onClose,
   defaultDate,
-  calendarId: propCalendarId,
+  defaultType = 'event',
   templates = [],
   className,
 }: QuickCreateProps) {
@@ -284,18 +325,9 @@ export function QuickCreate({
   const [showTemplates, setShowTemplates] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const { currentDate } = useSchedulingNavigation();
-  const { selectedCalendarIds, calendars } = useCalendarStore();
-  const createEvent = useCreateEvent();
-
-  // Resolve the calendar ID: prop > first selected > first available > 'default'
-  const resolvedCalendarId = React.useMemo(() => {
-    if (propCalendarId) return propCalendarId;
-    const selectedIds = Array.from(selectedCalendarIds);
-    if (selectedIds.length > 0) return selectedIds[0];
-    if (calendars.length > 0) return calendars[0].id;
-    return 'default';
-  }, [propCalendarId, selectedCalendarIds, calendars]);
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const scope = useSchedulingStore((state) => state.scope);
+  const addTimeItem = useSchedulingStore((state) => state.addTimeItem);
 
   // Filter templates based on input
   const filteredTemplates = React.useMemo(() => {
@@ -304,15 +336,15 @@ export function QuickCreate({
     return templates
       .filter(t =>
         t.name.toLowerCase().includes(search) ||
-        t.eventDefaults.title?.toLowerCase().includes(search) ||
+        t.itemDefaults.title?.toLowerCase().includes(search) ||
         t.category?.toLowerCase().includes(search)
       )
       .slice(0, 5);
   }, [templates, input]);
 
   // Apply template
-  const handleSelectTemplate = (template: EventTemplate) => {
-    const defaults = template.eventDefaults;
+  const handleSelectTemplate = (template: QuickCreateTemplate) => {
+    const defaults = template.itemDefaults;
     const title = defaults.title || template.name;
     setInput(title);
 
@@ -320,6 +352,7 @@ export function QuickCreate({
     const start = defaultDate || currentDate;
     const result: ParseResult = {
       title,
+      type: defaults.type || defaultType,
       date: start,
       duration: defaults.duration,
       location: defaults.location,
@@ -335,12 +368,12 @@ export function QuickCreate({
   // Parse input on change
   React.useEffect(() => {
     if (input.trim()) {
-      const result = parseNaturalLanguage(input);
+      const result = parseNaturalLanguage(input, defaultType);
       setParseResult(result);
     } else {
       setParseResult(null);
     }
-  }, [input]);
+  }, [input, defaultType]);
 
   // Focus input when opened
   React.useEffect(() => {
@@ -363,22 +396,28 @@ export function QuickCreate({
       const start = parseResult.date || defaultDate || currentDate;
       const duration = parseResult.duration || 60;
       const end = addHours(start, duration / 60);
+      const itemType = parseResult.type || defaultType || 'event';
 
-      await createEvent.mutateAsync({
-        calendarId: resolvedCalendarId,
-        input: {
-          title: parseResult.title,
-          start,
-          end,
-          calendarId: resolvedCalendarId,
-          recurrence: parseResult.recurrence,
-          location: parseResult.location ? { name: parseResult.location } : undefined,
-        },
+      const newItem = await schedulingApi.createTimeItem({
+        type: itemType,
+        title: parseResult.title,
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        scope: scope,
+        priority: parseResult.priority,
+        location: parseResult.location ? { name: parseResult.location } : undefined,
+        recurrence: parseResult.recurrence,
+        metadata: parseResult.participants?.length
+          ? { participants: parseResult.participants }
+          : undefined,
       });
+
+      // Add to local store
+      addTimeItem(newItem);
 
       onClose();
     } catch (error) {
-      console.error('Failed to create event:', error);
+      console.error('Failed to create item:', error);
     } finally {
       setIsCreating(false);
     }
@@ -463,10 +502,10 @@ export function QuickCreate({
                             'flex items-center gap-2'
                           )}
                         >
-                          {template.eventDefaults.color && (
+                          {template.itemDefaults.color && (
                             <span
                               className="w-2 h-2 rounded-full shrink-0"
-                              style={{ backgroundColor: template.eventDefaults.color }}
+                              style={{ backgroundColor: template.itemDefaults.color }}
                             />
                           )}
                           <span className="flex-1">{template.name}</span>

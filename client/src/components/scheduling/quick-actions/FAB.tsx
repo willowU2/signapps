@@ -2,6 +2,7 @@
 
 /**
  * FAB Component (Floating Action Button)
+ * Story 1.5.2: FAB Component
  *
  * Quick action button for creating new events.
  * Expands to show multiple action options.
@@ -16,11 +17,15 @@ import {
   CheckSquare,
   Building2,
   Sparkles,
+  Flag,
+  Bell,
+  XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useSchedulingNavigation } from '@/stores/scheduling-store';
-import type { TabType } from '@/lib/scheduling/types/scheduling';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
+import type { ViewType, TimeItemType } from '@/lib/scheduling/types';
 
 // ============================================================================
 // Types
@@ -28,19 +33,31 @@ import type { TabType } from '@/lib/scheduling/types/scheduling';
 
 interface FABProps {
   className?: string;
-  onCreateEvent?: () => void;
-  onCreateTask?: () => void;
-  onCreateBooking?: () => void;
+  onCreateItem?: (type: TimeItemType) => void;
   onQuickCreate?: () => void;
 }
 
 interface FABAction {
-  id: string;
+  id: TimeItemType | 'quick-create';
   icon: React.ElementType;
   label: string;
   color: string;
   onClick: () => void;
 }
+
+// ============================================================================
+// Action Configs
+// ============================================================================
+
+const actionConfigs: Record<TimeItemType, { icon: React.ElementType; label: string; color: string }> = {
+  event: { icon: Calendar, label: 'Événement', color: 'bg-blue-500 hover:bg-blue-600' },
+  task: { icon: CheckSquare, label: 'Tâche', color: 'bg-green-500 hover:bg-green-600' },
+  booking: { icon: Building2, label: 'Réservation', color: 'bg-orange-500 hover:bg-orange-600' },
+  shift: { icon: Calendar, label: 'Shift', color: 'bg-cyan-500 hover:bg-cyan-600' },
+  milestone: { icon: Flag, label: 'Jalon', color: 'bg-purple-500 hover:bg-purple-600' },
+  reminder: { icon: Bell, label: 'Rappel', color: 'bg-yellow-500 hover:bg-yellow-600' },
+  blocker: { icon: XCircle, label: 'Blocage', color: 'bg-red-500 hover:bg-red-600' },
+};
 
 // ============================================================================
 // FAB Action Button
@@ -92,15 +109,14 @@ function FABActionButton({
 
 export function FAB({
   className,
-  onCreateEvent,
-  onCreateTask,
-  onCreateBooking,
+  onCreateItem,
   onQuickCreate,
 }: FABProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
-  const { activeTab } = useSchedulingNavigation();
+  const view = useCalendarStore((state) => state.view);
+  const scope = useSchedulingStore((state) => state.scope);
 
-  // Define actions based on current tab
+  // Define actions based on current view and scope
   const actions: FABAction[] = React.useMemo(() => {
     const result: FABAction[] = [];
 
@@ -118,64 +134,79 @@ export function FAB({
       });
     }
 
-    // Event (for my-day tab)
-    if (activeTab === 'my-day' && onCreateEvent) {
+    if (!onCreateItem) return result;
+
+    // Context-aware actions based on view
+    if (view === 'day' || view === 'week' || view === 'month') {
       result.push({
         id: 'event',
-        icon: Calendar,
-        label: 'Événement',
-        color: 'bg-blue-500 hover:bg-blue-600',
+        ...actionConfigs.event,
         onClick: () => {
-          onCreateEvent();
+          onCreateItem('event');
           setIsExpanded(false);
         },
       });
     }
 
-    // Task (for tasks tab)
-    if (activeTab === 'tasks' && onCreateTask) {
+    if (view === 'kanban' || view === 'agenda') {
       result.push({
         id: 'task',
-        icon: CheckSquare,
-        label: 'Tâche',
-        color: 'bg-green-500 hover:bg-green-600',
+        ...actionConfigs.task,
         onClick: () => {
-          onCreateTask();
+          onCreateItem('task');
           setIsExpanded(false);
         },
       });
     }
 
-    // Booking (for resources tab)
-    if (activeTab === 'resources' && onCreateBooking) {
+    // Show booking for EUX scope (team resources)
+    if (scope === 'eux') {
       result.push({
         id: 'booking',
-        icon: Building2,
-        label: 'Réservation',
-        color: 'bg-orange-500 hover:bg-orange-600',
+        ...actionConfigs.booking,
         onClick: () => {
-          onCreateBooking();
+          onCreateItem('booking');
           setIsExpanded(false);
         },
       });
     }
 
-    // Default event creation for any tab
-    if (!result.some((a) => a.id === 'event') && onCreateEvent) {
+    // Show shift for roster view
+    if (view === 'roster') {
       result.push({
-        id: 'event',
-        icon: Calendar,
-        label: 'Événement',
-        color: 'bg-blue-500 hover:bg-blue-600',
+        id: 'shift',
+        ...actionConfigs.shift,
         onClick: () => {
-          onCreateEvent();
+          onCreateItem('shift');
+          setIsExpanded(false);
+        },
+      });
+    }
+
+    // Add reminder as a common option
+    result.push({
+      id: 'reminder',
+      ...actionConfigs.reminder,
+      onClick: () => {
+        onCreateItem('reminder');
+        setIsExpanded(false);
+      },
+    });
+
+    // Blocker for focus view
+    if (view === 'focus') {
+      result.push({
+        id: 'blocker',
+        ...actionConfigs.blocker,
+        onClick: () => {
+          onCreateItem('blocker');
           setIsExpanded(false);
         },
       });
     }
 
     return result;
-  }, [activeTab, onCreateEvent, onCreateTask, onCreateBooking, onQuickCreate]);
+  }, [view, scope, onCreateItem, onQuickCreate]);
 
   // Close on escape
   React.useEffect(() => {

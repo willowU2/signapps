@@ -2,6 +2,7 @@
 
 /**
  * BottomTabs Component
+ * Story 1.5.1: Mobile Bottom Tabs
  *
  * Mobile bottom navigation tabs for the Scheduling UI.
  * Replaces sidebar on small screens.
@@ -15,10 +16,14 @@ import {
   Building2,
   Users,
   Search,
+  User,
+  HandshakeIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useSchedulingNavigation, useSchedulingUI } from '@/stores/scheduling-store';
-import type { TabType } from '@/lib/scheduling/types/scheduling';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
+import { usePreferencesStore } from '@/stores/scheduling/preferences-store';
+import type { ViewType, ScopeType } from '@/lib/scheduling/types';
 
 // ============================================================================
 // Types
@@ -26,10 +31,11 @@ import type { TabType } from '@/lib/scheduling/types/scheduling';
 
 interface BottomTabsProps {
   className?: string;
+  variant?: 'views' | 'scopes';
 }
 
 interface TabConfig {
-  id: TabType | 'search';
+  id: string;
   label: string;
   icon: React.ElementType;
 }
@@ -38,12 +44,17 @@ interface TabConfig {
 // Tab Configuration
 // ============================================================================
 
-const tabs: TabConfig[] = [
-  { id: 'my-day', label: 'Ma journée', icon: CalendarDays },
-  { id: 'tasks', label: 'Tâches', icon: CheckSquare },
+const viewTabs: TabConfig[] = [
+  { id: 'day', label: 'Jour', icon: CalendarDays },
+  { id: 'week', label: 'Semaine', icon: CalendarDays },
+  { id: 'agenda', label: 'Agenda', icon: CheckSquare },
   { id: 'search', label: 'Recherche', icon: Search },
-  { id: 'resources', label: 'Ressources', icon: Building2 },
-  { id: 'team', label: 'Équipe', icon: Users },
+];
+
+const scopeTabs: TabConfig[] = [
+  { id: 'moi', label: 'Moi', icon: User },
+  { id: 'eux', label: 'Équipe', icon: Users },
+  { id: 'nous', label: 'Nous', icon: HandshakeIcon },
 ];
 
 // ============================================================================
@@ -95,15 +106,23 @@ function TabItem({
 // Main Component
 // ============================================================================
 
-export function BottomTabs({ className }: BottomTabsProps) {
-  const { activeTab, setActiveTab } = useSchedulingNavigation();
-  const { openCommandPalette } = useSchedulingUI();
+export function BottomTabs({ className, variant = 'views' }: BottomTabsProps) {
+  const view = useCalendarStore((state) => state.view);
+  const setView = useCalendarStore((state) => state.setView);
+  const scope = useSchedulingStore((state) => state.scope);
+  const setScope = useSchedulingStore((state) => state.setScope);
+  const openCommandPalette = usePreferencesStore((state) => state.openCommandPalette);
 
-  const handleTabClick = (tabId: TabConfig['id']) => {
+  const tabs = variant === 'views' ? viewTabs : scopeTabs;
+  const activeId = variant === 'views' ? view : scope;
+
+  const handleTabClick = (tabId: string) => {
     if (tabId === 'search') {
       openCommandPalette();
+    } else if (variant === 'views') {
+      setView(tabId as ViewType);
     } else {
-      setActiveTab(tabId);
+      setScope(tabId as ScopeType);
     }
   };
 
@@ -123,11 +142,55 @@ export function BottomTabs({ className }: BottomTabsProps) {
         <TabItem
           key={tab.id}
           tab={tab}
-          isActive={tab.id !== 'search' && activeTab === tab.id}
+          isActive={tab.id !== 'search' && activeId === tab.id}
           onClick={() => handleTabClick(tab.id)}
         />
       ))}
     </nav>
+  );
+}
+
+/**
+ * Scope Switcher for mobile - horizontal pills at top
+ */
+export function MobileScopeSwitcher({ className }: { className?: string }) {
+  const scope = useSchedulingStore((state) => state.scope);
+  const setScope = useSchedulingStore((state) => state.setScope);
+
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-1 p-1 rounded-lg bg-muted md:hidden',
+        className
+      )}
+    >
+      {scopeTabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = scope === tab.id;
+        return (
+          <button
+            key={tab.id}
+            onClick={() => setScope(tab.id as ScopeType)}
+            className={cn(
+              'relative flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-md text-xs font-medium transition-colors',
+              isActive ? 'text-foreground' : 'text-muted-foreground'
+            )}
+          >
+            {isActive && (
+              <motion.div
+                layoutId="mobile-scope-indicator"
+                className="absolute inset-0 rounded-md bg-background shadow-sm"
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1">
+              <Icon className="h-3.5 w-3.5" />
+              {tab.label}
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
