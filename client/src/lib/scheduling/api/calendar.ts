@@ -5,6 +5,7 @@
  * Wraps the base calendar API with scheduling-specific types and React Query hooks.
  */
 
+import * as React from 'react';
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { calendarApi, tasksApi } from '@/lib/api/calendar';
 import { toast } from 'sonner';
@@ -19,6 +20,9 @@ import type {
   EventTemplate,
   CreateTemplateInput,
   UpdateTemplateInput,
+  RSVPInput,
+  RSVPStatus,
+  Attendee,
 } from '../types/scheduling';
 
 // ============================================================================
@@ -512,3 +516,178 @@ export function useDeleteTemplate() {
     },
   });
 }
+
+// ============================================================================
+// RSVP (MVP: localStorage for attendee status)
+// ============================================================================
+
+const RSVP_STORAGE_KEY = 'scheduling_rsvp';
+
+interface StoredRSVP {
+  eventId: string;
+  attendeeId: string;
+  status: RSVPStatus;
+  declineReason?: string;
+  respondedAt: string;
+}
+
+function getStoredRSVPs(): StoredRSVP[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem(RSVP_STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRSVPs(rsvps: StoredRSVP[]): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(RSVP_STORAGE_KEY, JSON.stringify(rsvps));
+}
+
+/**
+ * Update RSVP status for an attendee
+ */
+export async function updateRSVP(input: RSVPInput): Promise<StoredRSVP> {
+  const rsvps = getStoredRSVPs();
+
+  // Remove existing RSVP for this event/attendee
+  const filtered = rsvps.filter(
+    (r) => !(r.eventId === input.eventId && r.attendeeId === input.attendeeId)
+  );
+
+  const newRSVP: StoredRSVP = {
+    eventId: input.eventId,
+    attendeeId: input.attendeeId,
+    status: input.status,
+    declineReason: input.declineReason,
+    respondedAt: new Date().toISOString(),
+  };
+
+  filtered.push(newRSVP);
+  saveRSVPs(filtered);
+
+  return newRSVP;
+}
+
+/**
+ * Get RSVP status for an attendee
+ */
+export function getRSVP(eventId: string, attendeeId: string): StoredRSVP | undefined {
+  const rsvps = getStoredRSVPs();
+  return rsvps.find((r) => r.eventId === eventId && r.attendeeId === attendeeId);
+}
+
+/**
+ * Get all RSVPs for an event
+ */
+export function getEventRSVPs(eventId: string): StoredRSVP[] {
+  const rsvps = getStoredRSVPs();
+  return rsvps.filter((r) => r.eventId === eventId);
+}
+
+/**
+ * Get RSVP summary for an event
+ */
+export function getRSVPSummary(eventId: string, attendees: Attendee[]): {
+  accepted: number;
+  declined: number;
+  tentative: number;
+  pending: number;
+  total: number;
+} {
+  const rsvps = getEventRSVPs(eventId);
+  const rsvpMap = new Map(rsvps.map((r) => [r.attendeeId, r.status]));
+
+  let accepted = 0;
+  let declined = 0;
+  let tentative = 0;
+  let pending = 0;
+
+  for (const attendee of attendees) {
+    const status = rsvpMap.get(attendee.id) || attendee.status || 'pending';
+    switch (status) {
+      case 'accepted':
+        accepted++;
+        break;
+      case 'declined':
+        declined++;
+        break;
+      case 'tentative':
+        tentative++;
+        break;
+      default:
+        pending++;
+    }
+  }
+
+  return {
+    accepted,
+    declined,
+    tentative,
+    pending,
+    total: attendees.length,
+  };
+}
+
+// ============================================================================
+// RSVP React Query Hooks
+// ============================================================================
+
+/**
+ * Hook to update RSVP status
+ */
+export function useUpdateRSVP() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateRSVP,
+    onMutate: async (input) => {
+      // Optimistically update the event in cache
+      await queryClient.cancelQueries({ queryKey: schedulingKeys.events() });
+
+      queryClient.setQueriesData(
+        { queryKey: schedulingKeys.events() },
+        (old: ScheduleBlock[] | undefined) =>
+          old?.map((event) => {
+            if (event.id !== input.eventId) return event;
+
+            return {
+              ...event,
+              attendees: event.attendees?.map((a) =>
+                a.id === input.attendeeId
+                  ? { ...a, status: input.status, respondedAt: new Date() }
+                  : a
+              ),
+            };
+          })
+      );
+    },
+    onSuccess: (data) => {
+      const statusLabels: Record<RSVPStatus, string> = {
+        accepted: 'Accepté',
+        declined: 'Refusé',
+        tentative: 'Peut-être',
+        pending: 'En attente',
+      };
+      toast.success(`Réponse: ${statusLabels[data.status]}`);
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: schedulingKeys.events() });
+    },
+  });
+}
+
+/**
+ * Hook to get RSVP summary for an event
+ */
+export function useRSVPSummary(eventId: string, attendees: Attendee[]) {
+  return React.useMemo(() => {
+    return getRSVPSummary(eventId, attendees);
+  }, [eventId, attendees]);
+}
+

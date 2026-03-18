@@ -48,12 +48,23 @@ export interface ScheduleBlock {
 export type BlockStatus = 'confirmed' | 'tentative' | 'cancelled' | 'completed';
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
+export type RSVPStatus = 'pending' | 'accepted' | 'declined' | 'tentative';
+
 export interface Attendee {
   id: string;
   name: string;
   email: string;
-  status: 'pending' | 'accepted' | 'declined' | 'tentative';
+  status: RSVPStatus;
   required: boolean;
+  declineReason?: string;
+  respondedAt?: Date;
+}
+
+export interface RSVPInput {
+  eventId: string;
+  attendeeId: string;
+  status: RSVPStatus;
+  declineReason?: string;
 }
 
 export interface RecurrenceRule {
