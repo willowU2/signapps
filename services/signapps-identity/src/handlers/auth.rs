@@ -7,11 +7,12 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use signapps_common::{Claims, Error, Result};
-use signapps_db::repositories::UserRepository;
+use signapps_db::repositories::{LdapRepository, UserRepository};
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::auth::{create_tokens, verify_password, verify_token};
+use crate::ldap::LdapService;
 use crate::AppState;
 
 /// Login request payload.
@@ -97,12 +98,47 @@ pub async fn login(
             }
         },
         "ldap" => {
-            // LDAP authentication
-            // TODO: Implement LDAP bind verification
-            tracing::info!(username = %payload.username, "LDAP auth not yet implemented, falling back");
-            return Err(Error::Internal(
-                "LDAP authentication not yet implemented".to_string(),
-            ));
+            // LDAP authentication - bind user against LDAP server
+            let ldap_config = LdapRepository::get_config(&state.pool)
+                .await?
+                .ok_or_else(|| Error::Internal("LDAP configuration not found".to_string()))?;
+
+            if !ldap_config.enabled {
+                // If LDAP is disabled, check fallback setting
+                if ldap_config.fallback_local_auth {
+                    // Try local auth fallback
+                    let password_hash = user
+                        .password_hash
+                        .as_ref()
+                        .ok_or(Error::InvalidCredentials)?;
+
+                    if !verify_password(&payload.password, password_hash)? {
+                        tracing::warn!(username = %payload.username, "Invalid password (LDAP fallback)");
+                        return Err(Error::InvalidCredentials);
+                    }
+                } else {
+                    return Err(Error::Internal("LDAP is disabled".to_string()));
+                }
+            } else {
+                // Decrypt service account password
+                let service_password = decrypt_ldap_password(&ldap_config.bind_password_encrypted)?;
+
+                // Authenticate user against LDAP
+                let ldap_result = LdapService::authenticate(
+                    &ldap_config,
+                    &service_password,
+                    &payload.username,
+                    &payload.password,
+                )
+                .await?;
+
+                if ldap_result.is_none() {
+                    tracing::warn!(username = %payload.username, "LDAP authentication failed");
+                    return Err(Error::InvalidCredentials);
+                }
+
+                tracing::info!(username = %payload.username, "LDAP authentication successful");
+            }
         },
         _ => {
             tracing::error!(auth_provider = %user.auth_provider, "Unknown auth provider");
@@ -347,4 +383,16 @@ fn verify_totp(secret: &str, code: &str) -> Result<bool> {
     .map_err(|e| Error::Internal(format!("TOTP error: {}", e)))?;
 
     Ok(totp.check_current(code).unwrap_or(false))
+}
+
+/// Decrypt LDAP bind password (placeholder - use proper encryption in production).
+fn decrypt_ldap_password(encrypted: &str) -> Result<String> {
+    use base64::Engine;
+
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(encrypted)
+        .map_err(|e| Error::Internal(format!("Failed to decrypt LDAP password: {}", e)))?;
+
+    String::from_utf8(bytes)
+        .map_err(|e| Error::Internal(format!("Invalid LDAP password encoding: {}", e)))
 }
