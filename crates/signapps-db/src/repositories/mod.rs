@@ -62,3 +62,10 @@ pub use external_sync_repository::{
 
 pub mod user_preferences_repository;
 pub use user_preferences_repository::UserPreferencesRepository;
+
+pub mod scheduling_repository;
+pub use scheduling_repository::{
+    RecurrenceRuleRepository, SchedulingPreferencesRepository, SchedulingResourceRepository,
+    SchedulingTemplateRepository, TimeItemDependencyRepository, TimeItemGroupRepository,
+    TimeItemRepository, TimeItemUserRepository,
+};

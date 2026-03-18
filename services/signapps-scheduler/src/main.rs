@@ -218,6 +218,81 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // TimeItem routes (Unified Scheduling API - require tenant context)
+    let time_item_routes = Router::new()
+        .route("/", get(handlers::time_items::list_time_items))
+        .route("/", post(handlers::time_items::create_time_item))
+        .route("/{id}", get(handlers::time_items::get_time_item))
+        .route("/{id}", put(handlers::time_items::update_time_item))
+        .route("/{id}", delete(handlers::time_items::delete_time_item))
+        .route("/{id}/move", post(handlers::time_items::move_time_item))
+        .route("/{id}/status", put(handlers::time_items::update_time_item_status))
+        .route("/{id}/children", get(handlers::time_items::list_children))
+        .route("/{id}/share", post(handlers::time_items::share_time_item))
+        // Users/Participants
+        .route("/{id}/users", get(handlers::time_items::list_time_item_users))
+        .route("/{id}/users", post(handlers::time_items::add_time_item_user))
+        .route("/{id}/users/{user_id}", delete(handlers::time_items::remove_time_item_user))
+        .route("/{id}/rsvp", put(handlers::time_items::update_rsvp))
+        // Groups
+        .route("/{id}/groups", get(handlers::time_items::list_time_item_groups))
+        .route("/{id}/groups", post(handlers::time_items::add_time_item_group))
+        .route("/{id}/groups/{group_id}", delete(handlers::time_items::remove_time_item_group))
+        // Dependencies
+        .route("/{id}/dependencies", get(handlers::time_items::list_dependencies))
+        .route("/{id}/dependencies", post(handlers::time_items::add_dependency))
+        .route("/{id}/dependencies/{depends_on_id}", delete(handlers::time_items::remove_dependency))
+        // Recurrence
+        .route("/{id}/recurrence", get(handlers::time_items::get_recurrence))
+        .route("/{id}/recurrence", delete(handlers::time_items::delete_recurrence))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Scheduling Resources routes
+    let scheduling_resource_routes = Router::new()
+        .route("/", get(handlers::time_items::list_scheduling_resources))
+        .route("/", post(handlers::time_items::create_scheduling_resource))
+        .route("/{id}", get(handlers::time_items::get_scheduling_resource))
+        .route("/{id}", delete(handlers::time_items::delete_scheduling_resource))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Scheduling Templates routes
+    let template_routes = Router::new()
+        .route("/", get(handlers::time_items::list_templates))
+        .route("/", post(handlers::time_items::create_template))
+        .route("/{id}", get(handlers::time_items::get_template))
+        .route("/{id}", delete(handlers::time_items::delete_template))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Scheduling Preferences routes
+    let preferences_routes = Router::new()
+        .route("/", get(handlers::time_items::get_preferences))
+        .route("/", put(handlers::time_items::update_preferences))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .nest("/api/v1/jobs", job_routes)
@@ -230,6 +305,11 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/resources", resource_routes)
         .nest("/api/v1/projects", project_routes)
         .nest("/api/v1/tasks", task_routes)
+        // Unified Scheduling API
+        .nest("/api/v1/time-items", time_item_routes)
+        .nest("/api/v1/scheduling/resources", scheduling_resource_routes)
+        .nest("/api/v1/scheduling/templates", template_routes)
+        .nest("/api/v1/scheduling/preferences", preferences_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

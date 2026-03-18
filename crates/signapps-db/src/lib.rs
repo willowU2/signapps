@@ -10,7 +10,16 @@ pub mod repositories;
 pub use pool::DatabasePool;
 pub use repositories::{
     CalendarMemberRepository, CalendarRepository, EventAttendeeRepository, EventRepository,
-    ResourceRepository, TaskRepository,
+    RecurrenceRuleRepository, ResourceRepository, SchedulingPreferencesRepository,
+    SchedulingResourceRepository, SchedulingTemplateRepository, TaskRepository,
+    TimeItemDependencyRepository, TimeItemGroupRepository, TimeItemRepository,
+    TimeItemUserRepository,
+};
+pub use models::{
+    AddDependency, AddTimeItemGroup, AddTimeItemUser, CreateSchedulingResource,
+    CreateSchedulingTemplate, CreateTimeItem, MoveTimeItem, RecurrenceRuleInput, ShareTimeItem,
+    TimeItem, TimeItemDependency, TimeItemGroup, TimeItemUser, TimeItemWithRelations,
+    TimeItemsQuery, TimeItemsResponse, UpdateSchedulingPreferences, UpdateTimeItem,
 };
 
 use sqlx::postgres::PgPoolOptions;

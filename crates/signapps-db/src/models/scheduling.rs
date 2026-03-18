@@ -208,7 +208,7 @@ pub struct TimeItem {
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateTimeItem {
     #[serde(rename = "type")]
@@ -275,7 +275,7 @@ pub struct UpdateTimeItem {
     pub metadata: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LocationInput {
     pub name: Option<String>,
@@ -424,7 +424,7 @@ pub struct RecurrenceRule {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RecurrenceRuleInput {
     pub frequency: String,

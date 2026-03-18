@@ -7,6 +7,7 @@ pub mod projects;
 pub mod resources;
 pub mod tasks;
 pub mod tenants;
+pub mod time_items;
 pub mod users;
 pub mod workspaces;
 
