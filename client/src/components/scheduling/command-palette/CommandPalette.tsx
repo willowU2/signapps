@@ -2,6 +2,7 @@
 
 /**
  * CommandPalette Component
+ * Story 1.4.1: Command Palette Component
  *
  * Modal command palette for quick actions in the scheduling UI.
  * Supports fuzzy search, keyboard navigation, and categorized commands.
@@ -11,7 +12,7 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useSchedulingUI } from '@/stores/scheduling-store';
+import { usePreferencesStore } from '@/stores/scheduling/preferences-store';
 import { CommandList, CommandListEmpty } from './CommandList';
 import { useCommands, useFilteredCommands } from '@/lib/scheduling/commands/registry';
 import type { Command } from '@/lib/scheduling/types/scheduling';
@@ -116,7 +117,8 @@ function Footer() {
 // ============================================================================
 
 export function CommandPalette({ className }: CommandPaletteProps) {
-  const { isCommandPaletteOpen, closeCommandPalette } = useSchedulingUI();
+  const isCommandPaletteOpen = usePreferencesStore((state) => state.isCommandPaletteOpen);
+  const closeCommandPalette = usePreferencesStore((state) => state.closeCommandPalette);
   const [query, setQuery] = React.useState('');
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);

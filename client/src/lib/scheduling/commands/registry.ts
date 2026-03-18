@@ -1,13 +1,17 @@
 /**
  * Command Registry
+ * Story 1.4.2: Command Registry
  *
  * Central registry for all scheduling commands.
  * Provides hooks for accessing and filtering commands.
  */
 
 import * as React from 'react';
-import { useSchedulingNavigation, useSchedulingUI, useSchedulingStore } from '@/stores/scheduling-store';
-import type { Command, ViewType, TabType } from '../types/scheduling';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
+import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
+import { usePreferencesStore } from '@/stores/scheduling/preferences-store';
+import type { Command } from '../types/scheduling';
+import type { ViewType, ScopeType, TimeItemType } from '../types/time-item';
 
 // ============================================================================
 // Command Registry State
@@ -88,14 +92,14 @@ function searchCommands(commands: Command[], query: string): Command[] {
  * Hook to get all registered commands
  */
 export function useCommands(): Command[] {
-  const store = useSchedulingStore();
-  const navigation = useSchedulingNavigation();
-  const ui = useSchedulingUI();
+  const calendarStore = useCalendarStore();
+  const schedulingStore = useSchedulingStore();
+  const preferencesStore = usePreferencesStore();
 
   // Rebuild commands when store changes
   return React.useMemo(() => {
-    return createDefaultCommands(store, navigation, ui);
-  }, [store, navigation, ui]);
+    return createDefaultCommands(calendarStore, schedulingStore, preferencesStore);
+  }, [calendarStore, schedulingStore, preferencesStore]);
 }
 
 /**
@@ -114,9 +118,9 @@ export function useFilteredCommands(query: string): Command[] {
 // ============================================================================
 
 function createDefaultCommands(
-  store: ReturnType<typeof useSchedulingStore>,
-  navigation: ReturnType<typeof useSchedulingNavigation>,
-  ui: ReturnType<typeof useSchedulingUI>
+  calendarStore: ReturnType<typeof useCalendarStore>,
+  schedulingStore: ReturnType<typeof useSchedulingStore>,
+  preferencesStore: ReturnType<typeof usePreferencesStore>
 ): Command[] {
   const commands: Command[] = [];
 
@@ -131,7 +135,7 @@ function createDefaultCommands(
     description: 'Aller à la date du jour',
     shortcut: 'T',
     category: 'navigation',
-    action: () => navigation.goToToday(),
+    action: () => calendarStore.goToToday(),
     keywords: ['today', 'maintenant', 'now'],
   });
 
@@ -142,7 +146,7 @@ function createDefaultCommands(
     description: 'Période précédente',
     shortcut: 'H',
     category: 'navigation',
-    action: () => navigation.navigatePrev(),
+    action: () => calendarStore.navigateRelative('prev'),
     keywords: ['previous', 'back', 'arrière'],
   });
 
@@ -153,17 +157,21 @@ function createDefaultCommands(
     description: 'Période suivante',
     shortcut: 'L',
     category: 'navigation',
-    action: () => navigation.navigateNext(),
+    action: () => calendarStore.navigateRelative('next'),
     keywords: ['next', 'forward', 'avant'],
   });
 
   // View commands
   const views: { id: ViewType; label: string; key: string }[] = [
-    { id: 'agenda', label: 'Vue Agenda', key: '1' },
-    { id: 'day', label: 'Vue Jour', key: '2' },
-    { id: '3-day', label: 'Vue 3 Jours', key: '3' },
-    { id: 'week', label: 'Vue Semaine', key: '4' },
-    { id: 'month', label: 'Vue Mois', key: '5' },
+    { id: 'day', label: 'Vue Jour', key: 'd' },
+    { id: 'week', label: 'Vue Semaine', key: 'w' },
+    { id: 'month', label: 'Vue Mois', key: 'm' },
+    { id: 'agenda', label: 'Vue Agenda', key: 'a' },
+    { id: 'timeline', label: 'Vue Timeline', key: 't' },
+    { id: 'kanban', label: 'Vue Kanban', key: 'k' },
+    { id: 'heatmap', label: 'Vue Heatmap', key: 'h' },
+    { id: 'focus', label: 'Mode Focus', key: 'f' },
+    { id: 'roster', label: 'Vue Roster', key: 'r' },
   ];
 
   for (const view of views) {
@@ -174,29 +182,27 @@ function createDefaultCommands(
       description: `Passer en ${view.label.toLowerCase()}`,
       shortcut: view.key,
       category: 'navigation',
-      action: () => navigation.setActiveView(view.id),
+      action: () => calendarStore.setView(view.id),
       keywords: [view.id, 'vue', 'view'],
     });
   }
 
-  // Tab commands
-  const tabs: { id: TabType; label: string; key: string }[] = [
-    { id: 'my-day', label: 'Ma Journée', key: 'D' },
-    { id: 'tasks', label: 'Tâches', key: 'Shift+T' },
-    { id: 'resources', label: 'Ressources', key: 'R' },
-    { id: 'team', label: 'Équipe', key: 'E' },
+  // Scope commands
+  const scopes: { id: ScopeType; label: string; key: string }[] = [
+    { id: 'moi', label: 'Moi (Personnel)', key: 'm' },
+    { id: 'eux', label: 'Eux (Équipe)', key: 'e' },
+    { id: 'nous', label: 'Nous (Collaboratif)', key: 'n' },
   ];
 
-  for (const tab of tabs) {
+  for (const scope of scopes) {
     commands.push({
-      id: `tab-${tab.id}`,
-      icon: tab.id === 'my-day' ? 'calendar' : tab.id === 'tasks' ? 'check' : tab.id === 'resources' ? 'building' : 'users',
-      label: tab.label,
-      description: `Aller à ${tab.label}`,
-      shortcut: tab.key,
+      id: `scope-${scope.id}`,
+      icon: scope.id === 'moi' ? 'user' : scope.id === 'eux' ? 'users' : 'hand-shake',
+      label: scope.label,
+      description: `Passer en mode ${scope.label}`,
       category: 'navigation',
-      action: () => navigation.setActiveTab(tab.id),
-      keywords: [tab.id, 'onglet', 'tab'],
+      action: () => schedulingStore.setScope(scope.id),
+      keywords: [scope.id, 'scope', 'portée'],
     });
   }
 
@@ -204,96 +210,102 @@ function createDefaultCommands(
   // Create Commands
   // ----------------------------------------
 
-  commands.push({
-    id: 'create-event',
-    icon: 'calendar-plus',
-    label: 'Nouvel événement',
-    description: 'Créer un nouvel événement',
-    shortcut: 'N',
-    category: 'create',
-    action: () => {
-      // Will be implemented with QuickCreate
-      console.log('Create event');
-    },
-    keywords: ['new', 'event', 'nouveau', 'événement', 'créer', 'create'],
-  });
+  const itemTypes: { id: TimeItemType; label: string; icon: string }[] = [
+    { id: 'event', label: 'Nouvel événement', icon: 'calendar-plus' },
+    { id: 'task', label: 'Nouvelle tâche', icon: 'check-square' },
+    { id: 'booking', label: 'Nouvelle réservation', icon: 'calendar-check' },
+    { id: 'shift', label: 'Nouveau shift', icon: 'user-cog' },
+    { id: 'milestone', label: 'Nouveau jalon', icon: 'flag' },
+    { id: 'reminder', label: 'Nouveau rappel', icon: 'bell' },
+    { id: 'blocker', label: 'Nouveau blocage', icon: 'x-circle' },
+  ];
 
-  commands.push({
-    id: 'create-task',
-    icon: 'check',
-    label: 'Nouvelle tâche',
-    description: 'Créer une nouvelle tâche',
-    category: 'create',
-    action: () => {
-      console.log('Create task');
-    },
-    keywords: ['new', 'task', 'nouvelle', 'tâche', 'todo'],
-  });
-
-  commands.push({
-    id: 'create-booking',
-    icon: 'building',
-    label: 'Nouvelle réservation',
-    description: 'Réserver une ressource',
-    category: 'create',
-    action: () => {
-      console.log('Create booking');
-    },
-    keywords: ['new', 'booking', 'réservation', 'salle', 'room'],
-  });
+  for (const itemType of itemTypes) {
+    commands.push({
+      id: `create-${itemType.id}`,
+      icon: itemType.icon,
+      label: itemType.label,
+      description: `Créer un nouveau ${itemType.label.toLowerCase().replace('nouveau ', '').replace('nouvelle ', '')}`,
+      shortcut: itemType.id === 'event' ? 'N' : undefined,
+      category: 'create',
+      action: () => {
+        // Will trigger QuickCreate with the item type
+        console.log(`Create ${itemType.id}`);
+      },
+      keywords: ['new', 'nouveau', 'créer', 'create', itemType.id],
+    });
+  }
 
   // ----------------------------------------
   // Action Commands
   // ----------------------------------------
 
   commands.push({
-    id: 'toggle-sidebar',
-    icon: 'settings',
-    label: 'Basculer la sidebar',
-    description: 'Afficher/masquer la barre latérale',
-    shortcut: '[',
-    category: 'action',
-    action: () => ui.toggleSidebar(),
-    keywords: ['sidebar', 'toggle', 'menu', 'barre'],
-  });
-
-  commands.push({
     id: 'toggle-weekends',
     icon: 'calendar',
     label: 'Afficher les weekends',
-    description: ui.filters.showWeekends
+    description: calendarStore.showWeekends
       ? 'Masquer samedi et dimanche'
       : 'Afficher samedi et dimanche',
     category: 'action',
-    action: () => ui.setFilters({ showWeekends: !ui.filters.showWeekends }),
+    action: () => calendarStore.setShowWeekends(!calendarStore.showWeekends),
     keywords: ['weekend', 'samedi', 'dimanche', 'saturday', 'sunday'],
   });
 
   commands.push({
-    id: 'toggle-all-day',
-    icon: 'clock',
-    label: 'Événements journée',
-    description: ui.filters.showAllDay
-      ? 'Masquer les événements journée entière'
-      : 'Afficher les événements journée entière',
+    id: 'toggle-compact',
+    icon: 'layout',
+    label: 'Mode compact',
+    description: calendarStore.compactMode
+      ? 'Désactiver le mode compact'
+      : 'Activer le mode compact',
     category: 'action',
-    action: () => ui.setFilters({ showAllDay: !ui.filters.showAllDay }),
-    keywords: ['all-day', 'journée', 'entière', 'full'],
+    action: () => calendarStore.setCompactMode(!calendarStore.compactMode),
+    keywords: ['compact', 'dense', 'condensé'],
+  });
+
+  commands.push({
+    id: 'refresh',
+    icon: 'refresh-cw',
+    label: 'Actualiser',
+    description: 'Recharger les données',
+    shortcut: 'Shift+R',
+    category: 'action',
+    action: () => {
+      const dateRange = calendarStore.getDateRange();
+      schedulingStore.fetchTimeItems(dateRange);
+    },
+    keywords: ['refresh', 'reload', 'actualiser', 'recharger'],
   });
 
   // ----------------------------------------
-  // Search Commands (placeholders)
+  // Filter Commands
   // ----------------------------------------
 
   commands.push({
-    id: 'search-events',
+    id: 'filter-clear',
+    icon: 'x',
+    label: 'Effacer les filtres',
+    description: 'Supprimer tous les filtres actifs',
+    category: 'action',
+    action: () => schedulingStore.clearFilters(),
+    keywords: ['clear', 'reset', 'effacer', 'filtres'],
+  });
+
+  // ----------------------------------------
+  // Search Commands
+  // ----------------------------------------
+
+  commands.push({
+    id: 'search-items',
     icon: 'search',
-    label: 'Rechercher des événements',
-    description: 'Trouver un événement par titre ou description',
+    label: 'Rechercher',
+    description: 'Trouver un élément par titre ou description',
     shortcut: '/',
     category: 'search',
     action: () => {
-      console.log('Search events');
+      // Will open search modal
+      console.log('Search items');
     },
     keywords: ['find', 'search', 'chercher', 'trouver'],
   });

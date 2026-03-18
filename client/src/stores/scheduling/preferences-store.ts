@@ -55,6 +55,10 @@ interface PreferencesState {
   lastSyncedAt: string | null;
   syncError: string | null;
 
+  // UI State
+  isCommandPaletteOpen: boolean;
+  isSidebarOpen: boolean;
+
   // Actions
   updatePreferences: (updates: Partial<PreferencesState>) => void;
   setPeakHours: (start: number, end: number) => void;
@@ -65,6 +69,12 @@ interface PreferencesState {
   syncWithServer: () => Promise<void>;
   loadFromServer: () => Promise<void>;
   reset: () => void;
+
+  // UI Actions
+  openCommandPalette: () => void;
+  closeCommandPalette: () => void;
+  toggleCommandPalette: () => void;
+  toggleSidebar: () => void;
 }
 
 // ============================================================================
@@ -114,6 +124,10 @@ const initialState = {
   isSyncing: false,
   lastSyncedAt: null as string | null,
   syncError: null as string | null,
+
+  // UI State
+  isCommandPaletteOpen: false,
+  isSidebarOpen: true,
 };
 
 // ============================================================================
@@ -239,6 +253,34 @@ export const usePreferencesStore = create<PreferencesState>()(
         reset: () => {
           set((state) => {
             Object.assign(state, initialState);
+          });
+        },
+
+        // ======================================================================
+        // UI ACTIONS
+        // ======================================================================
+
+        openCommandPalette: () => {
+          set((state) => {
+            state.isCommandPaletteOpen = true;
+          });
+        },
+
+        closeCommandPalette: () => {
+          set((state) => {
+            state.isCommandPaletteOpen = false;
+          });
+        },
+
+        toggleCommandPalette: () => {
+          set((state) => {
+            state.isCommandPaletteOpen = !state.isCommandPaletteOpen;
+          });
+        },
+
+        toggleSidebar: () => {
+          set((state) => {
+            state.isSidebarOpen = !state.isSidebarOpen;
           });
         },
       })),
