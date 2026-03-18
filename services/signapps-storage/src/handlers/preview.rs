@@ -8,14 +8,23 @@ use axum::{
     response::Response,
     Json,
 };
-use image::{imageops::FilterType, ImageFormat, ImageReader};
+use image::{imageops::FilterType, DynamicImage, ImageFormat, ImageReader, RgbaImage};
 use lopdf::Document as PdfDocument;
+use pdfium_render::prelude::*;
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 use std::io::Cursor;
 use zip::ZipArchive;
 
 use crate::AppState;
+
+/// Create a PDFium instance for rendering.
+/// Returns None if PDFium library is not available on the system.
+fn get_pdfium() -> Option<Pdfium> {
+    Pdfium::bind_to_system_library()
+        .ok()
+        .map(Pdfium::new)
+}
 
 /// Thumbnail size options.
 #[derive(Debug, Clone, Copy, Default, Deserialize)]
@@ -96,10 +105,7 @@ pub async fn get_thumbnail(
 
     match preview_type {
         PreviewType::Image => generate_image_thumbnail(&state, &bucket, &key, &query).await,
-        PreviewType::Pdf => {
-            // PDF thumbnails require pdf-to-image conversion (future sprint)
-            Err(Error::Internal("PDF thumbnail not yet implemented".to_string()))
-        },
+        PreviewType::Pdf => generate_pdf_thumbnail(&state, &bucket, &key, &query).await,
         PreviewType::Video => {
             // Video thumbnails require frame extraction (future sprint)
             Err(Error::Internal("Video thumbnail not yet implemented".to_string()))
@@ -166,6 +172,126 @@ async fn generate_image_thumbnail(
         .header(header::CACHE_CONTROL, "public, max-age=86400") // Cache 24h
         .body(Body::from(bytes))
         .map_err(|e| Error::Internal(e.to_string()))
+}
+
+/// Generate thumbnail for a PDF file (first page).
+async fn generate_pdf_thumbnail(
+    state: &AppState,
+    bucket: &str,
+    key: &str,
+    query: &ThumbnailQuery,
+) -> Result<Response> {
+    // Get the PDF data
+    let object = state.storage.get_object(bucket, key).await?;
+    let pdf_data = object.data.to_vec();
+
+    // Spawn blocking task for CPU-intensive PDF rendering
+    let (max_width, max_height) = query.size.dimensions();
+    let format = query.format.clone();
+
+    let result = tokio::task::spawn_blocking(move || {
+        render_pdf_thumbnail_sync(&pdf_data, max_width, max_height, format.as_deref())
+    })
+    .await
+    .map_err(|e| Error::Internal(format!("PDF render task failed: {}", e)))??;
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, result.content_type)
+        .header(header::CACHE_CONTROL, "public, max-age=86400") // Cache 24h
+        .body(Body::from(result.data))
+        .map_err(|e| Error::Internal(e.to_string()))
+}
+
+/// Result of PDF thumbnail rendering.
+struct PdfThumbnailResult {
+    data: Vec<u8>,
+    content_type: &'static str,
+}
+
+/// Synchronously render PDF thumbnail (called in spawn_blocking).
+fn render_pdf_thumbnail_sync(
+    pdf_data: &[u8],
+    max_width: u32,
+    max_height: u32,
+    format: Option<&str>,
+) -> Result<PdfThumbnailResult> {
+    // Get PDFium instance
+    let pdfium = get_pdfium()
+        .ok_or_else(|| Error::Internal("PDF thumbnails unavailable: PDFium library not installed. Install pdfium on your system.".to_string()))?;
+
+    // Load the PDF document
+    let document = pdfium
+        .load_pdf_from_byte_slice(pdf_data, None)
+        .map_err(|e| Error::Internal(format!("Failed to load PDF: {}", e)))?;
+
+    // Get the first page
+    let page = document
+        .pages()
+        .get(0)
+        .map_err(|e| Error::Internal(format!("Failed to get first page: {}", e)))?;
+
+    // Calculate render dimensions preserving aspect ratio
+    let page_width = page.width().value as u32;
+    let page_height = page.height().value as u32;
+    let (render_width, render_height) =
+        calculate_thumbnail_dimensions(page_width, page_height, max_width, max_height);
+
+    // Render the page to a bitmap
+    let render_config = PdfRenderConfig::new()
+        .set_target_width(render_width as i32)
+        .set_target_height(render_height as i32)
+        .rotate_if_landscape(PdfPageRenderRotation::None, false);
+
+    let bitmap = page
+        .render_with_config(&render_config)
+        .map_err(|e| Error::Internal(format!("Failed to render PDF page: {}", e)))?;
+
+    // Convert bitmap to image
+    let img = bitmap_to_dynamic_image(&bitmap)?;
+
+    // Determine output format
+    let (output_format, content_type) = match format {
+        Some("png") => (ImageFormat::Png, "image/png"),
+        Some("jpeg") | Some("jpg") => (ImageFormat::Jpeg, "image/jpeg"),
+        Some("webp") | None => (ImageFormat::WebP, "image/webp"),
+        Some(f) => {
+            return Err(Error::BadRequest(format!("Unsupported format: {}", f)));
+        }
+    };
+
+    // Encode to output format
+    let mut buffer = Cursor::new(Vec::new());
+    img.write_to(&mut buffer, output_format)
+        .map_err(|e| Error::Internal(format!("Failed to encode thumbnail: {}", e)))?;
+
+    Ok(PdfThumbnailResult {
+        data: buffer.into_inner(),
+        content_type,
+    })
+}
+
+/// Convert PDFium bitmap to DynamicImage.
+fn bitmap_to_dynamic_image(bitmap: &PdfBitmap) -> Result<DynamicImage> {
+    let width = bitmap.width() as u32;
+    let height = bitmap.height() as u32;
+
+    // Get the raw pixel buffer (renamed method in newer versions)
+    let buffer = bitmap.as_raw_bytes();
+
+    // PDFium uses BGRA format, we need to convert to RGBA
+    let mut rgba_buffer = Vec::with_capacity(buffer.len());
+    for chunk in buffer.chunks_exact(4) {
+        rgba_buffer.push(chunk[2]); // R (was B)
+        rgba_buffer.push(chunk[1]); // G
+        rgba_buffer.push(chunk[0]); // B (was R)
+        rgba_buffer.push(chunk[3]); // A
+    }
+
+    let img = RgbaImage::from_raw(width, height, rgba_buffer)
+        .ok_or_else(|| Error::Internal("Failed to create image from PDF bitmap".to_string()))?;
+
+    Ok(DynamicImage::ImageRgba8(img))
 }
 
 /// Generate preview for an image file (resized for display).
