@@ -106,10 +106,7 @@ pub async fn get_thumbnail(
     match preview_type {
         PreviewType::Image => generate_image_thumbnail(&state, &bucket, &key, &query).await,
         PreviewType::Pdf => generate_pdf_thumbnail(&state, &bucket, &key, &query).await,
-        PreviewType::Video => {
-            // Video thumbnails require frame extraction (future sprint)
-            Err(Error::Internal("Video thumbnail not yet implemented".to_string()))
-        },
+        PreviewType::Video => generate_video_thumbnail(&state, &bucket, &key, &query).await,
         _ => Err(Error::BadRequest(
             "Thumbnails not supported for this file type".to_string(),
         )),
@@ -292,6 +289,150 @@ fn bitmap_to_dynamic_image(bitmap: &PdfBitmap) -> Result<DynamicImage> {
         .ok_or_else(|| Error::Internal("Failed to create image from PDF bitmap".to_string()))?;
 
     Ok(DynamicImage::ImageRgba8(img))
+}
+
+/// Generate thumbnail for a video file (extract frame using ffmpeg CLI).
+async fn generate_video_thumbnail(
+    state: &AppState,
+    bucket: &str,
+    key: &str,
+    query: &ThumbnailQuery,
+) -> Result<Response> {
+    // Get the video data
+    let object = state.storage.get_object(bucket, key).await?;
+    let video_data = object.data.to_vec();
+
+    // Spawn blocking task for CPU-intensive video processing
+    let (max_width, max_height) = query.size.dimensions();
+    let format = query.format.clone();
+
+    let result = tokio::task::spawn_blocking(move || {
+        extract_video_frame_cli(&video_data, max_width, max_height, format.as_deref())
+    })
+    .await
+    .map_err(|e| Error::Internal(format!("Video frame extraction task failed: {}", e)))??;
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, result.content_type)
+        .header(header::CACHE_CONTROL, "public, max-age=86400") // Cache 24h
+        .body(Body::from(result.data))
+        .map_err(|e| Error::Internal(e.to_string()))
+}
+
+/// Result of video frame extraction.
+struct VideoThumbnailResult {
+    data: Vec<u8>,
+    content_type: &'static str,
+}
+
+/// Extract video frame using ffmpeg CLI.
+fn extract_video_frame_cli(
+    video_data: &[u8],
+    max_width: u32,
+    max_height: u32,
+    format: Option<&str>,
+) -> Result<VideoThumbnailResult> {
+    use std::io::Write;
+    use std::process::Command;
+
+    // Check if ffmpeg is available
+    let ffmpeg_check = Command::new("ffmpeg").arg("-version").output();
+    if ffmpeg_check.is_err() {
+        return Err(Error::Internal(
+            "Video thumbnails unavailable: ffmpeg not installed. Install ffmpeg on your system.".to_string(),
+        ));
+    }
+
+    // Create temp files for input and output
+    let temp_dir = std::env::temp_dir();
+    let input_path = temp_dir.join(format!("video_in_{}.tmp", uuid::Uuid::new_v4()));
+    let output_ext = match format {
+        Some("png") => "png",
+        Some("jpeg") | Some("jpg") => "jpg",
+        _ => "webp",
+    };
+    let output_path = temp_dir.join(format!("video_out_{}.{}", uuid::Uuid::new_v4(), output_ext));
+
+    // Write video data to temp file
+    {
+        let mut file = std::fs::File::create(&input_path)
+            .map_err(|e| Error::Internal(format!("Failed to create temp file: {}", e)))?;
+        file.write_all(video_data)
+            .map_err(|e| Error::Internal(format!("Failed to write temp file: {}", e)))?;
+    }
+
+    // Clean up temp files on exit
+    let _cleanup_input = TempFileCleanup { path: input_path.clone() };
+    let _cleanup_output = TempFileCleanup { path: output_path.clone() };
+
+    // Build scale filter preserving aspect ratio
+    let scale_filter = format!(
+        "scale='min({},iw)':min'({},ih)':force_original_aspect_ratio=decrease",
+        max_width, max_height
+    );
+
+    // Run ffmpeg to extract frame at 2 seconds (or first frame if shorter)
+    let output = Command::new("ffmpeg")
+        .args([
+            "-y",                           // Overwrite output
+            "-ss", "2",                     // Seek to 2 seconds
+            "-i", input_path.to_str().unwrap_or(""),
+            "-vframes", "1",                // Extract 1 frame
+            "-vf", &scale_filter,           // Scale down
+            "-q:v", "2",                    // Quality
+            output_path.to_str().unwrap_or(""),
+        ])
+        .output();
+
+    // If seeking to 2s failed (video too short), try from start
+    let output = match output {
+        Ok(o) if !o.status.success() => {
+            Command::new("ffmpeg")
+                .args([
+                    "-y",
+                    "-i", input_path.to_str().unwrap_or(""),
+                    "-vframes", "1",
+                    "-vf", &scale_filter,
+                    "-q:v", "2",
+                    output_path.to_str().unwrap_or(""),
+                ])
+                .output()
+        }
+        other => other,
+    };
+
+    output.map_err(|e| Error::Internal(format!("Failed to run ffmpeg: {}", e)))?;
+
+    // Read output file
+    let thumbnail_data = std::fs::read(&output_path)
+        .map_err(|e| Error::Internal(format!("Failed to read thumbnail: {}", e)))?;
+
+    if thumbnail_data.is_empty() {
+        return Err(Error::Internal("ffmpeg produced empty output".to_string()));
+    }
+
+    let content_type = match format {
+        Some("png") => "image/png",
+        Some("jpeg") | Some("jpg") => "image/jpeg",
+        _ => "image/webp",
+    };
+
+    Ok(VideoThumbnailResult {
+        data: thumbnail_data,
+        content_type,
+    })
+}
+
+/// Helper struct to clean up temp files.
+struct TempFileCleanup {
+    path: std::path::PathBuf,
+}
+
+impl Drop for TempFileCleanup {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.path);
+    }
 }
 
 /// Generate preview for an image file (resized for display).
