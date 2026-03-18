@@ -5,3 +5,5 @@
  */
 
 export { AvailabilityCalendar } from './AvailabilityCalendar';
+export { SlotSelector, SlotSelectorCompact } from './SlotSelector';
+export { MeetingScheduler } from './MeetingScheduler';
