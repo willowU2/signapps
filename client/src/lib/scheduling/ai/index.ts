@@ -13,3 +13,9 @@ export {
   type PatternAnalysis,
   type SuggestionOptions,
 } from './suggestions';
+
+export {
+  autoScheduleTasks,
+  previewAutoSchedule,
+  findBestSlotForTask,
+} from './auto-scheduler';
