@@ -2,13 +2,31 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Menu, ChevronLeft, ChevronRight, Search, HelpCircle, Settings, Grid, ChevronDown } from "lucide-react";
 import { ViewMode } from "@/stores/calendar-store";
+import { CompactPresenceIndicator } from "@/components/calendar/presence-indicator";
+
+interface PresenceUser {
+  user_id: string;
+  username: string;
+  status: 'join' | 'leave' | 'viewing' | 'editing' | 'idle';
+  editing_item_id?: string;
+  timestamp: number;
+}
 
 interface CalendarHeaderProps {
   viewMode: ViewMode;
   onViewModeChange?: (mode: ViewMode) => void;
+  presence?: PresenceUser[];
+  currentUserId?: string;
+  isConnected?: boolean;
 }
 
-export function CalendarHeader({ viewMode, onViewModeChange }: CalendarHeaderProps) {
+export function CalendarHeader({
+  viewMode,
+  onViewModeChange,
+  presence = [],
+  currentUserId,
+  isConnected = false,
+}: CalendarHeaderProps) {
   return (
       <header className="h-16 shrink-0 flex items-center justify-between px-2 pr-6 border-b border-gray-100 dark:border-[#2b2d31]">
         <div className="flex items-center gap-2">
@@ -45,6 +63,22 @@ export function CalendarHeader({ viewMode, onViewModeChange }: CalendarHeaderPro
 
         {/* Right header actions */}
         <div className="flex items-center gap-1 shrink-0 z-20">
+            {/* Presence indicator */}
+            {presence.length > 0 && (
+              <div className="flex items-center gap-2 mr-4 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-100 dark:border-blue-900/50">
+                {isConnected && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-xs font-medium text-green-700 dark:text-green-400">Live</span>
+                  </div>
+                )}
+                <CompactPresenceIndicator
+                  users={presence}
+                  currentUserId={currentUserId}
+                />
+              </div>
+            )}
+
             <div className="flex items-center gap-2 mr-2">
                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full text-[#5f6368] hover:bg-gray-100">
                   <Search className="h-5 w-5" />

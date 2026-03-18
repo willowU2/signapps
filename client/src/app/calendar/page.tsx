@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useCalendarStore, useCalendarSelection } from "@/stores/calendar-store";
 import { useEntityStore } from "@/stores/entity-hub-store";
 import { useShallow } from "zustand/react/shallow";
@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Plus, Download, Upload, MoreVertical, Share2, Zap, Users } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useCalendarWebSocket } from "@/hooks/use-calendar-websocket";
+import { useAuthStore } from "@/lib/store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +47,9 @@ export default function CalendarPage() {
   const viewMode = useCalendarStore((state) => state.viewMode);
   const setViewMode = useCalendarStore((state) => state.setViewMode);
   const { selectedEventId, selectEvent } = useCalendarSelection();
+
+  // Auth for presence tracking
+  const user = useAuthStore((state) => state.user);
 
   // Unified Entity Hub sync
   const { fetchTasks, fetchProjects } = useEntityStore();
@@ -76,6 +81,38 @@ export default function CalendarPage() {
   // Quick Add State
   const [quickAddText, setQuickAddText] = useState("");
   const [quickAddDefaultStart, setQuickAddDefaultStart] = useState<Date | undefined>(undefined);
+
+  // Real-time presence tracking via WebSocket
+  const {
+    isConnected: wsConnected,
+    presence,
+    tracking,
+  } = useCalendarWebSocket({
+    calendar_id: selectedCalendarId,
+    username: user?.username || "Anonymous",
+    enabled: !!selectedCalendarId,
+  });
+
+  // Track editing state when opening event form
+  const handleEventFormOpen = useCallback(
+    (open: boolean) => {
+      setEventFormOpen(open);
+      if (!open) {
+        selectEvent(null);
+        setQuickAddDefaultStart(undefined);
+        // Clear editing state when closing
+        tracking.editing(null);
+      }
+    },
+    [selectEvent, tracking]
+  );
+
+  // Track when editing a specific event
+  useEffect(() => {
+    if (selectedEventId && eventFormOpen) {
+      tracking.editing(selectedEventId);
+    }
+  }, [selectedEventId, eventFormOpen, tracking]);
 
   // Load calendars on mount
   useEffect(() => {
@@ -122,7 +159,13 @@ export default function CalendarPage() {
         {/* Full viewport Classic Calendar Layout */}
         
         {/* 1. Top Header */}
-      <CalendarHeader viewMode={viewMode} onViewModeChange={setViewMode} />
+      <CalendarHeader
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        presence={presence}
+        currentUserId={user?.id}
+        isConnected={wsConnected}
+      />
 
       {/* Main Body */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -131,7 +174,11 @@ export default function CalendarPage() {
           calendars={calendars}
           selectedCalendarId={selectedCalendarId}
           onSelectCalendar={setSelectedCalendarId}
-          onCreateEvent={() => setEventFormOpen(true)}
+          onCreateEvent={() => {
+            setEventFormOpen(true);
+            // Track that user is creating a new event (no specific ID)
+            tracking.editing("new");
+          }}
         />
 
         {/* 3. Main Calendar View Area */}
@@ -161,13 +208,7 @@ export default function CalendarPage() {
       {/* Modals & Dialogs */}
       <EventForm
         open={eventFormOpen}
-        onOpenChange={(open) => {
-          setEventFormOpen(open);
-          if (!open) {
-            selectEvent(null);
-            setQuickAddDefaultStart(undefined);
-          }
-        }}
+        onOpenChange={handleEventFormOpen}
         initialEvent={selectedEvent}
         calendarId={selectedCalendarId || calendars[0]?.id || ""}
         defaultStartDate={quickAddDefaultStart}
