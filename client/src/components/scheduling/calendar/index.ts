@@ -8,3 +8,4 @@ export { TimeGrid, useSlotClickHandler } from './TimeGrid';
 export { TimeGutter, TimeGutterCompact } from './TimeGutter';
 export { DayColumn, DayHeader } from './DayColumn';
 export { EventBlock, AllDayEventBlock, EventPreview } from './EventBlock';
+export { EventSheet } from './EventSheet';

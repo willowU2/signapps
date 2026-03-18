@@ -8,6 +8,7 @@
  */
 
 import * as React from 'react';
+import { format } from 'date-fns';
 import { SchedulingHub, SchedulingContent } from '@/components/scheduling/core/SchedulingHub';
 import { DayView, ThreeDayView } from '@/components/scheduling/views/DayView';
 import { WeekView } from '@/components/scheduling/views/WeekView';
@@ -18,29 +19,80 @@ import { ResourcesView } from '@/components/scheduling/resources/ResourcesView';
 import { TeamView } from '@/components/scheduling/team/TeamView';
 import { CommandPalette } from '@/components/scheduling/command-palette/CommandPalette';
 import { QuickCreate } from '@/components/scheduling/command-palette/QuickCreate';
-import { BottomTabs, BottomTabsSpacer } from '@/components/scheduling/mobile/BottomTabs';
+import { EventSheet } from '@/components/scheduling/calendar/EventSheet';
+import { BottomTabs } from '@/components/scheduling/mobile/BottomTabs';
 import { FAB } from '@/components/scheduling/quick-actions/FAB';
 import { useSchedulingNavigation } from '@/stores/scheduling-store';
-import type { ScheduleBlock } from '@/lib/scheduling/types/scheduling';
+import { useCreateEvent, useUpdateEvent, useDeleteEvent } from '@/lib/scheduling/api/calendar';
+import type { ScheduleBlock, CreateEventInput } from '@/lib/scheduling/types/scheduling';
 
 export default function SchedulingPage() {
-  const { activeTab, activeView } = useSchedulingNavigation();
+  const { activeTab, activeView, currentDate } = useSchedulingNavigation();
   const [isQuickCreateOpen, setIsQuickCreateOpen] = React.useState(false);
+  const [isEventSheetOpen, setIsEventSheetOpen] = React.useState(false);
   const [selectedEvent, setSelectedEvent] = React.useState<ScheduleBlock | null>(null);
+  const [defaultEventDate, setDefaultEventDate] = React.useState<Date | undefined>();
+  const [defaultEventTime, setDefaultEventTime] = React.useState<string | undefined>();
+
+  // Mutations
+  const createEvent = useCreateEvent();
+  const updateEvent = useUpdateEvent();
+  const deleteEvent = useDeleteEvent();
 
   // Event handlers
   const handleEventClick = (event: ScheduleBlock) => {
     setSelectedEvent(event);
-    // TODO: Open event detail sheet/modal
+    setIsEventSheetOpen(true);
   };
 
-  const handleCreateEvent = () => {
-    setIsQuickCreateOpen(true);
+  const handleCreateEvent = (start?: Date, end?: Date) => {
+    setSelectedEvent(null);
+    if (start) {
+      setDefaultEventDate(start);
+      setDefaultEventTime(format(start, 'HH:mm'));
+    } else {
+      setDefaultEventDate(currentDate);
+      setDefaultEventTime(undefined);
+    }
+    setIsEventSheetOpen(true);
   };
 
   const handleDayClick = (date: Date) => {
-    // TODO: Navigate to day view or open quick create with date
-    console.log('Day clicked:', date);
+    setSelectedEvent(null);
+    setDefaultEventDate(date);
+    setDefaultEventTime('09:00');
+    setIsEventSheetOpen(true);
+  };
+
+  const handleSaveEvent = (input: CreateEventInput) => {
+    if (selectedEvent) {
+      // Update existing event
+      updateEvent.mutate(
+        { eventId: selectedEvent.id, input },
+        { onSuccess: () => setIsEventSheetOpen(false) }
+      );
+    } else {
+      // Create new event
+      createEvent.mutate(
+        { calendarId: input.calendarId || 'default', input },
+        { onSuccess: () => setIsEventSheetOpen(false) }
+      );
+    }
+  };
+
+  const handleDeleteEvent = () => {
+    if (selectedEvent) {
+      deleteEvent.mutate(selectedEvent.id, {
+        onSuccess: () => setIsEventSheetOpen(false),
+      });
+    }
+  };
+
+  const handleCloseEventSheet = () => {
+    setIsEventSheetOpen(false);
+    setSelectedEvent(null);
+    setDefaultEventDate(undefined);
+    setDefaultEventTime(undefined);
   };
 
   // Render view based on active tab
@@ -100,6 +152,17 @@ export default function SchedulingPage() {
         onClose={() => setIsQuickCreateOpen(false)}
       />
 
+      {/* Event Sheet (Create/Edit) */}
+      <EventSheet
+        isOpen={isEventSheetOpen}
+        onClose={handleCloseEventSheet}
+        event={selectedEvent}
+        defaultDate={defaultEventDate}
+        defaultTime={defaultEventTime}
+        onSave={handleSaveEvent}
+        onDelete={selectedEvent ? handleDeleteEvent : undefined}
+      />
+
       {/* Mobile Bottom Tabs */}
       <BottomTabs />
 
@@ -112,50 +175,3 @@ export default function SchedulingPage() {
   );
 }
 
-// ============================================================================
-// Placeholder Components (Phase 2 features)
-// ============================================================================
-
-function ViewPlaceholder({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 p-8">
-      <div className="rounded-xl bg-muted/50 p-8 text-center">
-        <h3 className="text-2xl font-bold">{title}</h3>
-        <p className="mt-2 text-muted-foreground">{subtitle}</p>
-      </div>
-    </div>
-  );
-}
-
-function TasksPlaceholder() {
-  return (
-    <ViewPlaceholder
-      title="Tâches"
-      subtitle="Gestion des tâches avec Kanban (Phase 2)"
-    />
-  );
-}
-
-function ResourcesPlaceholder() {
-  return (
-    <ViewPlaceholder
-      title="Ressources"
-      subtitle="Réservation de salles et équipements (Phase 2)"
-    />
-  );
-}
-
-function TeamPlaceholder() {
-  return (
-    <ViewPlaceholder
-      title="Équipe"
-      subtitle="Disponibilités de l'équipe (Phase 2)"
-    />
-  );
-}
