@@ -28,8 +28,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sync auth state to cookie for middleware
   const syncAuthCookie = useCallback((authenticated: boolean) => {
     if (typeof document !== 'undefined') {
+      const isRemembered = localStorage.getItem('remember_me') === 'true';
+      const cookieProps = isRemembered ? 'max-age=31536000;' : '';
       const value = JSON.stringify({ state: { isAuthenticated: authenticated } });
-      document.cookie = `auth-storage=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+      document.cookie = `auth-storage=${encodeURIComponent(value)}; path=/; ${cookieProps} SameSite=Lax`;
     }
   }, []);
 
@@ -38,6 +40,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initAuth = async () => {
       const accessToken = localStorage.getItem('access_token');
       const refreshToken = localStorage.getItem('refresh_token');
+      const isRemembered = localStorage.getItem('remember_me') === 'true';
+      const authCookie = document.cookie.split(';').map(c => c.trim()).find(row => row.startsWith('auth-storage='));
+
+      // Clean up local storage if the user did NOT want to be remembered AND the session cookie is gone (browser closed).
+      if (accessToken && !isRemembered && !authCookie) {
+         localStorage.removeItem('access_token');
+         localStorage.removeItem('refresh_token');
+         localStorage.removeItem('remember_me');
+         setLoading(false);
+         syncAuthCookie(false);
+         return;
+      }
 
       if (!accessToken) {
         setLoading(false);
@@ -50,9 +64,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const response = await authApi.me();
         setUser(response.data);
         syncAuthCookie(true);
-        // Token expired or invalid, clear auth state
-        logout();
-        syncAuthCookie(false);
+      } catch (err: any) {
+        console.error("AUTH ERROR:", err);
+        // Only tear down the session if explicitly rejected. Transient network errors should not cause a forced logout.
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          logout();
+          syncAuthCookie(false);
+        }
       } finally {
         setLoading(false);
       }

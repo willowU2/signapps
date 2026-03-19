@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import { entityHubApi } from '@/lib/api/entityHub';
 
 // Unified Entity Hub Store for Phase 5 Calendars & Projects
 interface EntityState {
@@ -42,25 +43,24 @@ export const useEntityStore = create<EntityState>((set, get) => ({
   setSelectedWorkspace: (id) => set({ selectedWorkspaceId: id }),
 
   fetchWorkspaces: async () => {
-    set({ isLoading: true });
+    set({ isLoading: true, error: null });
     try {
-      // In real implementation, these call the signapps-scheduler endpoints via proxy
-      const response = await axios.get('/api/v1/workspaces', { baseURL: 'http://localhost:3007' });
-      set((state) => ({ 
-        workspaces: response.data.data, 
+      const response = await entityHubApi.listWorkspaces();
+      set((state) => ({
+        workspaces: response.data.data,
         selectedWorkspaceId: state.selectedWorkspaceId || (response.data.data.length > 0 ? response.data.data[0].id : null),
-        isLoading: false 
+        isLoading: false
       }));
     } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+      set({ error: error.message || 'Failed to fetch workspaces', isLoading: false });
     }
   },
 
   fetchCalendars: async () => {
     set({ isLoading: true });
     try {
-      const response = await axios.get('/api/v1/calendars', { baseURL: 'http://localhost:3007' });
-      set({ calendars: response.data.data, isLoading: false });
+      const response = await entityHubApi.listCalendars();
+      set({ calendars: response.data.data || response.data, isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
     }
@@ -69,8 +69,8 @@ export const useEntityStore = create<EntityState>((set, get) => ({
   fetchProjects: async () => {
     set({ isLoading: true });
     try {
-      const response = await axios.get('/api/v1/projects', { baseURL: 'http://localhost:3007' });
-      set({ projects: response.data.data, isLoading: false });
+      const response = await entityHubApi.listProjects();
+      set({ projects: response.data.data || response.data, isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
     }
@@ -79,8 +79,8 @@ export const useEntityStore = create<EntityState>((set, get) => ({
   fetchTasks: async () => {
     set({ isLoading: true });
     try {
-      const response = await axios.get('/api/v1/tasks', { baseURL: 'http://localhost:3007' });
-      set({ tasks: response.data.data, isLoading: false });
+      const response = await entityHubApi.listTasks();
+      set({ tasks: response.data.data || response.data, isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
     }
@@ -89,8 +89,8 @@ export const useEntityStore = create<EntityState>((set, get) => ({
   fetchResources: async () => {
     set({ isLoading: true });
     try {
-      const response = await axios.get('/api/v1/resources', { baseURL: 'http://localhost:3007' });
-      set({ resources: response.data.data, isLoading: false });
+      const response = await entityHubApi.listResources();
+      set({ resources: response.data.data || response.data, isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
     }
@@ -99,8 +99,8 @@ export const useEntityStore = create<EntityState>((set, get) => ({
   fetchEvents: async () => {
     set({ isLoading: true });
     try {
-      const response = await axios.get('/api/v1/events', { baseURL: 'http://localhost:3007' });
-      set({ events: response.data.data, isLoading: false });
+      const response = await entityHubApi.listEvents();
+      set({ events: response.data.data || response.data, isLoading: false });
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
     }
@@ -109,7 +109,7 @@ export const useEntityStore = create<EntityState>((set, get) => ({
   createWorkspace: async (data) => {
     set({ isLoading: true });
     try {
-      await axios.post('/api/v1/workspaces', data, { baseURL: 'http://localhost:3007' });
+      await entityHubApi.createWorkspace(data);
       await get().fetchWorkspaces();
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
@@ -120,7 +120,7 @@ export const useEntityStore = create<EntityState>((set, get) => ({
   createProject: async (data) => {
     set({ isLoading: true });
     try {
-      await axios.post('/api/v1/projects', data, { baseURL: 'http://localhost:3007' });
+      await entityHubApi.createProject(data);
       await get().fetchProjects();
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
@@ -131,7 +131,7 @@ export const useEntityStore = create<EntityState>((set, get) => ({
   createTask: async (data) => {
     set({ isLoading: true });
     try {
-      await axios.post('/api/v1/tasks', data, { baseURL: 'http://localhost:3007' });
+      await entityHubApi.createTask(data);
       await get().fetchTasks();
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
