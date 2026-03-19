@@ -118,8 +118,8 @@ function EventIndicators({
   event: ScheduleBlock;
   className?: string;
 }) {
-  const hasLocation = event.metadata?.location;
-  const hasVideo = event.metadata?.videoConference;
+  const hasLocation = Boolean(event.metadata?.location);
+  const hasVideo = Boolean(event.metadata?.videoConference);
   const hasAttendees = event.attendees && event.attendees.length > 0;
   const isRecurring = event.recurrence;
 
@@ -179,10 +179,10 @@ function FullDisplay({ event }: { event: ScheduleBlock }) {
         <EventIndicators event={event} className="shrink-0" />
       </div>
       <EventTime start={event.start} end={event.end} className="text-[10px]" />
-      {event.metadata?.location && (
+      {Boolean(event.metadata?.location) && (
         <div className="flex items-center gap-1 text-[10px] text-muted-foreground truncate">
           <MapPin className="h-2.5 w-2.5 shrink-0" />
-          <span className="truncate">{event.metadata.location as string}</span>
+          <span className="truncate">{String(event.metadata?.location)}</span>
         </div>
       )}
       {event.attendees && event.attendees.length > 0 && (
@@ -384,10 +384,10 @@ export function EventPreview({
           </span>
         </div>
 
-        {event.metadata?.location && (
+        {Boolean(event.metadata?.location) && (
           <div className="flex items-center gap-2">
             <MapPin className="h-3.5 w-3.5" />
-            <span>{event.metadata.location as string}</span>
+            <span>{String(event.metadata?.location)}</span>
           </div>
         )}
 

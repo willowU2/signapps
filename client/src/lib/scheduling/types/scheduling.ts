@@ -2,20 +2,21 @@
  * Scheduling Module Types
  *
  * Types for the Unified Scheduling UI including Calendar, Tasks, Resources, and Team features.
+ * Note: Core types like ViewType, DateRange, Priority are imported from time-item.ts
  */
+
+// Import shared types from time-item
+import type { Priority, DateRange, ViewType, RecurrenceRule } from './time-item';
+
+// Re-export for backwards compatibility
+export type { Priority, DateRange, ViewType, RecurrenceRule } from './time-item';
 
 // ============================================================================
 // Core Types
 // ============================================================================
 
-export type ViewType = 'agenda' | 'day' | '3-day' | 'week' | 'month' | 'timeline' | 'kanban' | 'heatmap' | 'focus' | 'roster';
 export type TabType = 'my-day' | 'tasks' | 'resources' | 'team';
 export type BlockType = 'event' | 'task' | 'booking';
-
-export interface DateRange {
-  start: Date;
-  end: Date;
-}
 
 // ============================================================================
 // Schedule Block (Unified Event/Task/Booking)
@@ -29,7 +30,7 @@ export interface ScheduleBlock {
   start: Date;
   end?: Date;
   allDay: boolean;
-  recurrence?: RecurrenceRule;
+  recurrence?: ScheduleRecurrenceRule;
   attendees?: Attendee[];
   resourceId?: string;
   calendarId?: string;
@@ -46,7 +47,8 @@ export interface ScheduleBlock {
 }
 
 export type BlockStatus = 'confirmed' | 'tentative' | 'cancelled' | 'completed';
-export type Priority = 'low' | 'medium' | 'high' | 'urgent';
+
+// Priority is defined in time-item.ts - use that version
 
 export type RSVPStatus = 'pending' | 'accepted' | 'declined' | 'tentative';
 
@@ -67,8 +69,9 @@ export interface RSVPInput {
   declineReason?: string;
 }
 
-export interface RecurrenceRule {
-  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+// RecurrenceRule for ScheduleBlock (simpler than TimeItem version)
+export interface ScheduleRecurrenceRule {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
   interval: number;
   endDate?: Date;
   count?: number;
@@ -97,7 +100,7 @@ export interface EventLayout {
 
 export type TaskStatus = 'backlog' | 'today' | 'in-progress' | 'done';
 
-export interface Task extends Omit<ScheduleBlock, 'type'> {
+export interface Task extends Omit<ScheduleBlock, 'type' | 'status'> {
   type: 'task';
   status: TaskStatus;
   dueDate?: Date;
@@ -247,7 +250,7 @@ export interface ParsedInput {
     duration?: number;
     participants?: string[];
     location?: string;
-    recurrence?: RecurrenceRule;
+    recurrence?: ScheduleRecurrenceRule;
     priority?: Priority;
   };
   suggestions?: ParsedInput[];
@@ -266,7 +269,7 @@ export interface CreateEventInput {
   allDay?: boolean;
   calendarId: string;
   attendees?: string[];
-  recurrence?: RecurrenceRule;
+  recurrence?: ScheduleRecurrenceRule;
   color?: string;
   location?: EventLocation;
   reminderMinutes?: number;
@@ -280,7 +283,7 @@ export interface UpdateEventInput {
   end?: Date;
   allDay?: boolean;
   attendees?: string[];
-  recurrence?: RecurrenceRule;
+  recurrence?: ScheduleRecurrenceRule;
   color?: string;
   status?: BlockStatus;
 }
@@ -314,7 +317,7 @@ export interface EventTemplateDefaults {
   color?: string;
   attendees?: string[];
   location?: string;
-  recurrence?: RecurrenceRule;
+  recurrence?: ScheduleRecurrenceRule;
   reminderMinutes?: number;
 }
 
@@ -518,5 +521,6 @@ export interface UndoableAction {
   data: {
     before?: unknown;
     after?: unknown;
+    actions?: UndoableAction[];
   };
 }

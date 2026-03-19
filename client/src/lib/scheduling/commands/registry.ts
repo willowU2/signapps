@@ -7,9 +7,9 @@
  */
 
 import * as React from 'react';
-import { useCalendarStore } from '@/stores/scheduling/calendar-store';
-import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
-import { usePreferencesStore } from '@/stores/scheduling/preferences-store';
+import { useCalendarStore, type CalendarState } from '@/stores/scheduling/calendar-store';
+import { useSchedulingStore, type SchedulingState } from '@/stores/scheduling/scheduling-store';
+import { usePreferencesStore, type PreferencesState } from '@/stores/scheduling/preferences-store';
 import type { Command } from '../types/scheduling';
 import type { ViewType, ScopeType, TimeItemType } from '../types/time-item';
 
@@ -118,9 +118,9 @@ export function useFilteredCommands(query: string): Command[] {
 // ============================================================================
 
 function createDefaultCommands(
-  calendarStore: ReturnType<typeof useCalendarStore>,
-  schedulingStore: ReturnType<typeof useSchedulingStore>,
-  preferencesStore: ReturnType<typeof usePreferencesStore>
+  calendarStore: CalendarState,
+  schedulingStore: SchedulingState,
+  preferencesStore: PreferencesState
 ): Command[] {
   const commands: Command[] = [];
 
@@ -248,7 +248,7 @@ function createDefaultCommands(
       ? 'Masquer samedi et dimanche'
       : 'Afficher samedi et dimanche',
     category: 'action',
-    action: () => calendarStore.setShowWeekends(!calendarStore.showWeekends),
+    action: () => calendarStore.toggleWeekends(),
     keywords: ['weekend', 'samedi', 'dimanche', 'saturday', 'sunday'],
   });
 
@@ -260,7 +260,7 @@ function createDefaultCommands(
       ? 'Désactiver le mode compact'
       : 'Activer le mode compact',
     category: 'action',
-    action: () => calendarStore.setCompactMode(!calendarStore.compactMode),
+    action: () => calendarStore.toggleCompactMode(),
     keywords: ['compact', 'dense', 'condensé'],
   });
 

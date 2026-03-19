@@ -247,9 +247,9 @@ export function DraggableEventBlock({
               <EventTitle title={event.title} className="text-xs" />
             </div>
             <EventTime start={event.start} end={event.end} className="text-[10px]" />
-            {event.metadata?.location && (
+            {Boolean(event.metadata?.location) && (
               <div className="text-[10px] text-muted-foreground truncate">
-                {event.metadata.location as string}
+                {String(event.metadata?.location)}
               </div>
             )}
           </div>

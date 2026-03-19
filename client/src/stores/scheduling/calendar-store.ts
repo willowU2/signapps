@@ -26,7 +26,7 @@ import type { ViewType, DateRange } from '@/lib/scheduling/types';
 // STATE INTERFACE
 // ============================================================================
 
-interface CalendarState {
+export interface CalendarState {
   // Navigation
   currentDate: Date;
   view: ViewType;

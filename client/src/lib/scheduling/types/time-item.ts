@@ -18,6 +18,9 @@ export type TimeItemType =
 
 export type Scope = 'moi' | 'eux' | 'nous';
 
+// Alias for backwards compatibility
+export type ScopeType = Scope;
+
 export type Visibility =
   | 'private'
   | 'group'
@@ -38,6 +41,7 @@ export type TimeOfDay = 'morning' | 'midday' | 'afternoon' | 'evening';
 
 export type ViewType =
   | 'day'
+  | '3-day'
   | 'week'
   | 'month'
   | 'agenda'
@@ -431,6 +435,7 @@ export const SCOPE_LABELS: Record<Scope, string> = {
 
 export const VIEW_TYPE_LABELS: Record<ViewType, string> = {
   day: 'Jour',
+  '3-day': '3 Jours',
   week: 'Semaine',
   month: 'Mois',
   agenda: 'Agenda',

@@ -146,7 +146,7 @@ export function useConflictDetectionDebounced(
   const { debounceMs = 300, ...restOptions } = options;
   const detection = useConflictDetection(restOptions);
 
-  const timeoutRef = React.useRef<NodeJS.Timeout>();
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const debouncedCheck = React.useCallback(
     (start: Date, end: Date) => {

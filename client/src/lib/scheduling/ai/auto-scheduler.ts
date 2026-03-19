@@ -125,7 +125,7 @@ export function autoScheduleTasks(
       });
 
       // Remove used slot from available slots
-      availableSlots = removeUsedSlot(availableSlots, result.slot, preferences.bufferBetweenTasks);
+      availableSlots = removeUsedSlot(availableSlots, result.slot, preferences.bufferBetweenTasks ?? 0);
     } else {
       unscheduled.push({
         task,

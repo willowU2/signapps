@@ -31,7 +31,7 @@ interface Filters {
   search: string;
 }
 
-interface SchedulingState {
+export interface SchedulingState {
   // Data
   timeItems: TimeItem[];
   selectedItem: TimeItem | null;

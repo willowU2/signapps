@@ -9,7 +9,7 @@ import { format, formatISO } from 'date-fns';
 import type {
   ScheduleBlock,
   Attendee,
-  RecurrenceRule,
+  ScheduleRecurrenceRule,
   EventLocation,
 } from '../types/scheduling';
 
@@ -373,7 +373,7 @@ function formatTrigger(minutes: number): string {
   return `${sign}PT${absMinutes}M`;
 }
 
-function formatRRule(recurrence: RecurrenceRule): string {
+function formatRRule(recurrence: ScheduleRecurrenceRule): string {
   const parts: string[] = [];
 
   // Frequency

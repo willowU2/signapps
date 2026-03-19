@@ -29,12 +29,14 @@ import { FAB } from '@/components/scheduling/quick-actions/FAB';
 import { useSchedulingNavigation } from '@/stores/scheduling-store';
 import { useCreateEvent, useUpdateEvent, useDeleteEvent } from '@/lib/scheduling/api/calendar';
 import type { ScheduleBlock, CreateEventInput } from '@/lib/scheduling/types/scheduling';
+import type { TimeItem } from '@/lib/scheduling/types';
 
 export default function SchedulingPage() {
   const { activeTab, activeView, currentDate } = useSchedulingNavigation();
   const [isQuickCreateOpen, setIsQuickCreateOpen] = React.useState(false);
   const [isEventSheetOpen, setIsEventSheetOpen] = React.useState(false);
   const [selectedEvent, setSelectedEvent] = React.useState<ScheduleBlock | null>(null);
+  const [selectedTimeItem, setSelectedTimeItem] = React.useState<TimeItem | null>(null);
   const [defaultEventDate, setDefaultEventDate] = React.useState<Date | undefined>();
   const [defaultEventTime, setDefaultEventTime] = React.useState<string | undefined>();
 
@@ -43,9 +45,27 @@ export default function SchedulingPage() {
   const updateEvent = useUpdateEvent();
   const deleteEvent = useDeleteEvent();
 
+  // Convert TimeItem to ScheduleBlock for the sheet
+  const timeItemToScheduleBlock = (item: TimeItem): ScheduleBlock => ({
+    id: item.id,
+    type: item.type === 'task' ? 'task' : item.type === 'booking' ? 'booking' : 'event',
+    title: item.title,
+    description: item.description,
+    start: item.startTime ? new Date(item.startTime) : new Date(),
+    end: item.endTime ? new Date(item.endTime) : undefined,
+    allDay: item.allDay,
+    color: item.color,
+    status: item.status === 'done' ? 'completed' : item.status === 'cancelled' ? 'cancelled' : 'confirmed',
+    priority: item.priority,
+    tags: item.tags,
+    createdAt: new Date(item.createdAt),
+    updatedAt: new Date(item.updatedAt),
+  });
+
   // Event handlers
-  const handleEventClick = (event: ScheduleBlock) => {
-    setSelectedEvent(event);
+  const handleItemClick = (item: TimeItem) => {
+    setSelectedTimeItem(item);
+    setSelectedEvent(timeItemToScheduleBlock(item));
     setIsEventSheetOpen(true);
   };
 
@@ -119,31 +139,30 @@ export default function SchedulingPage() {
   const renderCalendarView = () => {
     switch (activeView) {
       case 'agenda':
-        return <AgendaView onEventClick={handleEventClick} />;
+        return <AgendaView onItemClick={handleItemClick} />;
       case 'day':
-        return <DayView onEventClick={handleEventClick} onCreateEvent={handleCreateEvent} />;
+        return <DayView onItemClick={handleItemClick} onCreateItem={handleCreateEvent} />;
       case '3-day':
-        return <ThreeDayView onEventClick={handleEventClick} onCreateEvent={handleCreateEvent} />;
+        return <ThreeDayView onItemClick={handleItemClick} onCreateItem={handleCreateEvent} />;
       case 'week':
-        return <WeekView onEventClick={handleEventClick} onCreateEvent={handleCreateEvent} />;
+        return <WeekView onItemClick={handleItemClick} onCreateItem={handleCreateEvent} />;
       case 'month':
         return (
           <MonthView
-            onEventClick={handleEventClick}
+            onItemClick={handleItemClick}
             onDayClick={handleDayClick}
-            onCreateEvent={handleDayClick}
           />
         );
       case 'timeline':
-        return <TimelineView onItemClick={handleEventClick} />;
+        return <TimelineView onItemClick={handleItemClick} />;
       case 'kanban':
-        return <KanbanView onItemClick={handleEventClick} />;
+        return <KanbanView onItemClick={handleItemClick} />;
       case 'heatmap':
         return <HeatmapView />;
       case 'roster':
         return <RosterView />;
       default:
-        return <WeekView onEventClick={handleEventClick} onCreateEvent={handleCreateEvent} />;
+        return <WeekView onItemClick={handleItemClick} onCreateItem={handleCreateEvent} />;
     }
   };
 
@@ -181,7 +200,7 @@ export default function SchedulingPage() {
       {/* Floating Action Button */}
       <FAB
         onQuickCreate={() => setIsQuickCreateOpen(true)}
-        onCreateEvent={handleCreateEvent}
+        onCreateItem={(_type) => handleCreateEvent()}
       />
     </>
   );

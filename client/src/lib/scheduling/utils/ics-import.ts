@@ -8,7 +8,7 @@ import { parse, parseISO } from 'date-fns';
 import type {
   ScheduleBlock,
   Attendee,
-  RecurrenceRule,
+  ScheduleRecurrenceRule,
   EventLocation,
   RSVPStatus,
   BlockStatus,
@@ -334,7 +334,7 @@ function parseEventProperty(line: string, event: ParsedVEvent): void {
       event.rrule = value;
       break;
     case 'ORGANIZER':
-      event.organizer = parseAttendeeValue(value, params);
+      event.organizer = parseAttendeeValue(value, params) ?? undefined;
       break;
     case 'ATTENDEE':
       if (!event.attendees) event.attendees = [];
@@ -518,9 +518,9 @@ function parseICSDate(dateStr: string, isDateOnly?: boolean): Date {
   return parse(cleanStr, "yyyyMMdd'T'HHmmss", new Date());
 }
 
-function parseRRule(rruleStr: string): RecurrenceRule {
+function parseRRule(rruleStr: string): ScheduleRecurrenceRule {
   const parts = rruleStr.split(';');
-  const rule: RecurrenceRule = {
+  const rule: ScheduleRecurrenceRule = {
     frequency: 'weekly',
     interval: 1,
   };
@@ -529,7 +529,7 @@ function parseRRule(rruleStr: string): RecurrenceRule {
     const [key, value] = part.split('=');
     switch (key.toUpperCase()) {
       case 'FREQ':
-        rule.frequency = value.toLowerCase() as RecurrenceRule['frequency'];
+        rule.frequency = value.toLowerCase() as ScheduleRecurrenceRule['frequency'];
         break;
       case 'INTERVAL':
         rule.interval = parseInt(value, 10);

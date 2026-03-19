@@ -198,9 +198,9 @@ function ItemCard({
             </h4>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            {item.status === 'tentative' && (
+            {item.status === 'in_progress' && (
               <span className="text-[10px] text-yellow-600 bg-yellow-100 px-1.5 py-0.5 rounded">
-                Provisoire
+                En cours
               </span>
             )}
             {item.status === 'cancelled' && (
@@ -208,7 +208,7 @@ function ItemCard({
                 Annulé
               </span>
             )}
-            {item.status === 'completed' && (
+            {item.status === 'done' && (
               <span className="text-[10px] text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
                 Terminé
               </span>
@@ -239,22 +239,22 @@ function ItemCard({
           {item.location && (
             <div className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              <span>{item.location}</span>
+              <span>{typeof item.location === 'string' ? item.location : item.location.value}</span>
             </div>
           )}
 
-          {item.metadata?.videoConference && (
+          {typeof item.location === 'object' && item.location?.url && (
             <div className="flex items-center gap-1">
               <Video className="h-3 w-3" />
               <span>Visio</span>
             </div>
           )}
 
-          {item.attendees && item.attendees.length > 0 && (
+          {item.users && item.users.length > 0 && (
             <div className="flex items-center gap-1">
               <Users className="h-3 w-3" />
               <span>
-                {item.attendees.length} participant{item.attendees.length > 1 ? 's' : ''}
+                {item.users.length} participant{item.users.length > 1 ? 's' : ''}
               </span>
             </div>
           )}

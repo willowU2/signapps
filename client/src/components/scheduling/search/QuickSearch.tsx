@@ -44,7 +44,7 @@ interface QuickSearchInputProps {
   className?: string;
   onFocus?: () => void;
   onBlur?: () => void;
-  inputRef?: React.RefObject<HTMLInputElement>;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 // ============================================================================

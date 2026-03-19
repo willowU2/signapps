@@ -38,7 +38,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCalendarStore } from '@/stores/scheduling/calendar-store';
 import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
-import { schedulingApi } from '@/lib/scheduling/api';
 import type { RecurrenceRule, Priority, TimeItemType } from '@/lib/scheduling/types';
 
 // ============================================================================
@@ -226,11 +225,11 @@ function parseNaturalLanguage(input: string, defaultType?: TimeItemType): ParseR
 
   if (/\b(?:chaque|tous les)\s*(?:jours?|semaines?|mois)\b/i.test(remaining)) {
     if (/jours?/i.test(remaining)) {
-      result.recurrence = { frequency: 'daily', interval: 1 };
+      result.recurrence = { id: crypto.randomUUID(), frequency: 'daily', interval: 1, exceptions: [] };
     } else if (/semaines?/i.test(remaining)) {
-      result.recurrence = { frequency: 'weekly', interval: 1 };
+      result.recurrence = { id: crypto.randomUUID(), frequency: 'weekly', interval: 1, exceptions: [] };
     } else if (/mois/i.test(remaining)) {
-      result.recurrence = { frequency: 'monthly', interval: 1 };
+      result.recurrence = { id: crypto.randomUUID(), frequency: 'monthly', interval: 1, exceptions: [] };
     }
     remaining = remaining.replace(/\b(?:chaque|tous les)\s*(?:jours?|semaines?|mois)\b/i, '');
     result.confidence += 0.1;
@@ -327,7 +326,7 @@ export function QuickCreate({
 
   const currentDate = useCalendarStore((state) => state.currentDate);
   const scope = useSchedulingStore((state) => state.scope);
-  const addTimeItem = useSchedulingStore((state) => state.addTimeItem);
+  const createTimeItem = useSchedulingStore((state) => state.createTimeItem);
 
   // Filter templates based on input
   const filteredTemplates = React.useMemo(() => {
@@ -398,22 +397,23 @@ export function QuickCreate({
       const end = addHours(start, duration / 60);
       const itemType = parseResult.type || defaultType || 'event';
 
-      const newItem = await schedulingApi.createTimeItem({
+      await createTimeItem({
         type: itemType,
         title: parseResult.title,
         startTime: start.toISOString(),
         endTime: end.toISOString(),
-        scope: scope,
+        scope: scope === 'all' ? 'moi' : scope,
         priority: parseResult.priority,
-        location: parseResult.location ? { name: parseResult.location } : undefined,
-        recurrence: parseResult.recurrence,
-        metadata: parseResult.participants?.length
-          ? { participants: parseResult.participants }
-          : undefined,
+        location: parseResult.location ? { type: 'text', value: parseResult.location } : undefined,
+        // Pass recurrence without the internal 'id' field for API
+        ...(parseResult.recurrence && {
+          recurrence: {
+            ...parseResult.recurrence,
+            id: undefined,
+          } as unknown as RecurrenceRule,
+        }),
+        users: parseResult.participants,
       });
-
-      // Add to local store
-      addTimeItem(newItem);
 
       onClose();
     } catch (error) {

@@ -6,22 +6,11 @@
  * Uses a sweep-line algorithm for efficient O(n log n) overlap detection.
  */
 
-import type { TimeItem, OverlapGroup } from '../types';
+import type { TimeItem, OverlapGroup, PositionedItem } from '../types';
 import { parseDate } from './time-utils';
 
-// ============================================================================
-// Types
-// ============================================================================
-
-export interface PositionedItem {
-  item: TimeItem;
-  column: number;
-  totalColumns: number;
-  top: number; // percentage
-  height: number; // percentage
-  left: number; // percentage
-  width: number; // percentage
-}
+// Re-export PositionedItem for backwards compatibility
+export type { PositionedItem } from '../types';
 
 interface TimeRange {
   start: Date;

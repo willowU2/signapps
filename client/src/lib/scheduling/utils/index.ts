@@ -6,7 +6,23 @@
 
 export * from './event-layout';
 export * from './overlap-calculator';
-export * from './conflict-detection';
+// Exclude findNextAvailableSlot from conflict-detection to avoid duplicate export
+export {
+  checkConflicts,
+  checkResourceConflicts,
+  checkAttendeeConflicts,
+  findAvailableSlots,
+  suggestAlternativeTimes,
+  doTimesOverlap,
+  calculateOverlap,
+  isWithinWorkingHours,
+  getConflictSeverityColor,
+  formatConflictMessage,
+  type ConflictResult,
+  type Conflict,
+  type ConflictCheckOptions,
+  type AvailableSlot,
+} from './conflict-detection';
 export * from './availability-finder';
 export * from './search-service';
 export * from './ics-export';

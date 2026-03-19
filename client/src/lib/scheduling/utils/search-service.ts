@@ -269,7 +269,7 @@ export class SchedulingSearchService {
       if (query.userId) {
         const isOrganizer = block.metadata?.organizerId === query.userId;
         const isAssignee =
-          block.type === 'task' && (block as Task).assigneeId === query.userId;
+          block.type === 'task' && (block as unknown as Task).assigneeId === query.userId;
         if (!isOrganizer && !isAssignee) {
           return false;
         }

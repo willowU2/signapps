@@ -13,7 +13,7 @@ import { schedulingApi } from '@/lib/scheduling/api';
 // STATE INTERFACE
 // ============================================================================
 
-interface PreferencesState {
+export interface PreferencesState {
   // Energy Settings
   peakHoursStart: number; // e.g., 9
   peakHoursEnd: number; // e.g., 12

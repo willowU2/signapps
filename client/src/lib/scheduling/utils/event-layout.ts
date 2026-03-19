@@ -2,12 +2,134 @@
  * Event Layout Utilities
  *
  * High-level utilities for calculating event layouts in calendar views.
- * Wraps the overlap calculator with view-specific logic.
+ * Self-contained utilities for ScheduleBlock layout calculations.
  */
 
 import { isSameDay, startOfDay, endOfDay } from 'date-fns';
-import { calculateAllLayouts } from './overlap-calculator';
 import type { ScheduleBlock, EventLayout, ViewConfig } from '../types/scheduling';
+
+// ============================================================================
+// Internal Layout Calculator for ScheduleBlock
+// ============================================================================
+
+interface BlockInterval {
+  eventId: string;
+  start: number; // minutes from midnight
+  end: number;
+  block: ScheduleBlock;
+}
+
+function toMinutes(date: Date): number {
+  return date.getHours() * 60 + date.getMinutes();
+}
+
+function calculateBlockLayout(
+  blocks: ScheduleBlock[],
+  options: {
+    workingHoursStart: number;
+    slotDuration: number;
+    slotHeight: number;
+  }
+): Map<string, { top: number; height: number; left: number; width: number; column: number; totalColumns: number }> {
+  const { workingHoursStart, slotDuration, slotHeight } = options;
+  const pixelsPerMinute = slotHeight / slotDuration;
+  const layouts = new Map<string, { top: number; height: number; left: number; width: number; column: number; totalColumns: number }>();
+
+  if (blocks.length === 0) return layouts;
+
+  // Convert to intervals
+  const intervals: BlockInterval[] = blocks
+    .filter(b => b.start)
+    .map(block => {
+      const endTime = block.end || new Date(block.start.getTime() + 3600000); // Default 1 hour
+      return {
+        eventId: block.id,
+        start: toMinutes(block.start),
+        end: toMinutes(endTime),
+        block,
+      };
+    })
+    .sort((a, b) => a.start - b.start);
+
+  // Find overlapping groups
+  interface OverlapGroup {
+    intervals: BlockInterval[];
+    columns: Map<string, number>;
+    maxColumns: number;
+  }
+  const groups: OverlapGroup[] = [];
+  let currentGroup: BlockInterval[] = [];
+  let currentGroupEnd = 0;
+
+  for (const interval of intervals) {
+    if (currentGroup.length === 0 || interval.start < currentGroupEnd) {
+      currentGroup.push(interval);
+      currentGroupEnd = Math.max(currentGroupEnd, interval.end);
+    } else {
+      if (currentGroup.length > 0) {
+        groups.push(assignBlockColumns(currentGroup));
+      }
+      currentGroup = [interval];
+      currentGroupEnd = interval.end;
+    }
+  }
+  if (currentGroup.length > 0) {
+    groups.push(assignBlockColumns(currentGroup));
+  }
+
+  // Calculate layouts for each group
+  for (const group of groups) {
+    const columnWidth = 100 / group.maxColumns;
+    const padding = group.maxColumns > 1 ? 1 : 0;
+
+    for (const interval of group.intervals) {
+      const column = group.columns.get(interval.eventId) ?? 0;
+      const startMinutes = (interval.block.start.getHours() - workingHoursStart) * 60 + interval.block.start.getMinutes();
+      const endTime = interval.block.end || new Date(interval.block.start.getTime() + 3600000);
+      const endMinutes = (endTime.getHours() - workingHoursStart) * 60 + endTime.getMinutes();
+
+      const top = startMinutes * pixelsPerMinute;
+      const height = Math.max((endMinutes - startMinutes) * pixelsPerMinute, 20);
+      const left = column * columnWidth + padding;
+      const width = columnWidth - padding * 2;
+
+      layouts.set(interval.eventId, { top, height, left, width, column, totalColumns: group.maxColumns });
+    }
+  }
+
+  return layouts;
+}
+
+function assignBlockColumns(intervals: BlockInterval[]): { intervals: BlockInterval[]; columns: Map<string, number>; maxColumns: number } {
+  const columns = new Map<string, number>();
+  const columnEnds: number[] = [];
+
+  const sorted = [...intervals].sort((a, b) => {
+    const startDiff = a.start - b.start;
+    if (startDiff !== 0) return startDiff;
+    return (b.end - b.start) - (a.end - a.start);
+  });
+
+  for (const interval of sorted) {
+    let column = -1;
+    for (let i = 0; i < columnEnds.length; i++) {
+      if (columnEnds[i] <= interval.start) {
+        column = i;
+        break;
+      }
+    }
+
+    if (column === -1) {
+      column = columnEnds.length;
+      columnEnds.push(0);
+    }
+
+    columns.set(interval.eventId, column);
+    columnEnds[column] = interval.end;
+  }
+
+  return { intervals, columns, maxColumns: columnEnds.length };
+}
 
 // ============================================================================
 // Types
@@ -41,8 +163,8 @@ export function calculateDayLayouts(
 
   if (dayEvents.length === 0) return [];
 
-  // Calculate layouts using overlap calculator
-  const layouts = calculateAllLayouts(dayEvents, {
+  // Calculate layouts using internal block layout calculator
+  const layouts = calculateBlockLayout(dayEvents, {
     workingHoursStart: viewConfig.workingHoursStart,
     slotDuration: viewConfig.slotDuration,
     slotHeight,
