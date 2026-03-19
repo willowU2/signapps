@@ -9348,6 +9348,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-workforce"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "chrono",
+ "dotenvy",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "signapps-db",
+ "sqlx",
+ "thiserror 1.0.69",
+ "tokio",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "signature"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

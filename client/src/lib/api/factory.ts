@@ -39,6 +39,7 @@ export enum ServiceName {
   PXE = 'pxe',
   REMOTE = 'remote',
   OFFICE = 'office',
+  WORKFORCE = 'workforce',
 }
 
 interface ServiceConfig {
@@ -66,6 +67,7 @@ const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
   [ServiceName.PXE]: { port: 3016, envVar: 'NEXT_PUBLIC_PXE_URL', healthPath: '/health' },
   [ServiceName.REMOTE]: { port: 3017, envVar: 'NEXT_PUBLIC_REMOTE_URL', healthPath: '/health' },
   [ServiceName.OFFICE]: { port: 3018, envVar: 'NEXT_PUBLIC_OFFICE_URL', healthPath: '/health' },
+  [ServiceName.WORKFORCE]: { port: 3019, envVar: 'NEXT_PUBLIC_WORKFORCE_URL', healthPath: '/health' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -273,3 +275,4 @@ export const mailClient = () => getClient(ServiceName.MAIL);
 export const collabClient = () => getClient(ServiceName.COLLAB);
 export const meetClient = () => getClient(ServiceName.MEET);
 export const officeClient = () => getClient(ServiceName.OFFICE);
+export const workforceClient = () => getClient(ServiceName.WORKFORCE);

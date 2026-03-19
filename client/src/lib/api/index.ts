@@ -22,3 +22,4 @@ export * from './it-assets';
 export * from './keep';
 export * from './tenant';
 export * from './resources';
+export * from './workforce';
