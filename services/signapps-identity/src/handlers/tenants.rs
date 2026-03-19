@@ -391,20 +391,22 @@ pub async fn create_workspace(
         .validate()
         .map_err(|e| Error::Validation(e.to_string()))?;
 
-    // Check workspace limit
-    let count = WorkspaceRepository::list_by_tenant(&state.pool, ctx.tenant_id, 1000, 0)
-        .await?
-        .len() as i32;
+    // Check workspace limit (bypass for admins)
+    if claims.role < 2 {
+        let count = WorkspaceRepository::list_by_tenant(&state.pool, ctx.tenant_id, 1000, 0)
+            .await?
+            .len() as i32;
 
-    let tenant = TenantRepository::find_by_id(&state.pool, ctx.tenant_id)
-        .await?
-        .ok_or_else(|| Error::NotFound("Tenant not found".to_string()))?;
+        let tenant = TenantRepository::find_by_id(&state.pool, ctx.tenant_id)
+            .await?
+            .ok_or_else(|| Error::NotFound("Tenant not found".to_string()))?;
 
-    if count >= tenant.max_workspaces {
-        return Err(Error::BadRequest(format!(
-            "Workspace limit reached ({}/{})",
-            count, tenant.max_workspaces
-        )));
+        if count >= tenant.max_workspaces {
+            return Err(Error::BadRequest(format!(
+                "Workspace limit reached ({}/{})",
+                count, tenant.max_workspaces
+            )));
+        }
     }
 
     let create = CreateWorkspace {
