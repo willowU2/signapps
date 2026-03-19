@@ -27,16 +27,20 @@ import { EventSheet } from '@/components/scheduling/calendar/EventSheet';
 import { BottomTabs } from '@/components/scheduling/mobile/BottomTabs';
 import { FAB } from '@/components/scheduling/quick-actions/FAB';
 import { useSchedulingNavigation } from '@/stores/scheduling-store';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
 import { useCreateEvent, useUpdateEvent, useDeleteEvent } from '@/lib/scheduling/api/calendar';
 import type { ScheduleBlock, CreateEventInput } from '@/lib/scheduling/types/scheduling';
 import type { TimeItem } from '@/lib/scheduling/types';
 
 export default function SchedulingPage() {
-  const { activeTab, activeView, currentDate } = useSchedulingNavigation();
+  const { activeTab, currentDate } = useSchedulingNavigation();
+  // Use calendar-store for view (controlled by ViewSwitcher)
+  const view = useCalendarStore((state) => state.view);
+  const calendarCurrentDate = useCalendarStore((state) => state.currentDate);
+
   const [isQuickCreateOpen, setIsQuickCreateOpen] = React.useState(false);
   const [isEventSheetOpen, setIsEventSheetOpen] = React.useState(false);
   const [selectedEvent, setSelectedEvent] = React.useState<ScheduleBlock | null>(null);
-  const [selectedTimeItem, setSelectedTimeItem] = React.useState<TimeItem | null>(null);
   const [defaultEventDate, setDefaultEventDate] = React.useState<Date | undefined>();
   const [defaultEventTime, setDefaultEventTime] = React.useState<string | undefined>();
 
@@ -64,7 +68,6 @@ export default function SchedulingPage() {
 
   // Event handlers
   const handleItemClick = (item: TimeItem) => {
-    setSelectedTimeItem(item);
     setSelectedEvent(timeItemToScheduleBlock(item));
     setIsEventSheetOpen(true);
   };
@@ -75,7 +78,7 @@ export default function SchedulingPage() {
       setDefaultEventDate(start);
       setDefaultEventTime(format(start, 'HH:mm'));
     } else {
-      setDefaultEventDate(currentDate);
+      setDefaultEventDate(calendarCurrentDate);
       setDefaultEventTime(undefined);
     }
     setIsEventSheetOpen(true);
@@ -135,9 +138,9 @@ export default function SchedulingPage() {
     }
   };
 
-  // Render calendar view based on view type
+  // Render calendar view based on view type (from calendar-store)
   const renderCalendarView = () => {
-    switch (activeView) {
+    switch (view) {
       case 'agenda':
         return <AgendaView onItemClick={handleItemClick} />;
       case 'day':
@@ -168,9 +171,14 @@ export default function SchedulingPage() {
 
   return (
     <>
-      <SchedulingHub>
-        <SchedulingContent className="pb-16 md:pb-0">
-          {renderContent()}
+      <SchedulingHub
+        onCreateItem={() => handleCreateEvent()}
+        onQuickCreate={() => setIsQuickCreateOpen(true)}
+      >
+        <SchedulingContent className="p-4 pb-16 md:pb-4 overflow-auto">
+          <div className="h-full min-h-0 rounded-lg border bg-card shadow-sm overflow-hidden flex flex-col">
+            {renderContent()}
+          </div>
         </SchedulingContent>
       </SchedulingHub>
 

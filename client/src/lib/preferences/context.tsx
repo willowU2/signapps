@@ -174,48 +174,25 @@ export function useSyncStatus() {
 
 /**
  * Apply theme preferences to document
+ * Theme mode is handled by next-themes - we only apply additional settings
  */
 export function useApplyTheme() {
-  const { theme } = useThemePreferences();
+  const { theme: themePrefs } = useThemePreferences();
 
-  React.useEffect(() => {
-    const root = document.documentElement;
-
-    // Apply theme mode
-    const applyMode = (mode: ThemeMode) => {
-      if (mode === "system") {
-        const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        root.classList.toggle("dark", isDark);
-      } else {
-        root.classList.toggle("dark", mode === "dark");
-      }
-    };
-
-    applyMode(theme.mode);
-
-    // Listen for system theme changes
-    if (theme.mode === "system") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const handler = (e: MediaQueryListEvent) => {
-        root.classList.toggle("dark", e.matches);
-      };
-      mediaQuery.addEventListener("change", handler);
-      return () => mediaQuery.removeEventListener("change", handler);
-    }
-  }, [theme.mode]);
-
+  // Apply other theme settings (font scale, motion, contrast)
+  // Theme mode is managed by next-themes directly via ThemeProvider
   React.useEffect(() => {
     const root = document.documentElement;
 
     // Apply font scale
-    root.style.setProperty("--font-scale", String(theme.fontScale));
+    root.style.setProperty("--font-scale", String(themePrefs.fontScale));
 
     // Apply reduce motion
-    root.classList.toggle("reduce-motion", theme.reduceMotion);
+    root.classList.toggle("reduce-motion", themePrefs.reduceMotion);
 
     // Apply high contrast
-    root.classList.toggle("high-contrast", theme.highContrast);
-  }, [theme.fontScale, theme.reduceMotion, theme.highContrast]);
+    root.classList.toggle("high-contrast", themePrefs.highContrast);
+  }, [themePrefs.fontScale, themePrefs.reduceMotion, themePrefs.highContrast]);
 }
 
 // ============================================================================

@@ -226,12 +226,15 @@ export function RosterView({
     };
   }, [currentDate, weekStartsOn]);
 
-  // Fetch items
+  // Fetch items (use ISO strings as deps to prevent infinite loops)
+  const rangeStartISO = dateRange.start.toISOString();
+  const rangeEndISO = dateRange.end.toISOString();
   React.useEffect(() => {
     if (!propItems) {
       fetchTimeItems(dateRange);
     }
-  }, [propItems, fetchTimeItems, dateRange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propItems, rangeStartISO, rangeEndISO]);
 
   // Generate days of week
   const days = React.useMemo(() => {

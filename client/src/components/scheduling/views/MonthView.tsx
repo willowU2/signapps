@@ -187,18 +187,26 @@ export function MonthView({
 
   const items = propItems || storeItems;
 
-  // Calculate month boundaries with padding for week display
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const calendarStart = startOfWeek(monthStart, { weekStartsOn });
-  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn });
+  // Calculate month boundaries with padding for week display (memoized to prevent infinite loops)
+  const { calendarStart, calendarEnd } = React.useMemo(() => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    return {
+      calendarStart: startOfWeek(monthStart, { weekStartsOn }),
+      calendarEnd: endOfWeek(monthEnd, { weekStartsOn }),
+    };
+  }, [currentDate, weekStartsOn]);
 
-  // Fetch items on mount
+  // Fetch items on mount and when date range changes
+  const calendarStartISO = calendarStart.toISOString();
+  const calendarEndISO = calendarEnd.toISOString();
+
   React.useEffect(() => {
     if (!propItems) {
       fetchTimeItems({ start: calendarStart, end: calendarEnd });
     }
-  }, [propItems, fetchTimeItems, calendarStart, calendarEnd]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propItems, calendarStartISO, calendarEndISO]);
 
   // Generate all days to display
   const days = React.useMemo(() => {

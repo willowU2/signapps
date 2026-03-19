@@ -66,13 +66,15 @@ export function DayView({
 
   const items = propItems || storeItems;
 
-  // Fetch items on mount
+  // Fetch items on mount (use currentDate as dependency to prevent infinite loops)
+  const currentDateISO = currentDate.toISOString();
   React.useEffect(() => {
     if (!propItems) {
       const dateRange = getDateRange();
       fetchTimeItems(dateRange);
     }
-  }, [propItems, fetchTimeItems, getDateRange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propItems, currentDateISO]);
 
   // Calculate positions for all items
   const positions = React.useMemo(() => {
@@ -135,13 +137,15 @@ export function FocusView({
 
   const items = propItems || storeItems;
 
-  // Fetch items on mount
+  // Fetch items on mount (use currentDate as dependency to prevent infinite loops)
+  const currentDateISO = currentDate.toISOString();
   React.useEffect(() => {
     if (!propItems) {
       const dateRange = getDateRange();
       fetchTimeItems(dateRange);
     }
-  }, [propItems, fetchTimeItems, getDateRange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propItems, currentDateISO]);
 
   // Filter focus-relevant items (tasks and blockers)
   const focusItems = React.useMemo(() => {
@@ -222,13 +226,15 @@ export function ThreeDayView({
 
   const items = propItems || storeItems;
 
-  // Fetch items on mount
+  // Fetch items on mount (use currentDate as dependency to prevent infinite loops)
+  const currentDateISO = currentDate.toISOString();
   React.useEffect(() => {
     if (!propItems) {
       const dateRange = getDateRange();
       fetchTimeItems(dateRange);
     }
-  }, [propItems, fetchTimeItems, getDateRange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propItems, currentDateISO]);
 
   // Calculate positions for all items
   const positions = React.useMemo(() => {

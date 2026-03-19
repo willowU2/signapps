@@ -374,7 +374,7 @@ export function SchedulingContent({
   className?: string;
 }) {
   return (
-    <div className={cn('h-full', className)}>
+    <div className={cn('h-full overflow-hidden', className)}>
       {children}
     </div>
   );

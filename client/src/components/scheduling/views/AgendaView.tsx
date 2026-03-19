@@ -403,12 +403,17 @@ export function AgendaView({
     [currentDate, daysToShow]
   );
 
+  // Use ISO strings for effect dependencies to prevent infinite loops
+  const rangeStartISO = dateRange.start.toISOString();
+  const rangeEndISO = dateRange.end.toISOString();
+
   // Fetch items on mount
   React.useEffect(() => {
     if (!propItems) {
       fetchTimeItems(dateRange);
     }
-  }, [propItems, fetchTimeItems, dateRange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propItems, rangeStartISO, rangeEndISO]);
 
   // Group items by day
   const itemsByDay = React.useMemo(() => {

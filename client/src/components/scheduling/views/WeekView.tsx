@@ -76,13 +76,15 @@ export function WeekView({
 
   const items = propItems || storeItems;
 
-  // Fetch items on mount
+  // Fetch items on mount (use currentDate as dependency to prevent infinite loops)
+  const currentDateISO = currentDate.toISOString();
   React.useEffect(() => {
     if (!propItems) {
       const dateRange = getDateRange();
       fetchTimeItems(dateRange);
     }
-  }, [propItems, fetchTimeItems, getDateRange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propItems, currentDateISO]);
 
   // Get days of the week
   const days = React.useMemo(() => {

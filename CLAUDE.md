@@ -241,3 +241,7 @@ AI_URL=http://localhost:3005/api/v1      # AI service URL for voice pipeline
 ```
 
 See `.env.example` for the full list.
+
+## Préférences de développement
+
+- **Frontend port**: Le serveur de développement frontend doit TOUJOURS être lancé sur le port 3000

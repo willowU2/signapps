@@ -97,13 +97,14 @@ export default function LoginPage() {
       const savedToken = localStorage.getItem('access_token');
       // Only auto-login if not already authenticated (no token)
       if (!savedToken) {
-        onSubmit({ username: 'admin', password: 'password' });
+        onSubmit({ username: 'admin', password: 'admin' });
       } else {
         // If already logged in, redirect straight to dashboard
         router.push(redirectAfterLogin || '/dashboard');
       }
     }
-  }, [autoParam, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoParam]);
 
   return (
     <div
