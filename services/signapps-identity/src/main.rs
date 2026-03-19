@@ -176,6 +176,7 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/users/:id", get(handlers::users::get))
         .route("/api/v1/users/:id", put(handlers::users::update))
         .route("/api/v1/users/:id", delete(handlers::users::delete))
+        .route("/api/v1/users/:id/tenant", put(handlers::users::set_tenant))
         // LDAP/AD endpoints
         .route("/api/v1/auth/ldap/config", get(handlers::ldap::get_config))
         .route(

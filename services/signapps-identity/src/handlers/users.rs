@@ -85,6 +85,12 @@ pub struct UpdateSelfRequest {
     pub current_password: Option<String>,
 }
 
+/// Set user tenant request.
+#[derive(Debug, Deserialize)]
+pub struct SetTenantRequest {
+    pub tenant_id: Uuid,
+}
+
 impl From<signapps_db::models::User> for UserResponse {
     fn from(user: signapps_db::models::User) -> Self {
         Self {
@@ -356,4 +362,29 @@ pub async fn update_me(
     tracing::info!(user_id = %claims.sub, "User updated profile");
 
     Ok(Json(UserResponse::from(updated)))
+}
+
+/// Set user's default tenant (admin only).
+#[tracing::instrument(skip(state, payload))]
+pub async fn set_tenant(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<SetTenantRequest>,
+) -> Result<Json<UserResponse>> {
+    // Verify user exists
+    let _existing = UserRepository::find_by_id(&state.pool, id)
+        .await?
+        .ok_or_else(|| Error::NotFound(format!("User {}", id)))?;
+
+    // Verify tenant exists
+    let _tenant = signapps_db::repositories::TenantRepository::find_by_id(&state.pool, payload.tenant_id)
+        .await?
+        .ok_or_else(|| Error::NotFound(format!("Tenant {}", payload.tenant_id)))?;
+
+    // Set the tenant
+    let user = UserRepository::set_tenant(&state.pool, id, payload.tenant_id).await?;
+
+    tracing::info!(user_id = %id, tenant_id = %payload.tenant_id, "Admin assigned user to tenant");
+
+    Ok(Json(UserResponse::from(user)))
 }

@@ -225,4 +225,18 @@ impl UserRepository {
 
         Ok(users)
     }
+
+    /// Set user's default tenant.
+    pub async fn set_tenant(pool: &PgPool, user_id: Uuid, tenant_id: Uuid) -> Result<User> {
+        let updated = sqlx::query_as::<_, User>(
+            "UPDATE identity.users SET tenant_id = $2, updated_at = NOW() WHERE id = $1 RETURNING *",
+        )
+        .bind(user_id)
+        .bind(tenant_id)
+        .fetch_one(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
+        Ok(updated)
+    }
 }
