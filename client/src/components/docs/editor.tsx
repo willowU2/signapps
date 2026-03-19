@@ -48,6 +48,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
 import { GenericFeatureModal } from '@/components/editor/generic-feature-modal';
+import { driveApi } from '@/lib/api';
 
 // Utility to dynamically load Google Fonts without freezing the browser
 export const loadGoogleFont = (fontFamily: string) => {
@@ -1369,7 +1370,7 @@ const Editor = ({
                 label: 'Nouveau',
                 subItems: [{
                     label: 'Document',
-                    action: 'todo',
+                    action: 'newDoc',
                     icon: <FileText className="w-4 h-4" />
                 }, {
                     label: 'De modèle',
@@ -1795,7 +1796,28 @@ const Editor = ({
         if (action === 'redo') editor.commands.redo();
         if (action === 'selectAll') editor.commands.selectAll();
         if (action === 'delete') editor.commands.deleteSelection();
-        if (action === 'newDoc') window.open('/docs', '_blank');
+        if (action === 'newDoc') {
+            const name = window.prompt("Nom du nouveau document :");
+            if (name === null) return; // User canceled the prompt
+
+            const finalName = name.trim() || 'Document sans titre';
+            const toastId = toast.loading("Création du document...");
+            try {
+                const newNode = await driveApi.createNode({
+                    parent_id: null,
+                    name: finalName,
+                    node_type: 'document',
+                    target_id: null
+                });
+                const targetId = newNode.target_id || newNode.id;
+                toast.success("Document créé !", { id: toastId });
+                window.open(`/docs/editor?id=${targetId}`, '_blank');
+            } catch (err: any) {
+                console.error("Erreur création document:", err);
+                const msg = err?.response?.data?.message || err?.message || String(err);
+                toast.error(`Erreur création: ${msg}`, { id: toastId });
+            }
+        }
         if (action === 'downloadPdf') {
             toast.info("G\u00E9n\u00E9ration du PDF via le gestionnaire d'impression...");
             window.print();
@@ -2668,16 +2690,6 @@ const Editor = ({
                         )}
 
                         <EditorContent editor={editor} />
-
-                        {/* Character/Word Count Footer */}
-                        <div className="flex items-center justify-end px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800/50 bg-background dark:bg-[#1f1f1f]">
-                            <span className="mr-4">
-                                {editor.storage.characterCount?.words() || 0} mots
-                            </span>
-                            <span>
-                                {editor.storage.characterCount?.characters() || 0} caractères
-                            </span>
-                        </div>
                     </div>
                 </div>
 
@@ -2765,6 +2777,16 @@ const Editor = ({
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* Global Character/Word Count Status Bar */}
+            <div className="flex-none flex items-center justify-end px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-[#202124] border-t border-gray-200 dark:border-gray-800 shadow-[0_-1px_3px_rgba(0,0,0,0.02)] z-10 w-full relative">
+                <span className="mr-4">
+                    {editor.storage.characterCount?.words() || 0} mots
+                </span>
+                <span>
+                    {editor.storage.characterCount?.characters() || 0} caractères
+                </span>
             </div>
 
             <GenericFeatureModal

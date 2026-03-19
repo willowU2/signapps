@@ -277,7 +277,9 @@ macro_rules! bootstrap_service {
             let $pool = $config.create_pool().await?;
 
             // Run migrations
-            signapps_db::run_migrations(&$pool).await?;
+            if let Err(e) = signapps_db::run_migrations(&$pool).await {
+                tracing::warn!("Database migrations could not be completed, continuing anyway: {}", e);
+            }
 
             // User-provided initialization
             let router = $body;

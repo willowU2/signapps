@@ -37,7 +37,9 @@ async fn main() -> anyhow::Result<()> {
     let pool = create_pool(&config.database_url).await?;
 
     // Run global database migrations orchestrator
-    run_migrations(&pool).await?;
+    if let Err(e) = run_migrations(&pool).await {
+        tracing::warn!("Database migrations could not be completed, continuing anyway: {}", e);
+    }
 
     // Create in-process cache for token blacklisting
     let cache = signapps_cache::CacheService::new(
