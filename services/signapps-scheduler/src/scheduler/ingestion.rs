@@ -9,6 +9,8 @@ use crate::crawlers::chat::ChatCrawler;
 use crate::crawlers::docs::DocsCrawler;
 use crate::crawlers::mail::MailCrawler;
 use crate::crawlers::storage::StorageCrawler;
+use crate::crawlers::projects::ProjectCrawler;
+use crate::crawlers::tasks::TaskCrawler;
 
 pub async fn start_ingestion_loop(pool: DatabasePool) {
     let crawlers: Vec<Arc<dyn DatabaseCrawler>> = vec![
@@ -17,6 +19,8 @@ pub async fn start_ingestion_loop(pool: DatabasePool) {
         Arc::new(DocsCrawler),
         Arc::new(StorageCrawler),
         Arc::new(ChatCrawler),
+        Arc::new(ProjectCrawler),
+        Arc::new(TaskCrawler),
     ];
 
     let mut check_interval = interval(Duration::from_secs(300)); // Run every 5 minutes

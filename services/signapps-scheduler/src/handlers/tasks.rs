@@ -81,7 +81,7 @@ pub async fn create(
 
 pub async fn get_by_id(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
@@ -104,7 +104,7 @@ pub async fn get_by_id(
 
 pub async fn update(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateTimeItem>,
@@ -121,7 +121,7 @@ pub async fn update(
 
 pub async fn delete(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {

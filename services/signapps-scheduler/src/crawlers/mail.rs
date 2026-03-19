@@ -14,24 +14,7 @@ impl DatabaseCrawler for MailCrawler {
         "mail.emails"
     }
 
-    async fn fetch_pending_records(&self, pool: &PgPool, limit: i64) -> Result<Vec<Uuid>> {
-        let rows: Vec<(Uuid,)> = sqlx::query_as(
-            r#"
-            SELECT e.id
-            FROM mail.emails e
-            LEFT JOIN ai.ingestion_queue q
-                ON e.id::text = q.record_id AND q.source_table = 'mail.emails'
-            WHERE q.id IS NULL OR q.status = 'PENDING'
-            LIMIT $1
-            "#,
-        )
-        .bind(limit)
-        .fetch_all(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
 
-        Ok(rows.into_iter().map(|(id,)| id).collect())
-    }
 
     async fn crawl_record(
         &self,
@@ -83,20 +66,5 @@ impl DatabaseCrawler for MailCrawler {
         }
     }
 
-    async fn mark_as_processed(&self, pool: &PgPool, record_id: Uuid) -> Result<()> {
-        sqlx::query(
-            r#"
-            INSERT INTO ai.ingestion_queue (source_table, record_id, action, status, processed_at)
-            VALUES ($1, $2, 'UPSERT', 'COMPLETED', NOW())
-            ON CONFLICT (id) DO UPDATE SET status = 'COMPLETED', processed_at = NOW()
-            "#,
-        )
-        .bind(self.table_name())
-        .bind(record_id.to_string())
-        .execute(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
 
-        Ok(())
-    }
 }

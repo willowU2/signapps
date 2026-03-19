@@ -6,42 +6,37 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub struct CalendarCrawler;
+pub struct ProjectCrawler;
 
 #[async_trait]
-impl DatabaseCrawler for CalendarCrawler {
+impl DatabaseCrawler for ProjectCrawler {
     fn table_name(&self) -> &'static str {
-        "calendar_events"
+        "calendar.projects"
     }
-
-
 
     async fn crawl_record(
         &self,
         pool: &PgPool,
         record_id: Uuid,
     ) -> Result<Option<CrawledDocument>> {
-        let row: Option<(String, String, Option<String>, Option<Uuid>)> = sqlx::query_as(
-            "SELECT title, description, location, organizer_id FROM calendar_events WHERE id = $1",
+        let row: Option<(String, Option<String>, Uuid)> = sqlx::query_as(
+            "SELECT name, description, owner_id FROM calendar.projects WHERE id = $1",
         )
         .bind(record_id)
         .fetch_optional(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
 
-        if let Some((title, description, location, organizer_id)) = row {
-            // Build the string to embed
+        if let Some((name, description, owner_id)) = row {
             let content = format!(
-                "Event: {}\nLocation: {}\nDescription: {}",
-                title,
-                location.unwrap_or_else(|| "Unknown".to_string()),
-                description
+                "Project: {}\n\n{}",
+                name,
+                description.unwrap_or_default()
             );
 
-            // Access Control Rules: Here we could fetch the organization_id from the organizer_id
             let security_tags = json!({
-                "resource_type": "calendar_event",
-                "owner_id": organizer_id
+                "resource_type": "project",
+                "owner_id": owner_id
             });
 
             Ok(Some(CrawledDocument {
@@ -54,6 +49,4 @@ impl DatabaseCrawler for CalendarCrawler {
             Ok(None)
         }
     }
-
-
 }
