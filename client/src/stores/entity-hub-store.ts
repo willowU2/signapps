@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import axios from 'axios';
 import { entityHubApi } from '@/lib/api/entityHub';
 
+import { workspacesApi } from '@/lib/api/tenant';
+
 // Unified Entity Hub Store for Phase 5 Calendars & Projects
 interface EntityState {
   workspaces: any[];
@@ -45,10 +47,11 @@ export const useEntityStore = create<EntityState>((set, get) => ({
   fetchWorkspaces: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await entityHubApi.listWorkspaces();
+      const response = await workspacesApi.mine();
+      const data = response.data; 
       set((state) => ({
-        workspaces: response.data.data,
-        selectedWorkspaceId: state.selectedWorkspaceId || (response.data.data.length > 0 ? response.data.data[0].id : null),
+        workspaces: data,
+        selectedWorkspaceId: state.selectedWorkspaceId || (data.length > 0 ? data[0].id : null),
         isLoading: false
       }));
     } catch (error: any) {
