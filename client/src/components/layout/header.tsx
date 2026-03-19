@@ -73,11 +73,18 @@ export function Header() {
       .slice(0, 2);
   };
 
+  const labelMap: Record<string, string> = {
+      scheduling: 'Calendrier',
+      dashboard: 'Dashboard',
+      docs: 'Documents',
+      tasks: 'Tâches',
+      settings: 'Paramètres',
+  };
   const pathSegments = pathname.split('/').filter(Boolean);
   const breadcrumbItems = pathSegments.map((segment, index) => {
       const url = `/${pathSegments.slice(0, index + 1).join('/')}`;
       const isLast = index === pathSegments.length - 1;
-      const label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+      const label = labelMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
       return { label, url, isLast };
   });
 
@@ -99,7 +106,7 @@ export function Header() {
                 <BreadcrumbList className="gap-1 sm:gap-1.5 min-h-[20px]">
                     <BreadcrumbItem>
                         <BreadcrumbLink asChild>
-                            <Link href="/dashboard" className="text-xs">Home</Link>
+                            <Link href="/dashboard" className="text-xs">Accueil</Link>
                         </BreadcrumbLink>
                     </BreadcrumbItem>
                     {breadcrumbItems.map((item, index) => (
