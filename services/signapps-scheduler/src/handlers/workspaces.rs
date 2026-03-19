@@ -16,7 +16,7 @@ pub async fn list_workspaces(
 ) -> Result<impl IntoResponse, StatusCode> {
     // Needs tenant context
     let tenant_id = claims.tenant_id.ok_or(StatusCode::UNAUTHORIZED)?;
-    
+
     // Placeholder response
     Ok(Json(json!({
         "data": [],
@@ -30,7 +30,7 @@ pub async fn get_workspace(
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let _tenant_id = claims.tenant_id.ok_or(StatusCode::UNAUTHORIZED)?;
-    
+
     Ok(Json(json!({
         "id": id,
         "name": "Placeholder Workspace"

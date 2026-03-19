@@ -154,7 +154,7 @@ const isItemActive = (href: string, pathname: string) => {
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, setSidebarCollapsed } = useUIStore();
-  const { workspaces, selectedWorkspaceId, setSelectedWorkspace, fetchWorkspaces, projects } = useEntityStore();
+  const { workspaces, selectedWorkspaceId, setSelectedWorkspace, fetchWorkspaces, projects, fetchProjects } = useEntityStore();
   const { isAdmin } = usePermissions();
 
   // Filtrer les groupes de navigation selon les permissions utilisateur
@@ -171,7 +171,8 @@ export function Sidebar() {
   useEffect(() => {
     setMounted(true);
     fetchWorkspaces();
-  }, [fetchWorkspaces]);
+    fetchProjects();
+  }, [fetchWorkspaces, fetchProjects]);
 
   useEffect(() => {
     if (mounted && !sidebarCollapsed) {

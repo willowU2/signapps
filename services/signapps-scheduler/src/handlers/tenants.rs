@@ -18,7 +18,7 @@ pub async fn list_tenants(
     if claims.role != 1 {
         return Err(StatusCode::FORBIDDEN);
     }
-    
+
     // Placeholder response until SQL queries are implemented
     Ok(Json(json!({
         "data": []

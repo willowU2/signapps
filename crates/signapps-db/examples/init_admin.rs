@@ -26,8 +26,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Found {} admin user(s)", count.0);
 
     // Generate Argon2 hash - use ADMIN_PASSWORD env var or default dev password
-    let password = std::env::var("ADMIN_PASSWORD")
-        .unwrap_or_else(|_| "ChangeMeInProduction123!".to_string());
+    let password =
+        std::env::var("ADMIN_PASSWORD").unwrap_or_else(|_| "ChangeMeInProduction123!".to_string());
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
     let hash = argon2

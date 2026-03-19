@@ -28,6 +28,16 @@ description: Centralized Knowledge Base of common pitfalls, caveats, and resolut
 - **Root Cause**: AI defaults to mocking for velocity.
 - **Solution**: MOCK DATA IS STRICTLY BANNED. Every Playwright test must create, mutate, and delete *real* Postgres data via the frontend interface.
 
+### 5. Frontend Role ID Mapping (API Coherence Error)
+- **Symptom**: Selecting "Admin" in frontend forms (like `user-sheet.tsx`) attempts to create a user with an invalid role (e.g., `role: 0`).
+- **Root Cause**: The frontend defaults to `0`-indexed array dropdowns, while the backend Rust models (`UserRole` enum) use explicit values (`1=User`, `2=Admin`, `3=SuperAdmin`).
+- **Solution**: Always securely cross-reference frontend `<SelectItem value="x">` directly with the backend Rust database models in `crates/signapps-db/src/models/*.rs`. Never assume 0-indexed enums.
+
+### 6. XSS via dangerouslySetInnerHTML in Client Components
+- **Symptom**: Potential stored XSS via file previewers (`code-preview.tsx`) or custom branding CSS (`branding.tsx`).
+- **Root Cause**: Relying on basic sequence-based Regex inside `dangerouslySetInnerHTML` allows unescaped `<script>` payloads to be built and executed.
+- **Solution**: Avoid `dangerouslySetInnerHTML` completely if possible (render React nodes directly like `<>{line}</>`). When strictly necessary for injecting `<style>` tags via AST strings, ALWAYS sanitize closure tags (e.g. `.replace(/<\/style/gi, "<\\/style")`) to prevent breakouts.
+
 ---
 
 ### How to Contribute

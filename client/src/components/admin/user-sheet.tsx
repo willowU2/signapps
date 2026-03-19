@@ -210,9 +210,9 @@ export function UserSheet({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="0">Admin</SelectItem>
+                      <SelectItem value="3">SuperAdmin</SelectItem>
+                      <SelectItem value="2">Admin</SelectItem>
                       <SelectItem value="1">User</SelectItem>
-                      <SelectItem value="2">Viewer</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

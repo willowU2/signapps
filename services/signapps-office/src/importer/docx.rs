@@ -19,10 +19,13 @@ pub fn docx_to_tiptap(content: &[u8]) -> Result<serde_json::Value, ImportError> 
     Ok(tiptap)
 }
 
-fn read_file_from_zip(archive: &mut ZipArchive<Cursor<&[u8]>>, path: &str) -> Result<String, ImportError> {
-    let mut file = archive
-        .by_name(path)
-        .map_err(|e| ImportError::ParseError(format!("File not found in DOCX: {} - {}", path, e)))?;
+fn read_file_from_zip(
+    archive: &mut ZipArchive<Cursor<&[u8]>>,
+    path: &str,
+) -> Result<String, ImportError> {
+    let mut file = archive.by_name(path).map_err(|e| {
+        ImportError::ParseError(format!("File not found in DOCX: {} - {}", path, e))
+    })?;
 
     let mut content = String::new();
     file.read_to_string(&mut content)
@@ -96,19 +99,35 @@ fn parse_docx_xml(xml: &str) -> Result<serde_json::Value, ImportError> {
 
             if let Some(tag_name) = tag.strip_prefix('/') {
                 // Closing tag
-                process_closing_tag(tag_name, &mut in_paragraph, &mut in_text,
-                    &mut paragraph_content, &mut content, &mut is_bold,
-                    &mut is_italic, &mut is_underline, &mut is_strike);
+                process_closing_tag(
+                    tag_name,
+                    &mut in_paragraph,
+                    &mut in_text,
+                    &mut paragraph_content,
+                    &mut content,
+                    &mut is_bold,
+                    &mut is_italic,
+                    &mut is_underline,
+                    &mut is_strike,
+                );
             } else if tag.ends_with('/') {
                 // Self-closing tag
                 let tag_name = tag.trim_end_matches('/').trim();
                 process_self_closing_tag(tag_name, &mut paragraph_content);
             } else {
                 // Opening tag
-                process_opening_tag(tag, &mut in_paragraph, &mut in_text,
-                    &mut is_bold, &mut is_italic, &mut is_underline,
-                    &mut is_strike, &mut current_marks, &mut content,
-                    &mut paragraph_content);
+                process_opening_tag(
+                    tag,
+                    &mut in_paragraph,
+                    &mut in_text,
+                    &mut is_bold,
+                    &mut is_italic,
+                    &mut is_underline,
+                    &mut is_strike,
+                    &mut current_marks,
+                    &mut content,
+                    &mut paragraph_content,
+                );
             }
         } else if in_tag {
             tag_buffer.push(c);
@@ -170,7 +189,7 @@ fn process_opening_tag(
             *is_italic = false;
             *is_underline = false;
             *is_strike = false;
-        }
+        },
         // Text run properties
         "w:b" => *is_bold = true,
         "w:i" => *is_italic = true,
@@ -178,7 +197,7 @@ fn process_opening_tag(
         "w:strike" => *is_strike = true,
         // Text content
         "w:t" => *in_text = true,
-        _ => {}
+        _ => {},
     }
 }
 
@@ -213,17 +232,17 @@ fn process_closing_tag(
             *is_italic = false;
             *is_underline = false;
             *is_strike = false;
-        }
+        },
         "w:t" => *in_text = false,
         "w:r" => {
             // Run ended, reset run-level formatting
             // Note: We keep the formatting until the paragraph ends
             // to handle cases where formatting spans multiple runs
-        }
+        },
         "w:rPr" => {
             // Run properties ended
-        }
-        _ => {}
+        },
+        _ => {},
     }
 }
 

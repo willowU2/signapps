@@ -3,7 +3,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use signapps_common::bootstrap::{init_tracing, load_env, env_or};
+use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::{AuthState, JwtConfig};
 use signapps_runtime::ModelManager;
 use sqlx::PgPool;
@@ -88,7 +88,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("🚀 Starting signapps-media on port {}", port);
 
     // Database
-    let database_url = env_or("DATABASE_URL", "postgres://signapps:signapps@localhost:5432/signapps");
+    let database_url = env_or(
+        "DATABASE_URL",
+        "postgres://signapps:signapps@localhost:5432/signapps",
+    );
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)

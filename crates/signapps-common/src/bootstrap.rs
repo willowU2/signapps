@@ -62,8 +62,7 @@ pub fn init_tracing(service_name: &str) {
 pub fn init_tracing_with_filter(filter: &str) {
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| filter.into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| filter.into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -121,7 +120,10 @@ impl ServiceConfig {
     /// - `SERVER_HOST` (defaults to "0.0.0.0")
     /// - `SERVER_PORT` (defaults to provided default_port)
     pub fn from_env(name: &str, default_port: u16) -> Self {
-        let database_url = env_or("DATABASE_URL", "postgres://signapps:password@localhost:5432/signapps");
+        let database_url = env_or(
+            "DATABASE_URL",
+            "postgres://signapps:password@localhost:5432/signapps",
+        );
 
         let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
             tracing::warn!("JWT_SECRET not set, using insecure default");
@@ -156,8 +158,8 @@ impl ServiceConfig {
             secret: self.jwt_secret.clone(),
             issuer: "signapps".to_string(),
             audience: self.name.clone(),
-            access_expiration: 900,      // 15 minutes
-            refresh_expiration: 604800,  // 7 days
+            access_expiration: 900,     // 15 minutes
+            refresh_expiration: 604800, // 7 days
         }
     }
 
@@ -204,7 +206,9 @@ pub fn middleware_stack(router: Router) -> Router {
         .allow_headers(Any);
 
     router
-        .layer(middleware::from_fn(crate::middleware::request_id_middleware))
+        .layer(middleware::from_fn(
+            crate::middleware::request_id_middleware,
+        ))
         .layer(middleware::from_fn(crate::middleware::logging_middleware))
         .layer(cors)
 }
@@ -217,10 +221,7 @@ pub fn middleware_stack(router: Router) -> Router {
 ///
 /// Note: The router should have its state already applied via `.with_state()`.
 /// This function expects a `Router<()>` (stateless router).
-pub async fn run_server(
-    router: Router,
-    config: &ServiceConfig,
-) -> anyhow::Result<()> {
+pub async fn run_server(router: Router, config: &ServiceConfig) -> anyhow::Result<()> {
     let addr = config.socket_addr();
     tracing::info!("Listening on {}", addr);
 
@@ -278,7 +279,10 @@ macro_rules! bootstrap_service {
 
             // Run migrations
             if let Err(e) = signapps_db::run_migrations(&$pool).await {
-                tracing::warn!("Database migrations could not be completed, continuing anyway: {}", e);
+                tracing::warn!(
+                    "Database migrations could not be completed, continuing anyway: {}",
+                    e
+                );
             }
 
             // User-provided initialization

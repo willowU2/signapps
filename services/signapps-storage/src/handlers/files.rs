@@ -117,10 +117,10 @@ async fn trigger_ai_indexing(
 
             if !allowed_exts.is_empty() && !allowed_exts.contains(&ext) {
                 should_index = false; // Excluded by rule
-                // Note: matched_collection will be overwritten later for GED documents
+                                      // Note: matched_collection will be overwritten later for GED documents
             } else {
                 should_index = true; // explicitly included
-                // Note: matched_collection will be overwritten later for GED documents
+                                     // Note: matched_collection will be overwritten later for GED documents
             }
         } else {
             // Matched a rule with no specific extension limit

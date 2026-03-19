@@ -163,7 +163,7 @@ export function BrandingStyles({ branding: propBranding }: BrandingStylesProps) 
       parts.push(branding.customCss);
     }
 
-    return parts.join("\n\n");
+    return parts.join("\n\n").replace(/<\/style/gi, "<\\/style");
   }, [branding]);
 
   if (!cssContent) return null;

@@ -1,0 +1,8 @@
+# Security & Budget Logs - Antigravity Prime
+
+[2026-03-19] Initialization
+- Verified that .env is correctly added to .gitignore.
+- Created core_prompt.md successfully without cost.
+- Working inside isolated 'autonome-dev' branch safely.
+- No third-party APIs with costs invoked.
+- [Sprint 27] Verified Frontend API Coherence and neutralized 2 XSS Vectors.

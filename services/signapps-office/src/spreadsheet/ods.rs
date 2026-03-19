@@ -15,8 +15,11 @@ pub fn spreadsheet_to_ods(spreadsheet: &Spreadsheet) -> Result<Vec<u8>, Spreadsh
     let options = SimpleFileOptions::default();
 
     // 1. mimetype (must be first, uncompressed)
-    zip.start_file("mimetype", SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored))
-        .map_err(|e| SpreadsheetError::ConversionFailed(e.to_string()))?;
+    zip.start_file(
+        "mimetype",
+        SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored),
+    )
+    .map_err(|e| SpreadsheetError::ConversionFailed(e.to_string()))?;
     zip.write_all(b"application/vnd.oasis.opendocument.spreadsheet")
         .map_err(SpreadsheetError::IoError)?;
 
@@ -98,7 +101,8 @@ fn generate_styles() -> String {
       <style:text-properties fo:font-size="10pt" fo:font-family="Arial"/>
     </style:default-style>
   </office:styles>
-</office:document-styles>"#.to_string()
+</office:document-styles>"#
+        .to_string()
 }
 
 fn generate_content(spreadsheet: &Spreadsheet) -> String {
@@ -156,9 +160,11 @@ fn generate_content(spreadsheet: &Spreadsheet) -> String {
         content.push_str("      </table:table>\n");
     }
 
-    content.push_str(r#"    </office:spreadsheet>
+    content.push_str(
+        r#"    </office:spreadsheet>
   </office:body>
-</office:document-content>"#);
+</office:document-content>"#,
+    );
 
     content
 }
@@ -175,7 +181,7 @@ fn format_cell(cell: &super::Cell) -> String {
 "#,
                 escape_xml(s)
             )
-        }
+        },
 
         CellValue::Number(n) => {
             let display = if n.fract() == 0.0 {
@@ -190,7 +196,7 @@ fn format_cell(cell: &super::Cell) -> String {
 "#,
                 n, display
             )
-        }
+        },
 
         CellValue::Bool(b) => {
             let value = if *b { "true" } else { "false" };
@@ -202,7 +208,7 @@ fn format_cell(cell: &super::Cell) -> String {
 "#,
                 value, display
             )
-        }
+        },
 
         CellValue::Formula(f) => {
             // ODS uses different formula syntax, but we output as-is
@@ -213,7 +219,7 @@ fn format_cell(cell: &super::Cell) -> String {
 "#,
                 escape_xml(f)
             )
-        }
+        },
 
         CellValue::Date(d) => {
             format!(
@@ -224,7 +230,7 @@ fn format_cell(cell: &super::Cell) -> String {
                 escape_xml(d),
                 escape_xml(d)
             )
-        }
+        },
 
         CellValue::Error(e) => {
             format!(
@@ -234,7 +240,7 @@ fn format_cell(cell: &super::Cell) -> String {
 "#,
                 escape_xml(e)
             )
-        }
+        },
     }
 }
 

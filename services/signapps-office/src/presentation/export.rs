@@ -109,7 +109,7 @@ fn parse_fabric_object(obj: &serde_json::Value) -> Result<Option<SlideContent>, 
                 };
                 Ok(Some(SlideContent::Body(vec![element])))
             }
-        }
+        },
         "image" => {
             let src = obj
                 .get("src")
@@ -128,7 +128,7 @@ fn parse_fabric_object(obj: &serde_json::Value) -> Result<Option<SlideContent>, 
                 x: left,
                 y: top,
             }))
-        }
+        },
         "rect" | "circle" | "triangle" | "polygon" | "line" => {
             let width = obj.get("width").and_then(|w| w.as_f64()).unwrap_or(100.0);
             let height = obj.get("height").and_then(|h| h.as_f64()).unwrap_or(100.0);
@@ -144,7 +144,7 @@ fn parse_fabric_object(obj: &serde_json::Value) -> Result<Option<SlideContent>, 
                 y: top,
                 fill_color: fill,
             }))
-        }
+        },
         _ => Ok(None),
     }
 }
@@ -155,8 +155,8 @@ mod tests {
 
     #[test]
     fn test_presentation_export_success() {
-        let presentation = Presentation::new("Test Deck")
-            .with_slide(Slide::new().with_title("Slide 1"));
+        let presentation =
+            Presentation::new("Test Deck").with_slide(Slide::new().with_title("Slide 1"));
 
         let result = presentation_to_pptx(&presentation);
         assert!(result.is_ok());

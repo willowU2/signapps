@@ -148,6 +148,9 @@ export const calendarApi = {
     put: <T = any>(url: string, data?: any, config?: any) =>
         calendarClient.put<T>(url, data, config),
 
+    patch: <T = any>(url: string, data?: any, config?: any) =>
+        calendarClient.patch<T>(url, data, config),
+
     delete: <T = any>(url: string, config?: any) =>
         calendarClient.delete<T>(url, config),
 };

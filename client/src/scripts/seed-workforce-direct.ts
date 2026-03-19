@@ -28,6 +28,10 @@ interface Employee {
   fteRatio: number;
 }
 
+interface IdResult {
+  id: string;
+}
+
 // Org node types
 const NODE_TYPES = [
   { code: 'enterprise', name: 'Entreprise', level: 1 },
@@ -191,7 +195,7 @@ async function main() {
         const parentId = node.parentCode ? nodeIdMap[node.parentCode] : null;
 
         // First try to find existing node
-        const existing = await client.query(
+        const existing = await client.query<IdResult>(
           `SELECT id FROM workforce_org_nodes WHERE tenant_id = $1 AND code = $2`,
           [TENANT_ID, node.code]
         );
@@ -200,7 +204,7 @@ async function main() {
           nodeIdMap[node.code] = existing.rows[0].id;
           console.log(`  ✓ ${node.name} (existing)`);
         } else {
-          const result = await client.query(
+          const result = await client.query<IdResult>(
             `INSERT INTO workforce_org_nodes (tenant_id, parent_id, node_type, code, name, is_active)
              VALUES ($1, $2, $3, $4, $5, true)
              RETURNING id`,

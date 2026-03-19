@@ -78,7 +78,8 @@ fn extract_comments_recursive(
                 for mark in marks {
                     if mark.get("type").and_then(|t| t.as_str()) == Some("comment") {
                         if let Some(attrs) = mark.get("attrs") {
-                            if let Some(comment_id) = attrs.get("commentId").and_then(|c| c.as_str())
+                            if let Some(comment_id) =
+                                attrs.get("commentId").and_then(|c| c.as_str())
                             {
                                 // Create a placeholder comment - actual data would come from frontend
                                 let comment = Comment {

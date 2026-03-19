@@ -197,7 +197,10 @@ const SLIDE_MASTER_RELS: &str = r#"<?xml version="1.0" encoding="UTF-8" standalo
 /// Generate layout XML for a specific layout type
 fn generate_layout_xml(layout: SlideLayout) -> String {
     let (layout_type, name, placeholders) = match layout {
-        SlideLayout::TitleSlide => ("title", "Title Slide", r#"
+        SlideLayout::TitleSlide => (
+            "title",
+            "Title Slide",
+            r#"
       <p:sp>
         <p:nvSpPr>
           <p:cNvPr id="2" name="Title 1"/>
@@ -219,9 +222,13 @@ fn generate_layout_xml(layout: SlideLayout) -> String {
           <a:xfrm><a:off x="1371600" y="3886200"/><a:ext cx="6400800" cy="1752600"/></a:xfrm>
         </p:spPr>
         <p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr lang="en-US"/></a:p></p:txBody>
-      </p:sp>"#),
+      </p:sp>"#,
+        ),
 
-        SlideLayout::TitleAndContent => ("obj", "Title and Content", r#"
+        SlideLayout::TitleAndContent => (
+            "obj",
+            "Title and Content",
+            r#"
       <p:sp>
         <p:nvSpPr>
           <p:cNvPr id="2" name="Title 1"/>
@@ -243,9 +250,13 @@ fn generate_layout_xml(layout: SlideLayout) -> String {
           <a:xfrm><a:off x="457200" y="1600200"/><a:ext cx="8229600" cy="4525963"/></a:xfrm>
         </p:spPr>
         <p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr lang="en-US"/></a:p></p:txBody>
-      </p:sp>"#),
+      </p:sp>"#,
+        ),
 
-        SlideLayout::TwoContent => ("twoObj", "Two Content", r#"
+        SlideLayout::TwoContent => (
+            "twoObj",
+            "Two Content",
+            r#"
       <p:sp>
         <p:nvSpPr>
           <p:cNvPr id="2" name="Title 1"/>
@@ -278,9 +289,13 @@ fn generate_layout_xml(layout: SlideLayout) -> String {
           <a:xfrm><a:off x="4648200" y="1600200"/><a:ext cx="4038600" cy="4525963"/></a:xfrm>
         </p:spPr>
         <p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr lang="en-US"/></a:p></p:txBody>
-      </p:sp>"#),
+      </p:sp>"#,
+        ),
 
-        SlideLayout::SectionHeader => ("secHead", "Section Header", r#"
+        SlideLayout::SectionHeader => (
+            "secHead",
+            "Section Header",
+            r#"
       <p:sp>
         <p:nvSpPr>
           <p:cNvPr id="2" name="Title 1"/>
@@ -302,11 +317,15 @@ fn generate_layout_xml(layout: SlideLayout) -> String {
           <a:xfrm><a:off x="722313" y="2906713"/><a:ext cx="7772400" cy="1500187"/></a:xfrm>
         </p:spPr>
         <p:txBody><a:bodyPr anchor="b"/><a:lstStyle/><a:p><a:endParaRPr lang="en-US"/></a:p></p:txBody>
-      </p:sp>"#),
+      </p:sp>"#,
+        ),
 
         SlideLayout::Blank => ("blank", "Blank", ""),
 
-        SlideLayout::TitleOnly => ("titleOnly", "Title Only", r#"
+        SlideLayout::TitleOnly => (
+            "titleOnly",
+            "Title Only",
+            r#"
       <p:sp>
         <p:nvSpPr>
           <p:cNvPr id="2" name="Title 1"/>
@@ -317,7 +336,8 @@ fn generate_layout_xml(layout: SlideLayout) -> String {
           <a:xfrm><a:off x="457200" y="274638"/><a:ext cx="8229600" cy="1143000"/></a:xfrm>
         </p:spPr>
         <p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr lang="en-US"/></a:p></p:txBody>
-      </p:sp>"#),
+      </p:sp>"#,
+        ),
     };
 
     format!(
@@ -410,7 +430,8 @@ const THEME_XML: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"
 // ═══════════════════════════════════════════════════════════════════════════
 
 fn generate_content_types(presentation: &Presentation) -> String {
-    let mut xml = String::from(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    let mut xml = String::from(
+        r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
@@ -425,7 +446,8 @@ fn generate_content_types(presentation: &Presentation) -> String {
   <Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
   <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
   <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
-"#);
+"#,
+    );
 
     for (i, slide) in presentation.slides.iter().enumerate() {
         let slide_num = i + 1;
@@ -509,10 +531,12 @@ fn generate_presentation_xml(presentation: &Presentation) -> String {
 }
 
 fn generate_presentation_rels(slide_count: usize) -> String {
-    let mut rels = String::from(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    let mut rels = String::from(
+        r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
-"#);
+"#,
+    );
 
     for i in 0..slide_count {
         rels.push_str(&format!(
@@ -570,30 +594,16 @@ fn generate_slide_xml(slide: &Slide, _slide_num: usize) -> String {
         match content {
             SlideContent::Title(text) => {
                 shapes.push_str(&generate_text_shape(
-                    shape_id,
-                    text,
-                    457200,
-                    274638,
-                    8229600,
-                    1143000,
-                    4400,
-                    true,
+                    shape_id, text, 457200, 274638, 8229600, 1143000, 4400, true,
                 ));
                 shape_id += 1;
-            }
+            },
             SlideContent::Subtitle(text) => {
                 shapes.push_str(&generate_text_shape(
-                    shape_id,
-                    text,
-                    457200,
-                    1600200,
-                    8229600,
-                    571500,
-                    2400,
-                    false,
+                    shape_id, text, 457200, 1600200, 8229600, 571500, 2400, false,
                 ));
                 shape_id += 1;
-            }
+            },
             SlideContent::Body(elements) => {
                 for element in elements {
                     for run in &element.runs {
@@ -610,7 +620,7 @@ fn generate_slide_xml(slide: &Slide, _slide_num: usize) -> String {
                         shape_id += 1;
                     }
                 }
-            }
+            },
             SlideContent::BulletList(items) => {
                 let text = items.join("\n• ");
                 let text = if !text.is_empty() {
@@ -619,17 +629,10 @@ fn generate_slide_xml(slide: &Slide, _slide_num: usize) -> String {
                     text
                 };
                 shapes.push_str(&generate_text_shape(
-                    shape_id,
-                    &text,
-                    457200,
-                    2171700,
-                    8229600,
-                    3886200,
-                    1800,
-                    false,
+                    shape_id, &text, 457200, 2171700, 8229600, 3886200, 1800, false,
                 ));
                 shape_id += 1;
-            }
+            },
             SlideContent::Shape {
                 shape_type,
                 width,
@@ -648,11 +651,11 @@ fn generate_slide_xml(slide: &Slide, _slide_num: usize) -> String {
                     fill_color.as_deref(),
                 ));
                 shape_id += 1;
-            }
+            },
             SlideContent::Image { .. } => {
                 // Image support would require embedding the image in the PPTX
                 // For now, we skip images
-            }
+            },
         }
     }
 
@@ -736,7 +739,15 @@ fn generate_text_shape(
         </p:txBody>
       </p:sp>
 "#,
-        id, id, x, y, cx, cy, font_size, bold_attr, escape_xml(text)
+        id,
+        id,
+        x,
+        y,
+        cx,
+        cy,
+        font_size,
+        bold_attr,
+        escape_xml(text)
     )
 }
 
@@ -836,10 +847,13 @@ fn generate_notes_xml(slide: &Slide, slide_num: usize) -> String {
 fn generate_slide_rels(slide: &Slide, slide_num: usize) -> String {
     let layout_num = slide.layout.index();
 
-    let mut rels = format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    let mut rels = format!(
+        r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout{}.xml"/>
-"#, layout_num);
+"#,
+        layout_num
+    );
 
     // Add notes relationship if present
     if slide.notes.is_some() {
@@ -884,14 +898,9 @@ mod tests {
                     .with_title("First Slide")
                     .with_content(SlideContent::Subtitle("Subtitle here".to_string())),
             )
-            .with_slide(
-                Slide::new()
-                    .with_title("Second Slide")
-                    .with_content(SlideContent::BulletList(vec![
-                        "Item 1".to_string(),
-                        "Item 2".to_string(),
-                    ])),
-            );
+            .with_slide(Slide::new().with_title("Second Slide").with_content(
+                SlideContent::BulletList(vec!["Item 1".to_string(), "Item 2".to_string()]),
+            ));
 
         let result = generate_pptx(&presentation);
         assert!(result.is_ok());

@@ -64,7 +64,7 @@ fn node_to_html(node: &TiptapNode) -> Result<String, ConversionError> {
             html.push_str(&format!("<p{}>", style));
             html.push_str(&children_to_html(node)?);
             html.push_str("</p>");
-        }
+        },
         "heading" => {
             let level = node
                 .attrs
@@ -76,12 +76,12 @@ fn node_to_html(node: &TiptapNode) -> Result<String, ConversionError> {
             html.push_str(&format!("<h{}>", level));
             html.push_str(&children_to_html(node)?);
             html.push_str(&format!("</h{}>", level));
-        }
+        },
         "bulletList" => {
             html.push_str("<ul>");
             html.push_str(&children_to_html(node)?);
             html.push_str("</ul>");
-        }
+        },
         "orderedList" => {
             let start = node
                 .attrs
@@ -92,17 +92,17 @@ fn node_to_html(node: &TiptapNode) -> Result<String, ConversionError> {
             html.push_str(&format!("<ol start=\"{}\">", start));
             html.push_str(&children_to_html(node)?);
             html.push_str("</ol>");
-        }
+        },
         "listItem" => {
             html.push_str("<li>");
             html.push_str(&children_to_html(node)?);
             html.push_str("</li>");
-        }
+        },
         "taskList" => {
             html.push_str("<ul class=\"task-list\">");
             html.push_str(&children_to_html(node)?);
             html.push_str("</ul>");
-        }
+        },
         "taskItem" => {
             let checked = node
                 .attrs
@@ -118,12 +118,12 @@ fn node_to_html(node: &TiptapNode) -> Result<String, ConversionError> {
             html.push_str(&format!("<li class=\"task-item\">{}", checkbox));
             html.push_str(&children_to_html(node)?);
             html.push_str("</li>");
-        }
+        },
         "blockquote" => {
             html.push_str("<blockquote>");
             html.push_str(&children_to_html(node)?);
             html.push_str("</blockquote>");
-        }
+        },
         "codeBlock" => {
             let language = node
                 .attrs
@@ -134,19 +134,19 @@ fn node_to_html(node: &TiptapNode) -> Result<String, ConversionError> {
             html.push_str(&format!("<pre><code class=\"language-{}\">", language));
             html.push_str(&children_to_html(node)?);
             html.push_str("</code></pre>");
-        }
+        },
         "horizontalRule" => {
             html.push_str("<hr>");
-        }
+        },
         "hardBreak" => {
             html.push_str("<br>");
-        }
+        },
         "pageBreak" => {
             html.push_str("<div data-page-break class=\"page-break\"></div>");
-        }
+        },
         "tableOfContents" => {
             html.push_str("<div data-toc class=\"table-of-contents\"></div>");
-        }
+        },
         "footnote" => {
             let number = node
                 .attrs
@@ -165,7 +165,7 @@ fn node_to_html(node: &TiptapNode) -> Result<String, ConversionError> {
                 escape_html(content),
                 number
             ));
-        }
+        },
         "image" => {
             let src = node
                 .attrs
@@ -191,31 +191,31 @@ fn node_to_html(node: &TiptapNode) -> Result<String, ConversionError> {
                 escape_html(alt),
                 escape_html(title)
             ));
-        }
+        },
         "table" => {
             html.push_str("<table>");
             html.push_str(&children_to_html(node)?);
             html.push_str("</table>");
-        }
+        },
         "tableRow" => {
             html.push_str("<tr>");
             html.push_str(&children_to_html(node)?);
             html.push_str("</tr>");
-        }
+        },
         "tableHeader" => {
             let colspan = get_colspan(&node.attrs);
             let rowspan = get_rowspan(&node.attrs);
             html.push_str(&format!("<th{}{}>", colspan, rowspan));
             html.push_str(&children_to_html(node)?);
             html.push_str("</th>");
-        }
+        },
         "tableCell" => {
             let colspan = get_colspan(&node.attrs);
             let rowspan = get_rowspan(&node.attrs);
             html.push_str(&format!("<td{}{}>", colspan, rowspan));
             html.push_str(&children_to_html(node)?);
             html.push_str("</td>");
-        }
+        },
         "text" => {
             if let Some(text) = &node.text {
                 let mut text_html = escape_html(text);
@@ -228,11 +228,11 @@ fn node_to_html(node: &TiptapNode) -> Result<String, ConversionError> {
                 }
                 html.push_str(&text_html);
             }
-        }
+        },
         _ => {
             // Unknown node type - try to render children
             html.push_str(&children_to_html(node)?);
-        }
+        },
     }
 
     Ok(html)
@@ -284,7 +284,7 @@ fn apply_mark(text: &str, mark: &TiptapMark) -> String {
                 target,
                 text
             )
-        }
+        },
         "textStyle" => {
             let mut style = String::new();
             if let Some(attrs) = &mark.attrs {
@@ -307,7 +307,7 @@ fn apply_mark(text: &str, mark: &TiptapMark) -> String {
             } else {
                 format!("<span style=\"{}\">{}</span>", style, text)
             }
-        }
+        },
         "highlight" => {
             let color = mark
                 .attrs
@@ -319,7 +319,7 @@ fn apply_mark(text: &str, mark: &TiptapMark) -> String {
                 "<mark style=\"background-color: {};\">{}</mark>",
                 color, text
             )
-        }
+        },
         "subscript" => format!("<sub>{}</sub>", text),
         "superscript" => format!("<sup>{}</sup>", text),
         _ => text.to_string(),

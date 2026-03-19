@@ -48,22 +48,18 @@ impl DatabaseCrawler for ChatCrawler {
 
         if let Some((content, sender_id, channel_id)) = row {
             // Get channel name for context
-            let channel_name: Option<(String,)> = sqlx::query_as(
-                "SELECT title FROM documents WHERE id = $1 AND doc_type = 'chat'",
-            )
-            .bind(channel_id)
-            .fetch_optional(pool)
-            .await
-            .map_err(|e| Error::Database(e.to_string()))?;
+            let channel_name: Option<(String,)> =
+                sqlx::query_as("SELECT title FROM documents WHERE id = $1 AND doc_type = 'chat'")
+                    .bind(channel_id)
+                    .fetch_optional(pool)
+                    .await
+                    .map_err(|e| Error::Database(e.to_string()))?;
 
             let channel = channel_name
                 .map(|(n,)| n)
                 .unwrap_or_else(|| "unknown".to_string());
 
-            let indexed_content = format!(
-                "Chat message in #{}\n\n{}",
-                channel, content
-            );
+            let indexed_content = format!("Chat message in #{}\n\n{}", channel, content);
 
             let security_tags = json!({
                 "resource_type": "chat_message",

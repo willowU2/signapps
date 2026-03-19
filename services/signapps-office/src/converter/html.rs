@@ -44,7 +44,7 @@ fn extract_text(element: &scraper::ElementRef) -> String {
         match node.value() {
             scraper::Node::Text(t) => {
                 text.push_str(t);
-            }
+            },
             scraper::Node::Element(_) => {
                 if let Some(child_elem) = scraper::ElementRef::wrap(node) {
                     let tag = child_elem.value().name();
@@ -76,8 +76,8 @@ fn extract_text(element: &scraper::ElementRef) -> String {
                         text.push('\n');
                     }
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
@@ -125,66 +125,66 @@ fn element_to_markdown(elem: &scraper::ElementRef) -> String {
             result.push_str("# ");
             result.push_str(&children_to_markdown(elem));
             result.push_str("\n\n");
-        }
+        },
         "h2" => {
             result.push_str("## ");
             result.push_str(&children_to_markdown(elem));
             result.push_str("\n\n");
-        }
+        },
         "h3" => {
             result.push_str("### ");
             result.push_str(&children_to_markdown(elem));
             result.push_str("\n\n");
-        }
+        },
         "h4" => {
             result.push_str("#### ");
             result.push_str(&children_to_markdown(elem));
             result.push_str("\n\n");
-        }
+        },
         "h5" => {
             result.push_str("##### ");
             result.push_str(&children_to_markdown(elem));
             result.push_str("\n\n");
-        }
+        },
         "h6" => {
             result.push_str("###### ");
             result.push_str(&children_to_markdown(elem));
             result.push_str("\n\n");
-        }
+        },
         "p" => {
             result.push_str(&children_to_markdown(elem));
             result.push_str("\n\n");
-        }
+        },
         "strong" | "b" => {
             result.push_str("**");
             result.push_str(&children_to_markdown(elem));
             result.push_str("**");
-        }
+        },
         "em" | "i" => {
             result.push('*');
             result.push_str(&children_to_markdown(elem));
             result.push('*');
-        }
+        },
         "u" => {
             result.push_str("<u>");
             result.push_str(&children_to_markdown(elem));
             result.push_str("</u>");
-        }
+        },
         "s" | "strike" | "del" => {
             result.push_str("~~");
             result.push_str(&children_to_markdown(elem));
             result.push_str("~~");
-        }
+        },
         "code" => {
             result.push('`');
             result.push_str(&children_to_markdown(elem));
             result.push('`');
-        }
+        },
         "pre" => {
             result.push_str("```\n");
             result.push_str(&children_to_markdown(elem));
             result.push_str("\n```\n\n");
-        }
+        },
         "a" => {
             let href = elem.value().attr("href").unwrap_or("#");
             result.push('[');
@@ -192,12 +192,12 @@ fn element_to_markdown(elem: &scraper::ElementRef) -> String {
             result.push_str("](");
             result.push_str(href);
             result.push(')');
-        }
+        },
         "img" => {
             let src = elem.value().attr("src").unwrap_or("");
             let alt = elem.value().attr("alt").unwrap_or("");
             result.push_str(&format!("![{}]({})", alt, src));
-        }
+        },
         "ul" => {
             for child in elem.children() {
                 if let Some(li) = scraper::ElementRef::wrap(child) {
@@ -209,7 +209,7 @@ fn element_to_markdown(elem: &scraper::ElementRef) -> String {
                 }
             }
             result.push('\n');
-        }
+        },
         "ol" => {
             let mut idx = 1;
             for child in elem.children() {
@@ -223,7 +223,7 @@ fn element_to_markdown(elem: &scraper::ElementRef) -> String {
                 }
             }
             result.push('\n');
-        }
+        },
         "blockquote" => {
             for line in children_to_markdown(elem).lines() {
                 result.push_str("> ");
@@ -231,21 +231,21 @@ fn element_to_markdown(elem: &scraper::ElementRef) -> String {
                 result.push('\n');
             }
             result.push('\n');
-        }
+        },
         "hr" => {
             result.push_str("---\n\n");
-        }
+        },
         "br" => {
             result.push_str("  \n");
-        }
+        },
         "table" => {
             result.push_str(&table_to_markdown(elem));
             result.push('\n');
-        }
+        },
         _ => {
             // Unknown tag: just process children
             result.push_str(&children_to_markdown(elem));
-        }
+        },
     }
 
     result

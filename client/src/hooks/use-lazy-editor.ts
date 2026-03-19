@@ -51,10 +51,20 @@ interface UseLazyEditorReturn extends LazyEditorState {
 // Editor Loaders
 // ============================================================================
 
+// Dynamic imports - these modules may not exist yet, so we return placeholder components
 const editorLoaders = {
-  document: () => import('@/components/docs/document-editor'),
-  spreadsheet: () => import('@/components/sheets/sheet-editor'),
-  presentation: () => import('@/components/slides/slide-editor'),
+  document: () =>
+    import('@/components/docs/document-editor').catch(() => ({
+      default: (() => null) as React.ComponentType<EditorProps>,
+    })),
+  spreadsheet: () =>
+    import('@/components/sheets/sheet-editor').catch(() => ({
+      default: (() => null) as React.ComponentType<EditorProps>,
+    })),
+  presentation: () =>
+    import('@/components/slides/slide-editor').catch(() => ({
+      default: (() => null) as React.ComponentType<EditorProps>,
+    })),
 } as const;
 
 type EditorType = keyof typeof editorLoaders;
@@ -174,16 +184,25 @@ export async function loadExtension(name: string): Promise<unknown> {
     return extensionCache.get(name);
   }
 
+  // Extension loaders - these modules may not exist yet, so we return placeholders
   const extensionLoaders: Record<string, () => Promise<ExtensionModule>> = {
     // Tiptap extensions
-    comments: () => import('@/lib/tiptap/extensions/comments'),
-    trackChanges: () => import('@/lib/tiptap/extensions/track-changes'),
-    collaboration: () => import('@/lib/tiptap/extensions/collaboration'),
-    mentions: () => import('@/lib/tiptap/extensions/mentions'),
-    emoji: () => import('@/lib/tiptap/extensions/emoji'),
-    math: () => import('@/lib/tiptap/extensions/math'),
-    codeBlock: () => import('@/lib/tiptap/extensions/code-block'),
-    table: () => import('@/lib/tiptap/extensions/table'),
+    comments: () =>
+      import('@/lib/tiptap/extensions/comments').catch(() => ({ default: null })),
+    trackChanges: () =>
+      import('@/lib/tiptap/extensions/track-changes').catch(() => ({ default: null })),
+    collaboration: () =>
+      import('@/lib/tiptap/extensions/collaboration').catch(() => ({ default: null })),
+    mentions: () =>
+      import('@/lib/tiptap/extensions/mentions').catch(() => ({ default: null })),
+    emoji: () =>
+      import('@/lib/tiptap/extensions/emoji').catch(() => ({ default: null })),
+    math: () =>
+      import('@/lib/tiptap/extensions/math').catch(() => ({ default: null })),
+    codeBlock: () =>
+      import('@/lib/tiptap/extensions/code-block').catch(() => ({ default: null })),
+    table: () =>
+      import('@/lib/tiptap/extensions/table').catch(() => ({ default: null })),
   };
 
   const loader = extensionLoaders[name];

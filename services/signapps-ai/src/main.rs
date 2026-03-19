@@ -6,6 +6,10 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use opendal::{
+    services::{Fs, S3},
+    Operator,
+};
 use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
@@ -40,6 +44,7 @@ pub struct AppState {
     pub vectors: VectorService,
     pub embeddings: EmbeddingsClient,
     pub providers: Arc<ProviderRegistry>,
+    pub storage: Operator,
     pub rag: RagPipeline,
     pub indexer: IndexPipeline,
     pub jwt_config: JwtConfig,
@@ -91,6 +96,30 @@ async fn main() -> anyhow::Result<()> {
 
     let embeddings = EmbeddingsClient::new(&embeddings_url);
     tracing::info!("Embeddings client initialized");
+
+    // Initialize Storage Operator (OpenDAL)
+    let storage_mode = env_or("STORAGE_MODE", "fs");
+    let storage = if storage_mode == "s3" {
+        let endpoint = std::env::var("STORAGE_ENDPOINT").unwrap_or_default();
+        let access_key = std::env::var("STORAGE_ACCESS_KEY").unwrap_or_default();
+        let secret_key = std::env::var("STORAGE_SECRET_KEY").unwrap_or_default();
+        let region = std::env::var("STORAGE_REGION").unwrap_or_else(|_| "auto".into());
+        let bucket = std::env::var("STORAGE_BUCKET").unwrap_or_default();
+
+        let builder = S3::default()
+            .endpoint(&endpoint)
+            .access_key_id(&access_key)
+            .secret_access_key(&secret_key)
+            .region(&region)
+            .bucket(&bucket);
+
+        Operator::new(builder)?.finish()
+    } else {
+        let root = env_or("STORAGE_ROOT", "/data/signapps");
+        let builder = Fs::default().root(&root);
+        Operator::new(builder)?.finish()
+    };
+    tracing::info!("Storage operator initialized (mode: {})", storage_mode);
 
     // Build provider registry from environment variables
     let requested_default = std::env::var("LLM_PROVIDER").unwrap_or_default();
@@ -209,8 +238,8 @@ async fn main() -> anyhow::Result<()> {
     // Google Gemini
     if let Ok(key) = std::env::var("GEMINI_API_KEY") {
         if !key.is_empty() {
-            let default_model = std::env::var("GEMINI_MODEL")
-                .unwrap_or_else(|_| "gemini-2.0-flash".to_string());
+            let default_model =
+                std::env::var("GEMINI_MODEL").unwrap_or_else(|_| "gemini-2.0-flash".to_string());
             let config = ProviderConfig {
                 provider_type: LlmProviderType::Gemini,
                 base_url: "https://generativelanguage.googleapis.com".to_string(),
@@ -236,8 +265,8 @@ async fn main() -> anyhow::Result<()> {
     // LM Studio (local, OpenAI-compatible)
     if let Ok(url) = std::env::var("LMSTUDIO_URL") {
         if !url.is_empty() {
-            let default_model = std::env::var("LMSTUDIO_MODEL")
-                .unwrap_or_else(|_| "default".to_string());
+            let default_model =
+                std::env::var("LMSTUDIO_MODEL").unwrap_or_else(|_| "default".to_string());
             let config = ProviderConfig {
                 provider_type: LlmProviderType::LmStudio,
                 base_url: url,
@@ -338,6 +367,7 @@ async fn main() -> anyhow::Result<()> {
         vectors,
         embeddings,
         providers,
+        storage,
         rag,
         indexer,
         jwt_config,

@@ -4,7 +4,9 @@
  * API client for managing asynchronous conversion jobs.
  */
 
-import api from '@/lib/api';
+import { getClient, ServiceName } from '@/lib/api/factory';
+
+const api = getClient(ServiceName.OFFICE);
 import type {
   ConversionJob,
   BatchJob,

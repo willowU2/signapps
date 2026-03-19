@@ -1,5 +1,5 @@
-use signapps_common::AiIndexerClient;
 use signapps_common::traits::crawler::DatabaseCrawler;
+use signapps_common::AiIndexerClient;
 use signapps_db::DatabasePool;
 use std::sync::Arc;
 use tokio::time::{interval, Duration};
@@ -57,11 +57,7 @@ pub async fn start_ingestion_loop(pool: DatabasePool) {
                                         let _ = crawler.mark_as_processed(&pool, record_id).await;
                                     },
                                     Err(e) => {
-                                        tracing::error!(
-                                            "Failed to ingest {}: {}",
-                                            record_id,
-                                            e
-                                        );
+                                        tracing::error!("Failed to ingest {}: {}", record_id, e);
                                     },
                                 }
                             },

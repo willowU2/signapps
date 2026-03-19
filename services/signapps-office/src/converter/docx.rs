@@ -41,7 +41,9 @@ pub fn html_to_docx_with_comments(
     let mut buffer = Vec::new();
     docx.build()
         .pack(&mut std::io::Cursor::new(&mut buffer))
-        .map_err(|e| ConversionError::ConversionFailed(format!("Failed to generate DOCX: {}", e)))?;
+        .map_err(|e| {
+            ConversionError::ConversionFailed(format!("Failed to generate DOCX: {}", e))
+        })?;
 
     Ok(buffer)
 }
@@ -54,10 +56,7 @@ fn add_comments_appendix(mut docx: Docx, comments: &[Comment]) -> Docx {
 
     // Header "Comments"
     let header = Paragraph::new().add_run(
-        Run::new()
-            .add_text("Commentaires")
-            .bold()
-            .size(36), // 18pt
+        Run::new().add_text("Commentaires").bold().size(36), // 18pt
     );
     docx = docx.add_paragraph(header);
 
@@ -130,26 +129,22 @@ fn process_element(docx: &mut Docx, elem: &scraper::ElementRef) -> Result<(), Co
             let text = extract_text_content(elem);
             let para = create_heading_paragraph(&text, level);
             *docx = std::mem::take(docx).add_paragraph(para);
-        }
+        },
         "p" => {
             let para = create_paragraph_from_element(elem)?;
             *docx = std::mem::take(docx).add_paragraph(para);
-        }
+        },
         "ul" | "ol" => {
             let is_ordered = tag == "ol";
             process_list(docx, elem, is_ordered, 0)?;
-        }
+        },
         "blockquote" => {
             let text = extract_text_content(elem);
             let para = Paragraph::new()
-                .add_run(
-                    Run::new()
-                        .add_text(&text)
-                        .italic(),
-                )
+                .add_run(Run::new().add_text(&text).italic())
                 .indent(Some(720), None, None, None); // 0.5 inch indent
             *docx = std::mem::take(docx).add_paragraph(para);
-        }
+        },
         "pre" => {
             let text = extract_text_content(elem);
             // Create a code block style paragraph
@@ -163,16 +158,16 @@ fn process_element(docx: &mut Docx, elem: &scraper::ElementRef) -> Result<(), Co
                     .indent(Some(360), None, None, None);
                 *docx = std::mem::take(docx).add_paragraph(para);
             }
-        }
+        },
         "table" => {
             let table = create_table_from_element(elem)?;
             *docx = std::mem::take(docx).add_table(table);
-        }
+        },
         "hr" => {
             // Add a horizontal rule as a paragraph with border
             let para = Paragraph::new();
             *docx = std::mem::take(docx).add_paragraph(para);
-        }
+        },
         "div" => {
             // Check for page break
             if elem.value().attr("data-page-break").is_some() {
@@ -191,18 +186,18 @@ fn process_element(docx: &mut Docx, elem: &scraper::ElementRef) -> Result<(), Co
                     }
                 }
             }
-        }
+        },
         "br" => {
             let para = Paragraph::new().add_run(Run::new().add_break(BreakType::TextWrapping));
             *docx = std::mem::take(docx).add_paragraph(para);
-        }
+        },
         "img" => {
             // Images would need special handling with actual image data
             // For now, add alt text as placeholder
             let alt = elem.value().attr("alt").unwrap_or("[Image]");
             let para = Paragraph::new().add_run(Run::new().add_text(format!("[{}]", alt)));
             *docx = std::mem::take(docx).add_paragraph(para);
-        }
+        },
         _ => {
             // For unknown elements, try to process children
             for child in elem.children() {
@@ -210,7 +205,7 @@ fn process_element(docx: &mut Docx, elem: &scraper::ElementRef) -> Result<(), Co
                     process_element(docx, &child_elem)?;
                 }
             }
-        }
+        },
     }
 
     Ok(())
@@ -227,16 +222,11 @@ fn create_heading_paragraph(text: &str, level: usize) -> Paragraph {
     };
 
     Paragraph::new().add_run(
-        Run::new()
-            .add_text(text)
-            .bold()
-            .size(size * 2), // size is in half-points
+        Run::new().add_text(text).bold().size(size * 2), // size is in half-points
     )
 }
 
-fn create_paragraph_from_element(
-    elem: &scraper::ElementRef,
-) -> Result<Paragraph, ConversionError> {
+fn create_paragraph_from_element(elem: &scraper::ElementRef) -> Result<Paragraph, ConversionError> {
     let mut paragraph = Paragraph::new();
 
     // Check for text alignment, line height, and indent
@@ -281,13 +271,13 @@ fn process_inline_content(
                 if !text_str.trim().is_empty() {
                     paragraph = paragraph.add_run(Run::new().add_text(text_str));
                 }
-            }
+            },
             scraper::Node::Element(_) => {
                 if let Some(child_elem) = scraper::ElementRef::wrap(child) {
                     paragraph = process_inline_element(paragraph, &child_elem)?;
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
     Ok(paragraph)
@@ -305,23 +295,23 @@ fn process_inline_element(
     match tag {
         "strong" | "b" => {
             run = run.bold();
-        }
+        },
         "em" | "i" => {
             run = run.italic();
-        }
+        },
         "u" => {
             run = run.underline("single");
-        }
+        },
         "s" | "strike" | "del" => {
             run = run.strike();
-        }
+        },
         "code" => {
             run = run.fonts(RunFonts::new().ascii("Courier New"));
-        }
+        },
         "a" => {
             // Links - just show text with underline
             run = run.underline("single").color("0000FF");
-        }
+        },
         "span" => {
             // Check for styling
             if let Some(style) = elem.value().attr("style") {
@@ -332,24 +322,24 @@ fn process_inline_element(
                     run = run.size(font_size);
                 }
             }
-        }
+        },
         "mark" => {
             run = run.highlight("yellow");
-        }
+        },
         "sub" => {
             run = run.vanish().size(16); // Smaller text for subscript
-        }
+        },
         "sup" => {
             run = run.vanish().size(16); // Smaller text for superscript
-        }
+        },
         "br" => {
             paragraph = paragraph.add_run(Run::new().add_break(BreakType::TextWrapping));
             return Ok(paragraph);
-        }
+        },
         _ => {
             // For nested elements, recursively process
             return process_inline_content(paragraph, elem);
-        }
+        },
     }
 
     paragraph = paragraph.add_run(run);
@@ -416,17 +406,16 @@ fn create_table_from_element(elem: &scraper::ElementRef) -> Result<Table, Conver
         // Process header cells
         for th in tr.select(&th_selector) {
             let text = extract_text_content(&th);
-            let cell = TableCell::new().add_paragraph(
-                Paragraph::new().add_run(Run::new().add_text(&text).bold()),
-            );
+            let cell = TableCell::new()
+                .add_paragraph(Paragraph::new().add_run(Run::new().add_text(&text).bold()));
             cells.push(cell);
         }
 
         // Process data cells
         for td in tr.select(&td_selector) {
             let text = extract_text_content(&td);
-            let cell =
-                TableCell::new().add_paragraph(Paragraph::new().add_run(Run::new().add_text(&text)));
+            let cell = TableCell::new()
+                .add_paragraph(Paragraph::new().add_run(Run::new().add_text(&text)));
             cells.push(cell);
         }
 
@@ -446,13 +435,13 @@ fn extract_text_content(elem: &scraper::ElementRef) -> String {
         match node.value() {
             scraper::Node::Text(t) => {
                 text.push_str(t);
-            }
+            },
             scraper::Node::Element(_) => {
                 if let Some(child_elem) = scraper::ElementRef::wrap(node) {
                     text.push_str(&extract_text_content(&child_elem));
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
@@ -561,8 +550,7 @@ mod tests {
 
     #[test]
     fn test_formatting() {
-        let html =
-            "<html><body><p><strong>bold</strong> and <em>italic</em></p></body></html>";
+        let html = "<html><body><p><strong>bold</strong> and <em>italic</em></p></body></html>";
         let result = html_to_docx(html);
         assert!(result.is_ok());
     }

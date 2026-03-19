@@ -3,14 +3,33 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Command } from 'cmdk';
-import { Search, FileText, Mail, User, Mic, Monitor, Calendar, LayoutDashboard, Building2, FolderOpen, Plus, CheckSquare } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchOmniSearch } from '@/lib/api/search';
+import { Search, FileText, Mail, User, Mic, Monitor, Calendar, LayoutDashboard, Building2, FolderOpen, Plus, CheckSquare, File } from 'lucide-react';
 import { useEntityStore } from '@/stores/entity-hub-store';
 import { useUIStore } from '@/lib/store';
 import { useCommandBarStore } from '@/stores/command-bar-store';
 
+function useDebounce<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = React.useState<T>(value);
+    React.useEffect(() => {
+        const timer = setTimeout(() => setDebouncedValue(value), delay);
+        return () => clearTimeout(timer);
+    }, [value, delay]);
+    return debouncedValue;
+}
+
 export function CommandBar() {
     const router = useRouter();
     const { isOpen: open, setOpen, toggle } = useCommandBarStore();
+    const [query, setQuery] = React.useState("");
+    const debouncedQuery = useDebounce(query, 300);
+
+    const { data: searchResults, isLoading } = useQuery({
+        queryKey: ['omni-search', debouncedQuery],
+        queryFn: () => fetchOmniSearch(debouncedQuery),
+        enabled: debouncedQuery.length > 0,
+    });
 
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {
@@ -41,12 +60,34 @@ export function CommandBar() {
                         <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />
                         <Command.Input
                             autoFocus
-                            placeholder="Type a command or search..."
+                            placeholder="Type a command or search everywhere..."
                             className="flex h-14 w-full rounded-md bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
+                            value={query}
+                            onValueChange={setQuery}
                         />
                     </div>
                     <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden p-2">
                         <Command.Empty className="py-6 text-center text-sm text-muted-foreground">No results found.</Command.Empty>
+
+                        {isLoading && debouncedQuery.length > 0 && (
+                            <div className="py-6 text-center text-sm text-muted-foreground animate-pulse">Searching everywhere...</div>
+                        )}
+
+                        {searchResults?.results && searchResults.results.length > 0 && (
+                            <Command.Group heading="Search Results" className="text-xs font-semibold text-muted-foreground px-2 py-2">
+                                {searchResults.results.map(r => (
+                                    <Command.Item key={r.id} onSelect={() => runCommand(() => router.push(r.url))} className="flex items-center px-3 py-3 rounded-lg cursor-pointer hover:bg-accent/50 transition-colors text-sm text-foreground data-[selected=true]:bg-accent/50 data-[selected=true]:text-accent-foreground">
+                                        {r.entity_type === 'document' && <FileText className="mr-3 h-4 w-4 text-blue-500 shrink-0" />}
+                                        {r.entity_type === 'mail' && <Mail className="mr-3 h-4 w-4 text-red-500 shrink-0" />}
+                                        {r.entity_type === 'file' && <File className="mr-3 h-4 w-4 text-orange-500 shrink-0" />}
+                                        <div className="flex flex-col items-start overflow-hidden">
+                                            <span className="truncate w-full">{r.title}</span>
+                                            {r.snippet && <span className="text-xs text-muted-foreground truncate w-full">{r.snippet}</span>}
+                                        </div>
+                                    </Command.Item>
+                                ))}
+                            </Command.Group>
+                        )}
 
                         <Command.Group heading="Apps" className="text-xs font-semibold text-muted-foreground px-2 py-2">
                             <Command.Item onSelect={() => runCommand(() => router.push('/dashboard'))} className="flex items-center px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent/50 transition-colors text-sm text-foreground data-[selected=true]:bg-accent/50 data-[selected=true]:text-accent-foreground">

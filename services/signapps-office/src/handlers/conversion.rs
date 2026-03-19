@@ -113,6 +113,49 @@ pub async fn convert_json(
     Query(query): Query<ConversionQuery>,
     Json(request): Json<ConversionRequest>,
 ) -> Result<Response, ConversionErrorResponse> {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+    let mut hasher = DefaultHasher::new();
+    serde_json::to_string(&request)
+        .unwrap_or_default()
+        .hash(&mut hasher);
+    let format_str = format!("{:?}", query.format);
+    let cache_key = format!("conv_{}_{}", format_str, hasher.finish());
+
+    if let Some(cached_data) = state.cache.get(&cache_key).await {
+        tracing::info!("Cache hit for Conversion: {}", cache_key);
+        let content_type = match query.format {
+            OutputFormat::Docx => {
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            },
+            OutputFormat::Pdf => "application/pdf",
+            OutputFormat::Markdown => "text/markdown",
+            OutputFormat::Html => "text/html",
+            OutputFormat::Text => "text/plain",
+        };
+
+        let final_filename = query.filename.clone().unwrap_or_else(|| {
+            let ext = match query.format {
+                OutputFormat::Docx => "docx",
+                OutputFormat::Pdf => "pdf",
+                OutputFormat::Markdown => "md",
+                OutputFormat::Html => "html",
+                OutputFormat::Text => "txt",
+            };
+            format!("document.{}", ext)
+        });
+
+        return Ok(Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, content_type)
+            .header(
+                header::CONTENT_DISPOSITION,
+                format!("attachment; filename=\"{}\"", final_filename),
+            )
+            .header(header::CONTENT_LENGTH, cached_data.len())
+            .body(Body::from(cached_data))
+            .unwrap());
+    }
+
     let content_str = match request.input_format {
         InputFormat::TiptapJson => serde_json::to_string(&request.content)
             .map_err(|e| ConversionError::InvalidInput(e.to_string()))?,
@@ -156,6 +199,8 @@ pub async fn convert_json(
                 .collect()
         });
 
+    let start_time = std::time::Instant::now();
+
     let result = state
         .converter
         .convert_with_comments(
@@ -166,18 +211,30 @@ pub async fn convert_json(
         )
         .await?;
 
-    let filename = query
+    let duration_ms = start_time.elapsed().as_millis();
+    tracing::info!(
+        metric = "export_duration_ms",
+        format = ?query.format,
+        duration_ms = duration_ms,
+        "Document exported successfully in {}ms",
+        duration_ms
+    );
+
+    let final_filename = query
         .filename
         .unwrap_or_else(|| format!("document.{}", result.extension));
 
     let content_type = result.mime_type;
+
+    // Save to cache
+    state.cache.set(&cache_key, result.data.clone()).await;
 
     Ok(Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, content_type)
         .header(
             header::CONTENT_DISPOSITION,
-            format!("attachment; filename=\"{}\"", filename),
+            format!("attachment; filename=\"{}\"", final_filename),
         )
         .header(header::CONTENT_LENGTH, result.data.len())
         .body(Body::from(result.data))
@@ -215,19 +272,20 @@ pub async fn convert_upload(
 
                 // Auto-detect format from extension
                 input_format = Some(detect_format_from_filename(&filename));
-            }
+            },
             "input_format" => {
                 let format_str = field
                     .text()
                     .await
                     .map_err(|e| ConversionError::InvalidInput(e.to_string()))?;
                 input_format = Some(parse_input_format(&format_str)?);
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
-    let content = content.ok_or_else(|| ConversionError::InvalidInput("No file provided".into()))?;
+    let content =
+        content.ok_or_else(|| ConversionError::InvalidInput("No file provided".into()))?;
     let input_format =
         input_format.ok_or_else(|| ConversionError::InvalidInput("No format provided".into()))?;
 
@@ -327,40 +385,36 @@ pub async fn convert_batch(
 
     for item in request.items {
         let content_str = match item.input_format {
-            InputFormat::TiptapJson => {
-                match serde_json::to_string(&item.content) {
-                    Ok(s) => s,
-                    Err(e) => {
-                        failed += 1;
-                        results.push(BatchConversionResultItem {
-                            id: item.id,
-                            success: false,
-                            data_base64: None,
-                            mime_type: None,
-                            extension: None,
-                            error: Some(e.to_string()),
-                        });
-                        continue;
-                    }
-                }
-            }
-            InputFormat::Html | InputFormat::Markdown => {
-                match item.content.as_str() {
-                    Some(s) => s.to_string(),
-                    None => {
-                        failed += 1;
-                        results.push(BatchConversionResultItem {
-                            id: item.id,
-                            success: false,
-                            data_base64: None,
-                            mime_type: None,
-                            extension: None,
-                            error: Some("Content must be a string".to_string()),
-                        });
-                        continue;
-                    }
-                }
-            }
+            InputFormat::TiptapJson => match serde_json::to_string(&item.content) {
+                Ok(s) => s,
+                Err(e) => {
+                    failed += 1;
+                    results.push(BatchConversionResultItem {
+                        id: item.id,
+                        success: false,
+                        data_base64: None,
+                        mime_type: None,
+                        extension: None,
+                        error: Some(e.to_string()),
+                    });
+                    continue;
+                },
+            },
+            InputFormat::Html | InputFormat::Markdown => match item.content.as_str() {
+                Some(s) => s.to_string(),
+                None => {
+                    failed += 1;
+                    results.push(BatchConversionResultItem {
+                        id: item.id,
+                        success: false,
+                        data_base64: None,
+                        mime_type: None,
+                        extension: None,
+                        error: Some("Content must be a string".to_string()),
+                    });
+                    continue;
+                },
+            },
         };
 
         let input_format = match item.input_format {
@@ -385,7 +439,7 @@ pub async fn convert_batch(
                     extension: Some(result.extension.to_string()),
                     error: None,
                 });
-            }
+            },
             Err(e) => {
                 failed += 1;
                 results.push(BatchConversionResultItem {
@@ -396,7 +450,7 @@ pub async fn convert_batch(
                     extension: None,
                     error: Some(e.to_string()),
                 });
-            }
+            },
         }
     }
 
@@ -424,7 +478,7 @@ impl IntoResponse for ConversionErrorResponse {
             ConversionError::UnsupportedFormat(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
             ConversionError::ConversionFailed(msg) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, msg.clone())
-            }
+            },
         };
 
         let body = serde_json::json!({

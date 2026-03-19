@@ -1,4 +1,4 @@
-﻿//! LLM Provider abstraction supporting multiple backends.
+//! LLM Provider abstraction supporting multiple backends.
 
 use async_trait::async_trait;
 use reqwest::Client;
@@ -765,7 +765,7 @@ impl LlmProvider for AnthropicProvider {
                 Role::System => {
                     system_message = Some(m.content.clone());
                     None
-                }
+                },
                 Role::User => Some(AnthropicMessage {
                     role: "user".to_string(),
                     content: m.content.clone(),
@@ -824,22 +824,28 @@ impl LlmProvider for AnthropicProvider {
                                                 .and_then(|d| d.get("text"))
                                                 .and_then(|t| t.as_str())
                                             {
-                                                if tx.send(Ok(delta_text.to_string())).await.is_err() {
+                                                if tx
+                                                    .send(Ok(delta_text.to_string()))
+                                                    .await
+                                                    .is_err()
+                                                {
                                                     return;
                                                 }
                                             }
-                                        }
+                                        },
                                         Some("message_stop") => return,
-                                        _ => {} // skip other events
+                                        _ => {}, // skip other events
                                     }
                                 }
                             }
                         }
-                    }
+                    },
                     Err(e) => {
-                        let _ = tx.send(Err(Error::Internal(format!("Stream error: {}", e)))).await;
+                        let _ = tx
+                            .send(Err(Error::Internal(format!("Stream error: {}", e))))
+                            .await;
                         return;
-                    }
+                    },
                 }
             }
         });
@@ -975,7 +981,11 @@ impl LlmProvider for GeminiProvider {
             .into_iter()
             .filter(|m| m.name.contains("gemini"))
             .map(|m| {
-                let id = m.name.strip_prefix("models/").unwrap_or(&m.name).to_string();
+                let id = m
+                    .name
+                    .strip_prefix("models/")
+                    .unwrap_or(&m.name)
+                    .to_string();
                 ModelInfo {
                     id,
                     object: "model".to_string(),
@@ -1002,17 +1012,23 @@ impl LlmProvider for GeminiProvider {
                 Role::System => {
                     system_instruction = Some(GeminiContent {
                         role: None,
-                        parts: vec![GeminiPart { text: m.content.clone() }],
+                        parts: vec![GeminiPart {
+                            text: m.content.clone(),
+                        }],
                     });
                     None
-                }
+                },
                 Role::User => Some(GeminiContent {
                     role: Some("user".to_string()),
-                    parts: vec![GeminiPart { text: m.content.clone() }],
+                    parts: vec![GeminiPart {
+                        text: m.content.clone(),
+                    }],
                 }),
                 Role::Assistant => Some(GeminiContent {
                     role: Some("model".to_string()),
-                    parts: vec![GeminiPart { text: m.content.clone() }],
+                    parts: vec![GeminiPart {
+                        text: m.content.clone(),
+                    }],
                 }),
             })
             .collect();
@@ -1101,17 +1117,23 @@ impl LlmProvider for GeminiProvider {
                 Role::System => {
                     system_instruction = Some(GeminiContent {
                         role: None,
-                        parts: vec![GeminiPart { text: m.content.clone() }],
+                        parts: vec![GeminiPart {
+                            text: m.content.clone(),
+                        }],
                     });
                     None
-                }
+                },
                 Role::User => Some(GeminiContent {
                     role: Some("user".to_string()),
-                    parts: vec![GeminiPart { text: m.content.clone() }],
+                    parts: vec![GeminiPart {
+                        text: m.content.clone(),
+                    }],
                 }),
                 Role::Assistant => Some(GeminiContent {
                     role: Some("model".to_string()),
-                    parts: vec![GeminiPart { text: m.content.clone() }],
+                    parts: vec![GeminiPart {
+                        text: m.content.clone(),
+                    }],
                 }),
             })
             .collect();
@@ -1168,11 +1190,13 @@ impl LlmProvider for GeminiProvider {
                                 }
                             }
                         }
-                    }
+                    },
                     Err(e) => {
-                        let _ = tx.send(Err(Error::Internal(format!("Stream error: {}", e)))).await;
+                        let _ = tx
+                            .send(Err(Error::Internal(format!("Stream error: {}", e))))
+                            .await;
                         return;
-                    }
+                    },
                 }
             }
         });
@@ -1225,7 +1249,9 @@ impl LlmProvider for LmStudioProvider {
         max_tokens: Option<u32>,
         temperature: Option<f32>,
     ) -> Result<ChatResponse> {
-        self.inner.chat(messages, model, max_tokens, temperature).await
+        self.inner
+            .chat(messages, model, max_tokens, temperature)
+            .await
     }
 
     async fn chat_stream(
@@ -1235,7 +1261,9 @@ impl LlmProvider for LmStudioProvider {
         max_tokens: Option<u32>,
         temperature: Option<f32>,
     ) -> Result<mpsc::Receiver<Result<String>>> {
-        self.inner.chat_stream(messages, model, max_tokens, temperature).await
+        self.inner
+            .chat_stream(messages, model, max_tokens, temperature)
+            .await
     }
 
     async fn health_check(&self) -> Result<bool> {
@@ -1287,10 +1315,8 @@ pub fn create_provider(config: &ProviderConfig) -> Result<Box<dyn LlmProvider>> 
             &config.base_url,
             &config.default_model,
         ))),
-        LlmProviderType::LlamaCpp => {
-            Err(Error::Validation(
-                "LlamaCpp provider requires async init via LlamaCppProvider::new()".to_string(),
-            ))
-        },
+        LlmProviderType::LlamaCpp => Err(Error::Validation(
+            "LlamaCpp provider requires async init via LlamaCppProvider::new()".to_string(),
+        )),
     }
 }

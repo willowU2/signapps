@@ -58,7 +58,7 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
                     escape_xml(text)
                 ));
                 y_offset += 100.0;
-            }
+            },
             SlideContent::Subtitle(text) => {
                 svg.push_str(&format!(
                     r##"    <text x="100" y="{}" font-family="Arial, sans-serif" font-size="48" fill="#666666">{}</text>
@@ -67,7 +67,7 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
                     escape_xml(text)
                 ));
                 y_offset += 70.0;
-            }
+            },
             SlideContent::Body(elements) => {
                 for element in elements {
                     for run in &element.runs {
@@ -89,7 +89,7 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
                         y_offset += font_size * 2.0 + 10.0;
                     }
                 }
-            }
+            },
             SlideContent::BulletList(items) => {
                 for item in items {
                     svg.push_str(&format!(
@@ -100,7 +100,7 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
                     ));
                     y_offset += 50.0;
                 }
-            }
+            },
             SlideContent::Shape {
                 shape_type,
                 width,
@@ -120,7 +120,7 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
 "##,
                             px, py, pw, ph, escape_xml_attr(fill)
                         ));
-                    }
+                    },
                     "circle" => {
                         let cx = px + pw / 2.0;
                         let cy = py + ph / 2.0;
@@ -130,7 +130,7 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
 "##,
                             cx, cy, r, escape_xml_attr(fill)
                         ));
-                    }
+                    },
                     "triangle" => {
                         let p1 = format!("{},{}", px + pw / 2.0, py);
                         let p2 = format!("{},{}", px, py + ph);
@@ -140,7 +140,7 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
 "##,
                             p1, p2, p3, escape_xml_attr(fill)
                         ));
-                    }
+                    },
                     "line" => {
                         svg.push_str(&format!(
                             r##"    <line x1="{}" y1="{}" x2="{}" y2="{}" stroke="{}" stroke-width="3"/>
@@ -151,7 +151,7 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
                             py + ph,
                             escape_xml_attr(fill)
                         ));
-                    }
+                    },
                     _ => {
                         // Default to rectangle for unknown shapes
                         svg.push_str(&format!(
@@ -159,10 +159,16 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
 "##,
                             px, py, pw, ph, escape_xml_attr(fill)
                         ));
-                    }
+                    },
                 }
-            }
-            SlideContent::Image { path, width, height, x, y } => {
+            },
+            SlideContent::Image {
+                path,
+                width,
+                height,
+                x,
+                y,
+            } => {
                 let (px, py) = scale_coords(*x, *y);
                 let (pw, ph) = scale_size(*width, *height);
 
@@ -171,7 +177,11 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
                     svg.push_str(&format!(
                         r##"    <image x="{}" y="{}" width="{}" height="{}" href="{}"/>
 "##,
-                        px, py, pw, ph, escape_xml_attr(path)
+                        px,
+                        py,
+                        pw,
+                        ph,
+                        escape_xml_attr(path)
                     ));
                 } else {
                     // Placeholder for file paths
@@ -187,7 +197,7 @@ pub fn slide_to_svg(slide: &Slide, slide_num: usize) -> Result<String, Presentat
                         py + ph / 2.0
                     ));
                 }
-            }
+            },
         }
     }
 
@@ -217,8 +227,10 @@ pub fn slide_to_png(slide: &Slide, slide_num: usize) -> Result<Vec<u8>, Presenta
 
     // Create pixmap
     let pixmap_size = tree.size().to_int_size();
-    let mut pixmap = tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height())
-        .ok_or_else(|| PresentationError::ConversionFailed("Failed to create pixmap".to_string()))?;
+    let mut pixmap =
+        tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height()).ok_or_else(|| {
+            PresentationError::ConversionFailed("Failed to create pixmap".to_string())
+        })?;
 
     // Fill with white background
     pixmap.fill(tiny_skia::Color::WHITE);
@@ -227,7 +239,8 @@ pub fn slide_to_png(slide: &Slide, slide_num: usize) -> Result<Vec<u8>, Presenta
     resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
 
     // Encode to PNG
-    let png_data = pixmap.encode_png()
+    let png_data = pixmap
+        .encode_png()
         .map_err(|e| PresentationError::ConversionFailed(format!("PNG encode error: {}", e)))?;
 
     Ok(png_data)
@@ -244,7 +257,9 @@ pub fn presentation_to_svgs(presentation: &Presentation) -> Result<Vec<String>, 
 }
 
 /// Export all slides as PNG bytes
-pub fn presentation_to_pngs(presentation: &Presentation) -> Result<Vec<Vec<u8>>, PresentationError> {
+pub fn presentation_to_pngs(
+    presentation: &Presentation,
+) -> Result<Vec<Vec<u8>>, PresentationError> {
     presentation
         .slides
         .iter()
@@ -290,9 +305,7 @@ mod tests {
     fn test_slide_to_svg() {
         let slide = Slide {
             title: Some("Test Slide".to_string()),
-            contents: vec![
-                SlideContent::Body(vec![]),
-            ],
+            contents: vec![SlideContent::Body(vec![])],
             notes: None,
             background_color: Some("#f0f0f0".to_string()),
             layout: SlideLayout::TitleAndContent,
@@ -323,6 +336,9 @@ mod tests {
         let png = result.unwrap();
         // PNG magic bytes
         assert!(png.len() > 8);
-        assert_eq!(&png[0..8], &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+        assert_eq!(
+            &png[0..8],
+            &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
+        );
     }
 }

@@ -23,7 +23,6 @@ pub struct AccountResponse {
     pub created_at: String,
 }
 
-
 /// Create account request DTO
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateAccountRequest {
@@ -78,7 +77,7 @@ async fn get_account_by_username(
     _state: State<'_, AppState>,
     _username: String,
 ) -> Result<AccountResponse, String> {
-     Err("SeaORM removed. Connect through backend API.".into())
+    Err("SeaORM removed. Connect through backend API.".into())
 }
 
 /// Delete account by ID

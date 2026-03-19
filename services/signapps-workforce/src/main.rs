@@ -86,7 +86,10 @@ fn create_router(state: AppState) -> Router {
         .route("/nodes/{id}", delete(handlers::org::delete_node))
         .route("/nodes/{id}/move", post(handlers::org::move_node))
         .route("/nodes/{id}/children", get(handlers::org::get_children))
-        .route("/nodes/{id}/descendants", get(handlers::org::get_descendants))
+        .route(
+            "/nodes/{id}/descendants",
+            get(handlers::org::get_descendants),
+        )
         .route("/nodes/{id}/ancestors", get(handlers::org::get_ancestors))
         .route("/node-types", get(handlers::org::list_node_types))
         .route("/node-types", post(handlers::org::create_node_type))
@@ -109,8 +112,14 @@ fn create_router(state: AppState) -> Router {
         .route("/{id}/link-user", post(handlers::employees::link_user))
         .route("/{id}/unlink-user", post(handlers::employees::unlink_user))
         .route("/{id}/functions", get(handlers::employees::get_functions))
-        .route("/{id}/functions", put(handlers::employees::update_functions))
-        .route("/by-node/{node_id}", get(handlers::employees::list_by_org_node))
+        .route(
+            "/{id}/functions",
+            put(handlers::employees::update_functions),
+        )
+        .route(
+            "/by-node/{node_id}",
+            get(handlers::employees::list_by_org_node),
+        )
         .route("/search", get(handlers::employees::search_employees))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
@@ -124,8 +133,14 @@ fn create_router(state: AppState) -> Router {
     let function_routes = Router::new()
         .route("/", get(handlers::employees::list_function_definitions))
         .route("/", post(handlers::employees::create_function_definition))
-        .route("/{id}", put(handlers::employees::update_function_definition))
-        .route("/{id}", delete(handlers::employees::delete_function_definition))
+        .route(
+            "/{id}",
+            put(handlers::employees::update_function_definition),
+        )
+        .route(
+            "/{id}",
+            delete(handlers::employees::delete_function_definition),
+        )
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -141,7 +156,10 @@ fn create_router(state: AppState) -> Router {
         .route("/{id}", get(handlers::coverage::get_template))
         .route("/{id}", put(handlers::coverage::update_template))
         .route("/{id}", delete(handlers::coverage::delete_template))
-        .route("/{id}/duplicate", post(handlers::coverage::duplicate_template))
+        .route(
+            "/{id}/duplicate",
+            post(handlers::coverage::duplicate_template),
+        )
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -157,8 +175,14 @@ fn create_router(state: AppState) -> Router {
         .route("/{id}", get(handlers::coverage::get_rule))
         .route("/{id}", put(handlers::coverage::update_rule))
         .route("/{id}", delete(handlers::coverage::delete_rule))
-        .route("/by-node/{node_id}", get(handlers::coverage::get_rules_by_node))
-        .route("/effective/{node_id}", get(handlers::coverage::get_effective_coverage))
+        .route(
+            "/by-node/{node_id}",
+            get(handlers::coverage::get_rules_by_node),
+        )
+        .route(
+            "/effective/{node_id}",
+            get(handlers::coverage::get_effective_coverage),
+        )
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -171,8 +195,14 @@ fn create_router(state: AppState) -> Router {
     let validation_routes = Router::new()
         .route("/coverage", post(handlers::validation::validate_coverage))
         .route("/gaps", get(handlers::validation::analyze_gaps))
-        .route("/leave-simulation", post(handlers::validation::simulate_leave))
-        .route("/shift-simulation", post(handlers::validation::simulate_shift_change))
+        .route(
+            "/leave-simulation",
+            post(handlers::validation::simulate_leave),
+        )
+        .route(
+            "/shift-simulation",
+            post(handlers::validation::simulate_shift_change),
+        )
         .route("/conflicts", get(handlers::validation::get_conflicts))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
@@ -187,7 +217,10 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/workforce/org", org_routes)
         .nest("/api/v1/workforce/employees", employee_routes)
         .nest("/api/v1/workforce/functions", function_routes)
-        .nest("/api/v1/workforce/coverage/templates", coverage_template_routes)
+        .nest(
+            "/api/v1/workforce/coverage/templates",
+            coverage_template_routes,
+        )
         .nest("/api/v1/workforce/coverage/rules", coverage_rule_routes)
         .nest("/api/v1/workforce/validate", validation_routes)
         .nest("/health", health_routes)

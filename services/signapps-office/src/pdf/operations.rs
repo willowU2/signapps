@@ -4,7 +4,7 @@
 
 use super::PdfError;
 use crate::presentation::{Presentation, SlideContent};
-use ::lopdf::{Document, Object, ObjectId, Dictionary};
+use ::lopdf::{Dictionary, Document, Object, ObjectId};
 use printpdf::{BuiltinFont, Color, Mm, PdfDocument, Rect, Rgb};
 use std::collections::BTreeMap;
 use std::io::Cursor;
@@ -26,10 +26,10 @@ pub fn extract_text(pdf_data: &[u8]) -> Result<String, PdfError> {
                     text.push_str(" ---\n\n");
                 }
                 text.push_str(&page_text);
-            }
+            },
             Err(e) => {
                 tracing::warn!("Failed to extract text from page {}: {}", page_num, e);
-            }
+            },
         }
     }
 
@@ -50,9 +50,8 @@ pub fn merge_pdfs(pdf_files: &[&[u8]]) -> Result<Vec<u8>, PdfError> {
     // Load all documents first
     let mut documents: Vec<Document> = Vec::new();
     for (idx, pdf_data) in pdf_files.iter().enumerate() {
-        let doc = Document::load_mem(pdf_data).map_err(|e| {
-            PdfError::ParseError(format!("Failed to load PDF {}: {}", idx + 1, e))
-        })?;
+        let doc = Document::load_mem(pdf_data)
+            .map_err(|e| PdfError::ParseError(format!("Failed to load PDF {}: {}", idx + 1, e)))?;
         documents.push(doc);
     }
 
@@ -159,23 +158,23 @@ fn update_object_references(object: &mut Object, mapping: &BTreeMap<ObjectId, Ob
             if let Some(new_id) = mapping.get(id) {
                 *id = *new_id;
             }
-        }
+        },
         Object::Array(ref mut arr) => {
             for item in arr.iter_mut() {
                 update_object_references(item, mapping);
             }
-        }
+        },
         Object::Dictionary(ref mut dict) => {
             for (_, value) in dict.iter_mut() {
                 update_object_references(value, mapping);
             }
-        }
+        },
         Object::Stream(ref mut stream) => {
             for (_, value) in stream.dict.iter_mut() {
                 update_object_references(value, mapping);
             }
-        }
-        _ => {}
+        },
+        _ => {},
     }
 }
 
@@ -226,9 +225,9 @@ pub fn split_pdf(pdf_data: &[u8], ranges: &[(u32, u32)]) -> Result<Vec<Vec<u8>>,
 
         // Save to bytes
         let mut buffer = Vec::new();
-        new_doc.save_to(&mut Cursor::new(&mut buffer)).map_err(|e| {
-            PdfError::OperationFailed(format!("Failed to save split PDF: {}", e))
-        })?;
+        new_doc
+            .save_to(&mut Cursor::new(&mut buffer))
+            .map_err(|e| PdfError::OperationFailed(format!("Failed to save split PDF: {}", e)))?;
 
         results.push(buffer);
     }
@@ -331,7 +330,8 @@ pub fn get_page_dimensions(pdf_data: &[u8]) -> Result<Vec<PageInfo>, PdfError> {
         if let Ok(Object::Dictionary(page_dict)) = doc.get_object(page_id) {
             if let Ok(Object::Array(media_box)) = page_dict.get(b"MediaBox") {
                 if media_box.len() >= 4 {
-                    if let (Some(w), Some(h)) = (get_number(&media_box[2]), get_number(&media_box[3]))
+                    if let (Some(w), Some(h)) =
+                        (get_number(&media_box[2]), get_number(&media_box[3]))
                     {
                         width = w;
                         height = h;
@@ -362,17 +362,15 @@ fn get_number(obj: &Object) -> Option<f32> {
 /// Generate PDF from presentation slides
 pub fn generate_slides_pdf(presentation: &Presentation) -> Result<Vec<u8>, PdfError> {
     // Create PDF document (landscape A4: 297mm x 210mm)
-    let (doc, page1, layer1) = PdfDocument::new(
-        &presentation.title,
-        Mm(297.0),
-        Mm(210.0),
-        "Layer 1",
-    );
+    let (doc, page1, layer1) =
+        PdfDocument::new(&presentation.title, Mm(297.0), Mm(210.0), "Layer 1");
 
     // Add built-in font
-    let font = doc.add_builtin_font(BuiltinFont::Helvetica)
+    let font = doc
+        .add_builtin_font(BuiltinFont::Helvetica)
         .map_err(|e| PdfError::OperationFailed(e.to_string()))?;
-    let font_bold = doc.add_builtin_font(BuiltinFont::HelveticaBold)
+    let font_bold = doc
+        .add_builtin_font(BuiltinFont::HelveticaBold)
         .map_err(|e| PdfError::OperationFailed(e.to_string()))?;
 
     let mut current_layer = doc.get_page(page1).get_layer(layer1);
@@ -390,12 +388,7 @@ pub fn generate_slides_pdf(presentation: &Presentation) -> Result<Vec<u8>, PdfEr
         if let Some(bg_color) = &slide.background_color {
             if let Some(color) = parse_hex_color(bg_color) {
                 current_layer.set_fill_color(color);
-                current_layer.add_rect(Rect::new(
-                    Mm(0.0),
-                    Mm(0.0),
-                    Mm(297.0),
-                    Mm(210.0),
-                ));
+                current_layer.add_rect(Rect::new(Mm(0.0), Mm(0.0), Mm(297.0), Mm(210.0)));
             }
         }
 
@@ -415,12 +408,12 @@ pub fn generate_slides_pdf(presentation: &Presentation) -> Result<Vec<u8>, PdfEr
                     current_layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
                     current_layer.use_text(text, 28.0, Mm(20.0), Mm(y_position), &font_bold);
                     y_position -= 15.0;
-                }
+                },
                 SlideContent::Subtitle(text) => {
                     current_layer.set_fill_color(Color::Rgb(Rgb::new(0.3, 0.3, 0.3, None)));
                     current_layer.use_text(text, 20.0, Mm(20.0), Mm(y_position), &font);
                     y_position -= 12.0;
-                }
+                },
                 SlideContent::Body(elements) => {
                     for element in elements {
                         for run in &element.runs {
@@ -432,14 +425,21 @@ pub fn generate_slides_pdf(presentation: &Presentation) -> Result<Vec<u8>, PdfEr
                                     current_layer.set_fill_color(c);
                                 }
                             } else {
-                                current_layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
+                                current_layer
+                                    .set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
                             }
 
-                            current_layer.use_text(&run.text, font_size, Mm(20.0), Mm(y_position), font_to_use);
+                            current_layer.use_text(
+                                &run.text,
+                                font_size,
+                                Mm(20.0),
+                                Mm(y_position),
+                                font_to_use,
+                            );
                             y_position -= font_size / 2.0 + 4.0;
                         }
                     }
-                }
+                },
                 SlideContent::BulletList(items) => {
                     current_layer.set_fill_color(Color::Rgb(Rgb::new(0.0, 0.0, 0.0, None)));
                     for item in items {
@@ -447,8 +447,15 @@ pub fn generate_slides_pdf(presentation: &Presentation) -> Result<Vec<u8>, PdfEr
                         current_layer.use_text(&bullet_text, 14.0, Mm(25.0), Mm(y_position), &font);
                         y_position -= 8.0;
                     }
-                }
-                SlideContent::Shape { shape_type: _, width, height, x, y, fill_color } => {
+                },
+                SlideContent::Shape {
+                    shape_type: _,
+                    width,
+                    height,
+                    x,
+                    y,
+                    fill_color,
+                } => {
                     // Convert fabric coordinates to PDF coordinates
                     let pdf_x = Mm(20.0 + (*x as f32 / 10.0));
                     let pdf_y = Mm(y_position - (*y as f32 / 10.0));
@@ -465,14 +472,14 @@ pub fn generate_slides_pdf(presentation: &Presentation) -> Result<Vec<u8>, PdfEr
 
                     let rect = Rect::new(pdf_x, pdf_y, pdf_x + pdf_w, pdf_y + pdf_h);
                     current_layer.add_rect(rect);
-                }
+                },
                 SlideContent::Image { .. } => {
                     // Image embedding requires loading the image file
                     // For now, we add a placeholder text
                     current_layer.set_fill_color(Color::Rgb(Rgb::new(0.5, 0.5, 0.5, None)));
                     current_layer.use_text("[Image]", 12.0, Mm(20.0), Mm(y_position), &font);
                     y_position -= 8.0;
-                }
+                },
             }
         }
 

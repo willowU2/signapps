@@ -1,8 +1,8 @@
 //! HTTP handlers for scheduler service.
 
-pub mod jobs;
 pub mod calendars;
 pub mod events;
+pub mod jobs;
 pub mod projects;
 pub mod resources;
 pub mod tasks;

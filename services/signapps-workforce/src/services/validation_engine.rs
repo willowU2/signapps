@@ -6,9 +6,7 @@
 use chrono::{DateTime, Datelike, NaiveTime, Utc, Weekday};
 use sqlx::PgPool;
 
-use crate::handlers::validation::{
-    CoverageGap, GapSeverity, TimeSpan, ValidationSummary,
-};
+use crate::handlers::validation::{CoverageGap, GapSeverity, TimeSpan, ValidationSummary};
 
 /// Validation engine for workforce scheduling
 #[derive(Clone)]
@@ -35,11 +33,7 @@ impl ValidationEngine {
     }
 
     /// Validate maximum weekly hours
-    pub fn validate_weekly_hours(
-        &self,
-        shifts: &[TimeSpan],
-        max_hours: i64,
-    ) -> (bool, i64) {
+    pub fn validate_weekly_hours(&self, shifts: &[TimeSpan], max_hours: i64) -> (bool, i64) {
         let total_minutes: i64 = shifts.iter().map(|s| s.duration_minutes()).sum();
         let total_hours = total_minutes / 60;
         (total_hours <= max_hours, total_hours)
@@ -98,10 +92,22 @@ impl ValidationEngine {
             gap_count: gaps.len() as i32,
             overstaffed_count,
             coverage_percentage,
-            critical_gaps: gaps.iter().filter(|g| g.severity == GapSeverity::Critical).count() as i32,
-            high_gaps: gaps.iter().filter(|g| g.severity == GapSeverity::High).count() as i32,
-            medium_gaps: gaps.iter().filter(|g| g.severity == GapSeverity::Medium).count() as i32,
-            low_gaps: gaps.iter().filter(|g| g.severity == GapSeverity::Low).count() as i32,
+            critical_gaps: gaps
+                .iter()
+                .filter(|g| g.severity == GapSeverity::Critical)
+                .count() as i32,
+            high_gaps: gaps
+                .iter()
+                .filter(|g| g.severity == GapSeverity::High)
+                .count() as i32,
+            medium_gaps: gaps
+                .iter()
+                .filter(|g| g.severity == GapSeverity::Medium)
+                .count() as i32,
+            low_gaps: gaps
+                .iter()
+                .filter(|g| g.severity == GapSeverity::Low)
+                .count() as i32,
         }
     }
 
@@ -175,10 +181,7 @@ mod tests {
             ValidationEngine::calculate_severity(2, 4),
             GapSeverity::Medium
         );
-        assert_eq!(
-            ValidationEngine::calculate_severity(3, 4),
-            GapSeverity::Low
-        );
+        assert_eq!(ValidationEngine::calculate_severity(3, 4), GapSeverity::Low);
     }
 
     #[test]
@@ -186,8 +189,13 @@ mod tests {
         let employee = vec!["nurse".to_string(), "manager".to_string()];
         let required = vec!["nurse".to_string()];
 
-        assert!(ValidationEngine::functions_satisfy_requirements(&employee, &required));
-        assert!(ValidationEngine::functions_satisfy_requirements(&employee, &[]));
+        assert!(ValidationEngine::functions_satisfy_requirements(
+            &employee, &required
+        ));
+        assert!(ValidationEngine::functions_satisfy_requirements(
+            &employee,
+            &[]
+        ));
         assert!(!ValidationEngine::functions_satisfy_requirements(
             &[],
             &required

@@ -4,7 +4,9 @@
  * API client for metrics and monitoring.
  */
 
-import api from '@/lib/api';
+import { getClient, ServiceName } from '@/lib/api/factory';
+
+const api = getClient(ServiceName.OFFICE);
 import type {
   Metric,
   MetricSeries,

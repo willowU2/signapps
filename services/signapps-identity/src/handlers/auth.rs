@@ -365,9 +365,7 @@ pub async fn me(
 /// Bootstrap endpoint - promotes the first user to admin if no admin exists.
 /// This is a one-time operation for initial setup.
 #[tracing::instrument(skip(state))]
-pub async fn bootstrap(
-    State(state): State<AppState>,
-) -> Result<Json<serde_json::Value>> {
+pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
     // Check if any admin already exists
     let users = UserRepository::list(&state.pool, 100, 0).await?;
     let has_admin = users.iter().any(|u| u.role >= 2);

@@ -262,30 +262,24 @@ pub async fn validate_coverage(
     })?;
 
     // Get org node name
-    let org_node_name: String = sqlx::query_scalar(
-        "SELECT name FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(req.org_node_id)
-    .bind(ctx.tenant_id)
-    .fetch_optional(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get org node: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?
-    .ok_or(StatusCode::NOT_FOUND)?;
+    let org_node_name: String =
+        sqlx::query_scalar("SELECT name FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2")
+            .bind(req.org_node_id)
+            .bind(ctx.tenant_id)
+            .fetch_optional(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get org node: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
+            .ok_or(StatusCode::NOT_FOUND)?;
 
     // Get effective coverage rules
     let coverage_slots = get_effective_slots(&state, ctx.tenant_id, req.org_node_id).await?;
 
     // Get assigned shifts for the date range
-    let assignments = get_assignments(
-        &state,
-        ctx.tenant_id,
-        req.org_node_id,
-        &req.date_range,
-    )
-    .await?;
+    let assignments =
+        get_assignments(&state, ctx.tenant_id, req.org_node_id, &req.date_range).await?;
 
     // Calculate gaps and overstaffing
     let mut gaps = Vec::new();
@@ -350,10 +344,22 @@ pub async fn validate_coverage(
         gap_count: gaps.len() as i32,
         overstaffed_count: overstaffed.len() as i32,
         coverage_percentage,
-        critical_gaps: gaps.iter().filter(|g| g.severity == GapSeverity::Critical).count() as i32,
-        high_gaps: gaps.iter().filter(|g| g.severity == GapSeverity::High).count() as i32,
-        medium_gaps: gaps.iter().filter(|g| g.severity == GapSeverity::Medium).count() as i32,
-        low_gaps: gaps.iter().filter(|g| g.severity == GapSeverity::Low).count() as i32,
+        critical_gaps: gaps
+            .iter()
+            .filter(|g| g.severity == GapSeverity::Critical)
+            .count() as i32,
+        high_gaps: gaps
+            .iter()
+            .filter(|g| g.severity == GapSeverity::High)
+            .count() as i32,
+        medium_gaps: gaps
+            .iter()
+            .filter(|g| g.severity == GapSeverity::Medium)
+            .count() as i32,
+        low_gaps: gaps
+            .iter()
+            .filter(|g| g.severity == GapSeverity::Low)
+            .count() as i32,
     };
 
     Ok(Json(CoverageValidationResult {
@@ -509,16 +515,15 @@ pub async fn simulate_leave(
     let employee_functions: Vec<String> = serde_json::from_value(functions).unwrap_or_default();
 
     // Get org node name
-    let org_node_name: String = sqlx::query_scalar(
-        "SELECT name FROM workforce_org_nodes WHERE id = $1",
-    )
-    .bind(org_node_id)
-    .fetch_one(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get org node: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let org_node_name: String =
+        sqlx::query_scalar("SELECT name FROM workforce_org_nodes WHERE id = $1")
+            .bind(org_node_id)
+            .fetch_one(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get org node: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     // Get coverage slots
     let coverage_slots = get_effective_slots(&state, ctx.tenant_id, org_node_id).await?;
@@ -535,14 +540,9 @@ pub async fn simulate_leave(
 
         for slot in coverage_slots.iter().filter(|s| s.day_of_week == day_index) {
             // Check if employee is currently assigned to this slot
-            let is_assigned = is_employee_assigned(
-                &state,
-                ctx.tenant_id,
-                req.employee_id,
-                current_date,
-                slot,
-            )
-            .await?;
+            let is_assigned =
+                is_employee_assigned(&state, ctx.tenant_id, req.employee_id, current_date, slot)
+                    .await?;
 
             if is_assigned {
                 // Get current coverage
@@ -574,7 +574,9 @@ pub async fn simulate_leave(
                             warnings.push(format!(
                                 "Critical coverage gap on {} for slot {}",
                                 current_date,
-                                slot.label.as_ref().unwrap_or(&format!("{}-{}", slot.start_time, slot.end_time))
+                                slot.label
+                                    .as_ref()
+                                    .unwrap_or(&format!("{}-{}", slot.start_time, slot.end_time))
                             ));
                         }
                     }
@@ -707,7 +709,10 @@ pub async fn get_conflicts(
             description: format!(
                 "Missing {} employees for {} on {}",
                 gap.missing,
-                gap.slot.label.as_ref().unwrap_or(&format!("{}-{}", gap.slot.start_time, gap.slot.end_time)),
+                gap.slot
+                    .label
+                    .as_ref()
+                    .unwrap_or(&format!("{}-{}", gap.slot.start_time, gap.slot.end_time)),
                 gap.date
             ),
             severity: gap.severity,
@@ -791,16 +796,15 @@ async fn get_effective_slots(
         })?;
 
         if let Some(p) = pattern {
-            let weekly: WeeklyPattern =
-                serde_json::from_value(p).unwrap_or(WeeklyPattern {
-                    monday: vec![],
-                    tuesday: vec![],
-                    wednesday: vec![],
-                    thursday: vec![],
-                    friday: vec![],
-                    saturday: vec![],
-                    sunday: vec![],
-                });
+            let weekly: WeeklyPattern = serde_json::from_value(p).unwrap_or(WeeklyPattern {
+                monday: vec![],
+                tuesday: vec![],
+                wednesday: vec![],
+                thursday: vec![],
+                friday: vec![],
+                saturday: vec![],
+                sunday: vec![],
+            });
             return Ok(super::coverage::flatten_weekly_pattern(&weekly));
         }
     }
@@ -966,16 +970,14 @@ async fn analyze_gaps_internal(
     params: GapAnalysisParams,
 ) -> Result<Vec<CoverageGap>, StatusCode> {
     let node_ids: Vec<Uuid> = if let Some(node_id) = params.org_node_id {
-        sqlx::query_scalar(
-            "SELECT descendant_id FROM workforce_org_closure WHERE ancestor_id = $1",
-        )
-        .bind(node_id)
-        .fetch_all(&*state.pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get descendants: {}", e);
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?
+        sqlx::query_scalar("SELECT descendant_id FROM workforce_org_closure WHERE ancestor_id = $1")
+            .bind(node_id)
+            .fetch_all(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get descendants: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
     } else {
         sqlx::query_scalar(
             "SELECT id FROM workforce_org_nodes WHERE tenant_id = $1 AND parent_id IS NULL AND is_active = true",

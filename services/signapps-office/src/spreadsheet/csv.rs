@@ -152,7 +152,7 @@ fn parse_cell_value(value: &str) -> CellValue {
     match trimmed.to_lowercase().as_str() {
         "true" | "vrai" | "oui" | "yes" | "1" => return CellValue::Bool(true),
         "false" | "faux" | "non" | "no" | "0" => return CellValue::Bool(false),
-        _ => {}
+        _ => {},
     }
 
     // Check for formula
@@ -173,14 +173,14 @@ fn format_csv_value(value: &CellValue, delimiter: char) -> String {
             } else {
                 s.clone()
             }
-        }
+        },
         CellValue::Number(n) => {
             if n.fract() == 0.0 {
                 format!("{}", *n as i64)
             } else {
                 format!("{}", n)
             }
-        }
+        },
         CellValue::Bool(b) => if *b { "TRUE" } else { "FALSE" }.to_string(),
         CellValue::Formula(f) => f.clone(),
         CellValue::Date(d) => d.clone(),

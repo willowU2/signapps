@@ -73,10 +73,10 @@
 
 **Office Suite complète!** Options pour continuer:
 
-### Option A: Tests & Polish (Recommandé)
+### Option A: Tests & Polish (En Cours)
 ```
-Sprint 27: Tests E2E Office Suite (Docs, Sheets, Slides, PDF)
-Sprint 28: Performance optimization exports
+Sprint 27: Tests E2E Office Suite (Docs, Sheets, Slides, PDF) - ✅ TERMINE
+Sprint 28: Performance optimization exports & Caching Layer - 🚀 EN COURS
 Sprint 29: UX polish commentaires/track changes
 ```
 

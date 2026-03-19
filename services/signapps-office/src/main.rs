@@ -2,7 +2,7 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use signapps_common::bootstrap::{init_tracing, load_env, env_or};
+use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
@@ -22,6 +22,7 @@ use importer::DocumentImporter;
 pub struct AppState {
     pub converter: DocumentConverter,
     pub importer: DocumentImporter,
+    pub cache: signapps_cache::BinaryCacheService,
 }
 
 #[tokio::main]
@@ -37,6 +38,7 @@ async fn main() {
     let state = AppState {
         converter: DocumentConverter::new(),
         importer: DocumentImporter::new(),
+        cache: signapps_cache::BinaryCacheService::default_config(),
     };
 
     let app = Router::new()

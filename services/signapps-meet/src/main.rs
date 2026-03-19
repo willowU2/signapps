@@ -2,7 +2,7 @@
 //! Video conferencing rooms management with LiveKit integration
 
 use axum::{middleware, Router};
-use signapps_common::bootstrap::{init_tracing, load_env, env_or};
+use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::JwtConfig;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
@@ -42,7 +42,10 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("🚀 Starting signapps-meet on port {}", port);
 
     // Database
-    let database_url = env_or("DATABASE_URL", "postgres://signapps:password@localhost:5432/signapps");
+    let database_url = env_or(
+        "DATABASE_URL",
+        "postgres://signapps:password@localhost:5432/signapps",
+    );
     let pool = PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)

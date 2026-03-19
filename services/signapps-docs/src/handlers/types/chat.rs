@@ -690,7 +690,10 @@ pub async fn get_channel_read_status(
     .await
     .map_err(|e| {
         error!("Failed to get read status: {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get read status".to_string())
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to get read status".to_string(),
+        )
     })?;
 
     let (unread_count, last_read_at) = status.unwrap_or((0, chrono::Utc::now()));
@@ -727,7 +730,10 @@ pub async fn mark_channel_read(
     .await
     .map_err(|e| {
         error!("Failed to mark channel read: {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to mark as read".to_string())
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to mark as read".to_string(),
+        )
     })?;
 
     info!(channel_id = %channel_id, user_id = %user_id, "Marked channel as read");
@@ -764,7 +770,10 @@ pub async fn increment_unread_count(
     .await
     .map_err(|e| {
         error!("Failed to increment unread count: {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to update unread".to_string())
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to update unread".to_string(),
+        )
     })?;
 
     Ok(StatusCode::OK)
@@ -787,17 +796,22 @@ pub async fn get_all_unread_counts(
     .await
     .map_err(|e| {
         error!("Failed to get unread counts: {}", e);
-        (StatusCode::INTERNAL_SERVER_ERROR, "Failed to get unread counts".to_string())
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Failed to get unread counts".to_string(),
+        )
     })?;
 
     let response: Vec<ChannelReadStatus> = statuses
         .into_iter()
-        .map(|(channel_id, unread_count, last_read_at)| ChannelReadStatus {
-            channel_id: channel_id.to_string(),
-            user_id: user_id.to_string(),
-            unread_count,
-            last_read_at: last_read_at.to_rfc3339(),
-        })
+        .map(
+            |(channel_id, unread_count, last_read_at)| ChannelReadStatus {
+                channel_id: channel_id.to_string(),
+                user_id: user_id.to_string(),
+                unread_count,
+                last_read_at: last_read_at.to_rfc3339(),
+            },
+        )
         .collect();
 
     Ok(Json(response))

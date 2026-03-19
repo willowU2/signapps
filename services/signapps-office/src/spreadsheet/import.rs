@@ -30,7 +30,7 @@ pub fn xlsx_to_spreadsheet(data: &[u8]) -> Result<Spreadsheet, SpreadsheetError>
                         Data::DateTime(dt) => {
                             // Use ISO 8601 format from ExcelDateTime
                             CellValue::Date(dt.to_string())
-                        }
+                        },
                         Data::Error(e) => CellValue::Error(format!("{:?}", e)),
                         Data::DateTimeIso(s) => CellValue::Date(s.clone()),
                         Data::DurationIso(s) => CellValue::String(s.clone()),
@@ -60,7 +60,9 @@ pub fn xlsx_to_json(data: &[u8]) -> Result<serde_json::Value, SpreadsheetError> 
 }
 
 /// Convert Spreadsheet to JSON
-pub fn spreadsheet_to_json(spreadsheet: &Spreadsheet) -> Result<serde_json::Value, SpreadsheetError> {
+pub fn spreadsheet_to_json(
+    spreadsheet: &Spreadsheet,
+) -> Result<serde_json::Value, SpreadsheetError> {
     if spreadsheet.sheets.len() == 1 {
         // Single sheet - return simple format
         let sheet = &spreadsheet.sheets[0];
@@ -104,11 +106,9 @@ fn cell_to_json_value(value: &CellValue) -> serde_json::Value {
     match value {
         CellValue::Empty => serde_json::Value::Null,
         CellValue::String(s) => serde_json::Value::String(s.clone()),
-        CellValue::Number(n) => {
-            serde_json::Number::from_f64(*n)
-                .map(serde_json::Value::Number)
-                .unwrap_or(serde_json::Value::Null)
-        }
+        CellValue::Number(n) => serde_json::Number::from_f64(*n)
+            .map(serde_json::Value::Number)
+            .unwrap_or(serde_json::Value::Null),
         CellValue::Bool(b) => serde_json::Value::Bool(*b),
         CellValue::Formula(f) => serde_json::Value::String(f.clone()),
         CellValue::Date(d) => serde_json::Value::String(d.clone()),

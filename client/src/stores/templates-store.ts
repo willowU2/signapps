@@ -223,11 +223,9 @@ export const useTemplatesStore = create<TemplatesState>()(
           const template = await templatesApi.getTemplate(templateId);
           set({ selectedTemplate: template, isLoadingSelected: false });
 
-          // Add to recent
-          get().addToRecent({
-            ...template,
-            content: undefined as any, // Don't store content in metadata
-          });
+          // Add to recent (extract metadata only, excluding content)
+          const { content: _, ...metadata } = template;
+          get().addToRecent(metadata);
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : 'Erreur lors du chargement',

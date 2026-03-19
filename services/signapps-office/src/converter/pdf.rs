@@ -29,12 +29,8 @@ pub fn html_to_pdf(html: &str) -> Result<Vec<u8>, ConversionError> {
         .ok_or_else(|| ConversionError::InvalidInput("No body element found".to_string()))?;
 
     // Create PDF document - printpdf 0.7 API
-    let (doc, page1, layer1) = PdfDocument::new(
-        "Document",
-        Mm(PAGE_WIDTH_MM),
-        Mm(PAGE_HEIGHT_MM),
-        "Layer 1",
-    );
+    let (doc, page1, layer1) =
+        PdfDocument::new("Document", Mm(PAGE_WIDTH_MM), Mm(PAGE_HEIGHT_MM), "Layer 1");
 
     // Built-in fonts (no external font loading needed)
     let font = doc
@@ -77,9 +73,9 @@ pub fn html_to_pdf(html: &str) -> Result<Vec<u8>, ConversionError> {
     doc.save(&mut buffer)
         .map_err(|e| ConversionError::ConversionFailed(format!("Failed to save PDF: {}", e)))?;
 
-    buffer.into_inner().map_err(|e| {
-        ConversionError::ConversionFailed(format!("Failed to get PDF bytes: {}", e))
-    })
+    buffer
+        .into_inner()
+        .map_err(|e| ConversionError::ConversionFailed(format!("Failed to get PDF bytes: {}", e)))
 }
 
 struct PdfState<'a> {
@@ -116,15 +112,12 @@ impl<'a> PdfState<'a> {
     fn write_text(&mut self, text: &str, font_size: f32, font: &IndirectFontRef) {
         self.ensure_space(LINE_HEIGHT_MM);
 
-        let layer = self.doc.get_page(self.current_page).get_layer(self.current_layer);
+        let layer = self
+            .doc
+            .get_page(self.current_page)
+            .get_layer(self.current_layer);
 
-        layer.use_text(
-            text,
-            font_size,
-            Mm(MARGIN_MM),
-            Mm(self.y_position),
-            font,
-        );
+        layer.use_text(text, font_size, Mm(MARGIN_MM), Mm(self.y_position), font);
 
         self.y_position -= LINE_HEIGHT_MM;
     }
@@ -137,7 +130,10 @@ impl<'a> PdfState<'a> {
     }
 }
 
-fn process_element_to_pdf(state: &mut PdfState, elem: &scraper::ElementRef) -> Result<(), ConversionError> {
+fn process_element_to_pdf(
+    state: &mut PdfState,
+    elem: &scraper::ElementRef,
+) -> Result<(), ConversionError> {
     let tag = elem.value().name();
 
     match tag {
@@ -146,18 +142,18 @@ fn process_element_to_pdf(state: &mut PdfState, elem: &scraper::ElementRef) -> R
             state.add_vertical_space(LINE_HEIGHT_MM);
             state.write_text(&text, FONT_SIZE_H1, &state.font_bold.clone());
             state.add_vertical_space(LINE_HEIGHT_MM);
-        }
+        },
         "h2" => {
             let text = extract_text(elem);
             state.add_vertical_space(LINE_HEIGHT_MM * 0.5);
             state.write_text(&text, FONT_SIZE_H2, &state.font_bold.clone());
             state.add_vertical_space(LINE_HEIGHT_MM * 0.5);
-        }
+        },
         "h3" | "h4" | "h5" | "h6" => {
             let text = extract_text(elem);
             state.write_text(&text, FONT_SIZE_H3, &state.font_bold.clone());
             state.add_vertical_space(LINE_HEIGHT_MM * 0.25);
-        }
+        },
         "p" => {
             let text = extract_text(elem);
             // Wrap text at approximately 80 characters per line
@@ -165,7 +161,7 @@ fn process_element_to_pdf(state: &mut PdfState, elem: &scraper::ElementRef) -> R
                 state.write_text(&line, FONT_SIZE_NORMAL, &state.font.clone());
             }
             state.add_vertical_space(LINE_HEIGHT_MM * 0.5);
-        }
+        },
         "ul" | "ol" => {
             let is_ordered = tag == "ol";
             let li_selector = Selector::parse("li").unwrap();
@@ -191,7 +187,7 @@ fn process_element_to_pdf(state: &mut PdfState, elem: &scraper::ElementRef) -> R
                 index += 1;
             }
             state.add_vertical_space(LINE_HEIGHT_MM * 0.5);
-        }
+        },
         "blockquote" => {
             let text = extract_text(elem);
             let font = state.font_italic.clone();
@@ -199,7 +195,7 @@ fn process_element_to_pdf(state: &mut PdfState, elem: &scraper::ElementRef) -> R
                 state.write_text(&line, FONT_SIZE_NORMAL, &font);
             }
             state.add_vertical_space(LINE_HEIGHT_MM * 0.5);
-        }
+        },
         "pre" | "code" => {
             let text = extract_text(elem);
             let font = state.font_mono.clone();
@@ -207,7 +203,7 @@ fn process_element_to_pdf(state: &mut PdfState, elem: &scraper::ElementRef) -> R
                 state.write_text(line, FONT_SIZE_CODE, &font);
             }
             state.add_vertical_space(LINE_HEIGHT_MM * 0.5);
-        }
+        },
         "table" => {
             // Simple table rendering
             let tr_selector = Selector::parse("tr").unwrap();
@@ -229,22 +225,26 @@ fn process_element_to_pdf(state: &mut PdfState, elem: &scraper::ElementRef) -> R
                 }
             }
             state.add_vertical_space(LINE_HEIGHT_MM);
-        }
+        },
         "hr" => {
             state.add_vertical_space(LINE_HEIGHT_MM);
-            state.write_text("─".repeat(50).as_str(), FONT_SIZE_NORMAL, &state.font.clone());
+            state.write_text(
+                "─".repeat(50).as_str(),
+                FONT_SIZE_NORMAL,
+                &state.font.clone(),
+            );
             state.add_vertical_space(LINE_HEIGHT_MM);
-        }
+        },
         "br" => {
             state.add_vertical_space(LINE_HEIGHT_MM);
-        }
+        },
         "div" => {
             for child in elem.children() {
                 if let Some(child_elem) = scraper::ElementRef::wrap(child) {
                     process_element_to_pdf(state, &child_elem)?;
                 }
             }
-        }
+        },
         _ => {
             // Process children for unknown elements
             for child in elem.children() {
@@ -252,7 +252,7 @@ fn process_element_to_pdf(state: &mut PdfState, elem: &scraper::ElementRef) -> R
                     process_element_to_pdf(state, &child_elem)?;
                 }
             }
-        }
+        },
     }
 
     Ok(())
@@ -265,13 +265,13 @@ fn extract_text(elem: &scraper::ElementRef) -> String {
         match node.value() {
             scraper::Node::Text(t) => {
                 text.push_str(t);
-            }
+            },
             scraper::Node::Element(_) => {
                 if let Some(child) = scraper::ElementRef::wrap(node) {
                     text.push_str(&extract_text(&child));
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 

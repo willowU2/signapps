@@ -132,7 +132,10 @@ async fn main() -> anyhow::Result<()> {
 
         if acme_enabled {
             let acme_email = env_or("ACME_EMAIL", "admin@example.com");
-            let acme_directory = env_or("ACME_DIRECTORY_URL", "https://acme-v02.api.letsencrypt.org/directory");
+            let acme_directory = env_or(
+                "ACME_DIRECTORY_URL",
+                "https://acme-v02.api.letsencrypt.org/directory",
+            );
 
             let acme_service = AcmeService::new(
                 pool.clone(),

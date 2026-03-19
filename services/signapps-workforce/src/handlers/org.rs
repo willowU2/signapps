@@ -182,8 +182,7 @@ pub async fn get_tree(
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    let count_map: std::collections::HashMap<Uuid, i64> =
-        employee_counts.into_iter().collect();
+    let count_map: std::collections::HashMap<Uuid, i64> = employee_counts.into_iter().collect();
 
     // Build tree structure
     let tree = build_tree(nodes, &count_map, params.root_id, 0, max_depth);
@@ -274,17 +273,16 @@ pub async fn get_node(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let node: Option<OrgNode> = sqlx::query_as(
-        "SELECT * FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(ctx.tenant_id)
-    .fetch_optional(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get node: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let node: Option<OrgNode> =
+        sqlx::query_as("SELECT * FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(ctx.tenant_id)
+            .fetch_optional(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get node: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     match node {
         Some(n) => Ok(Json(json!(n))),
@@ -447,17 +445,16 @@ pub async fn move_node(
     })?;
 
     // Verify node exists
-    let node: Option<OrgNode> = sqlx::query_as(
-        "SELECT * FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(ctx.tenant_id)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get node: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let node: Option<OrgNode> =
+        sqlx::query_as("SELECT * FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(ctx.tenant_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get node: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     if node.is_none() {
         return Err(StatusCode::NOT_FOUND);
@@ -693,17 +690,16 @@ pub async fn delete_node_type(
         return Err(StatusCode::CONFLICT);
     }
 
-    let result = sqlx::query(
-        "DELETE FROM workforce_org_node_types WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(ctx.tenant_id)
-    .execute(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to delete node type: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let result =
+        sqlx::query("DELETE FROM workforce_org_node_types WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(ctx.tenant_id)
+            .execute(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to delete node type: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     if result.rows_affected() == 0 {
         return Err(StatusCode::NOT_FOUND);

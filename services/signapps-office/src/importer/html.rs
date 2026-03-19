@@ -1,7 +1,7 @@
 //! HTML import to Tiptap JSON.
 
 use super::ImportError;
-use scraper::{Html, Selector, ElementRef};
+use scraper::{ElementRef, Html, Selector};
 
 /// Convert HTML to Tiptap JSON
 pub fn html_to_tiptap(content: &[u8]) -> Result<serde_json::Value, ImportError> {
@@ -34,7 +34,7 @@ fn process_element(element: &ElementRef) -> Result<Vec<serde_json::Value>, Impor
                     let nodes = element_to_tiptap(&child_elem)?;
                     result.extend(nodes);
                 }
-            }
+            },
             scraper::Node::Text(text) => {
                 let trimmed = text.trim();
                 if !trimmed.is_empty() {
@@ -47,8 +47,8 @@ fn process_element(element: &ElementRef) -> Result<Vec<serde_json::Value>, Impor
                         }]
                     }));
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
@@ -69,7 +69,7 @@ fn element_to_tiptap(elem: &ElementRef) -> Result<Vec<serde_json::Value>, Import
                 "attrs": { "level": level },
                 "content": content
             }));
-        }
+        },
 
         // Paragraph
         "p" => {
@@ -89,19 +89,21 @@ fn element_to_tiptap(elem: &ElementRef) -> Result<Vec<serde_json::Value>, Import
 
                 result.push(para);
             }
-        }
+        },
 
         // Div (container)
         "div" => {
             result.extend(process_element(elem)?);
-        }
+        },
 
         // Lists
         "ul" => {
             let items = process_list_items(elem)?;
 
             // Check if it's a task list
-            let is_task_list = elem.value().attr("class")
+            let is_task_list = elem
+                .value()
+                .attr("class")
                 .map(|c| c.contains("task-list"))
                 .unwrap_or(false);
 
@@ -116,11 +118,13 @@ fn element_to_tiptap(elem: &ElementRef) -> Result<Vec<serde_json::Value>, Import
                     "content": items
                 }));
             }
-        }
+        },
 
         "ol" => {
             let items = process_list_items(elem)?;
-            let start = elem.value().attr("start")
+            let start = elem
+                .value()
+                .attr("start")
                 .and_then(|s| s.parse::<u32>().ok())
                 .unwrap_or(1);
 
@@ -134,7 +138,7 @@ fn element_to_tiptap(elem: &ElementRef) -> Result<Vec<serde_json::Value>, Import
             }
 
             result.push(node);
-        }
+        },
 
         // Blockquote
         "blockquote" => {
@@ -143,7 +147,7 @@ fn element_to_tiptap(elem: &ElementRef) -> Result<Vec<serde_json::Value>, Import
                 "type": "blockquote",
                 "content": inner
             }));
-        }
+        },
 
         // Preformatted / Code
         "pre" => {
@@ -158,7 +162,7 @@ fn element_to_tiptap(elem: &ElementRef) -> Result<Vec<serde_json::Value>, Import
                     "text": code
                 }]
             }));
-        }
+        },
 
         // Table
         "table" => {
@@ -167,14 +171,14 @@ fn element_to_tiptap(elem: &ElementRef) -> Result<Vec<serde_json::Value>, Import
                 "type": "table",
                 "content": rows
             }));
-        }
+        },
 
         // Horizontal rule
         "hr" => {
             result.push(serde_json::json!({
                 "type": "horizontalRule"
             }));
-        }
+        },
 
         // Images
         "img" => {
@@ -190,18 +194,18 @@ fn element_to_tiptap(elem: &ElementRef) -> Result<Vec<serde_json::Value>, Import
                     "title": title
                 }
             }));
-        }
+        },
 
         // Line break
         "br" => {
             result.push(serde_json::json!({
                 "type": "hardBreak"
             }));
-        }
+        },
 
         // Inline elements that shouldn't create blocks
-        "span" | "strong" | "b" | "em" | "i" | "u" | "s" | "strike" | "del" |
-        "code" | "a" | "mark" | "sub" | "sup" => {
+        "span" | "strong" | "b" | "em" | "i" | "u" | "s" | "strike" | "del" | "code" | "a"
+        | "mark" | "sub" | "sup" => {
             // These should be handled as inline content
             // If found at block level, wrap in paragraph
             let content = process_inline_content(elem)?;
@@ -211,17 +215,17 @@ fn element_to_tiptap(elem: &ElementRef) -> Result<Vec<serde_json::Value>, Import
                     "content": content
                 }));
             }
-        }
+        },
 
         // Ignore script, style, etc.
         "script" | "style" | "meta" | "link" | "head" | "title" | "noscript" => {
             // Skip these elements
-        }
+        },
 
         // Other elements: try to process children
         _ => {
             result.extend(process_element(elem)?);
-        }
+        },
     }
 
     Ok(result)
@@ -240,14 +244,14 @@ fn process_inline_content(elem: &ElementRef) -> Result<Vec<serde_json::Value>, I
                         "text": text_str
                     }));
                 }
-            }
+            },
             scraper::Node::Element(_) => {
                 if let Some(child_elem) = ElementRef::wrap(child) {
                     let inline = process_inline_element(&child_elem)?;
                     result.extend(inline);
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
@@ -265,28 +269,28 @@ fn process_inline_element(elem: &ElementRef) -> Result<Vec<serde_json::Value>, I
                 add_mark(&mut item, serde_json::json!({ "type": "bold" }));
                 result.push(item);
             }
-        }
+        },
         "em" | "i" => {
             let inner = process_inline_content(elem)?;
             for mut item in inner {
                 add_mark(&mut item, serde_json::json!({ "type": "italic" }));
                 result.push(item);
             }
-        }
+        },
         "u" => {
             let inner = process_inline_content(elem)?;
             for mut item in inner {
                 add_mark(&mut item, serde_json::json!({ "type": "underline" }));
                 result.push(item);
             }
-        }
+        },
         "s" | "strike" | "del" => {
             let inner = process_inline_content(elem)?;
             for mut item in inner {
                 add_mark(&mut item, serde_json::json!({ "type": "strike" }));
                 result.push(item);
             }
-        }
+        },
         "code" => {
             let text = extract_text(elem);
             result.push(serde_json::json!({
@@ -294,19 +298,22 @@ fn process_inline_element(elem: &ElementRef) -> Result<Vec<serde_json::Value>, I
                 "text": text,
                 "marks": [{ "type": "code" }]
             }));
-        }
+        },
         "a" => {
             let href = elem.value().attr("href").unwrap_or("#");
             let target = elem.value().attr("target").unwrap_or("_blank");
             let inner = process_inline_content(elem)?;
             for mut item in inner {
-                add_mark(&mut item, serde_json::json!({
-                    "type": "link",
-                    "attrs": { "href": href, "target": target }
-                }));
+                add_mark(
+                    &mut item,
+                    serde_json::json!({
+                        "type": "link",
+                        "attrs": { "href": href, "target": target }
+                    }),
+                );
                 result.push(item);
             }
-        }
+        },
         "span" => {
             let inner = process_inline_content(elem)?;
 
@@ -318,7 +325,8 @@ fn process_inline_element(elem: &ElementRef) -> Result<Vec<serde_json::Value>, I
                     text_style_attrs.insert("color".to_string(), serde_json::json!(color));
                 }
                 if let Some(font_family) = extract_font_family(style) {
-                    text_style_attrs.insert("fontFamily".to_string(), serde_json::json!(font_family));
+                    text_style_attrs
+                        .insert("fontFamily".to_string(), serde_json::json!(font_family));
                 }
                 if let Some(font_size) = extract_font_size(style) {
                     text_style_attrs.insert("fontSize".to_string(), serde_json::json!(font_size));
@@ -326,10 +334,13 @@ fn process_inline_element(elem: &ElementRef) -> Result<Vec<serde_json::Value>, I
 
                 if !text_style_attrs.is_empty() {
                     for mut item in inner {
-                        add_mark(&mut item, serde_json::json!({
-                            "type": "textStyle",
-                            "attrs": text_style_attrs
-                        }));
+                        add_mark(
+                            &mut item,
+                            serde_json::json!({
+                                "type": "textStyle",
+                                "attrs": text_style_attrs
+                            }),
+                        );
                         result.push(item);
                     }
                 } else {
@@ -338,40 +349,45 @@ fn process_inline_element(elem: &ElementRef) -> Result<Vec<serde_json::Value>, I
             } else {
                 result.extend(inner);
             }
-        }
+        },
         "mark" => {
-            let color = elem.value().attr("style")
+            let color = elem
+                .value()
+                .attr("style")
                 .and_then(extract_background_color)
                 .unwrap_or_else(|| "yellow".to_string());
 
             let inner = process_inline_content(elem)?;
             for mut item in inner {
-                add_mark(&mut item, serde_json::json!({
-                    "type": "highlight",
-                    "attrs": { "color": color }
-                }));
+                add_mark(
+                    &mut item,
+                    serde_json::json!({
+                        "type": "highlight",
+                        "attrs": { "color": color }
+                    }),
+                );
                 result.push(item);
             }
-        }
+        },
         "sub" => {
             let inner = process_inline_content(elem)?;
             for mut item in inner {
                 add_mark(&mut item, serde_json::json!({ "type": "subscript" }));
                 result.push(item);
             }
-        }
+        },
         "sup" => {
             let inner = process_inline_content(elem)?;
             for mut item in inner {
                 add_mark(&mut item, serde_json::json!({ "type": "superscript" }));
                 result.push(item);
             }
-        }
+        },
         "br" => {
             result.push(serde_json::json!({
                 "type": "hardBreak"
             }));
-        }
+        },
         "img" => {
             let src = elem.value().attr("src").unwrap_or("");
             let alt = elem.value().attr("alt").unwrap_or("");
@@ -379,11 +395,11 @@ fn process_inline_element(elem: &ElementRef) -> Result<Vec<serde_json::Value>, I
                 "type": "image",
                 "attrs": { "src": src, "alt": alt }
             }));
-        }
+        },
         _ => {
             // Process children for unknown inline elements
             result.extend(process_inline_content(elem)?);
-        }
+        },
     }
 
     Ok(result)

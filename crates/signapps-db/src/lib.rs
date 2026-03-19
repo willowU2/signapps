@@ -53,12 +53,14 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
         Ok(()) => {
             tracing::info!("Database migrations executed successfully");
             Ok(())
-        }
+        },
         Err(e) => {
             let error_msg = e.to_string();
 
             // Check if this is a checksum mismatch error
-            if error_msg.contains("checksum mismatch") || error_msg.contains("was previously applied but has been modified") {
+            if error_msg.contains("checksum mismatch")
+                || error_msg.contains("was previously applied but has been modified")
+            {
                 tracing::warn!("Migration checksum mismatch detected, attempting to fix...");
 
                 // Extract migration version from error message and update checksum
@@ -74,7 +76,7 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
             } else {
                 Err(e)
             }
-        }
+        },
     }
 }
 

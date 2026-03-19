@@ -56,19 +56,15 @@ impl DatabaseCrawler for MailCrawler {
                 .or(body_html)
                 .unwrap_or_default();
 
-            let content = format!(
-                "Email from: {}\nSubject: {}\n\n{}",
-                sender, subject, body
-            );
+            let content = format!("Email from: {}\nSubject: {}\n\n{}", sender, subject, body);
 
             // Get owner from account
-            let owner: Option<(Uuid,)> = sqlx::query_as(
-                "SELECT user_id FROM mail.accounts WHERE id = $1",
-            )
-            .bind(account_id)
-            .fetch_optional(pool)
-            .await
-            .map_err(|e| Error::Database(e.to_string()))?;
+            let owner: Option<(Uuid,)> =
+                sqlx::query_as("SELECT user_id FROM mail.accounts WHERE id = $1")
+                    .bind(account_id)
+                    .fetch_optional(pool)
+                    .await
+                    .map_err(|e| Error::Database(e.to_string()))?;
 
             let security_tags = json!({
                 "resource_type": "email",

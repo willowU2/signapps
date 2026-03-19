@@ -38,7 +38,10 @@ impl<'a> TimeItemRepository<'a> {
     }
 
     /// Find a time item with all relations.
-    pub async fn find_by_id_with_relations(&self, id: Uuid) -> Result<Option<TimeItemWithRelations>> {
+    pub async fn find_by_id_with_relations(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<TimeItemWithRelations>> {
         let item = self.find_by_id(id).await?;
 
         match item {
@@ -60,7 +63,7 @@ impl<'a> TimeItemRepository<'a> {
                     dependencies,
                     recurrence,
                 }))
-            }
+            },
             None => Ok(None),
         }
     }
@@ -91,7 +94,7 @@ impl<'a> TimeItemRepository<'a> {
                     conditions.push(format!(
                         "(owner_id = $2 OR id IN (SELECT time_item_id FROM scheduling.time_item_users WHERE user_id = $2))"
                     ));
-                }
+                },
                 _ => conditions.push("owner_id = $2".to_string()),
             }
         } else {
@@ -418,7 +421,9 @@ impl<'a> TimeItemRepository<'a> {
         // Create recurrence rule if provided
         if let Some(recurrence) = &item.recurrence {
             let recurrence_repo = RecurrenceRuleRepository::new(self.pool);
-            recurrence_repo.create(created.id, recurrence.clone()).await?;
+            recurrence_repo
+                .create(created.id, recurrence.clone())
+                .await?;
         }
 
         Ok(created)
@@ -961,10 +966,12 @@ impl<'a> SchedulingResourceRepository<'a> {
 
     /// Deactivate a resource.
     pub async fn deactivate(&self, id: Uuid) -> Result<()> {
-        sqlx::query("UPDATE scheduling.resources SET is_active = false, updated_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(self.pool.inner())
-            .await?;
+        sqlx::query(
+            "UPDATE scheduling.resources SET is_active = false, updated_at = NOW() WHERE id = $1",
+        )
+        .bind(id)
+        .execute(self.pool.inner())
+        .await?;
 
         Ok(())
     }
@@ -1124,7 +1131,7 @@ impl<'a> SchedulingPreferencesRepository<'a> {
                 .fetch_one(self.pool.inner())
                 .await?;
                 Ok(existing)
-            }
+            },
         }
     }
 

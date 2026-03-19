@@ -47,8 +47,8 @@ impl AiIndexerClient {
     /// Uses AI_URL env var, defaults to http://localhost:3005/api/v1.
     /// Set AI_INDEXER_ENABLED=false to disable.
     pub fn from_env() -> Self {
-        let ai_url = std::env::var("AI_URL")
-            .unwrap_or_else(|_| "http://localhost:3005/api/v1".to_string());
+        let ai_url =
+            std::env::var("AI_URL").unwrap_or_else(|_| "http://localhost:3005/api/v1".to_string());
         let enabled = std::env::var("AI_INDEXER_ENABLED")
             .map(|v| v != "false" && v != "0")
             .unwrap_or(true);
@@ -70,10 +70,7 @@ impl AiIndexerClient {
         }
 
         // Use the webhook endpoint for JSON payloads
-        let webhook_url = format!(
-            "{}/ai/webhook/{}",
-            self.ai_base_url, source_type
-        );
+        let webhook_url = format!("{}/ai/webhook/{}", self.ai_base_url, source_type);
 
         match self
             .client
@@ -99,7 +96,7 @@ impl AiIndexerClient {
                     // Non-fatal: don't break the calling service
                     Ok(())
                 }
-            }
+            },
             Err(e) => {
                 tracing::warn!(
                     source = source_type,
@@ -108,7 +105,7 @@ impl AiIndexerClient {
                 );
                 // Non-fatal: the AI service might be down
                 Ok(())
-            }
+            },
         }
     }
 
@@ -126,10 +123,7 @@ impl AiIndexerClient {
             return Ok(());
         }
 
-        let url = format!(
-            "{}/internal/index/{}",
-            self.ai_base_url, document_id
-        );
+        let url = format!("{}/internal/index/{}", self.ai_base_url, document_id);
 
         let payload = serde_json::json!({
             "content": content,
@@ -162,15 +156,11 @@ impl AiIndexerClient {
                     );
                 }
                 Ok(())
-            }
+            },
             Err(e) => {
-                tracing::warn!(
-                    collection = collection,
-                    "AI service unreachable: {}",
-                    e
-                );
+                tracing::warn!(collection = collection, "AI service unreachable: {}", e);
                 Ok(())
-            }
+            },
         }
     }
 
@@ -180,10 +170,7 @@ impl AiIndexerClient {
             return Ok(());
         }
 
-        let url = format!(
-            "{}/internal/index/{}",
-            self.ai_base_url, document_id
-        );
+        let url = format!("{}/internal/index/{}", self.ai_base_url, document_id);
 
         match self
             .client
@@ -195,11 +182,11 @@ impl AiIndexerClient {
             Ok(_) => {
                 tracing::debug!(document_id = %document_id, "Removed from AI index");
                 Ok(())
-            }
+            },
             Err(e) => {
                 tracing::warn!("Failed to remove from AI index: {}", e);
                 Ok(())
-            }
+            },
         }
     }
 }

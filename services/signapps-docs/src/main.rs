@@ -101,7 +101,14 @@ async fn main() -> anyhow::Result<()> {
 
     let addr: std::net::SocketAddr = format!("{}:{}", config.host, config.port).parse().unwrap();
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    tracing::info!("✅ signapps-docs listening at http://localhost:{}", config.port);
-    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
+    tracing::info!(
+        "✅ signapps-docs listening at http://localhost:{}",
+        config.port
+    );
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
     Ok(())
 }

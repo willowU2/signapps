@@ -132,41 +132,9 @@ export function CodePreview({
 }
 
 /**
- * Simple syntax highlighting pour les patterns courants.
- * Ne highlight que les patterns très courants pour rester léger.
+ * Simple parser that prevents XSS by returning safe React nodes.
+ * Heavy regex replacement using dangerouslySetInnerHTML was an XSS vulnerability.
  */
 function highlightLine(line: string): React.ReactNode {
-  const parts: React.ReactNode[] = [];
-  const lastIndex = 0;
-
-  // Patterns: strings, comments, keywords, numbers
-  const patterns = [
-    // Strings
-    { re: /(["'`])(?:\\.|(?!\1).)*?\1/g, class: 'text-green-400' },
-    // Comments
-    { re: /(\/\/|#|--).*/g, class: 'text-slate-500' },
-    // Keywords
-    {
-      re: /\b(function|const|let|var|if|else|for|while|return|class|async|await|import|export|from|default)\b/g,
-      class: 'text-blue-400',
-    },
-    // Numbers
-    { re: /\b\d+\.?\d*\b/g, class: 'text-yellow-400' },
-  ];
-
-  let result = line;
-  patterns.forEach(({ re, class: className }) => {
-    result = result.replace(
-      re,
-      (match) => `<span class="${className}">${match}</span>`
-    );
-  });
-
-  return (
-    <div
-      dangerouslySetInnerHTML={{
-        __html: result || line,
-      }}
-    />
-  );
+  return <span className="text-slate-300">{line}</span>;
 }

@@ -8,8 +8,8 @@ use std::time::Duration;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Use ADMIN_PASSWORD env var or default dev password
-    let password = std::env::var("ADMIN_PASSWORD")
-        .unwrap_or_else(|_| "ChangeMeInProduction123!".to_string());
+    let password =
+        std::env::var("ADMIN_PASSWORD").unwrap_or_else(|_| "ChangeMeInProduction123!".to_string());
     let salt = SaltString::generate(&mut OsRng);
 
     // Explicitly using signapps_identity configuration logic if needed,

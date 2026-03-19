@@ -37,7 +37,7 @@ pub async fn list_time_items(
         Err(e) => {
             tracing::error!("Failed to list time items: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -56,7 +56,7 @@ pub async fn get_time_item(
         Err(e) => {
             tracing::error!("Failed to get time item: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -69,12 +69,15 @@ pub async fn create_time_item(
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = TimeItemRepository::new(&state.pool);
 
-    match repo.create(ctx.tenant_id, claims.sub, claims.sub, input).await {
+    match repo
+        .create(ctx.tenant_id, claims.sub, claims.sub, input)
+        .await
+    {
         Ok(item) => Ok((StatusCode::CREATED, Json(json!(item)))),
         Err(e) => {
             tracing::error!("Failed to create time item: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -93,7 +96,7 @@ pub async fn update_time_item(
         Err(e) => {
             tracing::error!("Failed to update time item: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -115,7 +118,7 @@ pub async fn move_time_item(
         Err(e) => {
             tracing::error!("Failed to move time item: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -133,7 +136,7 @@ pub async fn delete_time_item(
         Err(e) => {
             tracing::error!("Failed to delete time item: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -157,7 +160,7 @@ pub async fn update_time_item_status(
         Err(e) => {
             tracing::error!("Failed to update status: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -179,7 +182,7 @@ pub async fn list_children(
         Err(e) => {
             tracing::error!("Failed to list children: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -201,7 +204,7 @@ pub async fn list_time_item_users(
         Err(e) => {
             tracing::error!("Failed to list users: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -220,7 +223,7 @@ pub async fn add_time_item_user(
         Err(e) => {
             tracing::error!("Failed to add user: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -238,7 +241,7 @@ pub async fn remove_time_item_user(
         Err(e) => {
             tracing::error!("Failed to remove user: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -262,7 +265,7 @@ pub async fn update_rsvp(
         Err(e) => {
             tracing::error!("Failed to update RSVP: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -284,7 +287,7 @@ pub async fn list_time_item_groups(
         Err(e) => {
             tracing::error!("Failed to list groups: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -303,7 +306,7 @@ pub async fn add_time_item_group(
         Err(e) => {
             tracing::error!("Failed to add group: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -321,7 +324,7 @@ pub async fn remove_time_item_group(
         Err(e) => {
             tracing::error!("Failed to remove group: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -375,7 +378,7 @@ pub async fn list_dependencies(
         Err(e) => {
             tracing::error!("Failed to list dependencies: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -394,7 +397,7 @@ pub async fn add_dependency(
         Err(e) => {
             tracing::error!("Failed to add dependency: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -412,7 +415,7 @@ pub async fn remove_dependency(
         Err(e) => {
             tracing::error!("Failed to remove dependency: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -435,7 +438,7 @@ pub async fn get_recurrence(
         Err(e) => {
             tracing::error!("Failed to get recurrence: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -453,7 +456,7 @@ pub async fn delete_recurrence(
         Err(e) => {
             tracing::error!("Failed to delete recurrence: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -474,7 +477,7 @@ pub async fn list_scheduling_resources(
         Err(e) => {
             tracing::error!("Failed to list resources: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -493,7 +496,7 @@ pub async fn get_scheduling_resource(
         Err(e) => {
             tracing::error!("Failed to get resource: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -511,7 +514,7 @@ pub async fn create_scheduling_resource(
         Err(e) => {
             tracing::error!("Failed to create resource: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -529,7 +532,7 @@ pub async fn delete_scheduling_resource(
         Err(e) => {
             tracing::error!("Failed to delete resource: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -550,7 +553,7 @@ pub async fn list_templates(
         Err(e) => {
             tracing::error!("Failed to list templates: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -569,7 +572,7 @@ pub async fn get_template(
         Err(e) => {
             tracing::error!("Failed to get template: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -587,7 +590,7 @@ pub async fn create_template(
         Err(e) => {
             tracing::error!("Failed to create template: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -605,7 +608,7 @@ pub async fn delete_template(
         Err(e) => {
             tracing::error!("Failed to delete template: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -626,7 +629,7 @@ pub async fn get_preferences(
         Err(e) => {
             tracing::error!("Failed to get preferences: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -647,6 +650,6 @@ pub async fn update_preferences(
         Err(e) => {
             tracing::error!("Failed to update preferences: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }

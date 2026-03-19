@@ -12,7 +12,41 @@ use crate::presentation::{
 };
 
 /// Export presentation JSON to PPTX
-pub async fn export_pptx(Json(payload): Json<serde_json::Value>) -> Response {
+pub async fn export_pptx(
+    axum::extract::State(state): axum::extract::State<crate::AppState>,
+    Json(payload): Json<serde_json::Value>,
+) -> Response {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+    let mut hasher = DefaultHasher::new();
+    serde_json::to_string(&payload)
+        .unwrap_or_default()
+        .hash(&mut hasher);
+    let cache_key = format!("slides_pptx_{}", hasher.finish());
+
+    let filename = payload
+        .get("filename")
+        .and_then(|f| f.as_str())
+        .unwrap_or("presentation.pptx")
+        .to_string();
+
+    if let Some(cached_data) = state.cache.get(&cache_key).await {
+        tracing::info!("Cache hit for PPTX: {}", cache_key);
+        return (
+            StatusCode::OK,
+            [
+                (
+                    "Content-Type",
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                ),
+                (
+                    "Content-Disposition",
+                    &format!("attachment; filename=\"{}\"", filename),
+                ),
+            ],
+            cached_data,
+        )
+            .into_response();
+    }
     match json_to_pptx(&payload) {
         Ok(data) => {
             let filename = payload
@@ -20,6 +54,7 @@ pub async fn export_pptx(Json(payload): Json<serde_json::Value>) -> Response {
                 .and_then(|f| f.as_str())
                 .unwrap_or("presentation.pptx");
 
+            state.cache.set(&cache_key, data.clone()).await;
             (
                 StatusCode::OK,
                 [
@@ -35,7 +70,7 @@ pub async fn export_pptx(Json(payload): Json<serde_json::Value>) -> Response {
                 data,
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!("PPTX export error: {}", e);
             (
@@ -46,12 +81,43 @@ pub async fn export_pptx(Json(payload): Json<serde_json::Value>) -> Response {
                 })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
 /// Export presentation to PDF (all slides)
-pub async fn export_slides_pdf(Json(payload): Json<serde_json::Value>) -> Response {
+pub async fn export_slides_pdf(
+    axum::extract::State(state): axum::extract::State<crate::AppState>,
+    Json(payload): Json<serde_json::Value>,
+) -> Response {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+    let mut hasher = DefaultHasher::new();
+    serde_json::to_string(&payload)
+        .unwrap_or_default()
+        .hash(&mut hasher);
+    let cache_key = format!("slides_pdf_{}", hasher.finish());
+
+    let filename = payload
+        .get("filename")
+        .and_then(|f| f.as_str())
+        .unwrap_or("slides.pdf")
+        .to_string();
+
+    if let Some(cached_data) = state.cache.get(&cache_key).await {
+        tracing::info!("Cache hit for PDF: {}", cache_key);
+        return (
+            StatusCode::OK,
+            [
+                ("Content-Type", "application/pdf"),
+                (
+                    "Content-Disposition",
+                    &format!("attachment; filename=\"{}\"", filename),
+                ),
+            ],
+            cached_data,
+        )
+            .into_response();
+    }
     // Parse presentation
     let presentation = match parse_json_to_presentation(&payload) {
         Ok(p) => p,
@@ -64,7 +130,7 @@ pub async fn export_slides_pdf(Json(payload): Json<serde_json::Value>) -> Respon
                 })),
             )
                 .into_response();
-        }
+        },
     };
 
     // Generate PDF from slides
@@ -76,6 +142,7 @@ pub async fn export_slides_pdf(Json(payload): Json<serde_json::Value>) -> Respon
                 .and_then(|f| f.as_str())
                 .unwrap_or("slides.pdf");
 
+            state.cache.set(&cache_key, data.clone()).await;
             (
                 StatusCode::OK,
                 [
@@ -88,7 +155,7 @@ pub async fn export_slides_pdf(Json(payload): Json<serde_json::Value>) -> Respon
                 data,
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!("PDF slides export error: {}", e);
             (
@@ -99,7 +166,7 @@ pub async fn export_slides_pdf(Json(payload): Json<serde_json::Value>) -> Respon
                 })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -116,13 +183,10 @@ pub async fn export_slide_png(Json(payload): Json<serde_json::Value>) -> Respons
                 })),
             )
                 .into_response();
-        }
+        },
     };
 
-    let slide_num = payload
-        .get("slide")
-        .and_then(|s| s.as_u64())
-        .unwrap_or(1) as usize;
+    let slide_num = payload.get("slide").and_then(|s| s.as_u64()).unwrap_or(1) as usize;
 
     if slide_num == 0 || slide_num > presentation.slides.len() {
         return (
@@ -152,7 +216,7 @@ pub async fn export_slide_png(Json(payload): Json<serde_json::Value>) -> Respons
                 data,
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!("PNG slide export error: {}", e);
             (
@@ -163,7 +227,7 @@ pub async fn export_slide_png(Json(payload): Json<serde_json::Value>) -> Respons
                 })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -180,13 +244,10 @@ pub async fn export_slide_svg(Json(payload): Json<serde_json::Value>) -> Respons
                 })),
             )
                 .into_response();
-        }
+        },
     };
 
-    let slide_num = payload
-        .get("slide")
-        .and_then(|s| s.as_u64())
-        .unwrap_or(1) as usize;
+    let slide_num = payload.get("slide").and_then(|s| s.as_u64()).unwrap_or(1) as usize;
 
     if slide_num == 0 || slide_num > presentation.slides.len() {
         return (
@@ -216,7 +277,7 @@ pub async fn export_slide_svg(Json(payload): Json<serde_json::Value>) -> Respons
                 data,
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!("SVG slide export error: {}", e);
             (
@@ -227,7 +288,7 @@ pub async fn export_slide_svg(Json(payload): Json<serde_json::Value>) -> Respons
                 })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -244,7 +305,7 @@ pub async fn export_all_slides_png(Json(payload): Json<serde_json::Value>) -> Re
                 })),
             )
                 .into_response();
-        }
+        },
     };
 
     match presentation_to_pngs(&presentation) {
@@ -270,7 +331,7 @@ pub async fn export_all_slides_png(Json(payload): Json<serde_json::Value>) -> Re
                 })),
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!("PNG slides export error: {}", e);
             (
@@ -281,7 +342,7 @@ pub async fn export_all_slides_png(Json(payload): Json<serde_json::Value>) -> Re
                 })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -298,7 +359,7 @@ pub async fn export_all_slides_svg(Json(payload): Json<serde_json::Value>) -> Re
                 })),
             )
                 .into_response();
-        }
+        },
     };
 
     match presentation_to_svgs(&presentation) {
@@ -324,7 +385,7 @@ pub async fn export_all_slides_svg(Json(payload): Json<serde_json::Value>) -> Re
                 })),
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!("SVG slides export error: {}", e);
             (
@@ -335,7 +396,7 @@ pub async fn export_all_slides_svg(Json(payload): Json<serde_json::Value>) -> Re
                 })),
             )
                 .into_response()
-        }
+        },
     }
 }
 

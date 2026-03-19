@@ -328,30 +328,28 @@ pub async fn get_employee(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let employee: Employee = sqlx::query_as(
-        "SELECT * FROM workforce_employees WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(ctx.tenant_id)
-    .fetch_optional(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get employee: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?
-    .ok_or(StatusCode::NOT_FOUND)?;
+    let employee: Employee =
+        sqlx::query_as("SELECT * FROM workforce_employees WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(ctx.tenant_id)
+            .fetch_optional(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get employee: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
+            .ok_or(StatusCode::NOT_FOUND)?;
 
     // Get org node name
-    let org_node_name: Option<String> = sqlx::query_scalar(
-        "SELECT name FROM workforce_org_nodes WHERE id = $1",
-    )
-    .bind(employee.org_node_id)
-    .fetch_optional(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get org node: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let org_node_name: Option<String> =
+        sqlx::query_scalar("SELECT name FROM workforce_org_nodes WHERE id = $1")
+            .bind(employee.org_node_id)
+            .fetch_optional(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get org node: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     // Get org node path (ancestors)
     let org_node_path: Vec<String> = sqlx::query_scalar(
@@ -569,18 +567,17 @@ pub async fn get_functions(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let employee: Employee = sqlx::query_as(
-        "SELECT * FROM workforce_employees WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(ctx.tenant_id)
-    .fetch_optional(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get employee: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?
-    .ok_or(StatusCode::NOT_FOUND)?;
+    let employee: Employee =
+        sqlx::query_as("SELECT * FROM workforce_employees WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(ctx.tenant_id)
+            .fetch_optional(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get employee: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
+            .ok_or(StatusCode::NOT_FOUND)?;
 
     let function_codes: Vec<String> =
         serde_json::from_value(employee.functions).unwrap_or_default();
@@ -858,17 +855,16 @@ pub async fn delete_function_definition(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let result = sqlx::query(
-        "DELETE FROM workforce_function_definitions WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(ctx.tenant_id)
-    .execute(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to delete function definition: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let result =
+        sqlx::query("DELETE FROM workforce_function_definitions WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(ctx.tenant_id)
+            .execute(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to delete function definition: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     if result.rows_affected() == 0 {
         return Err(StatusCode::NOT_FOUND);

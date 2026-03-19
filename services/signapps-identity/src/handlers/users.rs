@@ -377,9 +377,10 @@ pub async fn set_tenant(
         .ok_or_else(|| Error::NotFound(format!("User {}", id)))?;
 
     // Verify tenant exists
-    let _tenant = signapps_db::repositories::TenantRepository::find_by_id(&state.pool, payload.tenant_id)
-        .await?
-        .ok_or_else(|| Error::NotFound(format!("Tenant {}", payload.tenant_id)))?;
+    let _tenant =
+        signapps_db::repositories::TenantRepository::find_by_id(&state.pool, payload.tenant_id)
+            .await?
+            .ok_or_else(|| Error::NotFound(format!("Tenant {}", payload.tenant_id)))?;
 
     // Set the tenant
     let user = UserRepository::set_tenant(&state.pool, id, payload.tenant_id).await?;

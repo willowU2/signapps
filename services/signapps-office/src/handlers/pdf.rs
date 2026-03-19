@@ -8,7 +8,9 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::pdf::{extract_text, get_page_dimensions, get_pdf_info, merge_pdfs, split_pdf, PdfError};
+use crate::pdf::{
+    extract_text, get_page_dimensions, get_pdf_info, merge_pdfs, split_pdf, PdfError,
+};
 
 /// PDF info response
 #[derive(Debug, Serialize)]
@@ -23,13 +25,7 @@ pub async fn pdf_info() -> Json<PdfInfoResponse> {
     Json(PdfInfoResponse {
         service: "SignApps Office - PDF Operations",
         version: "1.0.0",
-        operations: vec![
-            "extract_text",
-            "merge",
-            "split",
-            "info",
-            "page_dimensions",
-        ],
+        operations: vec!["extract_text", "merge", "split", "info", "page_dimensions"],
     })
 }
 
@@ -52,7 +48,7 @@ pub async fn extract_pdf_text(mut multipart: Multipart) -> Response {
                         })),
                     )
                         .into_response();
-                }
+                },
             }
         }
     }
@@ -67,7 +63,7 @@ pub async fn extract_pdf_text(mut multipart: Multipart) -> Response {
                 })),
             )
                 .into_response();
-        }
+        },
     };
 
     match extract_text(&pdf_data) {
@@ -99,7 +95,7 @@ pub async fn get_pdf_document_info(mut multipart: Multipart) -> Response {
                         })),
                     )
                         .into_response();
-                }
+                },
             }
         }
     }
@@ -114,7 +110,7 @@ pub async fn get_pdf_document_info(mut multipart: Multipart) -> Response {
                 })),
             )
                 .into_response();
-        }
+        },
     };
 
     match get_pdf_info(&pdf_data) {
@@ -142,7 +138,7 @@ pub async fn get_pdf_pages(mut multipart: Multipart) -> Response {
                         })),
                     )
                         .into_response();
-                }
+                },
             }
         }
     }
@@ -157,7 +153,7 @@ pub async fn get_pdf_pages(mut multipart: Multipart) -> Response {
                 })),
             )
                 .into_response();
-        }
+        },
     };
 
     match get_page_dimensions(&pdf_data) {
@@ -197,7 +193,7 @@ pub async fn merge_pdf_files(mut multipart: Multipart) -> Response {
                         })),
                     )
                         .into_response();
-                }
+                },
             }
         }
     }
@@ -218,14 +214,8 @@ pub async fn merge_pdf_files(mut multipart: Multipart) -> Response {
         Ok(merged_data) => (
             StatusCode::OK,
             [
-                (
-                    "Content-Type",
-                    "application/pdf",
-                ),
-                (
-                    "Content-Disposition",
-                    "attachment; filename=\"merged.pdf\"",
-                ),
+                ("Content-Type", "application/pdf"),
+                ("Content-Disposition", "attachment; filename=\"merged.pdf\""),
             ],
             merged_data,
         )
@@ -251,21 +241,19 @@ pub async fn split_pdf_file(mut multipart: Multipart) -> Response {
         let name = field.name().unwrap_or_default().to_string();
 
         match name.as_str() {
-            "file" => {
-                match field.bytes().await {
-                    Ok(bytes) => pdf_data = Some(bytes.to_vec()),
-                    Err(e) => {
-                        return (
-                            StatusCode::BAD_REQUEST,
-                            Json(serde_json::json!({
-                                "error": "Failed to read file",
-                                "message": e.to_string()
-                            })),
-                        )
-                            .into_response();
-                    }
-                }
-            }
+            "file" => match field.bytes().await {
+                Ok(bytes) => pdf_data = Some(bytes.to_vec()),
+                Err(e) => {
+                    return (
+                        StatusCode::BAD_REQUEST,
+                        Json(serde_json::json!({
+                            "error": "Failed to read file",
+                            "message": e.to_string()
+                        })),
+                    )
+                        .into_response();
+                },
+            },
             "ranges" => {
                 match field.text().await {
                     Ok(text) => {
@@ -289,7 +277,7 @@ pub async fn split_pdf_file(mut multipart: Multipart) -> Response {
                                 }
                             }
                         }
-                    }
+                    },
                     Err(e) => {
                         return (
                             StatusCode::BAD_REQUEST,
@@ -299,10 +287,10 @@ pub async fn split_pdf_file(mut multipart: Multipart) -> Response {
                             })),
                         )
                             .into_response();
-                    }
+                    },
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
@@ -316,7 +304,7 @@ pub async fn split_pdf_file(mut multipart: Multipart) -> Response {
                 })),
             )
                 .into_response();
-        }
+        },
     };
 
     if ranges.is_empty() {
@@ -353,7 +341,7 @@ pub async fn split_pdf_file(mut multipart: Multipart) -> Response {
                 "results": results
             }))
             .into_response()
-        }
+        },
         Err(e) => error_response(e),
     }
 }

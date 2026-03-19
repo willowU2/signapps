@@ -94,10 +94,11 @@ impl DocumentConverter {
                 };
                 Ok(ConversionResult {
                     data,
-                    mime_type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    mime_type:
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     extension: "docx",
                 })
-            }
+            },
             ConversionFormat::Pdf => {
                 let data = pdf::html_to_pdf(&html)?;
                 Ok(ConversionResult {
@@ -105,7 +106,7 @@ impl DocumentConverter {
                     mime_type: "application/pdf",
                     extension: "pdf",
                 })
-            }
+            },
             ConversionFormat::Markdown => {
                 let data = html::html_to_markdown(&html)?;
                 Ok(ConversionResult {
@@ -113,7 +114,7 @@ impl DocumentConverter {
                     mime_type: "text/markdown",
                     extension: "md",
                 })
-            }
+            },
             ConversionFormat::Html => Ok(ConversionResult {
                 data: html.into_bytes(),
                 mime_type: "text/html",
@@ -126,7 +127,7 @@ impl DocumentConverter {
                     mime_type: "text/plain",
                     extension: "txt",
                 })
-            }
+            },
         }
     }
 }

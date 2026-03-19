@@ -7,7 +7,9 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use signapps_common::{Claims, TenantContext};
+use signapps_db::models::{CreateTimeItem, TimeItemsQuery};
 use signapps_db::repositories::calendar_repository::TaskRepository;
+use signapps_db::repositories::TimeItemRepository;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -38,14 +40,42 @@ pub struct TaskAttachmentResponse {
 // ============================================================================
 
 pub async fn list_tasks(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Extension(ctx): Extension<TenantContext>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    Ok(Json(json!({
-        "data": [],
-        "tenant_id": ctx.tenant_id
-    })))
+    let repo = TimeItemRepository::new(&state.pool);
+    let mut query = TimeItemsQuery::default();
+    query.types = Some(vec!["task".to_string()]);
+
+    match repo.query(ctx.tenant_id, claims.sub, &query).await {
+        Ok(response) => Ok(Json(json!({ "data": response.items }))),
+        Err(e) => {
+            tracing::error!("Failed to list tasks: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
+    }
+}
+
+pub async fn create_task(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(ctx): Extension<TenantContext>,
+    Json(mut payload): Json<CreateTimeItem>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let repo = TimeItemRepository::new(&state.pool);
+    payload.item_type = "task".to_string(); // Force task type to ensure correctness
+
+    match repo
+        .create(ctx.tenant_id, claims.sub, claims.sub, payload)
+        .await
+    {
+        Ok(task) => Ok((StatusCode::CREATED, Json(json!({ "data": task })))),
+        Err(e) => {
+            tracing::error!("Failed to create task: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
+    }
 }
 
 pub async fn get_task(

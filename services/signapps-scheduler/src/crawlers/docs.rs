@@ -39,13 +39,12 @@ impl DatabaseCrawler for DocsCrawler {
         pool: &PgPool,
         record_id: Uuid,
     ) -> Result<Option<CrawledDocument>> {
-        let row: Option<(String, String, Option<Uuid>)> = sqlx::query_as(
-            "SELECT title, doc_type, created_by FROM documents WHERE id = $1",
-        )
-        .bind(record_id)
-        .fetch_optional(pool)
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        let row: Option<(String, String, Option<Uuid>)> =
+            sqlx::query_as("SELECT title, doc_type, created_by FROM documents WHERE id = $1")
+                .bind(record_id)
+                .fetch_optional(pool)
+                .await
+                .map_err(|e| Error::Database(e.to_string()))?;
 
         if let Some((title, doc_type, created_by)) = row {
             // Get the latest content from document_metadata if available
@@ -61,10 +60,7 @@ impl DatabaseCrawler for DocsCrawler {
                 .map(|(v,)| v.as_str().unwrap_or("").to_string())
                 .unwrap_or_default();
 
-            let content = format!(
-                "Document: {} (type: {})\n\n{}",
-                title, doc_type, body
-            );
+            let content = format!("Document: {} (type: {})\n\n{}", title, doc_type, body);
 
             let security_tags = json!({
                 "resource_type": "document",

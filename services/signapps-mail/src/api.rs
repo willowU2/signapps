@@ -356,7 +356,9 @@ async fn test_smtp_connection(account: &MailAccount) -> (bool, Option<String>) {
     }
 }
 
-async fn test_imap_connection(account: &MailAccount) -> (bool, Option<String>, Option<Vec<String>>) {
+async fn test_imap_connection(
+    account: &MailAccount,
+) -> (bool, Option<String>, Option<Vec<String>>) {
     use futures_util::StreamExt;
 
     let Some(ref imap_server) = account.imap_server else {
@@ -404,13 +406,11 @@ async fn test_imap_connection(account: &MailAccount) -> (bool, Option<String>, O
         Err(e) => {
             // Connection will be dropped automatically
             return (false, Some(format!("Failed to list folders: {}", e)), None);
-        }
+        },
     };
 
     let folder_names: Vec<String> = stream
-        .filter_map(|item| async move {
-            item.ok().map(|f| f.name().to_string())
-        })
+        .filter_map(|item| async move { item.ok().map(|f| f.name().to_string()) })
         .collect()
         .await;
 

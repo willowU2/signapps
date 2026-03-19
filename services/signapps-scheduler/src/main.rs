@@ -48,9 +48,7 @@ async fn main() -> Result<()> {
     config.log_startup();
 
     // Scheduler-specific config
-    let job_timeout_seconds: u64 = env_or("JOB_TIMEOUT_SECONDS", "300")
-        .parse()
-        .unwrap_or(300);
+    let job_timeout_seconds: u64 = env_or("JOB_TIMEOUT_SECONDS", "300").parse().unwrap_or(300);
 
     // Create database pool
     let pool = signapps_db::create_pool(&config.database_url).await?;
@@ -190,6 +188,7 @@ fn create_router(state: AppState) -> Router {
     // Project routes (require tenant context)
     let project_routes = Router::new()
         .route("/", get(handlers::projects::list_projects))
+        .route("/", post(handlers::projects::create_project))
         .route("/{id}", get(handlers::projects::get_project))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
@@ -202,6 +201,7 @@ fn create_router(state: AppState) -> Router {
     // Task routes (require tenant context)
     let task_routes = Router::new()
         .route("/", get(handlers::tasks::list_tasks))
+        .route("/", post(handlers::tasks::create_task))
         .route("/{id}", get(handlers::tasks::get_task))
         // Task attachments
         .route("/{id}/attachments", get(handlers::tasks::list_attachments))
@@ -258,7 +258,10 @@ fn create_router(state: AppState) -> Router {
         .route("/", get(handlers::time_items::list_scheduling_resources))
         .route("/", post(handlers::time_items::create_scheduling_resource))
         .route("/{id}", get(handlers::time_items::get_scheduling_resource))
-        .route("/{id}", delete(handlers::time_items::delete_scheduling_resource))
+        .route(
+            "/{id}",
+            delete(handlers::time_items::delete_scheduling_resource),
+        )
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))

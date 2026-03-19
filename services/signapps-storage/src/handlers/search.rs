@@ -2,12 +2,13 @@
 #![allow(dead_code)]
 
 use axum::{
-    extract::{Query, State},
+    extract::{Extension, Query, State},
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use signapps_common::Result;
+use sqlx::{postgres::PgRow, Row};
 
 use crate::AppState;
 
@@ -378,4 +379,82 @@ mod tests {
     fn test_sort_order_default() {
         assert!(matches!(SortOrder::default(), SortOrder::Desc));
     }
+}
+
+/// Omni search query.
+#[derive(Debug, Deserialize)]
+pub struct OmniSearchQuery {
+    pub q: String,
+    pub limit: Option<i32>,
+}
+
+/// Omni search result item.
+#[derive(Debug, Serialize)]
+pub struct OmniSearchResult {
+    pub id: uuid::Uuid,
+    pub entity_type: String,
+    pub title: String,
+    pub snippet: Option<String>,
+    pub url: String,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// Omni search response.
+#[derive(Debug, Serialize)]
+pub struct OmniSearchResponse {
+    pub results: Vec<OmniSearchResult>,
+    pub took_ms: u64,
+}
+
+/// Omni-search: Search across ALL entities (Docs, Mail, Files) via global index
+#[tracing::instrument(skip(state))]
+pub async fn omni_search(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<uuid::Uuid>,
+    Query(query): Query<OmniSearchQuery>,
+) -> Result<Json<OmniSearchResponse>> {
+    let start = std::time::Instant::now();
+    let limit = query.limit.unwrap_or(10).clamp(1, 100) as i64;
+
+    // Quick escape if query is empty
+    if query.q.trim().is_empty() {
+        return Ok(Json(OmniSearchResponse {
+            results: vec![],
+            took_ms: start.elapsed().as_millis() as u64,
+        }));
+    }
+
+    let pattern = format!("%{}%", query.q);
+
+    let rows = sqlx::query(
+        r#"
+        SELECT id, entity_type, title, snippet, url, updated_at
+        FROM global_search_index
+        WHERE user_id = $1 AND (title ILIKE $2 OR snippet ILIKE $2)
+        ORDER BY updated_at DESC
+        LIMIT $3
+        "#,
+    )
+    .bind(user_id)
+    .bind(pattern)
+    .bind(limit)
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    let results = rows
+        .into_iter()
+        .map(|r: PgRow| OmniSearchResult {
+            id: r.get("id"),
+            entity_type: r.get("entity_type"),
+            title: r.get("title"),
+            snippet: r.get("snippet"),
+            url: r.get("url"),
+            updated_at: r.get("updated_at"),
+        })
+        .collect();
+
+    let took_ms = start.elapsed().as_millis() as u64;
+
+    Ok(Json(OmniSearchResponse { results, took_ms }))
 }

@@ -90,6 +90,7 @@ interface ConversionQueueState {
   // Utility
   clearError: () => void;
   reset: () => void;
+  updateJobInState: (job: ConversionJob) => void;
 }
 
 // ============================================================================
@@ -475,25 +476,21 @@ export const useConversionQueueStore = create<ConversionQueueState>()((set, get)
       error: null,
     });
   },
+
+  updateJobInState: (job: ConversionJob) => {
+    set((state) => {
+      const newJobs = state.jobs.map((j) => (j.id === job.id ? job : j));
+
+      return {
+        jobs: newJobs,
+        activeJobs: newJobs.filter((j) => ['pending', 'queued', 'processing'].includes(j.status)),
+        completedJobs: newJobs.filter((j) => j.status === 'completed'),
+        failedJobs: newJobs.filter((j) => j.status === 'failed'),
+        selectedJob: state.selectedJob?.id === job.id ? job : state.selectedJob,
+      };
+    });
+  },
 }));
-
-// Helper function (internal)
-const updateJobInState = (job: ConversionJob) => {
-  useConversionQueueStore.setState((state) => {
-    const newJobs = state.jobs.map((j) => (j.id === job.id ? job : j));
-
-    return {
-      jobs: newJobs,
-      activeJobs: newJobs.filter((j) => ['pending', 'queued', 'processing'].includes(j.status)),
-      completedJobs: newJobs.filter((j) => j.status === 'completed'),
-      failedJobs: newJobs.filter((j) => j.status === 'failed'),
-      selectedJob: state.selectedJob?.id === job.id ? job : state.selectedJob,
-    };
-  });
-};
-
-// Extend the store with the helper
-useConversionQueueStore.getState().updateJobInState = updateJobInState;
 
 // ============================================================================
 // Selectors

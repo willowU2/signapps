@@ -516,7 +516,11 @@ impl<'a> SyncConflictRepository<'a> {
     }
 
     /// Create conflict.
-    pub async fn create(&self, config_id: Uuid, conflict: CreateSyncConflict) -> Result<SyncConflict> {
+    pub async fn create(
+        &self,
+        config_id: Uuid,
+        conflict: CreateSyncConflict,
+    ) -> Result<SyncConflict> {
         let created = sqlx::query_as::<_, SyncConflict>(
             r#"
             INSERT INTO calendar.sync_conflicts
@@ -574,7 +578,12 @@ impl<'a> SyncConflictRepository<'a> {
     }
 
     /// Resolve all conflicts for a config.
-    pub async fn resolve_all(&self, config_id: Uuid, resolution: &str, user_id: Uuid) -> Result<i64> {
+    pub async fn resolve_all(
+        &self,
+        config_id: Uuid,
+        resolution: &str,
+        user_id: Uuid,
+    ) -> Result<i64> {
         let result = sqlx::query(
             r#"
             UPDATE calendar.sync_conflicts SET
@@ -699,7 +708,11 @@ impl<'a> EventMappingRepository<'a> {
     }
 
     /// Create or update mapping.
-    pub async fn upsert(&self, config_id: Uuid, mapping: CreateEventMapping) -> Result<EventMapping> {
+    pub async fn upsert(
+        &self,
+        config_id: Uuid,
+        mapping: CreateEventMapping,
+    ) -> Result<EventMapping> {
         let created = sqlx::query_as::<_, EventMapping>(
             r#"
             INSERT INTO calendar.event_mappings

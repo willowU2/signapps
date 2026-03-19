@@ -26,6 +26,7 @@ interface ExportOptions {
   includeTrackChanges?: boolean;
   quality?: number;
   useCache?: boolean;
+  [key: string]: unknown;
 }
 
 interface ExportProgress {

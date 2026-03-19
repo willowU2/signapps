@@ -10,7 +10,9 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::spreadsheet::{csv_to_spreadsheet, json_to_csv, json_to_ods, json_to_xlsx, spreadsheet_to_json, xlsx_to_json};
+use crate::spreadsheet::{
+    csv_to_spreadsheet, json_to_csv, json_to_ods, json_to_xlsx, spreadsheet_to_json, xlsx_to_json,
+};
 
 /// Export spreadsheet JSON data to XLSX
 pub async fn export_xlsx(Json(payload): Json<serde_json::Value>) -> Response {
@@ -36,7 +38,7 @@ pub async fn export_xlsx(Json(payload): Json<serde_json::Value>) -> Response {
                 data,
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!("XLSX export error: {}", e);
             (
@@ -47,7 +49,7 @@ pub async fn export_xlsx(Json(payload): Json<serde_json::Value>) -> Response {
                 })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -84,7 +86,7 @@ pub async fn import_xlsx(mut multipart: Multipart) -> Response {
                                 })),
                             )
                                 .into_response();
-                        }
+                        },
                         Err(e) => {
                             tracing::error!("XLSX import error: {}", e);
                             return (
@@ -95,9 +97,9 @@ pub async fn import_xlsx(mut multipart: Multipart) -> Response {
                                 })),
                             )
                                 .into_response();
-                        }
+                        },
                     }
-                }
+                },
                 Err(e) => {
                     tracing::error!("Failed to read upload: {}", e);
                     return (
@@ -108,7 +110,7 @@ pub async fn import_xlsx(mut multipart: Multipart) -> Response {
                         })),
                     )
                         .into_response();
-                }
+                },
             }
         }
     }
@@ -197,7 +199,7 @@ pub async fn export_csv_handler(Json(payload): Json<serde_json::Value>) -> Respo
                 data,
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!("CSV export error: {}", e);
             (
@@ -208,7 +210,7 @@ pub async fn export_csv_handler(Json(payload): Json<serde_json::Value>) -> Respo
                 })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -236,7 +238,7 @@ pub async fn export_ods_handler(Json(payload): Json<serde_json::Value>) -> Respo
                 data,
             )
                 .into_response()
-        }
+        },
         Err(e) => {
             tracing::error!("ODS export error: {}", e);
             (
@@ -247,7 +249,7 @@ pub async fn export_ods_handler(Json(payload): Json<serde_json::Value>) -> Respo
                 })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -260,10 +262,7 @@ pub struct CsvImportRequest {
 }
 
 pub async fn import_csv_text(Json(payload): Json<CsvImportRequest>) -> Response {
-    let delimiter = payload
-        .delimiter
-        .as_ref()
-        .and_then(|d| d.chars().next());
+    let delimiter = payload.delimiter.as_ref().and_then(|d| d.chars().next());
 
     let has_headers = payload.has_headers.unwrap_or(true);
 
@@ -297,7 +296,7 @@ pub async fn import_csv_text(Json(payload): Json<CsvImportRequest>) -> Response 
                 })),
             )
                 .into_response()
-        }
+        },
     }
 }
 
@@ -334,7 +333,7 @@ pub async fn import_spreadsheet(mut multipart: Multipart) -> Response {
                                         })),
                                     )
                                         .into_response();
-                                }
+                                },
                                 Err(e) => {
                                     return (
                                         StatusCode::BAD_REQUEST,
@@ -344,7 +343,7 @@ pub async fn import_spreadsheet(mut multipart: Multipart) -> Response {
                                         })),
                                     )
                                         .into_response();
-                                }
+                                },
                             },
                             Err(e) => {
                                 tracing::error!("CSV import error: {}", e);
@@ -356,9 +355,10 @@ pub async fn import_spreadsheet(mut multipart: Multipart) -> Response {
                                     })),
                                 )
                                     .into_response();
-                            }
+                            },
                         }
-                    } else if filename_lower.ends_with(".xlsx") || filename_lower.ends_with(".xls") {
+                    } else if filename_lower.ends_with(".xlsx") || filename_lower.ends_with(".xls")
+                    {
                         match xlsx_to_json(&data) {
                             Ok(json) => {
                                 return (
@@ -371,7 +371,7 @@ pub async fn import_spreadsheet(mut multipart: Multipart) -> Response {
                                     })),
                                 )
                                     .into_response();
-                            }
+                            },
                             Err(e) => {
                                 tracing::error!("XLSX import error: {}", e);
                                 return (
@@ -382,7 +382,7 @@ pub async fn import_spreadsheet(mut multipart: Multipart) -> Response {
                                     })),
                                 )
                                     .into_response();
-                            }
+                            },
                         }
                     } else {
                         return (
@@ -394,7 +394,7 @@ pub async fn import_spreadsheet(mut multipart: Multipart) -> Response {
                         )
                             .into_response();
                     }
-                }
+                },
                 Err(e) => {
                     tracing::error!("Failed to read upload: {}", e);
                     return (
@@ -405,7 +405,7 @@ pub async fn import_spreadsheet(mut multipart: Multipart) -> Response {
                         })),
                     )
                         .into_response();
-                }
+                },
             }
         }
     }

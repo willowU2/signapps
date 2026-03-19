@@ -3,7 +3,7 @@ pub mod auth;
 pub mod models;
 pub mod sync_service;
 
-use signapps_common::bootstrap::{init_tracing, load_env, env_or};
+use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::{AiIndexerClient, JwtConfig};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
@@ -32,7 +32,10 @@ async fn main() {
     tracing::info!("🚀 Starting signapps-mail on port {}", port);
 
     // Database
-    let database_url = env_or("DATABASE_URL", "postgres://signapps:password@localhost:5432/signapps");
+    let database_url = env_or(
+        "DATABASE_URL",
+        "postgres://signapps:password@localhost:5432/signapps",
+    );
     let pool = PgPoolOptions::new()
         .max_connections(10)
         .connect(&database_url)

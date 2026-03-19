@@ -25,7 +25,9 @@ pub fn json_to_xlsx(json: &serde_json::Value) -> Result<Vec<u8>, SpreadsheetErro
 }
 
 /// Parse Handsontable-style JSON to Spreadsheet
-pub fn parse_json_to_spreadsheet(json: &serde_json::Value) -> Result<Spreadsheet, SpreadsheetError> {
+pub fn parse_json_to_spreadsheet(
+    json: &serde_json::Value,
+) -> Result<Spreadsheet, SpreadsheetError> {
     let mut spreadsheet = Spreadsheet::new();
 
     // Handle single sheet (array of arrays)
@@ -63,10 +65,7 @@ pub fn parse_json_to_spreadsheet(json: &serde_json::Value) -> Result<Spreadsheet
     Ok(spreadsheet)
 }
 
-fn parse_sheet_data(
-    name: &str,
-    data: &[serde_json::Value],
-) -> Result<Sheet, SpreadsheetError> {
+fn parse_sheet_data(name: &str, data: &[serde_json::Value]) -> Result<Sheet, SpreadsheetError> {
     let mut sheet = Sheet::new(name);
 
     for row_data in data {
@@ -95,7 +94,7 @@ fn parse_cell_value(value: &serde_json::Value) -> super::Cell {
             } else {
                 CellValue::String(n.to_string())
             }
-        }
+        },
         serde_json::Value::String(s) => {
             // Check if it's a formula
             if s.starts_with('=') {
@@ -103,14 +102,14 @@ fn parse_cell_value(value: &serde_json::Value) -> super::Cell {
             } else {
                 CellValue::String(s.clone())
             }
-        }
+        },
         serde_json::Value::Object(obj) => {
             // Handle cell object with value and style
             if let Some(v) = obj.get("value") {
                 return parse_cell_value(v);
             }
             CellValue::Empty
-        }
+        },
         serde_json::Value::Array(_) => CellValue::Empty,
     };
 
@@ -158,38 +157,38 @@ fn write_cell(
     let format = build_cell_format(&cell.style);
 
     match &cell.value {
-        CellValue::Empty => {}
+        CellValue::Empty => {},
         CellValue::String(s) => {
             worksheet
                 .write_string_with_format(row, col, s, &format)
                 .map_err(|e: XlsxError| SpreadsheetError::ConversionFailed(e.to_string()))?;
-        }
+        },
         CellValue::Number(n) => {
             worksheet
                 .write_number_with_format(row, col, *n, &format)
                 .map_err(|e: XlsxError| SpreadsheetError::ConversionFailed(e.to_string()))?;
-        }
+        },
         CellValue::Bool(b) => {
             worksheet
                 .write_boolean_with_format(row, col, *b, &format)
                 .map_err(|e: XlsxError| SpreadsheetError::ConversionFailed(e.to_string()))?;
-        }
+        },
         CellValue::Formula(f) => {
             worksheet
                 .write_formula_with_format(row, col, f.as_str(), &format)
                 .map_err(|e: XlsxError| SpreadsheetError::ConversionFailed(e.to_string()))?;
-        }
+        },
         CellValue::Date(d) => {
             // Write date as string for now
             worksheet
                 .write_string_with_format(row, col, d, &format)
                 .map_err(|e: XlsxError| SpreadsheetError::ConversionFailed(e.to_string()))?;
-        }
+        },
         CellValue::Error(e) => {
             worksheet
                 .write_string_with_format(row, col, e, &format)
                 .map_err(|e: XlsxError| SpreadsheetError::ConversionFailed(e.to_string()))?;
-        }
+        },
     }
 
     Ok(())
@@ -268,11 +267,7 @@ mod tests {
 
     #[test]
     fn test_raw_array_json() {
-        let json = serde_json::json!([
-            ["A", "B", "C"],
-            [1, 2, 3],
-            [4, 5, 6]
-        ]);
+        let json = serde_json::json!([["A", "B", "C"], [1, 2, 3], [4, 5, 6]]);
 
         let result = json_to_xlsx(&json);
         assert!(result.is_ok());

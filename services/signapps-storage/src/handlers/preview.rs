@@ -21,9 +21,7 @@ use crate::AppState;
 /// Create a PDFium instance for rendering.
 /// Returns None if PDFium library is not available on the system.
 fn get_pdfium() -> Option<Pdfium> {
-    Pdfium::bind_to_system_library()
-        .ok()
-        .map(Pdfium::new)
+    Pdfium::bind_to_system_library().ok().map(Pdfium::new)
 }
 
 /// Thumbnail size options.
@@ -136,12 +134,8 @@ async fn generate_image_thumbnail(
 
     // Calculate dimensions preserving aspect ratio
     let (orig_width, orig_height) = (img.width(), img.height());
-    let (thumb_width, thumb_height) = calculate_thumbnail_dimensions(
-        orig_width,
-        orig_height,
-        max_width,
-        max_height,
-    );
+    let (thumb_width, thumb_height) =
+        calculate_thumbnail_dimensions(orig_width, orig_height, max_width, max_height);
 
     // Resize the image
     let thumbnail = img.resize_exact(thumb_width, thumb_height, FilterType::Lanczos3);
@@ -255,7 +249,7 @@ fn render_pdf_thumbnail_sync(
         Some("webp") | None => (ImageFormat::WebP, "image/webp"),
         Some(f) => {
             return Err(Error::BadRequest(format!("Unsupported format: {}", f)));
-        }
+        },
     };
 
     // Encode to output format
@@ -341,7 +335,8 @@ fn extract_video_frame_cli(
     let ffmpeg_check = Command::new("ffmpeg").arg("-version").output();
     if ffmpeg_check.is_err() {
         return Err(Error::Internal(
-            "Video thumbnails unavailable: ffmpeg not installed. Install ffmpeg on your system.".to_string(),
+            "Video thumbnails unavailable: ffmpeg not installed. Install ffmpeg on your system."
+                .to_string(),
         ));
     }
 
@@ -364,8 +359,12 @@ fn extract_video_frame_cli(
     }
 
     // Clean up temp files on exit
-    let _cleanup_input = TempFileCleanup { path: input_path.clone() };
-    let _cleanup_output = TempFileCleanup { path: output_path.clone() };
+    let _cleanup_input = TempFileCleanup {
+        path: input_path.clone(),
+    };
+    let _cleanup_output = TempFileCleanup {
+        path: output_path.clone(),
+    };
 
     // Build scale filter preserving aspect ratio
     let scale_filter = format!(
@@ -376,30 +375,37 @@ fn extract_video_frame_cli(
     // Run ffmpeg to extract frame at 2 seconds (or first frame if shorter)
     let output = Command::new("ffmpeg")
         .args([
-            "-y",                           // Overwrite output
-            "-ss", "2",                     // Seek to 2 seconds
-            "-i", input_path.to_str().unwrap_or(""),
-            "-vframes", "1",                // Extract 1 frame
-            "-vf", &scale_filter,           // Scale down
-            "-q:v", "2",                    // Quality
+            "-y", // Overwrite output
+            "-ss",
+            "2", // Seek to 2 seconds
+            "-i",
+            input_path.to_str().unwrap_or(""),
+            "-vframes",
+            "1", // Extract 1 frame
+            "-vf",
+            &scale_filter, // Scale down
+            "-q:v",
+            "2", // Quality
             output_path.to_str().unwrap_or(""),
         ])
         .output();
 
     // If seeking to 2s failed (video too short), try from start
     let output = match output {
-        Ok(o) if !o.status.success() => {
-            Command::new("ffmpeg")
-                .args([
-                    "-y",
-                    "-i", input_path.to_str().unwrap_or(""),
-                    "-vframes", "1",
-                    "-vf", &scale_filter,
-                    "-q:v", "2",
-                    output_path.to_str().unwrap_or(""),
-                ])
-                .output()
-        }
+        Ok(o) if !o.status.success() => Command::new("ffmpeg")
+            .args([
+                "-y",
+                "-i",
+                input_path.to_str().unwrap_or(""),
+                "-vframes",
+                "1",
+                "-vf",
+                &scale_filter,
+                "-q:v",
+                "2",
+                output_path.to_str().unwrap_or(""),
+            ])
+            .output(),
         other => other,
     };
 
@@ -485,7 +491,8 @@ fn generate_waveform_cli(
     let ffmpeg_check = Command::new("ffmpeg").arg("-version").output();
     if ffmpeg_check.is_err() {
         return Err(Error::Internal(
-            "Audio waveforms unavailable: ffmpeg not installed. Install ffmpeg on your system.".to_string(),
+            "Audio waveforms unavailable: ffmpeg not installed. Install ffmpeg on your system."
+                .to_string(),
         ));
     }
 
@@ -497,7 +504,11 @@ fn generate_waveform_cli(
         Some("jpeg") | Some("jpg") => "jpg",
         _ => "png", // Use PNG for waveforms (better for line graphics)
     };
-    let output_path = temp_dir.join(format!("waveform_out_{}.{}", uuid::Uuid::new_v4(), output_ext));
+    let output_path = temp_dir.join(format!(
+        "waveform_out_{}.{}",
+        uuid::Uuid::new_v4(),
+        output_ext
+    ));
 
     // Write audio data to temp file
     {
@@ -508,23 +519,27 @@ fn generate_waveform_cli(
     }
 
     // Clean up temp files on exit
-    let _cleanup_input = TempFileCleanup { path: input_path.clone() };
-    let _cleanup_output = TempFileCleanup { path: output_path.clone() };
+    let _cleanup_input = TempFileCleanup {
+        path: input_path.clone(),
+    };
+    let _cleanup_output = TempFileCleanup {
+        path: output_path.clone(),
+    };
 
     // Build showwavespic filter for waveform visualization
     // Colors: foreground=#3b82f6 (blue), background transparent for PNG
-    let filter = format!(
-        "showwavespic=s={}x{}:colors=#3b82f6|#60a5fa",
-        width, height
-    );
+    let filter = format!("showwavespic=s={}x{}:colors=#3b82f6|#60a5fa", width, height);
 
     // Run ffmpeg to generate waveform image
     let output = Command::new("ffmpeg")
         .args([
-            "-y",                           // Overwrite output
-            "-i", input_path.to_str().unwrap_or(""),
-            "-filter_complex", &filter,
-            "-frames:v", "1",
+            "-y", // Overwrite output
+            "-i",
+            input_path.to_str().unwrap_or(""),
+            "-filter_complex",
+            &filter,
+            "-frames:v",
+            "1",
             output_path.to_str().unwrap_or(""),
         ])
         .output();
@@ -533,7 +548,10 @@ fn generate_waveform_cli(
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(Error::Internal(format!("ffmpeg waveform generation failed: {}", stderr)));
+        return Err(Error::Internal(format!(
+            "ffmpeg waveform generation failed: {}",
+            stderr
+        )));
     }
 
     // Read output file
@@ -541,7 +559,9 @@ fn generate_waveform_cli(
         .map_err(|e| Error::Internal(format!("Failed to read waveform: {}", e)))?;
 
     if waveform_data.is_empty() {
-        return Err(Error::Internal("ffmpeg produced empty waveform".to_string()));
+        return Err(Error::Internal(
+            "ffmpeg produced empty waveform".to_string(),
+        ));
     }
 
     let content_type = match format {
@@ -891,7 +911,10 @@ pub async fn get_document_metadata(
 ) -> Result<Json<DocumentMetadata>> {
     // Get file info
     let info = state.storage.get_object_info(&bucket, &key).await?;
-    let content_type = info.content_type.as_deref().unwrap_or("application/octet-stream");
+    let content_type = info
+        .content_type
+        .as_deref()
+        .unwrap_or("application/octet-stream");
 
     // Extract filename from key
     let filename = key.rsplit('/').next().unwrap_or(&key).to_string();
@@ -901,7 +924,15 @@ pub async fn get_document_metadata(
 
     // For PDFs, extract detailed metadata
     if content_type == "application/pdf" || filename.ends_with(".pdf") {
-        return get_pdf_metadata(&state, &bucket, &key, filename, content_type.to_string(), info.size).await;
+        return get_pdf_metadata(
+            &state,
+            &bucket,
+            &key,
+            filename,
+            content_type.to_string(),
+            info.size,
+        )
+        .await;
     }
 
     // For other documents, return basic metadata
@@ -948,14 +979,13 @@ async fn get_pdf_metadata(
                 modified_at: None,
                 page_count: None,
             }));
-        }
+        },
     };
 
     let page_count = doc.get_pages().len() as u32;
 
     // Try to extract metadata from PDF Info dictionary
-    let (title, author, creator, producer, created_at, modified_at) =
-        extract_pdf_info_dict(&doc);
+    let (title, author, creator, producer, created_at, modified_at) = extract_pdf_info_dict(&doc);
 
     Ok(Json(DocumentMetadata {
         filename,
@@ -974,7 +1004,16 @@ async fn get_pdf_metadata(
 
 /// Extract metadata from PDF Info dictionary.
 #[allow(clippy::type_complexity)]
-fn extract_pdf_info_dict(doc: &PdfDocument) -> (Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>) {
+fn extract_pdf_info_dict(
+    doc: &PdfDocument,
+) -> (
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+) {
     let trailer = &doc.trailer;
 
     // Try to get Info dictionary reference
@@ -1019,11 +1058,15 @@ fn get_document_type_name(content_type: &str, filename: &str) -> String {
     let type_name = match content_type {
         "application/pdf" => "PDF Document",
         "application/msword" => "Microsoft Word 97-2003",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => "Microsoft Word",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => {
+            "Microsoft Word"
+        },
         "application/vnd.ms-excel" => "Microsoft Excel 97-2003",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => "Microsoft Excel",
         "application/vnd.ms-powerpoint" => "Microsoft PowerPoint 97-2003",
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation" => "Microsoft PowerPoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation" => {
+            "Microsoft PowerPoint"
+        },
         "application/vnd.oasis.opendocument.text" => "OpenDocument Text",
         "application/vnd.oasis.opendocument.spreadsheet" => "OpenDocument Spreadsheet",
         "application/vnd.oasis.opendocument.presentation" => "OpenDocument Presentation",

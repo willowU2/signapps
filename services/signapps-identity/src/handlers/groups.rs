@@ -42,7 +42,6 @@ pub struct AddMemberRequest {
     pub role: Option<String>,
 }
 
-
 /// List all groups.
 pub async fn list(
     State(state): State<AppState>,

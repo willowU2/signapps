@@ -92,7 +92,7 @@ impl CoverageRuleWithAncestor {
 /// Coverage slot definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoverageSlot {
-    pub day_of_week: i32, // 0=Sunday, 6=Saturday
+    pub day_of_week: i32,   // 0=Sunday, 6=Saturday
     pub start_time: String, // "HH:MM"
     pub end_time: String,
     pub min_employees: i32,
@@ -384,17 +384,16 @@ pub async fn delete_template(
         return Err(StatusCode::CONFLICT);
     }
 
-    let result = sqlx::query(
-        "DELETE FROM workforce_coverage_templates WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(ctx.tenant_id)
-    .execute(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to delete template: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let result =
+        sqlx::query("DELETE FROM workforce_coverage_templates WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(ctx.tenant_id)
+            .execute(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to delete template: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     if result.rows_affected() == 0 {
         return Err(StatusCode::NOT_FOUND);
@@ -599,18 +598,17 @@ pub async fn get_rule(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let rule: CoverageRule = sqlx::query_as(
-        "SELECT * FROM workforce_coverage_rules WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(ctx.tenant_id)
-    .fetch_optional(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get rule: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?
-    .ok_or(StatusCode::NOT_FOUND)?;
+    let rule: CoverageRule =
+        sqlx::query_as("SELECT * FROM workforce_coverage_rules WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(ctx.tenant_id)
+            .fetch_optional(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get rule: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
+            .ok_or(StatusCode::NOT_FOUND)?;
 
     Ok(Json(rule))
 }
@@ -684,17 +682,16 @@ pub async fn delete_rule(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let result = sqlx::query(
-        "DELETE FROM workforce_coverage_rules WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(id)
-    .bind(ctx.tenant_id)
-    .execute(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to delete rule: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    let result =
+        sqlx::query("DELETE FROM workforce_coverage_rules WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(ctx.tenant_id)
+            .execute(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to delete rule: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
 
     if result.rows_affected() == 0 {
         return Err(StatusCode::NOT_FOUND);
@@ -711,7 +708,9 @@ pub async fn get_rules_by_node(
     Path(node_id): Path<Uuid>,
     Query(params): Query<RuleQueryParams>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    let effective_date = params.effective_date.unwrap_or_else(|| Utc::now().date_naive());
+    let effective_date = params
+        .effective_date
+        .unwrap_or_else(|| Utc::now().date_naive());
 
     let rules: Vec<CoverageRule> = sqlx::query_as(
         r#"
@@ -747,18 +746,17 @@ pub async fn get_effective_coverage(
     let today = Utc::now().date_naive();
 
     // Get org node name
-    let node_name: String = sqlx::query_scalar(
-        "SELECT name FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2",
-    )
-    .bind(node_id)
-    .bind(ctx.tenant_id)
-    .fetch_optional(&*state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get org node: {}", e);
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?
-    .ok_or(StatusCode::NOT_FOUND)?;
+    let node_name: String =
+        sqlx::query_scalar("SELECT name FROM workforce_org_nodes WHERE id = $1 AND tenant_id = $2")
+            .bind(node_id)
+            .bind(ctx.tenant_id)
+            .fetch_optional(&*state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get org node: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
+            .ok_or(StatusCode::NOT_FOUND)?;
 
     // Try to find rule for this node or ancestors
     let rule_with_ancestor: Option<CoverageRuleWithAncestor> = sqlx::query_as(
@@ -792,24 +790,25 @@ pub async fn get_effective_coverage(
     let (rule, inherited_from) = match rule_with_ancestor {
         Some(rwa) => {
             let from = rwa.inherited_from;
-            (Some(rwa.into_rule()), if from != node_id { Some(from) } else { None })
-        }
+            (
+                Some(rwa.into_rule()),
+                if from != node_id { Some(from) } else { None },
+            )
+        },
         None => (None, None),
     };
 
     // Get template if rule uses one
     let template: Option<CoverageTemplate> = if let Some(ref r) = rule {
         if let Some(template_id) = r.template_id {
-            sqlx::query_as(
-                "SELECT * FROM workforce_coverage_templates WHERE id = $1",
-            )
-            .bind(template_id)
-            .fetch_optional(&*state.pool)
-            .await
-            .map_err(|e| {
-                tracing::error!("Failed to get template: {}", e);
-                StatusCode::INTERNAL_SERVER_ERROR
-            })?
+            sqlx::query_as("SELECT * FROM workforce_coverage_templates WHERE id = $1")
+                .bind(template_id)
+                .fetch_optional(&*state.pool)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Failed to get template: {}", e);
+                    StatusCode::INTERNAL_SERVER_ERROR
+                })?
         } else {
             None
         }
@@ -822,8 +821,8 @@ pub async fn get_effective_coverage(
         if let Some(ref custom) = r.custom_slots {
             serde_json::from_value(custom.clone()).unwrap_or_default()
         } else if let Some(ref t) = template {
-            let pattern: WeeklyPattern =
-                serde_json::from_value(t.weekly_pattern.clone()).unwrap_or(WeeklyPattern {
+            let pattern: WeeklyPattern = serde_json::from_value(t.weekly_pattern.clone())
+                .unwrap_or(WeeklyPattern {
                     monday: vec![],
                     tuesday: vec![],
                     wednesday: vec![],

@@ -106,34 +106,18 @@ pub async fn index_internal_document(
         payload.key
     );
 
-    // Fetch the file content from signapps-storage
-    let storage_url = std::env::var("STORAGE_INTERNAL_URL")
-        .unwrap_or_else(|_| "http://signapps-storage:3004/api/v1".into());
-    let url = format!("{}/files/{}/{}", storage_url, payload.bucket, payload.key);
+    let path = format!("{}/{}", payload.bucket, payload.key);
 
-    // Using a reqwest client without auth for internal docker networks or using a service token
-    let client = reqwest::Client::new();
-    let res = client.get(&url)
-        // Note: For a real setup with auth required on storage internal routes, we'd inject a machine token here.
-        .send()
-        .await
-        .map_err(|e| signapps_common::Error::Internal(format!("Failed to fetch file from storage: {}", e)))?;
-
-    if !res.status().is_success() {
-        return Err(signapps_common::Error::Internal(format!(
-            "Storage returned status {}",
-            res.status()
-        )));
-    }
-
-    let bytes = res.bytes().await.map_err(|e| {
-        signapps_common::Error::Internal(format!("Failed to read file bytes: {}", e))
+    // Read file directly via native OpenDAL instead of making an internal HTTP request to signapps-storage
+    // This removes network bandwidth overhead and optimizes memory allocation.
+    let bytes = state.storage.read(&path).await.map_err(|e| {
+        signapps_common::Error::Internal(format!("Failed to read file natively via OpenDAL: {}", e))
     })?;
 
     // Parse text from file based on mimetype using the indexer's processor
     let content = state
         .indexer
-        .process_document_bytes(&bytes, &payload.content_type)
+        .process_document_bytes(&bytes.to_bytes(), &payload.content_type)
         .await
         .map_err(|e| {
             signapps_common::Error::Internal(format!("Failed to parse document: {}", e))

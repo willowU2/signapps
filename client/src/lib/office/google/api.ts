@@ -4,7 +4,9 @@
  * API client for Google Drive, Docs, Sheets, and Slides integration.
  */
 
-import api from '@/lib/api';
+import { getClient, ServiceName } from '@/lib/api/factory';
+
+const api = getClient(ServiceName.OFFICE);
 import type {
   GoogleAuthState,
   GoogleDriveFile,
@@ -155,7 +157,7 @@ export async function getStarredDriveFiles(): Promise<GoogleDriveFile[]> {
   const response = await api.get<GoogleDriveListResponse>(
     `${GOOGLE_BASE}/drive/files/starred`
   );
-  return response.files;
+  return response.data.files;
 }
 
 // ============================================================================

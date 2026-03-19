@@ -147,7 +147,9 @@ pub async fn create_tenant(
         .await?
         .is_some()
     {
-        return Err(Error::AlreadyExists("Tenant slug already exists".to_string()));
+        return Err(Error::AlreadyExists(
+            "Tenant slug already exists".to_string(),
+        ));
     }
 
     // Check domain uniqueness if provided
@@ -156,7 +158,9 @@ pub async fn create_tenant(
             .await?
             .is_some()
         {
-            return Err(Error::AlreadyExists("Domain already registered".to_string()));
+            return Err(Error::AlreadyExists(
+                "Domain already registered".to_string(),
+            ));
         }
     }
 
@@ -194,7 +198,9 @@ pub async fn update_tenant(
     if let Some(ref domain) = payload.domain {
         if let Some(other) = TenantRepository::find_by_domain(&state.pool, domain).await? {
             if other.id != id {
-                return Err(Error::AlreadyExists("Domain already registered".to_string()));
+                return Err(Error::AlreadyExists(
+                    "Domain already registered".to_string(),
+                ));
             }
         }
     }
@@ -219,7 +225,10 @@ pub async fn update_tenant(
 
 /// Delete (deactivate) a tenant (super-admin only).
 #[tracing::instrument(skip(state))]
-pub async fn delete_tenant(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
+pub async fn delete_tenant(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<StatusCode> {
     // Verify tenant exists
     let _existing = TenantRepository::find_by_id(&state.pool, id)
         .await?
@@ -347,8 +356,10 @@ pub async fn list_workspaces(
 
     let workspaces =
         WorkspaceRepository::list_by_tenant(&state.pool, ctx.tenant_id, limit, offset).await?;
-    let response: Vec<WorkspaceResponse> =
-        workspaces.into_iter().map(WorkspaceResponse::from).collect();
+    let response: Vec<WorkspaceResponse> = workspaces
+        .into_iter()
+        .map(WorkspaceResponse::from)
+        .collect();
 
     Ok(Json(response))
 }
@@ -360,8 +371,10 @@ pub async fn list_my_workspaces(
     Extension(claims): Extension<Claims>,
 ) -> Result<Json<Vec<WorkspaceResponse>>> {
     let workspaces = WorkspaceRepository::list_by_user(&state.pool, claims.sub).await?;
-    let response: Vec<WorkspaceResponse> =
-        workspaces.into_iter().map(WorkspaceResponse::from).collect();
+    let response: Vec<WorkspaceResponse> = workspaces
+        .into_iter()
+        .map(WorkspaceResponse::from)
+        .collect();
 
     Ok(Json(response))
 }
@@ -429,7 +442,10 @@ pub async fn create_workspace(
 
     tracing::info!(workspace_id = %workspace.id, "Created new workspace");
 
-    Ok((StatusCode::CREATED, Json(WorkspaceResponse::from(workspace))))
+    Ok((
+        StatusCode::CREATED,
+        Json(WorkspaceResponse::from(workspace)),
+    ))
 }
 
 /// Update a workspace.
@@ -476,7 +492,9 @@ pub async fn delete_workspace(
 
     // Prevent deleting default workspace
     if workspace.is_default {
-        return Err(Error::BadRequest("Cannot delete default workspace".to_string()));
+        return Err(Error::BadRequest(
+            "Cannot delete default workspace".to_string(),
+        ));
     }
 
     WorkspaceRepository::delete(&state.pool, id).await?;
@@ -497,8 +515,10 @@ pub async fn list_workspace_members(
         .ok_or_else(|| Error::NotFound(format!("Workspace {}", workspace_id)))?;
 
     let members = WorkspaceRepository::list_members(&state.pool, workspace_id).await?;
-    let response: Vec<WorkspaceMemberResponse> =
-        members.into_iter().map(WorkspaceMemberResponse::from).collect();
+    let response: Vec<WorkspaceMemberResponse> = members
+        .into_iter()
+        .map(WorkspaceMemberResponse::from)
+        .collect();
 
     Ok(Json(response))
 }

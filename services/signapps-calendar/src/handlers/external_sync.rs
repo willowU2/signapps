@@ -144,9 +144,8 @@ pub async fn handle_oauth_callback(
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
-    let oauth_state = oauth_state.ok_or(CalendarError::bad_request(
-        "Invalid or expired OAuth state",
-    ))?;
+    let oauth_state =
+        oauth_state.ok_or(CalendarError::bad_request("Invalid or expired OAuth state"))?;
 
     if oauth_state.user_id != claims.sub {
         return Err(CalendarError::Forbidden);
@@ -446,7 +445,10 @@ pub async fn trigger_sync(
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
-    let log = logs.into_iter().next().ok_or(CalendarError::InternalError)?;
+    let log = logs
+        .into_iter()
+        .next()
+        .ok_or(CalendarError::InternalError)?;
 
     Ok(Json(log))
 }

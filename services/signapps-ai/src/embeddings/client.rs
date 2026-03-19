@@ -80,7 +80,10 @@ impl EmbeddingsClient {
         let base_url = base_url.trim_end_matches('/').to_string();
         // Auto-detect backend by URL pattern
         let (backend, api_key) = if base_url.contains("openai.com") {
-            (EmbeddingsBackend::OpenAI, std::env::var("OPENAI_API_KEY").ok())
+            (
+                EmbeddingsBackend::OpenAI,
+                std::env::var("OPENAI_API_KEY").ok(),
+            )
         } else if base_url.contains(":11434") || base_url.contains("ollama") {
             (EmbeddingsBackend::Ollama, None)
         } else {
@@ -115,7 +118,12 @@ impl EmbeddingsClient {
     }
 
     /// Create a new embeddings client with API key.
-    pub fn with_api_key(base_url: &str, backend: EmbeddingsBackend, model: &str, api_key: &str) -> Self {
+    pub fn with_api_key(
+        base_url: &str,
+        backend: EmbeddingsBackend,
+        model: &str,
+        api_key: &str,
+    ) -> Self {
         Self {
             client: Client::new(),
             base_url: base_url.trim_end_matches('/').to_string(),
@@ -133,7 +141,9 @@ impl EmbeddingsClient {
 
         match self.backend {
             EmbeddingsBackend::Tei => self.embed_batch_tei(texts).await,
-            EmbeddingsBackend::OpenAI | EmbeddingsBackend::Vllm => self.embed_batch_openai(texts).await,
+            EmbeddingsBackend::OpenAI | EmbeddingsBackend::Vllm => {
+                self.embed_batch_openai(texts).await
+            },
             EmbeddingsBackend::Ollama => self.embed_batch_ollama(texts).await,
         }
     }

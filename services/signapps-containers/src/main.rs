@@ -33,7 +33,9 @@ use store::StoreManager;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Initialize using bootstrap helpers (custom filter for bollard)
-    init_tracing_with_filter("info,signapps=debug,signapps_containers=debug,bollard=warn,sqlx=warn,tower_http=debug");
+    init_tracing_with_filter(
+        "info,signapps=debug,signapps_containers=debug,bollard=warn,sqlx=warn,tower_http=debug",
+    );
     load_env();
 
     let config = ServiceConfig::from_env("signapps-containers", 3002);

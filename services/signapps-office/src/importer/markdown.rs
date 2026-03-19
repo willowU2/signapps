@@ -1,8 +1,8 @@
 //! Markdown import to Tiptap JSON.
 
 use super::ImportError;
+use comrak::nodes::{AstNode, ListType, NodeValue};
 use comrak::{parse_document, Arena, ComrakOptions};
-use comrak::nodes::{AstNode, NodeValue, ListType};
 
 /// Convert Markdown to Tiptap JSON
 pub fn markdown_to_tiptap(content: &[u8]) -> Result<serde_json::Value, ImportError> {
@@ -38,7 +38,7 @@ fn process_node<'a>(node: &'a AstNode<'a>) -> Result<Vec<serde_json::Value>, Imp
         match &value.value {
             NodeValue::Document => {
                 result.extend(process_node(child)?);
-            }
+            },
             NodeValue::Paragraph => {
                 let content = process_inline(child)?;
                 if !content.is_empty() {
@@ -47,7 +47,7 @@ fn process_node<'a>(node: &'a AstNode<'a>) -> Result<Vec<serde_json::Value>, Imp
                         "content": content
                     }));
                 }
-            }
+            },
             NodeValue::Heading(heading) => {
                 let content = process_inline(child)?;
                 result.push(serde_json::json!({
@@ -55,14 +55,14 @@ fn process_node<'a>(node: &'a AstNode<'a>) -> Result<Vec<serde_json::Value>, Imp
                     "attrs": { "level": heading.level },
                     "content": content
                 }));
-            }
+            },
             NodeValue::BlockQuote => {
                 let inner = process_node(child)?;
                 result.push(serde_json::json!({
                     "type": "blockquote",
                     "content": inner
                 }));
-            }
+            },
             NodeValue::List(list) => {
                 let list_type = if list.list_type == ListType::Ordered {
                     "orderedList"
@@ -80,7 +80,7 @@ fn process_node<'a>(node: &'a AstNode<'a>) -> Result<Vec<serde_json::Value>, Imp
                 }
 
                 result.push(node_json);
-            }
+            },
             NodeValue::CodeBlock(code_block) => {
                 let language = code_block.info.split_whitespace().next().unwrap_or("");
 
@@ -92,33 +92,35 @@ fn process_node<'a>(node: &'a AstNode<'a>) -> Result<Vec<serde_json::Value>, Imp
                         "text": code_block.literal.trim_end()
                     }]
                 }));
-            }
+            },
             NodeValue::ThematicBreak => {
                 result.push(serde_json::json!({
                     "type": "horizontalRule"
                 }));
-            }
+            },
             NodeValue::Table(_) => {
                 let table_content = process_table(child)?;
                 result.push(serde_json::json!({
                     "type": "table",
                     "content": table_content
                 }));
-            }
+            },
             NodeValue::TaskItem(_) => {
                 // Task items are handled in process_list_items
-            }
+            },
             _ => {
                 // Try to process children for unhandled nodes
                 result.extend(process_node(child)?);
-            }
+            },
         }
     }
 
     Ok(result)
 }
 
-fn process_list_items<'a>(list_node: &'a AstNode<'a>) -> Result<Vec<serde_json::Value>, ImportError> {
+fn process_list_items<'a>(
+    list_node: &'a AstNode<'a>,
+) -> Result<Vec<serde_json::Value>, ImportError> {
     let mut items = Vec::new();
 
     for child in list_node.children() {
@@ -131,7 +133,7 @@ fn process_list_items<'a>(list_node: &'a AstNode<'a>) -> Result<Vec<serde_json::
                     "type": "listItem",
                     "content": content
                 }));
-            }
+            },
             NodeValue::TaskItem(checked) => {
                 let content = process_node(child)?;
                 items.push(serde_json::json!({
@@ -139,8 +141,8 @@ fn process_list_items<'a>(list_node: &'a AstNode<'a>) -> Result<Vec<serde_json::
                     "attrs": { "checked": *checked },
                     "content": content
                 }));
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
@@ -161,42 +163,42 @@ fn process_inline<'a>(node: &'a AstNode<'a>) -> Result<Vec<serde_json::Value>, I
                         "text": text
                     }));
                 }
-            }
+            },
             NodeValue::Code(code) => {
                 result.push(serde_json::json!({
                     "type": "text",
                     "text": &code.literal,
                     "marks": [{ "type": "code" }]
                 }));
-            }
+            },
             NodeValue::Strong => {
                 let inner = process_inline(child)?;
                 for mut item in inner {
                     add_mark(&mut item, "bold");
                     result.push(item);
                 }
-            }
+            },
             NodeValue::Emph => {
                 let inner = process_inline(child)?;
                 for mut item in inner {
                     add_mark(&mut item, "italic");
                     result.push(item);
                 }
-            }
+            },
             NodeValue::Strikethrough => {
                 let inner = process_inline(child)?;
                 for mut item in inner {
                     add_mark(&mut item, "strike");
                     result.push(item);
                 }
-            }
+            },
             NodeValue::Link(link) => {
                 let inner = process_inline(child)?;
                 for mut item in inner {
                     add_link_mark(&mut item, &link.url);
                     result.push(item);
                 }
-            }
+            },
             NodeValue::Image(image) => {
                 result.push(serde_json::json!({
                     "type": "image",
@@ -205,29 +207,29 @@ fn process_inline<'a>(node: &'a AstNode<'a>) -> Result<Vec<serde_json::Value>, I
                         "alt": &image.title
                     }
                 }));
-            }
+            },
             NodeValue::SoftBreak => {
                 result.push(serde_json::json!({
                     "type": "text",
                     "text": " "
                 }));
-            }
+            },
             NodeValue::LineBreak => {
                 result.push(serde_json::json!({
                     "type": "hardBreak"
                 }));
-            }
+            },
             NodeValue::Superscript => {
                 let inner = process_inline(child)?;
                 for mut item in inner {
                     add_mark(&mut item, "superscript");
                     result.push(item);
                 }
-            }
+            },
             _ => {
                 // Recursively process children
                 result.extend(process_inline(child)?);
-            }
+            },
         }
     }
 
@@ -252,7 +254,10 @@ fn process_table<'a>(table: &'a AstNode<'a>) -> Result<Vec<serde_json::Value>, I
     Ok(rows)
 }
 
-fn process_table_cells<'a>(row: &'a AstNode<'a>, is_header: bool) -> Result<Vec<serde_json::Value>, ImportError> {
+fn process_table_cells<'a>(
+    row: &'a AstNode<'a>,
+    is_header: bool,
+) -> Result<Vec<serde_json::Value>, ImportError> {
     let mut cells = Vec::new();
 
     for child in row.children() {
@@ -260,7 +265,11 @@ fn process_table_cells<'a>(row: &'a AstNode<'a>, is_header: bool) -> Result<Vec<
 
         if let NodeValue::TableCell = &value.value {
             let content = process_inline(child)?;
-            let cell_type = if is_header { "tableHeader" } else { "tableCell" };
+            let cell_type = if is_header {
+                "tableHeader"
+            } else {
+                "tableCell"
+            };
 
             cells.push(serde_json::json!({
                 "type": cell_type,

@@ -52,7 +52,10 @@ async fn main() -> anyhow::Result<()> {
 
     // Run migrations
     if let Err(e) = signapps_db::run_migrations(&pool).await {
-        tracing::warn!("Database migrations could not be completed, continuing anyway: {}", e);
+        tracing::warn!(
+            "Database migrations could not be completed, continuing anyway: {}",
+            e
+        );
     }
     tracing::info!("Database migrations completed");
 
@@ -214,7 +217,8 @@ fn create_router(state: AppState) -> Router {
         .route("/search", get(search::search))
         .route("/search/quick", get(search::quick_search))
         .route("/search/recent", get(search::recent_files))
-        .route("/search/suggest", get(search::suggest));
+        .route("/search/suggest", get(search::suggest))
+        .route("/search/omni", get(search::omni_search));
 
     // Quota routes
     let quota_routes = Router::new()

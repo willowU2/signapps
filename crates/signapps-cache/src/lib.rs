@@ -18,6 +18,35 @@ pub struct CacheService {
     counters: Arc<DashMap<String, AtomicI64>>,
 }
 
+/// In-process binary cache for heavy objects like PDFs and documents.
+#[derive(Clone)]
+pub struct BinaryCacheService {
+    cache: Cache<String, Vec<u8>>,
+}
+
+impl BinaryCacheService {
+    pub fn new(max_capacity: u64, default_ttl: Duration) -> Self {
+        let cache = Cache::builder()
+            .max_capacity(max_capacity)
+            .time_to_live(default_ttl)
+            .build();
+        Self { cache }
+    }
+
+    pub fn default_config() -> Self {
+        // Cache up to 1000 items, default 1 hour TTL
+        Self::new(1000, Duration::from_secs(3600))
+    }
+
+    pub async fn get(&self, key: &str) -> Option<Vec<u8>> {
+        self.cache.get(key).await
+    }
+
+    pub async fn set(&self, key: &str, value: Vec<u8>) {
+        self.cache.insert(key.to_string(), value).await;
+    }
+}
+
 impl CacheService {
     /// Create a new cache service.
     ///

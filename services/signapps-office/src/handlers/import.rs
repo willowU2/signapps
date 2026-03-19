@@ -91,10 +91,7 @@ pub async fn import_upload(
     });
 
     // Import document
-    let result = state
-        .importer
-        .import(&content, format)
-        .await?;
+    let result = state.importer.import(&content, format).await?;
 
     // Calculate metadata
     let metadata = calculate_metadata(&result.tiptap_json);
@@ -121,15 +118,12 @@ pub async fn import_json(
     let content = request.content.as_bytes().to_vec();
 
     // Determine format
-    let format = request.format.unwrap_or_else(|| {
-        detect_format(&content, "")
-    });
+    let format = request
+        .format
+        .unwrap_or_else(|| detect_format(&content, ""));
 
     // Import document
-    let result = state
-        .importer
-        .import(&content, format)
-        .await?;
+    let result = state.importer.import(&content, format).await?;
 
     // Calculate metadata
     let metadata = calculate_metadata(&result.tiptap_json);
@@ -164,21 +158,25 @@ fn detect_format(content: &[u8], filename: &str) -> ImportFormat {
             let content_str = String::from_utf8_lossy(content);
 
             // Check for HTML
-            if content_str.contains("<!DOCTYPE") || content_str.contains("<html") || content_str.contains("<body") {
+            if content_str.contains("<!DOCTYPE")
+                || content_str.contains("<html")
+                || content_str.contains("<body")
+            {
                 return ImportFormat::Html;
             }
 
             // Check for Markdown patterns
-            if content_str.starts_with('#') ||
-               content_str.contains("\n# ") ||
-               content_str.contains("\n## ") ||
-               content_str.contains("```") {
+            if content_str.starts_with('#')
+                || content_str.contains("\n# ")
+                || content_str.contains("\n## ")
+                || content_str.contains("```")
+            {
                 return ImportFormat::Markdown;
             }
 
             // Default to plain text
             ImportFormat::Text
-        }
+        },
     }
 }
 

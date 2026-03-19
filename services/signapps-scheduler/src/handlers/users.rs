@@ -14,7 +14,7 @@ pub async fn list_users(
     Extension(claims): Extension<Claims>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let tenant_id = claims.tenant_id.ok_or(StatusCode::UNAUTHORIZED)?;
-    
+
     Ok(Json(json!({
         "data": [],
         "tenant_id": tenant_id

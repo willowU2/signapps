@@ -89,8 +89,7 @@ pub async fn create_resource_type(
         requires_approval: payload.requires_approval,
     };
 
-    let resource_type =
-        ResourceTypeRepository::create(&state.pool, ctx.tenant_id, create).await?;
+    let resource_type = ResourceTypeRepository::create(&state.pool, ctx.tenant_id, create).await?;
     tracing::info!(resource_type_id = %resource_type.id, "Created resource type");
 
     Ok((
