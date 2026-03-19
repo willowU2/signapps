@@ -48,9 +48,34 @@ import { v4 as uuidv4 } from 'uuid';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
 import { GenericFeatureModal } from '@/components/editor/generic-feature-modal';
+
+// Utility to dynamically load Google Fonts without freezing the browser
+export const loadGoogleFont = (fontFamily: string) => {
+    if (!fontFamily || typeof window === 'undefined') return;
+    const systemFonts = ['Inter', 'Arial', 'Times New Roman', 'Georgia', 'Verdana', 'Courier New', 'Comic Sans MS'];
+    if (systemFonts.includes(fontFamily)) return;
+
+    const id = `font-${fontFamily.replace(/\s+/g, '-')}`;
+    if (!document.getElementById(id)) {
+        const link = document.createElement('link');
+        link.id = id;
+        link.rel = 'stylesheet';
+        link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, '+')}:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,700&display=swap`;
+        document.head.appendChild(link);
+    }
+};
 import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu';
 import { Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup } from '@/components/editor/toolbar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
     Sparkles,
     Wand2,
@@ -95,6 +120,8 @@ import {
     MessageSquarePlus,
     Trash2,
     ChevronRight,
+    ChevronDown,
+    Check,
     Video,
     Mic,
     Download,
@@ -551,6 +578,36 @@ const Editor = ({
         id: string,
         label?: string
     } | null>(null);
+
+    const [isLinkPopoverOpen, setIsLinkPopoverOpen] = useState(false);
+    const [isImagePopoverOpen, setIsImagePopoverOpen] = useState(false);
+    const [linkUrl, setLinkUrl] = useState('');
+    const [linkText, setLinkText] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
+    const [fontOpen, setFontOpen] = useState(false);
+
+    // Google Fonts API Integration Hook
+    const [availableFonts, setAvailableFonts] = useState<string[]>(['Inter', 'Arial', 'Times New Roman', 'Georgia', 'Verdana', 'Courier New', 'Comic Sans MS']);
+    
+    useEffect(() => {
+        const fetchGoogleFonts = async () => {
+            const apiKey = process.env.NEXT_PUBLIC_GOOGLE_FONTS_API_KEY;
+            if (!apiKey) return; // Silent fallback to system fonts if no key
+            
+            try {
+                // Get the top 100 most popular fonts
+                const res = await fetch(`https://www.googleapis.com/webfonts/v1/webfonts?sort=popularity&key=${apiKey}`);
+                const data = await res.json();
+                if (data.items) {
+                    const fetchedFonts = data.items.slice(0, 100).map((item: any) => item.family);
+                    setAvailableFonts([...new Set(['Inter', 'Arial', ...fetchedFonts])] as string[]);
+                }
+            } catch (error) {
+                console.error("Failed to fetch Google Fonts", error);
+            }
+        };
+        fetchGoogleFonts();
+    }, []);
 
     const editor = useEditor({
         immediatelyRender: false, // Required for SSR compatibility with Next.js
@@ -2001,33 +2058,87 @@ const Editor = ({
 
                 {/* Font Styles */}
                 <div className="flex border border-[#c7c7c7] dark:border-[#5f6368] rounded overflow-hidden h-[28px] mx-1 items-center bg-background dark:bg-[#202124]">
-                    <Select value={currentFont} onValueChange={(font) => { setCurrentFont(font); setTimeout(() => { editor.chain().focus().setFontFamily(font).run(); }, 50); }}>
-                        <SelectTrigger className="h-[28px] w-[130px] rounded-none px-3 border-0 border-r border-[#c7c7c7] dark:border-[#5f6368] bg-transparent hover:bg-gray-50 dark:hover:bg-[#303134] focus:ring-0 text-[13px] text-[#444746] dark:text-[#e3e3e3] font-medium shadow-none">
-                            <SelectValue placeholder="Inter" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {[
-                                { value: 'Inter', label: 'Inter' },
-                                { value: 'Arial', label: 'Arial' },
-                                { value: 'Times New Roman', label: 'Times New Roman' },
-                                { value: 'Georgia', label: 'Georgia' },
-                                { value: 'Verdana', label: 'Verdana' },
-                                { value: 'Courier New', label: 'Courier New' }
-                            ].map((font) => (
-                                <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
-                                    {font.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <Popover open={fontOpen} onOpenChange={setFontOpen}>
+                        <PopoverTrigger asChild>
+                            <button
+                                role="combobox"
+                                aria-expanded={fontOpen}
+                                className="flex items-center justify-between h-[28px] w-[130px] rounded-none px-3 border-0 border-r border-[#c7c7c7] dark:border-[#5f6368] bg-transparent hover:bg-gray-50 dark:hover:bg-[#303134] focus:outline-none text-[13px] text-[#444746] dark:text-[#e3e3e3] font-medium transition-colors"
+                            >
+                                <span className="truncate" style={{ fontFamily: currentFont }}>{currentFont}</span>
+                                <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-0" align="start">
+                            <Command>
+                                <CommandInput placeholder="Rechercher..." className="h-9 text-xs" />
+                                <CommandList className="max-h-[300px]">
+                                    <CommandEmpty>Introuvable.</CommandEmpty>
+                                    <CommandGroup>
+                                        {availableFonts.map((font) => (
+                                            <CommandItem
+                                                key={font}
+                                                value={font}
+                                                onSelect={(currentValue) => {
+                                                    const originalFont = availableFonts.find(f => f.toLowerCase() === currentValue) || font;
+                                                    setCurrentFont(originalFont);
+                                                    loadGoogleFont(originalFont);
+                                                    setTimeout(() => { editor.chain().focus().setFontFamily(originalFont).run(); }, 50);
+                                                    setFontOpen(false);
+                                                }}
+                                                style={{ fontFamily: font }}
+                                                className="text-[14px]"
+                                            >
+                                                <Check
+                                                    className={`mr-2 h-4 w-4 shrink-0 transition-opacity ${currentFont === font ? "opacity-100" : "opacity-0"}`}
+                                                />
+                                                {font}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
                     <div className="flex items-center">
                         <span
-                            onClick={() => { setDocFontSize(s => { const ns = Math.max(1, s - 1); setTimeout(() => editor.chain().focus().setFontSize(`${ns}pt`).run(), 50); return ns; }) }}
-                            className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-r border-[#c7c7c7] dark:border-[#5f6368]">-</span>
-                        <span className="px-3 text-[13px] text-[#444746] dark:text-[#e3e3e3]">{docFontSize}</span>
+                            onClick={() => { setDocFontSize(s => { const ns = Math.max(1, (typeof s === 'number'? s : 11) - 1); setTimeout(() => editor.chain().focus().setFontSize(`${ns}pt`).run(), 50); return ns; }) }}
+                            className="flex items-center justify-center h-full px-2.5 text-[14px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-r border-[#c7c7c7] dark:border-[#5f6368] select-none"
+                        >-</span>
+                        
+                        <input
+                            type="text"
+                            list="font-sizes"
+                            value={docFontSize}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setDocFontSize(isNaN(val) ? (e.target.value as any) : val);
+                            }}
+                            onBlur={(e) => {
+                                const val = parseInt(e.target.value) || 11;
+                                setDocFontSize(val);
+                                handleFormat(() => editor.chain().focus().setFontSize(`${val}pt`).run());
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    const val = parseInt((e.target as HTMLInputElement).value) || 11;
+                                    setDocFontSize(val);
+                                    handleFormat(() => editor.chain().focus().setFontSize(`${val}pt`).run());
+                                    (e.target as HTMLInputElement).blur();
+                                }
+                            }}
+                            className="w-[36px] h-full text-center text-[13px] text-[#444746] dark:text-[#e3e3e3] bg-transparent focus:outline-none focus:bg-[#e8f0fe] dark:focus:bg-[#3c4043] transition-colors"
+                        />
+                        <datalist id="font-sizes">
+                            {[8, 9, 10, 11, 12, 14, 18, 24, 30, 36, 48, 60, 72, 96].map(size => (
+                                <option key={size} value={size} />
+                            ))}
+                        </datalist>
+
                         <span
-                            onClick={() => { setDocFontSize(s => { const ns = s + 1; setTimeout(() => editor.chain().focus().setFontSize(`${ns}pt`).run(), 50); return ns; }) }}
-                            className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-l border-[#c7c7c7] dark:border-[#5f6368]">+</span>
+                            onClick={() => { setDocFontSize(s => { const ns = (typeof s === 'number' ? s : 11) + 1; setTimeout(() => editor.chain().focus().setFontSize(`${ns}pt`).run(), 50); return ns; }) }}
+                            className="flex items-center justify-center h-full px-2 text-[14px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-l border-[#c7c7c7] dark:border-[#5f6368] select-none"
+                        >+</span>
                     </div>
                 </div>
 
@@ -2135,7 +2246,7 @@ const Editor = ({
                 <ToolbarDivider />
 
                 {/* Alignment */}
-                <ToolbarButton onClick={() => handleFormat(() => editor.chain().setTextAlign('left').run())} isActive={editor.isActive({ textAlign: 'left' })} title="Align left (Ctrl+Shift+L)">
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().setTextAlign('left').run())} isActive={editor.isActive({ textAlign: 'left' }) || (!editor.isActive({ textAlign: 'center' }) && !editor.isActive({ textAlign: 'right' }) && !editor.isActive({ textAlign: 'justify' }))} title="Align left (Ctrl+Shift+L)">
                     <AlignLeft className="w-[18px] h-[18px]" />
                 </ToolbarButton>
                 <ToolbarButton onClick={() => handleFormat(() => editor.chain().setTextAlign('center').run())} isActive={editor.isActive({ textAlign: 'center' })} title="Center align (Ctrl+Shift+E)">
@@ -2151,13 +2262,13 @@ const Editor = ({
                 <ToolbarDivider />
 
                 {/* Lists */}
-                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleOrderedList().run())} isActive={editor.isActive('orderedList')} title="Numbered list (Ctrl+Shift+7)">
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().focus().toggleOrderedList().run())} isActive={editor.isActive('orderedList')} title="Numbered list (Ctrl+Shift+7)">
                     <ListOrdered className="w-[18px] h-[18px]" />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleBulletList().run())} isActive={editor.isActive('bulletList')} title="Bulleted list (Ctrl+Shift+8)">
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().focus().toggleBulletList().run())} isActive={editor.isActive('bulletList')} title="Bulleted list (Ctrl+Shift+8)">
                     <List className="w-[18px] h-[18px]" />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleTaskList().run())} isActive={editor.isActive('taskList')} title="Checklist (Ctrl+Shift+9)">
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().focus().toggleTaskList().run())} isActive={editor.isActive('taskList')} title="Checklist (Ctrl+Shift+9)">
                     <CheckSquare className="w-[18px] h-[18px]" />
                 </ToolbarButton>
 
@@ -2166,22 +2277,168 @@ const Editor = ({
                 <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert table">
                     <TableIcon className="w-[18px] h-[18px]" />
                 </ToolbarButton>
-                <ToolbarButton onClick={() => {
-                    const url = window.prompt('URL');
-                    if (url) {
-                        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+                <Popover open={isLinkPopoverOpen} onOpenChange={(open) => {
+                    setIsLinkPopoverOpen(open);
+                    if (open) {
+                        setLinkUrl(editor.getAttributes('link').href || '');
+                        const { from, to, empty } = editor.state.selection;
+                        if (!empty && !editor.getAttributes('link').href) {
+                            setLinkText(editor.state.doc.textBetween(from, to, ' '));
+                        } else {
+                            // If a link exists, we grab the anchor text using a DOM slice or fallback to just empty/current URL
+                            const linkNodeText = editor.getAttributes('link').href ? editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' ') : '';
+                            setLinkText(linkNodeText || editor.state.doc.textBetween(from, to, ' '));
+                        }
+                    } else {
+                        setLinkText('');
+                        setLinkUrl('');
                     }
-                }} isActive={editor.isActive('link')} title="Insert link">
-                    <LinkIcon className="w-[18px] h-[18px]" />
-                </ToolbarButton>
-                <ToolbarButton onClick={() => {
-                    const url = window.prompt('Image URL');
-                    if (url) {
-                        editor.chain().focus().setImage({ src: url }).run();
-                    }
-                }} title="Insert image">
-                    <ImageIcon className="w-[18px] h-[18px]" />
-                </ToolbarButton>
+                }}>
+                    <PopoverTrigger asChild>
+                        <ToolbarButton isActive={editor.isActive('link')} title="Insérer un lien">
+                            <LinkIcon className="w-[18px] h-[18px]" />
+                        </ToolbarButton>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[340px] p-4" align="start">
+                        <div className="flex flex-col gap-4">
+                            <h4 className="font-medium text-sm text-[#202124] dark:text-[#e8eaed]">Insérer ou modifier un lien</h4>
+                            
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs text-gray-500 font-medium">Texte à afficher (optionnel)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Texte cliquable..."
+                                    value={linkText}
+                                    onChange={(e) => setLinkText(e.target.value)}
+                                    className="flex h-8 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-[#202124] dark:text-[#e8eaed]"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs text-gray-500 font-medium">Lien web</label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="url"
+                                        placeholder="https://..."
+                                        value={linkUrl}
+                                        onChange={(e) => setLinkUrl(e.target.value)}
+                                        className="flex h-8 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-[#202124] dark:text-[#e8eaed]"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                if (linkUrl) {
+                                                    const finalUrl = linkUrl.startsWith('http') ? linkUrl : `https://${linkUrl}`;
+                                                    if (linkText) {
+                                                        // Replace selection with standard HTML structure that Tiptap parses seamlessly
+                                                        handleFormat(() => editor.chain().focus().insertContent(`<a href="${finalUrl}">${linkText}</a>`).run());
+                                                    } else {
+                                                        // Fallback to purely wrapping the selection
+                                                        handleFormat(() => editor.chain().focus().extendMarkRange('link').setLink({ href: finalUrl }).run());
+                                                    }
+                                                } else {
+                                                    handleFormat(() => editor.chain().focus().unsetLink().run());
+                                                }
+                                                setIsLinkPopoverOpen(false);
+                                                setLinkUrl('');
+                                                setLinkText('');
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (linkUrl) {
+                                                const finalUrl = linkUrl.startsWith('http') ? linkUrl : `https://${linkUrl}`;
+                                                if (linkText) {
+                                                    // Replace selection with standard HTML structure that Tiptap parses seamlessly
+                                                    handleFormat(() => editor.chain().focus().insertContent(`<a href="${finalUrl}">${linkText}</a>`).run());
+                                                } else {
+                                                    // Fallback to purely wrapping the selection
+                                                    handleFormat(() => editor.chain().focus().extendMarkRange('link').setLink({ href: finalUrl }).run());
+                                                }
+                                            } else {
+                                                handleFormat(() => editor.chain().focus().unsetLink().run());
+                                            }
+                                            setIsLinkPopoverOpen(false);
+                                            setLinkUrl('');
+                                            setLinkText('');
+                                        }}
+                                        className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shrink-0"
+                                    >
+                                        Valider
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </PopoverContent>
+                </Popover>
+
+                <Popover open={isImagePopoverOpen} onOpenChange={(open) => {
+                    setIsImagePopoverOpen(open);
+                    if (open) setImageUrl(editor.getAttributes('image').src || '');
+                }}>
+                    <PopoverTrigger asChild>
+                        <ToolbarButton title="Insérer une image">
+                            <ImageIcon className="w-[18px] h-[18px]" />
+                        </ToolbarButton>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-3" align="start">
+                        <div className="flex flex-col gap-3">
+                            <h4 className="font-medium text-sm text-[#202124] dark:text-[#e8eaed]">Insérer une image</h4>
+                            
+                            {/* File Upload Option */}
+                            <label className="flex flex-col items-center justify-center w-full h-24 px-4 transition bg-gray-50 dark:bg-[#202124] border-2 border-gray-200 dark:border-gray-700 border-dashed rounded-md cursor-pointer hover:border-primary hover:bg-gray-100 dark:hover:bg-[#303134]">
+                                <div className="flex items-center space-x-2">
+                                    <FileImage className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                                    <span className="font-medium text-sm text-gray-600 dark:text-gray-300">Choisir un fichier...</span>
+                                </div>
+                                <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">PNG, JPG, GIF jusqu'à 10MB</span>
+                                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        await insertImageFromFile(editor, file);
+                                        setIsImagePopoverOpen(false);
+                                    }
+                                }} />
+                            </label>
+
+                            <div className="relative flex items-center py-1">
+                                <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                                <span className="flex-shrink-0 mx-3 text-xs text-gray-400">ou via URL</span>
+                                <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="url"
+                                    placeholder="https://..."
+                                    value={imageUrl}
+                                    onChange={(e) => setImageUrl(e.target.value)}
+                                    className="flex h-8 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary text-[#202124] dark:text-[#e8eaed]"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            if (imageUrl) {
+                                                handleFormat(() => editor.chain().focus().setImage({ src: imageUrl }).run());
+                                                setIsImagePopoverOpen(false);
+                                                setImageUrl('');
+                                            }
+                                        }
+                                    }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        if (imageUrl) {
+                                            handleFormat(() => editor.chain().focus().setImage({ src: imageUrl }).run());
+                                            setIsImagePopoverOpen(false);
+                                            setImageUrl('');
+                                        }
+                                    }}
+                                    className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shrink-0"
+                                >
+                                    Insérer
+                                </button>
+                            </div>
+                        </div>
+                    </PopoverContent>
+                </Popover>
 
                 <ToolbarDivider />
 

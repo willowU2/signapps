@@ -368,13 +368,70 @@
 }
 
 /* Sprint 1: Focus Extension */
-.ProseMirror .has-focus {
+.ProseMirror .has-focus:not(p):not(h1):not(h2):not(h3):not(h4):not(h5):not(h6):not(li):not(ul):not(ol):not(blockquote):not(div) {
   border-radius: 3px;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
-.dark .ProseMirror .has-focus {
+.dark .ProseMirror .has-focus:not(p):not(h1):not(h2):not(h3):not(h4):not(h5):not(h6):not(li):not(ul):not(ol):not(blockquote):not(div) {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Sprint 4: Task List styling */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none !important;
+  padding-left: 0 !important;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex !important;
+  flex-direction: row;
+  align-items: flex-start;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin-right: 0.75rem;
+  margin-top: 0.35rem; /* align exactly with text baseline vertically */
+  user-select: none;
+}
+
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li > div > p {
+  margin: 0 !important;
+}
+
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--primary);
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* Sprint 5: Standard List Polishing (Tailwind Fix) */
+.ProseMirror ul:not([data-type="taskList"]) {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ProseMirror li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 
 /* Sprint 3: Page Break Extension */

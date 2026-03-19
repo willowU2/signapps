@@ -555,7 +555,7 @@ export function EditorToolbar({
                 <ToolbarBtn
                     variant="ghost"
                     size="icon"
-                    className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive({ textAlign: 'left' }) ? 'bg-primary/20 text-primary' : ''}`}
+                    className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive({ textAlign: 'left' }) || (!editor.isActive({ textAlign: 'center' }) && !editor.isActive({ textAlign: 'right' }) && !editor.isActive({ textAlign: 'justify' })) ? 'bg-primary/20 text-primary' : ''}`}
                     onClick={() => handleFormat(() => editor.chain().setTextAlign('left').run())}
                     title="Aligner à gauche"
                 >
@@ -604,7 +604,7 @@ export function EditorToolbar({
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive('taskList') ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => handleFormat(() => editor.chain().toggleTaskList().run())}
+                    onClick={() => handleFormat(() => editor.chain().focus().toggleTaskList().run())}
                     title="Liste de tâches"
                 >
                     <ListTodo className="h-4 w-4" />
@@ -613,7 +613,7 @@ export function EditorToolbar({
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive('bulletList') ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => handleFormat(() => editor.chain().toggleBulletList().run())}
+                    onClick={() => handleFormat(() => editor.chain().focus().toggleBulletList().run())}
                     title="Liste à puces"
                 >
                     <List className="h-4 w-4" />
@@ -622,7 +622,7 @@ export function EditorToolbar({
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive('orderedList') ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => handleFormat(() => editor.chain().toggleOrderedList().run())}
+                    onClick={() => handleFormat(() => editor.chain().focus().toggleOrderedList().run())}
                     title="Liste numérotée"
                 >
                     <ListOrdered className="h-4 w-4" />
