@@ -83,7 +83,7 @@ const apps: AppLink[] = [
     id: "calendar",
     name: "Calendrier",
     description: "Agenda et événements",
-    href: "/scheduling",
+    href: "/cal",
     icon: Calendar,
   },
 ];

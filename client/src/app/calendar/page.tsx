@@ -11,7 +11,7 @@ export default function CalendarPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/scheduling");
+    router.replace("/cal");
   }, [router]);
 
   return (

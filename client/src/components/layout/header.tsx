@@ -74,7 +74,7 @@ export function Header() {
   };
 
   const labelMap: Record<string, string> = {
-      scheduling: 'Calendrier',
+      cal: 'Calendrier',
       dashboard: 'Dashboard',
       docs: 'Documents',
       tasks: 'Tâches',

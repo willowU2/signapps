@@ -218,7 +218,7 @@ export function CommandBarEnhanced() {
         id: "nav-calendar",
         label: "Calendrier",
         icon: Calendar,
-        action: () => router.push("/scheduling"),
+        action: () => router.push("/cal"),
       },
       {
         id: "nav-storage",
@@ -369,7 +369,7 @@ export function CommandBarEnhanced() {
                               file: `/storage?file=${result.block.id}`,
                               folder: `/storage?folder=${result.block.id}`,
                               user: `/admin/users?id=${result.block.id}`,
-                              event: `/scheduling?event=${result.block.id}`,
+                              event: `/cal?event=${result.block.id}`,
                               container: `/containers?id=${result.block.id}`,
                             };
                             router.push(
@@ -461,7 +461,7 @@ export function CommandBarEnhanced() {
                             task: `/tasks?id=${item.block.id}`,
                             file: `/storage?file=${item.block.id}`,
                             user: `/admin/users?id=${item.block.id}`,
-                            event: `/scheduling?event=${item.block.id}`,
+                            event: `/cal?event=${item.block.id}`,
                           };
                           router.push(
                             routes[item.block.type] || `/view/${item.block.id}`

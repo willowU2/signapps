@@ -70,7 +70,7 @@ const navGroupsConfig = [
       { href: '/sheets', icon: Table, label: 'Sheets', enabled: FEATURES.DOCS },
       { href: '/slides', icon: Presentation, label: 'Slides', enabled: FEATURES.DOCS },
       { href: '/mail', icon: Mail, label: 'Mail', enabled: FEATURES.MAIL },
-      { href: '/scheduling', icon: Calendar, label: 'Calendar', enabled: FEATURES.CALENDAR },
+      { href: '/cal', icon: Calendar, label: 'Calendar', enabled: FEATURES.CALENDAR },
       { href: '/tasks', icon: CheckSquare, label: 'Tasks', enabled: FEATURES.SCHEDULER },
       { href: '/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
     ]

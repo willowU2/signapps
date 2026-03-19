@@ -191,8 +191,8 @@ export function TeamView({ className }: TeamViewProps) {
   };
 
   const handleViewCalendar = (member: TeamMember) => {
-    // Navigate to scheduling page filtered by team member
-    router.push(`/scheduling?member=${member.id}&view=week`);
+    // Navigate to calendar page filtered by team member
+    router.push(`/cal?member=${member.id}&view=week`);
   };
 
   const handleSendMessage = (member: TeamMember) => {
