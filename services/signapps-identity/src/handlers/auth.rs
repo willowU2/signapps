@@ -7,7 +7,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use signapps_common::{Claims, Error, Result};
-use signapps_db::repositories::{LdapRepository, UserRepository};
+use signapps_db::repositories::{LdapRepository, UserRepository, WorkspaceRepository};
 use uuid::Uuid;
 use validator::Validate;
 
@@ -163,10 +163,29 @@ pub async fn login(
     // Update last login
     UserRepository::update_last_login(&state.pool, user.id).await?;
 
-    // Generate tokens
-    let tokens = create_tokens(user.id, &user.username, user.role, &state.jwt_secret)?;
+    // Get user's workspace IDs if they have a tenant
+    let workspace_ids = if user.tenant_id.is_some() {
+        let workspaces = WorkspaceRepository::list_by_user(&state.pool, user.id).await?;
+        if workspaces.is_empty() {
+            None
+        } else {
+            Some(workspaces.into_iter().map(|w| w.id).collect())
+        }
+    } else {
+        None
+    };
 
-    tracing::info!(user_id = %user.id, "User logged in successfully");
+    // Generate tokens with tenant and workspace context
+    let tokens = create_tokens(
+        user.id,
+        &user.username,
+        user.role,
+        user.tenant_id,
+        workspace_ids,
+        &state.jwt_secret,
+    )?;
+
+    tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "User logged in successfully");
 
     Ok(Json(LoginResponse {
         access_token: tokens.access_token,
@@ -288,10 +307,29 @@ pub async fn refresh(
         .await?
         .ok_or(Error::NotFound("User not found".to_string()))?;
 
-    // Generate new tokens
-    let tokens = create_tokens(user.id, &user.username, user.role, &state.jwt_secret)?;
+    // Get user's workspace IDs if they have a tenant
+    let workspace_ids = if user.tenant_id.is_some() {
+        let workspaces = WorkspaceRepository::list_by_user(&state.pool, user.id).await?;
+        if workspaces.is_empty() {
+            None
+        } else {
+            Some(workspaces.into_iter().map(|w| w.id).collect())
+        }
+    } else {
+        None
+    };
 
-    tracing::info!(user_id = %user.id, "Token refreshed");
+    // Generate new tokens with tenant and workspace context
+    let tokens = create_tokens(
+        user.id,
+        &user.username,
+        user.role,
+        user.tenant_id,
+        workspace_ids,
+        &state.jwt_secret,
+    )?;
+
+    tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "Token refreshed");
 
     Ok(Json(LoginResponse {
         access_token: tokens.access_token,

@@ -43,6 +43,8 @@ pub struct User {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub last_login: Option<DateTime<Utc>>,
+    /// Tenant ID for multi-tenant isolation (NULL = not assigned to a tenant)
+    pub tenant_id: Option<Uuid>,
 }
 
 /// Create user request.

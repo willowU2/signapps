@@ -12,6 +12,12 @@ pub struct Claims {
     pub sub: Uuid, // User ID
     pub username: String,
     pub role: i16,
+    /// Tenant ID for multi-tenant isolation
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tenant_id: Option<Uuid>,
+    /// Workspace IDs the user has access to
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub workspace_ids: Option<Vec<Uuid>>,
     pub exp: i64,           // Expiration timestamp
     pub iat: i64,           // Issued at timestamp
     pub token_type: String, // "access" or "refresh"
@@ -26,7 +32,14 @@ pub struct TokenPair {
 }
 
 /// Create access and refresh tokens for a user.
-pub fn create_tokens(user_id: Uuid, username: &str, role: i16, secret: &str) -> Result<TokenPair> {
+pub fn create_tokens(
+    user_id: Uuid,
+    username: &str,
+    role: i16,
+    tenant_id: Option<Uuid>,
+    workspace_ids: Option<Vec<Uuid>>,
+    secret: &str,
+) -> Result<TokenPair> {
     let now = Utc::now();
 
     // Access token: 15 minutes
@@ -35,6 +48,8 @@ pub fn create_tokens(user_id: Uuid, username: &str, role: i16, secret: &str) -> 
         sub: user_id,
         username: username.to_string(),
         role,
+        tenant_id,
+        workspace_ids: workspace_ids.clone(),
         exp: access_exp.timestamp(),
         iat: now.timestamp(),
         token_type: "access".to_string(),
@@ -53,6 +68,8 @@ pub fn create_tokens(user_id: Uuid, username: &str, role: i16, secret: &str) -> 
         sub: user_id,
         username: username.to_string(),
         role,
+        tenant_id,
+        workspace_ids,
         exp: refresh_exp.timestamp(),
         iat: now.timestamp(),
         token_type: "refresh".to_string(),
