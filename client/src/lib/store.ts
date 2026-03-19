@@ -37,6 +37,7 @@ export const useAuthStore = create<AuthState>()(
         });
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('remember_me');
         // Clear cookie immediately so middleware sees unauthenticated state
         if (typeof document !== 'undefined') {
           document.cookie = 'auth-storage=; path=/; max-age=0';
@@ -51,13 +52,6 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
         redirectAfterLogin: state.redirectAfterLogin,
       }),
-      // Sync to cookie for middleware access
-      onRehydrateStorage: () => (state) => {
-        if (typeof document !== 'undefined' && state) {
-          const value = JSON.stringify({ state: { isAuthenticated: state.isAuthenticated } });
-          document.cookie = `auth-storage=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
-        }
-      },
     }
   )
 );

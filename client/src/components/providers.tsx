@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, Suspense } from 'react';
+import { usePathname } from 'next/navigation';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { PermissionsProvider } from '@/lib/permissions';
@@ -28,6 +29,7 @@ function LoadingFallback() {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -55,9 +57,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 <PreferencesProvider>
                   <PermissionsProvider>
                     {children}
-                    <CommandBar />
-                    <Sidebar />
-                    <RightSidebar />
+                    {!pathname?.startsWith('/login') && (
+                      <>
+                        <CommandBar />
+                        <Sidebar />
+                        <RightSidebar />
+                      </>
+                    )}
                     <GlobalModals />
                   </PermissionsProvider>
                 </PreferencesProvider>
