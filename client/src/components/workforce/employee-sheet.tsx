@@ -69,7 +69,7 @@ const employeeSchema = z.object({
   phone: z.string().max(20).optional(),
   employee_number: z.string().max(50).optional(),
   org_node_id: z.string().min(1, "L'unité est requise"),
-  functions: z.array(z.string()).default([]),
+  functions: z.array(z.string()),
   contract_type: z.enum(['full-time', 'part-time', 'contract', 'intern', 'temporary']),
   fte_ratio: z.number().min(0).max(1),
   hire_date: z.string().optional(),

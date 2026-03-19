@@ -267,7 +267,7 @@ export interface CreateEventInput {
   start: Date;
   end?: Date;
   allDay?: boolean;
-  calendarId: string;
+  calendarId?: string; // Optional - parent component should provide if not set
   attendees?: string[];
   recurrence?: ScheduleRecurrenceRule;
   color?: string;

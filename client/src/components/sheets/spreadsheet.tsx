@@ -1866,7 +1866,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 if (action === 'sortDesc') handleContextAction('sortDesc')
                 if (action === 'filter') toggleFilter()
                 if (action === 'validation') { if (!activeCell) return; const vals = prompt("Valeurs de la liste (séparées par des virgules):"); if (vals) { setCellValidation(activeCell.r, activeCell.c, { type: 'list', values: vals.split(',').map(v => v.trim()) }); toast.success('Validation ajoutée') } }
-                if (action === 'insertSheet') { addSheet(); toast.success('Nouvelle feuille ajoutée'); return }
+                if (action === 'insertSheet') { addSheet(`Sheet${sheets.length + 1}`); toast.success('Nouvelle feuille ajoutée'); return }
             }} />
             </div>
 

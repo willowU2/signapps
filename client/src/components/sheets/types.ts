@@ -6,11 +6,12 @@ export interface CellStyle {
     align?: 'left' | 'center' | 'right'
     verticalAlign?: 'top' | 'middle' | 'bottom'
     wrap?: boolean
+    overflow?: 'visible' | 'hidden' | 'clip'
     textColor?: string
     fillColor?: string
     fontFamily?: string
     fontSize?: number
-    numberFormat?: 'auto' | 'currency' | 'percent' | 'number' | 'date' | 'time' | 'scientific' | 'accounting'
+    numberFormat?: 'auto' | 'currency' | 'percent' | 'number' | 'date' | 'time' | 'datetime' | 'duration' | 'text' | 'scientific' | 'accounting'
     decimals?: number
     borderTop?: boolean
     borderRight?: boolean
@@ -20,7 +21,7 @@ export interface CellStyle {
     mergeCols?: number
     mergedInto?: string
     locked?: boolean
-    rotation?: number
+    rotation?: number | 'vertical'
 }
 
 export type CellValidation = 

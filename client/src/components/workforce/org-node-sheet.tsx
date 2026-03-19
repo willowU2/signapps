@@ -50,8 +50,8 @@ const orgNodeSchema = z.object({
   name: z.string().min(1, 'Le nom est requis').max(100),
   code: z.string().max(50).optional(),
   description: z.string().max(500).optional(),
-  is_active: z.boolean().default(true),
-  sort_order: z.number().int().min(0).default(0),
+  is_active: z.boolean(),
+  sort_order: z.number().int().min(0),
 });
 
 type OrgNodeFormValues = z.infer<typeof orgNodeSchema>;

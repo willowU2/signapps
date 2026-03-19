@@ -38,7 +38,18 @@ import { OrgNodeSheet } from '@/components/workforce/org-node-sheet';
 import { EmployeeSheet } from '@/components/workforce/employee-sheet';
 import { CoverageEditor } from '@/components/workforce/coverage-editor';
 import { orgNodesApi, employeesApi, validationApi } from '@/lib/api/workforce';
-import type { OrgNodeWithStats, EmployeeWithDetails, ValidateCoverageResponse } from '@/types/workforce';
+import type { OrgNodeWithStats, EmployeeWithDetails, ValidateCoverageResponse, WeeklyPattern } from '@/types/workforce';
+
+// Empty pattern for coverage editor
+const EMPTY_COVERAGE_PATTERN: WeeklyPattern = {
+  monday: [],
+  tuesday: [],
+  wednesday: [],
+  thursday: [],
+  friday: [],
+  saturday: [],
+  sunday: [],
+};
 
 type ActiveTab = 'org-tree' | 'employees' | 'validation' | 'coverage';
 
@@ -47,6 +58,7 @@ export default function WorkforcePage() {
   const [selectedNode, setSelectedNode] = React.useState<OrgNodeWithStats | null>(null);
   const [selectedEmployee, setSelectedEmployee] = React.useState<EmployeeWithDetails | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [coveragePattern, setCoveragePattern] = React.useState<WeeklyPattern>(EMPTY_COVERAGE_PATTERN);
 
   // Sheet states
   const [isNodeSheetOpen, setIsNodeSheetOpen] = React.useState(false);
@@ -355,10 +367,20 @@ export default function WorkforcePage() {
 
             <TabsContent value="coverage" className="flex-1 overflow-auto p-4">
               {selectedNode ? (
-                <CoverageEditor
-                  orgNodeId={selectedNode.id}
-                  orgNodeName={selectedNode.name}
-                />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-medium">{selectedNode.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Définissez les créneaux de couverture requis
+                      </p>
+                    </div>
+                  </div>
+                  <CoverageEditor
+                    value={coveragePattern}
+                    onChange={setCoveragePattern}
+                  />
+                </div>
               ) : (
                 <div className="flex h-full items-center justify-center">
                   <div className="text-center">

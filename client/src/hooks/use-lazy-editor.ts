@@ -11,15 +11,24 @@ import { createLazyLoader, preloadInIdle } from '@/lib/office/performance';
 // Types
 // ============================================================================
 
+/** Common props accepted by all lazy-loaded editors */
+interface EditorProps {
+  content?: unknown;
+  onChange?: (newContent: unknown) => void;
+  readOnly?: boolean;
+  documentId?: string;
+  [key: string]: unknown;
+}
+
 interface EditorModule {
-  default: React.ComponentType<unknown>;
+  default: React.ComponentType<EditorProps>;
 }
 
 interface LazyEditorState {
   isLoading: boolean;
   isVisible: boolean;
   error: Error | null;
-  Editor: React.ComponentType<unknown> | null;
+  Editor: React.ComponentType<EditorProps> | null;
 }
 
 interface UseLazyEditorOptions {

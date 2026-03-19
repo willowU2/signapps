@@ -110,8 +110,8 @@ export function GlobalDndProvider({ children }: GlobalDndProviderProps) {
               })
               .then((response) => {
                 // Link the created event to the task in local store
-                if (response?.id) {
-                  linkEventToTask(task.id, response.id);
+                if (response?.data?.id) {
+                  linkEventToTask(task.id, response.data.id);
                 }
                 const formattedDate = startTime.toLocaleDateString('fr-FR');
                 toast.success(`Tâche "${task.title || task.label}" planifiée pour le ${formattedDate}`);
