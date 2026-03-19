@@ -254,13 +254,21 @@ export function Sidebar() {
                 <Link
                   href="/dashboard"
                   className={cn(
-                    'flex w-full items-center justify-center rounded-lg p-2.5 transition-colors mb-2',
+                    'relative flex w-full items-center justify-center rounded-lg p-2.5 transition-colors mb-2 group',
                     pathname === '/dashboard'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'text-primary-foreground'
                       : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                   )}
                 >
-                  <LayoutDashboard className="h-5 w-5" />
+                  {pathname === '/dashboard' && (
+                    <motion.div
+                      layoutId="sidebar-active-collapsed"
+                      className="absolute inset-0 bg-primary rounded-lg shadow-sm"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <LayoutDashboard className="relative z-10 h-5 w-5 transition-transform group-hover:scale-110" />
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="right" className="font-semibold glass shadow-glass">
@@ -271,14 +279,24 @@ export function Sidebar() {
              <Link
               href="/dashboard"
               className={cn(
-                'group flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-semibold transition-all duration-200 mb-2',
+                'group relative flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-semibold transition-colors mb-2',
                 pathname === '/dashboard'
-                  ? 'bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20'
+                  ? 'text-primary'
                   : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
               )}
             >
-              <LayoutDashboard className={cn("h-5 w-5 transition-transform group-hover:scale-110", pathname === '/dashboard' && "text-primary")} />
-              <span>Dashboard</span>
+              {pathname === '/dashboard' && (
+                  <motion.div
+                    layoutId="sidebar-active-item"
+                    className="absolute inset-0 bg-primary/10 rounded-lg shadow-sm ring-1 ring-primary/20"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+              )}
+              <div className="relative z-10 flex items-center gap-3 w-full">
+                <LayoutDashboard className={cn("h-5 w-5 transition-transform group-hover:scale-110", pathname === '/dashboard' && "text-primary")} />
+                <span>Dashboard</span>
+              </div>
             </Link>
           )}
 
@@ -317,13 +335,21 @@ export function Sidebar() {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => toggleGroup(groupIndex)}
                       className={cn(
-                        'flex w-full items-center justify-center rounded-lg p-2.5 transition-all duration-200',
+                        'relative flex w-full items-center justify-center rounded-lg p-2.5 transition-colors group',
                         isGroupActive
-                          ? 'bg-primary/10 text-primary ring-1 ring-primary/20 shadow-sm'
+                          ? 'text-primary'
                           : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                       )}
                     >
-                      <DisplayIcon className="h-5 w-5" />
+                      {isGroupActive && (
+                        <motion.div
+                          layoutId="sidebar-active-collapsed"
+                          className="absolute inset-0 bg-primary/10 ring-1 ring-primary/20 rounded-lg shadow-sm"
+                          initial={false}
+                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <DisplayIcon className="relative z-10 h-5 w-5 transition-transform group-hover:scale-110" />
                     </motion.button>
                   </TooltipTrigger>
                   <TooltipContent side="right" className="font-semibold glass shadow-glass">
@@ -375,14 +401,24 @@ export function Sidebar() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                              'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ml-4 border-l-2',
+                              'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ml-4 border-l-2',
                               isActive
-                                ? 'border-primary bg-primary/5 text-primary shadow-sm'
+                                ? 'border-primary text-primary'
                                 : 'border-transparent text-sidebar-foreground hover:border-sidebar-foreground/30 hover:bg-sidebar-accent/40'
                             )}
                           >
-                            <Icon className={cn("h-4 w-4 shrink-0 transition-transform group-hover:scale-110", isActive && "text-primary")} />
-                            <span>{item.label}</span>
+                            {isActive && (
+                              <motion.div
+                                layoutId="sidebar-active-item"
+                                className="absolute inset-0 bg-primary/5 rounded-r-lg shadow-sm"
+                                initial={false}
+                                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                              />
+                            )}
+                            <div className="relative z-10 flex items-center gap-3 w-full">
+                              <Icon className={cn("h-4 w-4 shrink-0 transition-transform group-hover:scale-110", isActive && "text-primary")} />
+                              <span>{item.label}</span>
+                            </div>
                           </Link>
                         );
                       })}
