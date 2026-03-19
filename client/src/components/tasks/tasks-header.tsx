@@ -10,18 +10,18 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export interface TasksHeaderProps {
-    calendars: any[]
-    selectedCalendarId: string | null
-    onSelectCalendar: (id: string) => void
+    projects: any[]
+    selectedProjectId: string | null
+    onSelectProject: (id: string) => void
     onExportTasks: () => void
     onImportTasks: () => void
     onAddTask: () => void
 }
 
 export function TasksHeader({
-    calendars,
-    selectedCalendarId,
-    onSelectCalendar,
+    projects,
+    selectedProjectId,
+    onSelectProject,
     onExportTasks,
     onImportTasks,
     onAddTask
@@ -56,13 +56,13 @@ export function TasksHeader({
                             </div>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-56 rounded-xl">
-                            {calendars.map(cal => (
+                            {projects.map(proj => (
                                 <DropdownMenuItem 
-                                    key={cal.id} 
-                                    onClick={() => onSelectCalendar(cal.id)}
-                                    className={selectedCalendarId === cal.id ? "bg-blue-50 text-blue-700 font-medium" : ""}
+                                    key={proj.id} 
+                                    onClick={() => onSelectProject(proj.id)}
+                                    className={selectedProjectId === proj.id ? "bg-blue-50 text-blue-700 font-medium" : ""}
                                 >
-                                    {cal.name}
+                                    {proj.name}
                                 </DropdownMenuItem>
                             ))}
                             <DropdownMenuSeparator />

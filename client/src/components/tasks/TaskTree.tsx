@@ -3,11 +3,13 @@
 import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Plus, Trash2, CalendarIcon, MessageSquare, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTasks } from "@/hooks/use-tasks";
+import { useEntityStore } from "@/stores/entity-hub-store";
 import { format, isPast, parseISO } from "date-fns";
 
 interface Task {
   id: string;
+  project_id: string;
+  parent_id?: string;
   title: string;
   status: string;
   priority: number;
@@ -21,7 +23,7 @@ interface TaskNode {
 }
 
 interface TaskTreeProps {
-  calendarId: string;
+  projectId: string;
   onTaskSelect?: (task: Task) => void;
   onAddChild?: (parentId: string) => void;
 }
@@ -167,46 +169,46 @@ function TaskItem({
 }
 
 export function TaskTree({
-  calendarId,
+  projectId,
   onTaskSelect,
   onAddChild,
 }: TaskTreeProps) {
-  const [tree, setTree] = useState<TaskNode[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { getTaskTree, deleteTask } = useTasks(calendarId);
+  const { tasks, deleteTask, isLoading } = useEntityStore();
+  
+  // Filter tasks for this project
+  const projectTasks = React.useMemo(() => {
+    return tasks.filter((t) => t.project_id === projectId);
+  }, [tasks, projectId]);
 
-  useEffect(() => {
-    const loadTree = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getTaskTree(calendarId);
-        
-        setTree(data);
-      } catch {
-        // ignore
-      } finally {
-        setIsLoading(false);
-      }
+  // Build tree from flat list
+  const tree = React.useMemo(() => {
+    const buildNode = (taskList: Task[], parentId: string | null = null): TaskNode[] => {
+      return taskList
+        .filter((t) => (parentId ? t.parent_id === parentId : !t.parent_id))
+        .map((t) => ({
+          task: t,
+          children: buildNode(taskList, t.id),
+        }));
     };
-
-    loadTree();
-  }, [calendarId, getTaskTree]);
+    return buildNode(projectTasks);
+  }, [projectTasks]);
 
   const handleDelete = async (taskId: string) => {
-    if (!confirm("Delete task and all subtasks?")) return;
+    if (!confirm("Voulez-vous vraiment supprimer cette tâche ?")) return;
 
     try {
       await deleteTask(taskId);
-      // Reload tree
-      const data = await getTaskTree(calendarId);
-      setTree(data);
     } catch {
       // ignore
     }
   };
 
-  if (isLoading) {
+  if (isLoading && projectTasks.length === 0) {
     return <div className="text-center text-[#5f6368] py-8 text-sm">Chargement des tâches...</div>;
+  }
+
+  if (projectTasks.length === 0) {
+    return <div className="text-center text-[#5f6368] py-8 text-sm">Aucune tâche dans ce projet.</div>;
   }
 
   return (

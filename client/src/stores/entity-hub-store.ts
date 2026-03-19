@@ -28,7 +28,9 @@ interface EntityState {
 
   createWorkspace: (data: { name: string; description?: string }) => Promise<void>;
   createProject: (data: { name: string; description?: string; workspace_id: string }) => Promise<void>;
-  createTask: (data: { title: string; description?: string; project_id: string }) => Promise<void>;
+  createTask: (data: { title: string; description?: string; project_id: string, parent_id?: string, priority?: number, due_date?: string }) => Promise<void>;
+  updateTask: (id: string, data: any) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
 }
 
 export const useEntityStore = create<EntityState>((set, get) => ({
@@ -135,6 +137,28 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     set({ isLoading: true });
     try {
       await entityHubApi.createTask(data);
+      await get().fetchTasks();
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  updateTask: async (id, data) => {
+    set({ isLoading: true });
+    try {
+      await entityHubApi.updateTask(id, data);
+      await get().fetchTasks();
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  deleteTask: async (id) => {
+    set({ isLoading: true });
+    try {
+      await entityHubApi.deleteTask(id);
       await get().fetchTasks();
     } catch (error: any) {
       set({ error: error.message, isLoading: false });

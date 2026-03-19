@@ -24,6 +24,8 @@ export const entityHubApi = {
   listTasks: () => schedulerClient.get('/tasks'),
   getTask: (id: string) => schedulerClient.get(`/tasks/${id}`),
   createTask: (data: any) => schedulerClient.post('/tasks', data),
+  updateTask: (id: string, data: any) => schedulerClient.put(`/tasks/${id}`, data),
+  deleteTask: (id: string) => schedulerClient.delete(`/tasks/${id}`),
   
   // Events
   listEvents: () => schedulerClient.get('/events'),

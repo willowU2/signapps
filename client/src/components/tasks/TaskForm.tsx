@@ -20,13 +20,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useTasks, CreateTaskRequest } from "@/hooks/use-tasks";
+import { useEntityStore } from "@/stores/entity-hub-store";
 import { toast } from "sonner";
 
 interface TaskFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  calendarId: string;
+  projectId: string;
   parentTaskId?: string;
   onTaskCreated?: () => void;
 }
@@ -41,11 +41,11 @@ const PRIORITY_OPTIONS = [
 export function TaskForm({
   open,
   onOpenChange,
-  calendarId,
+  projectId,
   parentTaskId,
   onTaskCreated,
 }: TaskFormProps) {
-  const { createTask } = useTasks(calendarId);
+  const { createTask } = useEntityStore();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -68,12 +68,13 @@ export function TaskForm({
     setIsSubmitting(true);
 
     try {
-      const createData: CreateTaskRequest = {
-        parent_task_id: parentTaskId,
+      const createData = {
+        project_id: projectId,
+        parent_id: parentTaskId,
         title: formData.title || "Untitled Task",
         description: formData.description || undefined,
         priority: parseInt(formData.priority),
-        due_date: formData.due_date || undefined,
+        due_date: formData.due_date ? new Date(formData.due_date).toISOString() : undefined,
       };
 
       await createTask(createData);

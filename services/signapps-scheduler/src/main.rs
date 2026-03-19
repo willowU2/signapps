@@ -187,9 +187,11 @@ fn create_router(state: AppState) -> Router {
 
     // Project routes (require tenant context)
     let project_routes = Router::new()
-        .route("/", get(handlers::projects::list_projects))
-        .route("/", post(handlers::projects::create_project))
-        .route("/{id}", get(handlers::projects::get_project))
+        .route("/", get(handlers::projects::list))
+        .route("/", post(handlers::projects::create))
+        .route("/{id}", get(handlers::projects::get_by_id))
+        .route("/{id}", put(handlers::projects::update))
+        .route("/{id}", delete(handlers::projects::delete))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -200,9 +202,11 @@ fn create_router(state: AppState) -> Router {
 
     // Task routes (require tenant context)
     let task_routes = Router::new()
-        .route("/", get(handlers::tasks::list_tasks))
-        .route("/", post(handlers::tasks::create_task))
-        .route("/{id}", get(handlers::tasks::get_task))
+        .route("/", get(handlers::tasks::list))
+        .route("/", post(handlers::tasks::create))
+        .route("/{id}", get(handlers::tasks::get_by_id))
+        .route("/{id}", put(handlers::tasks::update))
+        .route("/{id}", delete(handlers::tasks::delete))
         // Task attachments
         .route("/{id}/attachments", get(handlers::tasks::list_attachments))
         .route("/{id}/attachments", post(handlers::tasks::add_attachment))

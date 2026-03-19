@@ -8,7 +8,6 @@ import { TaskForm } from "@/components/tasks/TaskForm";
 import { TasksHeader } from "@/components/tasks/tasks-header";
 import { ExportDialog } from "@/components/calendar/ExportDialog";
 import { ImportDialog } from "@/components/calendar/ImportDialog";
-import { calendarApi } from "@/lib/api";
 import { useEntityStore } from "@/stores/entity-hub-store";
 import { AppLayout } from "@/components/layout/app-layout";
 import {
@@ -20,9 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function TasksPage() {
-  const [calendars, setCalendars] = useState<any[]>([]);
-  const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -30,34 +27,19 @@ export default function TasksPage() {
   const [treeKey, setTreeKey] = useState(0);
 
   // Unified Entity Hub sync
-  const { fetchTasks, fetchProjects } = useEntityStore();
+  const { projects, fetchTasks, fetchProjects, isLoading } = useEntityStore();
 
   useEffect(() => {
     fetchTasks();
     fetchProjects();
   }, [fetchTasks, fetchProjects]);
 
-  // Load calendars on mount
+  // Load projects on mount
   useEffect(() => {
-    const loadCalendars = async () => {
-      try {
-        setIsLoading(true);
-        const response = await calendarApi.listCalendars();
-        setCalendars(response.data);
-
-        // Select first calendar
-        if (response.data.length > 0) {
-          setSelectedCalendarId(response.data[0].id);
-        }
-      } catch {
-        // ignore
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadCalendars();
-  }, []);
+    if (projects.length > 0 && !selectedProjectId) {
+      setSelectedProjectId(projects[0].id);
+    }
+  }, [projects, selectedProjectId]);
 
   const handleAddTask = () => {
     setParentTaskId(undefined);
@@ -80,9 +62,9 @@ export default function TasksPage() {
         <div className="w-full glass-panel border border-border/50 rounded-2xl shadow-premium flex flex-col overflow-hidden relative">
           
           <TasksHeader 
-            calendars={calendars}
-            selectedCalendarId={selectedCalendarId}
-            onSelectCalendar={setSelectedCalendarId}
+            projects={projects}
+            selectedProjectId={selectedProjectId}
+            onSelectProject={setSelectedProjectId}
             onExportTasks={() => setExportDialogOpen(true)}
             onImportTasks={() => setImportDialogOpen(true)}
             onAddTask={handleAddTask}
@@ -90,19 +72,19 @@ export default function TasksPage() {
 
           {/* Content Line Items */}
           <div className="flex-1 overflow-y-auto w-full">
-            {isLoading ? (
+            {isLoading && projects.length === 0 ? (
               <div className="text-center text-[#5f6368] py-12 text-sm">
                 Chargement...
               </div>
-            ) : calendars.length === 0 ? (
+            ) : projects.length === 0 ? (
               <div className="text-center text-[#5f6368] py-12 text-sm">
-                Aucune liste de tâches trouvée.
+                Aucun projet trouvé. Veuillez d'abord créer un projet dans le Hub.
               </div>
-            ) : selectedCalendarId && (
+            ) : selectedProjectId && (
                 <div className="pb-20">
                     <TaskTree
                         key={treeKey}
-                        calendarId={selectedCalendarId}
+                        projectId={selectedProjectId}
                         onAddChild={handleAddChild}
                     />
                 </div>
@@ -119,7 +101,7 @@ export default function TasksPage() {
         <TaskForm
           open={formOpen}
           onOpenChange={setFormOpen}
-          calendarId={selectedCalendarId || calendars[0]?.id || ""}
+          projectId={selectedProjectId || projects[0]?.id || ""}
           parentTaskId={parentTaskId}
           onTaskCreated={handleTaskCreated}
         />
@@ -127,16 +109,16 @@ export default function TasksPage() {
         <ExportDialog
           open={exportDialogOpen}
           onOpenChange={setExportDialogOpen}
-          calendarId={selectedCalendarId}
+          calendarId={selectedProjectId}
           calendarName={
-            calendars.find((c) => c.id === selectedCalendarId)?.name || "Tasks"
+            projects.find((c) => c.id === selectedProjectId)?.name || "Tasks"
           }
         />
 
         <ImportDialog
           open={importDialogOpen}
           onOpenChange={setImportDialogOpen}
-          calendarId={selectedCalendarId}
+          calendarId={selectedProjectId}
           onImportComplete={() => {
             setTreeKey((prev) => prev + 1);
           }}

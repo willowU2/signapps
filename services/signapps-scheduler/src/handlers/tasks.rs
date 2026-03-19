@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
@@ -7,7 +7,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use signapps_common::{Claims, TenantContext};
-use signapps_db::models::{CreateTimeItem, TimeItemsQuery};
+use signapps_db::models::{CreateTimeItem, TimeItemsQuery, UpdateTimeItem};
 use signapps_db::repositories::calendar_repository::TaskRepository;
 use signapps_db::repositories::TimeItemRepository;
 use uuid::Uuid;
@@ -36,16 +36,17 @@ pub struct TaskAttachmentResponse {
 }
 
 // ============================================================================
-// Task handlers (placeholder - TODO: implement fully)
+// CRUD handlers
 // ============================================================================
 
-pub async fn list_tasks(
+pub async fn list(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(ctx): Extension<TenantContext>,
+    Query(mut query): Query<TimeItemsQuery>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = TimeItemRepository::new(&state.pool);
-    let mut query = TimeItemsQuery::default();
+    // Ensure we only query tasks
     query.types = Some(vec!["task".to_string()]);
 
     match repo.query(ctx.tenant_id, claims.sub, &query).await {
@@ -57,7 +58,7 @@ pub async fn list_tasks(
     }
 }
 
-pub async fn create_task(
+pub async fn create(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Extension(ctx): Extension<TenantContext>,
@@ -78,17 +79,60 @@ pub async fn create_task(
     }
 }
 
-pub async fn get_task(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+pub async fn get_by_id(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Extension(ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    Ok(Json(json!({
-        "id": id,
-        "tenant_id": ctx.tenant_id,
-        "title": "Placeholder Task"
-    })))
+    let repo = TimeItemRepository::new(&state.pool);
+    match repo.find_by_id(id).await {
+        Ok(Some(task)) => {
+            // Verify tenant matches
+            if task.tenant_id != ctx.tenant_id {
+                return Err(StatusCode::NOT_FOUND);
+            }
+            Ok(Json(json!({ "data": task })))
+        },
+        Ok(None) => Err(StatusCode::NOT_FOUND),
+        Err(e) => {
+            tracing::error!("Failed to get task: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
+    }
+}
+
+pub async fn update(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(_ctx): Extension<TenantContext>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateTimeItem>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let repo = TimeItemRepository::new(&state.pool);
+    match repo.update(id, payload).await {
+        Ok(task) => Ok(Json(json!({ "data": task }))),
+        Err(e) => {
+            tracing::error!("Failed to update task: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
+    }
+}
+
+pub async fn delete(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(_ctx): Extension<TenantContext>,
+    Path(id): Path<Uuid>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let repo = TimeItemRepository::new(&state.pool);
+    match repo.delete(id).await {
+        Ok(_) => Ok(StatusCode::NO_CONTENT),
+        Err(e) => {
+            tracing::error!("Failed to delete task: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
+    }
 }
 
 // ============================================================================
