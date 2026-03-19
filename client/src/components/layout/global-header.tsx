@@ -15,9 +15,9 @@ import { Input } from '@/components/ui/input';
 import {
     Moon, Sun, LogOut, User as UserIcon, Settings, PanelLeft, PanelRight,
     Share2, MessageSquare, History, HardDrive, Mail, CheckSquare,
-    Video, Activity, Route, Calendar, Shield, Users, MessageCircle, Search, SlidersHorizontal
+    Video, Activity, Route, Calendar, Shield, Users, MessageCircle, Search, SlidersHorizontal, FileText
 } from 'lucide-react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
 import { NotificationBadge } from '@/components/notifications/notification-badge';
@@ -59,16 +59,38 @@ export function GlobalHeader() {
             .slice(0, 2);
     };
 
+    const searchParams = useSearchParams();
+    const docName = searchParams.get('name');
+
     // --- Contextual Logic ---
     let headerTitle = "App";
     let HeaderIcon = null;
     let showDocActions = false;
 
-    if (pathname.startsWith('/docs') || pathname.startsWith('/sheets') || pathname.startsWith('/slides')) {
-        const parts = pathname.split('/');
-        const id = parts[parts.length - 1];
-        headerTitle = id && id !== 'docs' && id !== 'sheets' && id !== 'slides' ? `Document ${id}` : 'Untitled Document';
-        showDocActions = true;
+    if (pathname.startsWith('/docs')) {
+        if (pathname.includes('/editor')) {
+            showDocActions = true;
+            headerTitle = docName || 'Document sans titre';
+        } else {
+            headerTitle = "Documents";
+            HeaderIcon = <FileText className="h-5 w-5 text-blue-500" />;
+        }
+    } else if (pathname.startsWith('/sheets')) {
+        if (pathname.includes('/editor')) {
+            showDocActions = true;
+            headerTitle = docName || 'Tableur sans titre';
+        } else {
+            headerTitle = "Tableurs";
+            HeaderIcon = <FileText className="h-5 w-5 text-green-500" />;
+        }
+    } else if (pathname.startsWith('/slides')) {
+        if (pathname.includes('/editor')) {
+            showDocActions = true;
+            headerTitle = docName || 'Présentation sans titre';
+        } else {
+            headerTitle = "Présentations";
+            HeaderIcon = <FileText className="h-5 w-5 text-yellow-500" />;
+        }
     } else if (pathname.startsWith('/chat')) {
         headerTitle = "Chat";
         HeaderIcon = <MessageCircle className="h-5 w-5 text-primary" />;

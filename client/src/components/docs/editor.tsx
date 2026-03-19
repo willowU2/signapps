@@ -1947,46 +1947,10 @@ const Editor = ({
 
     return (
         <div className={`flex flex-col h-full bg-[#f8f9fa] dark:bg-[#1a1a1a] overflow-hidden ${className}`}>
-            {/* Top Bar (Title & Main Menus) */}
-            <div className="flex items-center justify-between px-4 py-2 bg-[#f9fbfd] dark:bg-background border-b border-transparent flex-shrink-0">
-                <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 mt-1 flex items-center justify-center text-[#1a73e8] shrink-0 cursor-pointer">
-                        <FileText className="w-9 h-9" fill="#1a73e8" stroke="white" strokeWidth={1.5} />
-                    </div>
-                    <div className="flex flex-col gap-0.5 mt-0.5">
-                        <div className="flex items-center gap-2">
-                            <input
-                                defaultValue="Untitled Document"
-                                className="h-6 text-[18px] font-medium border-transparent hover:border-[#dadce0] focus:ring-2 focus:ring-[#1a73e8] px-1 py-0 w-auto min-w-[150px] bg-transparent shadow-none outline-none text-[#202124] dark:text-[#e8eaed]"
-                            />
-                        </div>
-                        <div className="-ml-1.5">
-                            <EditorMenu menus={editorMenus} onAction={handleMenuAction} />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <div className="hidden md:flex items-center gap-2 px-3 py-1 mr-4">
-                        <span className={`w-2 h-2 rounded-full shadow-sm ${status === 'connected' ? 'bg-[#1e8e3e] shadow-green-500/50' : 'bg-[#d93025] shadow-red-500/50'}`}></span>
-                        <span className="text-[12px] text-[#5f6368] dark:text-[#9aa0a6] font-medium">
-                            {status === 'connected' ? 'Enregistr\u00E9 sur le cloud' : 'Enregistrement...'}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button className="h-10 w-10 rounded-full text-[#5f6368] flex items-center justify-center hover:bg-[#f1f3f4] dark:text-[#9aa0a6] dark:hover:bg-[#303134]">
-                            <MessageSquarePlus className="h-5 w-5" />
-                        </button>
-                        <button className="h-10 w-10 rounded-full text-[#5f6368] flex items-center justify-center hover:bg-[#f1f3f4] dark:text-[#9aa0a6] dark:hover:bg-[#303134] mr-2">
-                            <Video className="h-5 w-5" />
-                        </button>
-                        <button className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] font-medium rounded-full px-6 h-9 flex items-center justify-center transition-colors shadow-none dark:bg-[#004a77] dark:text-[#c2e7ff] dark:hover:bg-[#005a92] mr-2">
-                            Partager
-                        </button>
-                        <div className="h-8 w-8 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold text-sm shadow-sm cursor-pointer">
-                            {userName ? userName[0].toUpperCase() : 'U'}
-                        </div>
-                    </div>
+            {/* Top Bar (Menus only, simplified) */}
+            <div className="flex items-center px-4 py-1.5 bg-[#f9fbfd] dark:bg-background border-b border-transparent flex-shrink-0">
+                <div className="-ml-1.5">
+                    <EditorMenu menus={editorMenus} onAction={handleMenuAction} />
                 </div>
             </div>
 
