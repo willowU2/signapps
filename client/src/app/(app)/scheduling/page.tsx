@@ -28,7 +28,7 @@ import { BottomTabs } from '@/components/scheduling/mobile/BottomTabs';
 import { FAB } from '@/components/scheduling/quick-actions/FAB';
 import { useSchedulingNavigation } from '@/stores/scheduling-store';
 import { useCalendarStore } from '@/stores/scheduling/calendar-store';
-import { useCreateEvent, useUpdateEvent, useDeleteEvent } from '@/lib/scheduling/api/calendar';
+import { useCreateEvent, useUpdateEvent, useDeleteEvent, useCalendars } from '@/lib/scheduling/api/calendar';
 import type { ScheduleBlock, CreateEventInput } from '@/lib/scheduling/types/scheduling';
 import type { TimeItem } from '@/lib/scheduling/types';
 
@@ -43,6 +43,10 @@ export default function SchedulingPage() {
   const [selectedEvent, setSelectedEvent] = React.useState<ScheduleBlock | null>(null);
   const [defaultEventDate, setDefaultEventDate] = React.useState<Date | undefined>();
   const [defaultEventTime, setDefaultEventTime] = React.useState<string | undefined>();
+
+  // Fetch calendars to get a valid calendarId
+  const { data: calendars } = useCalendars();
+  const defaultCalendarId = calendars?.[0]?.id;
 
   // Mutations
   const createEvent = useCreateEvent();
@@ -99,9 +103,14 @@ export default function SchedulingPage() {
         { onSuccess: () => setIsEventSheetOpen(false) }
       );
     } else {
-      // Create new event
+      // Create new event - use the first available calendar
+      const calendarId = input.calendarId || defaultCalendarId;
+      if (!calendarId) {
+        console.error('No calendar available to create event');
+        return;
+      }
       createEvent.mutate(
-        { calendarId: input.calendarId || 'default', input },
+        { calendarId, input },
         { onSuccess: () => setIsEventSheetOpen(false) }
       );
     }

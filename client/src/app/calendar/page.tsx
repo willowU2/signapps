@@ -1,5 +1,28 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+/**
+ * Legacy /calendar route - redirects to the new unified scheduling UI.
+ * The scheduling module at /scheduling now handles all calendar functionality.
+ */
+export default function CalendarPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/scheduling");
+  }, [router]);
+
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <p className="text-muted-foreground">Redirection vers le calendrier...</p>
+    </div>
+  );
+}
+
+// Keep the old implementation commented for reference during transition
+/*
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useCalendarStore, useCalendarSelection } from "@/stores/calendar-store";
 import { useEntityStore } from "@/stores/entity-hub-store";
@@ -38,7 +61,7 @@ import {
   ChevronDown
 } from "lucide-react";
 
-export default function CalendarPage() {
+function OldCalendarPage() {
   // Granular selectors for optimized re-renders
   const calendars = useCalendarStore((state) => state.calendars);
   const setCalendars = useCalendarStore((state) => state.setCalendars);
@@ -244,3 +267,4 @@ export default function CalendarPage() {
     </AppLayout>
   );
 }
+*/

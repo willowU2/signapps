@@ -287,7 +287,7 @@ export function EventSheet({
       start: startDateTime,
       end: endDateTime,
       allDay: isAllDay,
-      calendarId: 'default',
+      // calendarId will be set by the parent component with a valid value
       attendees: attendeeEmails,
       color,
       recurrence:
