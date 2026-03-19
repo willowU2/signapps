@@ -1,6 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
+import { preferencesApi } from '@/lib/api/identity';
+
+// Debounced sync function to avoid spamming the backend
+let syncTimeout: ReturnType<typeof setTimeout> | null = null;
+const syncDashboardLayoutToBackend = (widgets: WidgetConfig[]) => {
+  if (syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(() => {
+    preferencesApi.patch('dashboard', { widgets }).catch(console.error);
+  }, 2000);
+};
 
 export type WidgetType =
   | 'stat-cards'
@@ -91,7 +101,10 @@ export const useDashboardStore = create<DashboardStore>()(
       editMode: false,
       bookmarks: [],
 
-      setWidgets: (widgets) => set({ widgets }),
+      setWidgets: (widgets) => {
+        set({ widgets });
+        syncDashboardLayoutToBackend(widgets);
+      },
 
       addWidget: (type) =>
         set((state) => {
@@ -102,38 +115,47 @@ export const useDashboardStore = create<DashboardStore>()(
             (max, w) => Math.max(max, w.y + w.h),
             0,
           );
+          const newWidgets = [
+            ...state.widgets,
+            {
+              id,
+              type,
+              x: 0,
+              y: maxY,
+              w: catalog.defaultW,
+              h: catalog.defaultH,
+            },
+          ];
+          syncDashboardLayoutToBackend(newWidgets);
           return {
-            widgets: [
-              ...state.widgets,
-              {
-                id,
-                type,
-                x: 0,
-                y: maxY,
-                w: catalog.defaultW,
-                h: catalog.defaultH,
-              },
-            ],
+            widgets: newWidgets,
           };
         }),
 
       removeWidget: (id) =>
-        set((state) => ({
-          widgets: state.widgets.filter((w) => w.id !== id),
-        })),
+        set((state) => {
+          const newWidgets = state.widgets.filter((w) => w.id !== id);
+          syncDashboardLayoutToBackend(newWidgets);
+          return { widgets: newWidgets };
+        }),
 
       updateLayout: (layouts) =>
-        set((state) => ({
-          widgets: state.widgets.map((w) => {
+        set((state) => {
+          const newWidgets = state.widgets.map((w) => {
             const layout = layouts.find((l) => l.i === w.id);
             if (!layout) return w;
             return { ...w, x: layout.x, y: layout.y, w: layout.w, h: layout.h };
-          }),
-        })),
+          });
+          syncDashboardLayoutToBackend(newWidgets);
+          return { widgets: newWidgets };
+        }),
 
       setEditMode: (editMode) => set({ editMode }),
 
-      resetLayout: () => set({ widgets: DEFAULT_WIDGETS }),
+      resetLayout: () => {
+        set({ widgets: DEFAULT_WIDGETS });
+        syncDashboardLayoutToBackend(DEFAULT_WIDGETS);
+      },
 
       addBookmark: (bookmark) =>
         set((state) => ({

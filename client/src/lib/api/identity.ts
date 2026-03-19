@@ -50,6 +50,14 @@ export const authApi = {
         identityClient.post<{ success: boolean; message?: string }>('/auth/ldap/test', config),
 };
 
+// Preferences API
+export const preferencesApi = {
+    get: () => identityClient.get('/users/me/preferences'),
+    sync: (data: any) => identityClient.put('/users/me/preferences', data),
+    patch: (section: string, data: any) => identityClient.patch(`/users/me/preferences/${section}`, data),
+    reset: () => identityClient.post('/users/me/preferences/reset'),
+};
+
 export interface LoginRequest {
     username: string;
     password?: string;
