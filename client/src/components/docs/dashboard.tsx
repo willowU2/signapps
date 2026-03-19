@@ -38,7 +38,15 @@ export default function DocsDashboard() {
                 // Fetch previews lazily for the first few documents
                 textDocs.slice(0, 15).forEach(async (doc) => {
                     try {
-                        const parsed: any = await fetchAndParseDocument('drive', doc.name, doc.name);
+                        let parsed: any;
+                        const targetKey = `${doc.target_id || doc.id}.html`;
+                        try {
+                            parsed = await fetchAndParseDocument('drive', targetKey, targetKey);
+                        } catch (err) {
+                            // Fallback to older format or manually uploaded files
+                            parsed = await fetchAndParseDocument('drive', doc.name, doc.name);
+                        }
+                        
                         if (parsed && (parsed.text || parsed.html)) {
                             // Nettoyer les balises HTML rudimentaires pour la preview
                             const rawText = (parsed.text || parsed.html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();

@@ -83,10 +83,21 @@ export const storageApi = {
     },
 
     // Download a file
-    download: (bucket: string, key: string) =>
-        storageClient.get(`/files/${bucket}/${encodeURIComponent(key)}`, {
+    downloadFile: async (bucket: string, key: string): Promise<Blob> => {
+        const url = `/files/${bucket}/${key}?t=${Date.now()}`;
+        const response = await storageClient.get(url, {
+            responseType: 'blob',
+        });
+        return response.data;
+    },
+
+    // Alias pour download
+    download: async (bucket: string, key: string) => {
+        const response = await storageClient.get(`/files/${bucket}/${encodeURIComponent(key)}?t=${Date.now()}`, {
             responseType: 'arraybuffer',
-        }),
+        });
+        return response.data;
+    },
 
     // Create folder (virtual) - uses PUT with empty body to create a key ending with /
     createFolder: (bucket: string, path: string) =>

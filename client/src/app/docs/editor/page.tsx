@@ -21,7 +21,7 @@ function EditorContent() {
 
     return (
         <EditorLayout documentId={id} documentName={name || 'Sans titre'} icon={<FileText className="w-5 h-5 text-blue-600" />}>
-            <Editor documentId={id} className="h-full" bucket={name ? 'drive' : undefined} fileName={name || undefined} userName={userName} />
+            <Editor documentId={id} documentName={name || undefined} className="h-full" bucket={name ? 'drive' : undefined} fileName={name || undefined} userName={userName} />
         </EditorLayout>
     );
 }

@@ -7,24 +7,17 @@ import { storageApi } from './api';
  * Supported: .xlsx, .xls, .csv, .md, .txt, .docx
  */
 export async function fetchAndParseDocument(bucket: string, fileKey: string, fileName: string) {
-    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    let ext = fileName.split('.').pop()?.toLowerCase() || '';
+    if (ext === fileName.toLowerCase() && !fileName.includes('.')) {
+        // Files created natively without extensions are considered 'docx' blobs by signapps editor
+        ext = 'docx';
+    }
     
     // 1. Download file stream/blob
     let arrayBuffer: ArrayBuffer;
     try {
-        const responseData = await storageApi.download(bucket, fileKey);
-        // storageApi returns a blob for binary files or text for text files.
-        if (responseData instanceof Blob) {
-           arrayBuffer = await responseData.arrayBuffer();
-        } else {
-             // If the API unboxes to text or object
-             if (typeof responseData === 'string') {
-                 // Convert string to array buffer
-                 arrayBuffer = new TextEncoder().encode(responseData).buffer;
-             } else {
-                 throw new Error("Invalid download format received from API");
-             }
-        }
+        const blob = await storageApi.downloadFile(bucket, fileKey);
+        arrayBuffer = await blob.arrayBuffer();
     } catch (e: any) {
         throw new Error(`Failed to download file: ${e.message}`);
     }
@@ -38,7 +31,7 @@ export async function fetchAndParseDocument(bucket: string, fileKey: string, fil
         return parseDocx(arrayBuffer);
     }
     
-    if (['md', 'txt'].includes(ext)) {
+    if (['md', 'txt', 'html'].includes(ext)) {
         return parseText(arrayBuffer);
     }
 

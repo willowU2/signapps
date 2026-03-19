@@ -494,6 +494,37 @@ const Editor = ({
             color: getRandomColor(),
         });
 
+        // Extract loading logic to a reusable function
+        const performInitialLoad = async () => {
+            if (!bucket || !fileName) return;
+            
+            // Give Yjs a moment to sync, then check if document is completely empty
+            setTimeout(async () => {
+                const currentText = editor?.getText() || '';
+                if (!currentText || currentText.trim() === '') {
+                    try {
+                        let parsed: any;
+                        const targetKey = `${documentId}.html`;
+                        try {
+                            parsed = await fetchAndParseDocument(bucket, targetKey, targetKey);
+                        } catch (err) {
+                            parsed = await fetchAndParseDocument(bucket, fileName, fileName);
+                        }
+                        
+                        if (parsed && parsed.type === 'document' && (parsed.text || parsed.html)) {
+                            setInitialParsedContent(parsed.text || parsed.html || '');
+                            toast.success("Document chargé", {
+                                id: `load-${documentId}`
+                            });
+                        }
+                    } catch (e: any) {
+                        // Silently ignore if file doesn't exist yet (brand new document)
+                        console.debug("No previous document found to load:", e);
+                    }
+                }
+            }, 500); // reduced timeout for better UX
+        };
+
         // Only connect if collaboration server is explicitly enabled
         if (collabServerEnabled) {
             wsProvider.connect();
@@ -501,6 +532,8 @@ const Editor = ({
             console.debug('[Editor] Running in local-only mode (NEXT_PUBLIC_COLLAB_ENABLED not set)');
             // Set status to disconnected but allow local editing
             setStatus('disconnected');
+            // We MUST load content manually here since 'connected' event won't fire!
+            performInitialLoad();
         }
 
         wsProvider.on('status', async (event: {
@@ -509,35 +542,8 @@ const Editor = ({
             setStatus(event.status);
 
             // Fetch and inject content if document is fresh from S3
-            if (event.status === 'connected' && bucket && fileName) {
-                try {
-                    // Give Yjs a moment to sync, then check if document is completely empty
-                    setTimeout(async () => {
-                        const currentText = ydoc.getText('default').toString();
-                        if (!currentText || currentText.trim() === '') {
-                            toast.loading("Chargement du contenu du fichier...", {
-                                id: `load-${documentId}`
-                            });
-                            try {
-                                const parsed: any = await fetchAndParseDocument(bucket, fileName, fileName);
-                                if (parsed.type === 'document') {
-                                    // Need to inject it using the TipTap editor instance, handled in a separate useEffect
-                                    // since 'editor' isn't available here directly. We'll set a state.
-                                    setInitialParsedContent(parsed.text || parsed.html || '');
-                                }
-                                toast.success("Fichier chargé", {
-                                    id: `load-${documentId}`
-                                });
-                            } catch (e: any) {
-                                toast.error(`Erreur de lecture: ${e.message}`, {
-                                    id: `load-${documentId}`
-                                });
-                            }
-                        }
-                    }, 1000);
-                } catch (e) {
-                    console.debug("Failed to fetch initial content", e);
-                }
+            if (event.status === 'connected') {
+                performInitialLoad();
             }
         });
 
@@ -981,6 +987,38 @@ const Editor = ({
         }
     }, [editor, initialParsedContent]);
 
+    // ---- Auto-Save HTML for Previews ----
+    const lastSavedHtmlRef = useRef('');
+
+    useEffect(() => {
+        if (!editor || !documentId) return;
+
+        const performSave = async () => {
+            const htmlString = editor.getHTML();
+            if (htmlString === lastSavedHtmlRef.current) return;
+
+            const textContent = editor.getText().trim();
+            // Check that we actually have content to save
+            if (textContent.length > 0 || htmlString.includes('<img')) {
+                try {
+                    const blob = new Blob([htmlString], { type: 'text/html' });
+                    await storageApi.uploadWithKey('drive', `${documentId}.html`, blob);
+                    lastSavedHtmlRef.current = htmlString;
+                } catch (err) {
+                    console.debug("Auto-save preview failed:", err);
+                }
+            }
+        };
+
+        const autoSaveInterval = setInterval(performSave, 1500); // Sauvegarde très rapide
+
+        return () => {
+            clearInterval(autoSaveInterval);
+            // Toujours sauvegarder une dernière fois quand on quitte la page
+            performSave();
+        };
+    }, [editor, documentId]);
+
     // Global keyboard shortcuts
     useEffect(() => {
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -1342,6 +1380,12 @@ const Editor = ({
 
             // Envoyer à l'API backend dans le bucket 'drive'
             await storageApi.uploadWithKey('drive', documentName, blob);
+            
+            // AUSSI enregistrer le HTML pour la preview tout de suite !
+            if (documentId) {
+                const htmlBlob = new Blob([htmlString], { type: 'text/html' });
+                await storageApi.uploadWithKey('drive', `${documentId}.html`, htmlBlob);
+            }
 
             toast.success("Enregistré avec succès !", {
                 id: tId
@@ -1382,7 +1426,7 @@ const Editor = ({
                 icon: <Download size={14} />,
                 action: 'saveToDrive',
                 shortcut: 'Ctrl+S'
-            }, // Added this line
+            },
             {
                 label: 'Ouvrir',
                 action: 'open',
