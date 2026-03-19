@@ -2,31 +2,25 @@
   "permissions": {
     "allow": [
       "WebSearch",
-
       "Bash(git:*)",
       "Bash(cargo:*)",
       "Bash(npm:*)",
       "Bash(npx:*)",
       "Bash(node:*)",
-
       "Bash(curl:*)",
       "Bash(docker:*)",
       "Bash(docker-compose:*)",
-
       "Bash(tasklist:*)",
       "Bash(taskkill:*)",
       "Bash(netstat:*)",
       "Bash(ping:*)",
       "Bash(ipconfig:*)",
-
       "Bash(psql:*)",
       "Bash(pg_isready:*)",
-
       "Bash(python:*)",
       "Bash(python3:*)",
       "Bash(pip:*)",
       "Bash(pip3:*)",
-
       "Bash(ls:*)",
       "Bash(dir:*)",
       "Bash(tree:*)",
@@ -45,11 +39,9 @@
       "Bash(unzip:*)",
       "Bash(xargs:*)",
       "Bash(certutil:*)",
-
       "Bash(powershell:*)",
       "Bash(powershell.exe:*)",
       "Bash(cmd:*)",
-
       "Bash(nvidia-smi:*)",
       "Bash(nvcc:*)",
       "Bash(cmake:*)",
@@ -57,13 +49,8 @@
       "Bash(winget:*)",
       "Bash(wmic:*)",
       "Bash(claude:*)",
-
       "Bash(./target/release/*.exe:*)",
       "Bash(./target/debug/*.exe:*)",
-
-      "Skill(superpowers:*)",
-      "Skill(bmad-*)",
-
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:crates.io)",
@@ -72,10 +59,9 @@
       "WebFetch(domain:hub.docker.com)",
       "WebFetch(domain:tiptap.dev)",
       "WebFetch(domain:opendal.apache.org)",
-
       "mcp__MCP_DOCKER__*",
-      "mcp__context-mode__*"
+      "mcp__context-mode__*",
+      "WebFetch(domain:www.atcyrus.com)"
     ]
-  },
-  "contextWindow": 1000000
+  }
 }

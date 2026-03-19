@@ -21,7 +21,8 @@ import type {
 // ============================================================================
 
 const SCHEDULER_URL = process.env.NEXT_PUBLIC_SCHEDULER_URL || 'http://localhost:3007';
-const BASE_PATH = '/api/v1/scheduling';
+const TIME_ITEMS_PATH = '/api/v1/time-items';
+const SCHEDULING_PATH = '/api/v1/scheduling';
 
 // Create axios instance for scheduler service
 const schedulerApi = api.create({
@@ -36,7 +37,7 @@ const schedulerApi = api.create({
  * Create a new TimeItem
  */
 export async function createTimeItem(input: CreateTimeItemInput): Promise<TimeItem> {
-  const response = await schedulerApi.post<TimeItem>(`${BASE_PATH}/items`, input);
+  const response = await schedulerApi.post<TimeItem>(TIME_ITEMS_PATH, input);
   return response.data;
 }
 
@@ -44,7 +45,7 @@ export async function createTimeItem(input: CreateTimeItemInput): Promise<TimeIt
  * Get a single TimeItem by ID
  */
 export async function getTimeItem(id: string): Promise<TimeItem> {
-  const response = await schedulerApi.get<TimeItem>(`${BASE_PATH}/items/${id}`);
+  const response = await schedulerApi.get<TimeItem>(`${TIME_ITEMS_PATH}/${id}`);
   return response.data;
 }
 
@@ -55,7 +56,7 @@ export async function updateTimeItem(
   id: string,
   input: UpdateTimeItemInput
 ): Promise<TimeItem> {
-  const response = await schedulerApi.patch<TimeItem>(`${BASE_PATH}/items/${id}`, input);
+  const response = await schedulerApi.put<TimeItem>(`${TIME_ITEMS_PATH}/${id}`, input);
   return response.data;
 }
 
@@ -63,7 +64,7 @@ export async function updateTimeItem(
  * Delete a TimeItem
  */
 export async function deleteTimeItem(id: string): Promise<void> {
-  await schedulerApi.delete(`${BASE_PATH}/items/${id}`);
+  await schedulerApi.delete(`${TIME_ITEMS_PATH}/${id}`);
 }
 
 /**
@@ -92,7 +93,7 @@ export async function queryTimeItems(query: TimeItemsQuery): Promise<TimeItemsRe
   if (query.sortOrder) params.append('sort_order', query.sortOrder);
 
   const response = await schedulerApi.get<TimeItemsResponse>(
-    `${BASE_PATH}/items?${params.toString()}`
+    `${TIME_ITEMS_PATH}?${params.toString()}`
   );
   return response.data;
 }
@@ -138,7 +139,7 @@ export async function moveTimeItem(
   input: MoveTimeItemInput
 ): Promise<TimeItem> {
   const response = await schedulerApi.post<TimeItem>(
-    `${BASE_PATH}/items/${id}/move`,
+    `${TIME_ITEMS_PATH}/${id}/move`,
     input
   );
   return response.data;
@@ -152,7 +153,7 @@ export async function cloneTimeItem(
   overrides?: Partial<CreateTimeItemInput>
 ): Promise<TimeItem> {
   const response = await schedulerApi.post<TimeItem>(
-    `${BASE_PATH}/items/${id}/clone`,
+    `${TIME_ITEMS_PATH}/${id}/clone`,
     overrides || {}
   );
   return response.data;
@@ -170,7 +171,7 @@ export async function shareTimeItem(
   input: ShareTimeItemInput
 ): Promise<TimeItem> {
   const response = await schedulerApi.post<TimeItem>(
-    `${BASE_PATH}/items/${id}/share`,
+    `${TIME_ITEMS_PATH}/${id}/share`,
     input
   );
   return response.data;
@@ -188,7 +189,7 @@ export async function setRecurrence(
   rule: Omit<RecurrenceRule, 'id'>
 ): Promise<TimeItem> {
   const response = await schedulerApi.post<TimeItem>(
-    `${BASE_PATH}/items/${id}/recurrence`,
+    `${TIME_ITEMS_PATH}/${id}/recurrence`,
     rule
   );
   return response.data;
@@ -199,7 +200,7 @@ export async function setRecurrence(
  */
 export async function removeRecurrence(id: string): Promise<TimeItem> {
   const response = await schedulerApi.delete<TimeItem>(
-    `${BASE_PATH}/items/${id}/recurrence`
+    `${TIME_ITEMS_PATH}/${id}/recurrence`
   );
   return response.data;
 }
@@ -213,7 +214,7 @@ export async function modifyRecurrenceInstance(
   changes: UpdateTimeItemInput
 ): Promise<TimeItem> {
   const response = await schedulerApi.patch<TimeItem>(
-    `${BASE_PATH}/items/${id}/instances/${date}`,
+    `${TIME_ITEMS_PATH}/${id}/instances/${date}`,
     changes
   );
   return response.data;
@@ -232,7 +233,7 @@ export async function addDependency(
   type: string = 'finish_to_start'
 ): Promise<TimeItem> {
   const response = await schedulerApi.post<TimeItem>(
-    `${BASE_PATH}/items/${id}/dependencies`,
+    `${TIME_ITEMS_PATH}/${id}/dependencies`,
     { depends_on_id: dependsOnId, type }
   );
   return response.data;
@@ -246,7 +247,7 @@ export async function removeDependency(
   dependencyId: string
 ): Promise<TimeItem> {
   const response = await schedulerApi.delete<TimeItem>(
-    `${BASE_PATH}/items/${id}/dependencies/${dependencyId}`
+    `${TIME_ITEMS_PATH}/${id}/dependencies/${dependencyId}`
   );
   return response.data;
 }
@@ -268,7 +269,7 @@ export interface Template {
  * Get all templates
  */
 export async function getTemplates(): Promise<Template[]> {
-  const response = await schedulerApi.get<Template[]>(`${BASE_PATH}/templates`);
+  const response = await schedulerApi.get<Template[]>(`${SCHEDULING_PATH}/templates`);
   return response.data;
 }
 
@@ -280,7 +281,7 @@ export async function createTemplate(
   items: CreateTimeItemInput[],
   description?: string
 ): Promise<Template> {
-  const response = await schedulerApi.post<Template>(`${BASE_PATH}/templates`, {
+  const response = await schedulerApi.post<Template>(`${SCHEDULING_PATH}/templates`, {
     name,
     items,
     description,
@@ -296,7 +297,7 @@ export async function applyTemplate(
   startDate: string
 ): Promise<TimeItem[]> {
   const response = await schedulerApi.post<TimeItem[]>(
-    `${BASE_PATH}/templates/${templateId}/apply`,
+    `${SCHEDULING_PATH}/templates/${templateId}/apply`,
     { start_date: startDate }
   );
   return response.data;
@@ -320,7 +321,7 @@ export interface Resource {
  * Get all resources
  */
 export async function getResources(): Promise<Resource[]> {
-  const response = await schedulerApi.get<Resource[]>(`${BASE_PATH}/resources`);
+  const response = await schedulerApi.get<Resource[]>(`${SCHEDULING_PATH}/resources`);
   return response.data;
 }
 
@@ -333,7 +334,7 @@ export async function getResourceAvailability(
   end: string
 ): Promise<{ start: string; end: string }[]> {
   const response = await schedulerApi.get<{ start: string; end: string }[]>(
-    `${BASE_PATH}/resources/${resourceId}/availability`,
+    `${SCHEDULING_PATH}/resources/${resourceId}/availability`,
     { params: { start, end } }
   );
   return response.data;
@@ -366,7 +367,7 @@ export async function getBookingSlots(
   end: string
 ): Promise<BookingSlot[]> {
   const response = await schedulerApi.get<BookingSlot[]>(
-    `${BASE_PATH}/booking/${slug}/slots`,
+    `${SCHEDULING_PATH}/booking/${slug}/slots`,
     { params: { start, end } }
   );
   return response.data;
@@ -380,7 +381,7 @@ export async function bookSlot(
   request: BookingRequest
 ): Promise<TimeItem> {
   const response = await schedulerApi.post<TimeItem>(
-    `${BASE_PATH}/booking/${slug}/book`,
+    `${SCHEDULING_PATH}/booking/${slug}/book`,
     request
   );
   return response.data;
@@ -407,7 +408,7 @@ export async function getTeamAvailability(
   granularity: number = 30 // minutes
 ): Promise<AvailabilitySlot[]> {
   const response = await schedulerApi.get<AvailabilitySlot[]>(
-    `${BASE_PATH}/availability`,
+    `${SCHEDULING_PATH}/availability`,
     {
       params: {
         user_ids: userIds.join(','),
@@ -442,7 +443,7 @@ export interface UserPreferences {
  */
 export async function getPreferences(): Promise<UserPreferences> {
   const response = await schedulerApi.get<UserPreferences>(
-    `${BASE_PATH}/preferences`
+    `${SCHEDULING_PATH}/preferences`
   );
   return response.data;
 }
@@ -453,8 +454,8 @@ export async function getPreferences(): Promise<UserPreferences> {
 export async function updatePreferences(
   updates: Partial<UserPreferences>
 ): Promise<UserPreferences> {
-  const response = await schedulerApi.patch<UserPreferences>(
-    `${BASE_PATH}/preferences`,
+  const response = await schedulerApi.put<UserPreferences>(
+    `${SCHEDULING_PATH}/preferences`,
     updates
   );
   return response.data;
@@ -492,7 +493,7 @@ export async function getScheduleSuggestions(
   taskIds?: string[]
 ): Promise<ScheduleSuggestion[]> {
   const response = await schedulerApi.post<ScheduleSuggestion[]>(
-    `${BASE_PATH}/ai/suggest-schedule`,
+    `${SCHEDULING_PATH}/ai/suggest-schedule`,
     { date, task_ids: taskIds }
   );
   return response.data;
@@ -505,7 +506,7 @@ export async function parseNaturalLanguage(
   text: string
 ): Promise<ParsedNaturalLanguage> {
   const response = await schedulerApi.post<ParsedNaturalLanguage>(
-    `${BASE_PATH}/ai/parse-natural`,
+    `${SCHEDULING_PATH}/ai/parse-natural`,
     { text }
   );
   return response.data;
@@ -520,7 +521,7 @@ export async function getUserPatterns(): Promise<{
   averageTaskDuration: number;
   completionRate: number;
 }> {
-  const response = await schedulerApi.get(`${BASE_PATH}/ai/patterns`);
+  const response = await schedulerApi.get(`${SCHEDULING_PATH}/ai/patterns`);
   return response.data;
 }
 

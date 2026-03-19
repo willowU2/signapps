@@ -8,7 +8,7 @@
 // Core Types
 // ============================================================================
 
-export type ViewType = 'agenda' | 'day' | '3-day' | 'week' | 'month';
+export type ViewType = 'agenda' | 'day' | '3-day' | 'week' | 'month' | 'timeline' | 'kanban' | 'heatmap' | 'focus' | 'roster';
 export type TabType = 'my-day' | 'tasks' | 'resources' | 'team';
 export type BlockType = 'event' | 'task' | 'booking';
 

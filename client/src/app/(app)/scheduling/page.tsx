@@ -15,6 +15,10 @@ import { WeekView } from '@/components/scheduling/views/WeekView';
 import { MonthView } from '@/components/scheduling/views/MonthView';
 import { AgendaView } from '@/components/scheduling/views/AgendaView';
 import { TasksView } from '@/components/scheduling/views/TasksView';
+import { TimelineView } from '@/components/scheduling/views/TimelineView';
+import { KanbanView } from '@/components/scheduling/views/KanbanView';
+import { HeatmapView } from '@/components/scheduling/views/HeatmapView';
+import { RosterView } from '@/components/scheduling/views/RosterView';
 import { ResourcesView } from '@/components/scheduling/resources/ResourcesView';
 import { TeamView } from '@/components/scheduling/team/TeamView';
 import { CommandPalette } from '@/components/scheduling/command-palette/CommandPalette';
@@ -130,6 +134,14 @@ export default function SchedulingPage() {
             onCreateEvent={handleDayClick}
           />
         );
+      case 'timeline':
+        return <TimelineView onItemClick={handleEventClick} />;
+      case 'kanban':
+        return <KanbanView onItemClick={handleEventClick} />;
+      case 'heatmap':
+        return <HeatmapView />;
+      case 'roster':
+        return <RosterView />;
       default:
         return <WeekView onEventClick={handleEventClick} onCreateEvent={handleCreateEvent} />;
     }
