@@ -38,11 +38,15 @@ export function ToolbarButton({
                 "p-1.5 min-w-[32px] rounded flex items-center justify-center transition-all",
                 disabled ? "opacity-50 cursor-not-allowed" : "",
                 isActive 
-                    ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8] dark:text-[#8ab4f8]" 
+                    ? "bg-primary/20 text-primary dark:bg-primary/30 dark:text-primary-foreground" 
                     : "text-[#444746] dark:text-[#e3e3e3] hover:bg-[#f1f3f4] dark:hover:bg-[#303134]",
                 className
             )}
             {...props}
+            onMouseDown={(e) => {
+                e.preventDefault();
+                props.onMouseDown?.(e);
+            }}
         >
             {children}
         </button>

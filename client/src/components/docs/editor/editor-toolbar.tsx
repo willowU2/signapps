@@ -1,5 +1,18 @@
 import { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
+import React from 'react';
+
+const ToolbarBtn = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof Button>>((props, ref) => (
+    <Button
+        {...props}
+        ref={ref}
+        onMouseDown={(e) => {
+            e.preventDefault();
+            props.onMouseDown?.(e);
+        }}
+    />
+));
+ToolbarBtn.displayName = 'ToolbarBtn';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
@@ -139,6 +152,22 @@ export function EditorToolbar({
 }: EditorToolbarProps) {
     const [isAiOpen, setIsAiOpen] = useState(false);
 
+    const [, forceUpdate] = useState({});
+
+    const handleFormat = useCallback((command: () => void) => {
+        if (!editor) return;
+        if (!editor.isFocused) {
+            editor.commands.focus();
+            setTimeout(() => {
+                command();
+                forceUpdate({});
+            }, 50);
+        } else {
+            command();
+            forceUpdate({});
+        }
+    }, [editor]);
+
     // Get current font family from editor
     const currentFontFamily = useMemo(() => {
         if (!editor) return 'Arial';
@@ -158,13 +187,17 @@ export function EditorToolbar({
     // Handle font family change
     const handleFontFamilyChange = useCallback((fontFamily: string) => {
         if (!editor) return;
-        editor.chain().focus().setFontFamily(fontFamily).run();
+        setTimeout(() => {
+            editor.chain().focus().setFontFamily(fontFamily).run();
+        }, 50);
     }, [editor]);
 
     // Handle font size change
     const handleFontSizeChange = useCallback((size: string) => {
         if (!editor) return;
-        editor.chain().focus().setFontSize(`${size}pt`).run();
+        setTimeout(() => {
+            editor.chain().focus().setFontSize(`${size}pt`).run();
+        }, 50);
     }, [editor]);
 
     // Increment/decrement font size
@@ -210,13 +243,13 @@ export function EditorToolbar({
 
     return (
         <div className="flex flex-wrap items-center gap-0.5 px-4 py-1.5 w-full bg-[#edf2fa] dark:bg-[#3c4043] shrink-0 border-b border-transparent dark:border-[#5f6368]">
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground mr-1">
+            <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground mr-1">
                 <Search className="h-4 w-4 text-[#444746]" />
-            </Button>
+            </ToolbarBtn>
             
             {/* History & Print */}
             <div className="flex items-center">
-                <Button
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-[#444746] dark:text-muted-foreground"
@@ -225,8 +258,8 @@ export function EditorToolbar({
                     title="Annuler (Ctrl+Z)"
                 >
                     <Undo className="h-4 w-4" />
-                </Button>
-                <Button
+                </ToolbarBtn>
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-[#444746] dark:text-muted-foreground"
@@ -235,8 +268,8 @@ export function EditorToolbar({
                     title="Rétablir (Ctrl+Y)"
                 >
                     <Redo className="h-4 w-4" />
-                </Button>
-                <Button
+                </ToolbarBtn>
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-[#444746] dark:text-muted-foreground"
@@ -244,15 +277,15 @@ export function EditorToolbar({
                     title="Imprimer (Ctrl+P)"
                 >
                     <Printer className="h-4 w-4" />
-                </Button>
+                </ToolbarBtn>
                 <ExportMenu editor={editor} documentTitle={documentTitle} comments={exportComments} />
                 <ImportMenu editor={editor} />
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-[#444746] dark:text-muted-foreground ml-0.5">
+                <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 text-[#444746] dark:text-muted-foreground ml-0.5">
                     <SpellCheck2 className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-[#444746] dark:text-muted-foreground">
+                </ToolbarBtn>
+                <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 text-[#444746] dark:text-muted-foreground">
                     <PaintRoller className="h-4 w-4" />
-                </Button>
+                </ToolbarBtn>
             </div>
 
             <Separator orientation="vertical" className="h-5 mx-1" />
@@ -282,10 +315,12 @@ export function EditorToolbar({
                         editor.isActive('heading', { level: 3 }) ? 'h3' : 'p'
                     }
                     onValueChange={(value) => {
-                        if (value === 'p') editor.chain().focus().setParagraph().run();
-                        else if (value === 'h1') editor.chain().focus().toggleHeading({ level: 1 }).run();
-                        else if (value === 'h2') editor.chain().focus().toggleHeading({ level: 2 }).run();
-                        else if (value === 'h3') editor.chain().focus().toggleHeading({ level: 3 }).run();
+                        setTimeout(() => {
+                            if (value === 'p') editor.chain().setParagraph().run();
+                            else if (value === 'h1') editor.chain().focus().toggleHeading({ level: 1 }).run();
+                            else if (value === 'h2') editor.chain().focus().toggleHeading({ level: 2 }).run();
+                            else if (value === 'h3') editor.chain().focus().toggleHeading({ level: 3 }).run();
+                        }, 50);
                     }}
                 >
                     <SelectTrigger className="h-7 w-[110px] border-transparent bg-transparent hover:bg-muted focus:ring-0 text-sm font-medium text-[#444746] dark:text-[#e8eaed]">
@@ -317,7 +352,7 @@ export function EditorToolbar({
                 <Separator orientation="vertical" className="h-5 mx-0.5" />
 
                 <div className="flex items-center -space-x-1">
-                    <Button
+                    <ToolbarBtn
                         variant="ghost"
                         size="icon"
                         className="h-7 w-6 rounded-r-none text-[#444746] hover:bg-muted"
@@ -325,7 +360,7 @@ export function EditorToolbar({
                         title="Diminuer la taille"
                     >
                         <Minus className="h-3 w-3" />
-                    </Button>
+                    </ToolbarBtn>
                     <Select value={currentFontSize} onValueChange={handleFontSizeChange}>
                         <SelectTrigger className="h-7 w-[50px] border-transparent bg-transparent hover:bg-muted focus:ring-0 text-xs font-medium text-[#444746] dark:text-[#e8eaed] rounded-none px-1">
                             <SelectValue placeholder="11" />
@@ -338,7 +373,7 @@ export function EditorToolbar({
                             ))}
                         </SelectContent>
                     </Select>
-                    <Button
+                    <ToolbarBtn
                         variant="ghost"
                         size="icon"
                         className="h-7 w-6 rounded-l-none text-[#444746] hover:bg-muted"
@@ -346,7 +381,7 @@ export function EditorToolbar({
                         title="Augmenter la taille"
                     >
                         <Plus className="h-3 w-3" />
-                    </Button>
+                    </ToolbarBtn>
                 </div>
             </div>
 
@@ -354,61 +389,70 @@ export function EditorToolbar({
 
             {/* Marks */}
             <div className="flex items-center gap-0.5">
-                <Button
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive('bold') ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => editor.chain().focus().toggleBold().run()}
+                    onClick={() => handleFormat(() => editor.chain().toggleBold().run())}
                     title="Gras (Ctrl+B)"
                 >
                     <Bold className="h-4 w-4" />
-                </Button>
-                <Button
+                </ToolbarBtn>
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive('italic') ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => editor.chain().focus().toggleItalic().run()}
+                    onClick={() => handleFormat(() => editor.chain().toggleItalic().run())}
                     title="Italique (Ctrl+I)"
                 >
                     <Italic className="h-4 w-4" />
-                </Button>
-                <Button
+                </ToolbarBtn>
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive('underline') ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => editor.chain().focus().toggleUnderline().run()}
+                    onClick={() => handleFormat(() => editor.chain().toggleUnderline().run())}
                     title="Souligné (Ctrl+U)"
                 >
                     <UnderlineIcon className="h-4 w-4" />
-                </Button>
+                </ToolbarBtn>
                 {/* Text Color Picker */}
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]" title="Couleur du texte">
+                        <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]" title="Couleur du texte">
                             <div className="flex flex-col items-center">
                                 <Baseline className="h-4 w-4" />
                                 <div className="w-4 h-1 mt-0.5 rounded-sm" style={{ backgroundColor: currentTextColor }} />
                             </div>
-                        </Button>
+                        </ToolbarBtn>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-2" align="start">
                         <div className="grid grid-cols-4 gap-1">
                             {TEXT_COLORS.map((color) => (
                                 <button
                                     key={color.value}
-                                    className="w-6 h-6 rounded-sm border border-gray-200 hover:scale-110 transition-transform"
+                                    className={`w-6 h-6 rounded-sm border hover:scale-110 transition-transform ${currentTextColor === color.value ? 'ring-2 ring-primary' : 'border-gray-200'}`}
                                     style={{ backgroundColor: color.value }}
                                     onClick={() => handleTextColorChange(color.value)}
                                     title={color.label}
                                 />
                             ))}
                         </div>
+                        <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                            <span className="text-xs font-medium text-gray-500">Couleur</span>
+                            <input 
+                                type="color" 
+                                className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent"
+                                value={currentTextColor || '#000000'}
+                                onChange={(e) => handleTextColorChange(e.target.value)}
+                            />
+                        </div>
                     </PopoverContent>
                 </Popover>
                 {/* Highlight Color Picker */}
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button
+                        <ToolbarBtn
                             variant="ghost"
                             size="icon"
                             className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${currentHighlightColor ? 'bg-primary/20' : ''}`}
@@ -416,11 +460,9 @@ export function EditorToolbar({
                         >
                             <div className="flex flex-col items-center">
                                 <Highlighter className="h-4 w-4" />
-                                {currentHighlightColor && (
-                                    <div className="w-4 h-1 mt-0.5 rounded-sm" style={{ backgroundColor: currentHighlightColor }} />
-                                )}
+                                <div className="w-4 h-1 mt-0.5 rounded-sm" style={{ backgroundColor: currentHighlightColor || 'transparent' }} />
                             </div>
-                        </Button>
+                        </ToolbarBtn>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-2" align="start">
                         <div className="grid grid-cols-3 gap-1">
@@ -441,6 +483,15 @@ export function EditorToolbar({
                                 ✕
                             </button>
                         </div>
+                        <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                            <span className="text-xs font-medium text-gray-500">Surlignage</span>
+                            <input 
+                                type="color" 
+                                className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent"
+                                value={currentHighlightColor || '#ffffff'}
+                                onChange={(e) => handleHighlightChange(e.target.value)}
+                            />
+                        </div>
                     </PopoverContent>
                 </Popover>
             </div>
@@ -448,9 +499,9 @@ export function EditorToolbar({
             <Separator orientation="vertical" className="h-5 mx-1" />
             
             <div className="flex items-center gap-0.5">
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
+                <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
                     <LinkIcon className="h-4 w-4" />
-                </Button>
+                </ToolbarBtn>
                 {onAddComment ? (
                     <AddCommentButton
                         editor={editor}
@@ -458,7 +509,7 @@ export function EditorToolbar({
                     />
                 ) : null}
                 {onToggleSidebar && (
-                    <Button
+                    <ToolbarBtn
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] relative"
@@ -471,11 +522,11 @@ export function EditorToolbar({
                                 {commentCount > 9 ? '9+' : commentCount}
                             </span>
                         )}
-                    </Button>
+                    </ToolbarBtn>
                 )}
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
+                <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
                     <ImageIcon className="h-4 w-4" />
-                </Button>
+                </ToolbarBtn>
             </div>
 
             {/* Track Changes */}
@@ -501,90 +552,90 @@ export function EditorToolbar({
 
             {/* Alignment */}
             <div className="flex items-center gap-0.5">
-                <Button
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive({ textAlign: 'left' }) ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                    onClick={() => handleFormat(() => editor.chain().setTextAlign('left').run())}
                     title="Aligner à gauche"
                 >
                     <AlignLeft className="h-4 w-4" />
-                </Button>
-                <Button
+                </ToolbarBtn>
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive({ textAlign: 'center' }) ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                    onClick={() => handleFormat(() => editor.chain().setTextAlign('center').run())}
                     title="Centrer"
                 >
                     <AlignCenter className="h-4 w-4" />
-                </Button>
-                <Button
+                </ToolbarBtn>
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive({ textAlign: 'right' }) ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                    onClick={() => handleFormat(() => editor.chain().setTextAlign('right').run())}
                     title="Aligner à droite"
                 >
                     <AlignRight className="h-4 w-4" />
-                </Button>
-                 <Button
+                </ToolbarBtn>
+                 <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive({ textAlign: 'justify' }) ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+                    onClick={() => handleFormat(() => editor.chain().setTextAlign('justify').run())}
                     title="Justifier"
                 >
                     <AlignJustify className="h-4 w-4" />
-                </Button>
+                </ToolbarBtn>
             </div>
 
             <Separator orientation="vertical" className="h-5 mx-1" />
             
-            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
+            <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
                 <MoveVertical className="h-4 w-4" />
-            </Button>
+            </ToolbarBtn>
             
             <Separator orientation="vertical" className="h-5 mx-1" />
 
             {/* Lists & Indents */}
             <div className="flex items-center gap-0.5">
-                <Button
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive('taskList') ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => editor.chain().focus().toggleTaskList().run()}
+                    onClick={() => handleFormat(() => editor.chain().toggleTaskList().run())}
                     title="Liste de tâches"
                 >
                     <ListTodo className="h-4 w-4" />
-                </Button>
-                <Button
+                </ToolbarBtn>
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive('bulletList') ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => editor.chain().focus().toggleBulletList().run()}
+                    onClick={() => handleFormat(() => editor.chain().toggleBulletList().run())}
                     title="Liste à puces"
                 >
                     <List className="h-4 w-4" />
-                </Button>
-                <Button
+                </ToolbarBtn>
+                <ToolbarBtn
                     variant="ghost"
                     size="icon"
                     className={`h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed] ${editor.isActive('orderedList') ? 'bg-primary/20 text-primary' : ''}`}
-                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                    onClick={() => handleFormat(() => editor.chain().toggleOrderedList().run())}
                     title="Liste numérotée"
                 >
                     <ListOrdered className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
+                </ToolbarBtn>
+                <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
                     <IndentDecrease className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
+                </ToolbarBtn>
+                <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
                     <IndentIncrease className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
+                </ToolbarBtn>
+                <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 rounded-sm text-[#444746] dark:text-[#e8eaed]">
                     <RemoveFormatting className="h-4 w-4" />
-                </Button>
+                </ToolbarBtn>
             </div>
 
             <Separator orientation="vertical" className="h-5 flex-1 opacity-0" />
@@ -593,14 +644,14 @@ export function EditorToolbar({
             {onAiGenerate && setAiQuery && (
                 <Popover open={isAiOpen} onOpenChange={setIsAiOpen}>
                     <PopoverTrigger asChild>
-                        <Button
+                        <ToolbarBtn
                             variant="outline"
                             size="sm"
                             className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full border-transparent font-medium dark:bg-[#004a77] dark:hover:bg-[#005a92] dark:text-[#c2e7ff] shadow-sm transition-all group h-8 ml-auto px-4"
                         >
                             <Sparkles className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform text-[#0b57d0] dark:text-[#a8c7fa]" />
                             M'aider à écrire
-                        </Button>
+                        </ToolbarBtn>
                     </PopoverTrigger>
                     <PopoverContent className="w-[300px] p-3 glass" align="end">
                         {isStreaming ? (
@@ -609,9 +660,9 @@ export function EditorToolbar({
                                     <Sparkles className="h-4 w-4 animate-pulse" />
                                     Rédaction en cours...
                                 </p>
-                                <Button size="sm" variant="destructive" className="w-full" onClick={stopAi}>
+                                <ToolbarBtn size="sm" variant="destructive" className="w-full" onClick={stopAi}>
                                     Arrêter la génération
-                                </Button>
+                                </ToolbarBtn>
                             </div>
                         ) : (
                             <form onSubmit={(e) => { onAiGenerate(e); setIsAiOpen(false); }} className="grid gap-3">
@@ -630,14 +681,14 @@ export function EditorToolbar({
                                     onChange={(e) => setAiQuery(e.target.value)}
                                     className="h-9 focus-visible:ring-blue-500"
                                 />
-                                <Button
+                                <ToolbarBtn
                                     type="submit"
                                     size="sm"
                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                                     disabled={!aiQuery?.trim()}
                                 >
                                     Générer
-                                </Button>
+                                </ToolbarBtn>
                             </form>
                         )}
                     </PopoverContent>

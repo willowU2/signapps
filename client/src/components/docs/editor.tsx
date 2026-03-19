@@ -50,6 +50,7 @@ import { fetchAndParseDocument } from '@/lib/file-parsers';
 import { GenericFeatureModal } from '@/components/editor/generic-feature-modal';
 import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu';
 import { Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup } from '@/components/editor/toolbar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     Sparkles,
     Wand2,
@@ -118,9 +119,9 @@ const lowlight = createLowlight(common);
 type VoiceAction = 'undo' | 'redo' | 'selectAll' | 'clearAll' | 'delete' | 'fix' | 'improve' | 'summarize';
 
 const parseVoiceCommand = (
-    text: string, 
-    editor: any, 
-    pendingMarksRef: React.MutableRefObject<string[]>, 
+    text: string,
+    editor: any,
+    pendingMarksRef: React.MutableRefObject<string[]>,
     pendingBlocksRef: React.MutableRefObject<string[]>,
     onVoiceAction?: (action: VoiceAction) => void
 ) => {
@@ -135,7 +136,7 @@ const parseVoiceCommand = (
         .find('à la ligne').or('a la ligne').or('nouvelle ligne').or('saut de ligne')
         .or('point à la ligne').or('point a la ligne').or('retour à la ligne').or('retour a la ligne').or('retour chariot')
         .add('\\b').addModifier('i');
-    
+
     rawText = rawText.replace(newlineRegex, ' __NEWLINE__ ');
 
     const paragraphRegex = VerEx().add('\\b').find('nouveau paragraphe').or('paragraphe suivant').add('\\b').addModifier('i');
@@ -167,7 +168,7 @@ const parseVoiceCommand = (
         if (extractKeyword('tout sélectionner|sélectionner tout|sélectionne tout', 'action', 'selectAll')) found = true;
         if (extractKeyword('tout effacer|effacer tout le document|effacer tout|vider le document', 'action', 'clearAll')) found = true;
         if (extractKeyword('supprimer la ligne|effacer la ligne|supprimer le texte|effacer le texte|supprimer ça|supprimer|effacer la sélection|efface ça', 'action', 'delete')) found = true;
-        
+
         if (extractKeyword("corriger l'orthographe|corriger la sélection|corriger la phrase|corrige moi ça|corrige les fautes|corriger les fautes", 'action', 'fix')) found = true;
         if (extractKeyword('améliorer|réécrire|reformuler|améliore ce texte', 'action', 'improve')) found = true;
         if (extractKeyword('résumer le texte|résumer le document|fais un résumé', 'action', 'summarize')) found = true;
@@ -177,7 +178,7 @@ const parseVoiceCommand = (
         if (extractKeyword('en italique|met ça en italique|mettre en italique|mets en italique|italique', 'mark', 'italic')) found = true;
         if (extractKeyword('souligné|en souligné|met ça en souligné|mets en souligné|souligner', 'mark', 'underline')) found = true;
         if (extractKeyword('barré|en barré|texte barré', 'mark', 'strike')) found = true;
-        
+
         // Transformations de casse
         if (extractKeyword('en majuscule|tout en majuscule|majuscules', 'mark', 'uppercase')) found = true;
         if (extractKeyword('en minuscule|tout en minuscule|minuscules', 'mark', 'lowercase')) found = true;
@@ -195,13 +196,13 @@ const parseVoiceCommand = (
         if (extractKeyword('en gris|texte gris|écrit en gris|couleur grise?', 'mark', 'color:gray')) found = true;
         if (extractKeyword('en noir|texte noir|écrit en noir|couleur noire?', 'mark', 'color:black')) found = true;
         if (extractKeyword('en orange|texte orange|écrit en orange|couleur orange', 'mark', 'color:orange')) found = true;
-        
+
         // Surlignages
         if (extractKeyword('surligné en jaune|surligné jaune|surligneur jaune|en surbrillance', 'mark', 'highlight:yellow')) found = true;
         if (extractKeyword('surligné en rouge|surligné rouge|surligneur rouge', 'mark', 'highlight:red')) found = true;
         if (extractKeyword('surligné en vert|surligné vert|surligneur vert', 'mark', 'highlight:green')) found = true;
         if (extractKeyword('surligné en bleu|surligné bleu|surligneur bleu', 'mark', 'highlight:blue')) found = true;
-        
+
         if (extractKeyword('en code|format code|bloc de code|monocospace', 'mark', 'code')) found = true;
 
         // Alignement et Blocs
@@ -209,11 +210,11 @@ const parseVoiceCommand = (
         if (extractKeyword('à droite|aligné à droite|sur la droite|aligner à droite', 'block', 'right')) found = true;
         if (extractKeyword('à gauche|aligné à gauche|sur la gauche|aligner à gauche', 'block', 'left')) found = true;
         if (extractKeyword('justifié|alignement justifié|justifier le texte', 'block', 'justify')) found = true;
-        
+
         if (extractKeyword('en titre 1|en grand titre|titre un|titre 1|grand titre|titre principal', 'block', 'h1')) found = true;
         if (extractKeyword('en titre 2|titre deux|titre 2|moyen titre|sous-titre un|sous titre 1', 'block', 'h2')) found = true;
         if (extractKeyword('en petit titre|en titre 3|titre trois|titre 3|petit titre|sous-titre deux|sous titre 2', 'block', 'h3')) found = true;
-        
+
         if (extractKeyword('en liste|liste à puces|nouvelle puce|puce|liste non numérotée', 'block', 'bullet')) found = true;
         if (extractKeyword('liste numérotée|numéroté|en liste numérotée|numérotée', 'block', 'ordered')) found = true;
         if (extractKeyword('en citation|bloc de citation|citation', 'block', 'blockquote')) found = true;
@@ -267,7 +268,7 @@ const parseVoiceCommand = (
             // Nettoyage des espaces pour la typographie française :
             // 1. Coller le point et la virgule au mot précédent
             content = content.replace(/\s+([.,])/g, '$1');
-            
+
             // 2. Assurer un espace insécable (ou normal) avant la ponctuation double (: ; ? !)
             // En HTML strict, on utiliserait &nbsp;, mais l'espace standard au clavier passe bien pour un éditeur web.
             content = content.replace(/\s+([?!;:])/g, ' $1'); // Évite les doubles espaces "  ?"
@@ -280,7 +281,7 @@ const parseVoiceCommand = (
 
             let htmlContent = content;
             textWasInserted = true;
-            
+
             const marksToApply = pendingMarksRef.current;
             const blocksToApply = pendingBlocksRef.current;
 
@@ -297,7 +298,7 @@ const parseVoiceCommand = (
             if (marksToApply.includes('code')) htmlContent = `<code>${htmlContent}</code>`;
             if (marksToApply.includes('subscript')) htmlContent = `<sub>${htmlContent}</sub>`;
             if (marksToApply.includes('superscript')) htmlContent = `<sup>${htmlContent}</sup>`;
-            
+
             if (marksToApply.includes('color:red')) htmlContent = `<span style="color: red">${htmlContent}</span>`;
             if (marksToApply.includes('color:blue')) htmlContent = `<span style="color: blue">${htmlContent}</span>`;
             if (marksToApply.includes('color:green')) htmlContent = `<span style="color: green">${htmlContent}</span>`;
@@ -305,7 +306,7 @@ const parseVoiceCommand = (
             if (marksToApply.includes('color:gray')) htmlContent = `<span style="color: gray">${htmlContent}</span>`;
             if (marksToApply.includes('color:black')) htmlContent = `<span style="color: black">${htmlContent}</span>`;
             if (marksToApply.includes('color:orange')) htmlContent = `<span style="color: orange">${htmlContent}</span>`;
-            
+
             if (marksToApply.includes('highlight:yellow')) htmlContent = `<mark data-color="#FAF594">${htmlContent}</mark>`;
             if (marksToApply.includes('highlight:red')) htmlContent = `<mark data-color="#F98181">${htmlContent}</mark>`;
             if (marksToApply.includes('highlight:green')) htmlContent = `<mark data-color="#B9F18D">${htmlContent}</mark>`;
@@ -343,7 +344,7 @@ const parseVoiceCommand = (
         else if (action === 'delete') editor.chain().focus().deleteSelection().run();
         else if (onVoiceAction) onVoiceAction(action); // Les actions IA sont déléguées au composant React
     });
-    
+
     // On ne réinitialise le formatage que si on a écrit du texte !
     // Si la personne a juste dit "à la ligne", ou a juste balancé des commandes, on
     // garde le style en mémoire pour sa prochaine respiration.
@@ -526,6 +527,7 @@ const Editor = ({
     // Document Styles state
     const [docLineHeight, setDocLineHeight] = useState('1.5');
     const [docFontSize, setDocFontSize] = useState<number>(11);
+    const [currentFont, setCurrentFont] = useState('Inter');
     const [docBgColor, setDocBgColor] = useState<string>('');
 
     // Table of Contents state
@@ -553,6 +555,20 @@ const Editor = ({
     const editor = useEditor({
         immediatelyRender: false, // Required for SSR compatibility with Next.js
         editable: !isReadOnly,
+        onTransaction: ({ editor }) => {
+            let font = editor.getAttributes('textStyle').fontFamily?.replace(/['"]/g, '');
+            if (!font && editor.state.selection.empty) {
+                const fonts = ['Inter', 'Arial', 'Times New Roman', 'Georgia', 'Verdana', 'Courier New'];
+                font = fonts.find(f => editor.isActive('textStyle', { fontFamily: f }));
+            }
+            setCurrentFont(font || 'Inter');
+
+            const sizeAttr = editor.getAttributes('textStyle').fontSize;
+            if (sizeAttr) {
+                const num = parseInt(sizeAttr.replace(/['"pt]/g, ''), 10);
+                if (!isNaN(num)) setDocFontSize(num);
+            }
+        },
         extensions: [
             StarterKit.configure({
                 undoRedo: false, // Turn off Prosemirror history as Yjs handles it (renamed from 'history' in v3)
@@ -847,7 +863,7 @@ const Editor = ({
                 id: string,
                 text: string,
                 level: number
-            } [] = [];
+            }[] = [];
             editor.state.doc.descendants((node, pos) => {
                 if (node.type.name === 'heading') {
                     const id = `heading-${pos}`;
@@ -862,6 +878,22 @@ const Editor = ({
         }
     }, [ydoc, provider, isReadOnly, userName, initialContent]);
 
+    const [, forceUpdate] = useState({});
+
+    const handleFormat = useCallback((command: () => void) => {
+        if (!editor) return;
+        if (!editor.isFocused) {
+            editor.commands.focus();
+            setTimeout(() => {
+                command();
+                forceUpdate({});
+            }, 50);
+        } else {
+            command();
+            forceUpdate({});
+        }
+    }, [editor]);
+
     // Initial TOC processing
     useEffect(() => {
         if (!editor) return;
@@ -869,7 +901,7 @@ const Editor = ({
             id: string,
             text: string,
             level: number
-        } [] = [];
+        }[] = [];
         editor.state.doc.descendants((node, pos) => {
             if (node.type.name === 'heading') {
                 const id = `heading-${pos}`;
@@ -896,7 +928,7 @@ const Editor = ({
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
             if (e.ctrlKey || e.metaKey) {
                 const key = e.key.toLowerCase();
-                
+
                 // Existing shortcuts
                 if (key === 's' && !e.shiftKey) {
                     e.preventDefault();
@@ -911,7 +943,7 @@ const Editor = ({
                     e.preventDefault();
                     toast.info("Fermez l'onglet du navigateur pour quitter la session.");
                 }
-                
+
                 // Docs formatting shortcuts
                 if (editor) {
                     if (e.shiftKey) {
@@ -939,7 +971,7 @@ const Editor = ({
         };
         window.addEventListener('keydown', handleGlobalKeyDown);
         return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-    }, [editor]); 
+    }, [editor]);
 
     // Streaming AI action for BubbleMenu (improve/fix/shorten)
     const handleAiAction = useCallback(async (action: 'improve' | 'fix' | 'shorten') => {
@@ -964,21 +996,21 @@ const Editor = ({
 
         await stream(
             `${action === 'improve' ? 'Improve' : action === 'fix' ? 'Fix grammar and spelling in' : 'Shorten'} the following text:\n\n${text}`, {
-                onToken: (token) => {
-                    editor.chain().focus().insertContent(token).run();
-                },
-                onDone: () => {
-                    setAiAction(null);
-                    toast.success('Text updated');
-                },
-                onError: (err) => {
-                    setAiAction(null);
-                    toast.error(`AI error: ${err}`);
-                },
-            }, {
-                systemPrompt: systemPrompts[action],
-                language: 'en'
+            onToken: (token) => {
+                editor.chain().focus().insertContent(token).run();
             },
+            onDone: () => {
+                setAiAction(null);
+                toast.success('Text updated');
+            },
+            onError: (err) => {
+                setAiAction(null);
+                toast.error(`AI error: ${err}`);
+            },
+        }, {
+            systemPrompt: systemPrompts[action],
+            language: 'en'
+        },
         );
     }, [editor, isStreaming, stream]);
 
@@ -994,30 +1026,30 @@ const Editor = ({
 
         await stream(
             `Summarize the following document in 3-5 bullet points:\n\n${text}`, {
-                onToken: (token) => {
-                    summary += token;
-                    toast.loading(summary.slice(0, 200) + (summary.length > 200 ? '...' : ''), {
-                        id: toastId
-                    });
-                },
-                onDone: (full) => {
-                    setAiAction(null);
-                    toast.success('Summary', {
-                        id: toastId,
-                        description: full,
-                        duration: 15000
-                    });
-                },
-                onError: (err) => {
-                    setAiAction(null);
-                    toast.error(`Summarization failed: ${err}`, {
-                        id: toastId
-                    });
-                },
-            }, {
-                systemPrompt: 'You are a helpful assistant. Output a concise summary.',
-                language: 'en'
+            onToken: (token) => {
+                summary += token;
+                toast.loading(summary.slice(0, 200) + (summary.length > 200 ? '...' : ''), {
+                    id: toastId
+                });
             },
+            onDone: (full) => {
+                setAiAction(null);
+                toast.success('Summary', {
+                    id: toastId,
+                    description: full,
+                    duration: 15000
+                });
+            },
+            onError: (err) => {
+                setAiAction(null);
+                toast.error(`Summarization failed: ${err}`, {
+                    id: toastId
+                });
+            },
+        }, {
+            systemPrompt: 'You are a helpful assistant. Output a concise summary.',
+            language: 'en'
+        },
         );
     }, [editor, isStreaming, stream]);
 
@@ -1031,20 +1063,20 @@ const Editor = ({
 
         await stream(
             prompt, {
-                onToken: (token) => {
-                    editor.chain().focus().insertContent(token).run();
-                },
-                onDone: () => {
-                    setAiAction(null);
-                },
-                onError: (err) => {
-                    setAiAction(null);
-                    toast.error(`AI error: ${err}`);
-                },
-            }, {
-                systemPrompt: 'You are a professional writer. Write clear, well-structured content based on the user\'s instruction. Output ONLY the content, no explanations or meta-text.',
-                language: 'en',
+            onToken: (token) => {
+                editor.chain().focus().insertContent(token).run();
             },
+            onDone: () => {
+                setAiAction(null);
+            },
+            onError: (err) => {
+                setAiAction(null);
+                toast.error(`AI error: ${err}`);
+            },
+        }, {
+            systemPrompt: 'You are a professional writer. Write clear, well-structured content based on the user\'s instruction. Output ONLY the content, no explanations or meta-text.',
+            language: 'en',
+        },
         );
     }, [editor, isStreaming, promptValue, stream]);
 
@@ -1069,20 +1101,20 @@ const Editor = ({
 
         await stream(
             `Continue writing naturally from where this text leaves off:\n\n${context}`, {
-                onToken: (token) => {
-                    editor.chain().focus().insertContent(token).run();
-                },
-                onDone: () => {
-                    setAiAction(null);
-                },
-                onError: (err) => {
-                    setAiAction(null);
-                    toast.error(`AI error: ${err}`);
-                },
-            }, {
-                systemPrompt: 'You are a professional writer. Continue the text seamlessly, matching the tone, style, and topic. Output ONLY the continuation, no explanations.',
-                language: 'en',
+            onToken: (token) => {
+                editor.chain().focus().insertContent(token).run();
             },
+            onDone: () => {
+                setAiAction(null);
+            },
+            onError: (err) => {
+                setAiAction(null);
+                toast.error(`AI error: ${err}`);
+            },
+        }, {
+            systemPrompt: 'You are a professional writer. Continue the text seamlessly, matching the tone, style, and topic. Output ONLY the continuation, no explanations.',
+            language: 'en',
+        },
         );
     }, [editor, isStreaming, stream]);
 
@@ -1112,21 +1144,21 @@ const Editor = ({
 
         await stream(
             `Translate the following text to ${langLabel}:\n\n${text}`, {
-                onToken: (token) => {
-                    editor.chain().focus().insertContent(token).run();
-                },
-                onDone: () => {
-                    setAiAction(null);
-                    toast.success(`Translated to ${langLabel}`);
-                },
-                onError: (err) => {
-                    setAiAction(null);
-                    toast.error(`Translation failed: ${err}`);
-                },
-            }, {
-                systemPrompt: `You are a professional translator. Translate the text to ${langLabel}. Output ONLY the translation.`,
-                language: langCode,
+            onToken: (token) => {
+                editor.chain().focus().insertContent(token).run();
             },
+            onDone: () => {
+                setAiAction(null);
+                toast.success(`Translated to ${langLabel}`);
+            },
+            onError: (err) => {
+                setAiAction(null);
+                toast.error(`Translation failed: ${err}`);
+            },
+        }, {
+            systemPrompt: `You are a professional translator. Translate the text to ${langLabel}. Output ONLY the translation.`,
+            language: langCode,
+        },
         );
     }, [editor, isStreaming, stream]);
 
@@ -1243,7 +1275,7 @@ const Editor = ({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ html: htmlString })
             });
-            
+
             if (!res.ok) {
                 throw new Error("Erreur de conversion HTML vers DOCX sur le serveur");
             }
@@ -1556,7 +1588,7 @@ const Editor = ({
                 icon: <SuperscriptIcon className="w-4 h-4" />,
                 action: 'toggleSuperscript',
                 shortcut: 'Ctrl+.'
-            }, ]
+            },]
         }, {
             label: 'Styles de paragraphe',
             subItems: [{
@@ -1574,7 +1606,7 @@ const Editor = ({
                 label: 'Titre 3',
                 action: 'toggleH3',
                 shortcut: 'Ctrl+Alt+3'
-            }, ]
+            },]
         }, {
             sep: true
         }, {
@@ -1881,304 +1913,350 @@ const Editor = ({
 
             {/* Formatting Ribbon */}
             <Toolbar>
-                    {/* Undo/Redo */}
-                    <div className="flex items-center mx-1 relative">
-                        <VoiceInput
-                            onTranscription={(text, isFinal) => {
-                                if (!editor) return;
+                {/* Undo/Redo */}
+                <div className="flex items-center mx-1 relative">
+                    <VoiceInput
+                        onTranscription={(text, isFinal) => {
+                            if (!editor) return;
 
-                                if (isFinal) {
-                                    // Détection de macro vocale IA (Mot clé: SignApps / Synapse)
-                                    const prefixMatch = text.match(/^(?:signapps|sign app|sign apps|synapse|demande à signapps|dis à signapps|demande à synapse)[\s,:-]+(.+)/i);
-                                    const suffixMatch = text.match(/(.+) (?:par signapps|généré par signapps|par synapse|généré par synapse)$/i);
-                                    const aiPrompt = prefixMatch ? prefixMatch[1] : (suffixMatch ? suffixMatch[1] : null);
+                            if (isFinal) {
+                                // Détection de macro vocale IA (Mot clé: SignApps / Synapse)
+                                const prefixMatch = text.match(/^(?:signapps|sign app|sign apps|synapse|demande à signapps|dis à signapps|demande à synapse)[\s,:-]+(.+)/i);
+                                const suffixMatch = text.match(/(.+) (?:par signapps|généré par signapps|par synapse|généré par synapse)$/i);
+                                const aiPrompt = prefixMatch ? prefixMatch[1] : (suffixMatch ? suffixMatch[1] : null);
 
-                                    if (aiPrompt && !isStreaming) {
-                                        setInterimVoiceText('');
-                                        const toastId = toast.loading('IA crée du contenu...');
-                                        setAiAction('voice-macro');
-
-                                        stream(
-                                            aiPrompt,
-                                            {
-                                                onToken: (token) => {
-                                                    editor.chain().focus().insertContent(token).run();
-                                                },
-                                                onDone: () => {
-                                                    setAiAction(null);
-                                                    toast.success('Généré par l\'IA', { id: toastId });
-                                                },
-                                                onError: (err) => {
-                                                    setAiAction(null);
-                                                    toast.error(`Erreur IA : ${err}`, { id: toastId });
-                                                }
-                                            },
-                                            {
-                                               systemPrompt: 'You are an AI assistant integrated into a rich text editor. The user used a voice command to ask you to generate content. Output ONLY the requested content in HTML format compatible with TipTap (like tables, bold, lists, paragraphs). Do NOT wrap your answer in markdown code blocks like ```html. Output raw HTML directly.',
-                                               language: 'fr'
-                                            }
-                                         );
-                                        return;
-                                    }
-
-                                    parseVoiceCommand(text, editor, pendingVoiceMarksRef, pendingVoiceBlocksRef, (action) => {
-                                        if (action === 'fix') handleAiAction('fix');
-                                        if (action === 'improve') handleAiAction('improve');
-                                        if (action === 'summarize') handleSummarize();
-                                    });
+                                if (aiPrompt && !isStreaming) {
                                     setInterimVoiceText('');
-                                } else {
-                                    // Sauvegarde en état React au lieu d'insérer dans l'éditeur TipTap
-                                    // pour empêcher Yjs de supprimer la phrase finale après coup.
-                                    setInterimVoiceText(text);
+                                    const toastId = toast.loading('IA crée du contenu...');
+                                    setAiAction('voice-macro');
+
+                                    stream(
+                                        aiPrompt,
+                                        {
+                                            onToken: (token) => {
+                                                editor.chain().focus().insertContent(token).run();
+                                            },
+                                            onDone: () => {
+                                                setAiAction(null);
+                                                toast.success('Généré par l\'IA', { id: toastId });
+                                            },
+                                            onError: (err) => {
+                                                setAiAction(null);
+                                                toast.error(`Erreur IA : ${err}`, { id: toastId });
+                                            }
+                                        },
+                                        {
+                                            systemPrompt: 'You are an AI assistant integrated into a rich text editor. The user used a voice command to ask you to generate content. Output ONLY the requested content in HTML format compatible with TipTap (like tables, bold, lists, paragraphs). Do NOT wrap your answer in markdown code blocks like ```html. Output raw HTML directly.',
+                                            language: 'fr'
+                                        }
+                                    );
+                                    return;
                                 }
-                            }}
-                            className="bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 animate-none data-[state=active]:animate-pulse"
-                            title="Dictée Vocale"
-                        />
-                        {interimVoiceText && (
-                            <div className="absolute top-10 left-0 bg-background dark:bg-[#1e1f20] border border-gray-200 dark:border-gray-700 shadow-md rounded-md px-3 py-1.5 text-xs whitespace-nowrap z-50 animate-pulse text-gray-500 dark:text-gray-400 pointer-events-none">
-                                🎤 {interimVoiceText}...
-                            </div>
-                        )}
-                    </div>
 
-                    <ToolbarDivider />
-
-                    <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo (Ctrl+Z)">
-                        <Undo className="w-4 h-4" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo (Ctrl+Y)">
-                        <Redo className="w-4 h-4" />
-                    </ToolbarButton>
-
-                    <ToolbarDivider />
-
-                    {/* Text Styles */}
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive('heading', { level: 1 })} title="Heading 1">
-                        <Heading1 className="w-4 h-4" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive('heading', { level: 2 })} title="Heading 2">
-                        <Heading2 className="w-4 h-4" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().setParagraph().run()} isActive={editor.isActive('paragraph')} title="Paragraph">
-                        <span className="text-[13px] font-medium px-1">Normal text</span>
-                    </ToolbarButton>
-
-                    <ToolbarDivider />
-
-                    {/* Font Styles */}
-                    <div className="flex border border-[#c7c7c7] dark:border-[#5f6368] rounded overflow-hidden h-[28px] mx-1 items-center bg-background dark:bg-[#202124]">
-                        <span className="px-3 text-[13px] text-[#444746] dark:text-[#e3e3e3] border-r border-[#c7c7c7] dark:border-[#5f6368] flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-[#303134]">Inter</span>
-                        <div className="flex items-center">
-                            <span
-                                onClick={() => setDocFontSize(s => Math.max(1, s - 1))}
-                                className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-r border-[#c7c7c7] dark:border-[#5f6368]">-</span>
-                            <span className="px-3 text-[13px] text-[#444746] dark:text-[#e3e3e3]">{docFontSize}</span>
-                            <span
-                                onClick={() => setDocFontSize(s => s + 1)}
-                                className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-l border-[#c7c7c7] dark:border-[#5f6368]">+</span>
+                                parseVoiceCommand(text, editor, pendingVoiceMarksRef, pendingVoiceBlocksRef, (action) => {
+                                    if (action === 'fix') handleAiAction('fix');
+                                    if (action === 'improve') handleAiAction('improve');
+                                    if (action === 'summarize') handleSummarize();
+                                });
+                                setInterimVoiceText('');
+                            } else {
+                                // Sauvegarde en état React au lieu d'insérer dans l'éditeur TipTap
+                                // pour empêcher Yjs de supprimer la phrase finale après coup.
+                                setInterimVoiceText(text);
+                            }
+                        }}
+                        className="bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 animate-none data-[state=active]:animate-pulse"
+                        title="Dictée Vocale"
+                    />
+                    {interimVoiceText && (
+                        <div className="absolute top-10 left-0 bg-background dark:bg-[#1e1f20] border border-gray-200 dark:border-gray-700 shadow-md rounded-md px-3 py-1.5 text-xs whitespace-nowrap z-50 animate-pulse text-gray-500 dark:text-gray-400 pointer-events-none">
+                            🎤 {interimVoiceText}...
                         </div>
+                    )}
+                </div>
+
+                <ToolbarDivider />
+
+                <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo (Ctrl+Z)">
+                    <Undo className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo (Ctrl+Y)">
+                    <Redo className="w-4 h-4" />
+                </ToolbarButton>
+
+                <ToolbarDivider />
+
+                {/* Text Styles */}
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleHeading({ level: 1 }).run())} isActive={editor.isActive('heading', { level: 1 })} title="Heading 1">
+                    <Heading1 className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleHeading({ level: 2 }).run())} isActive={editor.isActive('heading', { level: 2 })} title="Heading 2">
+                    <Heading2 className="w-4 h-4" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().setParagraph().run())} isActive={editor.isActive('paragraph')} title="Paragraph">
+                    <span className="text-[13px] font-medium px-1">Normal text</span>
+                </ToolbarButton>
+
+                <ToolbarDivider />
+
+                {/* Font Styles */}
+                <div className="flex border border-[#c7c7c7] dark:border-[#5f6368] rounded overflow-hidden h-[28px] mx-1 items-center bg-background dark:bg-[#202124]">
+                    <Select value={currentFont} onValueChange={(font) => { setCurrentFont(font); setTimeout(() => { editor.chain().focus().setFontFamily(font).run(); }, 50); }}>
+                        <SelectTrigger className="h-[28px] w-[130px] rounded-none px-3 border-0 border-r border-[#c7c7c7] dark:border-[#5f6368] bg-transparent hover:bg-gray-50 dark:hover:bg-[#303134] focus:ring-0 text-[13px] text-[#444746] dark:text-[#e3e3e3] font-medium shadow-none">
+                            <SelectValue placeholder="Inter" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {[
+                                { value: 'Inter', label: 'Inter' },
+                                { value: 'Arial', label: 'Arial' },
+                                { value: 'Times New Roman', label: 'Times New Roman' },
+                                { value: 'Georgia', label: 'Georgia' },
+                                { value: 'Verdana', label: 'Verdana' },
+                                { value: 'Courier New', label: 'Courier New' }
+                            ].map((font) => (
+                                <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                                    {font.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <div className="flex items-center">
+                        <span
+                            onClick={() => { setDocFontSize(s => { const ns = Math.max(1, s - 1); setTimeout(() => editor.chain().focus().setFontSize(`${ns}pt`).run(), 50); return ns; }) }}
+                            className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-r border-[#c7c7c7] dark:border-[#5f6368]">-</span>
+                        <span className="px-3 text-[13px] text-[#444746] dark:text-[#e3e3e3]">{docFontSize}</span>
+                        <span
+                            onClick={() => { setDocFontSize(s => { const ns = s + 1; setTimeout(() => editor.chain().focus().setFontSize(`${ns}pt`).run(), 50); return ns; }) }}
+                            className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-gray-50 dark:hover:bg-[#303134] cursor-pointer border-l border-[#c7c7c7] dark:border-[#5f6368]">+</span>
                     </div>
+                </div>
 
-                    <ToolbarDivider />
+                <ToolbarDivider />
 
-                    {/* Basic Formatting */}
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold (Ctrl+B)">
-                        <Bold className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic (Ctrl+I)">
-                        <Italic className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline (Ctrl+U)">
-                        <UnderlineIcon className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Strikethrough (Alt+Shift+5)">
-                        <Strikethrough className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleSuperscript().run()} isActive={editor.isActive('superscript')} title="Superscript (Ctrl+.)">
-                        <SuperscriptIcon className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleSubscript().run()} isActive={editor.isActive('subscript')} title="Subscript (Ctrl+,)">
-                        <SubscriptIcon className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
+                {/* Basic Formatting */}
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleBold().run())} isActive={editor.isActive('bold')} title="Bold (Ctrl+B)">
+                    <Bold className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleItalic().run())} isActive={editor.isActive('italic')} title="Italic (Ctrl+I)">
+                    <Italic className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleUnderline().run())} isActive={editor.isActive('underline')} title="Underline (Ctrl+U)">
+                    <UnderlineIcon className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleStrike().run())} isActive={editor.isActive('strike')} title="Strikethrough (Alt+Shift+5)">
+                    <Strikethrough className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleSuperscript().run())} isActive={editor.isActive('superscript')} title="Superscript (Ctrl+.)">
+                    <SuperscriptIcon className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleSubscript().run())} isActive={editor.isActive('subscript')} title="Subscript (Ctrl+,)">
+                    <SubscriptIcon className="w-[18px] h-[18px]" />
+                </ToolbarButton>
 
-                    {/* Colors */}
-                    <div className="relative">
-                        <ToolbarButton onClick={() => setShowColorPicker(!showColorPicker)} title="Text color">
-                            <Palette className="w-[18px] h-[18px]" />
-                        </ToolbarButton>
-                        {showColorPicker && (
-                            <div className="absolute top-10 left-0 bg-background dark:bg-[#2d2e30] border border-gray-200 dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
-                                {['#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
-                                    '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
-                                ].map(color => (
-                                    <button
-                                        key={color}
-                                        className="w-5 h-5 rounded-full ring-1 ring-inset ring-black/10 hover:scale-110 transition-transform"
-                                        style={{ backgroundColor: color }}
-                                        onClick={() => { editor.chain().focus().setColor(color).run(); setShowColorPicker(false); }}
-                                    />
-                                ))}
+                {/* Colors */}
+                <div className="relative">
+                    <ToolbarButton onClick={() => setShowColorPicker(!showColorPicker)} title="Text color">
+                        <div className="flex flex-col items-center justify-center gap-[2px]">
+                            <Palette className="w-[16px] h-[16px]" />
+                            <div className="w-[14px] h-[3px] rounded-full" style={{ backgroundColor: editor.getAttributes('textStyle').color || '#000000' }} />
+                        </div>
+                    </ToolbarButton>
+                    {showColorPicker && (
+                        <div className="absolute top-10 left-0 bg-background dark:bg-[#2d2e30] border border-gray-200 dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
+                            {['#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
+                                '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
+                            ].map(color => (
                                 <button
-                                    className="w-full mt-1 text-xs text-center py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                                    onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorPicker(false); }}
-                                >
-                                    Reset
-                                </button>
+                                    key={color}
+                                    className="w-5 h-5 rounded-full ring-1 ring-inset ring-black/10 hover:scale-110 transition-transform"
+                                    style={{ backgroundColor: color }}
+                                    onClick={() => { handleFormat(() => editor.chain().setColor(color).run()); setShowColorPicker(false); }}
+                                />
+                            ))}
+                            <div className="w-full mt-1 flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-2 pb-1">
+                                <span className="text-xs text-gray-500 pl-1 font-medium">Couleur</span>
+                                <input 
+                                    type="color" 
+                                    className="w-5 h-5 p-0 border-0 rounded cursor-pointer shrink-0 bg-transparent"
+                                    value={editor.getAttributes('textStyle').color || '#000000'}
+                                    onChange={(e) => {
+                                        handleFormat(() => editor.chain().setColor(e.target.value).run());
+                                    }}
+                                />
                             </div>
-                        )}
-                    </div>
-                    <div className="relative">
-                        <ToolbarButton onClick={() => setShowHighlightPicker(!showHighlightPicker)} title="Highlight color">
-                            <Highlighter className="w-[18px] h-[18px]" />
-                        </ToolbarButton>
-                        {showHighlightPicker && (
-                            <div className="absolute top-10 left-0 bg-background dark:bg-[#2d2e30] border border-gray-200 dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
-                                {['#fce8e6', '#fce8b2', '#fff2cc', '#e6f4ea', '#e8f0fe', '#f3e8fd', '#ffffff',
-                                ].map(color => (
-                                    <button
-                                        key={color}
-                                        className="w-5 h-5 rounded-full ring-1 ring-inset ring-black/10 hover:scale-110 transition-transform"
-                                        style={{ backgroundColor: color }}
-                                        onClick={() => { editor.chain().focus().setHighlight({ color }).run(); setShowHighlightPicker(false); }}
-                                    />
-                                ))}
-                                <button
-                                    className="w-full mt-1 text-xs text-center py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                                    onClick={() => { editor.chain().focus().unsetHighlight().run(); setShowHighlightPicker(false); }}
-                                >
-                                    None
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    <ToolbarDivider />
-
-                    {/* Alignment */}
-                    <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('left').run()} isActive={editor.isActive({ textAlign: 'left' })} title="Align left (Ctrl+Shift+L)">
-                        <AlignLeft className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('center').run()} isActive={editor.isActive({ textAlign: 'center' })} title="Center align (Ctrl+Shift+E)">
-                        <AlignCenter className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('right').run()} isActive={editor.isActive({ textAlign: 'right' })} title="Align right (Ctrl+Shift+R)">
-                        <AlignRight className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().setTextAlign('justify').run()} isActive={editor.isActive({ textAlign: 'justify' })} title="Justify (Ctrl+Shift+J)">
-                        <AlignJustify className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-
-                    <ToolbarDivider />
-
-                    {/* Lists */}
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} title="Numbered list (Ctrl+Shift+7)">
-                        <ListOrdered className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bulleted list (Ctrl+Shift+8)">
-                        <List className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => editor.chain().focus().toggleTaskList().run()} isActive={editor.isActive('taskList')} title="Checklist (Ctrl+Shift+9)">
-                        <CheckSquare className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-
-
-
-                    <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert table">
-                        <TableIcon className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => {
-                        const url = window.prompt('URL');
-                        if (url) {
-                            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-                        }
-                    }} isActive={editor.isActive('link')} title="Insert link">
-                        <LinkIcon className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => {
-                        const url = window.prompt('Image URL');
-                        if (url) {
-                            editor.chain().focus().setImage({ src: url }).run();
-                        }
-                    }} title="Insert image">
-                        <ImageIcon className="w-[18px] h-[18px]" />
-                    </ToolbarButton>
-
-                    <ToolbarDivider />
-
-                    {/* AI Integrations Toggle */}
-                    <button
-                        onClick={() => setShowAiToolbar(!showAiToolbar)}
-                        className={`p-1.5 px-3 rounded flex items-center gap-1.5 transition-all ml-auto mr-1 ${showAiToolbar ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'text-[#444746] dark:text-[#e3e3e3] hover:bg-[#f1f3f4] dark:hover:bg-[#303134]'}`}
-                    >
-                        <Bot className="w-4 h-4" />
-                        <span className="text-[12px] font-medium hidden sm:inline">AI Tools</span>
-                    </button>
-                </Toolbar>
-
-                {/* AI Auxiliary Toolbar */}
-                {showAiToolbar && (
-                    <div className="flex flex-wrap items-center gap-2 px-6 py-2 bg-purple-50/50 dark:bg-purple-900/10 border-b border-purple-100 dark:border-purple-900/30 shadow-inner">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-purple-400 mr-2 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" /> Magic
-                        </span>
-
-                        {isStreaming ? (
                             <button
-                                onClick={stop}
-                                className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-md text-[13px] font-medium transition-colors flex items-center"
+                                className="w-full mt-1 text-xs text-center py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded font-medium"
+                                onClick={() => { handleFormat(() => editor.chain().unsetColor().run()); setShowColorPicker(false); }}
                             >
-                                <Square className="w-3.5 h-3.5 mr-1.5" /> Stop Generation
+                                Réinitialiser
                             </button>
-                        ) : (
-                            <>
+                        </div>
+                    )}
+                </div>
+                <div className="relative">
+                    <ToolbarButton onClick={() => setShowHighlightPicker(!showHighlightPicker)} title="Highlight color">
+                        <div className="flex flex-col items-center justify-center gap-[2px]">
+                            <Highlighter className="w-[16px] h-[16px]" />
+                            <div className="w-[14px] h-[3px] rounded-full" style={{ backgroundColor: editor.getAttributes('highlight').color || 'transparent' }} />
+                        </div>
+                    </ToolbarButton>
+                    {showHighlightPicker && (
+                        <div className="absolute top-10 left-0 bg-background dark:bg-[#2d2e30] border border-gray-200 dark:border-gray-700 shadow-xl rounded-md p-2 flex flex-wrap w-[140px] gap-1 z-30">
+                            {['#fce8e6', '#fce8b2', '#fff2cc', '#e6f4ea', '#e8f0fe', '#f3e8fd', '#ffffff',
+                            ].map(color => (
                                 <button
-                                    onClick={handleSummarize}
-                                    className="px-3 py-1.5 bg-background dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center"
-                                >
-                                    <FileText className="w-3.5 h-3.5 mr-1.5" /> Summarize Document
-                                </button>
-                                <button
-                                    onClick={() => handleAiAction('improve')}
-                                    disabled={editor.state.selection.empty}
-                                    className="px-3 py-1.5 bg-background dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Improve Selection
-                                </button>
-                                <button
-                                    onClick={() => handleAiAction('fix')}
-                                    disabled={editor.state.selection.empty}
-                                    className="px-3 py-1.5 bg-background dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <CheckCheck className="w-3.5 h-3.5 mr-1.5" /> Fix Selection
-                                </button>
-                            </>
-                        )}
-                    </div>
-                )}
+                                    key={color}
+                                    className="w-5 h-5 rounded-full ring-1 ring-inset ring-black/10 hover:scale-110 transition-transform"
+                                    style={{ backgroundColor: color }}
+                                    onClick={() => { handleFormat(() => editor.chain().setHighlight({ color }).run()); setShowHighlightPicker(false); }}
+                                />
+                            ))}
+                            <div className="w-full mt-1 flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-2 pb-1">
+                                <span className="text-xs text-gray-500 pl-1 font-medium">Surlignage</span>
+                                <input 
+                                    type="color" 
+                                    className="w-5 h-5 p-0 border-0 rounded cursor-pointer shrink-0 bg-transparent"
+                                    value={editor.getAttributes('highlight').color || '#ffffff'}
+                                    onChange={(e) => {
+                                        handleFormat(() => editor.chain().setHighlight({ color: e.target.value }).run());
+                                    }}
+                                />
+                            </div>
+                            <button
+                                className="w-full mt-1 text-xs text-center py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded font-medium"
+                                onClick={() => { handleFormat(() => editor.chain().unsetHighlight().run()); setShowHighlightPicker(false); }}
+                            >
+                                Aucun
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                <ToolbarDivider />
+
+                {/* Alignment */}
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().setTextAlign('left').run())} isActive={editor.isActive({ textAlign: 'left' })} title="Align left (Ctrl+Shift+L)">
+                    <AlignLeft className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().setTextAlign('center').run())} isActive={editor.isActive({ textAlign: 'center' })} title="Center align (Ctrl+Shift+E)">
+                    <AlignCenter className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().setTextAlign('right').run())} isActive={editor.isActive({ textAlign: 'right' })} title="Align right (Ctrl+Shift+R)">
+                    <AlignRight className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().setTextAlign('justify').run())} isActive={editor.isActive({ textAlign: 'justify' })} title="Justify (Ctrl+Shift+J)">
+                    <AlignJustify className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+
+                <ToolbarDivider />
+
+                {/* Lists */}
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleOrderedList().run())} isActive={editor.isActive('orderedList')} title="Numbered list (Ctrl+Shift+7)">
+                    <ListOrdered className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleBulletList().run())} isActive={editor.isActive('bulletList')} title="Bulleted list (Ctrl+Shift+8)">
+                    <List className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleTaskList().run())} isActive={editor.isActive('taskList')} title="Checklist (Ctrl+Shift+9)">
+                    <CheckSquare className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+
+
+
+                <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Insert table">
+                    <TableIcon className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => {
+                    const url = window.prompt('URL');
+                    if (url) {
+                        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+                    }
+                }} isActive={editor.isActive('link')} title="Insert link">
+                    <LinkIcon className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+                <ToolbarButton onClick={() => {
+                    const url = window.prompt('Image URL');
+                    if (url) {
+                        editor.chain().focus().setImage({ src: url }).run();
+                    }
+                }} title="Insert image">
+                    <ImageIcon className="w-[18px] h-[18px]" />
+                </ToolbarButton>
+
+                <ToolbarDivider />
+
+                {/* AI Integrations Toggle */}
+                <button
+                    onClick={() => setShowAiToolbar(!showAiToolbar)}
+                    className={`p-1.5 px-3 rounded flex items-center gap-1.5 transition-all ml-auto mr-1 ${showAiToolbar ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'text-[#444746] dark:text-[#e3e3e3] hover:bg-[#f1f3f4] dark:hover:bg-[#303134]'}`}
+                >
+                    <Bot className="w-4 h-4" />
+                    <span className="text-[12px] font-medium hidden sm:inline">AI Tools</span>
+                </button>
+            </Toolbar>
+
+            {/* AI Auxiliary Toolbar */}
+            {showAiToolbar && (
+                <div className="flex flex-wrap items-center gap-2 px-6 py-2 bg-purple-50/50 dark:bg-purple-900/10 border-b border-purple-100 dark:border-purple-900/30 shadow-inner">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-purple-400 mr-2 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" /> Magic
+                    </span>
+
+                    {isStreaming ? (
+                        <button
+                            onClick={stop}
+                            className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-md text-[13px] font-medium transition-colors flex items-center"
+                        >
+                            <Square className="w-3.5 h-3.5 mr-1.5" /> Stop Generation
+                        </button>
+                    ) : (
+                        <>
+                            <button
+                                onClick={handleSummarize}
+                                className="px-3 py-1.5 bg-background dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center"
+                            >
+                                <FileText className="w-3.5 h-3.5 mr-1.5" /> Summarize Document
+                            </button>
+                            <button
+                                onClick={() => handleAiAction('improve')}
+                                disabled={editor.state.selection.empty}
+                                className="px-3 py-1.5 bg-background dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Improve Selection
+                            </button>
+                            <button
+                                onClick={() => handleAiAction('fix')}
+                                disabled={editor.state.selection.empty}
+                                className="px-3 py-1.5 bg-background dark:bg-gray-800 border border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-md text-[13px] font-medium transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <CheckCheck className="w-3.5 h-3.5 mr-1.5" /> Fix Selection
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
 
 
             {/* Editor Canvas Area */}
             <div className="flex-1 overflow-y-auto w-full relative pb-16 custom-scrollbar bg-[#f8f9fa] dark:bg-[#1b1b1b] flex flex-row justify-center py-6">
                 <div className="flex-1 min-w-0 max-w-[816px]">
-                        {/* Main Content Area constrained like Google Docs (A4 Paper) */}
-                        <div 
-                            className="w-[816px] shrink-0 min-h-[1056px] bg-background dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10 mx-auto px-20 pt-16"
-                            onKeyDown={(e) => {
-                                if (!editor) return;
-                                if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
-                                    if (e.key.toLowerCase() === 'l') { e.preventDefault(); editor.chain().focus().setTextAlign('left').run(); }
-                                    if (e.key.toLowerCase() === 'e') { e.preventDefault(); editor.chain().focus().setTextAlign('center').run(); }
-                                    if (e.key.toLowerCase() === 'r') { e.preventDefault(); editor.chain().focus().setTextAlign('right').run(); }
-                                    if (e.key.toLowerCase() === 'j') { e.preventDefault(); editor.chain().focus().setTextAlign('justify').run(); }
-                                    if (e.key.toLowerCase() === 'x') { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }
-                                }
-                                if ((e.ctrlKey || e.metaKey) && e.key === '5') {
-                                    e.preventDefault(); editor.chain().focus().toggleStrike().run();
-                                }
-                            }}
-                        >
+                    {/* Main Content Area constrained like Google Docs (A4 Paper) */}
+                    <div
+                        className="w-[816px] shrink-0 min-h-[1056px] bg-background dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10 mx-auto px-20 pt-16"
+                        onKeyDown={(e) => {
+                            if (!editor) return;
+                            if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+                                if (e.key.toLowerCase() === 'l') { e.preventDefault(); editor.chain().focus().setTextAlign('left').run(); }
+                                if (e.key.toLowerCase() === 'e') { e.preventDefault(); editor.chain().focus().setTextAlign('center').run(); }
+                                if (e.key.toLowerCase() === 'r') { e.preventDefault(); editor.chain().focus().setTextAlign('right').run(); }
+                                if (e.key.toLowerCase() === 'j') { e.preventDefault(); editor.chain().focus().setTextAlign('justify').run(); }
+                                if (e.key.toLowerCase() === 'x') { e.preventDefault(); editor.chain().focus().toggleStrike().run(); }
+                            }
+                            if ((e.ctrlKey || e.metaKey) && e.key === '5') {
+                                e.preventDefault(); editor.chain().focus().toggleStrike().run();
+                            }
+                        }}
+                    >
                         {/* BubbleMenu - Text Selection Toolbar */}
                         {editor && (
                             <BubbleMenu
@@ -2189,10 +2267,10 @@ const Editor = ({
                                 }}
                                 className="bg-background/95 dark:bg-[#202124]/95 backdrop-blur-xl shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-gray-200/50 dark:border-gray-700/50 rounded-[8px] overflow-hidden flex divide-x divide-gray-100 dark:divide-gray-800 pl-1"
                             >
-                                <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
+                                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleBold().run())} isActive={editor.isActive('bold')}>
                                     <Bold className="w-[16px] h-[16px]" />
                                 </ToolbarButton>
-                                <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}>
+                                <ToolbarButton onClick={() => handleFormat(() => editor.chain().toggleItalic().run())} isActive={editor.isActive('italic')}>
                                     <Italic className="w-[16px] h-[16px]" />
                                 </ToolbarButton>
 
@@ -2343,8 +2421,8 @@ const Editor = ({
                                 {editor.storage.characterCount?.characters() || 0} caractères
                             </span>
                         </div>
-                        </div>
                     </div>
+                </div>
 
                 {/* Table of Contents Sidebar */}
                 <div className="hidden lg:block w-[240px] shrink-0 border-l border-gray-100 dark:border-gray-800/50 p-6 pt-12 overflow-y-auto max-h-full sticky top-0 custom-scrollbar">
@@ -2432,11 +2510,11 @@ const Editor = ({
                 </div>
             </div>
 
-            <GenericFeatureModal 
-                isOpen={!!activeModal} 
-                actionId={activeModal?.id || null} 
+            <GenericFeatureModal
+                isOpen={!!activeModal}
+                actionId={activeModal?.id || null}
                 actionLabel={activeModal?.label}
-                onClose={() => setActiveModal(null)} 
+                onClose={() => setActiveModal(null)}
             />
         </div>
     );
