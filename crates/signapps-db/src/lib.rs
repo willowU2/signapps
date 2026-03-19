@@ -7,6 +7,12 @@ pub mod models;
 pub mod pool;
 pub mod repositories;
 
+pub use models::{
+    AddDependency, AddTimeItemGroup, AddTimeItemUser, CreateSchedulingResource,
+    CreateSchedulingTemplate, CreateTimeItem, MoveTimeItem, RecurrenceRuleInput, ShareTimeItem,
+    TimeItem, TimeItemDependency, TimeItemGroup, TimeItemUser, TimeItemWithRelations,
+    TimeItemsQuery, TimeItemsResponse, UpdateSchedulingPreferences, UpdateTimeItem,
+};
 pub use pool::DatabasePool;
 pub use repositories::{
     CalendarMemberRepository, CalendarRepository, EventAttendeeRepository, EventRepository,
@@ -14,12 +20,6 @@ pub use repositories::{
     SchedulingResourceRepository, SchedulingTemplateRepository, TaskRepository,
     TimeItemDependencyRepository, TimeItemGroupRepository, TimeItemRepository,
     TimeItemUserRepository,
-};
-pub use models::{
-    AddDependency, AddTimeItemGroup, AddTimeItemUser, CreateSchedulingResource,
-    CreateSchedulingTemplate, CreateTimeItem, MoveTimeItem, RecurrenceRuleInput, ShareTimeItem,
-    TimeItem, TimeItemDependency, TimeItemGroup, TimeItemUser, TimeItemWithRelations,
-    TimeItemsQuery, TimeItemsResponse, UpdateSchedulingPreferences, UpdateTimeItem,
 };
 
 use sqlx::postgres::PgPoolOptions;
@@ -58,7 +58,7 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
             let error_msg = e.to_string();
 
             // Check if this is a checksum mismatch error
-            if error_msg.contains("checksum mismatch") {
+            if error_msg.contains("checksum mismatch") || error_msg.contains("was previously applied but has been modified") {
                 tracing::warn!("Migration checksum mismatch detected, attempting to fix...");
 
                 // Extract migration version from error message and update checksum
@@ -88,12 +88,10 @@ async fn fix_migration_checksums(
         let new_checksum = migration.checksum.as_ref();
 
         // Check if this migration exists in DB
-        let row = sqlx::query(
-            "SELECT checksum FROM _sqlx_migrations WHERE version = $1"
-        )
-        .bind(version)
-        .fetch_optional(pool.inner())
-        .await?;
+        let row = sqlx::query("SELECT checksum FROM _sqlx_migrations WHERE version = $1")
+            .bind(version)
+            .fetch_optional(pool.inner())
+            .await?;
 
         if let Some(row) = row {
             let db_checksum: Vec<u8> = row.get("checksum");
@@ -103,13 +101,11 @@ async fn fix_migration_checksums(
                     version,
                     migration.description
                 );
-                sqlx::query(
-                    "UPDATE _sqlx_migrations SET checksum = $1 WHERE version = $2"
-                )
-                .bind(new_checksum)
-                .bind(version)
-                .execute(pool.inner())
-                .await?;
+                sqlx::query("UPDATE _sqlx_migrations SET checksum = $1 WHERE version = $2")
+                    .bind(new_checksum)
+                    .bind(version)
+                    .execute(pool.inner())
+                    .await?;
             }
         }
     }
