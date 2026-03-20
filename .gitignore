@@ -21,6 +21,7 @@ livekit-server/*.zip
 .env
 .env.local
 .env.*.local
+env.txt
 
 # OS
 .DS_Store
