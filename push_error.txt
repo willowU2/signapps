@@ -1,35 +1,135 @@
-remote: error: GH013: Repository rule violations found for refs/heads/main.        
+﻿git : remote: error: 
+GH013: Repository 
+rule violations found 
+for refs/heads/feature
+/ui-updates.        
+Au caractère Ligne:1 
+: 1
++ git push -u origin 
+feature/ui-updates 
+2>&1 | Out-File 
+-Encoding utf8  ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : 
+NotSpecified    : 
+(remote: error: .    
+..pdates.        :S   
+ tring) [], RemoteEx  
+  ception
+    + 
+FullyQualifiedErr    
+orId : NativeComman   
+ dError
+ 
 remote: 
-remote: - GITHUB PUSH PROTECTION        
-remote:   —————————————————————————————————————————        
-remote:     Resolve the following violations before pushing again        
+remote: - GITHUB PUSH 
+PROTECTION        
+remote:   ÔÇöÔÇöÔÇöÔÇö
+ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö
+ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+ö        
+remote:     Resolve 
+the following 
+violations before 
+pushing again        
 remote: 
-remote:     - Push cannot contain secrets        
+remote:     - Push 
+cannot contain 
+secrets        
 remote: 
 remote:             
-remote:      (?) Learn how to resolve a blocked push        
-remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push        
+remote:      (?) 
+Learn how to resolve 
+a blocked push        
+remote:      https://d
+ocs.github.com/code-se
+curity/secret-scanning
+/working-with-secret-s
+canning-and-push-prote
+ction/working-with-pus
+h-protection-from-the-
+command-line#resolving
+-a-blocked-push       
+ 
 remote:             
 remote:             
-remote:       —— OpenAI API Key ————————————————————————————————————        
-remote:        locations:        
-remote:          - commit: d6ec80de3a01d4014bd6ee918ef24a22e28cfad1        
-remote:            path: env.txt:20        
+remote:       ÔÇöÔÇö 
+OpenAI API Key ÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö
+ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇö        
+remote:        
+locations:        
+remote:          - 
+commit: 194cee5e10bb78
+f1577aafed38b8085ce3a5
+4a04        
+remote:            
+path: env.txt:20      
+  
 remote:             
-remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
-remote:        https://github.com/willowU2/signapps/security/secret-scanning/unblock-secret/3BAgZXkXbAZv2OI5jmesNcua1Pr        
+remote:        (?) To 
+push, remove secret 
+from commit(s) or 
+follow this URL to 
+allow the secret.     
+   
+remote:        https:/
+/github.com/willowU2/s
+ignapps/security/secre
+t-scanning/unblock-sec
+ret/3BAgZXkXbAZv2OI5jm
+esNcua1Pr        
 remote:             
 remote:             
-remote:       —— Anthropic API Key —————————————————————————————————        
-remote:        locations:        
-remote:          - commit: d6ec80de3a01d4014bd6ee918ef24a22e28cfad1        
-remote:            path: env.txt:21        
+remote:       ÔÇöÔÇö 
+Anthropic API Key ÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö
+ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇö        
+remote:        
+locations:        
+remote:          - 
+commit: 194cee5e10bb78
+f1577aafed38b8085ce3a5
+4a04        
+remote:            
+path: env.txt:21      
+  
 remote:             
-remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.        
-remote:        https://github.com/willowU2/signapps/security/secret-scanning/unblock-secret/3BAgZbbA7TwLmuvORJ8KJQLGMCG        
+remote:        (?) To 
+push, remove secret 
+from commit(s) or 
+follow this URL to 
+allow the secret.     
+   
+remote:        https:/
+/github.com/willowU2/s
+ignapps/security/secre
+t-scanning/unblock-sec
+ret/3BAgZbbA7TwLmuvORJ
+8KJQLGMCG        
 remote:             
 remote: 
 remote: 
-To https://github.com/willowU2/signapps.git
- ! [remote rejected] main -> main (push declined due to repository rule violations)
-error: failed to push some refs to 'https://github.com/willowU2/signapps.git'
+To https://github.com/
+willowU2/signapps.git
+ ! [remote rejected] 
+feature/ui-updates -> 
+feature/ui-updates 
+(push declined due to 
+repository rule 
+violations)
+error: failed to push 
+some refs to 'https://
+github.com/willowU2/si
+gnapps.git'

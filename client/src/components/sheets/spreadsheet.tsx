@@ -1140,7 +1140,8 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             // Note: on utilise 'drive' comme paramètre de bucket par défaut 
             // puisque Global Drive route l'upload générique au bucket principal (qui peut être "drive" ou "general"). 
             // "drive" est le bucket utilisé par fetchAndParseDocument
-            await storageApi.uploadWithKey('drive', documentName, blob);
+            const targetKey = `${documentId}.xlsx`;
+            await storageApi.uploadWithKey('drive', targetKey, blob);
             
             toast.success("Enregistré avec succès !", { id: tId });
         } catch(err: any) {

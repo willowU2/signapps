@@ -12,6 +12,7 @@ pub enum NodeType {
     File,
     Document,
     Spreadsheet,
+    Presentation,
 }
 
 /// Represents a node (folder, file, or document) in the virtual file system
@@ -22,6 +23,7 @@ pub struct DriveNode {
     pub name: String,
     pub node_type: NodeType,
     pub target_id: Option<Uuid>,
+    pub workspace_id: Option<Uuid>,
     pub owner_id: Uuid,
     pub size: Option<i64>,
     pub mime_type: Option<String>,
@@ -37,6 +39,7 @@ pub struct CreateDriveNodeRequest {
     pub name: String,
     pub node_type: String, // "folder", "file", "document"
     pub target_id: Option<Uuid>,
+    pub workspace_id: Option<Uuid>,
     pub size: Option<i64>,
     pub mime_type: Option<String>,
 }

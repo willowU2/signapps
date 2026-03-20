@@ -26,7 +26,7 @@ import { useCollaborativeComments } from '@/hooks/use-collaborative-comments';
 import { useTrackChanges } from '@/hooks/use-track-changes';
 import { useAuthStore } from '@/lib/store';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Loader2, Sparkles, PencilLine, PanelRightOpen, MessageSquarePlus } from 'lucide-react';
+import { Loader2, Sparkles, PencilLine, PanelRightOpen, MessageSquarePlus, Bold, Italic, Strikethrough, Eraser, Underline as UnderlineIcon } from 'lucide-react';
 import { useAiStream } from '@/hooks/use-ai-stream';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -62,6 +62,17 @@ export function CollaborativeEditor({
     // AI state
     const [aiQuery, setAiQuery] = useState('');
     const { stream, stop, isStreaming } = useAiStream();
+    
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [contextMenu, setContextMenu] = useState<{x: number, y: number} | null>(null);
+
+    // Close context menu on any click
+    useEffect(() => {
+        const handleGlobalClick = () => setContextMenu(null);
+        window.addEventListener('click', handleGlobalClick);
+        return () => window.removeEventListener('click', handleGlobalClick);
+    }, []);
 
     // Update awareness with current user info
     useEffect(() => {
@@ -145,6 +156,18 @@ export function CollaborativeEditor({
             // Auto-save logic could be added here
         },
         editable: isSynced,
+        editorProps: {
+            handleDOMEvents: {
+                contextmenu: (view, event) => {
+                    if (!view.state.selection.empty) {
+                        event.preventDefault();
+                        setContextMenu({ x: event.clientX, y: event.clientY });
+                        return true;
+                    }
+                    return false;
+                }
+            }
+        }
     });
 
     useEffect(() => {
@@ -310,59 +333,112 @@ export function CollaborativeEditor({
             {/* Main Content Area with Sidebar */}
             <div className="flex-1 flex overflow-hidden">
                 {/* Document Canvas Area */}
-                <div className="flex-1 overflow-y-auto w-full flex justify-center py-6 px-4 cursor-text bg-[#f8f9fa] dark:bg-[#1f1f1f]">
-                    <div className="w-[816px] shrink-0 min-h-[1056px] bg-background dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10">
-                        <EditorContent
-                            editor={editor}
-                            className="prose prose-sm md:prose-base dark:prose-invert max-w-none px-[96px] py-[96px] min-h-full focus:outline-none focus-visible:outline-none placeholder:text-[#5f6368] dark:placeholder:text-[#9aa0a6] text-[11pt] [&_.comment-highlight]:bg-yellow-100 [&_.comment-highlight]:dark:bg-yellow-900/30 [&_.comment-highlight]:border-b-2 [&_.comment-highlight]:border-yellow-400"
-                            onClick={() => editor.commands.focus()}
-                        />
+                <div className="flex-1 overflow-y-auto w-full flex justify-center py-6 px-4 cursor-text bg-[#f8f9fa] dark:bg-[#1f1f1f] relative">
+                    
+                    {contextMenu && (
+                        <div 
+                            className="fixed z-[100] min-w-[14rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-80"
+                            style={{ top: contextMenu.y, left: contextMenu.x }}
+                            onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        >
+                            <button
+                                className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 w-full"
+                                onClick={() => editor?.chain().focus().toggleBold().run()}
+                                disabled={!editor?.can().chain().focus().toggleBold().run()}
+                            >
+                                <Bold className="mr-2 h-4 w-4" />
+                                <span>Gras</span>
+                                <span className="ml-auto text-xs tracking-widest text-muted-foreground">⌘B</span>
+                            </button>
+                            <button
+                                className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 w-full"
+                                onClick={() => editor?.chain().focus().toggleItalic().run()}
+                                disabled={!editor?.can().chain().focus().toggleItalic().run()}
+                            >
+                                <Italic className="mr-2 h-4 w-4" />
+                                <span>Italique</span>
+                                <span className="ml-auto text-xs tracking-widest text-muted-foreground">⌘I</span>
+                            </button>
+                            <button
+                                className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 w-full"
+                                onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                                disabled={!editor?.can().chain().focus().toggleUnderline().run()}
+                            >
+                                <UnderlineIcon className="mr-2 h-4 w-4" />
+                                <span>Souligné</span>
+                                <span className="ml-auto text-xs tracking-widest text-muted-foreground">⌘U</span>
+                            </button>
+                            <button
+                                className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 w-full"
+                                onClick={() => editor?.chain().focus().toggleStrike().run()}
+                                disabled={!editor?.can().chain().focus().toggleStrike().run()}
+                            >
+                                <Strikethrough className="mr-2 h-4 w-4" />
+                                <span>Barré</span>
+                                <span className="ml-auto text-xs tracking-widest text-muted-foreground">⌘⇧X</span>
+                            </button>
+                            <div className="-mx-1 my-1 h-px bg-border" />
+                            <button
+                                className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 w-full"
+                                onClick={() => editor?.chain().focus().unsetAllMarks().run()}
+                            >
+                                <Eraser className="mr-2 h-4 w-4" />
+                                <span>Effacer le formatage</span>
+                            </button>
+                        </div>
+                    )}
 
-                        {/* Floating Canvas AI Buttons (visible when empty) */}
-                        {editor.isEmpty && (
-                            <div className="absolute top-[300px] left-0 right-0 flex items-center justify-center gap-2 z-10 select-none pointer-events-none">
-                                <Button
-                                    variant="secondary"
-                                    className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full shadow-sm font-medium h-[36px] px-5 pointer-events-auto transition-colors"
-                                >
-                                    <Sparkles className="h-[18px] w-[18px] mb-0.5 mr-2 text-[#0b57d0]" fill="#0b57d0" />
-                                    Générer un document
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full shadow-sm font-medium h-[36px] px-5 pointer-events-auto transition-colors"
-                                >
-                                    <PencilLine className="h-[18px] w-[18px] mb-0.5 mr-2 text-[#0b57d0]" fill="#0b57d0" />
-                                    M'aider à écrire
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    className="bg-background hover:bg-gray-50 text-[#444746] rounded-full shadow-sm ring-1 ring-[#dadce0] font-medium h-[36px] px-4 pointer-events-auto transition-colors"
-                                >
-                                    <PanelRightOpen className="h-[18px] w-[18px] mb-0.5 mr-2" />
-                                    Plus
-                                </Button>
-                            </div>
-                        )}
+                    <div className="w-[816px] shrink-0 min-h-[1056px] bg-background dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10 block">
+                            <EditorContent
+                                editor={editor}
+                                className="prose prose-sm md:prose-base dark:prose-invert max-w-none px-[96px] py-[96px] min-h-full focus:outline-none focus-visible:outline-none placeholder:text-[#5f6368] dark:placeholder:text-[#9aa0a6] text-[11pt] [&_.comment-highlight]:bg-yellow-100 [&_.comment-highlight]:dark:bg-yellow-900/30 [&_.comment-highlight]:border-b-2 [&_.comment-highlight]:border-yellow-400"
+                            />
 
-                        {/* Floating Right Page Action Buttons */}
-                        <div className="absolute top-[300px] -right-12 hidden xl:flex flex-col gap-2 items-center">
-                            <div className="bg-background dark:bg-[#202124] rounded-full shadow-sm ring-1 ring-[#dadce0] dark:ring-[#5f6368] p-1.5 flex flex-col items-center">
-                                <Button variant="ghost" size="icon" className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]">
-                                    <PencilLine className="h-[18px] w-[18px]" />
-                                </Button>
-                                <div className="h-[1px] w-6 bg-[#dadce0] dark:bg-[#5f6368] my-0.5" />
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]"
-                                    onClick={toggleSidebar}
-                                >
-                                    <MessageSquarePlus className="h-[18px] w-[18px]" />
-                                </Button>
+                            {/* Floating Canvas AI Buttons (visible when empty) */}
+                            {editor.isEmpty && (
+                                <div className="absolute top-[300px] left-0 right-0 flex items-center justify-center gap-2 z-10 select-none pointer-events-none">
+                                    <Button
+                                        variant="secondary"
+                                        className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full shadow-sm font-medium h-[36px] px-5 pointer-events-auto transition-colors"
+                                    >
+                                        <Sparkles className="h-[18px] w-[18px] mb-0.5 mr-2 text-[#0b57d0]" fill="#0b57d0" />
+                                        Générer un document
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        className="bg-[#c2e7ff] hover:bg-[#a8d3f1] text-[#001d35] rounded-full shadow-sm font-medium h-[36px] px-5 pointer-events-auto transition-colors"
+                                    >
+                                        <PencilLine className="h-[18px] w-[18px] mb-0.5 mr-2 text-[#0b57d0]" fill="#0b57d0" />
+                                        M'aider à écrire
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        className="bg-background hover:bg-gray-50 text-[#444746] rounded-full shadow-sm ring-1 ring-[#dadce0] font-medium h-[36px] px-4 pointer-events-auto transition-colors"
+                                    >
+                                        <PanelRightOpen className="h-[18px] w-[18px] mb-0.5 mr-2" />
+                                        Plus
+                                    </Button>
+                                </div>
+                            )}
+
+                            {/* Floating Right Page Action Buttons */}
+                            <div className="absolute top-[300px] -right-12 hidden xl:flex flex-col gap-2 items-center">
+                                <div className="bg-background dark:bg-[#202124] rounded-full shadow-sm ring-1 ring-[#dadce0] dark:ring-[#5f6368] p-1.5 flex flex-col items-center">
+                                    <Button variant="ghost" size="icon" className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]">
+                                        <PencilLine className="h-[18px] w-[18px]" />
+                                    </Button>
+                                    <div className="h-[1px] w-6 bg-[#dadce0] dark:bg-[#5f6368] my-0.5" />
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-[36px] w-[36px] rounded-full text-[#1a73e8] hover:bg-[#e8f0fe] dark:hover:bg-[#1a73e820]"
+                                        onClick={toggleSidebar}
+                                    >
+                                        <MessageSquarePlus className="h-[18px] w-[18px]" />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
-                    </div>
                 </div>
 
                 {/* Comments Sidebar */}

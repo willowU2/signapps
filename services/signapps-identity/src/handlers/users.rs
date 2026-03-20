@@ -35,6 +35,7 @@ pub struct UserResponse {
     pub auth_provider: String,
     pub created_at: String,
     pub last_login: Option<String>,
+    pub avatar_url: Option<String>,
 }
 
 /// User list response with pagination info.
@@ -61,6 +62,8 @@ pub struct AdminCreateUserRequest {
     pub role: Option<i16>,
     pub auth_provider: Option<String>,
     pub workspace_ids: Option<Vec<Uuid>>,
+    #[validate(length(max = 2048))]
+    pub avatar_url: Option<String>,
 }
 
 /// Update user request (admin).
@@ -73,6 +76,8 @@ pub struct AdminUpdateUserRequest {
     pub role: Option<i16>,
     pub mfa_enabled: Option<bool>,
     pub workspace_ids: Option<Vec<Uuid>>,
+    #[validate(length(max = 2048))]
+    pub avatar_url: Option<String>,
 }
 
 /// Update self request.
@@ -85,6 +90,8 @@ pub struct UpdateSelfRequest {
     #[validate(length(min = 8, max = 128))]
     pub new_password: Option<String>,
     pub current_password: Option<String>,
+    #[validate(length(max = 2048))]
+    pub avatar_url: Option<String>,
 }
 
 /// Set user tenant request.
@@ -105,6 +112,7 @@ impl From<signapps_db::models::User> for UserResponse {
             auth_provider: user.auth_provider,
             created_at: user.created_at.to_rfc3339(),
             last_login: user.last_login.map(|dt| dt.to_rfc3339()),
+            avatar_url: user.avatar_url,
         }
     }
 }
@@ -139,9 +147,9 @@ pub async fn get(
 }
 
 /// Create new user (admin only).
-#[tracing::instrument(skip(state, payload))]
 pub async fn create(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<AdminCreateUserRequest>,
 ) -> Result<Json<UserResponse>> {
     payload
@@ -181,6 +189,7 @@ pub async fn create(
         auth_provider,
         ldap_dn: None,
         ldap_groups: None,
+        avatar_url: payload.avatar_url,
     };
 
     // Hash password if provided and create user
@@ -190,6 +199,13 @@ pub async fn create(
     } else {
         UserRepository::create(&state.pool, create_user).await?
     };
+
+    // Associate the new user with the admin's tenant automatically
+    if let Some(tenant_id) = claims.tenant_id {
+        if let Err(e) = UserRepository::set_tenant(&state.pool, user.id, tenant_id).await {
+            tracing::error!(user_id = %user.id, "Failed to set default tenant for new user: {}", e);
+        }
+    }
 
     // Initialize Default Calendar
     let calendar_params = CreateCalendar {
@@ -264,6 +280,7 @@ pub async fn update(
         role: payload.role,
         ldap_dn: None,
         ldap_groups: None,
+        avatar_url: payload.avatar_url,
     };
 
     let user = UserRepository::update(&state.pool, id, update).await?;
@@ -370,6 +387,7 @@ pub async fn update_me(
         role: None, // Users cannot change their own role
         ldap_dn: None,
         ldap_groups: None,
+        avatar_url: payload.avatar_url,
     };
 
     let updated = UserRepository::update(&state.pool, claims.sub, update).await?;

@@ -12,7 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { getUsers, type User, isAdmin, isActive } from "@/lib/api-admin"
+import { type User, isAdmin, isActive } from "@/lib/api-admin"
 import { Plus, Search, MoreHorizontal } from "lucide-react"
 import {
     DropdownMenu,
@@ -35,8 +35,15 @@ export default function UsersPage() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null)
     const [isLoading, setIsLoading] = useState(false)
 
-    const loadUsers = () => {
-        getUsers().then(setUsers).catch(err => console.debug(err))
+    const loadUsers = async () => {
+        try {
+            const res = await usersApi.list();
+            // The rust backend might return the list directly, while the swagger says { users: ... }
+            setUsers(Array.isArray(res.data) ? res.data : (res.data?.users || []));
+        } catch (err) {
+            console.error("Failed to load users", err);
+            toast.error("Failed to load users");
+        }
     }
 
     useEffect(() => {
