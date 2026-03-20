@@ -3,6 +3,7 @@
 import { useAuthStore, useUIStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
+import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -154,21 +155,16 @@ export function Header() {
         {/* Notifications */}
         <NotificationPopover />
 
-        {/* Notification Badge */}
-        <NotificationBadge className="cursor-pointer" />
-
         {/* Theme Toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        >
-          {mounted && theme === 'dark' ? (
-            <Sun className="h-5 w-5" />
-          ) : (
-            <Moon className="h-5 w-5" />
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Sun className={`h-4 w-4 transition-all duration-500 ${theme === 'light' ? 'text-amber-500 scale-125 rotate-0' : 'text-muted-foreground scale-75 -rotate-90'}`} />
+          <Switch
+            checked={mounted && theme === 'dark'}
+            onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+            aria-label="Toggle dark mode"
+          />
+          <Moon className={`h-4 w-4 transition-all duration-500 ${theme === 'dark' ? 'text-indigo-400 scale-125 rotate-0' : 'text-muted-foreground scale-75 rotate-90'}`} />
+        </div>
 
         {/* User Menu */}
         <DropdownMenu>
