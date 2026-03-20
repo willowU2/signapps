@@ -45,6 +45,7 @@ import type {
   TeamMember,
   DateRange,
 } from '@/lib/scheduling/types/scheduling';
+import { timeItemsApi } from '@/lib/api/scheduler';
 
 // ============================================================================
 // Types
@@ -651,39 +652,71 @@ function formatDateRange(range: DateRange): string {
 }
 
 // ============================================================================
-// Mock Data Generator
+// Real Data Fetcher
 // ============================================================================
 
-export function generateMockWorkloadData(members: TeamMember[]): WorkloadData[] {
-  return members.map((member) => {
-    const capacityHours = 40;
-    const scheduledHours = Math.random() * 55 + 10; // 10-65 hours
-    const utilizationPercent = (scheduledHours / capacityHours) * 100;
+export async function fetchWorkloadData(
+  members: TeamMember[],
+  start: Date,
+  end: Date
+): Promise<WorkloadData[]> {
+  const memberIds = members.map((m) => m.id);
+  if (memberIds.length === 0) return [];
 
-    const meetingsPercent = Math.random() * 0.5 + 0.2; // 20-70%
-    const focusPercent = Math.random() * 0.3 + 0.1; // 10-40%
-    const tasksPercent = Math.random() * 0.2 + 0.1; // 10-30%
-    const otherPercent = 1 - meetingsPercent - focusPercent - tasksPercent;
+  try {
+    const res = await timeItemsApi.queryUsersEvents(memberIds, start.toISOString(), end.toISOString());
+    const items = res.data.items;
 
-    return {
-      memberId: member.id,
-      memberName: member.name,
-      avatarUrl: member.avatarUrl,
-      period: {
-        start: new Date(),
-        end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-      scheduledHours,
-      capacityHours,
-      utilizationPercent,
-      breakdown: {
-        meetings: scheduledHours * meetingsPercent,
-        focusTime: scheduledHours * focusPercent,
-        tasks: scheduledHours * tasksPercent,
-        other: scheduledHours * otherPercent,
-      },
-      trend: ['up', 'down', 'stable'][Math.floor(Math.random() * 3)] as 'up' | 'down' | 'stable',
-      trendPercent: Math.round(Math.random() * 20 - 10),
-    };
-  });
+    return members.map((member) => {
+      // Find items for this specific member (either they own it or they are attendee)
+      // Note: for MVP we just use owner_id. A full implementation would check relations.
+      const memberItems = items.filter((item) => item.owner_id === member.id);
+
+      let meetingsHours = 0;
+      let focusHours = 0;
+      let tasksHours = 0;
+      let otherHours = 0;
+
+      memberItems.forEach((item) => {
+        const durationMin = item.duration_minutes || 60; // default 1h
+        const durationHrs = durationMin / 60;
+
+        if (item.item_type === 'meeting' || item.item_type === 'event') {
+          meetingsHours += durationHrs;
+        } else if (item.item_type === 'task') {
+          tasksHours += durationHrs;
+        } else if (item.item_type === 'block' && item.title.toLowerCase().includes('focus')) {
+          focusHours += durationHrs;
+        } else {
+          otherHours += durationHrs;
+        }
+      });
+
+      const scheduledHours = meetingsHours + focusHours + tasksHours + otherHours;
+      const capacityHours = 40; // Default capacity per week, could be adjusted by DateRange
+      const utilizationPercent = (scheduledHours / capacityHours) * 100;
+
+      return {
+        memberId: member.id,
+        memberName: member.name,
+        avatarUrl: member.avatarUrl,
+        period: { start, end },
+        scheduledHours,
+        capacityHours,
+        utilizationPercent,
+        breakdown: {
+          meetings: meetingsHours,
+          focusTime: focusHours,
+          tasks: tasksHours,
+          other: otherHours,
+        },
+        trend: 'stable', // Real historical comparison would require another query
+        trendPercent: 0,
+      };
+    });
+  } catch (error) {
+    console.error('Failed to fetch workload data:', error);
+    return [];
+  }
 }
+

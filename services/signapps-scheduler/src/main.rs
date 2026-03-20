@@ -259,6 +259,7 @@ fn create_router(state: AppState) -> Router {
     let time_item_routes = Router::new()
         .route("/", get(handlers::time_items::list_time_items))
         .route("/", post(handlers::time_items::create_time_item))
+        .route("/availability", post(handlers::time_items::query_users_events))
         .route("/{id}", get(handlers::time_items::get_time_item))
         .route("/{id}", put(handlers::time_items::update_time_item))
         .route("/{id}", delete(handlers::time_items::delete_time_item))

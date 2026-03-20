@@ -316,6 +316,43 @@ impl<'a> TimeItemRepository<'a> {
         Ok(items)
     }
 
+    /// List time items for a list of users in a date range. (For Availability Finder)
+    pub async fn fetch_events_for_users(
+        &self,
+        tenant_id: Uuid,
+        user_ids: &[Uuid],
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<Vec<TimeItem>> {
+        if user_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        // We use ANY to check if owner is in the array, OR if user is in time_item_users array
+        let items = sqlx::query_as::<_, TimeItem>(
+            r#"
+            SELECT DISTINCT t.* FROM scheduling.time_items t
+            LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id
+            WHERE t.tenant_id = $1
+              AND t.deleted_at IS NULL
+              AND (t.owner_id = ANY($2) OR tu.user_id = ANY($2))
+              AND (
+                  (t.start_time IS NOT NULL AND t.start_time < $4 AND (t.end_time IS NULL OR t.end_time > $3))
+                  OR (t.start_time IS NULL AND t.deadline BETWEEN $3 AND $4)
+              )
+            ORDER BY COALESCE(t.start_time, t.deadline) ASC
+            "#,
+        )
+        .bind(tenant_id)
+        .bind(user_ids)
+        .bind(start)
+        .bind(end)
+        .fetch_all(self.pool.inner())
+        .await?;
+
+        Ok(items)
+    }
+
     /// List unscheduled tasks for a user.
     pub async fn list_unscheduled(&self, owner_id: Uuid) -> Result<Vec<TimeItem>> {
         let items = sqlx::query_as::<_, TimeItem>(

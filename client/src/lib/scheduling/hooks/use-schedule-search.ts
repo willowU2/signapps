@@ -16,6 +16,7 @@ import {
   type SearchResultItem,
 } from '../utils/search-service';
 import type { ScheduleBlock } from '../types/scheduling';
+import { timeItemsApi } from '../../api/scheduler';
 
 // ============================================================================
 // Types
@@ -60,23 +61,31 @@ export interface UseScheduleSearchResult {
 }
 
 // ============================================================================
-// Mock Data (MVP - localStorage)
+// Real Data Fetching (Replacing localStorage MVP)
 // ============================================================================
 
-function getStoredBlocks(): ScheduleBlock[] {
-  if (typeof window === 'undefined') return [];
+async function fetchRealBlocks(): Promise<ScheduleBlock[]> {
   try {
-    const data = localStorage.getItem('scheduling_events');
-    if (!data) return [];
-    const events = JSON.parse(data);
-    return events.map((e: ScheduleBlock) => ({
-      ...e,
-      start: new Date(e.start),
-      end: e.end ? new Date(e.end) : undefined,
-      createdAt: new Date(e.createdAt),
-      updatedAt: new Date(e.updatedAt),
+    // Fetch up to 500 items for the search index
+    const res = await timeItemsApi.list({ limit: 500, scope: 'nous' });
+    return res.data.items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      start: new Date(item.start_time || item.deadline || new Date().toISOString()),
+      end: item.end_time ? new Date(item.end_time) : undefined,
+      allDay: item.all_day,
+      type: item.item_type as any,
+      status: item.status as any,
+      priority: item.priority as any,
+      tags: [], // Tags not yet exposed in TimeItem response model simply
+      location: item.location_name ? { name: item.location_name, address: item.location_address || '' } : undefined,
+      metadata: { organizerId: item.owner_id },
+      createdAt: new Date(item.created_at),
+      updatedAt: new Date(item.updated_at),
     }));
-  } catch {
+  } catch (err) {
+    console.error('Failed to fetch blocks for search:', err);
     return [];
   }
 }
@@ -101,10 +110,9 @@ export function useScheduleSearch(
   const [debouncedQuery, setDebouncedQuery] = React.useState(initialQuery);
   const [suggestions, setSuggestions] = React.useState<string[]>([]);
 
-  // Initialize search service
+  // Initialize search service using an empty state at first, updated via query
   const searchService = React.useMemo(() => {
-    const blocks = getStoredBlocks();
-    return initSearchService(blocks);
+    return getSearchService();
   }, []);
 
   // Debounced query update
@@ -140,9 +148,10 @@ export function useScheduleSearch(
     error,
   } = useQuery({
     queryKey: ['schedule-search', searchQuery],
-    queryFn: () => {
-      // Refresh blocks from storage
-      const blocks = getStoredBlocks();
+    queryFn: async () => {
+      // Fetch fresh blocks from API
+      // In a real optimized system, this would only be fetched occasionally, or rely on server-side search API directly
+      const blocks = await fetchRealBlocks();
       searchService.updateIndex(blocks);
       return searchService.search(searchQuery);
     },
@@ -229,15 +238,14 @@ export function useQuickSearch(
   );
 
   const searchService = React.useMemo(() => {
-    const blocks = getStoredBlocks();
-    return initSearchService(blocks);
+    return getSearchService();
   }, []);
 
   const { data: results = [], isLoading } = useQuery({
     queryKey: ['quick-search', debouncedQuery, limit],
-    queryFn: () => {
+    queryFn: async () => {
       if (!debouncedQuery.trim()) return [];
-      const blocks = getStoredBlocks();
+      const blocks = await fetchRealBlocks();
       searchService.updateIndex(blocks);
       return searchService.quickSearch(debouncedQuery, limit);
     },

@@ -245,3 +245,4 @@ See `.env.example` for the full list.
 ## Préférences de développement
 
 - **Frontend port**: Le serveur de développement frontend doit TOUJOURS être lancé sur le port 3000
+- **Authentification Locale**: Pour se connecter rapidement (bypass login manuel ou bugs de session), utilisez l'URL `http://localhost:3000/login?auto=admin`. Il est souvent nécessaire de charger cette URL une première fois, d'attendre environ 2 secondes, puis de la recharger une deuxième fois pour que la session soit bien validée.

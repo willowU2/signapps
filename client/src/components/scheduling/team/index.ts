@@ -14,5 +14,5 @@ export { TeamView } from './TeamView';
 export {
   WorkloadDashboard,
   WorkloadDetail,
-  generateMockWorkloadData,
+  fetchWorkloadData,
 } from './WorkloadDashboard';

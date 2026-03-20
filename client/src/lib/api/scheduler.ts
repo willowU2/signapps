@@ -140,3 +140,82 @@ export const taskAttachmentsApi = {
     deleteAttachment: (taskId: string, attachmentId: string) =>
         schedulerClient.delete(`/tasks/${taskId}/attachments/${attachmentId}`),
 };
+
+// ============================================================================
+// Time Items (Unified Scheduling API)
+// ============================================================================
+
+export interface TimeItem {
+    id: string;
+    item_type: string; // 'task', 'event', 'meeting', 'block'
+    title: string;
+    description?: string;
+    start_time?: string;
+    end_time?: string;
+    deadline?: string;
+    duration_minutes?: number;
+    all_day: boolean;
+    timezone: string;
+    
+    // Ownership
+    tenant_id: string;
+    project_id?: string;
+    owner_id: string;
+    
+    // Status & Priority
+    status: string; // 'todo', 'in_progress', 'done', 'cancelled'
+    priority: string; // 'low', 'medium', 'high', 'urgent'
+    
+    // Common properties
+    location_name?: string;
+    location_address?: string;
+    location_url?: string;
+    
+    deleted_at?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TimeItemsQuery {
+    start?: string;
+    end?: string;
+    types?: string[];
+    statuses?: string[];
+    priorities?: string[];
+    project_id?: string;
+    search?: string;
+    scope?: string; // 'moi', 'eux', 'tous', etc.
+    unscheduled_only?: boolean;
+    include_completed?: boolean;
+    include_cancelled?: boolean;
+    limit?: number;
+    offset?: number;
+    sort_by?: string;
+    sort_order?: string;
+}
+
+export interface TimeItemsResponse {
+    items: TimeItem[];
+    total: number;
+    limit: number;
+    offset: number;
+}
+
+export const timeItemsApi = {
+    list: (query?: TimeItemsQuery) => {
+        // Axios serializes arrays as types[]=a&types[]=b. We can pass params normally
+        // but let's transform arrays to comma-separated if needed by backend or just pass array.
+        // Rust Axum Query extractor expects either multiple query params `?types=a&types=b` or `?types=a,b`.
+        return schedulerClient.get<TimeItemsResponse>('/time_items', { params: query });
+    },
+    get: (id: string) => schedulerClient.get<TimeItem>(`/time_items/${id}`),
+    create: (data: any) => schedulerClient.post<TimeItem>('/time_items', data),
+    update: (id: string, data: any) => schedulerClient.put<TimeItem>(`/time_items/${id}`, data),
+    move: (id: string, data: { start_time: string; end_time?: string; duration_minutes?: number }) =>
+        schedulerClient.put<TimeItem>(`/time_items/${id}/move`, data),
+    updateStatus: (id: string, status: string) =>
+        schedulerClient.put<TimeItem>(`/time_items/${id}/status`, { status }),
+    delete: (id: string) => schedulerClient.delete(`/time_items/${id}`),
+    queryUsersEvents: (user_ids: string[], start: string, end: string) =>
+        schedulerClient.post<{items: TimeItem[]}>('/time_items/availability', { user_ids, start, end })
+};

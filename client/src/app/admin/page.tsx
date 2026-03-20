@@ -4,11 +4,13 @@ import { useEffect, useState } from "react"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getUsers, getSystemMetrics, type User, type SystemMetrics, isAdmin } from "@/lib/api-admin"
+import { useServiceHealth } from "@/hooks/use-service-health"
 import { Users, Activity, HardDrive, Cpu, ShieldCheck } from "lucide-react"
 
 export default function AdminDashboard() {
     const [users, setUsers] = useState<User[]>([])
     const [metrics, setMetrics] = useState<SystemMetrics | null>(null)
+    const { data: healthData } = useServiceHealth()
 
     useEffect(() => {
         getUsers().then(setUsers).catch(err => console.debug(err))
@@ -91,22 +93,15 @@ export default function AdminDashboard() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-green-500" />
-                                    <span className="text-sm">Identity Service: Online</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-green-500" />
-                                    <span className="text-sm">Metrics Service: Online</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-green-500" />
-                                    <span className="text-sm">Collab Service: Online</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-green-500" />
-                                    <span className="text-sm">Database: Connected</span>
-                                </div>
+                                {healthData?.slice(0, 5).map(service => (
+                                    <div key={service.name} className="flex items-center gap-2">
+                                        <div className={`h-2 w-2 rounded-full ${service.status === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
+                                        <span className="text-sm">{service.name} Service: {service.status === 'online' ? 'Online' : 'Offline'}</span>
+                                    </div>
+                                ))}
+                                {!healthData && (
+                                    <div className="text-sm text-muted-foreground animate-pulse">Checking system health...</div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

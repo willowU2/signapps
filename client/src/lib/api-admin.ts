@@ -1,5 +1,4 @@
-export const IDENTITY_API = "http://localhost:3001/api/v1"
-export const METRICS_API = "http://localhost:3008/api/v1"
+import { getClient, ServiceName } from './api/factory';
 
 // Types - aligned with Rust UserResponse from signapps-identity
 export interface User {
@@ -32,13 +31,30 @@ export interface SystemMetrics {
 }
 
 export async function getUsers(): Promise<User[]> {
-    const res = await fetch(`${IDENTITY_API}/users`)
-    if (!res.ok) throw new Error("Impossible de charger les utilisateurs")
-    return res.json()
+    try {
+        const client = getClient(ServiceName.IDENTITY);
+        const res = await client.get('/users?limit=100');
+        // Handle pagination response { users: [], total: ... } or direct array
+        if (res.data && Array.isArray(res.data.users)) {
+            return res.data.users;
+        }
+        if (Array.isArray(res.data)) {
+            return res.data;
+        }
+        return [];
+    } catch (err) {
+        console.error("Failed to fetch users:", err);
+        return [];
+    }
 }
 
 export async function getSystemMetrics(): Promise<SystemMetrics> {
-    const res = await fetch(`${METRICS_API}/metrics/summary`)
-    if (!res.ok) throw new Error("Impossible de charger les métriques")
-    return res.json()
+    try {
+        const client = getClient(ServiceName.METRICS);
+        const res = await client.get('/metrics/summary');
+        return res.data;
+    } catch (err) {
+        console.error("Failed to fetch metrics:", err);
+        throw new Error("Impossible de charger les métriques");
+    }
 }

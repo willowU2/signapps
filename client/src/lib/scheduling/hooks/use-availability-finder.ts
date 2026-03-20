@@ -15,6 +15,8 @@ import {
   type CommonSlot,
 } from '../utils/availability-finder';
 import type { ScheduleBlock, TeamMember } from '../types/scheduling';
+import { usersApi } from '../../api/identity';
+import { timeItemsApi } from '../../api/scheduler';
 
 // ============================================================================
 // Types
@@ -60,61 +62,52 @@ export interface UseAvailabilityFinderResult {
 }
 
 // ============================================================================
-// Mock Data (for MVP - replace with API calls)
+// Data Fetching Helper
 // ============================================================================
 
-function getMockEvents(): ScheduleBlock[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const data = localStorage.getItem('scheduling_events');
-    if (!data) return [];
-    const events = JSON.parse(data);
-    return events.map((e: ScheduleBlock) => ({
-      ...e,
-      start: new Date(e.start),
-      end: e.end ? new Date(e.end) : undefined,
-      createdAt: new Date(e.createdAt),
-      updatedAt: new Date(e.updatedAt),
+async function fetchAvailabilityData(
+  participantIds: string[],
+  start: Date,
+  end: Date
+): Promise<{ events: ScheduleBlock[]; members: TeamMember[] }> {
+  // Fetch users
+  const usersRes = await usersApi.list(1, 100);
+  const members: TeamMember[] = usersRes.data.users
+    .filter((u) => participantIds.includes(u.id))
+    .map((u) => ({
+      id: u.id,
+      name: u.display_name || u.username,
+      email: u.email || '',
+      role: u.role === 2 ? 'Admin' : 'Utilisateur',
+      department: 'Général',
     }));
-  } catch {
-    return [];
-  }
-}
 
-function getMockTeamMembers(): TeamMember[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const data = localStorage.getItem('scheduling_team_members');
-    if (!data) {
-      // Return default team members for demo
-      return [
-        {
-          id: 'user-1',
-          name: 'Alice Martin',
-          email: 'alice@example.com',
-          role: 'Développeur',
-          department: 'Engineering',
-        },
-        {
-          id: 'user-2',
-          name: 'Bob Dupont',
-          email: 'bob@example.com',
-          role: 'Designer',
-          department: 'Design',
-        },
-        {
-          id: 'user-3',
-          name: 'Claire Petit',
-          email: 'claire@example.com',
-          role: 'Product Manager',
-          department: 'Product',
-        },
-      ];
-    }
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
+  // Fetch TimeItems
+  const eventsRes = await timeItemsApi.queryUsersEvents(
+    participantIds,
+    start.toISOString(),
+    end.toISOString()
+  );
+
+  const events: ScheduleBlock[] = eventsRes.data.items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    start: new Date(item.start_time || item.deadline || new Date().toISOString()),
+    end: item.end_time ? new Date(item.end_time) : undefined,
+    allDay: item.all_day,
+    type: item.item_type as any,
+    status: item.status as any,
+    metadata: {
+      organizerId: item.owner_id,
+    },
+    // To support checkTimeSlot which looks at attendees, we map owner_id to attendees for MVP.
+    // In a full implementation, we would extract actual attendees from TimeItemRelations.
+    attendees: [{ id: item.owner_id, name: '', email: '', responseStatus: 'accepted', status: 'accepted', required: true }],
+    createdAt: new Date(item.created_at),
+    updatedAt: new Date(item.updated_at),
+  }));
+
+  return { events, members };
 }
 
 // ============================================================================
@@ -198,9 +191,12 @@ export function useAvailabilityFinder(
   } = useQuery({
     queryKey: ['availability', query],
     queryFn: async () => {
-      // Get events and team members (MVP: from localStorage)
-      const events = getMockEvents();
-      const members = getMockTeamMembers();
+      // Get real data from APIs
+      const { events, members } = await fetchAvailabilityData(
+        query.participantIds,
+        query.dateRange.start,
+        query.dateRange.end
+      );
 
       // Find availability
       return findAvailability(query, events, members);
@@ -260,15 +256,21 @@ export function useQuickAvailability(
   const { data: suggestions = [], isLoading } = useQuery({
     queryKey: ['quick-availability', participantIds.join(','), duration, limit],
     queryFn: async () => {
-      const events = getMockEvents();
-      const members = getMockTeamMembers();
+      const searchStart = startOfDay(new Date());
+      const searchEnd = endOfDay(addDays(new Date(), 14)); // Search 2 weeks
+
+      const { events, members } = await fetchAvailabilityData(
+        participantIds,
+        searchStart,
+        searchEnd
+      );
 
       const query: AvailabilityQuery = {
         participantIds,
         duration,
         dateRange: {
-          start: startOfDay(new Date()),
-          end: endOfDay(addDays(new Date(), 14)), // Search 2 weeks
+          start: searchStart,
+          end: searchEnd,
         },
         includeWeekends: false,
       };

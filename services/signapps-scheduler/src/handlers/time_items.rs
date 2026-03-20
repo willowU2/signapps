@@ -6,6 +6,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use chrono::{DateTime, Utc};
 use serde_json::json;
 use signapps_common::{Claims, TenantContext};
 use signapps_db::{
@@ -159,6 +160,38 @@ pub async fn update_time_item_status(
         Ok(item) => Ok(Json(json!(item))),
         Err(e) => {
             tracing::error!("Failed to update status: {}", e);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
+    }
+}
+
+// ============================================================================
+// Multi-User Availability
+// ============================================================================
+
+#[derive(serde::Deserialize)]
+pub struct QueryUsersEventsInput {
+    pub user_ids: Vec<Uuid>,
+    pub start: DateTime<Utc>,
+    pub end: DateTime<Utc>,
+}
+
+/// Fetch events for multiple users to compute availability.
+pub async fn query_users_events(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Extension(ctx): Extension<TenantContext>,
+    Json(input): Json<QueryUsersEventsInput>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let repo = TimeItemRepository::new(&state.pool);
+
+    match repo
+        .fetch_events_for_users(ctx.tenant_id, &input.user_ids, input.start, input.end)
+        .await
+    {
+        Ok(items) => Ok(Json(json!({ "items": items }))),
+        Err(e) => {
+            tracing::error!("Failed to fetch events for users: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
         },
     }
