@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -28,8 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
-import { User, CreateUserRequest, UpdateUserRequest } from "@/lib/api";
+import { User, CreateUserRequest, UpdateUserRequest, Workspace } from "@/lib/api";
+import { workspacesApi } from "@/lib/api/tenant";
 
 const userFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(50),
@@ -37,6 +39,7 @@ const userFormSchema = z.object({
   password: z.string().optional(),
   display_name: z.string().optional(),
   role: z.string().min(1, "Role is required"),
+  workspace_ids: z.array(z.string()).optional(),
 });
 
 type UserFormValues = {
@@ -45,6 +48,7 @@ type UserFormValues = {
   password?: string;
   display_name?: string;
   role: string;
+  workspace_ids?: string[];
 };
 
 interface UserSheetProps {
@@ -63,6 +67,7 @@ export function UserSheet({
   isLoading,
 }: UserSheetProps) {
   const isEditing = !!user;
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
@@ -92,8 +97,13 @@ export function UserSheet({
           password: "",
           display_name: "",
           role: "1",
+          workspace_ids: [],
         });
       }
+      // Load workspaces available to assign
+      workspacesApi.list().then((res: any) => {
+        setWorkspaces(res.data?.data || res.data || []);
+      }).catch(console.error);
     }
   }, [open, user, form]);
 
@@ -119,6 +129,7 @@ export function UserSheet({
         password: values.password,
         display_name: values.display_name,
         role: parseInt(values.role, 10),
+        workspace_ids: values.workspace_ids,
       };
       await onSubmit(createData);
     }
@@ -240,6 +251,60 @@ export function UserSheet({
                 </FormItem>
               )}
             />
+
+            {!isEditing && workspaces.length > 0 && (
+              <FormField
+                control={form.control}
+                name="workspace_ids"
+                render={() => (
+                  <FormItem>
+                    <div className="mb-4">
+                      <FormLabel className="text-base">Workspaces</FormLabel>
+                      <SheetDescription>
+                        Assign the user to one or multiple workspaces.
+                      </SheetDescription>
+                    </div>
+                    <div className="space-y-3">
+                      {workspaces.map((workspace) => (
+                        <FormField
+                          key={workspace.id}
+                          control={form.control}
+                          name="workspace_ids"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={workspace.id}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(workspace.id)}
+                                    onCheckedChange={(checked) => {
+                                      const current = field.value || [];
+                                      return checked
+                                        ? field.onChange([...current, workspace.id])
+                                        : field.onChange(
+                                            current.filter(
+                                              (value) => value !== workspace.id
+                                            )
+                                          );
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {workspace.name}
+                                </FormLabel>
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={isLoading}>

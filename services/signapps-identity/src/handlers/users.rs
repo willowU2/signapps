@@ -60,6 +60,7 @@ pub struct AdminCreateUserRequest {
     pub display_name: Option<String>,
     pub role: Option<i16>,
     pub auth_provider: Option<String>,
+    pub workspace_ids: Option<Vec<Uuid>>,
 }
 
 /// Update user request (admin).
@@ -71,6 +72,7 @@ pub struct AdminUpdateUserRequest {
     pub display_name: Option<String>,
     pub role: Option<i16>,
     pub mfa_enabled: Option<bool>,
+    pub workspace_ids: Option<Vec<Uuid>>,
 }
 
 /// Update self request.
@@ -212,6 +214,19 @@ pub async fn create(
     };
     let task_repo = TaskRepository::new(&state.pool);
     let _root_task = task_repo.create(calendar.id, task_params, user.id).await?;
+
+    // Add user to specified workspaces
+    if let Some(workspace_ids) = payload.workspace_ids {
+        for workspace_id in workspace_ids {
+            let member = signapps_db::models::AddWorkspaceMember {
+                user_id: user.id,
+                role: Some("member".to_string()),
+            };
+            if let Err(e) = signapps_db::repositories::WorkspaceRepository::add_member(&state.pool, workspace_id, member).await {
+                tracing::error!(workspace_id = %workspace_id, "Failed to add new user to workspace: {}", e);
+            }
+        }
+    }
 
     tracing::info!(user_id = %user.id, calendar_id = %calendar.id, "Admin created user and default calendar & tasks");
 
