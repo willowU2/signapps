@@ -74,7 +74,7 @@ pub struct ExportCommentReply {
 }
 
 /// Request body for JSON conversion
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ConversionRequest {
     /// Input format (tiptapjson, html, markdown)
     pub input_format: InputFormat,
