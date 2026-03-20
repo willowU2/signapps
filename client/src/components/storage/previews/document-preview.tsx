@@ -32,10 +32,22 @@ export function DocumentPreview({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch document metadata from backend
-    // GET /api/v1/preview/document/:bucket/*key/metadata
-    setLoading(false);
-  }, []);
+    if (!bucket || !fileKey) {
+      setLoading(false);
+      return;
+    }
+
+    previewApi.getDocumentMetadata(bucket, fileKey)
+      .then(res => {
+        setMetadata(res.data);
+      })
+      .catch(err => {
+        console.error("Failed to load document metadata", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [bucket, fileKey]);
 
   const getDocumentType = () => {
     const ext = fileName.split('.').pop()?.toLowerCase() || '';

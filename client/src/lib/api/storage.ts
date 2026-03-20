@@ -523,6 +523,10 @@ export const previewApi = {
         `${STORAGE_URL}/preview/thumbnail/${bucket}/${encodeURIComponent(key)}?size=${size || 'medium'}`,
     getPreviewUrl: (bucket: string, key: string) =>
         `${STORAGE_URL}/preview/view/${bucket}/${encodeURIComponent(key)}`,
+    getArchiveListing: (bucket: string, key: string) =>
+        storageClient.get<any[]>(`/preview/archive/${bucket}/${encodeURIComponent(key)}`),
+    getDocumentMetadata: (bucket: string, key: string) =>
+        storageClient.get<Record<string, string>>(`/preview/document-metadata/${bucket}/${encodeURIComponent(key)}`),
 };
 
 export interface PreviewInfo {

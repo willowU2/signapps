@@ -461,7 +461,7 @@ export function FilePreviewDialog({
         ) : null;
 
       case 'archive':
-        return <ArchivePreview fileName={file.name} />;
+        return <ArchivePreview fileName={file.name} bucket={bucket} fileKey={file.key} />;
 
       case 'document':
         return <DocumentPreview fileName={file.name} bucket={bucket} fileKey={file.key} />;
