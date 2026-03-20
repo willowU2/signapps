@@ -257,6 +257,7 @@ export function VersionHistoryPanel({
     toggleVersionSelection,
     clearSelection,
     compareSelectedVersions,
+    updateVersionMetadata,
     setTypeFilter,
     setStarredOnly,
     loadVersionPreview,
@@ -266,6 +267,10 @@ export function VersionHistoryPanel({
   const [createLabel, setCreateLabel] = useState('');
   const [showRestoreDialog, setShowRestoreDialog] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState<string | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState<DocumentVersion | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Initialize
   useEffect(() => {
@@ -294,6 +299,17 @@ export function VersionHistoryPanel({
     if (!showDeleteDialog) return;
     await deleteVersion(showDeleteDialog);
     setShowDeleteDialog(null);
+  };
+
+  const handleEditVersion = async () => {
+    if (!showEditDialog) return;
+    setIsUpdating(true);
+    await updateVersionMetadata(showEditDialog.id, {
+      label: editLabel || undefined,
+      description: editDescription || undefined,
+    });
+    setIsUpdating(false);
+    setShowEditDialog(null);
   };
 
   const handleCompare = () => {
@@ -399,7 +415,9 @@ export function VersionHistoryPanel({
                     onDelete={() => setShowDeleteDialog(version.id)}
                     onPreview={() => loadVersionPreview(version.id)}
                     onEdit={() => {
-                      // TODO: Implement edit dialog
+                      setEditLabel(version.label || '');
+                      setEditDescription(version.description || '');
+                      setShowEditDialog(version);
                     }}
                   />
                 ))}
@@ -497,6 +515,50 @@ export function VersionHistoryPanel({
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Version Dialog */}
+      <AlertDialog
+        open={!!showEditDialog}
+        onOpenChange={(open) => !open && setShowEditDialog(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Modifier les informations</AlertDialogTitle>
+            <AlertDialogDescription>
+              Modifiez le nom ou la description de cette version.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Nom de la version</label>
+              <Input
+                placeholder="Ex: Version finale"
+                value={editLabel}
+                onChange={(e) => setEditLabel(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Input
+                placeholder="Description optionnelle"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUpdating}>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEditVersion} disabled={isUpdating}>
+              {isUpdating ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Enregistrer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

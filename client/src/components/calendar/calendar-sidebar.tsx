@@ -88,36 +88,6 @@ export function CalendarSidebar({
                     <span className="text-sm text-[#3c4043] truncate leading-tight mt-0.5">{calendar.name}</span>
                   </label>
                 ))}
-                {/* Extra fake calendars */}
-                <label className="flex items-center gap-3 py-1 cursor-pointer group rounded hover:bg-gray-50 -mx-1 px-1 mt-1">
-                    <div className="relative flex items-center justify-center">
-                        <input type="checkbox" className="peer appearance-none w-4 h-4 border-2 rounded-[3px] border-[#5f6368] checked:border-transparent checked:bg-current transition-colors text-[#34A853]" defaultChecked />
-                        <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-sm text-[#3c4043] truncate leading-tight mt-0.5">Anniversaires</span>
-                </label>
-                <label className="flex items-center gap-3 py-1 cursor-pointer group rounded hover:bg-gray-50 -mx-1 px-1 mt-1">
-                    <div className="relative flex items-center justify-center">
-                        <input type="checkbox" className="peer appearance-none w-4 h-4 border-2 rounded-[3px] border-[#5f6368] checked:border-transparent checked:bg-current transition-colors text-[#F4B400]" defaultChecked />
-                        <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-sm text-[#3c4043] truncate leading-tight mt-0.5">Samuel EXEL</span>
-                </label>
-             </div>
-
-             {/* Accordion 3 */}
-             <div className="flex items-center justify-between py-2 px-2 hover:bg-gray-50 rounded cursor-pointer group mt-4">
-                <span className="text-sm font-medium text-[#3c4043]">Autres agendas</span>
-                <ChevronDown className="h-4 w-4 text-[#5f6368] opacity-0 group-hover:opacity-100" />
-             </div>
-             <div className="flex flex-col gap-1 px-2 mt-1">
-                <label className="flex items-center gap-3 py-1 cursor-pointer group rounded hover:bg-gray-50 -mx-1 px-1">
-                    <div className="relative flex items-center justify-center">
-                        <input type="checkbox" className="peer appearance-none w-4 h-4 border-2 rounded-[3px] border-[#5f6368] checked:border-transparent checked:bg-current transition-colors text-[#0b8043]" defaultChecked />
-                        <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <span className="text-sm text-[#3c4043] truncate leading-tight mt-0.5">Jours fériés</span>
-                </label>
              </div>
 
           </div>

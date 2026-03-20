@@ -69,8 +69,8 @@ impl ServiceDefinition {
 static SERVICE_STATE: once_cell::sync::Lazy<Arc<Mutex<Option<ShutdownSignal>>>> =
     once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(None)));
 
-// Type for the service main function
-type ServiceMainFn = fn(ShutdownSignal) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<()>> + Send>>;
+// Type for the service main function - use Arc<dyn Fn> for clonability
+type ServiceMainFn = Arc<dyn Fn(ShutdownSignal) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<()>> + Send>> + Send + Sync>;
 
 static SERVICE_MAIN_FN: once_cell::sync::Lazy<Arc<Mutex<Option<ServiceMainFn>>>> =
     once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(None)));
@@ -113,14 +113,14 @@ where
         *name = definition.name.clone();
     }
 
-    // Store the service main function (we need to box it)
+    // Store the service main function (we need to wrap it in Arc)
     {
         let service_main = Arc::new(service_main);
         let mut main_fn = SERVICE_MAIN_FN.blocking_lock();
-        *main_fn = Some(move |shutdown| {
+        *main_fn = Some(Arc::new(move |shutdown| {
             let service_main = service_main.clone();
             Box::pin(async move { service_main(shutdown).await })
-        });
+        }));
     }
 
     // Run the service dispatcher

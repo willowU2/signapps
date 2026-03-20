@@ -1,12 +1,12 @@
 //! Windows Event Log integration
 //!
 //! Provides logging to Windows Event Log for services.
+//! Note: The eventlog crate is a simple logger that implements the log facade.
 
-use eventlog::EventLog;
+use log::Level;
 
 /// Logger that writes to Windows Event Log.
 pub struct EventLogger {
-    log: EventLog,
     service_name: String,
 }
 
@@ -14,33 +14,28 @@ impl EventLogger {
     /// Create a new event logger for the given service.
     ///
     /// The service name should match the Windows service name.
+    /// This initializes the eventlog crate as a global logger.
     pub fn new(service_name: &str) -> anyhow::Result<Self> {
-        let log = EventLog::new(service_name, None)?;
+        // Initialize eventlog as the global logger with Info level
+        eventlog::init(service_name, Level::Info)?;
         Ok(Self {
-            log,
             service_name: service_name.to_string(),
         })
     }
 
-    /// Log an informational message.
+    /// Log an informational message using the log crate.
     pub fn info(&self, message: &str) {
-        if let Err(e) = self.log.info(message) {
-            eprintln!("Failed to write to event log: {}", e);
-        }
+        log::info!("{}", message);
     }
 
-    /// Log a warning message.
+    /// Log a warning message using the log crate.
     pub fn warn(&self, message: &str) {
-        if let Err(e) = self.log.warn(message) {
-            eprintln!("Failed to write to event log: {}", e);
-        }
+        log::warn!("{}", message);
     }
 
-    /// Log an error message.
+    /// Log an error message using the log crate.
     pub fn error(&self, message: &str) {
-        if let Err(e) = self.log.error(message) {
-            eprintln!("Failed to write to event log: {}", e);
-        }
+        log::error!("{}", message);
     }
 
     /// Get the service name.
