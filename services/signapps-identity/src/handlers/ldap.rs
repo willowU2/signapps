@@ -203,6 +203,7 @@ pub async fn sync_users(State(state): State<AppState>) -> Result<Json<SyncResult
                     role: if ldap_user.is_admin { Some(2) } else { Some(1) },
                     ldap_dn: Some(ldap_user.dn.clone()),
                     ldap_groups: Some(ldap_user.groups.clone()),
+                    avatar_url: None,
                 };
                 if let Err(e) = UserRepository::update(&state.pool, existing.id, update).await {
                     sync_result
@@ -223,6 +224,7 @@ pub async fn sync_users(State(state): State<AppState>) -> Result<Json<SyncResult
                     auth_provider: "ldap".to_string(),
                     ldap_dn: Some(ldap_user.dn),
                     ldap_groups: Some(ldap_user.groups),
+                    avatar_url: None,
                 };
                 if let Err(e) = UserRepository::create(&state.pool, create).await {
                     sync_result

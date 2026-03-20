@@ -12,7 +12,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { getUsers, type User, isAdmin, isActive } from "@/lib/api-admin"
+import { type User, isAdmin, isActive } from "@/lib/api-admin"
 import { Plus, Search, MoreHorizontal } from "lucide-react"
 import {
     DropdownMenu,
@@ -22,14 +22,63 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { UserSheet } from "@/components/admin/user-sheet"
+import { usersApi } from "@/lib/api/identity"
+import { CreateUserRequest, UpdateUserRequest } from "@/lib/api"
+import { toast } from "sonner"
+
 
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([])
     const [search, setSearch] = useState("")
+    const [isSheetOpen, setIsSheetOpen] = useState(false)
+    const [selectedUser, setSelectedUser] = useState<User | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
+
+    const loadUsers = async () => {
+        try {
+            const res = await usersApi.list();
+            // The rust backend might return the list directly, while the swagger says { users: ... }
+            setUsers(Array.isArray(res.data) ? res.data : (res.data?.users || []));
+        } catch (err) {
+            console.error("Failed to load users", err);
+            toast.error("Failed to load users");
+        }
+    }
 
     useEffect(() => {
-        getUsers().then(setUsers).catch(err => console.debug(err))
+        loadUsers()
     }, [])
+
+    const handleOpenCreate = () => {
+        setSelectedUser(null)
+        setIsSheetOpen(true)
+    }
+
+    const handleOpenEdit = (user: User) => {
+        setSelectedUser(user)
+        setIsSheetOpen(true)
+    }
+
+    const handleSubmit = async (data: CreateUserRequest | UpdateUserRequest) => {
+        setIsLoading(true)
+        try {
+            if (selectedUser) {
+                await usersApi.update(selectedUser.id, data as UpdateUserRequest)
+                toast.success("User updated successfully")
+            } else {
+                await usersApi.create(data as CreateUserRequest)
+                toast.success("User created successfully")
+            }
+            setIsSheetOpen(false)
+            loadUsers()
+        } catch (error: any) {
+            console.error("Failed to save user", error)
+            toast.error(error.response?.data?.message || "Failed to save user")
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     const filteredUsers = users.filter(user =>
         user.username.toLowerCase().includes(search.toLowerCase()) ||
@@ -42,7 +91,7 @@ export default function UsersPage() {
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-                    <Button>
+                    <Button onClick={handleOpenCreate}>
                         <Plus className="mr-2 h-4 w-4" /> Add User
                     </Button>
                 </div>
@@ -101,7 +150,7 @@ export default function UsersPage() {
                                                     Copy ID
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem>Edit</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenEdit(user)}>Edit</DropdownMenuItem>
                                                 <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -112,6 +161,14 @@ export default function UsersPage() {
                     </Table>
                 </div>
             </div>
+
+            <UserSheet
+                open={isSheetOpen}
+                onOpenChange={setIsSheetOpen}
+                user={selectedUser}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+            />
         </AppLayout>
     )
 }

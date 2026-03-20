@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { useEntityStore } from '@/stores/entity-hub-store';
 
 // Service-specific base URLs
 export const IDENTITY_URL = process.env.NEXT_PUBLIC_IDENTITY_URL || 'http://127.0.0.1:3001/api/v1';
@@ -27,12 +28,18 @@ export function createApiClient(baseURL: string): AxiosInstance {
         },
     });
 
-    // Request interceptor to add auth token
+    // Request interceptor to add auth token and workspace context
     client.interceptors.request.use((config) => {
         if (typeof window !== 'undefined') {
             const token = localStorage.getItem('access_token');
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
+            }
+
+            // Dynamically inject the active workspace from Zustand state without persistence
+            const workspaceId = useEntityStore.getState().selectedWorkspaceId;
+            if (workspaceId) {
+                config.headers['X-Workspace-ID'] = workspaceId;
             }
         }
         return config;

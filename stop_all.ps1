@@ -9,10 +9,14 @@ Get-Process | Where-Object { $_.ProcessName -like "signapps-*" } | ForEach-Objec
     Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
 }
 
-# Stop Next.js dev server
-Get-Process node -ErrorAction SilentlyContinue | Where-Object {
-    $_.CommandLine -like "*next*" -or $_.CommandLine -like "*3000*"
-} | Stop-Process -Force -ErrorAction SilentlyContinue
+# Stop Next.js dev server on port 3000
+$tcpconns = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
+foreach ($conn in $tcpconns) {
+    if ($conn.State -eq "Listen") {
+        Write-Host "  Stopping process on port 3000 (PID $($conn.OwningProcess))..."
+        Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue
+    }
+}
 
 Start-Sleep -Seconds 2
 Write-Host "All services stopped." -ForegroundColor Green

@@ -13,7 +13,7 @@ export interface DriveNode {
   id: string;
   parent_id: string | null;
   name: string;
-  node_type: 'folder' | 'file' | 'document' | 'spreadsheet';
+  node_type: 'folder' | 'file' | 'document' | 'spreadsheet' | 'presentation';
   target_id: string | null;
   owner_id: string;
   size: number | null;
@@ -27,7 +27,7 @@ export interface DriveNode {
 export interface CreateDriveNodeRequest {
   parent_id: string | null;
   name: string;
-  node_type: 'folder' | 'file' | 'document' | 'spreadsheet';
+  node_type: 'folder' | 'file' | 'document' | 'spreadsheet' | 'presentation';
   target_id: string | null;
   size?: number | null;
   mime_type?: string | null;

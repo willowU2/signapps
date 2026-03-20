@@ -97,12 +97,10 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
             const jsonStr = JSON.stringify(slidesData, null, 2)
             const blob = new Blob([jsonStr], { type: 'application/json' })
 
-            // Use .signslides extension for our format
-            const fileName = documentName.endsWith('.signslides')
-                ? documentName
-                : documentName.replace(/\.[^/.]+$/, '') + '.signslides'
+            // Use targetKey UUID as filename instead of documentName
+            const targetKey = documentId && documentId !== 'new-presentation' ? `${documentId}.signslides` : documentName.replace(/\.[^/.]+$/, '') + '.signslides';
 
-            await storageApi.uploadWithKey('drive', fileName, blob)
+            await storageApi.uploadWithKey('drive', targetKey, blob)
 
             toast.success("Présentation enregistrée !", { id: tId })
         } catch (err: any) {

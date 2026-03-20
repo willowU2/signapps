@@ -72,9 +72,9 @@ impl UserRepository {
             r#"
             INSERT INTO identity.users (
                 username, email, password_hash, display_name, role,
-                auth_provider, ldap_dn, ldap_groups
+                auth_provider, ldap_dn, ldap_groups, avatar_url
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
             "#,
         )
@@ -86,6 +86,7 @@ impl UserRepository {
         .bind(&user.auth_provider)
         .bind(&user.ldap_dn)
         .bind(&user.ldap_groups)
+        .bind(&user.avatar_url)
         .fetch_one(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
@@ -103,9 +104,9 @@ impl UserRepository {
             r#"
             INSERT INTO identity.users (
                 username, email, password_hash, display_name, role,
-                auth_provider, ldap_dn, ldap_groups
+                auth_provider, ldap_dn, ldap_groups, avatar_url
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
             "#,
         )
@@ -117,6 +118,7 @@ impl UserRepository {
         .bind(&user.auth_provider)
         .bind(&user.ldap_dn)
         .bind(&user.ldap_groups)
+        .bind(&user.avatar_url)
         .fetch_one(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
@@ -134,6 +136,7 @@ impl UserRepository {
                 role = COALESCE($4, role),
                 ldap_dn = COALESCE($5, ldap_dn),
                 ldap_groups = COALESCE($6, ldap_groups),
+                avatar_url = COALESCE($7, avatar_url),
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
@@ -145,6 +148,7 @@ impl UserRepository {
         .bind(update.role)
         .bind(&update.ldap_dn)
         .bind(&update.ldap_groups)
+        .bind(&update.avatar_url)
         .fetch_one(pool)
         .await
         .map_err(|e| Error::Database(e.to_string()))?;

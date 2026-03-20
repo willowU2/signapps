@@ -263,6 +263,7 @@ pub async fn register(
         auth_provider: "local".to_string(),
         ldap_dn: None,
         ldap_groups: None,
+        avatar_url: None,
     };
 
     let user = UserRepository::create_with_hash(&state.pool, create_user, &password_hash).await?;

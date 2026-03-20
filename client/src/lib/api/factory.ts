@@ -15,6 +15,7 @@
  */
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { useEntityStore } from '@/stores/entity-hub-store';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SERVICE CONFIGURATION
@@ -117,6 +118,12 @@ function addAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequest
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Dynamically inject the active workspace from Zustand state
+    const workspaceId = useEntityStore.getState().selectedWorkspaceId;
+    if (workspaceId) {
+      config.headers['X-Workspace-ID'] = workspaceId;
     }
   }
   return config;

@@ -40,6 +40,7 @@ pub async fn create_pool(database_url: &str) -> Result<DatabasePool, sqlx::Error
 }
 
 /// Run database migrations.
+/// Ensure cargo rebuilds this when SQL files change: touch this file!
 ///
 /// If a migration was modified after being applied (common in dev),
 /// we fix the checksum in the database and retry.
