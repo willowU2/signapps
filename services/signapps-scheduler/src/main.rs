@@ -152,7 +152,10 @@ fn create_router(state: AppState) -> Router {
     // Calendar routes (require tenant context)
     let calendar_routes = Router::new()
         .route("/", get(handlers::calendars::list_calendars))
+        .route("/", post(handlers::calendars::create_calendar))
         .route("/{id}", get(handlers::calendars::get_calendar))
+        .route("/{id}", put(handlers::calendars::update_calendar))
+        .route("/{id}", delete(handlers::calendars::delete_calendar))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -163,8 +166,38 @@ fn create_router(state: AppState) -> Router {
 
     // Event routes (require tenant context)
     let event_routes = Router::new()
-        .route("/", get(handlers::events::list_events))
         .route("/{id}", get(handlers::events::get_event))
+        .route("/{id}", put(handlers::events::update_event))
+        .route("/{id}", delete(handlers::events::delete_event))
+        // Attendees nested inside event limits
+        .route("/{id}/attendees", get(handlers::events::list_attendees))
+        .route("/{id}/attendees", post(handlers::events::add_attendee))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Calendar nested routes for events
+    // Required to match: POST /api/v1/calendars/:calendar_id/events
+    let calendar_event_routes = Router::new()
+        .route("/", get(handlers::events::list_events))
+        .route("/", post(handlers::events::create_event))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Attendee routes (require tenant context)
+    // Matches PUT /api/v1/attendees/:attendee_id/rsvp and DELETE /api/v1/attendees/:attendee_id
+    let attendee_routes = Router::new()
+        .route("/{id}", delete(handlers::events::remove_attendee))
+        .route("/{id}/rsvp", put(handlers::events::update_rsvp))
         .layer(axum::middleware::from_fn(
             signapps_common::middleware::tenant_context_middleware,
         ))
@@ -308,7 +341,9 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/workspaces", workspace_routes)
         .nest("/api/v1/users", user_routes)
         .nest("/api/v1/calendars", calendar_routes)
+        .nest("/api/v1/calendars/{calendar_id}/events", calendar_event_routes)
         .nest("/api/v1/events", event_routes)
+        .nest("/api/v1/attendees", attendee_routes)
         .nest("/api/v1/resources", resource_routes)
         .nest("/api/v1/projects", project_routes)
         .nest("/api/v1/tasks", task_routes)
