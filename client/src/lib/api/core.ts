@@ -25,17 +25,12 @@ export function createApiClient(baseURL: string): AxiosInstance {
         headers: {
             'Content-Type': 'application/json',
         },
+        withCredentials: true,
     });
 
-    // Request interceptor to add auth token
+    // Request interceptor
     client.interceptors.request.use((config) => {
-        if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('access_token');
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-        }
-        return config;
+        return config; // Cookies are sent automatically via withCredentials: true
     });
 
     // Response interceptor for token refresh
@@ -48,31 +43,16 @@ export function createApiClient(baseURL: string): AxiosInstance {
                 originalRequest._retry = true;
 
                 if (typeof window !== 'undefined') {
-                    const refreshToken = localStorage.getItem('refresh_token');
-                    if (!refreshToken) {
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('auth-storage');
-                        document.cookie = 'auth-storage=; path=/; max-age=0';
-                        window.location.href = '/login';
-                        return Promise.reject(error);
-                    }
-
+                    // Make a refresh call which will automatically include the refresh_token cookie
                     try {
-                        const response = await axios.post(`${IDENTITY_URL}/auth/refresh`, {
-                            refresh_token: refreshToken,
+                        await axios.post(`${IDENTITY_URL}/auth/refresh`, null, {
+                            withCredentials: true,
                         });
-
-                        const { access_token, refresh_token } = response.data;
-                        localStorage.setItem('access_token', access_token);
-                        localStorage.setItem('refresh_token', refresh_token);
-
-                        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+                        
+                        // Retry original request (the cookie is now updated)
                         return client(originalRequest);
                     } catch (refreshError) {
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('refresh_token');
                         localStorage.removeItem('auth-storage');
-                        document.cookie = 'auth-storage=; path=/; max-age=0';
                         window.location.href = '/login';
                         return Promise.reject(refreshError);
                     }

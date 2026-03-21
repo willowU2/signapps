@@ -257,12 +257,30 @@ pub async fn add_time_item_user(
             let item_repo = TimeItemRepository::new(&state.pool);
             if let Ok(Some(item)) = item_repo.find_by_id(id).await {
                 let type_label = if item.item_type == "task" { "la tâche" } else { "l'événement" };
-                let _ = state.tx_notifications.send(crate::NotificationMessage {
+                let notification = crate::NotificationMessage {
                     user_id: user.user_id,
                     title: "Nouvelle Assignation".to_string(),
                     message: format!("Vous avez été ajouté(e) à {} '{}'", type_label, item.title),
                     action_url: Some(format!("/app/scheduling/hub")),
-                });
+                };
+
+                let tx = state.tx_notifications.clone();
+                if let Some(client) = state.redis_client.clone() {
+                    tokio::spawn(async move {
+                        if let Ok(mut con) = client.get_multiplexed_tokio_connection().await {
+                            let payload = serde_json::to_string(&notification).unwrap_or_default();
+                            let _: Result<(), redis::RedisError> = redis::cmd("PUBLISH")
+                                .arg("signapps_notifications")
+                                .arg(payload)
+                                .query_async(&mut con)
+                                .await;
+                        } else {
+                            let _ = tx.send(notification);
+                        }
+                    });
+                } else {
+                    let _ = state.tx_notifications.send(notification);
+                }
             }
 
             Ok((StatusCode::CREATED, Json(json!(user))))

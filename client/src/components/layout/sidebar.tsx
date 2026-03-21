@@ -44,7 +44,8 @@ import {
   Sun,
   Moon,
   DoorOpen,
-  Building2
+  Building2,
+  TrendingUp
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
@@ -115,6 +116,7 @@ const navGroupsConfig = [
     items: [
       { href: '/ai', icon: MessageSquare, label: 'AI', enabled: FEATURES.AI },
       { href: '/scheduler', icon: Clock, label: 'Scheduler', enabled: FEATURES.SCHEDULER },
+      { href: '/analytics', icon: TrendingUp, label: 'Analytics', enabled: FEATURES.METRICS },
       { href: '/monitoring', icon: Activity, label: 'Monitoring', enabled: FEATURES.METRICS },
     ]
   },

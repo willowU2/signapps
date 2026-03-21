@@ -13,3 +13,4 @@ pub mod workspaces;
 pub mod notifications;
 
 pub use jobs::*;
+pub mod metrics;

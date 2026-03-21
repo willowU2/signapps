@@ -113,12 +113,7 @@ const clientCache = new Map<ServiceName, AxiosInstance>();
 // ═══════════════════════════════════════════════════════════════════════════
 
 function addAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
+  // Cookies are automatically sent via withCredentials: true
   return config;
 }
 
@@ -129,23 +124,13 @@ async function handleAuthError(error: AxiosError, client: AxiosInstance): Promis
     originalRequest._retry = true;
 
     if (typeof window !== 'undefined') {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (!refreshToken) {
-        clearAuthAndRedirect();
-        return Promise.reject(error);
-      }
-
       try {
         const identityUrl = getServiceUrl(ServiceName.IDENTITY);
-        const response = await axios.post(`${identityUrl}/auth/refresh`, {
-          refresh_token: refreshToken,
+        await axios.post(`${identityUrl}/auth/refresh`, null, {
+          withCredentials: true,
         });
 
-        const { access_token, refresh_token } = response.data;
-        localStorage.setItem('access_token', access_token);
-        localStorage.setItem('refresh_token', refresh_token);
-
-        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+        // Retry original request (the cookie is now updated)
         return client(originalRequest);
       } catch (refreshError) {
         clearAuthAndRedirect();
@@ -158,8 +143,6 @@ async function handleAuthError(error: AxiosError, client: AxiosInstance): Promis
 }
 
 function clearAuthAndRedirect(): void {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
   localStorage.removeItem('auth-storage');
   document.cookie = 'auth-storage=; path=/; max-age=0';
   window.location.href = '/login';
@@ -185,6 +168,7 @@ export function getClient(service: ServiceName): AxiosInstance {
     headers: {
       'Content-Type': 'application/json',
     },
+    withCredentials: true,
   });
 
   // Request interceptor

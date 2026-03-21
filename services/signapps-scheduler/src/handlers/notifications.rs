@@ -1,9 +1,9 @@
 use axum::{
-    extract::State,
+    extract::{Extension, State},
     response::sse::{Event, Sse},
 };
 use futures::stream::Stream;
-use signapps_common::middleware::UserContext;
+use signapps_common::Claims;
 use std::convert::Infallible;
 use tokio_stream::{wrappers::BroadcastStream, StreamExt};
 
@@ -11,7 +11,7 @@ use crate::AppState;
 
 pub async fn sse_handler(
     State(state): State<AppState>,
-    user_context: UserContext,
+    Extension(claims): Extension<Claims>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     // We subscribe to the global broadcast channel
     let receiver = state.tx_notifications.subscribe();
@@ -19,9 +19,9 @@ pub async fn sse_handler(
     // Convert the receiver into a Stream
     let stream = BroadcastStream::new(receiver)
         // Filter out errors (like RecvError::Lagged)
-        .filter_map(|res| res.ok())
+        .filter_map(|res: Result<crate::NotificationMessage, _>| res.ok())
         // Only keep notifications meant for this user
-        .filter(move |msg| msg.user_id == user_context.user_id)
+        .filter(move |msg| msg.user_id == claims.sub)
         // Convert to SSE Event
         .map(|msg| {
             let json = serde_json::to_string(&msg).unwrap_or_default();

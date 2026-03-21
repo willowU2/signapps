@@ -72,7 +72,7 @@ pub struct RefreshRequest {
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
-) -> Result<Json<LoginResponse>> {
+) -> Result<(HeaderMap, Json<LoginResponse>)> {
     // Validate input
     payload
         .validate()
@@ -187,38 +187,72 @@ pub async fn login(
 
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "User logged in successfully");
 
-    Ok(Json(LoginResponse {
+    let access_cookie = format!(
+        "access_token={}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age={}",
+        tokens.access_token, tokens.expires_in
+    );
+    let refresh_cookie = format!(
+        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/refresh; Max-Age=604800",
+        tokens.refresh_token
+    );
+
+    let mut response_headers = HeaderMap::new();
+    if let Ok(c) = access_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
+    if let Ok(c) = refresh_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
+
+    Ok((response_headers, Json(LoginResponse {
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         token_type: "Bearer".to_string(),
         expires_in: tokens.expires_in,
-    }))
+    })))
 }
 
-/// Logout endpoint - blacklists the token in cache.
-#[tracing::instrument(skip(state, headers))]
-pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<()> {
-    if let Some(auth_header) = headers.get(header::AUTHORIZATION) {
-        if let Ok(auth_str) = auth_header.to_str() {
-            if let Some(token) = auth_str.strip_prefix("Bearer ") {
-                // Decode token to get expiration
-                if let Ok(claims) = verify_token(token, &state.jwt_secret) {
-                    let ttl = claims.exp - chrono::Utc::now().timestamp();
-                    if ttl > 0 {
-                        // Blacklist token in cache with remaining TTL
-                        let key = format!("blacklist:{}", token);
-                        state
-                            .cache
-                            .set(&key, "1", std::time::Duration::from_secs(ttl as u64))
-                            .await;
-                    }
+pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<HeaderMap> {
+    let mut token = None;
+
+    if let Some(auth_header) = headers.get(header::AUTHORIZATION).and_then(|h| h.to_str().ok()) {
+        if let Some(t) = auth_header.strip_prefix("Bearer ") {
+            token = Some(t.to_string());
+        }
+    }
+
+    if token.is_none() {
+        if let Some(cookie_header) = headers.get(header::COOKIE).and_then(|h| h.to_str().ok()) {
+            for cookie in cookie_header.split(';') {
+                let cookie = cookie.trim();
+                if let Some(t) = cookie.strip_prefix("access_token=") {
+                    token = Some(t.to_string());
+                    break;
                 }
-                tracing::info!("User logged out, token blacklisted");
             }
         }
     }
 
-    Ok(())
+    if let Some(token) = token {
+        // Decode token to get expiration
+        if let Ok(claims) = verify_token(&token, &state.jwt_secret) {
+            let ttl = claims.exp - chrono::Utc::now().timestamp();
+            if ttl > 0 {
+                // Blacklist token in cache with remaining TTL
+                let key = format!("blacklist:{}", token);
+                state
+                    .cache
+                    .set(&key, "1", std::time::Duration::from_secs(ttl as u64))
+                    .await;
+            }
+        }
+        tracing::info!("User logged out, token blacklisted");
+    }
+
+    let access_cookie = "access_token=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0";
+    let refresh_cookie = "refresh_token=; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/refresh; Max-Age=0";
+    
+    let mut response_headers = HeaderMap::new();
+    if let Ok(c) = access_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
+    if let Ok(c) = refresh_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
+
+    Ok(response_headers)
 }
 
 /// Register new user (local auth only).
@@ -282,14 +316,24 @@ pub async fn register(
     }))
 }
 
-/// Refresh access token.
-#[tracing::instrument(skip(state, payload))]
 pub async fn refresh(
     State(state): State<AppState>,
-    Json(payload): Json<RefreshRequest>,
-) -> Result<Json<LoginResponse>> {
+    headers: HeaderMap,
+) -> Result<(HeaderMap, Json<LoginResponse>)> {
+    let mut refresh_token = None;
+    if let Some(cookie_header) = headers.get(header::COOKIE).and_then(|h| h.to_str().ok()) {
+        for cookie in cookie_header.split(';') {
+            let cookie = cookie.trim();
+            if let Some(t) = cookie.strip_prefix("refresh_token=") {
+                refresh_token = Some(t.to_string());
+                break;
+            }
+        }
+    }
+    let refresh_token = refresh_token.ok_or(Error::InvalidToken)?;
+
     // Verify refresh token
-    let claims = verify_token(&payload.refresh_token, &state.jwt_secret)?;
+    let claims = verify_token(&refresh_token, &state.jwt_secret)?;
 
     // Ensure it's a refresh token
     if claims.token_type != "refresh" {
@@ -331,12 +375,25 @@ pub async fn refresh(
 
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "Token refreshed");
 
-    Ok(Json(LoginResponse {
+    let access_cookie = format!(
+        "access_token={}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age={}",
+        tokens.access_token, tokens.expires_in
+    );
+    let refresh_cookie = format!(
+        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/refresh; Max-Age=604800",
+        tokens.refresh_token
+    );
+
+    let mut response_headers = HeaderMap::new();
+    if let Ok(c) = access_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
+    if let Ok(c) = refresh_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
+
+    Ok((response_headers, Json(LoginResponse {
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         token_type: "Bearer".to_string(),
         expires_in: tokens.expires_in,
-    }))
+    })))
 }
 
 /// Get current user info.

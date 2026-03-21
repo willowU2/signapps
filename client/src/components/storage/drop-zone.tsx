@@ -180,12 +180,7 @@ export function DropZone({
       });
 
       xhr.open('POST', `${process.env.NEXT_PUBLIC_STORAGE_URL || 'http://localhost:3004/api/v1'}/files/${bucket}`);
-
-      // Set auth header (must be after xhr.open)
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      if (token) {
-        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      }
+      xhr.withCredentials = true; // Send HttpOnly cookies for auth
 
       xhr.send(formData);
 

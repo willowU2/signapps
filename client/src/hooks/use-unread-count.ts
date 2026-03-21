@@ -7,10 +7,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { calendarApiClient } from '@/lib/api/core';
 import { useAuthStore } from '@/lib/store';
 
-function hasAccessToken(): boolean {
-  if (typeof window === 'undefined') return false;
-  return !!localStorage.getItem('access_token');
-}
+// Access token checks are obsolete with HttpOnly cookies
 
 export interface UseUnreadCountReturn {
   unreadCount: number;
@@ -34,7 +31,7 @@ export function useUnreadCount(initialInterval: number = 30000): UseUnreadCountR
 
   // Fetch unread count
   const fetchUnreadCount = useCallback(async () => {
-    if (!isAuthenticated || !hasAccessToken()) return;
+    if (!isAuthenticated) return;
     try {
       setError(null);
 
@@ -52,7 +49,7 @@ export function useUnreadCount(initialInterval: number = 30000): UseUnreadCountR
 
   // Fetch on mount (only if authenticated)
   useEffect(() => {
-    if (isAuthenticated && hasAccessToken()) {
+    if (isAuthenticated) {
       setLoading(true);
       fetchUnreadCount();
     } else {

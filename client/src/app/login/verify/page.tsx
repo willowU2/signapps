@@ -71,9 +71,7 @@ export default function VerifyPage() {
       const response = await authApi.mfaVerify(mfaSessionToken, verificationCode);
 
       if (response.data.access_token && response.data.refresh_token) {
-        // Store tokens
-        localStorage.setItem('access_token', response.data.access_token);
-        localStorage.setItem('refresh_token', response.data.refresh_token);
+        // Tokens are stored securely in HttpOnly cookies by the backend
 
         // Set user in store
         if (response.data.user) {

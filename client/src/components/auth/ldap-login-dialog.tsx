@@ -68,8 +68,7 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
 
       // Store tokens
       if (response.data.access_token && response.data.refresh_token) {
-        localStorage.setItem('access_token', response.data.access_token);
-        localStorage.setItem('refresh_token', response.data.refresh_token);
+        // Tokens are now stored securely in HttpOnly cookies by the backend
 
         // Set user data
         if (response.data.user) {

@@ -36,10 +36,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Initialize auth state on mount
   useEffect(() => {
     const initAuth = async () => {
-      const accessToken = localStorage.getItem('access_token');
-      const refreshToken = localStorage.getItem('refresh_token');
+      const authStorageStr = localStorage.getItem('auth-storage');
+      let isPresumedAuthenticated = false;
 
-      if (!accessToken) {
+      if (authStorageStr) {
+        try {
+          const authData = JSON.parse(authStorageStr);
+          isPresumedAuthenticated = authData?.state?.isAuthenticated === true;
+        } catch {
+            isPresumedAuthenticated = false;
+        }
+      }
+
+      if (!isPresumedAuthenticated) {
         setLoading(false);
         syncAuthCookie(false);
         return;

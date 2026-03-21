@@ -18,9 +18,6 @@ export function useNotificationsSSE() {
   useEffect(() => {
     if (!user) return;
 
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
-
     const baseUrl = getServiceUrl(ServiceName.SCHEDULER);
     const url = `${baseUrl}/notifications/stream`;
 
@@ -30,8 +27,8 @@ export function useNotificationsSSE() {
       try {
         await fetchEventSource(url, {
           method: 'GET',
+          credentials: 'include', // Ensure HttpOnly cookies are sent
           headers: {
-            Authorization: `Bearer ${token}`,
             Accept: 'text/event-stream',
           },
           signal: controller.signal,

@@ -62,8 +62,7 @@ export default function LoginPage() {
 
       // Store tokens
       if (response.data.access_token && response.data.refresh_token) {
-        localStorage.setItem('access_token', response.data.access_token);
-        localStorage.setItem('refresh_token', response.data.refresh_token);
+        // Tokens are now stored securely in HttpOnly cookies by the backend
 
         // Set user data from response or fetch it
         if (response.data.user) {

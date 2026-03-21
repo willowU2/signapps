@@ -32,7 +32,7 @@ pub use vector_repository::VectorRepository;
 pub mod calendar_repository;
 pub use calendar_repository::{
     CalendarMemberRepository, CalendarRepository, EventAttendeeRepository, EventRepository,
-    ResourceRepository, TaskRepository,
+    FloorPlanRepository, ResourceRepository, TaskRepository,
 };
 
 pub mod notification_repository;
@@ -69,3 +69,5 @@ pub use scheduling_repository::{
     SchedulingTemplateRepository, TimeItemDependencyRepository, TimeItemGroupRepository,
     TimeItemRepository, TimeItemUserRepository,
 };
+pub mod metrics_repository;
+pub use metrics_repository::{MetricsRepository, WorkloadMetrics, ResourceMetrics};

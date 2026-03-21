@@ -121,8 +121,7 @@ export function ContainerTerminal({
     setStatus('connecting');
     terminal.writeln('\x1b[33mConnecting...\x1b[0m');
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-    const wsUrl = `${getWsUrl()}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    const wsUrl = getWsUrl();
 
     try {
       const ws = new WebSocket(wsUrl);

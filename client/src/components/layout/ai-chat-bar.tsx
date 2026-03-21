@@ -99,12 +99,11 @@ export function AiChatBar() {
     abortControllerRef.current = controller;
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       const res = await fetch(`${AI_URL}/ai/chat/stream`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           question,
@@ -119,9 +118,9 @@ export function AiChatBar() {
         // Fallback to non-streaming
         const fallbackRes = await fetch(`${AI_URL}/ai/chat`, {
           method: 'POST',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
             question,

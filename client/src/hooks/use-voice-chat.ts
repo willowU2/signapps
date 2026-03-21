@@ -193,9 +193,6 @@ export function useVoiceChat({
         );
 
         // Open WebSocket
-        const token = typeof window !== 'undefined'
-          ? localStorage.getItem('access_token')
-          : null;
         const wsUrl = getVoiceWebSocketUrl();
         const ws = new WebSocket(wsUrl);
         ws.binaryType = 'arraybuffer';
@@ -204,7 +201,6 @@ export function useVoiceChat({
           // Send config message
           ws.send(JSON.stringify({
             type: 'config',
-            token: token || undefined,
             provider: provider || undefined,
             model: model || undefined,
             language: language || undefined,

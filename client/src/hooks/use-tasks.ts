@@ -50,9 +50,9 @@ export function useTasks(calendarId?: string) {
         setError(null);
         const response = await fetch(`${API_BASE}/calendars/${calendarId}/tasks`, {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
           },
           body: JSON.stringify(data),
         });
@@ -73,9 +73,9 @@ export function useTasks(calendarId?: string) {
       setError(null);
       const response = await fetch(`${API_BASE}/tasks/${id}`, {
         method: "PUT",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
         body: JSON.stringify(data),
       });
@@ -95,9 +95,9 @@ export function useTasks(calendarId?: string) {
         setError(null);
         const response = await fetch(`${API_BASE}/tasks/${id}/move`, {
           method: "PUT",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
           },
           body: JSON.stringify({ new_parent_id: newParentId || null }),
         });
@@ -118,9 +118,7 @@ export function useTasks(calendarId?: string) {
       setError(null);
       const response = await fetch(`${API_BASE}/tasks/${id}/complete`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
+        credentials: "include",
       });
 
       if (!response.ok) throw new Error("Failed to complete task");
@@ -136,9 +134,7 @@ export function useTasks(calendarId?: string) {
       setError(null);
       const response = await fetch(`${API_BASE}/tasks/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
+        credentials: "include",
       });
 
       if (!response.ok) throw new Error("Failed to delete task");
@@ -156,9 +152,7 @@ export function useTasks(calendarId?: string) {
       try {
         setIsLoading(true);
         const response = await fetch(`${API_BASE}/calendars/${calendarId}/tasks/tree`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
+          credentials: "include",
         });
 
         if (!response.ok) throw new Error("Failed to fetch task tree");

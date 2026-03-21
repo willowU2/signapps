@@ -13,6 +13,7 @@ use axum::{
 use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use std::sync::Arc;
 use tokio::sync::broadcast;
+use tokio_stream::StreamExt;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
@@ -25,7 +26,7 @@ use signapps_common::middleware::AuthState;
 use signapps_common::{JwtConfig, Result};
 use signapps_db::DatabasePool;
 
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct NotificationMessage {
     pub user_id: uuid::Uuid,
     pub title: String,
@@ -40,6 +41,7 @@ pub struct AppState {
     pub scheduler: SchedulerService,
     pub jwt_config: JwtConfig,
     pub tx_notifications: broadcast::Sender<NotificationMessage>,
+    pub redis_client: Option<redis::Client>,
 }
 
 impl AuthState for AppState {
@@ -89,12 +91,56 @@ async fn main() -> Result<()> {
 
     // Create application state
     let (tx_notifications, _) = broadcast::channel(100);
-    
+
+    // Try to connect to Redis for Pub/Sub notifications
+    let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+    let redis_client = match redis::Client::open(redis_url) {
+        Ok(client) => Some(client),
+        Err(e) => {
+            tracing::warn!("Failed to create Redis client for notifications: {}. Falling back to local-only broadcasts.", e);
+            None
+        }
+    };
+
+    // Spawn Redis Pub/Sub listener if client is available
+    if let Some(client) = redis_client.clone() {
+        let tx = tx_notifications.clone();
+        tokio::spawn(async move {
+            tracing::info!("Starting Redis Pub/Sub listener for notifications");
+            loop {
+                match client.get_async_pubsub().await {
+                    Ok(mut pubsub) => {
+                        if let Err(e) = pubsub.subscribe("signapps_notifications").await {
+                            tracing::error!("Failed to subscribe to Redis channel: {}", e);
+                            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+                            continue;
+                        }
+                        
+                        let mut stream = pubsub.on_message();
+                        while let Some(msg) = stream.next().await {
+                            if let Ok(payload) = msg.get_payload::<String>() {
+                                if let Ok(notification) = serde_json::from_str::<NotificationMessage>(&payload) {
+                                    // Broadcast to local SSE clients
+                                    let _ = tx.send(notification);
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!("Failed to establish Redis Pub/Sub connection: {}", e);
+                        tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+                    }
+                }
+            }
+        });
+    }
+
     let state = AppState {
         pool,
         scheduler,
         jwt_config,
         tx_notifications,
+        redis_client,
     };
 
     // Build router
@@ -358,6 +404,18 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // Metrics routes (Option C)
+    let metrics_routes = Router::new()
+        .route("/workload", get(handlers::metrics::get_workload))
+        .route("/resources", get(handlers::metrics::get_resources))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .nest("/api/v1/jobs", job_routes)
@@ -378,6 +436,7 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/scheduling/templates", template_routes)
         .nest("/api/v1/scheduling/preferences", preferences_routes)
         .nest("/api/v1/notifications", notifications_routes)
+        .nest("/api/v1/metrics", metrics_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

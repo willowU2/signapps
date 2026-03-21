@@ -23,3 +23,4 @@ export * from './keep';
 export * from './tenant';
 export * from './resources';
 export * from './workforce';
+export * from './metrics';

@@ -44,14 +44,31 @@ pub async fn auth_middleware<S: AuthState>(
     mut request: Request,
     next: Next,
 ) -> Result<Response, Error> {
-    let auth_header = request
-        .headers()
-        .get(header::AUTHORIZATION)
-        .and_then(|h| h.to_str().ok());
+    let mut token = None;
 
-    let token = match auth_header {
-        Some(h) if h.starts_with("Bearer ") => &h[7..],
-        _ => return Err(Error::Unauthorized),
+    // First try Authorization header
+    if let Some(auth_header) = request.headers().get(header::AUTHORIZATION).and_then(|h| h.to_str().ok()) {
+        if let Some(t) = auth_header.strip_prefix("Bearer ") {
+            token = Some(t);
+        }
+    }
+
+    // Fallback to Cookies
+    if token.is_none() {
+        if let Some(cookie_header) = request.headers().get(header::COOKIE).and_then(|h| h.to_str().ok()) {
+            for cookie in cookie_header.split(';') {
+                let cookie = cookie.trim();
+                if let Some(t) = cookie.strip_prefix("access_token=") {
+                    token = Some(t);
+                    break;
+                }
+            }
+        }
+    }
+
+    let token = match token {
+        Some(t) => t,
+        None => return Err(Error::Unauthorized),
     };
 
     // Verify JWT token
@@ -84,17 +101,31 @@ pub async fn optional_auth_middleware<S: AuthState>(
     mut request: Request,
     next: Next,
 ) -> Response {
-    if let Some(auth_header) = request
-        .headers()
-        .get(header::AUTHORIZATION)
-        .and_then(|h| h.to_str().ok())
-    {
-        if let Some(token) = auth_header.strip_prefix("Bearer ") {
-            if let Ok(claims) = verify_token(token, state.jwt_config()) {
-                let now = chrono::Utc::now().timestamp();
-                if claims.exp >= now && claims.token_type == "access" {
-                    request.extensions_mut().insert(claims);
+    let mut token = None;
+
+    if let Some(auth_header) = request.headers().get(header::AUTHORIZATION).and_then(|h| h.to_str().ok()) {
+        if let Some(t) = auth_header.strip_prefix("Bearer ") {
+            token = Some(t);
+        }
+    }
+
+    if token.is_none() {
+        if let Some(cookie_header) = request.headers().get(header::COOKIE).and_then(|h| h.to_str().ok()) {
+            for cookie in cookie_header.split(';') {
+                let cookie = cookie.trim();
+                if let Some(t) = cookie.strip_prefix("access_token=") {
+                    token = Some(t);
+                    break;
                 }
+            }
+        }
+    }
+
+    if let Some(t) = token {
+        if let Ok(claims) = verify_token(t, state.jwt_config()) {
+            let now = chrono::Utc::now().timestamp();
+            if claims.exp >= now && claims.token_type == "access" {
+                request.extensions_mut().insert(claims);
             }
         }
     }
