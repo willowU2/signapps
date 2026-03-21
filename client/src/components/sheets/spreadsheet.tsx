@@ -2001,11 +2001,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     <TBtn onClick={toggleFilter} active={filterCol !== null} title="Filtre"><Filter className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={toggleFreeze} active={freezeRows > 0 || freezeCols > 0} title="Figer lignes/colonnes"><Snowflake className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => setShowCondFormat(true)} active={condRules.length > 0} title="Mise en forme conditionnelle"><Palette className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => exportXLSX('csv')} title="Exporter CSV"><Download className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => fileInputRef.current?.click()} title="Importer (CSV/XLSX)"><Upload className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => { if (!activeCell) return; const vals = prompt("Valeurs de la liste (séparées par des virgules):"); if (vals) { setCellValidation(activeCell.r, activeCell.c, { type: 'list', values: vals.split(',').map(v => v.trim()) }); toast.success('Validation ajoutée') } }} title="Validation des données"><ListChecks className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => setBandedRows(!bandedRows)} active={bandedRows} title="Couleurs alternées"><StretchHorizontal className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => { if (!selectionBounds) return; const isLocked = activeCellStyle.locked; applyToSelection({ locked: !isLocked }); toast.success(isLocked ? 'Cellules d\u00E9verrouill\u00E9es' : 'Cellules verrouill\u00E9es') }} active={!!activeCellStyle.locked} title={activeCellStyle.locked ? "D\u00E9verrouiller" : "Verrouiller"}>{activeCellStyle.locked ? <Lock className="w-[18px] h-[18px]" /> : <Unlock className="w-[18px] h-[18px]" />}</TBtn>
+
                     {/* Functions helper */}
                     <div className="relative" data-popover>
                         <TBtn onClick={() => setShowFunctionHelper(!showFunctionHelper)} title="Fonctions"><Sigma className="w-[18px] h-[18px]" /></TBtn>
