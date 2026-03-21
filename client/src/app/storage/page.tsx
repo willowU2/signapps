@@ -26,7 +26,7 @@ import { StorageFileGrid } from '@/components/storage/storage-file-grid';
 import { StorageHeader } from '@/components/storage/storage-header';
 import { RenameSheet } from '@/components/storage/rename-sheet';
 import { MoveToSheet } from '@/components/storage/move-to-sheet';
-import { Upload, Folder, FileText, Image as ImageIcon, Search, ChevronRight, ChevronDown, MoreVertical, Download, Trash2, FolderPlus, Home, FileArchive, FileCode, Plus, Database, LayoutDashboard, HardDrive, FolderOpen, Usb, Share2, Eye, Lock, Star, LayoutGrid, List as ListIcon, AlignLeft, // Added for tree view } from 'lucide-react';
+import { Upload, Folder, FileText, Image as ImageIcon, Search, ChevronRight, ChevronDown, MoreVertical, Download, Trash2, FolderPlus, Home, FileArchive, FileCode, Plus, Database, LayoutDashboard, HardDrive, FolderOpen, Usb, Share2, Eye, Lock, Star, LayoutGrid, List as ListIcon, AlignLeft } from 'lucide-react'; // Added for tree view
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,7 @@ import { UploadSheet } from '@/components/storage/upload-sheet';
 import { FilePreviewDialog } from '@/components/storage/file-preview-dialog';
 import { FolderTree } from '@/components/storage/folder-tree';
 import { PermissionsSheet } from '@/components/storage/permissions-sheet';
-import { DropZone } from '@/components/storage/drop-zone';
+import { FileUploadProgressBar } from '@/components/application/file-upload/file-upload-progress-bar';
 
 import { ManageTagsSheet } from '@/components/storage/manage-tags-sheet';
 import { FileTagsSheet } from '@/components/storage/file-tags-sheet';
@@ -715,12 +715,12 @@ export default function StoragePage() {
                       )}
                     </div>
                   ) : currentBucket ? (
-                    <DropZone
-                      bucket={currentBucket}
-                      prefix={currentPath.length > 0 ? currentPath.join('/') : undefined}
-                      onUploadComplete={fetchFiles}
-                      className="flex-1 min-h-[400px]"
-                    >
+                    <div className="flex-1 min-h-[400px] flex flex-col gap-4">
+  <FileUploadProgressBar
+    bucket={currentBucket}
+    prefix={currentPath.length > 0 ? currentPath.join('/') : undefined}
+    onUploadComplete={fetchFiles}
+  />
                       {loading ? (
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                           {[...Array(10)].map((_, i) => (
@@ -743,7 +743,7 @@ export default function StoragePage() {
                           onAction={handleAction}
                         />
                       )}
-                    </DropZone>
+                    </div>
                   ) : (
                     <div className="h-full flex flex-col min-h-[400px]">
                       {loading ? (
