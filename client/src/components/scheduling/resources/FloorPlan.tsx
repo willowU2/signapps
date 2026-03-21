@@ -8,6 +8,7 @@
 'use client';
 
 import * as React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -473,24 +474,44 @@ export function FloorPlan({
               />
             </pattern>
           </defs>
-          <rect
-            width={floorPlan.width}
-            height={floorPlan.height}
-            fill="url(#floor-grid)"
-          />
+          {/* Background grid pattern (only if no SVG map) */}
+          {!floorPlan.svgContent && (
+            <rect
+              width={floorPlan.width}
+              height={floorPlan.height}
+              fill="url(#floor-grid)"
+            />
+          )}
 
-          {/* Building outline */}
-          <rect
-            x={20}
-            y={20}
-            width={floorPlan.width - 40}
-            height={floorPlan.height - 40}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-border"
-            rx={8}
-          />
+          {/* User uploaded Blueprint Map */}
+          {floorPlan.svgContent && (
+            <image
+              href={
+                floorPlan.svgContent.startsWith('<svg') 
+                  ? `data:image/svg+xml;utf8,${encodeURIComponent(floorPlan.svgContent)}` 
+                  : floorPlan.svgContent
+              }
+              width={floorPlan.width}
+              height={floorPlan.height}
+              className="opacity-95 dark:opacity-80 transition-opacity pointer-events-none"
+              preserveAspectRatio="xMidYMid meet"
+            />
+          )}
+
+          {/* Fallback Building outline */}
+          {!floorPlan.svgContent && (
+            <rect
+              x={20}
+              y={20}
+              width={floorPlan.width - 40}
+              height={floorPlan.height - 40}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-border"
+              rx={8}
+            />
+          )}
 
           {/* Resources */}
           {filteredResources.map((fpResource) => {
@@ -525,6 +546,13 @@ export function FloorPlan({
                 onMouseLeave={() => setHoveredResourceId(null)}
                 className="cursor-pointer"
               >
+                {/* Native Browser Tooltip */}
+                <title>
+                  {fpResource.name}
+                  {resource.capacity ? ` (${resource.capacity} pers.)` : ''} - 
+                  {status.available ? ' Disponible' : ' Occupé'}
+                </title>
+
                 {/* Room shape */}
                 <rect
                   x={fpResource.bounds.x}
@@ -610,17 +638,27 @@ export function FloorPlan({
       </div>
 
       {/* Selected resource detail panel */}
-      {viewState.selectedResourceId && (
-        <ResourceDetailPanel
-          resourceId={viewState.selectedResourceId}
-          resources={resources}
-          floorPlanResources={floorPlan.resources}
-          status={getResourceStatus(viewState.selectedResourceId)}
-          currentTime={currentTime}
-          onClose={() => onResourceSelect?.(null)}
-          onBook={onResourceBook}
-        />
-      )}
+      <AnimatePresence>
+        {viewState.selectedResourceId && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute bottom-4 right-4 w-80 shadow-2xl rounded-xl overflow-hidden"
+          >
+            <ResourceDetailPanel
+              resourceId={viewState.selectedResourceId}
+              resources={resources}
+              floorPlanResources={floorPlan.resources}
+              status={getResourceStatus(viewState.selectedResourceId)}
+              currentTime={currentTime}
+              onClose={() => onResourceSelect?.(null)}
+              onBook={onResourceBook}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -657,7 +695,7 @@ function ResourceDetailPanel({
     date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="border-t p-4 bg-background">
+    <div className="border border-border/50 p-4 bg-background/95 backdrop-blur-sm">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="font-semibold">{fpResource.name}</h3>
@@ -665,7 +703,7 @@ function ResourceDetailPanel({
             {resource.location || floorPlanResources[0]?.name}
           </p>
         </div>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-muted/50 hover:bg-muted" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -737,118 +775,3 @@ function ResourceDetailPanel({
   );
 }
 
-// ============================================================================
-// Mock Data Generator (for development)
-// ============================================================================
-
-export function generateMockFloorPlan(): FloorPlanData {
-  return {
-    id: 'floor-1',
-    name: 'Rez-de-chauss\u00e9e',
-    floor: '0',
-    width: 800,
-    height: 600,
-    resources: [
-      {
-        id: 'fp-1',
-        resourceId: 'room-1',
-        name: 'Salle Horizon',
-        type: 'room',
-        path: '',
-        bounds: { x: 50, y: 50, width: 150, height: 120 },
-        capacity: 10,
-        amenities: ['visioconference', 'wifi', 'ecran'],
-      },
-      {
-        id: 'fp-2',
-        resourceId: 'room-2',
-        name: 'Salle Zenith',
-        type: 'room',
-        path: '',
-        bounds: { x: 220, y: 50, width: 180, height: 120 },
-        capacity: 6,
-        amenities: ['wifi', 'ecran'],
-      },
-      {
-        id: 'fp-3',
-        resourceId: 'room-3',
-        name: 'Phone Booth A',
-        type: 'room',
-        path: '',
-        bounds: { x: 420, y: 50, width: 80, height: 80 },
-        capacity: 2,
-        amenities: ['wifi'],
-      },
-      {
-        id: 'fp-4',
-        resourceId: 'room-4',
-        name: 'Phone Booth B',
-        type: 'room',
-        path: '',
-        bounds: { x: 520, y: 50, width: 80, height: 80 },
-        capacity: 2,
-        amenities: ['wifi'],
-      },
-      {
-        id: 'fp-5',
-        resourceId: 'room-5',
-        name: 'Salle Innovation',
-        type: 'room',
-        path: '',
-        bounds: { x: 50, y: 200, width: 200, height: 150 },
-        capacity: 20,
-        amenities: ['visioconference', 'wifi', 'ecran', 'cafe'],
-      },
-      {
-        id: 'fp-6',
-        resourceId: 'room-6',
-        name: 'Open Space A',
-        type: 'zone',
-        path: '',
-        bounds: { x: 270, y: 200, width: 250, height: 150 },
-        capacity: 30,
-        amenities: ['wifi'],
-      },
-      {
-        id: 'fp-7',
-        resourceId: 'room-7',
-        name: 'Cafeteria',
-        type: 'zone',
-        path: '',
-        bounds: { x: 540, y: 200, width: 180, height: 150 },
-        capacity: 40,
-        amenities: ['wifi', 'cafe'],
-      },
-      {
-        id: 'fp-8',
-        resourceId: 'room-8',
-        name: 'Salle Formation',
-        type: 'room',
-        path: '',
-        bounds: { x: 50, y: 380, width: 300, height: 180 },
-        capacity: 50,
-        amenities: ['visioconference', 'wifi', 'ecran'],
-      },
-      {
-        id: 'fp-9',
-        resourceId: 'room-9',
-        name: 'Meeting Room C',
-        type: 'room',
-        path: '',
-        bounds: { x: 380, y: 380, width: 140, height: 100 },
-        capacity: 8,
-        amenities: ['wifi', 'ecran'],
-      },
-      {
-        id: 'fp-10',
-        resourceId: 'room-10',
-        name: 'Meeting Room D',
-        type: 'room',
-        path: '',
-        bounds: { x: 540, y: 380, width: 140, height: 100 },
-        capacity: 8,
-        amenities: ['wifi', 'visioconference'],
-      },
-    ],
-  };
-}

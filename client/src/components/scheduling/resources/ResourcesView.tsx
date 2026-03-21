@@ -22,6 +22,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  Map,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -39,12 +40,14 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ResourceCard, ResourceCardCompact } from './ResourceCard';
 import { BookingSheet } from './BookingSheet';
+import { FloorPlan } from './FloorPlan';
 import {
   useResources,
   useBookings,
   useCreateBooking,
   useUpdateBooking,
   useDeleteBooking,
+  useFloorPlans,
 } from '@/lib/scheduling/api/resources';
 import type { Resource, Booking } from '@/lib/scheduling/types/scheduling';
 
@@ -56,7 +59,7 @@ interface ResourcesViewProps {
   className?: string;
 }
 
-type ViewMode = 'grid' | 'list' | 'calendar';
+type ViewMode = 'grid' | 'list' | 'calendar' | 'floorplan';
 type ResourceType = Resource['type'];
 
 // ============================================================================
@@ -230,6 +233,7 @@ export function ResourcesView({ className }: ResourcesViewProps) {
   // Data
   const { data: resources = [], isLoading: resourcesLoading } = useResources();
   const { data: bookings = [], isLoading: bookingsLoading } = useBookings();
+  const { data: floorPlans = [], isLoading: floorPlansLoading } = useFloorPlans();
   const createBooking = useCreateBooking();
   const updateBooking = useUpdateBooking();
   const deleteBooking = useDeleteBooking();
@@ -289,6 +293,16 @@ export function ResourcesView({ className }: ResourcesViewProps) {
     setIsBookingSheetOpen(true);
   };
 
+  const handleFloorPlanBook = (resourceId: string, slot: { start: Date; end: Date }) => {
+    const resource = resources.find(r => r.id === resourceId);
+    if (resource) {
+      setSelectedResource(resource);
+      setEditingBooking(null);
+      setBookingDate(slot.start);
+      setIsBookingSheetOpen(true);
+    }
+  };
+
   const handleSaveBooking = (data: Partial<Booking>) => {
     if (editingBooking) {
       updateBooking.mutate({ id: editingBooking.id, updates: data });
@@ -315,7 +329,7 @@ export function ResourcesView({ className }: ResourcesViewProps) {
     }
   };
 
-  const isLoading = resourcesLoading || bookingsLoading;
+  const isLoading = resourcesLoading || bookingsLoading || floorPlansLoading;
 
   if (isLoading) {
     return (
@@ -400,6 +414,9 @@ export function ResourcesView({ className }: ResourcesViewProps) {
             <TabsTrigger value="calendar">
               <Building2 className="h-4 w-4" />
             </TabsTrigger>
+            <TabsTrigger value="floorplan">
+              <Map className="h-4 w-4" />
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -462,6 +479,24 @@ export function ResourcesView({ className }: ResourcesViewProps) {
             onBookingClick={handleBookingClick}
             onSlotClick={handleSlotClick}
           />
+        )}
+
+        {viewMode === 'floorplan' && (
+          <div className="h-full border rounded-lg overflow-hidden bg-background">
+            {floorPlans.length > 0 ? (
+              <FloorPlan
+                floorPlan={floorPlans[0]}
+                resources={filteredResources}
+                bookings={bookings}
+                currentTime={currentDate}
+                onResourceBook={handleFloorPlanBook}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                Aucun plan au sol configuré.
+              </div>
+            )}
+          </div>
         )}
       </div>
 

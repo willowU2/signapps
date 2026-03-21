@@ -154,6 +154,8 @@ export interface TeamMember {
   role?: string;
   department?: string;
   workingHours?: WorkingHours;
+  managerId?: string | null;
+  orgNodeId?: string;
 }
 
 export interface WorkingHours {
@@ -357,6 +359,7 @@ export interface EventLocation {
 export interface FloorPlanData {
   id: string;
   name: string;
+  description?: string;
   floor: string;
   buildingId?: string;
   svgContent?: string; // Raw SVG or URL

@@ -30,6 +30,7 @@ import { ViewSwitcher, ViewSwitcherDropdown } from './ViewSwitcher';
 import { DateNavigator, DateNavigatorCompact } from './DateNavigator';
 import { BottomTabs, BottomTabsSpacer, MobileScopeSwitcher } from '../mobile/BottomTabs';
 import { FAB } from '../quick-actions/FAB';
+import { MiniMonthView } from '../views/MonthView';
 import type { ScopeType, ViewType } from '@/lib/scheduling/types';
 
 // ============================================================================
@@ -114,6 +115,20 @@ function Sidebar({
           )}
         </Button>
       </div>
+
+      {/* Mini Calendar */}
+      <AnimatePresence mode="wait">
+        {!collapsed && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-4 py-3 border-b overflow-hidden"
+          >
+            <MiniMonthView />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Scope Selection (MOI / EUX / NOUS) */}
       <nav className="flex-1 space-y-1 p-2">

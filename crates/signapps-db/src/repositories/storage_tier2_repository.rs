@@ -84,7 +84,7 @@ impl StorageTier2Repository {
         tag_id: Uuid,
         user_id: Uuid,
     ) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query!(
+        let result: sqlx::postgres::PgQueryResult = sqlx::query!(
             r#"
             DELETE FROM storage.tags
             WHERE id = $1 AND user_id = $2
@@ -149,7 +149,7 @@ impl StorageTier2Repository {
         file_id: Uuid,
         tag_id: Uuid,
     ) -> Result<u64, sqlx::Error> {
-        let result = sqlx::query!(
+        let result: sqlx::postgres::PgQueryResult = sqlx::query!(
             r#"
             DELETE FROM storage.file_tags
             WHERE file_id = $1 AND tag_id = $2

@@ -29,6 +29,8 @@ import { Button } from '@/components/ui/button';
 import { useCalendarStore } from '@/stores/scheduling/calendar-store';
 import { useSchedulingStore } from '@/stores/scheduling/scheduling-store';
 import type { TimeItem } from '@/lib/scheduling/types';
+import { DndContext, useDraggable, useDroppable, DragEndEvent } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 
 // ============================================================================
 // Types
@@ -50,6 +52,60 @@ interface MonthViewProps {
 function getItemDate(item: TimeItem): Date | null {
   if (!item.startTime) return null;
   return typeof item.startTime === 'string' ? parseISO(item.startTime) : item.startTime;
+}
+
+// ============================================================================
+// Draggable Event Component
+// ============================================================================
+
+function DraggableEvent({ item, onClick }: { item: TimeItem; onClick?: (e: React.MouseEvent) => void }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: item.id,
+    data: { item }
+  });
+
+  const style: React.CSSProperties = {
+    backgroundColor: item.allDay
+      ? item.color || 'hsl(var(--primary))'
+      : `${item.color || 'hsl(var(--primary))'}10`,
+    borderLeftColor: !item.allDay
+      ? item.color || 'hsl(var(--primary))'
+      : undefined,
+  };
+
+  if (transform) {
+    style.transform = CSS.Translate.toString(transform);
+    style.zIndex = 50;
+    style.position = 'relative';
+  }
+
+  if (isDragging) {
+    style.opacity = 0.5;
+  }
+
+  const startTime = getItemDate(item);
+
+  return (
+    <button
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+      className={cn(
+        'w-full text-left text-[11px] px-1.5 py-0.5 rounded truncate touch-none',
+        'hover:opacity-80 transition-opacity cursor-grab active:cursor-grabbing',
+        item.allDay ? 'text-white' : 'border-l-2'
+      )}
+      style={style}
+    >
+      {!item.allDay && startTime && (
+        <span className="text-muted-foreground mr-1">
+          {format(startTime, 'HH:mm', { locale: fr })}
+        </span>
+      )}
+      <span className={item.allDay ? '' : 'font-medium'}>{item.title}</span>
+    </button>
+  );
 }
 
 // ============================================================================
@@ -77,11 +133,16 @@ function DayCell({
   const visibleItems = items.slice(0, maxItems);
   const hiddenCount = items.length - maxItems;
 
+  const dateKey = format(date, 'yyyy-MM-dd');
+  const { setNodeRef, isOver } = useDroppable({ id: dateKey });
+
   return (
     <div
+      ref={setNodeRef}
       className={cn(
         'min-h-[100px] border-b border-r p-1 transition-colors group',
-        'hover:bg-accent/30 cursor-pointer',
+        'hover:bg-accent/30 cursor-pointer relative',
+        isOver && 'bg-accent/50 ring-2 ring-inset ring-primary/50',
         !isCurrentMonth && 'bg-muted/30 text-muted-foreground'
       )}
       onClick={() => onDayClick?.(date)}
@@ -118,33 +179,14 @@ function DayCell({
           const startTime = getItemDate(item);
 
           return (
-            <button
+            <DraggableEvent
               key={item.id}
+              item={item}
               onClick={(e) => {
                 e.stopPropagation();
                 onItemClick?.(item);
               }}
-              className={cn(
-                'w-full text-left text-[11px] px-1.5 py-0.5 rounded truncate',
-                'hover:opacity-80 transition-opacity',
-                item.allDay ? 'text-white' : 'border-l-2'
-              )}
-              style={{
-                backgroundColor: item.allDay
-                  ? item.color || 'hsl(var(--primary))'
-                  : `${item.color || 'hsl(var(--primary))'}10`,
-                borderLeftColor: !item.allDay
-                  ? item.color || 'hsl(var(--primary))'
-                  : undefined,
-              }}
-            >
-              {!item.allDay && startTime && (
-                <span className="text-muted-foreground mr-1">
-                  {format(startTime, 'HH:mm', { locale: fr })}
-                </span>
-              )}
-              <span className={item.allDay ? '' : 'font-medium'}>{item.title}</span>
-            </button>
+            />
           );
         })}
 
@@ -184,6 +226,7 @@ export function MonthView({
   const storeItems = useSchedulingStore((state) => state.timeItems);
   const isLoading = useSchedulingStore((state) => state.isLoading);
   const fetchTimeItems = useSchedulingStore((state) => state.fetchTimeItems);
+  const moveTimeItem = useSchedulingStore((state) => state.moveTimeItem);
 
   const items = propItems || storeItems;
 
@@ -265,8 +308,34 @@ export function MonthView({
     );
   }
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const itemId = active.id as string;
+    const targetDateStr = over.id as string;
+    const item = active.data.current?.item as TimeItem;
+
+    if (!item) return;
+
+    const originalStart = item.startTime ? new Date(item.startTime) : new Date();
+    const updatedStart = parseISO(targetDateStr);
+    updatedStart.setHours(originalStart.getHours(), originalStart.getMinutes(), 0, 0);
+
+    let endStr: string | undefined = undefined;
+    if (item.endTime) {
+      const originalEnd = new Date(item.endTime);
+      const diffMs = originalEnd.getTime() - originalStart.getTime();
+      const updatedEnd = new Date(updatedStart.getTime() + diffMs);
+      endStr = updatedEnd.toISOString();
+    }
+
+    moveTimeItem(itemId, updatedStart.toISOString(), endStr).catch(console.error);
+  };
+
   return (
-    <div className={cn('flex h-full flex-col', className)}>
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className={cn('flex h-full flex-col', className)}>
       {/* Week Day Headers */}
       <div
         className="grid border-b bg-muted/30"
@@ -306,6 +375,7 @@ export function MonthView({
         })}
       </div>
     </div>
+    </DndContext>
   );
 }
 

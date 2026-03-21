@@ -88,17 +88,22 @@ impl<'a> TimeItemRepository<'a> {
         // Owner filter based on scope
         if let Some(scope) = &query.scope {
             match scope.as_str() {
-                "moi" => conditions.push("owner_id = $2".to_string()),
-                "eux" | "nous" => {
+                "moi" | "eux" | "nous" => {
                     // Include items shared with user or where user is participant
                     conditions.push(format!(
                         "(owner_id = $2 OR id IN (SELECT time_item_id FROM scheduling.time_item_users WHERE user_id = $2))"
                     ));
                 },
-                _ => conditions.push("owner_id = $2".to_string()),
+                _ => {
+                    conditions.push(format!(
+                        "(owner_id = $2 OR id IN (SELECT time_item_id FROM scheduling.time_item_users WHERE user_id = $2))"
+                    ));
+                },
             }
         } else {
-            conditions.push("owner_id = $2".to_string());
+            conditions.push(format!(
+                "(owner_id = $2 OR id IN (SELECT time_item_id FROM scheduling.time_item_users WHERE user_id = $2))"
+            ));
         }
 
         // Date range
@@ -259,7 +264,7 @@ impl<'a> TimeItemRepository<'a> {
         // Note: Full dynamic binding would require a query builder
         // For now, use simplified approach for MVP
         let total = sqlx::query_scalar::<_, i64>(&format!(
-            "SELECT COUNT(*) FROM scheduling.time_items WHERE tenant_id = $1 AND owner_id = $2 AND deleted_at IS NULL"
+            "SELECT COUNT(DISTINCT t.id) FROM scheduling.time_items t LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id WHERE t.tenant_id = $1 AND (t.owner_id = $2 OR tu.user_id = $2) AND t.deleted_at IS NULL"
         ))
         .bind(tenant_id)
         .bind(owner_id)
@@ -267,7 +272,7 @@ impl<'a> TimeItemRepository<'a> {
         .await?;
 
         let items = sqlx::query_as::<_, TimeItem>(&format!(
-            "SELECT * FROM scheduling.time_items WHERE tenant_id = $1 AND owner_id = $2 AND deleted_at IS NULL ORDER BY {} LIMIT $3 OFFSET $4",
+            "SELECT DISTINCT t.* FROM scheduling.time_items t LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id WHERE t.tenant_id = $1 AND (t.owner_id = $2 OR tu.user_id = $2) AND t.deleted_at IS NULL ORDER BY t.{} LIMIT $3 OFFSET $4",
             order_clause
         ))
         .bind(tenant_id)
@@ -357,13 +362,14 @@ impl<'a> TimeItemRepository<'a> {
     pub async fn list_unscheduled(&self, owner_id: Uuid) -> Result<Vec<TimeItem>> {
         let items = sqlx::query_as::<_, TimeItem>(
             r#"
-            SELECT * FROM scheduling.time_items
-            WHERE owner_id = $1
-              AND deleted_at IS NULL
-              AND start_time IS NULL
-              AND item_type = 'task'
-              AND status NOT IN ('done', 'cancelled')
-            ORDER BY COALESCE(deadline, created_at) ASC
+            SELECT DISTINCT t.* FROM scheduling.time_items t
+            LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id
+            WHERE t.deleted_at IS NULL
+              AND (t.owner_id = $1 OR tu.user_id = $1)
+              AND t.start_time IS NULL
+              AND t.item_type = 'task'
+              AND t.status NOT IN ('done', 'cancelled')
+            ORDER BY COALESCE(t.deadline, t.created_at) ASC
             "#,
         )
         .bind(owner_id)

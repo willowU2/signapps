@@ -10,5 +10,6 @@ pub mod tenants;
 pub mod time_items;
 pub mod users;
 pub mod workspaces;
+pub mod notifications;
 
 pub use jobs::*;

@@ -12,6 +12,7 @@ use axum::{
 };
 use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use std::sync::Arc;
+use tokio::sync::broadcast;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
@@ -24,12 +25,21 @@ use signapps_common::middleware::AuthState;
 use signapps_common::{JwtConfig, Result};
 use signapps_db::DatabasePool;
 
+#[derive(Clone, Debug, serde::Serialize)]
+pub struct NotificationMessage {
+    pub user_id: uuid::Uuid,
+    pub title: String,
+    pub message: String,
+    pub action_url: Option<String>,
+}
+
 /// Application state.
 #[derive(Clone)]
 pub struct AppState {
     pub pool: DatabasePool,
     pub scheduler: SchedulerService,
     pub jwt_config: JwtConfig,
+    pub tx_notifications: broadcast::Sender<NotificationMessage>,
 }
 
 impl AuthState for AppState {
@@ -78,10 +88,13 @@ async fn main() -> Result<()> {
     };
 
     // Create application state
+    let (tx_notifications, _) = broadcast::channel(100);
+    
     let state = AppState {
         pool,
         scheduler,
         jwt_config,
+        tx_notifications,
     };
 
     // Build router
@@ -334,6 +347,17 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // Notifications routes
+    let notifications_routes = Router::new()
+        .route("/stream", get(handlers::notifications::sse_handler))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .nest("/api/v1/jobs", job_routes)
@@ -353,6 +377,7 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/scheduling/resources", scheduling_resource_routes)
         .nest("/api/v1/scheduling/templates", template_routes)
         .nest("/api/v1/scheduling/preferences", preferences_routes)
+        .nest("/api/v1/notifications", notifications_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

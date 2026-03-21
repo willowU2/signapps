@@ -252,7 +252,21 @@ pub async fn add_time_item_user(
     let repo = TimeItemUserRepository::new(&state.pool);
 
     match repo.add_user(id, input).await {
-        Ok(user) => Ok((StatusCode::CREATED, Json(json!(user)))),
+        Ok(user) => {
+            // Attempt to broadcast to the assigned user
+            let item_repo = TimeItemRepository::new(&state.pool);
+            if let Ok(Some(item)) = item_repo.find_by_id(id).await {
+                let type_label = if item.item_type == "task" { "la tâche" } else { "l'événement" };
+                let _ = state.tx_notifications.send(crate::NotificationMessage {
+                    user_id: user.user_id,
+                    title: "Nouvelle Assignation".to_string(),
+                    message: format!("Vous avez été ajouté(e) à {} '{}'", type_label, item.title),
+                    action_url: Some(format!("/app/scheduling/hub")),
+                });
+            }
+
+            Ok((StatusCode::CREATED, Json(json!(user))))
+        },
         Err(e) => {
             tracing::error!("Failed to add user: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)

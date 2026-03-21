@@ -311,3 +311,41 @@ pub struct ActivityLog {
     pub changes: Option<serde_json::Value>,
     pub created_at: DateTime<Utc>,
 }
+
+// ============================================================================
+// FloorPlan Models
+// ============================================================================
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
+pub struct FloorPlan {
+    pub id: Uuid,
+    pub name: String,
+    pub floor: String,
+    pub width: f64,
+    pub height: f64,
+    pub resources: serde_json::Value,
+    pub svg_content: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateFloorPlan {
+    pub name: String,
+    pub floor: String,
+    pub width: f64,
+    pub height: f64,
+    pub resources: serde_json::Value,
+    #[serde(rename = "svgContent")]
+    pub svg_content: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdateFloorPlan {
+    pub name: Option<String>,
+    pub floor: Option<String>,
+    pub width: Option<f64>,
+    pub height: Option<f64>,
+    pub resources: Option<serde_json::Value>,
+    #[serde(rename = "svgContent")]
+    pub svg_content: Option<String>,
+}

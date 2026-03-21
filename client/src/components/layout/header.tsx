@@ -27,8 +27,10 @@ import {
 } from '@/components/ui/breadcrumb';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useNotificationsSSE } from '@/hooks/use-notifications-sse';
 
 export function Header() {
+  useNotificationsSSE();
   const { user, logout } = useAuthStore();
   const { toggleSidebar, sidebarCollapsed } = useUIStore();
   const { theme, setTheme } = useTheme();

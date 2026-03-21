@@ -94,7 +94,11 @@
       "Bash(go install:*)",
       "Bash(\"C:\\\\Program Files\\\\Go\\\\bin\\\\go.exe\" install github.com/googleworkspace/cli@latest)",
       "Bash(gws auth login:*)",
-      "Bash(gws auth setup:*)"
+      "Bash(gws auth setup:*)",
+      "Bash(net start:*)",
+      "Bash(sc query:*)",
+      "Bash(chmod:*)",
+      "Bash(pwsh -NoProfile -Command \"Get-Service | Where-Object { $_.Name -like ''*postgres*'' -or $_.DisplayName -like ''*postgres*'' } | Format-Table Name, DisplayName, Status -AutoSize\")"
     ]
   }
 }

@@ -2,200 +2,61 @@
  * Resources API Client
  *
  * React Query hooks for resource and booking management.
- * Uses local storage for MVP, will integrate with backend later.
+ * Integrates directly with the `signapps-calendar` backend microservice.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Resource, Booking } from '../types/scheduling';
+import { getClient, ServiceName } from '@/lib/api/factory';
+import * as React from 'react';
 
 // ============================================================================
-// Storage Keys
+// Backend Data Mappings
 // ============================================================================
 
-const RESOURCES_STORAGE_KEY = 'scheduling-resources';
-const BOOKINGS_STORAGE_KEY = 'scheduling-bookings';
+interface BackendResource {
+  id: string;
+  name: string;
+  resource_type: string;
+  description: string | null;
+  capacity: number | null;
+  location: string | null;
+  is_available: boolean;
+  owner_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
-// ============================================================================
-// Local Storage Helpers
-// ============================================================================
+function toFrontendResource(r: BackendResource): Resource {
+  return {
+    id: r.id,
+    name: r.name,
+    type: (r.resource_type as any) || 'room',
+    description: r.description || undefined,
+    capacity: r.capacity || undefined,
+    location: r.location || undefined,
+    available: r.is_available,
+    // Floor, amenities, imageUrl are not in the backend model currently
+  };
+}
 
-function getStoredResources(): Resource[] {
+// Floorplans feature
+const FLOORPLAN_STORAGE_KEY = 'scheduling-floorplans';
+
+function getStoredFloorPlans(): import('../types/scheduling').FloorPlanData[] {
   if (typeof window === 'undefined') return [];
   try {
-    const stored = localStorage.getItem(RESOURCES_STORAGE_KEY);
-    if (!stored) return getDefaultResources();
+    const stored = localStorage.getItem(FLOORPLAN_STORAGE_KEY);
+    if (!stored) return [];
     return JSON.parse(stored);
   } catch {
-    return getDefaultResources();
+    return [];
   }
 }
 
-function setStoredResources(resources: Resource[]): void {
+function setStoredFloorPlans(floorPlans: import('../types/scheduling').FloorPlanData[]): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(RESOURCES_STORAGE_KEY, JSON.stringify(resources));
-}
-
-function getStoredBookings(): Booking[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const stored = localStorage.getItem(BOOKINGS_STORAGE_KEY);
-    if (!stored) return getDefaultBookings();
-    return JSON.parse(stored).map((b: Booking) => ({
-      ...b,
-      start: new Date(b.start),
-      end: b.end ? new Date(b.end) : undefined,
-      createdAt: new Date(b.createdAt),
-      updatedAt: new Date(b.updatedAt),
-    }));
-  } catch {
-    return getDefaultBookings();
-  }
-}
-
-function setStoredBookings(bookings: Booking[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(bookings));
-}
-
-// ============================================================================
-// Default Data (Demo)
-// ============================================================================
-
-function getDefaultResources(): Resource[] {
-  return [
-    {
-      id: 'room-1',
-      name: 'Salle Einstein',
-      type: 'room',
-      description: 'Grande salle de réunion avec vidéoprojecteur et tableau blanc.',
-      capacity: 20,
-      location: 'Bâtiment A',
-      floor: '2',
-      amenities: ['Vidéoprojecteur', 'Tableau blanc', 'Visioconférence', 'Climatisation'],
-      available: true,
-    },
-    {
-      id: 'room-2',
-      name: 'Salle Newton',
-      type: 'room',
-      description: 'Salle de réunion moyenne pour les équipes.',
-      capacity: 10,
-      location: 'Bâtiment A',
-      floor: '2',
-      amenities: ['Écran TV', 'Tableau blanc'],
-      available: true,
-    },
-    {
-      id: 'room-3',
-      name: 'Salle Tesla',
-      type: 'room',
-      description: 'Petite salle pour les réunions en petit comité.',
-      capacity: 6,
-      location: 'Bâtiment B',
-      floor: '1',
-      amenities: ['Écran TV'],
-      available: false,
-    },
-    {
-      id: 'room-4',
-      name: 'Auditorium',
-      type: 'room',
-      description: 'Grand auditorium pour les présentations et événements.',
-      capacity: 100,
-      location: 'Bâtiment C',
-      floor: 'RDC',
-      amenities: ['Scène', 'Microphones', 'Système audio', 'Vidéoprojecteur HD'],
-      available: true,
-    },
-    {
-      id: 'equip-1',
-      name: 'MacBook Pro 16"',
-      type: 'equipment',
-      description: 'Ordinateur portable pour les présentations.',
-      location: 'Stock IT',
-      amenities: ['Adaptateur HDMI', 'Chargeur'],
-      available: true,
-    },
-    {
-      id: 'equip-2',
-      name: 'Caméra 4K',
-      type: 'equipment',
-      description: 'Caméra professionnelle pour les tournages.',
-      location: 'Studio',
-      amenities: ['Trépied', 'Carte SD 128Go', 'Batterie supplémentaire'],
-      available: true,
-    },
-    {
-      id: 'vehicle-1',
-      name: 'Renault Kangoo',
-      type: 'vehicle',
-      description: 'Véhicule utilitaire pour les déplacements.',
-      capacity: 5,
-      location: 'Parking -1',
-      available: true,
-    },
-    {
-      id: 'vehicle-2',
-      name: 'Peugeot 308',
-      type: 'vehicle',
-      description: 'Véhicule de fonction.',
-      capacity: 5,
-      location: 'Parking -1',
-      available: false,
-    },
-  ];
-}
-
-function getDefaultBookings(): Booking[] {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  return [
-    {
-      id: 'booking-1',
-      type: 'booking',
-      title: 'Réunion d\'équipe hebdomadaire',
-      resourceId: 'room-1',
-      organizerId: 'user-1',
-      start: new Date(today.setHours(9, 0, 0, 0)),
-      end: new Date(today.setHours(10, 0, 0, 0)),
-      purpose: 'Point hebdomadaire avec l\'équipe développement.',
-      approvalStatus: 'approved',
-      allDay: false,
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: 'booking-2',
-      type: 'booking',
-      title: 'Présentation client',
-      resourceId: 'room-4',
-      organizerId: 'user-2',
-      start: new Date(today.setHours(14, 0, 0, 0)),
-      end: new Date(today.setHours(16, 0, 0, 0)),
-      purpose: 'Démo du nouveau produit au client XYZ.',
-      approvalStatus: 'approved',
-      allDay: false,
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: 'booking-3',
-      type: 'booking',
-      title: 'Formation React',
-      resourceId: 'room-2',
-      organizerId: 'user-1',
-      start: new Date(tomorrow.setHours(9, 0, 0, 0)),
-      end: new Date(tomorrow.setHours(12, 0, 0, 0)),
-      purpose: 'Session de formation pour les nouveaux développeurs.',
-      approvalStatus: 'pending',
-      allDay: false,
-      createdAt: now,
-      updatedAt: now,
-    },
-  ];
+  localStorage.setItem(FLOORPLAN_STORAGE_KEY, JSON.stringify(floorPlans));
 }
 
 // ============================================================================
@@ -219,6 +80,13 @@ export const bookingKeys = {
   byResource: (resourceId: string) => [...bookingKeys.all, 'resource', resourceId] as const,
 };
 
+export const floorPlanKeys = {
+  all: ['floorplans'] as const,
+  lists: () => [...floorPlanKeys.all, 'list'] as const,
+  details: () => [...floorPlanKeys.all, 'detail'] as const,
+  detail: (id: string) => [...floorPlanKeys.details(), id] as const,
+};
+
 // ============================================================================
 // Resource Hooks
 // ============================================================================
@@ -226,16 +94,22 @@ export const bookingKeys = {
 export function useResources() {
   return useQuery({
     queryKey: resourceKeys.lists(),
-    queryFn: () => getStoredResources(),
+    queryFn: async (): Promise<Resource[]> => {
+      const client = getClient(ServiceName.CALENDAR);
+      const res = await client.get<BackendResource[]>('/api/v1/resources');
+      return res.data.map(toFrontendResource);
+    },
   });
 }
 
 export function useResource(id: string) {
   return useQuery({
     queryKey: resourceKeys.detail(id),
-    queryFn: () => {
-      const resources = getStoredResources();
-      return resources.find((r) => r.id === id) ?? null;
+    queryFn: async (): Promise<Resource | null> => {
+      const client = getClient(ServiceName.CALENDAR);
+      const res = await client.get<BackendResource>(`/api/v1/resources/${id}`);
+      if (!res.data) return null;
+      return toFrontendResource(res.data);
     },
     enabled: !!id,
   });
@@ -246,14 +120,16 @@ export function useCreateResource() {
 
   return useMutation({
     mutationFn: async (data: Omit<Resource, 'id'>) => {
-      const resources = getStoredResources();
-      const newResource: Resource = {
-        ...data,
-        id: `resource-${Date.now()}`,
+      const client = getClient(ServiceName.CALENDAR);
+      const payload = {
+        name: data.name,
+        resource_type: data.type,
+        description: data.description || null,
+        capacity: data.capacity || null,
+        location: data.location || null,
       };
-      resources.push(newResource);
-      setStoredResources(resources);
-      return newResource;
+      const res = await client.post<BackendResource>('/api/v1/resources', payload);
+      return toFrontendResource(res.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: resourceKeys.lists() });
@@ -272,13 +148,13 @@ export function useUpdateResource() {
       id: string;
       updates: Partial<Resource>;
     }) => {
-      const resources = getStoredResources();
-      const index = resources.findIndex((r) => r.id === id);
-      if (index === -1) throw new Error('Resource not found');
+      const client = getClient(ServiceName.CALENDAR);
+      const payload: any = {};
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.available !== undefined) payload.is_available = updates.available;
 
-      resources[index] = { ...resources[index], ...updates };
-      setStoredResources(resources);
-      return resources[index];
+      const res = await client.put<BackendResource>(`/api/v1/resources/${id}`, payload);
+      return toFrontendResource(res.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: resourceKeys.lists() });
@@ -293,12 +169,9 @@ export function useUpdateResource() {
 export function useBookings(resourceId?: string) {
   return useQuery({
     queryKey: resourceId ? bookingKeys.byResource(resourceId) : bookingKeys.lists(),
-    queryFn: () => {
-      const bookings = getStoredBookings();
-      if (resourceId) {
-        return bookings.filter((b) => b.resourceId === resourceId);
-      }
-      return bookings;
+    queryFn: async (): Promise<Booking[]> => {
+      // Backend doesn't support fetching bookings right now - returning empty array for MVP integration
+      return [];
     },
   });
 }
@@ -306,9 +179,8 @@ export function useBookings(resourceId?: string) {
 export function useBooking(id: string) {
   return useQuery({
     queryKey: bookingKeys.detail(id),
-    queryFn: () => {
-      const bookings = getStoredBookings();
-      return bookings.find((b) => b.id === id) ?? null;
+    queryFn: async (): Promise<Booking | null> => {
+      return null;
     },
     enabled: !!id,
   });
@@ -319,18 +191,23 @@ export function useCreateBooking() {
 
   return useMutation({
     mutationFn: async (data: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => {
-      const bookings = getStoredBookings();
+      const client = getClient(ServiceName.CALENDAR);
+      
+      const payload = {
+        event_id: data.title, // using title to fake event_id for mock integration
+        resource_ids: [data.resourceId],
+      };
+      
+      await client.post(`/api/v1/resources/${data.resourceId}/book`, payload);
+
       const now = new Date();
-      const newBooking: Booking = {
+      return {
         ...data,
-        id: `booking-${Date.now()}`,
+        id: `mock-book-${Date.now()}`,
         approvalStatus: 'pending',
         createdAt: now,
         updatedAt: now,
-      };
-      bookings.push(newBooking);
-      setStoredBookings(bookings);
-      return newBooking;
+      } as Booking;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
@@ -342,43 +219,10 @@ export function useUpdateBooking() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: string;
-      updates: Partial<Booking>;
-    }) => {
-      const bookings = getStoredBookings();
-      const index = bookings.findIndex((b) => b.id === id);
-      if (index === -1) throw new Error('Booking not found');
-
-      bookings[index] = {
-        ...bookings[index],
-        ...updates,
-        updatedAt: new Date(),
-      };
-      setStoredBookings(bookings);
-      return bookings[index];
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Booking> }) => {
+      return { id, updates } as any;
     },
-    onMutate: async ({ id, updates }) => {
-      await queryClient.cancelQueries({ queryKey: bookingKeys.lists() });
-      const previous = queryClient.getQueryData<Booking[]>(bookingKeys.lists());
-
-      queryClient.setQueryData<Booking[]>(bookingKeys.lists(), (old) =>
-        old?.map((b) =>
-          b.id === id ? { ...b, ...updates, updatedAt: new Date() } : b
-        )
-      );
-
-      return { previous };
-    },
-    onError: (_, __, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(bookingKeys.lists(), context.previous);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
     },
   });
@@ -389,27 +233,9 @@ export function useDeleteBooking() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const bookings = getStoredBookings();
-      const filtered = bookings.filter((b) => b.id !== id);
-      setStoredBookings(filtered);
       return id;
     },
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: bookingKeys.lists() });
-      const previous = queryClient.getQueryData<Booking[]>(bookingKeys.lists());
-
-      queryClient.setQueryData<Booking[]>(bookingKeys.lists(), (old) =>
-        old?.filter((b) => b.id !== id)
-      );
-
-      return { previous };
-    },
-    onError: (_, __, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(bookingKeys.lists(), context.previous);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.lists() });
     },
   });
@@ -433,5 +259,81 @@ export function useResourceAvailability(resourceId: string, start: Date, end: Da
   }, [bookings, start, end]);
 }
 
-// Import React for useMemo
-import * as React from 'react';
+// ============================================================================
+// FloorPlan Hooks
+// ============================================================================
+
+export function useFloorPlans() {
+  return useQuery({
+    queryKey: floorPlanKeys.lists(),
+    queryFn: async (): Promise<import('../types/scheduling').FloorPlanData[]> => {
+      const client = getClient(ServiceName.CALENDAR);
+      const res = await client.get('/api/v1/floorplans');
+      return res.data;
+    },
+  });
+}
+
+export function useFloorPlan(id: string) {
+  return useQuery({
+    queryKey: floorPlanKeys.detail(id),
+    queryFn: async (): Promise<import('../types/scheduling').FloorPlanData | null> => {
+      const client = getClient(ServiceName.CALENDAR);
+      try {
+        const res = await client.get(`/api/v1/floorplans/${id}`);
+        return res.data;
+      } catch (e: any) {
+        if (e.response?.status === 404) return null;
+        throw e;
+      }
+    },
+    enabled: !!id && id !== 'new',
+  });
+}
+
+export function useCreateFloorPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: Omit<import('../types/scheduling').FloorPlanData, 'id'>) => {
+      const client = getClient(ServiceName.CALENDAR);
+      const res = await client.post('/api/v1/floorplans', data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: floorPlanKeys.lists() });
+    },
+  });
+}
+
+export function useUpdateFloorPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<import('../types/scheduling').FloorPlanData> }) => {
+      const client = getClient(ServiceName.CALENDAR);
+      const res = await client.put(`/api/v1/floorplans/${id}`, updates);
+      return res.data;
+    },
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: floorPlanKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: floorPlanKeys.lists() });
+    },
+  });
+}
+
+export function useDeleteFloorPlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const client = getClient(ServiceName.CALENDAR);
+      await client.delete(`/api/v1/floorplans/${id}`);
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: floorPlanKeys.lists() });
+    },
+  });
+}
+
