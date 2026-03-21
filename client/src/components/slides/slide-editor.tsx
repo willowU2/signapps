@@ -42,6 +42,7 @@ interface SlideEditorProps {
         getSlideLayout?: (id: string) => SlideLayout;
         presentationTheme?: PresentationTheme;
         updatePresentationTheme?: (theme: Partial<PresentationTheme>) => void;
+        addSlide?: (layout?: SlideLayout) => void;
     }
     isReadOnly?: boolean;
 }
@@ -50,7 +51,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
     const {
         objects, updateObject, removeObject, updateCursor, collaborators, isConnected, activeSlideId,
         canUndo, canRedo, undo, redo, clearSlide, updateSlideNotes, getSlideNotes,
-        updateSlideLayout, getSlideLayout, presentationTheme, updatePresentationTheme
+        updateSlideLayout, getSlideLayout, presentationTheme, updatePresentationTheme, addSlide
     } = slideState;
 
     const fabricCanvasRef = useRef<fabric.Canvas | null>(null)
@@ -1841,6 +1842,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                             setPageConfig(prev => ({ ...prev, backgroundColor: theme.colors.background }))
                         }
                         : undefined}
+                    onAddSlide={addSlide}
                 />
             )}
 

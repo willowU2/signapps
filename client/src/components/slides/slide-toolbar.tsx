@@ -41,6 +41,8 @@ interface SlideToolbarProps {
     // Theme support
     currentThemeId?: string
     onThemeChange?: (theme: SlideTheme) => void
+    // Add Slide support
+    onAddSlide?: (layout?: SlideLayout) => void
 }
 
 export function SlideToolbar({
@@ -55,8 +57,6 @@ export function SlideToolbar({
     onUndo,
     onRedo,
     onClear,
-    isListening,
-    onToggleListen,
     isFormatPainting,
     onToggleFormatPainter,
     showGrid,
@@ -68,10 +68,13 @@ export function SlideToolbar({
     currentLayout,
     onLayoutChange,
     currentThemeId,
-    onThemeChange
+    onThemeChange,
+    onAddSlide
 }: SlideToolbarProps) {
     return (
         <Toolbar className="overflow-x-auto custom-scrollbar flex-nowrap min-h-[44px]">
+
+
             <ToolbarGroup>
                 <div
                     className={cn("h-2 w-2 rounded-full", isConnected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-red-500")}

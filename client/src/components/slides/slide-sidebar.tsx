@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
-import { Trash2, Copy, Save, Download } from "lucide-react"
+import { Trash2, Copy, Save, Download, Plus } from "lucide-react"
 import { SlideThumbnail } from "./slide-thumbnail"
-import { SlideLayoutPicker } from "./slide-layout-picker"
+
 import type { SlideLayout } from "./use-slides"
 
 interface SlideData {
@@ -45,7 +45,7 @@ export function SlideSidebar({ slides, activeSlideId, onSelectSlide, onAddSlide,
                             <Download className="w-4 h-4" />
                         </button>
                     )}
-                    <SlideLayoutPicker onSelectLayout={(layout) => onAddSlide(layout)} />
+
                 </div>
             </div>
 
@@ -102,6 +102,22 @@ export function SlideSidebar({ slides, activeSlideId, onSelectSlide, onAddSlide,
                         </div>
                     )
                 })}
+
+                {slides.length > 0 && (
+                    <div 
+                        onClick={() => onAddSlide('title_and_content')}
+                        className="group flex gap-3 relative cursor-pointer"
+                    >
+                        {/* Spacer for numbering alignment */}
+                        <div className="w-4" />
+
+                        {/* Add Slide Tile */}
+                        <div className="flex-1 aspect-video rounded-lg border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all flex flex-col items-center justify-center text-gray-500 hover:text-indigo-600 bg-background/50 group-hover:shadow-sm">
+                            <Plus className="w-6 h-6 mb-1 opacity-70 group-hover:opacity-100" />
+                            <span className="text-xs font-medium opacity-80 group-hover:opacity-100 mt-1">Nouvelle diapositive</span>
+                        </div>
+                    </div>
+                )}
 
                 {slides.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-32 text-center text-sm text-gray-400">
