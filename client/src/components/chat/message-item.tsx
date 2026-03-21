@@ -45,6 +45,41 @@ export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddR
     // Quick reaction picker options
     const quickReactions = ["👍", "❤️", "😂", "🎉"];
 
+    const renderContent = (content: string) => {
+        // Simple regex to match ![alt](url)
+        const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+        if (!imgRegex.test(content)) return content;
+        
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+        
+        imgRegex.lastIndex = 0;
+        
+        while ((match = imgRegex.exec(content)) !== null) {
+            if (match.index > lastIndex) {
+                parts.push(content.substring(lastIndex, match.index));
+            }
+            const alt = match[1];
+            const url = match[2];
+            parts.push(
+                <img 
+                    key={match.index} 
+                    src={url} 
+                    alt={alt || "image"} 
+                    className="max-w-full max-h-[300px] rounded-md my-2 object-contain bg-muted/20" 
+                    loading="lazy"
+                />
+            );
+            lastIndex = imgRegex.lastIndex;
+        }
+        if (lastIndex < content.length) {
+            parts.push(content.substring(lastIndex));
+        }
+        
+        return <>{parts}</>;
+    };
+
     return (
         <div
             className={cn(
@@ -151,7 +186,7 @@ export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddR
                 )}
 
                 <div className="text-[15px] text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">
-                    {message.content}
+                    {renderContent(message.content)}
                     {message.isEdited && (
                         <span className="text-[10px] text-muted-foreground ml-2 select-none">(edited)</span>
                     )}

@@ -6,6 +6,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { VoiceInput } from "@/components/ui/voice-input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import EmojiPicker from 'emoji-picker-react';
+import GifPicker from 'gif-picker-react';
+import { Image as ImageIcon } from "lucide-react";
 
 interface ChatInputProps {
     onSend: (content: string) => void;
@@ -213,10 +215,31 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
                                     onEmojiClick={(emojiData) => {
                                         setInputValue((prev) => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + emojiData.emoji);
                                     }}
-                                    // Use proper theme matching with our app if needed
                                 />
                             </PopoverContent>
                         </Popover>
+                        
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hidden sm:flex">
+                                    <ImageIcon className="h-5 w-5" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent side="top" align="end" className="w-[300px] p-0 border-none shadow-none mb-2" sideOffset={10}>
+                                <div>
+                                    <GifPicker
+                                        tenorApiKey={process.env.NEXT_PUBLIC_TENOR_API_KEY || "LIVDSRZULELA"}
+                                        onGifClick={(gif) => {
+                                            const finalValue = `![GIF](${gif.url})`;
+                                            if (!disabled) {
+                                                onSend(finalValue);
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                        
                         <Button
                             type="button"
                             size="icon"

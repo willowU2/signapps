@@ -83,6 +83,7 @@
     "file-saver": "^2.0.5",
     "framer-motion": "^12.36.0",
     "fuse.js": "^7.1.0",
+    "gif-picker-react": "^1.5.0",
     "html-to-docx": "^1.8.0",
     "jotai": "^2.18.0",
     "livekit-client": "^2.17.2",
