@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,14 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Upload,
-  FileText,
-  FileCode,
-  FileJson,
-  Clipboard,
-  Loader2,
-} from 'lucide-react';
+import { Upload, FileText, FileCode, FileJson, Clipboard } from 'lucide-react';
 import { useDocumentImport } from '@/hooks/use-document-import';
 
 interface ImportMenuProps {
@@ -55,7 +50,7 @@ export function ImportMenu({ editor }: ImportMenuProps) {
           >
             {isImporting ? (
               <>
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 mr-1.5 " />
                 Import...
               </>
             ) : (
@@ -82,7 +77,7 @@ export function ImportMenu({ editor }: ImportMenuProps) {
               <span className="text-xs text-muted-foreground">.docx, .md, .html, .txt</span>
             </div>
             {isImporting && importFormat && (
-              <Loader2 className="h-4 w-4 ml-auto animate-spin" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
             )}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -100,7 +95,7 @@ export function ImportMenu({ editor }: ImportMenuProps) {
               <span className="text-xs text-muted-foreground">Convertit le Markdown en formatage</span>
             </div>
             {isImporting && importFormat === 'markdown' && (
-              <Loader2 className="h-4 w-4 ml-auto animate-spin" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
             )}
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -114,7 +109,7 @@ export function ImportMenu({ editor }: ImportMenuProps) {
               <span className="text-xs text-muted-foreground">Préserve la mise en forme HTML</span>
             </div>
             {isImporting && importFormat === 'html' && (
-              <Loader2 className="h-4 w-4 ml-auto animate-spin" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
             )}
           </DropdownMenuItem>
         </DropdownMenuContent>

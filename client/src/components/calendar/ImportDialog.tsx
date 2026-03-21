@@ -1,3 +1,4 @@
+import { SpinnerInfinity } from 'spinners-react';
 import React, { useState, useRef } from "react";
 import {
   Dialog,
@@ -17,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Upload, Check, AlertCircle, Loader } from "lucide-react";
+import { Upload, Check, AlertCircle } from 'lucide-react';
 import { calendarApi } from "@/lib/api";
 
 interface ImportDialogProps {
@@ -290,7 +291,7 @@ export function ImportDialog({
                   >
                     {isImporting ? (
                       <>
-                        <Loader className="h-4 w-4 animate-spin" />
+                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
                         Importing...
                       </>
                     ) : (
@@ -320,7 +321,7 @@ export function ImportDialog({
           <div className="flex gap-3">
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleImport} className="gap-2">
-              {isImporting && <Loader className="h-4 w-4 animate-spin" />}
+              {isImporting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />}
               Import
             </AlertDialogAction>
           </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
@@ -10,31 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
-import {
-  Plus,
-  Lock,
-  Unlock,
-  ExternalLink,
-  MoreVertical,
-  Search,
-  Shield,
-  RefreshCw,
-  Pencil,
-  Trash2,
-  Power,
-  PowerOff,
-  Globe,
-  ArrowRight,
-  Loader2,
-  Copy,
-  CheckCircle2,
-  AlertCircle,
-  Server,
-  Network,
-  FileCode,
-  Asterisk,
-  ListTree,
-} from 'lucide-react';
+import { Plus, Lock, Unlock, ExternalLink, MoreVertical, Search, Shield, RefreshCw, Pencil, Trash2, Power, PowerOff, Globe, ArrowRight, Copy, CheckCircle2, AlertCircle, Server, Network, FileCode, Asterisk, ListTree } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -810,7 +788,7 @@ export default function RoutesPage() {
               Annuler
             </Button>
             <Button onClick={handleRequestCertificate} disabled={certLoading || !certDomain.trim()}>
-              {certLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {certLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               Demander
             </Button>
           </DialogFooter>

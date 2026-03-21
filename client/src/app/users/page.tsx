@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
@@ -51,34 +53,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Plus,
-  Search,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Key,
-  Shield,
-  User as UserIcon,
-  Users,
-  Link as LinkIcon,
-  Check,
-  X,
-  Loader2,
-  RefreshCw,
-  Download,
-  Upload,
-  FileText,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Filter,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  FileWarning,
-  History,
-} from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, Key, Shield, User as UserIcon, Users, Link as LinkIcon, Check, X, RefreshCw, Download, Upload, FileText, AlertCircle, CheckCircle, Clock, Filter, Calendar, ChevronLeft, ChevronRight, FileWarning, History } from 'lucide-react';
 import {
   usersApi,
   User,
@@ -590,7 +565,7 @@ function ImportUsersDialog({
               onClick={handleImport}
               disabled={importing || validUsers === 0}
             >
-              {importing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {importing && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               Import {validUsers} User(s)
             </Button>
           )}
@@ -1290,7 +1265,7 @@ export default function UsersPage() {
               onClick={handleResetPassword}
               disabled={resettingPassword || newPassword.length < 8}
             >
-              {resettingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {resettingPassword && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               Reset Password
             </Button>
           </DialogFooter>

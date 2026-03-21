@@ -1,29 +1,9 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import {
-  Search,
-  Menu,
-  Settings,
-  Grid,
-  List,
-  RefreshCw,
-  Lightbulb,
-  Bell,
-  Pencil,
-  Archive,
-  Trash2,
-  Image,
-  Palette,
-  MoreVertical,
-  Pin,
-  CheckSquare,
-  Check,
-  X,
-  Plus,
-  Tag,
-  Loader2,
-} from "lucide-react";
+import { Search, Menu, Settings, Grid, List, RefreshCw, Lightbulb, Bell, Pencil, Archive, Trash2, Image, Palette, MoreVertical, Pin, CheckSquare, Check, X, Plus, Tag } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -257,7 +237,7 @@ export default function KeepPage() {
           sidebar={<div className="w-[80px]" />}
         >
           <div className="flex flex-col items-center justify-center h-full">
-            <Loader2 className="h-12 w-12 text-[#fbbc04] animate-spin mb-4" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-12 w-12 text-[#fbbc04]  mb-4" />
             <p className="text-[#9aa0a6]">Chargement des notes...</p>
           </div>
         </WorkspaceShell>
@@ -650,7 +630,7 @@ export default function KeepPage() {
                         className="text-[#e8eaed] hover:bg-[#3c4043] rounded-md px-6 font-medium"
                       >
                         {createNoteMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
                         ) : (
                           "Fermer"
                         )}
@@ -676,7 +656,7 @@ export default function KeepPage() {
                     className="ml-4 text-[#e8eaed] hover:bg-[#3c4043]"
                   >
                     {emptyTrashMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
                     ) : null}
                     Vider la corbeille
                   </Button>

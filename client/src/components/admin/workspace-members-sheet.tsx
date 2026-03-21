@@ -1,5 +1,7 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from "react"
 import {
     Dialog,
@@ -28,7 +30,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
-import { Trash2, UserPlus, Shield, User, Eye, Crown, Loader2, Users } from "lucide-react"
+import { Trash2, UserPlus, Shield, User, Eye, Crown, Users } from 'lucide-react';
 import { workspacesApi, type WorkspaceMember, type WorkspaceRole, type Workspace } from "@/lib/api/tenant"
 import { usersApi, type User as UserType } from "@/lib/api/identity"
 
@@ -202,7 +204,7 @@ export function WorkspaceMembersSheet({ open, onOpenChange, workspace }: Workspa
                                     className="h-[48px] px-6 rounded-lg text-sm bg-[#4d51f2] hover:bg-[#4d51f2]/90 text-white shadow-sm font-bold transition-all hover:scale-[1.02]"
                                 >
                                     {isAdding ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                                     ) : (
                                         <UserPlus className="mr-2 h-4 w-4" />
                                     )}

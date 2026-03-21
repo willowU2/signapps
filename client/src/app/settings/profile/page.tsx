@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -26,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { User, Shield, Key, Loader2, Check, Copy, ArrowLeft, Upload, Trash2 } from 'lucide-react';
+import { User, Shield, Key, Check, Copy, ArrowLeft, Upload, Trash2 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import { authApi, usersApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -192,7 +194,7 @@ export default function ProfilePage() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8 " />
         </div>
       </AppLayout>
     );
@@ -357,7 +359,7 @@ export default function ProfilePage() {
               </div>
 
               <Button onClick={handleSaveProfile} disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {saving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                 Save Changes
               </Button>
             </div>
@@ -400,7 +402,7 @@ export default function ProfilePage() {
                 </Button>
               ) : (
                 <Button onClick={handleSetupMfa} disabled={mfaLoading}>
-                  {mfaLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {mfaLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                   Enable 2FA
                 </Button>
               )}
@@ -451,7 +453,7 @@ export default function ProfilePage() {
                     onClick={handleChangePassword}
                     disabled={changingPassword || !newPassword || !confirmPassword}
                   >
-                    {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {changingPassword && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                     Change Password
                   </Button>
                 </div>
@@ -558,7 +560,7 @@ export default function ProfilePage() {
               onClick={handleVerifyMfa}
               disabled={mfaLoading || mfaCode.length !== 6}
             >
-              {mfaLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {mfaLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               Verify & Enable
             </Button>
           </DialogFooter>
@@ -581,7 +583,7 @@ export default function ProfilePage() {
               onClick={handleDisableMfa}
               className="bg-destructive text-destructive-foreground"
             >
-              {mfaLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {mfaLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               Disable 2FA
             </AlertDialogAction>
           </AlertDialogFooter>

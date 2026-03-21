@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
@@ -26,7 +28,7 @@ import { useCollaborativeComments } from '@/hooks/use-collaborative-comments';
 import { useTrackChanges } from '@/hooks/use-track-changes';
 import { useAuthStore } from '@/lib/store';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Loader2, Sparkles, PencilLine, PanelRightOpen, MessageSquarePlus, Bold, Italic, Strikethrough, Eraser, Underline as UnderlineIcon } from 'lucide-react';
+import { Sparkles, PencilLine, PanelRightOpen, MessageSquarePlus, Bold, Italic, Strikethrough, Eraser, Underline as UnderlineIcon } from 'lucide-react';
 import { useAiStream } from '@/hooks/use-ai-stream';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -285,7 +287,7 @@ export function CollaborativeEditor({
         return (
             <div className="flex items-center justify-center h-full w-full bg-gray-50 dark:bg-gray-900 absolute inset-0">
                 <div className="text-center">
-                    <Loader2 className="animate-spin h-8 w-8 text-muted-foreground mx-auto" />
+                    <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className=" h-8 w-8 text-muted-foreground mx-auto" />
                     <p className="text-muted-foreground mt-4 text-sm font-medium">Initialisation du document...</p>
                 </div>
             </div>

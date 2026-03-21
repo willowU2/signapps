@@ -1,3 +1,4 @@
+import { SpinnerInfinity } from 'spinners-react';
 /**
  * Notification History Component
  * Display and manage sent notifications
@@ -11,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Mail, MessageSquare, Bell, RotateCcw, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, MessageSquare, Bell, RotateCcw, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatDistanceToNow } from 'date-fns';
 import useNotificationHistory, { Notification as HistoryNotification } from '@/hooks/use-notification-history';
@@ -68,7 +69,7 @@ export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
           <CardTitle>Notification History</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center py-10">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
         </CardContent>
       </Card>
     );
@@ -205,7 +206,7 @@ export function NotificationHistory({ limit = 50 }: NotificationHistoryProps) {
                           variant="outline"
                         >
                           {resendingId === notification.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3 " />
                           ) : (
                             <RotateCcw className="h-3 w-3" />
                           )}

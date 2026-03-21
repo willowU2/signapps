@@ -4,6 +4,8 @@
  */
 
 'use client';
+import { SpinnerInfinity } from 'spinners-react';
+
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -15,7 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 import useNotificationPreferences, { NotificationPreferences } from '@/hooks/use-notification-preferences';
 
 /**
@@ -77,7 +79,7 @@ export function NotificationPreferencesForm() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader className="h-5 w-5 animate-spin text-gray-400" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-5 w-5  text-gray-400" />
           </div>
         </CardContent>
       </Card>

@@ -1,14 +1,9 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useCallback, useEffect, useRef } from "react"
-import {
-    Bot,
-    Loader2,
-    RefreshCw,
-    Send,
-    Square,
-    Sparkles,
-} from "lucide-react"
+import { Bot, RefreshCw, Send, Square, Sparkles } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -319,7 +314,7 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
                     )}
                     {generating && !isStreaming && (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3 " />
                             Processing...
                         </div>
                     )}

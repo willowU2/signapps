@@ -1,3 +1,4 @@
+import { SpinnerInfinity } from 'spinners-react';
 /**
  * Universal Blocks System - Search
  *
@@ -7,7 +8,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, Loader2, Filter, X, ChevronDown } from "lucide-react";
+import { Search, Filter, X, ChevronDown } from 'lucide-react';
 import Fuse, { type IFuseOptions } from "fuse.js";
 
 import { cn } from "@/lib/utils";
@@ -173,7 +174,7 @@ export function BlockSearchInput({
         className="pl-9 pr-9"
       />
       {isSearching && (
-        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4  text-muted-foreground" />
       )}
       {!isSearching && value && (
         <button
@@ -315,7 +316,7 @@ export function BlockSearchResults({
   if (isSearching) {
     return (
       <div className={cn("flex items-center justify-center py-8", className)}>
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
       </div>
     );
   }
@@ -530,7 +531,7 @@ export function CommandPaletteSearch({
       <CommandList>
         {isSearching && (
           <div className="flex items-center justify-center py-6">
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-5 w-5 " />
           </div>
         )}
 

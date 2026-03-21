@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -50,30 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Plus,
-  Wifi,
-  WifiOff,
-  Shield,
-  MoreVertical,
-  Trash2,
-  CheckCircle,
-  RefreshCw,
-  Loader2,
-  Copy,
-  Globe,
-  Radio,
-  Activity,
-  ArrowDownUp,
-  ExternalLink,
-  Pencil,
-  PlugZap,
-  ShieldCheck,
-  Ban,
-  CircleDot,
-  X,
-  Gauge,
-} from 'lucide-react';
+import { Plus, Wifi, WifiOff, Shield, MoreVertical, Trash2, CheckCircle, RefreshCw, Copy, Globe, Radio, Activity, ArrowDownUp, ExternalLink, Pencil, PlugZap, ShieldCheck, Ban, CircleDot, X, Gauge } from 'lucide-react';
 import {
   tunnelApi,
   Tunnel,
@@ -502,7 +481,7 @@ export default function VpnPage() {
       case 'connecting':
         return (
           <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-600" variant="outline">
-            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-1 h-3 w-3 " />
             Connecting
           </Badge>
         );
@@ -663,7 +642,7 @@ export default function VpnPage() {
                       onClick={handleQuickConnect}
                       disabled={quickConnecting}
                     >
-                      {quickConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {quickConnecting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                       Quick Connect
                     </Button>
                   )}
@@ -1362,7 +1341,7 @@ export default function VpnPage() {
               Cancel
             </Button>
             <Button onClick={handleSaveTunnel} disabled={submitting}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               {editingTunnel ? 'Save Changes' : 'Create Tunnel'}
             </Button>
           </DialogFooter>
@@ -1428,7 +1407,7 @@ export default function VpnPage() {
               Cancel
             </Button>
             <Button onClick={handleSaveRelay} disabled={submitting}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               {editingRelay ? 'Save Changes' : 'Add Relay'}
             </Button>
           </DialogFooter>
@@ -1472,7 +1451,7 @@ export default function VpnPage() {
               Cancel
             </Button>
             <Button onClick={handleAddBlocklist} disabled={submitting}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               Add Blocklist
             </Button>
           </DialogFooter>
@@ -1542,7 +1521,7 @@ export default function VpnPage() {
               Cancel
             </Button>
             <Button onClick={handleSaveDnsRecord} disabled={submitting}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               {editingDnsRecord ? 'Save Changes' : 'Add Record'}
             </Button>
           </DialogFooter>

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * TemplateGallery
  *
@@ -7,29 +9,7 @@
  */
 
 import React, { useEffect, useCallback } from 'react';
-import {
-  Search,
-  Filter,
-  Star,
-  Clock,
-  Grid3X3,
-  List,
-  Loader2,
-  FileText,
-  Table,
-  Presentation,
-  Briefcase,
-  GraduationCap,
-  User,
-  Megaphone,
-  Scale,
-  Users,
-  Calculator,
-  Palette,
-  Folder,
-  Heart,
-  ChevronRight,
-} from 'lucide-react';
+import { Search, Filter, Star, Clock, Grid3X3, List, FileText, Table, Presentation, Briefcase, GraduationCap, User, Megaphone, Scale, Users, Calculator, Palette, Folder, Heart, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -495,7 +475,7 @@ export function TemplateGallery({
               {/* Loading */}
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
                 </div>
               ) : templates.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -538,7 +518,7 @@ export function TemplateGallery({
                         disabled={isLoadingMore}
                       >
                         {isLoadingMore ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
                         ) : null}
                         Charger plus
                       </Button>

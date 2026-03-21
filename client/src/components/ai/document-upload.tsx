@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useCallback } from 'react';
 import {
   Dialog,
@@ -10,15 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import {
-  Upload,
-  FileText,
-  X,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  File,
-} from 'lucide-react';
+import { Upload, FileText, X, CheckCircle, AlertCircle, File } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { aiApi, storageApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -166,7 +160,7 @@ export function DocumentUpload({ open, onOpenChange, onSuccess }: DocumentUpload
     switch (status) {
       case 'uploading':
       case 'indexing':
-        return <Loader2 className="h-4 w-4 animate-spin text-primary" />;
+        return <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  text-primary" />;
       case 'done':
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'error':
@@ -294,7 +288,7 @@ export function DocumentUpload({ open, onOpenChange, onSuccess }: DocumentUpload
               Clear All
             </Button>
             <Button onClick={processFiles} disabled={!canProcess}>
-              {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isProcessing && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               Index {pendingCount} Document{pendingCount !== 1 ? 's' : ''}
             </Button>
           </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * Meeting Scheduler Component
  *
@@ -10,15 +12,7 @@
 import * as React from 'react';
 import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Calendar,
-  Users,
-  Clock,
-  Settings2,
-  CalendarRange,
-  Check,
-  Loader2,
-} from 'lucide-react';
+import { Calendar, Users, Clock, Settings2, CalendarRange, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -361,7 +355,7 @@ export function MeetingScheduler({
 
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
                   <span className="ml-2 text-sm text-muted-foreground">
                     Recherche des disponibilités...
                   </span>

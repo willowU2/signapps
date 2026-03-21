@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * QuickCreate Component
  * Story 1.4.4: QuickCreate Component
@@ -10,17 +12,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  Users,
-  Tag,
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
-  Sparkles,
-} from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Tag, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react';
 import {
   format,
   addHours,
@@ -566,7 +558,7 @@ export function QuickCreate({
                   >
                     {isCreating ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                         Création...
                       </>
                     ) : (

@@ -1,4 +1,6 @@
 'use client';
+import { SpinnerInfinity } from 'spinners-react';
+
 
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -140,7 +142,7 @@ export function GroupSheet({ open, onOpenChange, initialData }: GroupSheetProps)
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
                 {(createMutation.isPending || updateMutation.isPending) && (
-                  <span className="mr-2 animate-spin">⏳</span>
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
                 )}
                 {isEditing ? 'Mettre à jour' : 'Créer'}
               </Button>

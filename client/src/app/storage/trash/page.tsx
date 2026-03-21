@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -18,20 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Trash2,
-  RotateCcw,
-  Search,
-  File,
-  FileText,
-  FileImage,
-  FileArchive,
-  Loader2,
-  Folder,
-  Clock,
-  HardDrive,
-  AlertTriangle,
-} from 'lucide-react';
+import { Trash2, RotateCcw, Search, File, FileText, FileImage, FileArchive, Folder, Clock, HardDrive, AlertTriangle } from 'lucide-react';
 import { trashApi, TrashItem, TrashStats } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -240,7 +229,7 @@ export default function TrashPage() {
                     disabled={restoring}
                   >
                     {restoring ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                     ) : (
                       <RotateCcw className="mr-2 h-4 w-4" />
                     )}
@@ -253,7 +242,7 @@ export default function TrashPage() {
                     disabled={deleting}
                   >
                     {deleting ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                     ) : (
                       <Trash2 className="mr-2 h-4 w-4" />
                     )}
@@ -366,7 +355,7 @@ export default function TrashPage() {
                 disabled={deleting}
               >
                 {deleting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                 ) : (
                   <Trash2 className="mr-2 h-4 w-4" />
                 )}

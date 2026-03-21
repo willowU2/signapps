@@ -1,5 +1,7 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -24,7 +26,7 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
+
 import { useCreateRole, useUpdateRole, type Role } from "@/hooks/use-roles"
 import { PermissionsEditor } from "./permissions-editor"
 import type { RolePermissions } from "@/lib/api/identity"
@@ -191,7 +193,7 @@ export function RoleSheet({ open, onOpenChange, initialData }: RoleSheetProps) {
                                 Annuler
                             </Button>
                             <Button type="submit" disabled={isLoading || isSystem}>
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {isLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                                 {isEditing ? "Enregistrer" : "Créer"}
                             </Button>
                         </SheetFooter>

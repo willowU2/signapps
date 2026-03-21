@@ -1,5 +1,7 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from "react"
 import {
     Sheet,
@@ -27,7 +29,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
-import { Trash2, UserPlus, Shield, User, Loader2 } from "lucide-react"
+import { Trash2, UserPlus, Shield, User } from 'lucide-react';
 import { groupsApi, type GroupMember } from "@/lib/api/identity"
 import { usersApi, type User as UserType } from "@/lib/api/identity"
 
@@ -182,7 +184,7 @@ export function GroupMembersSheet({ open, onOpenChange, group, onMembersChange }
                             className="w-full"
                         >
                             {isAdding ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                             ) : (
                                 <UserPlus className="mr-2 h-4 w-4" />
                             )}

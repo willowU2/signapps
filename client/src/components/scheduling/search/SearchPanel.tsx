@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * Search Panel Component
  *
@@ -9,23 +11,7 @@
 import * as React from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Search,
-  X,
-  Calendar,
-  CheckSquare,
-  Building,
-  Clock,
-  MapPin,
-  Tag,
-  Filter,
-  SortAsc,
-  SortDesc,
-  Loader2,
-  AlertCircle,
-  ChevronRight,
-  Users,
-} from 'lucide-react';
+import { Search, X, Calendar, CheckSquare, Building, Clock, MapPin, Tag, Filter, SortAsc, SortDesc, AlertCircle, ChevronRight, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -371,7 +357,7 @@ export function SearchPanel({
             <span>
               {total} résultat{total !== 1 ? 's' : ''}
             </span>
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+            {isLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />}
           </div>
 
           {/* Error state */}

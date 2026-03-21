@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * OAuth Callback Page
  *
@@ -11,7 +13,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import { useExternalSyncStore } from '@/stores/external-sync-store';
 import type { CalendarProvider } from '@/lib/calendar/external-sync/types';
 import { PROVIDER_LABELS } from '@/lib/calendar/external-sync/types';
@@ -85,7 +87,7 @@ export default function OAuthCallbackPage() {
         <CardContent className="pt-6 text-center">
           {status === 'processing' && (
             <div className="space-y-4">
-              <Loader2 className="h-12 w-12 mx-auto animate-spin text-blue-500" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-12 w-12 mx-auto  text-blue-500" />
               <div>
                 <h2 className="text-xl font-bold">Connexion en cours</h2>
                 <p className="text-muted-foreground mt-2">

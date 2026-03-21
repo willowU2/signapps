@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useEffect } from "react";
 import {
   Sheet,
@@ -13,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { storageApi } from "@/lib/api";
-import { Tag, Loader2, Trash2, Edit2, Check, X } from "lucide-react";
+import { Tag, Trash2, Edit2, Check, X } from 'lucide-react';
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -211,7 +213,7 @@ export function ManageTagsSheet({
           <div className="flex-1 border rounded-md overflow-hidden bg-muted/10">
             {loading ? (
               <div className="h-full flex items-center justify-center p-4">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
               </div>
             ) : tags.length === 0 && !isCreating ? (
               <div className="h-full flex flex-col items-center justify-center p-8 text-center">

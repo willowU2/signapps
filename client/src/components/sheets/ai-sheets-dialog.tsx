@@ -1,11 +1,13 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState } from "react";
 import { useAiStream } from "@/hooks/use-ai-stream";
 import { useAiRouting } from "@/hooks/use-ai-routing";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Sparkles, Loader2, Bot, Wand2, Calculator } from "lucide-react";
+import { X, Sparkles, Bot, Wand2, Calculator } from 'lucide-react';
 import { SelectionBounds, CellData } from "./types";
 import { cn } from "@/lib/utils";
 import { indexToCol } from "@/lib/sheets/formula";
@@ -120,7 +122,7 @@ export function AiSheetsDialog({ onClose, selectionBounds, data, onApplyResult, 
                 {result && (
                     <div className="mt-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                         <div className="text-xs font-semibold text-[#5f6368] dark:text-[#9aa0a6] flex items-center gap-1.5">
-                            {isStreaming ? <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-500" /> : <Bot className="w-3.5 h-3.5 text-purple-500" />}
+                            {isStreaming ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-3.5 h-3.5  text-purple-500" /> : <Bot className="w-3.5 h-3.5 text-purple-500" />}
                             Résultat IA :
                         </div>
                         <div className="p-3 bg-[#f8f9fa] dark:bg-[#202124] rounded-md border border-[#dadce0] dark:border-[#5f6368] text-sm text-[#202124] dark:text-[#e8eaed] whitespace-pre-wrap font-mono">

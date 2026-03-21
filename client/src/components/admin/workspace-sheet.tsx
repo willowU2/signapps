@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Building2 } from "lucide-react";
+import { Building2 } from 'lucide-react';
 import type { Workspace } from "@/lib/api/tenant";
 
 const workspaceFormSchema = z.object({
@@ -215,7 +217,7 @@ export function WorkspaceSheet({
                   className="h-[52px] px-8 rounded-xl text-[15px] bg-[#4d51f2] hover:bg-[#4d51f2]/90 text-white shadow-sm font-bold transition-all hover:-translate-y-0.5"
                 >
                   {isLoading ? (
-                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {isEditing ? "Saving..." : "Creating..."}</>
+                    <><SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-5 w-5 " /> {isEditing ? "Saving..." : "Creating..."}</>
                   ) : (
                     isEditing ? "Save Workspace" : "Create Workspace"
                   )}

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * NLPInput Component
  * Phase 3: Productivity Features
@@ -17,18 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Sparkles,
-  Calendar,
-  Clock,
-  User,
-  MapPin,
-  Tag,
-  AlertCircle,
-  Check,
-  X,
-  Loader2,
-} from 'lucide-react';
+import { Sparkles, Calendar, Clock, User, MapPin, Tag, AlertCircle, Check, X } from 'lucide-react';
 import { schedulingApi, type ParsedNaturalLanguage } from '@/lib/scheduling/api';
 import type { CreateTimeItemInput, TimeItemType, Priority } from '@/lib/scheduling/types';
 
@@ -383,7 +374,7 @@ export function NLPInput({
           autoFocus={autoFocus}
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          {isLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  text-muted-foreground" />}
           {parsed && (
             <Button
               size="sm"

@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, UserPlus, Upload, Trash2 } from "lucide-react";
+import { UserPlus, Upload, Trash2 } from 'lucide-react';
 import { User, CreateUserRequest, UpdateUserRequest, Workspace } from "@/lib/api";
 import { workspacesApi } from "@/lib/api/tenant";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -456,7 +458,7 @@ export function UserSheet({
                   className="h-[52px] px-8 rounded-xl text-[15px] bg-[#4d51f2] hover:bg-[#4d51f2]/90 text-white shadow-sm font-bold transition-all hover:-translate-y-0.5"
                 >
                   {isLoading ? (
-                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {isEditing ? "Saving..." : "Creating..."}</>
+                    <><SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-5 w-5 " /> {isEditing ? "Saving..." : "Creating..."}</>
                   ) : (
                     isEditing ? "Save User" : "Create User"
                   )}

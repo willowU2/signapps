@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -49,22 +51,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Plus,
-  Clock,
-  Play,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Terminal,
-  Container,
-  Server,
-  RefreshCw,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  History,
-} from 'lucide-react';
+import { Plus, Clock, Play, MoreVertical, Pencil, Trash2, Terminal, Container, Server, RefreshCw, CheckCircle, XCircle, History } from 'lucide-react';
 import { schedulerApi, ScheduledJob, JobRun, JobStats, RunningJob } from '@/lib/api';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
@@ -332,7 +319,7 @@ export default function SchedulerPage() {
             <CardContent className="flex items-center gap-4 p-6">
               <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${runningJobs.length > 0 ? 'bg-amber-500/10' : 'bg-muted'}`}>
                 {runningJobs.length > 0 ? (
-                  <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6 text-amber-500 " />
                 ) : (
                   <Server className="h-6 w-6 text-muted-foreground" />
                 )}
@@ -561,7 +548,7 @@ export default function SchedulerPage() {
               Annuler
             </Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {saving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               {editingJob ? 'Enregistrer' : 'Créer'}
             </Button>
           </DialogFooter>
@@ -590,7 +577,7 @@ export default function SchedulerPage() {
                         ) : run.status === 'failed' ? (
                           <XCircle className="h-4 w-4 text-red-500" />
                         ) : (
-                          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  text-blue-500" />
                         )}
                         {getStatusBadge(run.status)}
                       </div>

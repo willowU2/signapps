@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -24,36 +26,7 @@ import { StorageFileGrid } from '@/components/storage/storage-file-grid';
 import { StorageHeader } from '@/components/storage/storage-header';
 import { RenameSheet } from '@/components/storage/rename-sheet';
 import { MoveToSheet } from '@/components/storage/move-to-sheet';
-import {
-  Upload,
-  Folder,
-  FileText,
-  Image as ImageIcon,
-  Search,
-  ChevronRight,
-  ChevronDown,
-  MoreVertical,
-  Download,
-  Trash2,
-  FolderPlus,
-  Home,
-  FileArchive,
-  FileCode,
-  Loader2,
-  Plus,
-  Database,
-  LayoutDashboard,
-  HardDrive,
-  FolderOpen,
-  Usb,
-  Share2,
-  Eye,
-  Lock,
-  Star,
-  LayoutGrid,
-  List as ListIcon,
-  AlignLeft, // Added for tree view
-} from 'lucide-react';
+import { Upload, Folder, FileText, Image as ImageIcon, Search, ChevronRight, ChevronDown, MoreVertical, Download, Trash2, FolderPlus, Home, FileArchive, FileCode, Plus, Database, LayoutDashboard, HardDrive, FolderOpen, Usb, Share2, Eye, Lock, Star, LayoutGrid, List as ListIcon, AlignLeft, // Added for tree view } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -988,7 +961,7 @@ export default function StoragePage() {
                 Cancel
               </Button>
               <Button onClick={handleCreateFolder} disabled={creatingFolder || !newFolderName.trim()}>
-                {creatingFolder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {creatingFolder && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                 Create Folder
               </Button>
             </DialogFooter>
@@ -1062,7 +1035,7 @@ export default function StoragePage() {
                 Cancel
               </Button>
               <Button onClick={handleCreateBucket} disabled={creatingBucket || !newBucketName.trim()}>
-                {creatingBucket && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {creatingBucket && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                 Create Bucket
               </Button>
             </DialogFooter>

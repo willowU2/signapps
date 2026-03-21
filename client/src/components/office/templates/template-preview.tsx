@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * TemplatePreview
  *
@@ -7,21 +9,7 @@
  */
 
 import React, { useState } from 'react';
-import {
-  FileText,
-  Table,
-  Presentation,
-  Star,
-  Clock,
-  User,
-  Heart,
-  Download,
-  Copy,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Check,
-} from 'lucide-react';
+import { FileText, Table, Presentation, Star, Clock, User, Heart, Download, Copy, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -405,7 +393,7 @@ export function TemplatePreview({
             <Button className="w-full" onClick={handleApplyClick} disabled={isApplying}>
               {isApplying ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                   Création...
                 </>
               ) : (
@@ -455,7 +443,7 @@ export function TemplatePreview({
               <Button onClick={handleApply} disabled={!validateVariables() || isApplying}>
                 {isApplying ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                     Création...
                   </>
                 ) : (

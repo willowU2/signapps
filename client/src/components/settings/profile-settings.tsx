@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -8,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/store';
 import { usersApi } from '@/lib/api/identity';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+
 
 export function ProfileSettings() {
   const { user, setUser } = useAuthStore();
@@ -88,7 +90,7 @@ export function ProfileSettings() {
             />
           </div>
           <Button onClick={handleSaveProfile} disabled={savingProfile}>
-            {savingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {savingProfile && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
             Enregistrer les modifications
           </Button>
         </CardContent>
@@ -117,7 +119,7 @@ export function ProfileSettings() {
             />
           </div>
           <Button onClick={handleUpdatePassword} variant="secondary" disabled={savingPassword}>
-            {savingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {savingPassword && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
             Mettre à jour le mot de passe
           </Button>
         </CardContent>

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * QueueStatusWidget
  *
@@ -7,15 +9,7 @@
  */
 
 import React, { useEffect } from 'react';
-import {
-  FileText,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  TrendingUp,
-  Activity,
-} from 'lucide-react';
+import { FileText, CheckCircle2, AlertCircle, Clock, TrendingUp, Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -101,7 +95,7 @@ interface ActiveJobPreviewProps {
 function ActiveJobPreview({ name, progress, type }: ActiveJobPreviewProps) {
   return (
     <div className="flex items-center gap-3 p-2 rounded-lg border bg-background">
-      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  text-primary" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{name}</p>
         <div className="flex items-center gap-2 mt-1">
@@ -172,7 +166,7 @@ export function QueueStatusWidget({
         </div>
         {activeJobs.length > 0 && (
           <div className="flex items-center gap-1 text-primary">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
             <span className="text-sm font-medium">{activeJobs.length}</span>
           </div>
         )}
@@ -203,7 +197,7 @@ export function QueueStatusWidget({
             value={stats.pendingJobs}
           />
           <StatCard
-            icon={<Loader2 className="h-4 w-4 text-yellow-500" />}
+            icon={<SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 text-yellow-500" />}
             label="En cours"
             value={stats.processingJobs}
           />

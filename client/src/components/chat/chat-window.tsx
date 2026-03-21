@@ -1,9 +1,11 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useRef, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sparkles, Hash, Phone, Video, Search, ChevronDown, Bot, X, Loader2, CheckCircle, Info, LogIn } from "lucide-react"
+import { Sparkles, Hash, Phone, Video, Search, ChevronDown, Bot, X, CheckCircle, Info, LogIn } from 'lucide-react';
 import { useChat } from "@/hooks/use-chat"
 import { cn } from "@/lib/utils"
 import { MessageItem, ChatMessage } from "./message-item"
@@ -252,7 +254,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                                             <h4 className="text-sm font-semibold tracking-tight">{aiCard.title}</h4>
 
                                             {aiCard.status === 'generating' && (
-                                                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-2" />
+                                                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3  text-muted-foreground ml-2" />
                                             )}
                                         </div>
                                         <Button

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * ConversionJobList
  *
@@ -9,23 +11,7 @@
 import React, { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  FileText,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  MoreHorizontal,
-  Download,
-  RotateCcw,
-  X,
-  Trash2,
-  Filter,
-  RefreshCw,
-  PlayCircle,
-  PauseCircle,
-  AlertTriangle,
-} from 'lucide-react';
+import { FileText, Clock, CheckCircle2, XCircle, MoreHorizontal, Download, RotateCcw, X, Trash2, Filter, RefreshCw, PlayCircle, PauseCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -66,7 +52,7 @@ function getStatusIcon(status: JobStatus, className?: string) {
     case 'queued':
       return <PauseCircle className={cn('h-4 w-4 text-blue-500', className)} />;
     case 'processing':
-      return <Loader2 className={cn('h-4 w-4 text-yellow-500 animate-spin', className)} />;
+      return <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className={cn('h-4 w-4 text-yellow-500 ', className)} />;
     case 'completed':
       return <CheckCircle2 className={cn('h-4 w-4 text-green-500', className)} />;
     case 'failed':
@@ -316,7 +302,7 @@ export function ConversionJobList({ className, onJobSelect }: ConversionJobListP
         <div className="p-3 space-y-1">
           {isLoading && jobs.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
             </div>
           ) : jobs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -347,7 +333,7 @@ export function ConversionJobList({ className, onJobSelect }: ConversionJobListP
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
                     ) : null}
                     Charger plus
                   </Button>
