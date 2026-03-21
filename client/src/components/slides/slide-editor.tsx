@@ -130,8 +130,6 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     { label: 'Paysage', action: 'pageSetup_landscape' }
                 ] },
                 { sep: true },
-                { label: 'Partager', action: 'slides_share' },
-                { label: 'Publier sur le Web', action: 'slides_publish' },
                 { label: 'Historique des versions', action: 'slides_versions' },
                 { label: 'Détails du fichier', action: 'slides_details' }
             ]

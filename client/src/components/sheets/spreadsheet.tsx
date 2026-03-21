@@ -1466,10 +1466,6 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 { label: 'Importer', action: 'import' },
                 { label: 'Créer une copie', action: 'copyFile' },
                 { sep: true },
-                { label: 'Partager', subItems: [
-                    { label: 'Partager avec d\'autres personnes', action: 'share' },
-                    { label: 'Publier sur le Web', action: 'publish_web' }
-                ] },
                 { label: 'Envoyer par e-mail', action: 'email_send' },
                 { label: 'Télécharger', subItems: [
                     { label: 'Microsoft Excel (.xlsx)', action: 'export_xlsx' },
