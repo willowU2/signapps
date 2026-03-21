@@ -6,11 +6,32 @@ import { EmptyChatState } from "@/components/chat/empty-chat-state"
 import { Menu, MessageSquare, Video, Settings, Search, ChevronDown, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { WorkspaceShell } from "@/components/layout/workspace-shell"
-import { useSelectedChannel, useChatActions } from "@/lib/store/chat-store"
+import { useSelectedChannel, useSelectedChannelName, useChatActions, useIsDm } from "@/lib/store/chat-store"
+import { useEffect } from "react"
+import { usersApi } from "@/lib/api/identity"
 
 export default function ChatPage() {
     const selectedChannel = useSelectedChannel()
-    const { setSelectedChannel } = useChatActions()
+    const selectedChannelName = useSelectedChannelName()
+    const isDm = useIsDm()
+    const { setSelectedChannel, setUsersMap } = useChatActions()
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await usersApi.list(1, 1000)
+                const users = response.data?.users || response.data || []
+                const map: Record<string, any> = {}
+                users.forEach(u => {
+                    map[u.id] = u
+                })
+                setUsersMap(map)
+            } catch (error) {
+                console.error("Failed to fetch users for chat", error)
+            }
+        }
+        fetchUsers()
+    }, [setUsersMap])
 
     return (
         <WorkspaceShell
@@ -67,7 +88,7 @@ export default function ChatPage() {
         >
             <div className="flex-1 glass-panel rounded-2xl shadow-premium border border-border/50 overflow-hidden flex flex-col min-w-0 mt-2 mb-2">
                 {selectedChannel ? (
-                    <ChatWindow channelId={selectedChannel} />
+                    <ChatWindow channelId={selectedChannel} channelName={selectedChannelName || undefined} isDm={isDm} />
                 ) : (
                     <EmptyChatState />
                 )}

@@ -11,6 +11,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useUsersMap } from "@/lib/store/chat-store";
 
 export interface ChatMessage {
     id: string;
@@ -32,9 +33,14 @@ interface MessageItemProps {
 }
 
 export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddReaction }: MessageItemProps) {
+    const usersMap = useUsersMap();
     const [isHovered, setIsHovered] = useState(false);
     const date = new Date(message.timestamp);
     const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Resolve user avatar
+    const targetUser = usersMap[message.senderId] || Object.values(usersMap).find(u => u.username === message.senderName);
+    const resolvedAvatar = message.avatar || targetUser?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${message.senderId}`;
 
     // Quick reaction picker options
     const quickReactions = ["👍", "❤️", "😂", "🎉"];
@@ -119,7 +125,7 @@ export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddR
             <div className="w-10 shrink-0 flex justify-center">
                 {showAvatar ? (
                     <Avatar className="h-9 w-9 ring-1 ring-border/50 transition-transform hover:scale-105 cursor-pointer">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${message.senderId}`} />
+                        <AvatarImage src={resolvedAvatar} />
                         <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
                             {message.senderName.substring(0, 2).toUpperCase()}
                         </AvatarFallback>

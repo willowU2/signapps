@@ -22,6 +22,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
 
     useEffect(() => {
         if (!channelId) return
+        setMessages([])
 
         // Initialize Yjs Doc
         const doc = new Y.Doc()

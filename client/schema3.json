@@ -1,0 +1,42 @@
+[
+  {
+    "column_name": "id",
+    "data_type": "uuid",
+    "column_default": null
+  },
+  {
+    "column_name": "name",
+    "data_type": "text",
+    "column_default": "'Untitled'::text"
+  },
+  {
+    "column_name": "doc_type",
+    "data_type": "text",
+    "column_default": "'text'::text"
+  },
+  {
+    "column_name": "doc_binary",
+    "data_type": "bytea",
+    "column_default": null
+  },
+  {
+    "column_name": "version",
+    "data_type": "integer",
+    "column_default": "0"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "column_default": null
+  }
+]

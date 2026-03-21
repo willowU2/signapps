@@ -1,0 +1,27 @@
+[
+  {
+    "id": "a4409d69-4f17-4a73-af1a-3b55aa49e3b8",
+    "doc_type": "dm",
+    "bin_len": 2
+  },
+  {
+    "id": "d4f4c78a-0234-4eb7-af94-7eaae9f8bc53",
+    "doc_type": "dm",
+    "bin_len": 205
+  },
+  {
+    "id": "b21befb3-57be-4091-b385-059d7b4cec3d",
+    "doc_type": "dm",
+    "bin_len": 213
+  },
+  {
+    "id": "45110313-4973-4af9-8b71-4a32a5f787dc",
+    "doc_type": "dm",
+    "bin_len": 2
+  },
+  {
+    "id": "be147d54-9803-4989-ad70-d62d2ede3688",
+    "doc_type": "dm",
+    "bin_len": 2
+  }
+]

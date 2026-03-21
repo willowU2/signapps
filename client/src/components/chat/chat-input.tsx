@@ -4,6 +4,8 @@ import { Send, Paperclip, Smile, Type, Sparkles, Video, CheckCircle, Bot } from 
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { VoiceInput } from "@/components/ui/voice-input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import EmojiPicker from 'emoji-picker-react';
 
 interface ChatInputProps {
     onSend: (content: string) => void;
@@ -200,9 +202,21 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
                             }}
                             className="hidden sm:flex"
                         />
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hidden sm:flex">
-                            <Smile className="h-5 w-5" />
-                        </Button>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hidden sm:flex">
+                                    <Smile className="h-5 w-5" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent side="top" align="end" className="w-auto p-0 border-none shadow-none mb-2" sideOffset={10}>
+                                <EmojiPicker
+                                    onEmojiClick={(emojiData) => {
+                                        setInputValue((prev) => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + emojiData.emoji);
+                                    }}
+                                    // Use proper theme matching with our app if needed
+                                />
+                            </PopoverContent>
+                        </Popover>
                         <Button
                             type="button"
                             size="icon"

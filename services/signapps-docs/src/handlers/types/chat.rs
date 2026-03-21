@@ -553,9 +553,9 @@ pub async fn get_direct_messages(
         // Get participants
         let participants = sqlx::query_as::<_, (Uuid, String)>(
             r#"
-            SELECT cm.user_id, u.username
+            SELECT cm.user_id, COALESCE(NULLIF(TRIM(u.display_name), ''), u.username)
             FROM channel_members cm
-            JOIN users u ON cm.user_id = u.id
+            JOIN identity.users u ON cm.user_id = u.id
             WHERE cm.channel_id = $1
             "#,
         )
@@ -621,7 +621,7 @@ pub async fn create_direct_message(
 
     // Add participants
     for user_id in &payload.participant_ids {
-        let username = sqlx::query_scalar::<_, String>("SELECT username FROM users WHERE id = $1")
+        let username = sqlx::query_scalar::<_, String>("SELECT COALESCE(display_name, username) FROM identity.users WHERE id = $1")
             .bind(user_id)
             .fetch_optional(state.pool.inner())
             .await
@@ -657,6 +657,18 @@ pub async fn create_direct_message(
         }),
     ))
 }
+
+/// Delete a direct message
+pub async fn delete_direct_message(
+    State(state): State<AppState>,
+    Path(dm_id): Path<Uuid>,
+    // TODO: Get user_id from auth middleware and verify participation
+) -> Result<StatusCode, (StatusCode, String)> {
+    // We no longer hard-delete the document to preserve chat history.
+    // The frontend will hide the DM from the user's sidebar locally using Zustand.
+    Ok(StatusCode::NO_CONTENT)
+}
+
 
 // ============================================================================
 // Channel Read Status (Unread Count)

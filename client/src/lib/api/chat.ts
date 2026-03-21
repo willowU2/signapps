@@ -122,6 +122,10 @@ export const chatApi = {
     createDirectMessage: (data: CreateDmRequest) =>
         docsClient.post<DirectMessage>('/dms', data),
 
+    // Delete a direct message
+    deleteDirectMessage: (id: string) =>
+        docsClient.delete(`/dms/${id}`),
+
     // ========================================================================
     // Read Status (Unread Counts)
     // ========================================================================
