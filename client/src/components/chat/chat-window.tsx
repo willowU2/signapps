@@ -222,7 +222,7 @@ export function ChatWindow({ channelId, channelName, isDm }: ChatWindowProps) {
                 </div>
 
                 {/* Messages List Area */}
-                <ScrollArea className="flex-1 px-4 relative" ref={scrollRef}>
+                <ScrollArea className="flex-1 min-h-0 px-4 relative" ref={scrollRef}>
                     <div className="flex flex-col min-h-full justify-end py-4">
                         {formattedMessages.length === 0 && isConnected && (
                             <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500">
@@ -319,7 +319,7 @@ export function ChatWindow({ channelId, channelName, isDm }: ChatWindowProps) {
                 </ScrollArea>
 
                 {/* Main Input Component */}
-                <div className="p-4 bg-background">
+                <div className="p-4 bg-background shrink-0">
                     <ChatInput
                         onSend={handleSendMessage}
                         placeholder={`Message #${displayName}`}
