@@ -276,15 +276,7 @@ export function GlobalHeader() {
                 {/* Action Items Based on Context */}
                 {showDocActions && (
                     <>
-                        <Button variant="outline" size="sm" className="hidden sm:flex gap-2 h-9">
-                            <MessageSquare className="h-4 w-4" />
-                            <span className="hidden lg:inline">Comments</span>
-                        </Button>
-
-                        <Button variant="default" size="sm" className="hidden sm:flex gap-2 h-9 mr-2">
-                            <Share2 className="h-4 w-4" />
-                            <span>Share</span>
-                        </Button>
+                        {/* Comments and Share buttons removed per user request for a cleaner UI */}
                     </>
                 )}
 
