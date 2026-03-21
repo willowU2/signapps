@@ -1,11 +1,13 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import type EmailEditorType from "react-email-editor";
 import type { EditorRef, EmailEditorProps } from "react-email-editor";
 import { Button } from "@/components/ui/button";
-import { Save, Send, Eye, Code, Loader2 } from "lucide-react";
+import { Save, Send, Eye, Code } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -18,7 +20,7 @@ const EmailEditor = dynamic(() => import("react-email-editor"), {
     ssr: false,
     loading: () => (
         <div className="flex items-center justify-center h-full min-h-[500px]">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
         </div>
     ),
 });
@@ -95,7 +97,7 @@ export function EmailComposer({
     if (!mounted) {
         return (
             <div className="flex items-center justify-center h-full min-h-[500px]">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
             </div>
         );
     }

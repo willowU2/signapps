@@ -15,6 +15,7 @@
  */
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { useEntityStore } from '@/stores/entity-hub-store';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SERVICE CONFIGURATION
@@ -114,6 +115,13 @@ const clientCache = new Map<ServiceName, AxiosInstance>();
 
 function addAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
   // Cookies are automatically sent via withCredentials: true
+  // Add workspace context header
+  if (typeof window !== 'undefined') {
+    const workspaceId = useEntityStore.getState().selectedWorkspaceId;
+    if (workspaceId) {
+      config.headers['X-Workspace-ID'] = workspaceId;
+    }
+  }
   return config;
 }
 

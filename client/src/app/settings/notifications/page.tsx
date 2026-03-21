@@ -1,3 +1,4 @@
+import { SpinnerInfinity } from 'spinners-react';
 /**
  * Notification Settings Page
  * Configure email, SMS, and push notifications
@@ -15,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Mail, MessageSquare, Bell, Clock, Save, Loader2, CheckCircle2, AlertCircle, History, Settings } from 'lucide-react';
+import { Mail, MessageSquare, Bell, Clock, Save, CheckCircle2, AlertCircle, History, Settings } from 'lucide-react';
 import { calendarApi } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { PushSubscriptionManager } from '@/components/notifications/push-subscription-manager';
@@ -151,7 +152,7 @@ export default function NotificationSettingsPage() {
   if (loading) {
     return (
       <div className="container mx-auto py-10 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
       </div>
     );
   }
@@ -423,7 +424,7 @@ export default function NotificationSettingsPage() {
         >
           {saving ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
               Saving...
             </>
           ) : (

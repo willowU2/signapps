@@ -45,6 +45,7 @@ pub struct User {
     pub last_login: Option<DateTime<Utc>>,
     /// Tenant ID for multi-tenant isolation (NULL = not assigned to a tenant)
     pub tenant_id: Option<Uuid>,
+    pub avatar_url: Option<String>,
 }
 
 /// Create user request.
@@ -58,6 +59,7 @@ pub struct CreateUser {
     pub auth_provider: String,
     pub ldap_dn: Option<String>,
     pub ldap_groups: Option<Vec<String>>,
+    pub avatar_url: Option<String>,
 }
 
 impl Default for CreateUser {
@@ -71,6 +73,7 @@ impl Default for CreateUser {
             auth_provider: "local".to_string(),
             ldap_dn: None,
             ldap_groups: None,
+            avatar_url: None,
         }
     }
 }
@@ -83,6 +86,7 @@ pub struct UpdateUser {
     pub role: Option<i16>,
     pub ldap_dn: Option<String>,
     pub ldap_groups: Option<Vec<String>>,
+    pub avatar_url: Option<String>,
 }
 
 /// User session entity.

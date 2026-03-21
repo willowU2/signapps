@@ -1,0 +1,32 @@
+[package]
+name = "signapps-service"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Windows Service support for SignApps Platform"
+
+[dependencies]
+# Async runtime
+tokio = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Utilities
+once_cell = { workspace = true }
+
+# Windows service support
+[target.'cfg(windows)'.dependencies]
+windows-service = "0.7"
+eventlog = "0.2"
+log = "0.4"
+
+[features]
+default = []

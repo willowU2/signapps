@@ -28,6 +28,8 @@ export interface SystemMetrics {
     memory_usage: number
     disk_usage: number
     uptime: number
+    network_rx_bytes?: number
+    network_tx_bytes?: number
 }
 
 export async function getUsers(): Promise<User[]> {

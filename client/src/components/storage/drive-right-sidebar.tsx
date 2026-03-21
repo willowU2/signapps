@@ -1,18 +1,10 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 
 import { useState, useEffect } from 'react';
-import {
-    Calendar as CalendarIcon,
-    StickyNote,
-    CheckCircle2,
-    Sparkles,
-    X,
-    Plus,
-    Trash2,
-    CalendarCheck,
-    Loader2
-} from 'lucide-react';
+import { Calendar as CalendarIcon, StickyNote, CheckCircle2, Sparkles, X, Plus, Trash2, CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -288,7 +280,7 @@ export function DriveRightSidebar() {
                                 <div className="pt-2 relative">
                                     {loadingEvents ? (
                                         <div className="flex flex-col items-center justify-center py-10 text-[#5f6368]">
-                                            <Loader2 className="w-6 h-6 animate-spin mb-2" />
+                                            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-6 h-6  mb-2" />
                                             <span className="text-sm">Chargement...</span>
                                         </div>
                                     ) : events.length === 0 ? (

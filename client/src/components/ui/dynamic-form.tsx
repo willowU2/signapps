@@ -1,3 +1,4 @@
+import { SpinnerInfinity } from 'spinners-react';
 /**
  * Dynamic Form Component
  *
@@ -10,7 +11,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -337,7 +338,7 @@ export function DynamicForm({
               )}
               <Button type="submit" disabled={isLoading || isSubmitting || readOnly}>
                 {(isLoading || isSubmitting) && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                 )}
                 {schema.submitLabel ?? "Enregistrer"}
               </Button>

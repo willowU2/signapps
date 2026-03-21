@@ -1,16 +1,8 @@
 'use client';
 
-import {
-    HardDrive,
-    Users,
-    Clock,
-    Star,
-    Trash2,
-    Cloud,
-    Plus,
-    Loader2,
-    Home
-} from 'lucide-react';
+import { SpinnerInfinity } from 'spinners-react';
+
+import { HardDrive, Users, Clock, Star, Trash2, Cloud, Plus, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -120,7 +112,7 @@ export function DriveSidebar({
                     </div>
                 ) : (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3 " />
                         Chargement...
                     </div>
                 )}

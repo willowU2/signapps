@@ -8,17 +8,40 @@ import { Activity, HardDrive, Cpu, Network } from "lucide-react"
 
 export default function MonitoringPage() {
     const [metrics, setMetrics] = useState<SystemMetrics | null>(null)
+    const [prevMetrics, setPrevMetrics] = useState<SystemMetrics | null>(null)
+    const [netSpeed, setNetSpeed] = useState({ rx: 0, tx: 0 })
 
     // Polling for live metrics
     useEffect(() => {
         const fetchMetrics = () => {
-            getSystemMetrics().then(setMetrics).catch(err => console.debug(err))
+            getSystemMetrics().then(newMetrics => {
+                setPrevMetrics(prev => {
+                    if (prev) {
+                        const rxDiff = (newMetrics.network_rx_bytes || 0) - (prev.network_rx_bytes || 0);
+                        const txDiff = (newMetrics.network_tx_bytes || 0) - (prev.network_tx_bytes || 0);
+                        // Convert bytes/5sec to bytes/sec
+                        setNetSpeed({
+                            rx: Math.max(0, rxDiff / 5),
+                            tx: Math.max(0, txDiff / 5)
+                        });
+                    }
+                    return newMetrics;
+                });
+                setMetrics(newMetrics);
+            }).catch(err => console.debug(err))
         }
 
         fetchMetrics()
         const interval = setInterval(fetchMetrics, 5000)
         return () => clearInterval(interval)
     }, [])
+
+    const formatSpeed = (bytesPerSec: number) => {
+        if (bytesPerSec === 0) return "0 B/s";
+        if (bytesPerSec < 1024) return `${bytesPerSec.toFixed(0)} B/s`;
+        if (bytesPerSec < 1024 * 1024) return `${(bytesPerSec / 1024).toFixed(1)} KB/s`;
+        return `${(bytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`;
+    }
 
     return (
         <AppLayout>
@@ -77,7 +100,7 @@ export default function MonitoringPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Network (Mock) */}
+                    {/* Network Live Feed */}
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-base font-medium">Network I/O</CardTitle>
@@ -86,11 +109,11 @@ export default function MonitoringPage() {
                         <CardContent>
                             <div className="flex justify-between items-end">
                                 <div>
-                                    <div className="text-2xl font-bold">1.2 MB/s</div>
+                                    <div className="text-2xl font-bold">{formatSpeed(netSpeed.rx)}</div>
                                     <p className="text-xs text-muted-foreground">Inbound</p>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-2xl font-bold">0.8 MB/s</div>
+                                    <div className="text-2xl font-bold">{formatSpeed(netSpeed.tx)}</div>
                                     <p className="text-xs text-muted-foreground">Outbound</p>
                                 </div>
                             </div>

@@ -1,10 +1,13 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { driveApi, DriveNode } from '@/lib/api';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
-import { Loader2, FileText, Plus, MoreVertical } from 'lucide-react';
+import { useEntityStore } from '@/stores/entity-hub-store';
+import { FileText, Plus, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -23,8 +26,11 @@ export default function DocsDashboard() {
     const [newDocName, setNewDocName] = useState('Document sans titre');
     const [isCreating, setIsCreating] = useState(false);
 
+    const { selectedWorkspaceId } = useEntityStore();
+
     useEffect(() => {
         const fetchDocs = async () => {
+            setLoading(true);
             try {
                 const nodes = await driveApi.listNodes(null);
                 const textDocs = nodes.filter(n => 
@@ -68,7 +74,7 @@ export default function DocsDashboard() {
         };
 
         fetchDocs();
-    }, []);
+    }, [selectedWorkspaceId]);
 
     const handleCreateNew = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -105,7 +111,7 @@ export default function DocsDashboard() {
     if (loading) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center p-8 h-full bg-background/50 backdrop-blur-sm">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-primary mb-4" />
                 <p className="text-muted-foreground animate-pulse">Chargement de vos documents...</p>
             </div>
         );
@@ -132,12 +138,12 @@ export default function DocsDashboard() {
                         </span>
                     </div>
                     
-                    <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 snap-x smooth-scroll no-scrollbar">
+                    <div className="flex gap-4 sm:gap-6 overflow-x-auto pt-2 pb-4 snap-x smooth-scroll no-scrollbar -mt-2">
                         {templates.map(tpl => (
                             <div key={tpl.id} className="flex flex-col gap-3 group shrink-0 snap-start">
                                 <Card 
                                     onClick={tpl.isAdd ? openCreateModal : () => toast.info('Modèle à venir !')}
-                                    className={`h-[185px] w-[140px] rounded border border-border/50 bg-background cursor-pointer flex items-center justify-center transition-all duration-300 relative overflow-hidden group-hover:border-primary/50 group-hover:ring-1 group-hover:ring-primary/20 ${tpl.isAdd ? 'shadow-sm hover:shadow-md' : 'shadow-none hover:shadow-sm'}`}
+                                    className={`h-[185px] w-[140px] rounded border border-border/50 bg-background cursor-pointer flex items-center justify-center transition-all duration-300 relative overflow-hidden group-hover:border-muted-foreground/30 group-hover:shadow-md group-hover:-translate-y-1 ${tpl.isAdd ? 'shadow-sm' : 'shadow-none'}`}
                                 >
                                     {tpl.isAdd ? (
                                         <div className="rounded-full bg-primary/10 p-4 transition-transform group-hover:scale-105 duration-300">
@@ -183,7 +189,7 @@ export default function DocsDashboard() {
                             <Card 
                                 key={doc.id}
                                 onClick={() => handleOpenDoc(doc)}
-                                className="group cursor-pointer flex flex-col bg-background overflow-hidden border border-border/60 hover:border-primary/50 hover:ring-1 hover:ring-primary/20 shadow-none hover:shadow-md transition-all duration-300 h-[220px]"
+                                className="group cursor-pointer flex flex-col bg-background overflow-hidden border border-border/60 hover:border-muted-foreground/30 hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-[220px]"
                             >
                                 {/* Document Preview Area */}
                                 <div className="flex-1 bg-muted/20 border-b border-border/50 p-3 pt-6 flex flex-col items-center justify-start overflow-hidden relative">
@@ -265,7 +271,7 @@ export default function DocsDashboard() {
                             </Button>
                             <Button type="submit" disabled={isCreating || !newDocName.trim()} className="px-6 relative overflow-hidden group">
                                 {isCreating ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                                 ) : (
                                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                                 )}

@@ -1,7 +1,9 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from 'react';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 import { previewApi } from '@/lib/api';
 
@@ -32,10 +34,22 @@ export function DocumentPreview({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch document metadata from backend
-    // GET /api/v1/preview/document/:bucket/*key/metadata
-    setLoading(false);
-  }, []);
+    if (!bucket || !fileKey) {
+      setLoading(false);
+      return;
+    }
+
+    previewApi.getDocumentMetadata(bucket, fileKey)
+      .then(res => {
+        setMetadata(res.data);
+      })
+      .catch(err => {
+        console.error("Failed to load document metadata", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [bucket, fileKey]);
 
   const getDocumentType = () => {
     const ext = fileName.split('.').pop()?.toLowerCase() || '';
@@ -65,7 +79,7 @@ export function DocumentPreview({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
       </div>
     );
   }

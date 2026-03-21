@@ -40,8 +40,7 @@ if (Test-Path "$PSScriptRoot\client\.next") {
     Remove-Item -Recurse -Force "$PSScriptRoot\client\.next" -ErrorAction Ignore
 }
 
-Write-Host "Starting Next.js..."
-Start-Process "npm.cmd" -ArgumentList "run", "dev" -WorkingDirectory "c:\prog\signapps-platform\client" -WindowStyle Minimized
+Start-Process "npm.cmd" -ArgumentList "run", "dev" -WorkingDirectory "$PSScriptRoot\client" -WindowStyle Minimized
 
 Write-Host "Waiting for Next.js to start..."
 Start-Sleep -Seconds 12

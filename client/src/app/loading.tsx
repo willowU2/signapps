@@ -1,4 +1,5 @@
-import { Loader2 } from 'lucide-react';
+import { SpinnerInfinity } from 'spinners-react';
+
 
 export default function Loading() {
   return (
@@ -8,7 +9,7 @@ export default function Loading() {
           <span className="text-3xl font-bold text-primary-foreground">S</span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-5 w-5 " />
           <span>Loading...</span>
         </div>
       </div>

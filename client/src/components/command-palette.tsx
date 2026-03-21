@@ -40,6 +40,7 @@ import {
   CommandShortcut,
 } from '@/components/ui/command';
 import { VoiceInput } from '@/components/ui/voice-input';
+import { useUniversalSearch } from '@/hooks/use-universal-search';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -48,6 +49,33 @@ export function CommandPalette() {
   const router = useRouter();
   const pathname = usePathname();
   const { logout } = useAuthStore();
+  const { blocks, isLoading } = useUniversalSearch({ limitPerType: 10 });
+
+  const getBlockIcon = (type: string) => {
+    switch (type) {
+      case 'file': return <FileText className="mr-2 h-4 w-4 text-blue-500" />;
+      case 'folder': return <HardDrive className="mr-2 h-4 w-4 text-slate-500" />;
+      case 'user': return <User className="mr-2 h-4 w-4 text-green-500" />;
+      case 'task': return <ListTodo className="mr-2 h-4 w-4 text-orange-500" />;
+      case 'event': return <Clock className="mr-2 h-4 w-4 text-purple-500" />;
+      default: return <FileText className="mr-2 h-4 w-4" />;
+    }
+  };
+
+  const getBlockRoute = (block: any) => {
+    switch (block.type) {
+      case 'file': return `/storage?preview=${block.data.id || block.data.key}`; 
+      case 'folder': return `/storage?folder=${block.data.id}`;
+      case 'user': return `/workforce?user=${block.data.id}`;
+      case 'task': return `/tasks`;
+      case 'event': return `/scheduler`;
+      default: return '#';
+    }
+  };
+
+  const getBlockTitle = (block: any) => {
+    return block.data.name || block.data.title || block.data.displayName || block.data.username || "Unknown Item";
+  };
 
   const handleTranscription = useCallback((text: string, isFinal: boolean) => {
     if (isFinal) {
@@ -169,20 +197,36 @@ export function CommandPalette() {
 
         {(pathname.includes('/docs') || pathname.includes('/mail') || pathname.includes('/slides')) && <CommandSeparator />}
 
-        {/* --- Universal Search Mock --- */}
-        {search && (
+        {/* --- Universal Search Federated Results --- */}
+        {search && isLoading && (
+          <div className="py-4 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+            <Activity className="h-4 w-4 animate-spin" />
+            Recherche fédérée en cours...
+          </div>
+        )}
+        
+        {search && blocks.length > 0 && (
           <>
-            <CommandGroup heading="Files (Universal Search)">
-              <CommandItem onSelect={() => runCommand(() => router.push('/docs/q4-report'))}>
-                <FileText className="mr-2 h-4 w-4 text-blue-500" />
-                <span>{search} - Q4 Financial Report</span>
-                <span className="ml-auto text-xs text-muted-foreground border rounded px-1.5 py-0.5">Doc</span>
-              </CommandItem>
-              <CommandItem onSelect={() => runCommand(() => router.push('/slides/pitch'))}>
-                <Presentation className="mr-2 h-4 w-4 text-yellow-500" />
-                <span>{search} Deck 2026</span>
-                <span className="ml-auto text-xs text-muted-foreground border rounded px-1.5 py-0.5">Slide</span>
-              </CommandItem>
+            <CommandGroup heading="Federated Search Results (Files, Users, Tasks, Events)">
+              {blocks.map((block: any, idx: number) => (
+                <CommandItem 
+                  key={`${block.type}-${block.data.id || idx}`}
+                  value={getBlockTitle(block) + ' ' + block.type + ' ' + (block.data.email || '') + ' ' + (block.data.department || '')}
+                  onSelect={() => runCommand(() => router.push(getBlockRoute(block)))}
+                >
+                  {getBlockIcon(block.type)}
+                  <span>{getBlockTitle(block)}</span>
+                  {block.data.department && (
+                     <span className="ml-2 pl-2 border-l text-xs text-muted-foreground">{block.data.department}</span>
+                  )}
+                  {block.data.email && (
+                     <span className="ml-2 text-xs text-muted-foreground">- {block.data.email}</span>
+                  )}
+                  <span className="ml-auto text-xs text-muted-foreground border rounded px-1.5 py-0.5 capitalize shadow-sm">
+                    {block.type}
+                  </span>
+                </CommandItem>
+              ))}
             </CommandGroup>
             <CommandSeparator />
           </>

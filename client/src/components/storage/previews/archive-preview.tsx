@@ -1,9 +1,12 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from 'react';
-import { FileArchive, Loader2, Download } from 'lucide-react';
+import { FileArchive, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { previewApi } from '@/lib/api';
 
 interface ArchiveFile {
   name: string;
@@ -13,7 +16,8 @@ interface ArchiveFile {
 
 interface ArchivePreviewProps {
   fileName: string;
-  // In a real implementation, this would call an API to extract archive listing
+  bucket?: string;
+  fileKey?: string;
 }
 
 /**
@@ -24,16 +28,34 @@ interface ArchivePreviewProps {
  */
 export function ArchivePreview({
   fileName,
+  bucket,
+  fileKey,
 }: ArchivePreviewProps) {
   const [files, setFiles] = useState<ArchiveFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalSize, setTotalSize] = useState(0);
 
   useEffect(() => {
-    // TODO: Fetch archive listing from backend
-    // GET /api/v1/preview/archive/:bucket/*key
-    setLoading(false);
-  }, []);
+    if (!bucket || !fileKey) {
+      setLoading(false);
+      return;
+    }
+
+    previewApi.getArchiveListing(bucket, fileKey)
+      .then(res => {
+        const fileList = res.data;
+        setFiles(fileList);
+        const total = fileList.reduce((acc: number, f: ArchiveFile) => acc + f.size, 0);
+        setTotalSize(total);
+      })
+      .catch(err => {
+        console.error("Failed to load archive listing", err);
+        // Only show toast if it's explicitly requested by an action, or fail silently for preview pane
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [bucket, fileKey]);
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -49,7 +71,7 @@ export function ArchivePreview({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
       </div>
     );
   }

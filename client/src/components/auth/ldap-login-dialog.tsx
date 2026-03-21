@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -18,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Eye, EyeOff, Loader2, Network } from 'lucide-react';
+import { Eye, EyeOff, Network } from 'lucide-react';
 import { parseApiError } from '@/lib/errors';
 
 const ldapLoginSchema = z.object({
@@ -171,7 +173,7 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                 Authenticating...
               </>
             ) : (

@@ -6,6 +6,7 @@ members = [
     "crates/signapps-db",
     "crates/signapps-cache",
     "crates/signapps-runtime",
+    "crates/signapps-service",
     # Tauri desktop app
     "src-tauri",
     # Backend services

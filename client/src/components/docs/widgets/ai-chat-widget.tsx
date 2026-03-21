@@ -1,7 +1,9 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2 } from "lucide-react";
+import { Send, Bot, User } from 'lucide-react';
 import { useAiStream } from "@/hooks/use-ai-stream";
 import { useAiRouting } from "@/hooks/use-ai-routing";
 
@@ -95,7 +97,7 @@ export function AiChatWidget() {
                 {isStreaming && (
                     <div className="flex gap-3 max-w-full justify-start animate-fade-in">
                         <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0 mt-0.5">
-                            <Loader2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 animate-spin" />
+                            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 " />
                         </div>
                         <div className="p-3 rounded-2xl text-sm leading-relaxed bg-background dark:bg-gray-800 border border-indigo-100 dark:border-indigo-900/50 text-gray-800 dark:text-gray-200 shadow-sm rounded-tl-sm border-l-2 border-l-indigo-500">
                             {currentStream || "Thinking..."}

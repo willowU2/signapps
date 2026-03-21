@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { useEntityStore } from '@/stores/entity-hub-store';
 
 // Service-specific base URLs
 export const IDENTITY_URL = process.env.NEXT_PUBLIC_IDENTITY_URL || 'http://127.0.0.1:3001/api/v1';
@@ -28,9 +29,16 @@ export function createApiClient(baseURL: string): AxiosInstance {
         withCredentials: true,
     });
 
-    // Request interceptor
+    // Request interceptor - cookies sent via withCredentials, add workspace context
     client.interceptors.request.use((config) => {
-        return config; // Cookies are sent automatically via withCredentials: true
+        if (typeof window !== 'undefined') {
+            // Dynamically inject the active workspace from Zustand state
+            const workspaceId = useEntityStore.getState().selectedWorkspaceId;
+            if (workspaceId) {
+                config.headers['X-Workspace-ID'] = workspaceId;
+            }
+        }
+        return config;
     });
 
     // Response interceptor for token refresh

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,18 +10,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Bell,
-  Container,
-  Shield,
-  HardDrive,
-  User,
-  AlertTriangle,
-  CheckCircle,
-  Info,
-  X,
-  Loader2,
-} from 'lucide-react';
+import { Bell, Container, Shield, HardDrive, User, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
 import { notificationsApi, type NotificationRecord } from '@/lib/api/calendar';
 
 interface Notification {
@@ -199,7 +190,7 @@ export function NotificationPopover() {
         <ScrollArea className="h-[300px]">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Loader2 className="h-8 w-8 text-muted-foreground mb-2 animate-spin" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8 text-muted-foreground mb-2 " />
               <p className="text-sm text-muted-foreground">Chargement...</p>
             </div>
           ) : notifications.length === 0 ? (

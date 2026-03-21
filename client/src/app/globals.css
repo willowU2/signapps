@@ -154,6 +154,30 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* Premium Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 9999px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+  
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
 }
 
 @layer utilities {
@@ -590,4 +614,54 @@
 
 .collaboration-cursor__selection {
   background-color: inherit;
+}
+
+/* =========================================
+   Print Optimizations for Document Editor 
+   ========================================= */
+@media print {
+  /* Only trigger this layout isolated print if a rich text editor is present on the page */
+  body:has(.ProseMirror) * {
+    visibility: hidden;
+  }
+  
+  body:has(.ProseMirror) .ProseMirror, 
+  body:has(.ProseMirror) .ProseMirror * {
+    visibility: visible;
+  }
+  
+  body:has(.ProseMirror) .ProseMirror {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* Browser generic print settings */
+  @page {
+    margin: 2cm;
+  }
+
+  body:has(.ProseMirror) h1, 
+  body:has(.ProseMirror) h2, 
+  body:has(.ProseMirror) h3 {
+    page-break-after: avoid;
+  }
+
+  body:has(.ProseMirror) img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  body:has(.ProseMirror) table, 
+  body:has(.ProseMirror) tr, 
+  body:has(.ProseMirror) td {
+    page-break-inside: avoid;
+  }
 }

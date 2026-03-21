@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * Validation Dashboard Component
  *
@@ -10,19 +12,7 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle2,
-  Info,
-  Calendar,
-  Users,
-  Clock,
-  RefreshCw,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-} from 'lucide-react';
+import { AlertTriangle, AlertCircle, CheckCircle2, Info, Calendar, Users, Clock, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -297,7 +287,7 @@ export function ValidationDashboard({
       ) : (
         <div className="flex h-64 items-center justify-center">
           <div className="text-center">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mx-auto h-8 w-8  text-muted-foreground" />
             <p className="mt-2 text-sm text-muted-foreground">Chargement...</p>
           </div>
         </div>

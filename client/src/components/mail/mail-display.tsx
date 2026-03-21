@@ -1,20 +1,6 @@
+import { SpinnerInfinity } from 'spinners-react';
 import { format } from "date-fns"
-import {
-    Archive,
-    ArchiveX,
-    Clock,
-    Forward,
-    MoreVertical,
-    Reply,
-    ReplyAll,
-    Trash2,
-    Sparkles,
-    Bot,
-    X,
-    Loader2,
-    Send,
-    FileText,
-} from "lucide-react"
+import { Archive, ArchiveX, Clock, Forward, MoreVertical, Reply, ReplyAll, Trash2, Sparkles, Bot, X, Send, FileText } from 'lucide-react';
 
 import {
     DropdownMenu,
@@ -261,7 +247,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                 disabled={isStreaming}
                             >
                                 {isStreaming ? (
-                                    <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin text-purple-500" />
+                                    <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3.5 w-3.5 mr-2  text-purple-500" />
                                 ) : (
                                     <Sparkles className="h-3.5 w-3.5 mr-2 text-purple-500" />
                                 )}
@@ -381,7 +367,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                     disabled={isRepliesLoading}
                                 >
                                     {isRepliesLoading ? (
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 mr-2 " />
                                     ) : (
                                         <Bot className="h-4 w-4 mr-2" />
                                     )}

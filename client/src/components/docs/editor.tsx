@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
@@ -77,57 +79,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-    Sparkles,
-    Wand2,
-    CheckCheck,
-    FileText,
-    Loader2,
-    Pencil,
-    ArrowRight,
-    Languages,
-    X,
-    Square,
-    Bold,
-    Italic,
-    Underline as UnderlineIcon,
-    Strikethrough,
-    AlignLeft,
-    AlignCenter,
-    AlignRight,
-    AlignJustify,
-    List,
-    ListOrdered,
-    CheckSquare,
-    Quote,
-    Heading1,
-    Heading2,
-    Heading3,
-    Subscript as SubscriptIcon,
-    Superscript as SuperscriptIcon,
-    Palette,
-    Highlighter,
-    Table as TableIcon,
-    Image as ImageIcon,
-    Link as LinkIcon,
-    Undo,
-    Redo,
-    Menu,
-    Bot,
-    Code,
-    FileImage,
-    Smile,
-    MessageSquare,
-    MessageSquarePlus,
-    Trash2,
-    ChevronRight,
-    ChevronDown,
-    Check,
-    Video,
-    Mic,
-    Download,
-    Upload
-} from 'lucide-react';
+import { Sparkles, Wand2, CheckCheck, FileText, Pencil, ArrowRight, Languages, X, Square, Bold, Italic, Underline as UnderlineIcon, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered, CheckSquare, Quote, Heading1, Heading2, Heading3, Subscript as SubscriptIcon, Superscript as SuperscriptIcon, Palette, Highlighter, Table as TableIcon, Image as ImageIcon, Link as LinkIcon, Undo, Redo, Menu, Bot, Code, FileImage, Smile, MessageSquare, MessageSquarePlus, Trash2, ChevronRight, ChevronDown, Check, Video, Mic, Download, Upload } from 'lucide-react';
 import { useAiStream } from '@/hooks/use-ai-stream';
 import { toast } from 'sonner';
 import { VoiceInput } from '@/components/ui/voice-input';
@@ -2582,7 +2534,7 @@ const Editor = ({
                                     disabled={isStreaming}
                                     className="flex items-center gap-1.5 px-3 py-1 hover:bg-purple-50 dark:hover:bg-purple-900/20 text-[13px] font-medium text-purple-600 dark:text-purple-400 transition-colors"
                                 >
-                                    {aiAction === 'improve' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                    {aiAction === 'improve' ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-3.5 h-3.5 " /> : <Sparkles className="w-3.5 h-3.5" />}
                                     Improve
                                 </button>
                                 <button
@@ -2590,7 +2542,7 @@ const Editor = ({
                                     disabled={isStreaming}
                                     className="flex items-center gap-1.5 px-3 py-1 hover:bg-gray-100 dark:hover:bg-[#303134] text-[13px] font-medium text-[#444746] dark:text-[#e3e3e3] transition-colors"
                                 >
-                                    {aiAction === 'fix' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCheck className="w-3.5 h-3.5" />}
+                                    {aiAction === 'fix' ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-3.5 h-3.5 " /> : <CheckCheck className="w-3.5 h-3.5" />}
                                     Fix
                                 </button>
                             </BubbleMenu>
@@ -2621,7 +2573,7 @@ const Editor = ({
                                             disabled={isStreaming}
                                             className="flex items-center gap-2.5 px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#303134] text-[13px] text-[#444746] dark:text-[#e3e3e3] transition-colors text-left"
                                         >
-                                            {aiAction === 'continue' ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                                            {aiAction === 'continue' ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-4 h-4 " /> : <ArrowRight className="w-4 h-4" />}
                                             Continue writing
                                         </button>
                                         <button
@@ -2661,7 +2613,7 @@ const Editor = ({
                                             disabled={!promptValue.trim() || isStreaming}
                                             className="p-1.5 rounded-md bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 disabled:opacity-30 transition-colors"
                                         >
-                                            {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                                            {isStreaming ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-4 h-4 " /> : <ArrowRight className="w-4 h-4" />}
                                         </button>
                                         <button
                                             onClick={() => { setFloatingMode('menu'); setPromptValue(''); }}

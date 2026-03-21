@@ -1,10 +1,12 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { MessageSquare, Hash, Plus, Loader2, ChevronDown, Users } from "lucide-react"
+import { MessageSquare, Hash, Plus, ChevronDown, Users } from 'lucide-react';
 import { chatApi, Channel, DirectMessage } from "@/lib/api/chat"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { FEATURES } from "@/lib/features"
@@ -232,7 +234,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                         </div>
                         {isLoading ? (
                             <div className="px-3 flex items-center gap-2 text-[#444746] text-sm pt-2">
-                                <Loader2 className="h-3 w-3 animate-spin" /> Chargement...
+                                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3 " /> Chargement...
                             </div>
                         ) : (
                             <div className="space-y-0.5">
@@ -310,7 +312,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                             onClick={handleCreateChannel}
                             disabled={isCreating || !newChannelName.trim()}
                         >
-                            {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {isCreating && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                             Créer
                         </Button>
                     </DialogFooter>

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -41,33 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Send,
-  Bot,
-  User,
-  FileText,
-  Loader2,
-  Plus,
-  Upload,
-  Search,
-  RefreshCw,
-  Cpu,
-  Server,
-  Cloud,
-  MessageSquare,
-  Trash2,
-  Edit3,
-  MoreVertical,
-  Download,
-  Database,
-  FolderPlus,
-  HardDrive,
-  Clock,
-  ChevronLeft,
-  ChevronRight,
-  Languages,
-  Settings,
-} from 'lucide-react';
+import { Send, Bot, User, FileText, Plus, Upload, Search, RefreshCw, Cpu, Server, Cloud, MessageSquare, Trash2, Edit3, MoreVertical, Download, Database, FolderPlus, HardDrive, Clock, ChevronLeft, ChevronRight, Languages, Settings } from 'lucide-react';
 import { aiApi, AIStats, Model, ProviderInfo, KnowledgeBase } from '@/lib/api';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -1138,7 +1114,7 @@ export default function AIPage() {
                         <Bot className="h-4 w-4 text-primary-foreground" />
                       </div>
                       <div className="flex items-center gap-2 rounded-lg bg-muted px-4 py-3">
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
                         <span className="text-sm">Reflexion en cours...</span>
                       </div>
                     </div>
@@ -1265,7 +1241,7 @@ export default function AIPage() {
 
                 {loadingKnowledgeBases ? (
                   <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8 " />
                   </div>
                 ) : knowledgeBases.length === 0 ? (
                   <Card>

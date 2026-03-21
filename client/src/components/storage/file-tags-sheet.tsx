@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useEffect } from "react";
 import {
   Sheet,
@@ -10,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { storageApi } from "@/lib/api";
-import { Tag, Loader2, Check } from "lucide-react";
+import { Tag, Check } from 'lucide-react';
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -105,7 +107,7 @@ export function FileTagsSheet({
         <div className="flex-1 mt-6 min-h-0 border text-sm rounded-md bg-muted/10 overflow-hidden relative">
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
             </div>
           ) : allTags.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
@@ -134,7 +136,7 @@ export function FileTagsSheet({
                       disabled={savingId === tag.id}
                     >
                       {savingId === tag.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3.5 w-3.5 " />
                       ) : isSelected && (
                         <Check className="h-3.5 w-3.5" />
                       )}

@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -10,7 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Bot, FileText, Mail, Presentation, MonitorDot } from "lucide-react";
+import { Bot, FileText, Mail, Presentation, MonitorDot } from 'lucide-react';
 import { useAiRouting, AiRole } from "@/hooks/use-ai-routing";
 import { aiApi, ProviderInfo, Model } from "@/lib/api";
 
@@ -45,7 +47,7 @@ export function AiRoutingSettings() {
     if (loadingProviders) {
         return (
             <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
             </div>
         );
     }
@@ -149,7 +151,7 @@ function RoleConfigRow({
                 <div className="flex-1 space-y-2">
                     <Label className="flex items-center gap-2">
                         Model
-                        {loadingModels && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                        {loadingModels && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3  text-muted-foreground" />}
                     </Label>
                     <Select
                         value={currentConfig.modelId || "unassigned"}

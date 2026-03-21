@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * CreateTemplateDialog
  *
@@ -7,27 +9,7 @@
  */
 
 import React, { useState } from 'react';
-import {
-  FileText,
-  Table,
-  Presentation,
-  Briefcase,
-  GraduationCap,
-  User,
-  Megaphone,
-  Scale,
-  Users,
-  Calculator,
-  Palette,
-  Folder,
-  Globe,
-  Lock,
-  Building2,
-  Loader2,
-  ImagePlus,
-  X,
-  Plus,
-} from 'lucide-react';
+import { FileText, Table, Presentation, Briefcase, GraduationCap, User, Megaphone, Scale, Users, Calculator, Palette, Folder, Globe, Lock, Building2, ImagePlus, X, Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -454,7 +436,7 @@ export function CreateTemplateDialog({
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                     Création...
                   </>
                 ) : (

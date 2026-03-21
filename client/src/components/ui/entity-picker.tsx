@@ -1,3 +1,4 @@
+import { SpinnerInfinity } from 'spinners-react';
 /**
  * Entity Picker Component
  *
@@ -8,7 +9,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, Loader2, X, User, File, Calendar, FileText, CheckSquare } from "lucide-react";
+import { Check, ChevronsUpDown, X, User, File, Calendar, FileText, CheckSquare } from 'lucide-react';
 
 // Simple debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -449,7 +450,7 @@ export function EntityPicker({
           <CommandList>
             {isSearching && (
               <div className="flex items-center justify-center py-6">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
               </div>
             )}
 
@@ -466,7 +467,7 @@ export function EntityPicker({
                       disabled={isCreating}
                     >
                       {isCreating ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                       ) : null}
                       Créer "{searchQuery}"
                     </Button>

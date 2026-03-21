@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState } from 'react';
 import {
     Dialog,
@@ -12,11 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-    Loader2,
-    Trash2,
-    Plus,
-} from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { containersApi } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -254,7 +252,7 @@ export function CustomAppDialog({
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                     <Button onClick={handleInstall} disabled={loading}>
-                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {loading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                         Install App
                     </Button>
                 </DialogFooter>

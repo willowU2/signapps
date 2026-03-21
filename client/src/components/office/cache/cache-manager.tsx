@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * CacheManager
  *
@@ -9,23 +11,7 @@
 import React, { useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Database,
-  Trash2,
-  RefreshCw,
-  Flame,
-  Filter,
-  MoreHorizontal,
-  ChevronRight,
-  HardDrive,
-  Cloud,
-  MemoryStick,
-  FileText,
-  Image,
-  FileType,
-  Loader2,
-  AlertTriangle,
-} from 'lucide-react';
+import { Database, Trash2, RefreshCw, Flame, Filter, MoreHorizontal, ChevronRight, HardDrive, Cloud, MemoryStick, FileText, Image, FileType, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -260,7 +246,7 @@ export function CacheManager({ className }: CacheManagerProps) {
             disabled={isPrewarming}
           >
             {isPrewarming ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
             ) : (
               <Flame className="h-4 w-4 mr-2" />
             )}
@@ -273,7 +259,7 @@ export function CacheManager({ className }: CacheManagerProps) {
             disabled={isInvalidating}
           >
             {isInvalidating ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
             ) : (
               <RefreshCw className="h-4 w-4 mr-2" />
             )}
@@ -390,7 +376,7 @@ export function CacheManager({ className }: CacheManagerProps) {
         <div className="p-3 space-y-1">
           {isLoading && entries.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
             </div>
           ) : entries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -418,7 +404,7 @@ export function CacheManager({ className }: CacheManagerProps) {
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
                     ) : null}
                     Charger plus
                   </Button>

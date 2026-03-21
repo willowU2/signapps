@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * VersionHistoryPanel
  *
@@ -9,24 +11,7 @@
 import React, { useEffect, useState } from 'react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  History,
-  Star,
-  Clock,
-  User,
-  MoreHorizontal,
-  RotateCcw,
-  Trash2,
-  Edit2,
-  Eye,
-  GitCompare,
-  Download,
-  ChevronDown,
-  Loader2,
-  Check,
-  Filter,
-  Save,
-} from 'lucide-react';
+import { History, Star, Clock, User, MoreHorizontal, RotateCcw, Trash2, Edit2, Eye, GitCompare, Download, ChevronDown, Check, Filter, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -257,6 +242,7 @@ export function VersionHistoryPanel({
     toggleVersionSelection,
     clearSelection,
     compareSelectedVersions,
+    updateVersionMetadata,
     setTypeFilter,
     setStarredOnly,
     loadVersionPreview,
@@ -266,6 +252,10 @@ export function VersionHistoryPanel({
   const [createLabel, setCreateLabel] = useState('');
   const [showRestoreDialog, setShowRestoreDialog] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState<string | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState<DocumentVersion | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Initialize
   useEffect(() => {
@@ -296,6 +286,17 @@ export function VersionHistoryPanel({
     setShowDeleteDialog(null);
   };
 
+  const handleEditVersion = async () => {
+    if (!showEditDialog) return;
+    setIsUpdating(true);
+    await updateVersionMetadata(showEditDialog.id, {
+      label: editLabel || undefined,
+      description: editDescription || undefined,
+    });
+    setIsUpdating(false);
+    setShowEditDialog(null);
+  };
+
   const handleCompare = () => {
     compareSelectedVersions();
     if (onCompare) {
@@ -314,7 +315,7 @@ export function VersionHistoryPanel({
         </div>
         <Button size="sm" onClick={() => setShowCreateDialog(true)} disabled={isCreating}>
           {isCreating ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
           ) : (
             <Save className="mr-2 h-4 w-4" />
           )}
@@ -374,7 +375,7 @@ export function VersionHistoryPanel({
         <div className="p-3 space-y-1">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
             </div>
           ) : versions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -399,7 +400,9 @@ export function VersionHistoryPanel({
                     onDelete={() => setShowDeleteDialog(version.id)}
                     onPreview={() => loadVersionPreview(version.id)}
                     onEdit={() => {
-                      // TODO: Implement edit dialog
+                      setEditLabel(version.label || '');
+                      setEditDescription(version.description || '');
+                      setShowEditDialog(version);
                     }}
                   />
                 ))}
@@ -414,7 +417,7 @@ export function VersionHistoryPanel({
                     disabled={isLoadingMore}
                   >
                     {isLoadingMore ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
                     ) : (
                       <ChevronDown className="h-4 w-4 mr-2" />
                     )}
@@ -467,7 +470,7 @@ export function VersionHistoryPanel({
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleRestore} disabled={isRestoring}>
               {isRestoring ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
               ) : (
                 <RotateCcw className="h-4 w-4 mr-2" />
               )}
@@ -497,6 +500,50 @@ export function VersionHistoryPanel({
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Version Dialog */}
+      <AlertDialog
+        open={!!showEditDialog}
+        onOpenChange={(open) => !open && setShowEditDialog(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Modifier les informations</AlertDialogTitle>
+            <AlertDialogDescription>
+              Modifiez le nom ou la description de cette version.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Nom de la version</label>
+              <Input
+                placeholder="Ex: Version finale"
+                value={editLabel}
+                onChange={(e) => setEditLabel(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Input
+                placeholder="Description optionnelle"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUpdating}>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEditVersion} disabled={isUpdating}>
+              {isUpdating ? (
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Enregistrer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

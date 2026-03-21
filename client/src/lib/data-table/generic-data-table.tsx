@@ -1,3 +1,4 @@
+import { SpinnerInfinity } from 'spinners-react';
 /**
  * Generic DataTable Component
  *
@@ -22,18 +23,7 @@ import {
   Row,
 } from "@tanstack/react-table";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Inbox,
-  MoreHorizontal,
-  LayoutGrid,
-  Table as TableIcon,
-  Kanban,
-  Loader2,
-} from "lucide-react";
+import { Search, ChevronDown, ChevronLeft, ChevronRight, Inbox, MoreHorizontal, LayoutGrid, Table as TableIcon, Kanban } from 'lucide-react';
 
 import {
   Table,
@@ -585,7 +575,7 @@ export function GenericDataTable<TData>({
       {isLoading ? (
         <div className="rounded-lg border bg-card/40 p-6">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-5 w-5 " />
             <span>Chargement...</span>
           </div>
         </div>

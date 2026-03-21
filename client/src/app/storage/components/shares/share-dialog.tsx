@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState } from 'react';
 import {
   Dialog,
@@ -19,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Share2 } from 'lucide-react';
+import { Share2 } from 'lucide-react';
 
 interface ShareDialogProps {
   open: boolean;
@@ -209,7 +211,7 @@ export function ShareDialog({
             Annuler
           </Button>
           <Button onClick={handleSubmit} disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
             Créer le lien
           </Button>
         </DialogFooter>

@@ -22,16 +22,17 @@ interface ToolbarButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     isActive?: boolean;
 }
 
-export function ToolbarButton({ 
+export const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonProps>(({ 
     className, 
     isActive = false, 
     disabled = false, 
     children, 
     title,
     ...props 
-}: ToolbarButtonProps) {
+}, ref) => {
     return (
         <button
+            ref={ref}
             disabled={disabled}
             title={title}
             className={cn(
@@ -51,7 +52,8 @@ export function ToolbarButton({
             {children}
         </button>
     );
-}
+});
+ToolbarButton.displayName = "ToolbarButton";
 
 export function ToolbarDivider({ className }: { className?: string }) {
     return <div className={cn("w-px h-5 bg-[#e3e3e3] dark:bg-[#5f6368] mx-1 self-center shrink-0", className)} />;

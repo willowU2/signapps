@@ -773,5 +773,5 @@ function ResourceDetailPanel({
       )}
     </div>
   );
-}
 
+}

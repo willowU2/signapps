@@ -221,14 +221,76 @@ pub fn middleware_stack(router: Router) -> Router {
 ///
 /// Note: The router should have its state already applied via `.with_state()`.
 /// This function expects a `Router<()>` (stateless router).
+///
+/// This version supports graceful shutdown via Ctrl+C or SIGTERM.
 pub async fn run_server(router: Router, config: &ServiceConfig) -> anyhow::Result<()> {
     let addr = config.socket_addr();
     tracing::info!("Listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, router).await?;
 
+    // Setup graceful shutdown
+    let shutdown_signal = async {
+        shutdown_signal().await;
+        tracing::info!("Shutdown signal received, stopping server...");
+    };
+
+    axum::serve(listener, router)
+        .with_graceful_shutdown(shutdown_signal)
+        .await?;
+
+    tracing::info!("Server stopped gracefully");
     Ok(())
+}
+
+/// Run an Axum server with a custom shutdown signal.
+///
+/// Use this when running as a Windows service where you need to control
+/// the shutdown signal externally.
+pub async fn run_server_with_shutdown<F>(
+    router: Router,
+    config: &ServiceConfig,
+    shutdown: F,
+) -> anyhow::Result<()>
+where
+    F: std::future::Future<Output = ()> + Send + 'static,
+{
+    let addr = config.socket_addr();
+    tracing::info!("Listening on {}", addr);
+
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+
+    axum::serve(listener, router)
+        .with_graceful_shutdown(shutdown)
+        .await?;
+
+    tracing::info!("Server stopped gracefully");
+    Ok(())
+}
+
+/// Wait for a shutdown signal (Ctrl+C or SIGTERM).
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("Failed to install SIGTERM handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

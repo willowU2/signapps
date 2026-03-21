@@ -1,4 +1,6 @@
 'use client';
+import { SpinnerInfinity } from 'spinners-react';
+
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -21,7 +23,7 @@ export default function Home() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="flex items-center gap-2">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <SpinnerInfinity size={32} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
         <span>Loading...</span>
       </div>
     </div>

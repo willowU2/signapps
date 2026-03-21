@@ -41,13 +41,10 @@ import {
   Terminal,
   MonitorSmartphone,
   FolderOpen,
-  Sun,
-  Moon,
   DoorOpen,
   Building2,
   TrendingUp
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -434,9 +431,8 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Footer with Theme Toggle */}
+        {/* Footer */}
         <div className="border-t p-2 shrink-0">
-          <ThemeToggleButton isCollapsed={isCollapsed} />
           {!isCollapsed && (
             <p className="text-xs text-muted-foreground text-center mt-2">
               SignApps Platform v0.1.0
@@ -448,59 +444,4 @@ export function Sidebar() {
   );
 }
 
-function ThemeToggleButton({ isCollapsed }: { isCollapsed: boolean }) {
-  const { setTheme, theme } = useTheme();
-  const [currentTheme, setCurrentTheme] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    setCurrentTheme(theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-  };
-
-  // SSR placeholder
-  if (currentTheme === undefined) {
-    return (
-      <div className={cn('flex items-center gap-2 rounded-lg p-2 h-10', isCollapsed ? 'justify-center' : 'px-3')}>
-        <Sun className="h-4 w-4" />
-        {!isCollapsed && <span className="text-sm">Theme</span>}
-      </div>
-    );
-  }
-
-  const isDark = currentTheme === 'dark';
-
-  if (isCollapsed) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-full h-10"
-            onClick={toggleTheme}
-          >
-            {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="right">
-          {isDark ? 'Light mode' : 'Dark mode'}
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return (
-    <Button
-      variant="ghost"
-      className="w-full justify-start gap-3 px-3 h-10"
-      onClick={toggleTheme}
-    >
-      {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-      <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
-    </Button>
-  );
-}

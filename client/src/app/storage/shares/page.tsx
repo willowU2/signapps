@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -29,23 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Share2,
-  Link,
-  Copy,
-  MoreVertical,
-  Trash2,
-  Edit,
-  Eye,
-  Download,
-  FileEdit,
-  Lock,
-  Clock,
-  CheckCircle,
-  XCircle,
-  ExternalLink,
-  Loader2,
-} from 'lucide-react';
+import { Share2, Link, Copy, MoreVertical, Trash2, Edit, Eye, Download, FileEdit, Lock, Clock, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
 import { sharesApi, ShareLink, UpdateShareRequest } from '@/lib/api';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
@@ -380,7 +366,7 @@ export default function SharesPage() {
                 Cancel
               </Button>
               <Button onClick={handleSaveEdit} disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {saving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                 Save Changes
               </Button>
             </DialogFooter>

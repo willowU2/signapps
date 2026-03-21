@@ -201,6 +201,8 @@ export interface CreateUserRequest {
     password: string;
     display_name?: string;
     role?: number;
+    workspace_ids?: string[];
+    avatar_url?: string;
 }
 
 export interface UpdateUserRequest {
@@ -208,6 +210,8 @@ export interface UpdateUserRequest {
     password?: string;
     display_name?: string;
     role?: number;
+    workspace_ids?: string[];
+    avatar_url?: string;
 }
 
 // Groups API

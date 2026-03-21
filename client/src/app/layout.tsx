@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { ContextAssistant } from "@/components/ai/context-assistant";
+import ClickSpark from "@/components/ui/click-spark";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,8 +31,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <Providers>{children}</Providers>
-        <ContextAssistant />
+        <ClickSpark sparkColor="var(--primary)" sparkSize={6} sparkRadius={20} sparkCount={8} duration={400}>
+          <Providers>{children}</Providers>
+          <ContextAssistant />
+        </ClickSpark>
       </body>
     </html>
   );
