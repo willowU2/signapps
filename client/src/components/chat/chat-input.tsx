@@ -226,16 +226,26 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent side="top" align="end" className="w-[300px] p-0 border-none shadow-none mb-2" sideOffset={10}>
-                                <div>
-                                    <GifPicker
-                                        tenorApiKey={process.env.NEXT_PUBLIC_TENOR_API_KEY || "LIVDSRZULELA"}
-                                        onGifClick={(gif) => {
-                                            const finalValue = `![GIF](${gif.url})`;
-                                            if (!disabled) {
-                                                onSend(finalValue);
-                                            }
-                                        }}
-                                    />
+                                <div className="bg-background border rounded-lg shadow-lg overflow-hidden">
+                                    {process.env.NEXT_PUBLIC_TENOR_API_KEY ? (
+                                        <GifPicker
+                                            tenorApiKey={process.env.NEXT_PUBLIC_TENOR_API_KEY}
+                                            onGifClick={(gif) => {
+                                                const finalValue = `![GIF](${gif.url})`;
+                                                if (!disabled) {
+                                                    onSend(finalValue);
+                                                }
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="p-4 text-center flex flex-col items-center gap-2">
+                                            <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
+                                            <p className="text-sm font-medium text-foreground">Configuration requise</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Ajoutez votre clé API Tenor dans <code className="bg-muted px-1 rounded text-[10px]">NEXT_PUBLIC_TENOR_API_KEY</code> pour activer les GIFs.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </PopoverContent>
                         </Popover>
