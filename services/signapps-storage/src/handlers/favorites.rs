@@ -147,15 +147,27 @@ pub async fn list_favorites(
     axum::Extension(user_id): axum::Extension<Uuid>,
     Query(query): Query<ListFavoritesQuery>,
 ) -> Result<Json<ListFavoritesResponse>> {
+    // folders_only=true  → is_folder = true
+    // files_only=true    → is_folder = false
+    // Both or neither   → no filter
     let rows = sqlx::query(
         r#"
-        SELECT id, user_id, bucket, key, is_folder, display_name, color, added_at, sort_order
-        FROM storage.favorites
-        WHERE user_id = $1
-          AND ($2::TEXT IS NULL OR bucket = $2)
-          AND ($3::BOOLEAN IS NULL OR is_folder = $3)
-          AND ($4::BOOLEAN IS NULL OR is_folder = NOT $4)
-        ORDER BY sort_order ASC, added_at DESC
+        SELECT
+            f.id, f.user_id, f.bucket, f.key, f.is_folder,
+            f.display_name, f.color, f.added_at, f.sort_order,
+            sf.size        AS file_size,
+            sf.content_type AS file_content_type,
+            (sf.id IS NOT NULL) AS file_exists
+        FROM storage.favorites f
+        LEFT JOIN storage.files sf
+            ON sf.bucket = f.bucket
+           AND sf.key    = f.key
+           AND sf.user_id = f.user_id
+        WHERE f.user_id = $1
+          AND ($2::TEXT IS NULL OR f.bucket = $2)
+          AND ($3::BOOLEAN IS NULL OR f.is_folder = $3)
+          AND ($4::BOOLEAN IS NULL OR f.is_folder = (NOT $4))
+        ORDER BY f.sort_order ASC, f.added_at DESC
         "#,
     )
     .bind(user_id)
@@ -165,26 +177,32 @@ pub async fn list_favorites(
     .fetch_all(state.pool.inner())
     .await?;
 
-    let favorites = rows
+    let favorites_with_info = rows
         .iter()
-        .map(map_row_to_favorite)
-        .collect::<Result<Vec<_>>>()?;
-
-    let favorites_with_info = favorites
-        .into_iter()
-        .map(|fav| FavoriteWithInfo {
-            filename: fav
-                .key
-                .split('/')
-                .next_back()
-                .unwrap_or(&fav.key)
-                .to_string(),
-            size: None,
-            content_type: None,
-            exists: true,
-            favorite: fav,
+        .map(|row| {
+            let fav = map_row_to_favorite(row)?;
+            let size: Option<i64> = row.get("file_size");
+            let content_type: Option<String> = row.get("file_content_type");
+            // For folders there's no file record; treat them as existing
+            let exists: bool = if fav.is_folder {
+                true
+            } else {
+                row.get::<bool, _>("file_exists")
+            };
+            Ok(FavoriteWithInfo {
+                filename: fav
+                    .key
+                    .split('/')
+                    .next_back()
+                    .unwrap_or(&fav.key)
+                    .to_string(),
+                size,
+                content_type,
+                exists,
+                favorite: fav,
+            })
         })
-        .collect::<Vec<_>>();
+        .collect::<Result<Vec<_>>>()?;
 
     let total = favorites_with_info.len() as i64;
 
@@ -203,9 +221,18 @@ pub async fn get_favorite(
 ) -> Result<Json<FavoriteWithInfo>> {
     let row = sqlx::query(
         r#"
-        SELECT id, user_id, bucket, key, is_folder, display_name, color, added_at, sort_order
-        FROM storage.favorites
-        WHERE id = $1 AND user_id = $2
+        SELECT
+            f.id, f.user_id, f.bucket, f.key, f.is_folder,
+            f.display_name, f.color, f.added_at, f.sort_order,
+            sf.size        AS file_size,
+            sf.content_type AS file_content_type,
+            (sf.id IS NOT NULL) AS file_exists
+        FROM storage.favorites f
+        LEFT JOIN storage.files sf
+            ON sf.bucket = f.bucket
+           AND sf.key    = f.key
+           AND sf.user_id = f.user_id
+        WHERE f.id = $1 AND f.user_id = $2
         "#,
     )
     .bind(id)
@@ -215,6 +242,13 @@ pub async fn get_favorite(
     .ok_or_else(|| Error::NotFound(format!("Favorite {} not found", id)))?;
 
     let favorite = map_row_to_favorite(&row)?;
+    let size: Option<i64> = row.get("file_size");
+    let content_type: Option<String> = row.get("file_content_type");
+    let exists: bool = if favorite.is_folder {
+        true
+    } else {
+        row.get::<bool, _>("file_exists")
+    };
 
     let favorite_with_info = FavoriteWithInfo {
         filename: favorite
@@ -223,9 +257,9 @@ pub async fn get_favorite(
             .next_back()
             .unwrap_or(&favorite.key)
             .to_string(),
-        size: None,
-        content_type: None,
-        exists: true,
+        size,
+        content_type,
+        exists,
         favorite,
     };
 

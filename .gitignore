@@ -97,5 +97,14 @@ services/**/check_output*.txt
 .claude/PROJECT_COMPLETE.md
 .claude/SESSION_COMPLETE_SUMMARY.md
 
+# Session persistence (AgentIQ context)
+.session/
+
+# Knowledge base (AgentIQ long-term memory)
+.knowledge/
+
+# Technology context docs (live, fetched per-session)
+.context/
+
 # WebAssembly (downloaded at runtime)
 client/public/vad/

@@ -31,6 +31,7 @@ import { useCalendarStore } from '@/stores/scheduling/calendar-store';
 import { useCreateEvent, useUpdateEvent, useDeleteEvent, useCalendars } from '@/lib/scheduling/api/calendar';
 import type { ScheduleBlock, CreateEventInput } from '@/lib/scheduling/types/scheduling';
 import type { TimeItem } from '@/lib/scheduling/types';
+import { toast } from 'sonner';
 
 export default function SchedulingPage() {
   const { activeTab, currentDate } = useSchedulingNavigation();
@@ -107,6 +108,7 @@ export default function SchedulingPage() {
       const calendarId = input.calendarId || defaultCalendarId;
       if (!calendarId) {
         console.error('No calendar available to create event');
+        toast.error('Aucun calendrier disponible pour créer un événement');
         return;
       }
       createEvent.mutate(

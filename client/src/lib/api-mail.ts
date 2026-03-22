@@ -1,22 +1,7 @@
-import axios from 'axios'
+import { getClient, ServiceName } from '@/lib/api/factory'
 
-const API_URL = process.env.NEXT_PUBLIC_MAIL_API_URL || 'http://localhost:3012/api/v1/mail'
-
-// Create axios instance with auth
-const mailClient = axios.create({
-    baseURL: API_URL,
-})
-
-// Add auth interceptor
-mailClient.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token')
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
-    }
-    return config
-})
+// Get mail client using factory with HttpOnly cookies
+const mailClient = getClient(ServiceName.MAIL)
 
 // ============================================================================
 // Types

@@ -36,6 +36,27 @@ async-trait = { workspace = true }
 # Observability
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+tracing-opentelemetry = { workspace = true }
+opentelemetry = { workspace = true }
+opentelemetry_sdk = { workspace = true }
+opentelemetry-otlp = { workspace = true }
+prometheus = { workspace = true }
+
+# OpenAPI documentation
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
+
+# Crypto/HMAC signing
+base64 = { workspace = true }
+hmac = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+
+# Concurrent collections
+dashmap = { workspace = true }
+
+# Random number generation
+rand = { workspace = true }
 
 # Utilities
 uuid = { workspace = true }
@@ -43,6 +64,17 @@ chrono = { workspace = true }
 config = { workspace = true }
 dotenvy = { workspace = true }
 validator = { workspace = true }
+once_cell = { workspace = true }
+regex = "1"
+
+# QR Code generation
+qrcode = { workspace = true }
+
+# Full-text search (optional, behind feature flag)
+tantivy = { workspace = true, optional = true }
+
+[features]
+search = ["dep:tantivy"]
 
 [dev-dependencies]
 tokio-test = { workspace = true }

@@ -78,207 +78,100 @@ impl<'a> TimeItemRepository<'a> {
         let limit = query.limit.unwrap_or(100).min(500);
         let offset = query.offset.unwrap_or(0);
 
-        // Build WHERE clauses dynamically
-        let mut conditions = vec![
-            "deleted_at IS NULL".to_string(),
-            "tenant_id = $1".to_string(),
-        ];
-        let mut param_idx = 3; // $1=tenant_id, $2=owner_id, $3+ for filters
+        // Parse optional date filters
+        let start_date: Option<DateTime<Utc>> = query.start.as_ref()
+            .and_then(|s| s.parse::<DateTime<Utc>>().ok());
+        let end_date: Option<DateTime<Utc>> = query.end.as_ref()
+            .and_then(|s| s.parse::<DateTime<Utc>>().ok());
 
-        // Owner filter based on scope
-        if let Some(scope) = &query.scope {
-            match scope.as_str() {
-                "moi" => conditions.push("owner_id = $2".to_string()),
-                "eux" | "nous" => {
-                    // Include items shared with user or where user is participant
-                    conditions.push(format!(
-                        "(owner_id = $2 OR id IN (SELECT time_item_id FROM scheduling.time_item_users WHERE user_id = $2))"
-                    ));
-                },
-                _ => conditions.push("owner_id = $2".to_string()),
-            }
-        } else {
-            conditions.push("owner_id = $2".to_string());
+        // Build optional WHERE fragments (safe: values are whitelisted or parameterised)
+        let mut extra_where = String::new();
+
+        if start_date.is_some() {
+            extra_where.push_str(
+                " AND (t.start_time >= $5 OR (t.start_time IS NULL AND t.deadline >= $5))"
+            );
         }
-
-        // Date range
-        let mut start_date: Option<DateTime<Utc>> = None;
-        let mut end_date: Option<DateTime<Utc>> = None;
-
-        if let Some(start) = &query.start {
-            if let Ok(dt) = start.parse::<DateTime<Utc>>() {
-                start_date = Some(dt);
-                conditions.push(format!(
-                    "(start_time >= ${} OR (start_time IS NULL AND deadline >= ${}))",
-                    param_idx, param_idx
-                ));
-                param_idx += 1;
-            }
-        }
-
-        if let Some(end) = &query.end {
-            if let Ok(dt) = end.parse::<DateTime<Utc>>() {
-                end_date = Some(dt);
-                conditions.push(format!(
-                    "(start_time <= ${} OR (start_time IS NULL AND deadline <= ${}))",
-                    param_idx, param_idx
-                ));
-                param_idx += 1;
-            }
-        }
-
-        // Types filter
-        let types_clause = if let Some(types) = &query.types {
-            if !types.is_empty() {
-                let placeholders: Vec<String> = types
-                    .iter()
-                    .enumerate()
-                    .map(|(i, _)| format!("${}", param_idx + i))
-                    .collect();
-                let clause = format!("item_type IN ({})", placeholders.join(", "));
-                param_idx += types.len();
-                Some(clause)
-            } else {
-                None
-            }
-        } else {
-            None
-        };
-
-        if let Some(clause) = &types_clause {
-            conditions.push(clause.clone());
-        }
-
-        // Statuses filter
-        let statuses_clause = if let Some(statuses) = &query.statuses {
-            if !statuses.is_empty() {
-                let placeholders: Vec<String> = statuses
-                    .iter()
-                    .enumerate()
-                    .map(|(i, _)| format!("${}", param_idx + i))
-                    .collect();
-                let clause = format!("status IN ({})", placeholders.join(", "));
-                param_idx += statuses.len();
-                Some(clause)
-            } else {
-                None
-            }
-        } else {
-            None
-        };
-
-        if let Some(clause) = &statuses_clause {
-            conditions.push(clause.clone());
-        }
-
-        // Priorities filter
-        let priorities_clause = if let Some(priorities) = &query.priorities {
-            if !priorities.is_empty() {
-                let placeholders: Vec<String> = priorities
-                    .iter()
-                    .enumerate()
-                    .map(|(i, _)| format!("${}", param_idx + i))
-                    .collect();
-                let clause = format!("priority IN ({})", placeholders.join(", "));
-                param_idx += priorities.len();
-                Some(clause)
-            } else {
-                None
-            }
-        } else {
-            None
-        };
-
-        if let Some(clause) = &priorities_clause {
-            conditions.push(clause.clone());
-        }
-
-        // Project filter
-        if query.project_id.is_some() {
-            conditions.push(format!("project_id = ${}", param_idx));
-            param_idx += 1;
-        }
-
-        // Search filter
-        if query.search.is_some() {
-            conditions.push(format!(
-                "(title ILIKE ${} OR description ILIKE ${})",
-                param_idx, param_idx
-            ));
-            param_idx += 1;
+        if end_date.is_some() {
+            extra_where.push_str(
+                " AND (t.start_time <= $6 OR (t.start_time IS NULL AND t.deadline <= $6))"
+            );
         }
 
         // Unscheduled only
         if query.unscheduled_only == Some(true) {
-            conditions.push("start_time IS NULL".to_string());
+            extra_where.push_str(" AND t.start_time IS NULL");
         }
 
         // Exclude completed/cancelled unless explicitly requested
         if query.include_completed != Some(true) {
-            conditions.push("status != 'done'".to_string());
+            extra_where.push_str(" AND t.status != 'done'");
         }
         if query.include_cancelled != Some(true) {
-            conditions.push("status != 'cancelled'".to_string());
+            extra_where.push_str(" AND t.status != 'cancelled'");
         }
 
-        let where_clause = conditions.join(" AND ");
+        // Search filter (parameterised via $7)
+        let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
+        if search_pattern.is_some() {
+            extra_where.push_str(" AND (t.title ILIKE $7 OR t.description ILIKE $7)");
+        }
 
-        // Sort
-        let sort_by = query.sort_by.as_deref().unwrap_or("start_time");
-        let sort_order = query.sort_order.as_deref().unwrap_or("ASC");
-        let order_clause = format!(
-            "{} {} NULLS LAST",
-            match sort_by {
-                "title" => "title",
-                "priority" => "priority",
-                "status" => "status",
-                "deadline" => "deadline",
-                "created_at" => "created_at",
-                _ => "start_time",
-            },
-            if sort_order.to_uppercase() == "DESC" {
-                "DESC"
-            } else {
-                "ASC"
-            }
+        // Sort (whitelisted column names only)
+        let sort_col = match query.sort_by.as_deref().unwrap_or("start_time") {
+            "title" => "t.title",
+            "priority" => "t.priority",
+            "status" => "t.status",
+            "deadline" => "t.deadline",
+            "created_at" => "t.created_at",
+            _ => "t.start_time",
+        };
+        let sort_dir = if query.sort_order.as_deref().unwrap_or("ASC").to_uppercase() == "DESC" {
+            "DESC"
+        } else {
+            "ASC"
+        };
+
+        let base_where = format!(
+            "t.tenant_id = $1 AND (t.owner_id = $2 OR tu.user_id = $2) AND t.deleted_at IS NULL{}",
+            extra_where
         );
 
-        // Count query (simplified - doesn't include all dynamic binds)
+        // Count query
         let count_sql = format!(
-            "SELECT COUNT(*) as count FROM scheduling.time_items WHERE {}",
-            where_clause
+            "SELECT COUNT(DISTINCT t.id) FROM scheduling.time_items t \
+             LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id \
+             WHERE {}",
+            base_where
         );
+        let mut count_q = sqlx::query_scalar::<_, i64>(&count_sql)
+            .bind(tenant_id)
+            .bind(owner_id)
+            .bind(limit)    // $3 (unused in count but keeps indices aligned)
+            .bind(offset);  // $4
+        if let Some(sd) = start_date { count_q = count_q.bind(sd); }           // $5
+        if let Some(ed) = end_date { count_q = count_q.bind(ed); }             // $6
+        if let Some(ref sp) = search_pattern { count_q = count_q.bind(sp); }   // $7
+
+        let total = count_q.fetch_one(self.pool.inner()).await?;
 
         // Items query
         let items_sql = format!(
-            "SELECT * FROM scheduling.time_items WHERE {} ORDER BY {} LIMIT {} OFFSET {}",
-            where_clause, order_clause, limit, offset
+            "SELECT DISTINCT t.* FROM scheduling.time_items t \
+             LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id \
+             WHERE {} ORDER BY {} {} NULLS LAST LIMIT $3 OFFSET $4",
+            base_where, sort_col, sort_dir
         );
+        let mut items_q = sqlx::query_as::<_, TimeItem>(&items_sql)
+            .bind(tenant_id)
+            .bind(owner_id)
+            .bind(limit)
+            .bind(offset);
+        if let Some(sd) = start_date { items_q = items_q.bind(sd); }
+        if let Some(ed) = end_date { items_q = items_q.bind(ed); }
+        if let Some(ref sp) = search_pattern { items_q = items_q.bind(sp); }
 
-        // Execute queries with basic parameters
-        // Note: Full dynamic binding would require a query builder
-        // For now, use simplified approach for MVP
-        let total = sqlx::query_scalar::<_, i64>(&format!(
-            "SELECT COUNT(*) FROM scheduling.time_items WHERE tenant_id = $1 AND owner_id = $2 AND deleted_at IS NULL"
-        ))
-        .bind(tenant_id)
-        .bind(owner_id)
-        .fetch_one(self.pool.inner())
-        .await?;
-
-        let items = sqlx::query_as::<_, TimeItem>(&format!(
-            "SELECT * FROM scheduling.time_items WHERE tenant_id = $1 AND owner_id = $2 AND deleted_at IS NULL ORDER BY {} LIMIT $3 OFFSET $4",
-            order_clause
-        ))
-        .bind(tenant_id)
-        .bind(owner_id)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(self.pool.inner())
-        .await?;
-
-        // Suppress unused variable warnings for MVP
-        let _ = (start_date, end_date, param_idx, items_sql, count_sql);
+        let items = items_q.fetch_all(self.pool.inner()).await?;
 
         Ok(TimeItemsResponse {
             items,
@@ -357,13 +250,14 @@ impl<'a> TimeItemRepository<'a> {
     pub async fn list_unscheduled(&self, owner_id: Uuid) -> Result<Vec<TimeItem>> {
         let items = sqlx::query_as::<_, TimeItem>(
             r#"
-            SELECT * FROM scheduling.time_items
-            WHERE owner_id = $1
-              AND deleted_at IS NULL
-              AND start_time IS NULL
-              AND item_type = 'task'
-              AND status NOT IN ('done', 'cancelled')
-            ORDER BY COALESCE(deadline, created_at) ASC
+            SELECT DISTINCT t.* FROM scheduling.time_items t
+            LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id
+            WHERE t.deleted_at IS NULL
+              AND (t.owner_id = $1 OR tu.user_id = $1)
+              AND t.start_time IS NULL
+              AND t.item_type = 'task'
+              AND t.status NOT IN ('done', 'cancelled')
+            ORDER BY COALESCE(t.deadline, t.created_at) ASC
             "#,
         )
         .bind(owner_id)
@@ -423,7 +317,7 @@ impl<'a> TimeItemRepository<'a> {
         .bind(&item.item_type)
         .bind(&item.title)
         .bind(&item.description)
-        .bind(&item.tags.clone().unwrap_or_default())
+        .bind(item.tags.clone().unwrap_or_default())
         .bind(&item.color)
         .bind(item.start_time)
         .bind(item.end_time)
@@ -881,7 +775,7 @@ impl<'a> RecurrenceRuleRepository<'a> {
         .bind(time_item_id)
         .bind(&rule.frequency)
         .bind(rule.interval)
-        .bind(&rule.days_of_week.clone().unwrap_or_default())
+        .bind(rule.days_of_week.clone().unwrap_or_default())
         .bind(rule.day_of_month)
         .bind(rule.month_of_year)
         .bind(rule.week_of_month)

@@ -315,7 +315,7 @@ fn validate_public_share(
     }
 
     if let Some(max) = share.max_downloads {
-        if share.download_count >= max {
+        if share.download_count.unwrap_or(0) >= max {
             return Err(Error::NotFound(
                 "Share link has reached its maximum access limit".into(),
             ));
@@ -440,12 +440,14 @@ fn map_share_to_api(share: signapps_db::models::storage_tier3::Share) -> ShareLi
         key: share.key,
         token: share.token,
         created_by: share.created_by,
-        created_at: share.created_at,
+        // created_at has DEFAULT NOW() in DB but no NOT NULL — fall back to epoch if somehow NULL
+        created_at: share.created_at.unwrap_or_else(Utc::now),
         expires_at: share.expires_at,
         password_protected: share.password_hash.is_some()
             && !share.password_hash.as_ref().unwrap().is_empty(),
         max_downloads: share.max_downloads,
-        download_count: share.download_count,
+        // download_count has DEFAULT 0 in DB but no NOT NULL — fall back to 0 if somehow NULL
+        download_count: share.download_count.unwrap_or(0),
         access_type: share
             .access_type
             .parse()

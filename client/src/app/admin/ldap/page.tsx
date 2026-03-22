@@ -179,6 +179,7 @@ export default function LdapPage() {
             toast.success(`Sync terminee: ${r.users_created} crees, ${r.users_updated} mis a jour`)
             if (r.errors.length > 0) {
                 console.error("Sync errors:", r.errors)
+                toast.error(`Erreurs de synchronisation: ${r.errors.length} utilisateur(s)`)
             }
         } catch (err: any) {
             toast.error("Erreur sync: " + (err.response?.data?.message || err.message))

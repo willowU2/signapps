@@ -199,6 +199,76 @@ pub async fn list(
     Ok(Json(response))
 }
 
+/// List containers for a specific user (admin only).
+/// Filters by user_id path parameter.
+#[tracing::instrument(skip(state))]
+pub async fn list_by_user(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(user_id): Path<Uuid>,
+    Query(query): Query<ListQuery>,
+) -> Result<Json<Vec<ContainerResponse>>> {
+    let repo = ContainerRepository::new(&state.pool);
+
+    // Admin (role >= 2) filters by user_id, otherwise filter by their own owner_id
+    let db_containers = if claims.role >= 2 {
+        repo.list_by_owner(user_id).await?
+    } else {
+        repo.list_by_owner(claims.sub).await?
+    };
+
+    // Get Docker containers
+    let docker_containers = state
+        .docker
+        .list_containers(query.all.unwrap_or(true))
+        .await
+        .unwrap_or_default();
+
+    // Create lookup map by docker_id
+    let docker_map: std::collections::HashMap<_, _> = docker_containers
+        .iter()
+        .map(|c| (c.id.clone(), c.clone()))
+        .collect();
+
+    // Track which docker IDs have been matched to DB records
+    let mut matched_docker_ids: std::collections::HashSet<String> =
+        std::collections::HashSet::new();
+
+    // Merge DB containers with Docker info
+    let mut response: Vec<ContainerResponse> = db_containers
+        .into_iter()
+        .map(|c| {
+            let docker_info = c.docker_id.as_ref().and_then(|did| {
+                matched_docker_ids.insert(did.clone());
+                docker_map.get(did).cloned()
+            });
+            let (category, tags, app_name) = extract_store_meta(&c.labels);
+
+            ContainerResponse {
+                id: c.id,
+                docker_id: c.docker_id,
+                name: c.name,
+                image: c.image,
+                status: docker_info.as_ref().map(|d| d.status.clone()).or(c.status),
+                owner_id: c.owner_id,
+                auto_update: c.auto_update,
+                created_at: c.created_at.to_rfc3339(),
+                docker_info,
+                is_system: false,
+                is_managed: true,
+                category,
+                tags,
+                app_name,
+            }
+        })
+        .collect();
+
+    // Sort: user/managed containers first, system containers last
+    response.sort_by(|a, b| a.is_system.cmp(&b.is_system).then(a.name.cmp(&b.name)));
+
+    Ok(Json(response))
+}
+
 /// List all Docker containers directly (including system containers).
 #[allow(dead_code)]
 #[tracing::instrument(skip(state))]
@@ -283,7 +353,7 @@ pub async fn create(
         labels: payload
             .labels
             .as_ref()
-            .map(|l| serde_json::to_value(l).unwrap()),
+            .and_then(|l| serde_json::to_value(l).ok()),
         auto_update: payload.auto_update,
     };
 

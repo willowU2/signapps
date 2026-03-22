@@ -4,6 +4,7 @@ import { useMemo, useCallback } from 'react';
 import { ResponsiveGridLayout, useContainerWidth, Layout } from 'react-grid-layout';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useDashboardStore, useDashboardWidgets, useDashboardEditMode, useDashboardWidgetActions, WidgetConfig } from '@/stores/dashboard-store';
 import { useContainers } from '@/hooks/use-containers';
 
@@ -17,6 +18,9 @@ import { WidgetProxyStatus } from './widget-proxy-status';
 import { WidgetRecentTasks } from './widgets/widget-recent-tasks';
 import { WidgetUpcomingEvents } from './widgets/widget-upcoming-events';
 import { WidgetRecentFiles } from './widgets/widget-recent-files';
+import { WidgetRecentEmails } from './widgets/widget-recent-emails';
+import { WidgetTodayCalendar } from './widgets/widget-today-calendar';
+import { WidgetTasksSummary } from './widgets/widget-tasks-summary';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -51,6 +55,12 @@ function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
       return <WidgetUpcomingEvents {...renderProps} />;
     case 'recent-files':
       return <WidgetRecentFiles {...renderProps} />;
+    case 'recent-emails':
+      return <WidgetRecentEmails {...renderProps} />;
+    case 'today-calendar':
+      return <WidgetTodayCalendar {...renderProps} />;
+    case 'tasks-summary':
+      return <WidgetTasksSummary {...renderProps} />;
     default:
       return <div className="p-4 text-muted-foreground text-center">Widget inconnu: {widget.type}</div>;
   }
@@ -131,7 +141,7 @@ export function WidgetGrid() {
           onLayoutChange={onLayoutChange}
           margin={[16, 16] as const}
         >
-          {widgets.map((widget) => (
+          {widgets.map((widget, index) => (
             <div
               key={widget.id}
               className={`relative ${editMode ? 'ring-2 ring-dashed ring-primary/30 rounded-lg' : ''}`}
@@ -144,16 +154,21 @@ export function WidgetGrid() {
                   <Button
                     variant="destructive"
                     size="icon"
-                    className="absolute -right-2 -top-2 z-20 h-6 w-6 rounded-full"
+                    className="absolute -right-2 -top-2 z-20 h-6 w-6 rounded-full shadow-md"
                     onClick={() => removeWidget(widget.id)}
                   >
                     <X className="h-3 w-3" />
                   </Button>
                 </>
               )}
-              <div className={editMode ? 'pt-6 h-full' : 'h-full'}>
+              <motion.div 
+                className={editMode ? 'pt-6 h-full' : 'h-full'}
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
+              >
                 <WidgetRenderer widget={widget} />
-              </div>
+              </motion.div>
             </div>
           ))}
         </ResponsiveGridLayout>

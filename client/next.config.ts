@@ -1,4 +1,11 @@
 import path from "path";
+import withSerwistInit from "@serwist/next";
+
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development",
+});
 
 const nextConfig = {
   images: { unoptimized: true },
@@ -17,4 +24,4 @@ const nextConfig = {
   serverExternalPackages: ["onnxruntime-web"],
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

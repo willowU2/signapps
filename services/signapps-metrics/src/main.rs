@@ -12,7 +12,7 @@ use axum::{
 };
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use std::sync::Arc;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 mod handlers;
@@ -85,9 +85,13 @@ async fn main() -> Result<()> {
 fn create_router(state: AppState) -> Router {
     // CORS configuration
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "http://127.0.0.1:3000".parse().unwrap(),
+        ]))
+        .allow_credentials(true)
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
+        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN]);
 
     // Metrics routes
     let metrics_routes = Router::new()
@@ -113,6 +117,21 @@ fn create_router(state: AppState) -> Router {
             post(handlers::alerts::acknowledge_alert),
         );
 
+    // Admin analytics routes
+    let analytics_routes = Router::new()
+        .route(
+            "/overview",
+            get(handlers::analytics::get_overview),
+        )
+        .route(
+            "/storage",
+            get(handlers::analytics::get_storage),
+        )
+        .route(
+            "/activity",
+            get(handlers::analytics::get_activity),
+        );
+
     // Prometheus endpoint
     let prometheus_routes = Router::new().route("/", get(handlers::prometheus_metrics));
 
@@ -123,6 +142,7 @@ fn create_router(state: AppState) -> Router {
     Router::new()
         .nest("/api/v1/metrics", metrics_routes)
         .nest("/api/v1/alerts", alert_routes)
+        .nest("/api/v1/admin/analytics", analytics_routes)
         .nest("/metrics", prometheus_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())

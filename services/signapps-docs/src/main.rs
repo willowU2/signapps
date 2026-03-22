@@ -15,6 +15,7 @@ mod models;
 mod utils;
 
 use handlers::health::health_handler;
+use handlers::templates::{create_template, get_template, list_templates};
 use handlers::types::{board, chat, sheet, slide, text};
 use handlers::websocket::websocket_handler;
 use signapps_common::AiIndexerClient;
@@ -89,6 +90,11 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/channels/:channel_id/read-status", post(chat::mark_channel_read))
         .route("/api/v1/channels/:channel_id/increment-unread", post(chat::increment_unread_count))
         .route("/api/v1/unread-counts", get(chat::get_all_unread_counts))
+
+        // Document templates
+        .route("/api/v1/docs/templates", get(list_templates))
+        .route("/api/v1/docs/templates", post(create_template))
+        .route("/api/v1/docs/templates/:id", get(get_template))
 
         // Global middleware
         .layer(TraceLayer::new_for_http())

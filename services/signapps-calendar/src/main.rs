@@ -96,7 +96,7 @@ async fn main() -> anyhow::Result<()> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, post, put};
     use handlers::{
-        calendars, events, external_sync, icalendar, notifications, push, recurrence, resources,
+        calendars, events, external_sync, floor_plans, icalendar, notifications, push, recurrence, resources,
         shares, tasks, timezones, websocket,
     };
 
@@ -163,6 +163,12 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/resources/:id", get(resources::get_resource))
         .route("/api/v1/resources/:id", put(resources::update_resource))
         .route("/api/v1/resources/:id", delete(resources::delete_resource))
+        // FloorPlan routes
+        .route("/api/v1/floorplans", post(floor_plans::create_floor_plan))
+        .route("/api/v1/floorplans", get(floor_plans::list_floor_plans))
+        .route("/api/v1/floorplans/:id", get(floor_plans::get_floor_plan))
+        .route("/api/v1/floorplans/:id", put(floor_plans::update_floor_plan))
+        .route("/api/v1/floorplans/:id", delete(floor_plans::delete_floor_plan))
         .route("/api/v1/resources/type/:resource_type", get(resources::list_resources_by_type))
         .route("/api/v1/resources/availability", post(resources::check_availability))
         .route("/api/v1/resources/:resource_id/book", post(resources::book_resources))
@@ -212,12 +218,16 @@ fn build_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
-    use tower_http::cors::{Any, CorsLayer};
+    use tower_http::cors::{AllowOrigin, CorsLayer};
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any)
-        .expose_headers(Any);
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "http://127.0.0.1:3000".parse().unwrap(),
+        ]))
+        .allow_credentials(true)
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
+        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN])
+        ;
 
     public_routes
         .merge(protected_routes)

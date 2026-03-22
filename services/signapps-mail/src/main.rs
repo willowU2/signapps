@@ -1,19 +1,24 @@
 pub mod api;
 pub mod auth;
+pub mod handlers;
 pub mod models;
 pub mod sync_service;
 
-use signapps_common::bootstrap::{env_or, init_tracing, load_env};
+use signapps_common::bootstrap::{env_or, env_required, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::{AiIndexerClient, JwtConfig};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use handlers::signatures::SignatureStore;
+use handlers::rules::RuleStore;
 
 #[derive(Clone)]
 pub struct AppState {
     pub pool: Pool<Postgres>,
     pub jwt_config: JwtConfig,
     pub indexer: AiIndexerClient,
+    pub signatures: SignatureStore,
+    pub rules: RuleStore,
 }
 
 impl AuthState for AppState {
@@ -43,7 +48,7 @@ async fn main() {
         .expect("Failed to connect to Postgres");
 
     // JWT configuration (custom: audience="signapps" for all services)
-    let jwt_secret = env_or("JWT_SECRET", "dev-secret-change-me");
+    let jwt_secret = env_required("JWT_SECRET");
     let jwt_config = JwtConfig {
         secret: jwt_secret,
         issuer: "signapps".to_string(),
@@ -56,6 +61,8 @@ async fn main() {
         pool: pool.clone(),
         jwt_config,
         indexer: AiIndexerClient::from_env(),
+        signatures: SignatureStore::new(),
+        rules: RuleStore::new(),
     };
 
     // Start background sync service

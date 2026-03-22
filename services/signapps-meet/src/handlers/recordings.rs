@@ -220,6 +220,100 @@ pub async fn stop_recording(
     }))
 }
 
+/// Get the active (in-progress) recording for a room
+pub async fn get_active_recording(
+    State(state): State<AppState>,
+    Path(room_id): Path<Uuid>,
+) -> Result<Json<RecordingResponse>, (StatusCode, String)> {
+    let _room = sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE id = $1")
+        .bind(room_id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
+
+    let recording = sqlx::query_as::<_, Recording>(
+        "SELECT * FROM meet.recordings WHERE room_id = $1 AND status = 'recording' ORDER BY started_at DESC LIMIT 1",
+    )
+    .bind(room_id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+    .ok_or((StatusCode::NOT_FOUND, "No active recording for this room".to_string()))?;
+
+    Ok(Json(RecordingResponse {
+        id: recording.id,
+        room_id: recording.room_id,
+        status: recording.status,
+        started_at: recording.started_at,
+        ended_at: recording.ended_at,
+        duration_seconds: recording.duration_seconds,
+        file_size_bytes: recording.file_size_bytes,
+        download_url: recording
+            .storage_path
+            .map(|p| format!("/api/v1/storage/files/{}", p)),
+    }))
+}
+
+/// Stop the active recording for a room (host convenience endpoint)
+pub async fn stop_room_recording(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(room_id): Path<Uuid>,
+) -> Result<Json<RecordingResponse>, (StatusCode, String)> {
+    let room = sqlx::query_as::<_, Room>("SELECT * FROM meet.rooms WHERE id = $1")
+        .bind(room_id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "Room not found".to_string()))?;
+
+    if room.created_by != claims.sub {
+        return Err((
+            StatusCode::FORBIDDEN,
+            "Only host can stop room recording".to_string(),
+        ));
+    }
+
+    let recording = sqlx::query_as::<_, Recording>(
+        "SELECT * FROM meet.recordings WHERE room_id = $1 AND status = 'recording' ORDER BY started_at DESC LIMIT 1",
+    )
+    .bind(room_id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+    .ok_or((StatusCode::NOT_FOUND, "No active recording for this room".to_string()))?;
+
+    let duration = (chrono::Utc::now() - recording.started_at).num_seconds() as i32;
+
+    let updated = sqlx::query_as::<_, Recording>(
+        r#"
+        UPDATE meet.recordings SET
+            status = 'processing',
+            ended_at = NOW(),
+            duration_seconds = $1
+        WHERE id = $2
+        RETURNING *
+        "#,
+    )
+    .bind(duration)
+    .bind(recording.id)
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    Ok(Json(RecordingResponse {
+        id: updated.id,
+        room_id: updated.room_id,
+        status: updated.status,
+        started_at: updated.started_at,
+        ended_at: updated.ended_at,
+        duration_seconds: updated.duration_seconds,
+        file_size_bytes: updated.file_size_bytes,
+        download_url: None,
+    }))
+}
+
 /// Delete a recording
 pub async fn delete_recording(
     State(state): State<AppState>,

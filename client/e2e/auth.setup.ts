@@ -21,7 +21,7 @@ setup('authenticate', async ({ page }) => {
 
   const passwordInput = page.getByLabel(/password/i);
   await passwordInput.click();
-  await passwordInput.fill('password123');
+  await passwordInput.fill('admin');
 
   // Click the sign in button within the form
   await page.locator('form').getByRole('button', { name: /sign in/i }).click();

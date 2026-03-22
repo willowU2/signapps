@@ -41,7 +41,7 @@ export class ServiceWorkerManager {
       throw new Error('Service Workers not supported in this browser');
     }
 
-    const registration = await navigator.serviceWorker.register('/service-worker.js', {
+    const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/',
     });
     return registration;

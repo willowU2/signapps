@@ -20,6 +20,9 @@ pub enum ConversionError {
 
     #[error("Conversion failed: {0}")]
     ConversionFailed(String),
+
+    #[error("Internal error")]
+    InternalError,
 }
 
 /// Input formats supported

@@ -27,6 +27,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarX, Clock, Check, X, AlertTriangle } from "lucide-react"
 import { reservationsApi, Reservation, getReservationStatusColor, getReservationStatusLabel } from "@/lib/api/resources"
+import { toast } from "sonner"
 
 export default function MyReservationsPage() {
     const [reservations, setReservations] = useState<Reservation[]>([])
@@ -39,6 +40,7 @@ export default function MyReservationsPage() {
             setReservations(response.data)
         } catch (error) {
             console.error("Failed to fetch reservations:", error)
+            toast.error("Erreur lors du chargement de vos réservations")
         } finally {
             setLoading(false)
         }
@@ -56,6 +58,7 @@ export default function MyReservationsPage() {
             ))
         } catch (error) {
             console.error("Failed to cancel reservation:", error)
+            toast.error("Erreur lors de l'annulation de la réservation")
         }
     }
 

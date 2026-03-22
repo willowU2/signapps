@@ -190,7 +190,7 @@ async fn process_speech_turn(
                     serde_json::to_string(&ServerEvent::Error {
                         message: format!("STT failed: {}", e),
                     })
-                    .unwrap(),
+                    .unwrap_or_else(|_| r#"{"error":"STT serialization failed"}"#.to_string()),
                 ))
                 .await;
             return;

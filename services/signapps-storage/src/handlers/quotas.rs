@@ -1,42 +1,27 @@
-//! User storage quotas handlers.
-#![allow(dead_code)]
+//! User storage quota handlers.
+//!
+//! All persistence is delegated to `signapps_db::QuotaRepository` so that
+//! quota logic is reusable across services and is tested in one place.
 
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     Json,
 };
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
-use sqlx::{FromRow, Row};
+use signapps_db::{
+    models::{SetQuotaLimits, StorageQuota, UpdateQuotaUsage},
+    QuotaRepository,
+};
 use uuid::Uuid;
 
 use crate::AppState;
 
-/// User storage quota.
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct StorageQuota {
-    pub user_id: Uuid,
-    /// Maximum storage in bytes (None = unlimited)
-    pub max_storage_bytes: Option<i64>,
-    /// Maximum number of files (None = unlimited)
-    pub max_files: Option<i64>,
-    /// Maximum file size in bytes (None = unlimited)
-    pub max_file_size_bytes: Option<i64>,
-    /// Current used storage in bytes
-    pub used_storage_bytes: i64,
-    /// Current number of files
-    pub file_count: i64,
-    /// Allowed buckets (empty = all allowed)
-    pub allowed_buckets: Option<Vec<String>>,
-    /// Created at
-    pub created_at: DateTime<Utc>,
-    /// Updated at
-    pub updated_at: DateTime<Utc>,
-}
+// ─── Response types ──────────────────────────────────────────────────────────
 
-/// Quota usage summary.
+/// Quota usage summary returned to callers.
 #[derive(Debug, Serialize)]
 pub struct QuotaUsage {
     pub user_id: Uuid,
@@ -45,33 +30,21 @@ pub struct QuotaUsage {
     pub buckets: Vec<BucketUsage>,
 }
 
-/// Usage info for a resource.
+/// Usage info for a single resource dimension.
 #[derive(Debug, Serialize)]
 pub struct UsageInfo {
     pub used: i64,
     pub limit: Option<i64>,
+    /// Percentage of limit consumed (None when unlimited).
     pub percentage: Option<f32>,
 }
 
-/// Per-bucket usage.
+/// Per-bucket usage (populated on demand; empty in basic path).
 #[derive(Debug, Serialize)]
 pub struct BucketUsage {
     pub bucket: String,
     pub used_bytes: i64,
     pub file_count: i64,
-}
-
-/// Set quota request.
-#[derive(Debug, Deserialize)]
-pub struct SetQuotaRequest {
-    /// Maximum storage in bytes
-    pub max_storage_bytes: Option<i64>,
-    /// Maximum number of files
-    pub max_files: Option<i64>,
-    /// Maximum file size in bytes
-    pub max_file_size_bytes: Option<i64>,
-    /// Allowed buckets
-    pub allowed_buckets: Option<Vec<String>>,
 }
 
 /// Quota alert.
@@ -85,16 +58,127 @@ pub struct QuotaAlert {
     pub message: String,
 }
 
-/// Quota alert types.
+/// Severity of a quota alert.
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum QuotaAlertType {
-    Warning,  // > 80%
-    Critical, // > 90%
-    Exceeded, // > 100%
+    Warning,  // > 80 %
+    Critical, // > 90 %
+    Exceeded, // > 100 %
 }
 
-/// Get current user's quota usage.
+// ─── Request types ────────────────────────────────────────────────────────────
+
+/// Admin request to configure limits for a user.
+#[derive(Debug, Deserialize)]
+pub struct SetQuotaRequest {
+    pub max_storage_bytes: Option<i64>,
+    pub max_files: Option<i64>,
+    pub max_file_size_bytes: Option<i64>,
+    pub allowed_buckets: Option<Vec<String>>,
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+fn default_quota(user_id: Uuid) -> StorageQuota {
+    StorageQuota {
+        user_id,
+        max_storage_bytes: Some(10 * 1024 * 1024 * 1024), // 10 GiB
+        max_files: Some(1_000),
+        max_file_size_bytes: None,
+        used_storage_bytes: 0,
+        file_count: 0,
+        allowed_buckets: None,
+        created_at: Utc::now(),
+        updated_at: Utc::now(),
+    }
+}
+
+fn quota_to_usage(quota: StorageQuota) -> QuotaUsage {
+    let storage_pct = quota.max_storage_bytes.map(|limit| {
+        if limit > 0 {
+            (quota.used_storage_bytes as f32 / limit as f32) * 100.0
+        } else {
+            0.0
+        }
+    });
+    let files_pct = quota.max_files.map(|limit| {
+        if limit > 0 {
+            (quota.file_count as f32 / limit as f32) * 100.0
+        } else {
+            0.0
+        }
+    });
+
+    QuotaUsage {
+        user_id: quota.user_id,
+        storage: UsageInfo {
+            used: quota.used_storage_bytes,
+            limit: quota.max_storage_bytes,
+            percentage: storage_pct,
+        },
+        files: UsageInfo {
+            used: quota.file_count,
+            limit: quota.max_files,
+            percentage: files_pct,
+        },
+        buckets: vec![],
+    }
+}
+
+/// Determine alert level for a resource dimension.
+pub fn calculate_alert_type(used: i64, limit: Option<i64>) -> Option<QuotaAlertType> {
+    let limit = limit?;
+    if limit <= 0 {
+        return None;
+    }
+    let pct = (used as f64 / limit as f64) * 100.0;
+    if pct >= 100.0 {
+        Some(QuotaAlertType::Exceeded)
+    } else if pct >= 90.0 {
+        Some(QuotaAlertType::Critical)
+    } else if pct >= 80.0 {
+        Some(QuotaAlertType::Warning)
+    } else {
+        None
+    }
+}
+
+// ─── Core: get_quota ─────────────────────────────────────────────────────────
+
+/// Fetch quota usage for any user, falling back to defaults when no row exists.
+async fn get_quota_impl(state: &AppState, user_id: Uuid) -> Result<QuotaUsage> {
+    let repo = QuotaRepository::new(&state.pool);
+    let quota = repo
+        .get_quota(user_id)
+        .await?
+        .unwrap_or_else(|| default_quota(user_id));
+    Ok(quota_to_usage(quota))
+}
+
+// ─── Core: update_quota ──────────────────────────────────────────────────────
+
+/// Directly overwrite the usage counters for a user (admin / recalculate path).
+async fn update_quota_impl(
+    state: &AppState,
+    user_id: Uuid,
+    used_storage_bytes: i64,
+    file_count: i64,
+) -> Result<StorageQuota> {
+    let repo = QuotaRepository::new(&state.pool);
+    repo.update_quota_usage(
+        user_id,
+        UpdateQuotaUsage {
+            used_storage_bytes,
+            file_count,
+        },
+    )
+    .await
+}
+
+// ─── HTTP handlers ────────────────────────────────────────────────────────────
+
+/// GET /quotas/me — current user's quota usage.
 #[tracing::instrument(skip(state, user_id))]
 pub async fn get_my_quota(
     State(state): State<AppState>,
@@ -103,7 +187,7 @@ pub async fn get_my_quota(
     get_quota_impl(&state, user_id).await.map(Json)
 }
 
-/// Get quota for a specific user (admin only).
+/// GET /quotas/users/:user_id — admin: fetch any user's quota usage.
 #[tracing::instrument(skip(state))]
 pub async fn get_user_quota(
     State(state): State<AppState>,
@@ -112,114 +196,47 @@ pub async fn get_user_quota(
     get_quota_impl(&state, user_id).await.map(Json)
 }
 
-async fn get_quota_impl(state: &AppState, user_id: Uuid) -> Result<QuotaUsage> {
-    let quota = sqlx::query(
-        r#"
-        SELECT * FROM storage.quotas WHERE user_id = $1
-        "#,
-    )
-    .bind(user_id)
-    .fetch_optional(state.pool.inner())
-    .await?
-    .map(|row| StorageQuota::from_row(&row))
-    .transpose()?
-    .unwrap_or_else(|| StorageQuota {
-        user_id,
-        max_storage_bytes: Some(10 * 1024 * 1024 * 1024), // Default 10GB
-        max_files: Some(1000),
-        max_file_size_bytes: None,
-        used_storage_bytes: 0,
-        file_count: 0,
-        allowed_buckets: None,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    });
-
-    let storage_percentage = quota.max_storage_bytes.map(|limit| {
-        if limit > 0 {
-            (quota.used_storage_bytes as f32 / limit as f32) * 100.0
-        } else {
-            0.0
-        }
-    });
-
-    let files_percentage = quota.max_files.map(|limit| {
-        if limit > 0 {
-            (quota.file_count as f32 / limit as f32) * 100.0
-        } else {
-            0.0
-        }
-    });
-
-    Ok(QuotaUsage {
-        user_id,
-        storage: UsageInfo {
-            used: quota.used_storage_bytes,
-            limit: quota.max_storage_bytes,
-            percentage: storage_percentage,
-        },
-        files: UsageInfo {
-            used: quota.file_count,
-            limit: quota.max_files,
-            percentage: files_percentage,
-        },
-        buckets: vec![], // TODO: Implement per-bucket breakdown if needed
-    })
-}
-
-/// Set quota for a user (admin only).
+/// PUT /quotas/users/:user_id — admin: set quota limits for a user.
 #[tracing::instrument(skip(state))]
 pub async fn set_user_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
-    Json(request): Json<SetQuotaRequest>,
+    Json(req): Json<SetQuotaRequest>,
 ) -> Result<Json<StorageQuota>> {
-    let quota = sqlx::query(
-        r#"
-        INSERT INTO storage.quotas (user_id, max_storage_bytes, max_files, max_file_size_bytes, allowed_buckets)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (user_id) DO UPDATE SET
-            max_storage_bytes = EXCLUDED.max_storage_bytes,
-            max_files = EXCLUDED.max_files,
-            max_file_size_bytes = EXCLUDED.max_file_size_bytes,
-            allowed_buckets = EXCLUDED.allowed_buckets,
-            updated_at = NOW()
-        RETURNING *
-        "#,
-    )
-    .bind(user_id)
-    .bind(request.max_storage_bytes)
-    .bind(request.max_files)
-    .bind(request.max_file_size_bytes)
-    .bind(request.allowed_buckets)
-    .fetch_one(state.pool.inner())
-    .await?;
-
-    Ok(Json(StorageQuota::from_row(&quota)?))
+    let repo = QuotaRepository::new(&state.pool);
+    let quota = repo
+        .set_quota_limits(
+            user_id,
+            SetQuotaLimits {
+                max_storage_bytes: req.max_storage_bytes,
+                max_files: req.max_files,
+                max_file_size_bytes: req.max_file_size_bytes,
+                allowed_buckets: req.allowed_buckets,
+            },
+        )
+        .await?;
+    Ok(Json(quota))
 }
 
-/// Delete quota for a user (admin only).
+/// DELETE /quotas/users/:user_id — admin: remove quota row (user reverts to defaults).
 #[tracing::instrument(skip(state))]
 pub async fn delete_user_quota(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
 ) -> Result<StatusCode> {
-    let result = sqlx::query("DELETE FROM storage.quotas WHERE user_id = $1")
-        .bind(user_id)
-        .execute(state.pool.inner())
-        .await?;
-
-    if result.rows_affected() == 0 {
-        return Err(Error::NotFound(format!(
+    let repo = QuotaRepository::new(&state.pool);
+    let deleted = repo.delete_quota(user_id).await?;
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(Error::NotFound(format!(
             "Quota for user {} not found",
             user_id
-        )));
+        )))
     }
-
-    Ok(StatusCode::NO_CONTENT)
 }
 
-/// Get quota alerts for current user.
+/// GET /quotas/me/alerts — active quota alerts for the current user.
 #[tracing::instrument(skip(state, user_id))]
 pub async fn get_quota_alerts(
     State(state): State<AppState>,
@@ -228,116 +245,90 @@ pub async fn get_quota_alerts(
     let usage = get_quota_impl(&state, user_id).await?;
     let mut alerts = Vec::new();
 
-    if let Some(pct) = usage.storage.percentage {
-        let limit = usage.storage.limit.unwrap_or(0);
-        if pct > 100.0 {
-            alerts.push(QuotaAlert {
-                alert_type: QuotaAlertType::Exceeded,
-                resource: "storage".to_string(),
-                current: usage.storage.used,
-                limit,
-                percentage: pct,
-                message: "Storage quota exceeded".to_string(),
-            });
-        } else if pct > 95.0 {
-            alerts.push(QuotaAlert {
-                alert_type: QuotaAlertType::Critical,
-                resource: "storage".to_string(),
-                current: usage.storage.used,
-                limit,
-                percentage: pct,
-                message: "Storage quota critical".to_string(),
-            });
-        } else if pct > 80.0 {
-            alerts.push(QuotaAlert {
-                alert_type: QuotaAlertType::Warning,
-                resource: "storage".to_string(),
-                current: usage.storage.used,
-                limit,
-                percentage: pct,
-                message: "Storage quota warning".to_string(),
-            });
-        }
-    }
+    let push_alert = |alerts: &mut Vec<QuotaAlert>,
+                      resource: &str,
+                      info: &UsageInfo,
+                      alert_type: QuotaAlertType| {
+        let limit = info.limit.unwrap_or(0);
+        let pct = info.percentage.unwrap_or(0.0);
+        let msg = match alert_type {
+            QuotaAlertType::Exceeded => format!("{resource} quota exceeded"),
+            QuotaAlertType::Critical => format!("{resource} quota critical"),
+            QuotaAlertType::Warning => format!("{resource} quota warning"),
+        };
+        alerts.push(QuotaAlert {
+            alert_type,
+            resource: resource.to_string(),
+            current: info.used,
+            limit,
+            percentage: pct,
+            message: msg,
+        });
+    };
 
-    if let Some(pct) = usage.files.percentage {
-        let limit = usage.files.limit.unwrap_or(0);
-        if pct > 100.0 {
-            alerts.push(QuotaAlert {
-                alert_type: QuotaAlertType::Exceeded,
-                resource: "files".to_string(),
-                current: usage.files.used,
-                limit,
-                percentage: pct,
-                message: "File count quota exceeded".to_string(),
-            });
-        } else if pct > 95.0 {
-            alerts.push(QuotaAlert {
-                alert_type: QuotaAlertType::Critical,
-                resource: "files".to_string(),
-                current: usage.files.used,
-                limit,
-                percentage: pct,
-                message: "File count quota critical".to_string(),
-            });
-        } else if pct > 80.0 {
-            alerts.push(QuotaAlert {
-                alert_type: QuotaAlertType::Warning,
-                resource: "files".to_string(),
-                current: usage.files.used,
-                limit,
-                percentage: pct,
-                message: "File count quota warning".to_string(),
-            });
-        }
+    if let Some(alert) = calculate_alert_type(usage.storage.used, usage.storage.limit) {
+        push_alert(&mut alerts, "storage", &usage.storage, alert);
+    }
+    if let Some(alert) = calculate_alert_type(usage.files.used, usage.files.limit) {
+        push_alert(&mut alerts, "files", &usage.files, alert);
     }
 
     Ok(Json(alerts))
 }
 
-/// Check if an upload would exceed quota.
+/// POST /quotas/users/:user_id/recalculate — admin: recalculate usage from storage.files.
+#[tracing::instrument(skip(state))]
+pub async fn recalculate_usage(
+    State(state): State<AppState>,
+    Path(user_id): Path<Uuid>,
+) -> Result<Json<QuotaUsage>> {
+    let repo = QuotaRepository::new(&state.pool);
+    let quota = repo.recalculate_from_files(user_id).await?;
+    Ok(Json(quota_to_usage(quota)))
+}
+
+/// GET /quotas/over-limit — admin: list users who have exceeded their quota.
+#[tracing::instrument(skip(state))]
+pub async fn get_users_over_quota(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<QuotaUsage>>> {
+    let repo = QuotaRepository::new(&state.pool);
+    let rows = repo.list_over_quota().await?;
+    let usages = rows.into_iter().map(quota_to_usage).collect();
+    Ok(Json(usages))
+}
+
+// ─── Internal helpers called by files.rs ─────────────────────────────────────
+
+/// Check whether an upload of `file_size` bytes would exceed the user's quota.
 pub async fn check_quota(state: &AppState, user_id: Uuid, file_size: i64) -> Result<()> {
-    let quota = sqlx::query(r#"SELECT * FROM storage.quotas WHERE user_id = $1"#)
-        .bind(user_id)
-        .fetch_optional(state.pool.inner())
-        .await?
-        .map(|row| StorageQuota::from_row(&row))
-        .transpose()?;
+    let repo = QuotaRepository::new(&state.pool);
+    let Some(quota) = repo.get_quota(user_id).await? else {
+        return Ok(()); // No quota row → no limits enforced
+    };
 
-    if let Some(quota) = quota {
-        // Check max file size
-        if let Some(max_size) = quota.max_file_size_bytes {
-            if file_size > max_size {
-                return Err(Error::BadRequest(format!(
-                    "File size {} bytes exceeds limit of {} bytes",
-                    file_size, max_size
-                )));
-            }
+    if let Some(max_size) = quota.max_file_size_bytes {
+        if file_size > max_size {
+            return Err(Error::BadRequest(format!(
+                "File size {file_size} bytes exceeds per-file limit of {max_size} bytes"
+            )));
         }
-
-        // Check total storage and file count (only if we have limits)
-        if quota.max_storage_bytes.is_some() || quota.max_files.is_some() {
-            // For strict correctness, we might want to do this check in a transaction with the update
-            // but for now checking against current state is sufficient
-
-            if let Some(max_storage) = quota.max_storage_bytes {
-                if quota.used_storage_bytes + file_size > max_storage {
-                    return Err(Error::Forbidden("Storage quota exceeded".to_string()));
-                }
-            }
-
-            if let Some(max_files) = quota.max_files {
-                if quota.file_count + 1 > max_files {
-                    return Err(Error::Forbidden("File count quota exceeded".to_string()));
-                }
-            }
+    }
+    if let Some(max_storage) = quota.max_storage_bytes {
+        if quota.used_storage_bytes + file_size > max_storage {
+            return Err(Error::Forbidden("Storage quota exceeded".to_string()));
+        }
+    }
+    if let Some(max_files) = quota.max_files {
+        if quota.file_count + 1 > max_files {
+            return Err(Error::Forbidden("File count quota exceeded".to_string()));
         }
     }
 
     Ok(())
 }
 
-/// Update usage after upload.
+/// Record a successful upload: insert file row and atomically increment quota.
 pub async fn record_upload(
     state: &AppState,
     user_id: Uuid,
@@ -346,17 +337,22 @@ pub async fn record_upload(
     file_size: i64,
     content_type: Option<&str>,
 ) -> Result<Uuid> {
-    let mut tx = state.pool.inner().begin().await?;
+    let mut tx = state
+        .pool
+        .inner()
+        .begin()
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
-    // 1. Record the file
+    // 1. Persist file record (upsert on duplicate path).
     let row = sqlx::query(
         r#"
         INSERT INTO storage.files (user_id, bucket, key, size, content_type)
         VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (user_id, bucket, key) DO UPDATE SET
-            size = EXCLUDED.size,
+            size         = EXCLUDED.size,
             content_type = EXCLUDED.content_type,
-            updated_at = NOW()
+            updated_at   = NOW()
         RETURNING id
         "#,
     )
@@ -366,31 +362,37 @@ pub async fn record_upload(
     .bind(file_size)
     .bind(content_type)
     .fetch_one(&mut *tx)
-    .await?;
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
 
+    use sqlx::Row as _;
     let file_id: Uuid = row.get("id");
 
-    // 2. Increment quota
+    // 2. Atomically increment quota counters.
     sqlx::query(
         r#"
         INSERT INTO storage.quotas (user_id, used_storage_bytes, file_count)
         VALUES ($1, $2, 1)
         ON CONFLICT (user_id) DO UPDATE SET
             used_storage_bytes = storage.quotas.used_storage_bytes + $2,
-            file_count = storage.quotas.file_count + 1,
-            updated_at = NOW()
+            file_count         = storage.quotas.file_count + 1,
+            updated_at         = NOW()
         "#,
     )
     .bind(user_id)
     .bind(file_size)
     .execute(&mut *tx)
-    .await?;
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
 
-    tx.commit().await?;
+    tx.commit()
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
     Ok(file_id)
 }
 
-/// Update usage after delete.
+/// Record a deletion: remove file row and atomically decrement quota.
 pub async fn record_delete(
     state: &AppState,
     user_id: Uuid,
@@ -398,92 +400,46 @@ pub async fn record_delete(
     key: &str,
     file_size: i64,
 ) -> Result<()> {
-    let mut tx = state.pool.inner().begin().await?;
+    let mut tx = state
+        .pool
+        .inner()
+        .begin()
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
-    // 1. Remove file record
     sqlx::query(
-        r#"
-        DELETE FROM storage.files 
-        WHERE user_id = $1 AND bucket = $2 AND key = $3
-        "#,
+        "DELETE FROM storage.files WHERE user_id = $1 AND bucket = $2 AND key = $3",
     )
     .bind(user_id)
     .bind(bucket)
     .bind(key)
     .execute(&mut *tx)
-    .await?;
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
 
-    // 2. Decrement quota
     sqlx::query(
         r#"
         UPDATE storage.quotas
         SET used_storage_bytes = GREATEST(0, used_storage_bytes - $2),
-            file_count = GREATEST(0, file_count - 1),
-            updated_at = NOW()
+            file_count         = GREATEST(0, file_count - 1),
+            updated_at         = NOW()
         WHERE user_id = $1
         "#,
     )
     .bind(user_id)
     .bind(file_size)
     .execute(&mut *tx)
-    .await?;
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
 
-    tx.commit().await?;
+    tx.commit()
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
     Ok(())
 }
 
-/// Recalculate usage for a user (admin operation).
-#[tracing::instrument(skip(state))]
-pub async fn recalculate_usage(
-    State(state): State<AppState>,
-    Path(user_id): Path<Uuid>,
-) -> Result<Json<QuotaUsage>> {
-    let mut tx = state.pool.inner().begin().await?;
-
-    // 1. Calculate actual totals from stored files
-    let row = sqlx::query(
-        r#"
-        SELECT 
-            COALESCE(SUM(size), 0) as total_size,
-            COUNT(*) as total_count
-        FROM storage.files
-        WHERE user_id = $1
-        "#,
-    )
-    .bind(user_id)
-    .fetch_one(&mut *tx)
-    .await?;
-
-    let total_size: i64 = row.get("total_size");
-    let total_count: i64 = row.get("total_count");
-
-    // 2. Sync with storage backend (Optional but good: check if files actually exist)
-    // For now we trust our `storage.files` table as the source of truth,
-    // but in a production environment, one might want to list OpenDAL and reconcile.
-
-    // 3. Update the quota record
-    sqlx::query(
-        r#"
-        INSERT INTO storage.quotas (user_id, used_storage_bytes, file_count)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (user_id) DO UPDATE SET
-            used_storage_bytes = EXCLUDED.used_storage_bytes,
-            file_count = EXCLUDED.file_count,
-            updated_at = NOW()
-        "#,
-    )
-    .bind(user_id)
-    .bind(total_size)
-    .bind(total_count)
-    .execute(&mut *tx)
-    .await?;
-
-    tx.commit().await?;
-
-    get_quota_impl(&state, user_id).await.map(Json)
-}
-
-/// Update usage after move.
+/// Record a move (rename): update the file path without changing quota counters.
 pub async fn record_move(
     state: &AppState,
     user_id: Uuid,
@@ -505,12 +461,13 @@ pub async fn record_move(
     .bind(dst_bucket)
     .bind(dst_key)
     .execute(state.pool.inner())
-    .await?;
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
 
     Ok(())
 }
 
-/// Update usage after copy.
+/// Record a copy: insert destination file row and increment quota by the source size.
 pub async fn record_copy(
     state: &AppState,
     user_id: Uuid,
@@ -519,34 +476,37 @@ pub async fn record_copy(
     dst_bucket: &str,
     dst_key: &str,
 ) -> Result<()> {
-    let mut tx = state.pool.inner().begin().await?;
+    let mut tx = state
+        .pool
+        .inner()
+        .begin()
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
-    // 1. Get info of source file
+    use sqlx::Row as _;
+
     let file_row = sqlx::query(
-        r#"
-        SELECT size, content_type FROM storage.files
-        WHERE user_id = $1 AND bucket = $2 AND key = $3
-        "#,
+        "SELECT size, content_type FROM storage.files WHERE user_id = $1 AND bucket = $2 AND key = $3",
     )
     .bind(user_id)
     .bind(src_bucket)
     .bind(src_key)
     .fetch_optional(&mut *tx)
-    .await?;
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
 
     if let Some(row) = file_row {
-        let size: i64 = row.get::<i64, _>("size");
-        let content_type: Option<String> = row.get::<Option<String>, _>("content_type");
+        let size: i64 = row.get("size");
+        let content_type: Option<String> = row.get("content_type");
 
-        // 2. Record the new file
         sqlx::query(
             r#"
             INSERT INTO storage.files (user_id, bucket, key, size, content_type)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (user_id, bucket, key) DO UPDATE SET
-                size = EXCLUDED.size,
+                size         = EXCLUDED.size,
                 content_type = EXCLUDED.content_type,
-                updated_at = NOW()
+                updated_at   = NOW()
             "#,
         )
         .bind(user_id)
@@ -555,83 +515,34 @@ pub async fn record_copy(
         .bind(size)
         .bind(content_type)
         .execute(&mut *tx)
-        .await?;
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
-        // 3. Increment quota
         sqlx::query(
             r#"
             INSERT INTO storage.quotas (user_id, used_storage_bytes, file_count)
             VALUES ($1, $2, 1)
             ON CONFLICT (user_id) DO UPDATE SET
                 used_storage_bytes = storage.quotas.used_storage_bytes + $2,
-                file_count = storage.quotas.file_count + 1,
-                updated_at = NOW()
+                file_count         = storage.quotas.file_count + 1,
+                updated_at         = NOW()
             "#,
         )
         .bind(user_id)
         .bind(size)
         .execute(&mut *tx)
-        .await?;
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
     }
 
-    tx.commit().await?;
+    tx.commit()
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
     Ok(())
 }
 
-/// Get all users over quota (admin only).
-
-#[tracing::instrument(skip(state))]
-pub async fn get_users_over_quota(State(state): State<AppState>) -> Result<Json<Vec<QuotaUsage>>> {
-    // Simple query to find users where used > max
-    let users = sqlx::query_as::<_, StorageQuota>(
-        r#"
-        SELECT * FROM storage.quotas 
-        WHERE (max_storage_bytes IS NOT NULL AND used_storage_bytes > max_storage_bytes)
-           OR (max_files IS NOT NULL AND file_count > max_files)
-        "#,
-    )
-    .fetch_all(state.pool.inner())
-    .await?;
-
-    let mut usages = Vec::new();
-    for quota in users {
-        usages.push(QuotaUsage {
-            user_id: quota.user_id,
-            storage: UsageInfo {
-                used: quota.used_storage_bytes,
-                limit: quota.max_storage_bytes,
-                percentage: Some(100.0), // Simplified
-            },
-            files: UsageInfo {
-                used: quota.file_count,
-                limit: quota.max_files,
-                percentage: Some(100.0), // Simplified
-            },
-            buckets: vec![],
-        });
-    }
-
-    Ok(Json(usages))
-}
-
-/// Determine the alert type based on usage and limits.
-pub fn calculate_alert_type(used: i64, limit: Option<i64>) -> Option<QuotaAlertType> {
-    let limit = limit?;
-    if limit <= 0 {
-        return None;
-    }
-
-    let percentage = (used as f64 / limit as f64) * 100.0;
-    if percentage >= 100.0 {
-        Some(QuotaAlertType::Exceeded)
-    } else if percentage >= 90.0 {
-        Some(QuotaAlertType::Critical)
-    } else if percentage >= 80.0 {
-        Some(QuotaAlertType::Warning)
-    } else {
-        None
-    }
-}
+// ─── Tests ────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod tests {
@@ -639,13 +550,11 @@ mod tests {
 
     #[test]
     fn test_quota_alert_logic() {
-        let limit = Some(1000);
+        let limit = Some(1_000_i64);
 
-        // No alert
         assert_eq!(calculate_alert_type(500, limit), None);
         assert_eq!(calculate_alert_type(799, limit), None);
 
-        // Warning (80%)
         assert_eq!(
             calculate_alert_type(800, limit),
             Some(QuotaAlertType::Warning)
@@ -654,8 +563,6 @@ mod tests {
             calculate_alert_type(899, limit),
             Some(QuotaAlertType::Warning)
         );
-
-        // Critical (90%)
         assert_eq!(
             calculate_alert_type(900, limit),
             Some(QuotaAlertType::Critical)
@@ -664,25 +571,23 @@ mod tests {
             calculate_alert_type(999, limit),
             Some(QuotaAlertType::Critical)
         );
-
-        // Exceeded (100%+)
         assert_eq!(
-            calculate_alert_type(1000, limit),
+            calculate_alert_type(1_000, limit),
             Some(QuotaAlertType::Exceeded)
         );
         assert_eq!(
-            calculate_alert_type(1100, limit),
+            calculate_alert_type(1_100, limit),
             Some(QuotaAlertType::Exceeded)
         );
     }
 
     #[test]
     fn test_quota_alert_no_limit() {
-        assert_eq!(calculate_alert_type(1000, None), None);
+        assert_eq!(calculate_alert_type(1_000, None), None);
     }
 
     #[test]
     fn test_quota_alert_zero_limit() {
-        assert_eq!(calculate_alert_type(1000, Some(0)), None);
+        assert_eq!(calculate_alert_type(1_000, Some(0)), None);
     }
 }

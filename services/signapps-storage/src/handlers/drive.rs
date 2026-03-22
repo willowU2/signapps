@@ -34,8 +34,8 @@ pub async fn list_nodes(
         // Query children of specific folder where user is owner or has permissions
         sqlx::query_as::<_, DriveNode>(
             r#"
-            SELECT n.id, n.parent_id, n.name, n.node_type, 
-                   n.target_id, n.workspace_id, n.owner_id, n.size, n.mime_type, 
+            SELECT n.id, n.parent_id, n.name, n.node_type,
+                   n.target_id, n.workspace_id, n.owner_id, n.size, n.mime_type,
                    n.created_at, n.updated_at, n.deleted_at
             FROM drive.nodes n
             LEFT JOIN drive.permissions p ON p.node_id = n.id AND p.user_id = $1
@@ -56,7 +56,7 @@ pub async fn list_nodes(
         sqlx::query_as::<_, DriveNode>(
             r#"
             SELECT n.id, n.parent_id, n.name, n.node_type,
-                   n.target_id, n.workspace_id, n.owner_id, n.size, n.mime_type, 
+                   n.target_id, n.workspace_id, n.owner_id, n.size, n.mime_type,
                    n.created_at, n.updated_at, n.deleted_at
             FROM drive.nodes n
             LEFT JOIN drive.permissions p ON p.node_id = n.id AND p.user_id = $1

@@ -8,6 +8,7 @@
 'use client';
 
 import * as React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -473,24 +474,44 @@ export function FloorPlan({
               />
             </pattern>
           </defs>
-          <rect
-            width={floorPlan.width}
-            height={floorPlan.height}
-            fill="url(#floor-grid)"
-          />
+          {/* Background grid pattern (only if no SVG map) */}
+          {!floorPlan.svgContent && (
+            <rect
+              width={floorPlan.width}
+              height={floorPlan.height}
+              fill="url(#floor-grid)"
+            />
+          )}
 
-          {/* Building outline */}
-          <rect
-            x={20}
-            y={20}
-            width={floorPlan.width - 40}
-            height={floorPlan.height - 40}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-border"
-            rx={8}
-          />
+          {/* User uploaded Blueprint Map */}
+          {floorPlan.svgContent && (
+            <image
+              href={
+                floorPlan.svgContent.startsWith('<svg') 
+                  ? `data:image/svg+xml;utf8,${encodeURIComponent(floorPlan.svgContent)}` 
+                  : floorPlan.svgContent
+              }
+              width={floorPlan.width}
+              height={floorPlan.height}
+              className="opacity-95 dark:opacity-80 transition-opacity pointer-events-none"
+              preserveAspectRatio="xMidYMid meet"
+            />
+          )}
+
+          {/* Fallback Building outline */}
+          {!floorPlan.svgContent && (
+            <rect
+              x={20}
+              y={20}
+              width={floorPlan.width - 40}
+              height={floorPlan.height - 40}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-border"
+              rx={8}
+            />
+          )}
 
           {/* Resources */}
           {filteredResources.map((fpResource) => {
@@ -525,6 +546,13 @@ export function FloorPlan({
                 onMouseLeave={() => setHoveredResourceId(null)}
                 className="cursor-pointer"
               >
+                {/* Native Browser Tooltip */}
+                <title>
+                  {fpResource.name}
+                  {resource.capacity ? ` (${resource.capacity} pers.)` : ''} - 
+                  {status.available ? ' Disponible' : ' Occupé'}
+                </title>
+
                 {/* Room shape */}
                 <rect
                   x={fpResource.bounds.x}
@@ -610,17 +638,27 @@ export function FloorPlan({
       </div>
 
       {/* Selected resource detail panel */}
-      {viewState.selectedResourceId && (
-        <ResourceDetailPanel
-          resourceId={viewState.selectedResourceId}
-          resources={resources}
-          floorPlanResources={floorPlan.resources}
-          status={getResourceStatus(viewState.selectedResourceId)}
-          currentTime={currentTime}
-          onClose={() => onResourceSelect?.(null)}
-          onBook={onResourceBook}
-        />
-      )}
+      <AnimatePresence>
+        {viewState.selectedResourceId && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute bottom-4 right-4 w-80 shadow-2xl rounded-xl overflow-hidden"
+          >
+            <ResourceDetailPanel
+              resourceId={viewState.selectedResourceId}
+              resources={resources}
+              floorPlanResources={floorPlan.resources}
+              status={getResourceStatus(viewState.selectedResourceId)}
+              currentTime={currentTime}
+              onClose={() => onResourceSelect?.(null)}
+              onBook={onResourceBook}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -657,7 +695,7 @@ function ResourceDetailPanel({
     date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="border-t p-4 bg-background">
+    <div className="border border-border/50 p-4 bg-background/95 backdrop-blur-sm">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="font-semibold">{fpResource.name}</h3>
@@ -665,7 +703,7 @@ function ResourceDetailPanel({
             {resource.location || floorPlanResources[0]?.name}
           </p>
         </div>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full bg-muted/50 hover:bg-muted" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
       </div>

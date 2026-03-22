@@ -42,8 +42,6 @@ export function useAiStream() {
     abortControllerRef.current = controller;
     let fullResponse = '';
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-
     const body = {
       question: prompt,
       language: config.language || 'fr',
@@ -58,9 +56,9 @@ export function useAiStream() {
       // Try true SSE streaming first
       const res = await fetch(`${AI_URL}/ai/chat/stream`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(body),
         signal: controller.signal,
@@ -70,9 +68,9 @@ export function useAiStream() {
         // Fallback to non-streaming endpoint
         const fallbackRes = await fetch(`${AI_URL}/ai/chat`, {
           method: 'POST',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify(body),
           signal: controller.signal,

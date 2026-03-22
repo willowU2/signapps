@@ -88,6 +88,20 @@ export function NotificationPopover() {
     }
   }, [open, loadNotifications]);
 
+  // Listen for real-time SSE notifications
+  useEffect(() => {
+    const handleNewNotification = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      // We can either push the new notification directly or reload from API
+      // Since SSE gives us the title and message, we reload to get the full formatted Notifications
+      // Or we can just increment the counter and reload when opened
+      loadNotifications();
+    };
+
+    window.addEventListener('new-notification', handleNewNotification);
+    return () => window.removeEventListener('new-notification', handleNewNotification);
+  }, [loadNotifications]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const getIcon = (type: Notification['type']) => {

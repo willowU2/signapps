@@ -9,6 +9,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use signapps_common::Result;
 use sqlx::{postgres::PgRow, Row};
+use uuid::Uuid;
 
 use crate::AppState;
 
@@ -155,185 +156,411 @@ pub struct QuickSearchResponse {
     pub total: i64,
 }
 
-/// Search files with full options.
-#[tracing::instrument(skip(_state))]
+/// Extract filename from a storage key (last path component).
+fn filename_from_key(key: &str) -> String {
+    key.split('/').next_back().unwrap_or(key).to_string()
+}
+
+/// Map a PgRow from `storage.files` to a `SearchResult`.
+fn row_to_search_result(row: &PgRow) -> SearchResult {
+    let key: String = row.get("key");
+    let bucket: String = row.get("bucket");
+    let filename = filename_from_key(&key);
+    let content_type: Option<String> = row.get("content_type");
+    SearchResult {
+        path: key.clone(),
+        filename,
+        bucket,
+        key,
+        size: row.get("size"),
+        content_type: content_type.unwrap_or_else(|| "application/octet-stream".to_string()),
+        modified_at: row.get("updated_at"),
+        score: 1.0,
+        highlights: vec![],
+        preview: None,
+    }
+}
+
+/// Search files with full options (ILIKE-based, filters on type/date/size/bucket).
+///
+/// Strategy:
+///  - Match on the last path segment (filename) via ILIKE `%q%`
+///  - Optional filters: bucket, content_type prefix, size range, date range
+///  - Sorting: name / size / modified_at (default: modified_at DESC)
+///  - Pagination via LIMIT / OFFSET
+///  - Facets computed separately for buckets and file-type categories.
+#[tracing::instrument(skip(state))]
 pub async fn search(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(user_id): Extension<Uuid>,
     Query(query): Query<SearchQuery>,
 ) -> Result<Json<SearchResponse>> {
     let start = std::time::Instant::now();
 
-    let bucket = query
-        .bucket
-        .clone()
-        .unwrap_or_else(|| "default".to_string());
+    let limit = query.limit.unwrap_or(50).clamp(1, 200) as i64;
+    let offset = query.offset.unwrap_or(0).max(0) as i64;
 
-    let list_query = crate::storage::ListObjectsQuery {
-        prefix: query.prefix.clone(),
-        delimiter: None,
-        max_keys: Some(1000),
-        continuation_token: None,
-    };
+    // ---- Build WHERE clauses dynamically (sqlx doesn't support truly dynamic
+    // queries, so we use a fixed parameterised query and handle optionals with
+    // Postgres conditional expressions).  We rely on Postgres short-circuit:
+    // ($N IS NULL OR expr) always evaluates to TRUE when $N is NULL.
+    let rows = sqlx::query(
+        r#"
+        SELECT bucket, key, size, content_type, updated_at
+        FROM storage.files
+        WHERE user_id = $1
+          AND ($2::text IS NULL OR key ILIKE '%' || $2 || '%')
+          AND ($3::text IS NULL OR bucket = $3)
+          AND ($4::text IS NULL OR key LIKE $4 || '%')
+          AND ($5::text IS NULL OR content_type ILIKE $5 || '%')
+          AND ($6::bigint IS NULL OR size >= $6)
+          AND ($7::bigint IS NULL OR size <= $7)
+          AND ($8::timestamptz IS NULL OR updated_at >= $8)
+          AND ($9::timestamptz IS NULL OR updated_at <= $9)
+        ORDER BY
+          CASE WHEN $10 = 'name'     AND $11 = 'asc'  THEN key END ASC,
+          CASE WHEN $10 = 'name'     AND $11 = 'desc' THEN key END DESC,
+          CASE WHEN $10 = 'size'     AND $11 = 'asc'  THEN size END ASC,
+          CASE WHEN $10 = 'size'     AND $11 = 'desc' THEN size END DESC,
+          CASE WHEN $10 = 'modified' AND $11 = 'asc'  THEN updated_at END ASC,
+          updated_at DESC
+        LIMIT $12 OFFSET $13
+        "#,
+    )
+    .bind(user_id)
+    .bind(if query.q.is_empty() { None } else { Some(&query.q) })
+    .bind(query.bucket.as_deref())
+    .bind(query.prefix.as_deref())
+    .bind(query.content_type.as_deref())
+    .bind(query.min_size)
+    .bind(query.max_size)
+    .bind(query.modified_after)
+    .bind(query.modified_before)
+    .bind(
+        query
+            .sort_by
+            .as_ref()
+            .map(|s| match s {
+                SearchSortField::Name => "name",
+                SearchSortField::Size => "size",
+                SearchSortField::Modified => "modified",
+                SearchSortField::Relevance => "modified",
+            })
+            .unwrap_or("modified"),
+    )
+    .bind(
+        query
+            .sort_order
+            .as_ref()
+            .map(|o| match o {
+                SortOrder::Asc => "asc",
+                SortOrder::Desc => "desc",
+            })
+            .unwrap_or("desc"),
+    )
+    .bind(limit)
+    .bind(offset)
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
-    let mut results = vec![];
-    let mut total = 0;
+    // ---- Count total matching rows ----
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) AS cnt
+        FROM storage.files
+        WHERE user_id = $1
+          AND ($2::text IS NULL OR key ILIKE '%' || $2 || '%')
+          AND ($3::text IS NULL OR bucket = $3)
+          AND ($4::text IS NULL OR key LIKE $4 || '%')
+          AND ($5::text IS NULL OR content_type ILIKE $5 || '%')
+          AND ($6::bigint IS NULL OR size >= $6)
+          AND ($7::bigint IS NULL OR size <= $7)
+          AND ($8::timestamptz IS NULL OR updated_at >= $8)
+          AND ($9::timestamptz IS NULL OR updated_at <= $9)
+        "#,
+    )
+    .bind(user_id)
+    .bind(if query.q.is_empty() { None } else { Some(&query.q) })
+    .bind(query.bucket.as_deref())
+    .bind(query.prefix.as_deref())
+    .bind(query.content_type.as_deref())
+    .bind(query.min_size)
+    .bind(query.max_size)
+    .bind(query.modified_after)
+    .bind(query.modified_before)
+    .fetch_one(state.pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
-    if let Ok(listed) = _state.storage.list_objects(&bucket, list_query).await {
-        let q_lower = query.q.to_lowercase();
+    let total: i64 = total_row.get("cnt");
 
-        for obj in listed.objects {
-            let filename = obj
-                .key
-                .split('/')
-                .next_back()
-                .unwrap_or(&obj.key)
-                .to_string();
+    // ---- Build facets: per-bucket counts ----
+    let bucket_rows = sqlx::query(
+        r#"
+        SELECT bucket, COUNT(*) AS cnt
+        FROM storage.files
+        WHERE user_id = $1
+          AND ($2::text IS NULL OR key ILIKE '%' || $2 || '%')
+        GROUP BY bucket
+        ORDER BY cnt DESC
+        LIMIT 20
+        "#,
+    )
+    .bind(user_id)
+    .bind(if query.q.is_empty() { None } else { Some(&query.q) })
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
 
-            if q_lower.is_empty() || filename.to_lowercase().contains(&q_lower) {
-                let modified_at = if let Some(dt_str) = &obj.last_modified {
-                    DateTime::parse_from_rfc3339(dt_str)
-                        .map(|dt| dt.with_timezone(&Utc))
-                        .unwrap_or_else(|_| Utc::now())
-                } else {
-                    Utc::now()
-                };
+    let bucket_facets: Vec<FacetCount> = bucket_rows
+        .iter()
+        .map(|r| FacetCount {
+            value: r.get("bucket"),
+            count: r.get("cnt"),
+        })
+        .collect();
 
-                results.push(SearchResult {
-                    bucket: bucket.clone(),
-                    key: obj.key.clone(),
-                    filename,
-                    path: obj.key.clone(),
-                    size: obj.size,
-                    content_type: obj
-                        .content_type
-                        .unwrap_or_else(|| "application/octet-stream".to_string()),
-                    modified_at,
-                    score: 1.0,
-                    highlights: vec![],
-                    preview: None,
-                });
-            }
-        }
-        total = results.len() as i64;
+    // ---- Build facets: per-file-type counts ----
+    let type_rows = sqlx::query(
+        r#"
+        SELECT content_type, COUNT(*) AS cnt
+        FROM storage.files
+        WHERE user_id = $1
+          AND ($2::text IS NULL OR key ILIKE '%' || $2 || '%')
+          AND content_type IS NOT NULL
+        GROUP BY content_type
+        ORDER BY cnt DESC
+        LIMIT 20
+        "#,
+    )
+    .bind(user_id)
+    .bind(if query.q.is_empty() { None } else { Some(&query.q) })
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    // Aggregate by category
+    let mut type_map: std::collections::HashMap<String, i64> = std::collections::HashMap::new();
+    for r in &type_rows {
+        let ct: String = r.get("content_type");
+        let cnt: i64 = r.get("cnt");
+        let category = get_file_type(&ct);
+        *type_map.entry(category).or_insert(0) += cnt;
     }
+    let mut file_type_facets: Vec<FacetCount> = type_map
+        .into_iter()
+        .map(|(value, count)| FacetCount { value, count })
+        .collect();
+    file_type_facets.sort_by(|a, b| b.count.cmp(&a.count));
+
+    // ---- Build facets: size ranges ----
+    let size_ranges = build_size_range_facets(&rows);
+
+    let results: Vec<SearchResult> = rows.iter().map(row_to_search_result).collect();
 
     let took_ms = start.elapsed().as_millis() as u64;
 
     Ok(Json(SearchResponse {
         results,
         total,
-
         query: query.q,
         facets: SearchFacets {
-            buckets: vec![],
-            file_types: vec![],
-            size_ranges: vec![
-                SizeRangeFacet {
-                    label: "< 1 MB".to_string(),
-                    min: None,
-                    max: Some(1024 * 1024),
-                    count: 0,
-                },
-                SizeRangeFacet {
-                    label: "1 - 10 MB".to_string(),
-                    min: Some(1024 * 1024),
-                    max: Some(10 * 1024 * 1024),
-                    count: 0,
-                },
-                SizeRangeFacet {
-                    label: "10 - 100 MB".to_string(),
-                    min: Some(10 * 1024 * 1024),
-                    max: Some(100 * 1024 * 1024),
-                    count: 0,
-                },
-                SizeRangeFacet {
-                    label: "> 100 MB".to_string(),
-                    min: Some(100 * 1024 * 1024),
-                    max: None,
-                    count: 0,
-                },
-            ],
+            buckets: bucket_facets,
+            file_types: file_type_facets,
+            size_ranges,
         },
         took_ms,
     }))
 }
 
-/// Quick search - simple filename search.
-#[tracing::instrument(skip(_state))]
-pub async fn quick_search(
-    State(_state): State<AppState>,
-    Query(query): Query<QuickSearchQuery>,
-) -> Result<Json<QuickSearchResponse>> {
-    let limit = query.limit.unwrap_or(10) as usize;
+/// Compute size-range facet counts from a result slice.
+fn build_size_range_facets(rows: &[PgRow]) -> Vec<SizeRangeFacet> {
+    let mut tiny = 0i64;
+    let mut small = 0i64;
+    let mut medium = 0i64;
+    let mut large = 0i64;
 
-    let bucket = "default".to_string();
-    let list_query = crate::storage::ListObjectsQuery {
-        prefix: None,
-        delimiter: None,
-        max_keys: Some(500),
-        continuation_token: None,
-    };
-
-    let mut results = vec![];
-
-    if let Ok(listed) = _state.storage.list_objects(&bucket, list_query).await {
-        let q_lower = query.q.to_lowercase();
-
-        for obj in listed.objects {
-            if results.len() >= limit {
-                break;
-            }
-            let filename = obj
-                .key
-                .split('/')
-                .next_back()
-                .unwrap_or(&obj.key)
-                .to_string();
-
-            if q_lower.is_empty() || filename.to_lowercase().contains(&q_lower) {
-                results.push(QuickSearchResult {
-                    bucket: bucket.clone(),
-                    key: obj.key.clone(),
-                    filename,
-                    size: obj.size,
-                    content_type: obj
-                        .content_type
-                        .unwrap_or_else(|| "application/octet-stream".to_string()),
-                });
-            }
+    for row in rows {
+        let size: i64 = row.get("size");
+        if size < 1024 * 1024 {
+            tiny += 1;
+        } else if size < 10 * 1024 * 1024 {
+            small += 1;
+        } else if size < 100 * 1024 * 1024 {
+            medium += 1;
+        } else {
+            large += 1;
         }
     }
 
-    let total = results.len() as i64;
+    vec![
+        SizeRangeFacet {
+            label: "< 1 MB".to_string(),
+            min: None,
+            max: Some(1024 * 1024),
+            count: tiny,
+        },
+        SizeRangeFacet {
+            label: "1 - 10 MB".to_string(),
+            min: Some(1024 * 1024),
+            max: Some(10 * 1024 * 1024),
+            count: small,
+        },
+        SizeRangeFacet {
+            label: "10 - 100 MB".to_string(),
+            min: Some(10 * 1024 * 1024),
+            max: Some(100 * 1024 * 1024),
+            count: medium,
+        },
+        SizeRangeFacet {
+            label: "> 100 MB".to_string(),
+            min: Some(100 * 1024 * 1024),
+            max: None,
+            count: large,
+        },
+    ]
+}
+
+/// Quick search - simple ILIKE on the key (filename).
+///
+/// Returns up to `limit` files (default 10, max 50) whose key contains the
+/// query string (case-insensitive).  Searches all buckets for the user.
+#[tracing::instrument(skip(state))]
+pub async fn quick_search(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<Uuid>,
+    Query(query): Query<QuickSearchQuery>,
+) -> Result<Json<QuickSearchResponse>> {
+    let limit = query.limit.unwrap_or(10).clamp(1, 50) as i64;
+    let pattern = format!("%{}%", query.q);
+
+    let rows = sqlx::query(
+        r#"
+        SELECT bucket, key, size, content_type
+        FROM storage.files
+        WHERE user_id = $1
+          AND key ILIKE $2
+        ORDER BY updated_at DESC
+        LIMIT $3
+        "#,
+    )
+    .bind(user_id)
+    .bind(&pattern)
+    .bind(limit)
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    let total = rows.len() as i64;
+
+    let results: Vec<QuickSearchResult> = rows
+        .iter()
+        .map(|r| {
+            let key: String = r.get("key");
+            let filename = filename_from_key(&key);
+            let content_type: Option<String> = r.get("content_type");
+            QuickSearchResult {
+                bucket: r.get("bucket"),
+                key,
+                filename,
+                size: r.get("size"),
+                content_type: content_type
+                    .unwrap_or_else(|| "application/octet-stream".to_string()),
+            }
+        })
+        .collect();
 
     Ok(Json(QuickSearchResponse { results, total }))
 }
 
-/// Get recent files for current user.
-#[tracing::instrument(skip(_state))]
-pub async fn recent_files(
-    State(_state): State<AppState>,
-    Query(limit): Query<Option<i32>>,
-) -> Result<Json<Vec<QuickSearchResult>>> {
-    let _limit = limit.unwrap_or(20);
-
-    // TODO: Get recent files from access history
-
-    Ok(Json(vec![]))
+/// Recent files query (for the optional `limit` query param).
+#[derive(Debug, Deserialize)]
+pub struct RecentFilesQuery {
+    pub limit: Option<i32>,
 }
 
-/// Suggest search completions.
-#[tracing::instrument(skip(_state))]
+/// Get the 20 most recently updated files for the current user.
+#[tracing::instrument(skip(state))]
+pub async fn recent_files(
+    State(state): State<AppState>,
+    Extension(user_id): Extension<Uuid>,
+    Query(query): Query<RecentFilesQuery>,
+) -> Result<Json<Vec<QuickSearchResult>>> {
+    let limit = query.limit.unwrap_or(20).clamp(1, 100) as i64;
+
+    let rows = sqlx::query(
+        r#"
+        SELECT bucket, key, size, content_type
+        FROM storage.files
+        WHERE user_id = $1
+        ORDER BY updated_at DESC
+        LIMIT $2
+        "#,
+    )
+    .bind(user_id)
+    .bind(limit)
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    let results: Vec<QuickSearchResult> = rows
+        .iter()
+        .map(|r| {
+            let key: String = r.get("key");
+            let filename = filename_from_key(&key);
+            let content_type: Option<String> = r.get("content_type");
+            QuickSearchResult {
+                bucket: r.get("bucket"),
+                key,
+                filename,
+                size: r.get("size"),
+                content_type: content_type
+                    .unwrap_or_else(|| "application/octet-stream".to_string()),
+            }
+        })
+        .collect();
+
+    Ok(Json(results))
+}
+
+/// Suggest search completions — returns the top 5 matching filenames.
+///
+/// Matches the last path component (filename) using ILIKE, returns distinct
+/// filenames sorted alphabetically.  Useful for autocomplete dropdowns.
+#[tracing::instrument(skip(state))]
 pub async fn suggest(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(user_id): Extension<Uuid>,
     Query(query): Query<QuickSearchQuery>,
 ) -> Result<Json<Vec<String>>> {
-    // TODO: Suggest based on:
-    // - Recent searches
-    // - File names
-    // - Folder names
+    if query.q.trim().is_empty() {
+        return Ok(Json(vec![]));
+    }
 
-    Ok(Json(vec![]))
+    let pattern = format!("%{}%", query.q);
+
+    // Extract the filename (last path segment) in SQL using split_part / reverse trick:
+    // reverse(split_part(reverse(key), '/', 1)) gives us the last component.
+    let rows = sqlx::query(
+        r#"
+        SELECT DISTINCT reverse(split_part(reverse(key), '/', 1)) AS filename
+        FROM storage.files
+        WHERE user_id = $1
+          AND key ILIKE $2
+        ORDER BY filename
+        LIMIT 5
+        "#,
+    )
+    .bind(user_id)
+    .bind(&pattern)
+    .fetch_all(state.pool.inner())
+    .await
+    .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
+
+    let suggestions: Vec<String> = rows.iter().map(|r| r.get("filename")).collect();
+
+    Ok(Json(suggestions))
 }
 
 /// Get file type categories.
@@ -379,6 +606,13 @@ mod tests {
     fn test_sort_order_default() {
         assert!(matches!(SortOrder::default(), SortOrder::Desc));
     }
+
+    #[test]
+    fn test_filename_from_key() {
+        assert_eq!(filename_from_key("folder/sub/file.pdf"), "file.pdf");
+        assert_eq!(filename_from_key("file.txt"), "file.txt");
+        assert_eq!(filename_from_key("a/b/c/d.mp4"), "d.mp4");
+    }
 }
 
 /// Omni search query.
@@ -410,7 +644,7 @@ pub struct OmniSearchResponse {
 #[tracing::instrument(skip(state))]
 pub async fn omni_search(
     State(state): State<AppState>,
-    Extension(user_id): Extension<uuid::Uuid>,
+    Extension(user_id): Extension<Uuid>,
     Query(query): Query<OmniSearchQuery>,
 ) -> Result<Json<OmniSearchResponse>> {
     let start = std::time::Instant::now();

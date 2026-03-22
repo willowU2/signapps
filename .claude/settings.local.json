@@ -96,7 +96,28 @@
       "Bash(gws auth login:*)",
       "Bash(gws auth setup:*)",
       "Bash(net start:*)",
-      "Bash(sc query:*)"
+      "Bash(sc query:*)",
+      "Bash(chmod:*)",
+      "Bash(pwsh -NoProfile -Command \"Get-Service | Where-Object { $_.Name -like ''*postgres*'' -or $_.DisplayName -like ''*postgres*'' } | Format-Table Name, DisplayName, Status -AutoSize\")",
+      "Bash(pg_lsclusters)",
+      "Read(//c/Program Files/**)",
+      "Read(//c//**)",
+      "Read(//c/Prog//**)",
+      "Read(//c/Prog/signapps-platform/$HOME/AppData/Local/**)",
+      "Bash(powershell.exe -NoProfile -Command ':*)",
+      "Bash(RUST_BACKTRACE=1 ./target/debug/signapps-storage.exe)",
+      "Bash(RUST_BACKTRACE=1 ./target/debug/signapps-ai.exe)",
+      "Bash(powershell.exe -NoProfile -Command 'Get-Process | Where-Object { $_.ProcessName -like \"\"\"\"signapps-identity*\"\"\"\" } | Stop-Process -Force -ErrorAction SilentlyContinue' sleep 2)",
+      "Bash(for pid:*)",
+      "Bash(do taskkill:*)",
+      "Bash(PORT=3000 npm run dev)",
+      "Bash(while read:*)",
+      "Bash(sleep:*)",
+      "Bash(PGPASSWORD=password psql -h localhost -U signapps -d signapps -c \"SELECT id, username, tenant_id, role FROM identity.users WHERE username = ''admin''\")",
+      "Bash(TOKEN=\"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2NjRmNjg0MC1jN2QxLTRiYmYtYTg0NS04ZDAzODI3N2RhYjMiLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MiwiZXhwIjoxNzc0MTEwNTYzLCJpYXQiOjE3NzQxMDk2NjMsInRva2VuX3R5cGUiOiJhY2Nlc3MifQ.HLC-NWiYwVyKBD5hfVM6ljBdp2QlA4SWQxiz_HMGHIw\")",
+      "Bash(PGPASSWORD=signapps_dev \"C:/Program Files/PostgreSQL/17/bin/psql.exe\" -h 127.0.0.1 -U signapps -d signapps -c \"ALTER TYPE drive.node_type ADD VALUE IF NOT EXISTS ''spreadsheet''; ALTER TYPE drive.node_type ADD VALUE IF NOT EXISTS ''presentation'';\")",
+      "Bash(PGPASSWORD=signapps_dev \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -h 127.0.0.1 -U signapps -d signapps -c \"ALTER TYPE drive.node_type ADD VALUE IF NOT EXISTS ''spreadsheet'';\")",
+      "Bash(cargo run:*)"
     ]
   }
 }

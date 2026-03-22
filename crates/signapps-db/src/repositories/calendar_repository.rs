@@ -763,3 +763,98 @@ impl<'a> ResourceRepository<'a> {
         Ok(())
     }
 }
+
+// ============================================================================
+// Floor Plan Repository
+// ============================================================================
+pub struct FloorPlanRepository<'a> {
+    pool: &'a DatabasePool,
+}
+
+impl<'a> FloorPlanRepository<'a> {
+    pub fn new(pool: &'a DatabasePool) -> Self {
+        Self { pool }
+    }
+
+    /// Find floor plan by ID.
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<FloorPlan>> {
+        let floor_plan =
+            sqlx::query_as::<_, FloorPlan>("SELECT * FROM calendar.floor_plans WHERE id = $1")
+                .bind(id)
+                .fetch_optional(self.pool.inner())
+                .await?;
+
+        Ok(floor_plan)
+    }
+
+    /// List all floor plans.
+    pub async fn list(&self) -> Result<Vec<FloorPlan>> {
+        let floor_plans =
+            sqlx::query_as::<_, FloorPlan>("SELECT * FROM calendar.floor_plans ORDER BY created_at DESC")
+                .fetch_all(self.pool.inner())
+                .await?;
+
+        Ok(floor_plans)
+    }
+
+    /// Create a new floor plan.
+    pub async fn create(&self, floor_plan: CreateFloorPlan) -> Result<FloorPlan> {
+        let created = sqlx::query_as::<_, FloorPlan>(
+            r#"
+            INSERT INTO calendar.floor_plans (name, floor, width, height, resources, svg_content)
+            VALUES ($1, $2, $3, $4, COALESCE($5, '[]'::jsonb), $6)
+            RETURNING *
+            "#,
+        )
+        .bind(&floor_plan.name)
+        .bind(&floor_plan.floor)
+        .bind(floor_plan.width)
+        .bind(floor_plan.height)
+        .bind(&floor_plan.resources)
+        .bind(&floor_plan.svg_content)
+        .fetch_one(self.pool.inner())
+        .await?;
+
+        Ok(created)
+    }
+
+    /// Update a floor plan.
+    pub async fn update(&self, id: Uuid, floor_plan: UpdateFloorPlan) -> Result<FloorPlan> {
+        let updated = sqlx::query_as::<_, FloorPlan>(
+            r#"
+            UPDATE calendar.floor_plans
+            SET
+                name = COALESCE($2, name),
+                floor = COALESCE($3, floor),
+                width = COALESCE($4, width),
+                height = COALESCE($5, height),
+                resources = COALESCE($6, resources),
+                svg_content = COALESCE($7, svg_content),
+                updated_at = NOW()
+            WHERE id = $1
+            RETURNING *
+            "#,
+        )
+        .bind(id)
+        .bind(&floor_plan.name)
+        .bind(&floor_plan.floor)
+        .bind(floor_plan.width)
+        .bind(floor_plan.height)
+        .bind(&floor_plan.resources)
+        .bind(&floor_plan.svg_content)
+        .fetch_one(self.pool.inner())
+        .await?;
+
+        Ok(updated)
+    }
+
+    /// Delete a floor plan.
+    pub async fn delete(&self, id: Uuid) -> Result<()> {
+        sqlx::query("DELETE FROM calendar.floor_plans WHERE id = $1")
+            .bind(id)
+            .execute(self.pool.inner())
+            .await?;
+
+        Ok(())
+    }
+}

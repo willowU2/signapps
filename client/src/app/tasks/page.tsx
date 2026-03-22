@@ -5,6 +5,7 @@ import { Plus, Download, Upload, MoreVertical, ExternalLink, X, Settings } from 
 import { Button } from "@/components/ui/button";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskForm } from "@/components/tasks/TaskForm";
+import { TaskBoard } from "@/components/tasks/TaskBoard";
 import { TasksHeader } from "@/components/tasks/tasks-header";
 import { ExportDialog } from "@/components/calendar/ExportDialog";
 import { ImportDialog } from "@/components/calendar/ImportDialog";
@@ -25,6 +26,7 @@ export default function TasksPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [parentTaskId, setParentTaskId] = useState<string | undefined>();
   const [treeKey, setTreeKey] = useState(0);
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
 
   // Unified Entity Hub sync
   const { projects, fetchTasks, fetchProjects, isLoading } = useEntityStore();
@@ -68,6 +70,8 @@ export default function TasksPage() {
             onExportTasks={() => setExportDialogOpen(true)}
             onImportTasks={() => setImportDialogOpen(true)}
             onAddTask={handleAddTask}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           />
 
           {/* Content Line Items */}
@@ -81,12 +85,19 @@ export default function TasksPage() {
                 Aucun projet trouvé. Veuillez d'abord créer un projet dans le Hub.
               </div>
             ) : selectedProjectId && (
-                <div className="pb-20">
-                    <TaskTree
-                        key={treeKey}
-                        projectId={selectedProjectId}
-                        onAddChild={handleAddChild}
-                    />
+                <div className="pb-20 h-full">
+                    {viewMode === 'list' ? (
+                      <TaskTree
+                          key={treeKey}
+                          projectId={selectedProjectId}
+                          onAddChild={handleAddChild}
+                      />
+                    ) : (
+                      <TaskBoard 
+                          key={`board-${treeKey}`}
+                          projectId={selectedProjectId} 
+                      />
+                    )}
                 </div>
             )}
           </div>

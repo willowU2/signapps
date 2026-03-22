@@ -40,22 +40,6 @@ export interface ImportResult {
   };
 }
 
-export interface PdfInfo {
-  page_count: number;
-  title: string;
-  author: string;
-  subject: string;
-  keywords: string;
-  creator: string;
-  producer: string;
-  version: string;
-}
-
-export interface PdfPageInfo {
-  page_number: number;
-  width: number;
-  height: number;
-}
 
 /**
  * Comment reply for export
@@ -217,227 +201,6 @@ export async function importFromFile(file: File): Promise<ImportResult> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PDF OPERATIONS
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Get PDF operations info
- */
-export async function getPdfInfo(): Promise<{
-  service: string;
-  version: string;
-  operations: string[];
-}> {
-  const response = await officeClient().get('/pdf/info');
-  return response.data;
-}
-
-/**
- * Extract text from a PDF file
- */
-export async function extractPdfText(file: File): Promise<{ text: string; success: boolean }> {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await officeClient().post('/pdf/extract-text', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
-}
-
-/**
- * Get PDF document info
- */
-export async function getPdfDocumentInfo(file: File): Promise<PdfInfo> {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await officeClient().post('/pdf/document-info', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
-}
-
-/**
- * Get PDF pages info
- */
-export async function getPdfPages(file: File): Promise<{ count: number; pages: PdfPageInfo[] }> {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await officeClient().post('/pdf/pages', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
-}
-
-/**
- * Merge multiple PDF files
- */
-export async function mergePdfs(files: File[]): Promise<Blob> {
-  const formData = new FormData();
-  files.forEach((file, index) => {
-    formData.append(`file${index}`, file);
-  });
-
-  const response = await officeClient().post('/pdf/merge', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-    responseType: 'blob',
-  });
-  return response.data;
-}
-
-/**
- * Split a PDF file by page ranges
- */
-export async function splitPdf(
-  file: File,
-  ranges: string // e.g., "1-3,5,7-10"
-): Promise<Blob> {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('ranges', ranges);
-
-  const response = await officeClient().post('/pdf/split', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-    responseType: 'blob',
-  });
-  return response.data;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SPREADSHEET OPERATIONS (Epic 6)
-// ═══════════════════════════════════════════════════════════════════════════
-
-export type SpreadsheetFormat = 'xlsx' | 'csv' | 'ods';
-
-export interface SpreadsheetInfo {
-  supported_formats: string[];
-  max_rows: number;
-  max_cols: number;
-  version: string;
-}
-
-export interface SpreadsheetData {
-  sheets: {
-    name: string;
-    data: (string | number | null)[][];
-    styles?: Record<string, any>;
-  }[];
-}
-
-/**
- * Get spreadsheet service info
- */
-export async function getSpreadsheetInfo(): Promise<SpreadsheetInfo> {
-  const response = await officeClient().get('/spreadsheet/info');
-  return response.data;
-}
-
-/**
- * Export spreadsheet data to XLSX
- */
-export async function exportSpreadsheet(
-  data: SpreadsheetData,
-  format: SpreadsheetFormat = 'xlsx'
-): Promise<Blob> {
-  const response = await officeClient().post(
-    '/spreadsheet/export',
-    { data, format },
-    { responseType: 'blob' }
-  );
-  return response.data;
-}
-
-/**
- * Export spreadsheet data to CSV
- */
-export async function exportSpreadsheetCsv(
-  data: (string | number | null)[][],
-  options?: { delimiter?: string; filename?: string }
-): Promise<Blob> {
-  const response = await officeClient().post(
-    '/spreadsheet/export/csv',
-    { data, ...options },
-    { responseType: 'blob' }
-  );
-  return response.data;
-}
-
-/**
- * Export spreadsheet data to ODS
- */
-export async function exportSpreadsheetOds(data: SpreadsheetData): Promise<Blob> {
-  const response = await officeClient().post(
-    '/spreadsheet/export/ods',
-    { data },
-    { responseType: 'blob' }
-  );
-  return response.data;
-}
-
-/**
- * Import spreadsheet from file (XLSX, CSV, ODS)
- */
-export async function importSpreadsheet(file: File): Promise<SpreadsheetData> {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await officeClient().post('/spreadsheet/import', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-  return response.data;
-}
-
-/**
- * Import CSV from text
- */
-export async function importCsvText(
-  content: string,
-  options?: { delimiter?: string; has_headers?: boolean }
-): Promise<SpreadsheetData> {
-  const response = await officeClient().post('/spreadsheet/import/csv', {
-    content,
-    ...options,
-  });
-  return response.data;
-}
-
-/**
- * Download spreadsheet
- */
-export async function downloadSpreadsheet(
-  data: SpreadsheetData,
-  format: SpreadsheetFormat,
-  filename: string
-): Promise<void> {
-  const blob = await exportSpreadsheet(data, format);
-  const extension = format;
-  const fullFilename = filename.endsWith(`.${extension}`)
-    ? filename
-    : `${filename}.${extension}`;
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fullFilename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
 // PRESENTATION OPERATIONS (Epic 7)
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -459,7 +222,7 @@ export interface SlideElement {
   style?: Record<string, any>;
 }
 
-export interface Slide {
+export interface PresentationSlide {
   id: string;
   elements: SlideElement[];
   background?: string;
@@ -469,7 +232,7 @@ export interface Slide {
 
 export interface PresentationData {
   title: string;
-  slides: Slide[];
+  slides: PresentationSlide[];
   theme?: {
     primaryColor?: string;
     secondaryColor?: string;
@@ -513,7 +276,7 @@ export async function exportPresentationPdf(data: PresentationData): Promise<Blo
  * Export single slide to PNG
  */
 export async function exportSlidePng(
-  slide: Slide,
+  slide: PresentationSlide,
   options?: { width?: number; height?: number }
 ): Promise<Blob> {
   const response = await officeClient().post(
@@ -527,7 +290,7 @@ export async function exportSlidePng(
 /**
  * Export single slide to SVG
  */
-export async function exportSlideSvg(slide: Slide): Promise<string> {
+export async function exportSlideSvg(slide: PresentationSlide): Promise<string> {
   const response = await officeClient().post('/presentation/export/svg', { slide });
   return response.data;
 }

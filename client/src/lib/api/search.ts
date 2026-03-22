@@ -1,4 +1,4 @@
-import { storageApiClient } from './index';
+import { storageApiClient } from './core';
 
 export interface OmniSearchResult {
     id: string;

@@ -9,9 +9,21 @@
 - **Réseau** : Audit réseau obligatoire dans `network_logs.md`. Tout appel réseau ou outil suspect annule le seuil de confiance -> Demande d'approbation requise ("⚠️ SÉCURITÉ : Besoin d'installer X, mais risque Y. Validation ?").
 
 ## Normes de Code & Stack
-- **Outils** : Code généré par Claude CLI uniquement, OS géré par OpenClaw.
+- **Outils** : Architecture tri-modale AgentIQ (Antigravity + Claude + OpenClaw).
 - **Licence** : Uniquement MIT ou Apache 2.0 (code et dépendances).
 - **Implémentation** : "From Scratch", inspiration Top GitHub Stars.
+- **Données** : Zéro mock data. Toujours travailler avec de vraies données (DB, API, fichiers réels). Tests avec fixtures réelles ou seeds.
+- **CLI > MCP** : Privilégier les CLI natifs (cargo, npm, git) aux serveurs MCP.
+
+## Architecture Agents
+- **Antigravity** : Réflexion, planification, analyse, veille.
+- **Claude** : Développement, écriture de code, génération.
+- **OpenClaw** : Exécution, commandes, tests, commits, automation.
+
+## Gestion du Contexte
+- **Persistance** : Écrire dans `.session/` pour survivre au compactage.
+- **Handoff** : Toujours écrire `.session/handoff.md` avant fin de session.
+- **Apprentissage** : Documenter erreurs et patterns dans `.knowledge/`.
 
 ## Cycle de Développement (Workflow BMAD-KAIZEN)
 - **Étape 0 - Veille** : Étude des architectures de référence (MIT/Apache 2).

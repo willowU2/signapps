@@ -12,6 +12,7 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use handlers::admin_security;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
@@ -20,7 +21,7 @@ use signapps_common::middleware::{
 use signapps_common::JwtConfig;
 use signapps_db::{create_pool, run_migrations, DatabasePool};
 use tower_http::{
-    cors::{Any, CorsLayer},
+    cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
 
@@ -65,6 +66,11 @@ async fn main() -> anyhow::Result<()> {
         jwt_secret: config.jwt_secret.clone(),
         jwt_config,
         cache,
+        security_policies: handlers::admin_security::SecurityPoliciesStore::new(),
+        active_sessions: handlers::admin_security::ActiveSessionsStore::new(),
+        login_attempts: handlers::admin_security::LoginAttemptsStore::new(),
+        migration: handlers::migration::MigrationStore::new(),
+        data_export: handlers::data_export::DataExportStore::new(),
     };
 
     // Build router
@@ -81,6 +87,16 @@ pub struct AppState {
     pub jwt_secret: String,
     pub jwt_config: JwtConfig,
     pub cache: signapps_cache::CacheService,
+    /// In-memory security policies store (admin-managed).
+    pub security_policies: handlers::admin_security::SecurityPoliciesStore,
+    /// In-memory active sessions store.
+    pub active_sessions: handlers::admin_security::ActiveSessionsStore,
+    /// In-memory recent failed login attempts store.
+    pub login_attempts: handlers::admin_security::LoginAttemptsStore,
+    /// In-memory migration job store (V2-15).
+    pub migration: handlers::migration::MigrationStore,
+    /// In-memory RGPD data export job store (V3-02).
+    pub data_export: handlers::data_export::DataExportStore,
 }
 
 impl AuthState for AppState {
@@ -92,9 +108,13 @@ impl AuthState for AppState {
 /// Create the main router with all routes.
 fn create_router(state: AppState) -> Router {
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "http://127.0.0.1:3000".parse().unwrap(),
+        ]))
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
+        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN])
+        .allow_credentials(true);
 
     // Public routes (no auth required)
     let public_routes = Router::new()
@@ -124,6 +144,10 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/users/me/preferences/reset", post(handlers::preferences::reset_preferences))
         .route("/api/v1/users/me/preferences/export", get(handlers::preferences::export_preferences))
         .route("/api/v1/users/me/preferences/import", post(handlers::preferences::import_preferences))
+        // RGPD data export (V3-02)
+        .route("/api/v1/users/me/export", post(handlers::data_export::request_export))
+        .route("/api/v1/users/me/export/status", get(handlers::data_export::export_status))
+        .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -228,6 +252,53 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/webhooks/:id", put(handlers::webhooks::update))
         .route("/api/v1/webhooks/:id", delete(handlers::webhooks::delete))
         .route("/api/v1/webhooks/:id/test", post(handlers::webhooks::test))
+        // Security policies (V2-10)
+        .route(
+            "/api/v1/admin/security/policies",
+            get(admin_security::get_policies),
+        )
+        .route(
+            "/api/v1/admin/security/policies",
+            put(admin_security::update_policies),
+        )
+        .route(
+            "/api/v1/admin/security/sessions",
+            get(admin_security::list_sessions),
+        )
+        .route(
+            "/api/v1/admin/security/sessions/:id",
+            delete(admin_security::revoke_session),
+        )
+        .route(
+            "/api/v1/admin/security/login-attempts",
+            get(admin_security::list_login_attempts),
+        )
+        // Bulk user management (V3-09)
+        .route(
+            "/api/v1/admin/users/import",
+            post(handlers::bulk_users::import_users),
+        )
+        .route(
+            "/api/v1/admin/users/export",
+            get(handlers::bulk_users::export_users),
+        )
+        .route(
+            "/api/v1/admin/users/bulk-action",
+            post(handlers::bulk_users::bulk_action),
+        )
+        // Migration wizard (V2-15)
+        .route(
+            "/api/v1/admin/migration/start",
+            post(handlers::migration::start_migration),
+        )
+        .route(
+            "/api/v1/admin/migration/status",
+            get(handlers::migration::get_migration_status),
+        )
+        .route(
+            "/api/v1/admin/migration/cancel",
+            post(handlers::migration::cancel_migration),
+        )
         .layer(middleware::from_fn(require_admin))
         .layer(middleware::from_fn_with_state(
             state.clone(),

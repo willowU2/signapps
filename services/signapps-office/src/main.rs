@@ -15,6 +15,7 @@ mod presentation;
 mod spreadsheet;
 
 use converter::DocumentConverter;
+use handlers::jobs::JobStore;
 use importer::DocumentImporter;
 
 /// Application state shared across handlers
@@ -23,6 +24,8 @@ pub struct AppState {
     pub converter: DocumentConverter,
     pub importer: DocumentImporter,
     pub cache: signapps_cache::BinaryCacheService,
+    /// In-memory async job queue for heavy document exports (MT-02)
+    pub jobs: JobStore,
 }
 
 #[tokio::main]
@@ -39,6 +42,7 @@ async fn main() {
         converter: DocumentConverter::new(),
         importer: DocumentImporter::new(),
         cache: signapps_cache::BinaryCacheService::default_config(),
+        jobs: handlers::jobs::new_job_store(),
     };
 
     let app = Router::new()
@@ -94,6 +98,12 @@ async fn main() {
         .route("/api/v1/presentation/export/all/png", post(handlers::presentation::export_all_slides_png))
         .route("/api/v1/presentation/export/all/svg", post(handlers::presentation::export_all_slides_svg))
 
+        // ═══════════════════════════════════════════════════════════════════════
+        // ASYNC JOB QUEUE ROUTES - MT-02: heavy document exports
+        // ═══════════════════════════════════════════════════════════════════════
+        .route("/api/v1/office/jobs/convert", post(handlers::jobs::submit_convert_job))
+        .route("/api/v1/office/jobs/:id", get(handlers::jobs::get_job_status))
+
         // Middleware
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
@@ -130,5 +140,7 @@ async fn main() {
     tracing::info!("   - POST /api/v1/presentation/export/svg");
     tracing::info!("   - POST /api/v1/presentation/export/all/png");
     tracing::info!("   - POST /api/v1/presentation/export/all/svg");
+    tracing::info!("   - POST /api/v1/office/jobs/convert  [async queue]");
+    tracing::info!("   - GET  /api/v1/office/jobs/:id      [job status]");
     axum::serve(listener, app).await.unwrap();
 }

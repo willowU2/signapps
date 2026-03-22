@@ -639,6 +639,91 @@ fn calculate_thumbnail_dimensions(
     (new_width.max(1), new_height.max(1))
 }
 
+/// Response body for unsupported preview types.
+#[derive(Debug, Serialize)]
+struct PreviewNotAvailable {
+    previewable: bool,
+    message: &'static str,
+}
+
+/// Generate a preview for a file and return it immediately.
+///
+/// - Images (`image/*`): resized to max 800 px width, returned as WebP.
+/// - Text files (`text/*`): first 1 000 characters returned as `text/plain`.
+/// - Everything else: JSON `{"previewable":false,"message":"preview not available"}`.
+#[tracing::instrument(skip(state))]
+pub async fn generate_preview(
+    State(state): State<AppState>,
+    Path((bucket, key)): Path<(String, String)>,
+) -> Result<Response> {
+    let info = state.storage.get_object_info(&bucket, &key).await?;
+    let content_type = info
+        .content_type
+        .as_deref()
+        .unwrap_or("application/octet-stream")
+        .to_string();
+
+    if content_type.starts_with("image/") {
+        // Decode the image, resize to max 800 px width, return as WebP.
+        let object = state.storage.get_object(&bucket, &key).await?;
+
+        let img = ImageReader::new(Cursor::new(&object.data))
+            .with_guessed_format()
+            .map_err(|e| Error::Internal(format!("Failed to detect image format: {}", e)))?
+            .decode()
+            .map_err(|e| Error::Internal(format!("Failed to decode image: {}", e)))?;
+
+        const MAX_WIDTH: u32 = 800;
+        let preview_img = if img.width() > MAX_WIDTH {
+            let new_height =
+                ((img.height() as f64 * MAX_WIDTH as f64) / img.width() as f64).round() as u32;
+            let new_height = new_height.max(1);
+            img.resize_exact(MAX_WIDTH, new_height, FilterType::Lanczos3)
+        } else {
+            img
+        };
+
+        let mut buffer = Cursor::new(Vec::new());
+        preview_img
+            .write_to(&mut buffer, ImageFormat::WebP)
+            .map_err(|e| Error::Internal(format!("Failed to encode preview: {}", e)))?;
+
+        return Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, "image/webp")
+            .header(header::CACHE_CONTROL, "public, max-age=3600")
+            .body(Body::from(buffer.into_inner()))
+            .map_err(|e| Error::Internal(e.to_string()));
+    }
+
+    if content_type.starts_with("text/") {
+        // Return the first 1 000 characters as plain text.
+        let object = state.storage.get_object(&bucket, &key).await?;
+
+        let text = String::from_utf8_lossy(&object.data);
+        let preview: String = text.chars().take(1_000).collect();
+
+        return Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
+            .body(Body::from(preview))
+            .map_err(|e| Error::Internal(e.to_string()));
+    }
+
+    // All other types: preview not available.
+    let body = serde_json::to_vec(&PreviewNotAvailable {
+        previewable: false,
+        message: "preview not available",
+    })
+    .map_err(|e| Error::Internal(e.to_string()))?;
+
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .map_err(|e| Error::Internal(e.to_string()))
+}
+
 /// Get preview for a file.
 #[tracing::instrument(skip(state))]
 pub async fn get_preview(

@@ -1,22 +1,7 @@
-import axios from 'axios'
+import { getClient, getServiceUrl, ServiceName } from '@/lib/api/factory'
 
-const API_URL = process.env.NEXT_PUBLIC_REMOTE_API_URL || 'http://localhost:3017/api/v1/remote'
-
-// Create axios instance with auth
-const remoteClient = axios.create({
-    baseURL: API_URL,
-})
-
-// Add auth interceptor
-remoteClient.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token')
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
-    }
-    return config
-})
+// Get remote client using factory with HttpOnly cookies
+const remoteClient = getClient(ServiceName.REMOTE)
 
 // ============================================================================
 // Types
@@ -88,7 +73,8 @@ export const connectionApi = {
     },
 
     getWebSocketUrl: (connectionId: string): string => {
-        const wsBase = API_URL.replace('http://', 'ws://').replace('https://', 'wss://')
+        const apiUrl = getServiceUrl(ServiceName.REMOTE)
+        const wsBase = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://')
         return `${wsBase}/ws/${connectionId}`
     },
 }

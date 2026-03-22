@@ -57,11 +57,9 @@ export function InstallProgress({
     const fetchProgress = async () => {
       try {
         const url = getInstallProgressUrl(installId);
-        const token = localStorage.getItem('access_token');
-
         const response = await fetch(url, {
+          credentials: 'include',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Accept': 'text/event-stream',
           },
           signal: abortController.signal,

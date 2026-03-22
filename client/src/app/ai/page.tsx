@@ -51,6 +51,8 @@ import { DocumentUpload } from '@/components/ai/document-upload';
 import { VoiceChatButton } from '@/components/ai/voice-chat-button';
 import { useVoiceChat } from '@/hooks/use-voice-chat';
 import { ModelManagement } from '@/components/ai/model-management';
+import { ConversationSidebar } from '@/components/ai/conversation-sidebar';
+import { KnowledgeBasesTab } from '@/components/ai/knowledge-bases-tab';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/lib/store';
 
@@ -557,13 +559,12 @@ export default function AIPage() {
     try {
       // Try streaming first with native fetch
       const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:3005/api/v1';
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
       const streamResponse = await fetch(`${AI_URL}/ai/chat/stream`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           question: text,
@@ -801,76 +802,21 @@ export default function AIPage() {
           "flex flex-col border-r bg-muted/30 transition-all duration-300",
           sidebarOpen ? "w-72" : "w-0 overflow-hidden"
         )}>
-          <div className="flex items-center justify-between p-3 border-b">
-            <h2 className="font-semibold text-sm">Historique</h2>
-            <Button variant="ghost" size="icon" onClick={createNewChat}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <ScrollArea className="flex-1">
-            <div className="p-2 space-y-1">
-              {conversations.length === 0 ? (
-                <div className="text-center text-muted-foreground text-sm py-8">
-                  <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>Aucune conversation</p>
-                  <Button variant="link" size="sm" onClick={createNewChat}>
-                    Commencer une nouvelle
-                  </Button>
-                </div>
-              ) : (
-                conversations.map(conversation => (
-                  <div
-                    key={conversation.id}
-                    className={cn(
-                      "group flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-muted transition-colors",
-                      activeConversationId === conversation.id && "bg-muted"
-                    )}
-                    onClick={() => selectConversation(conversation)}
-                  >
-                    <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate">{conversation.title}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatDate(conversation.updatedAt)}
-                      </p>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
-                          <MoreVertical className="h-3 w-3" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation();
-                          setConversationToRename(conversation);
-                          setNewConversationTitle(conversation.title);
-                          setRenameDialogOpen(true);
-                        }}>
-                          <Edit3 className="h-4 w-4 mr-2" />
-                          Renommer
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConversationToDelete(conversation);
-                            setDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Supprimer
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                ))
-              )}
-            </div>
-          </ScrollArea>
+          <ConversationSidebar
+            conversations={conversations}
+            activeConversationId={activeConversationId}
+            onCreateNewChat={createNewChat}
+            onSelectConversation={selectConversation}
+            onRenameConversation={(conversation) => {
+              setConversationToRename(conversation);
+              setNewConversationTitle(conversation.title);
+              setRenameDialogOpen(true);
+            }}
+            onDeleteConversation={(conversation) => {
+              setConversationToDelete(conversation);
+              setDeleteDialogOpen(true);
+            }}
+          />
         </div>
 
         {/* Sidebar Toggle */}
@@ -1226,121 +1172,23 @@ export default function AIPage() {
 
             {/* Knowledge Bases Tab */}
             <TabsContent value="knowledge" className="flex-1 m-0 p-4 overflow-auto">
-              <div className="max-w-4xl mx-auto">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-xl font-semibold">Knowledge Bases</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Gerez vos collections de documents pour le RAG
-                    </p>
-                  </div>
-                  <Button onClick={() => setCreateKbDialogOpen(true)}>
-                    <FolderPlus className="h-4 w-4 mr-2" />
-                    Nouvelle collection
-                  </Button>
-                </div>
-
-                {loadingKnowledgeBases ? (
-                  <div className="flex items-center justify-center py-12">
-                    <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8 " />
-                  </div>
-                ) : knowledgeBases.length === 0 ? (
-                  <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                      <Database className="h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="text-lg font-medium">Aucune knowledge base</p>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Creez une collection pour commencer a indexer vos documents
-                      </p>
-                      <Button onClick={() => setCreateKbDialogOpen(true)}>
-                        <FolderPlus className="h-4 w-4 mr-2" />
-                        Creer une collection
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {knowledgeBases.map((kb) => (
-                      <Card key={kb.name} className={cn(
-                        "cursor-pointer transition-colors hover:bg-muted/50",
-                        selectedKnowledgeBases.includes(kb.name) && "ring-2 ring-primary"
-                      )}>
-                        <CardHeader className="pb-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-2">
-                              <Database className="h-5 w-5 text-primary" />
-                              <CardTitle className="text-lg">{kb.name}</CardTitle>
-                            </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => {
-                                  if (!selectedKnowledgeBases.includes(kb.name)) {
-                                    setSelectedKnowledgeBases(prev => [...prev, kb.name]);
-                                  }
-                                  setActiveTab('chat');
-                                }}>
-                                  <MessageSquare className="h-4 w-4 mr-2" />
-                                  Utiliser pour le chat
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  setUploadDialogOpen(true);
-                                }}>
-                                  <Upload className="h-4 w-4 mr-2" />
-                                  Ajouter des documents
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => {
-                                    setKbToDelete(kb);
-                                    setDeleteKbDialogOpen(true);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Supprimer
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          {kb.description && (
-                            <p className="text-sm text-muted-foreground">{kb.description}</p>
-                          )}
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <p className="font-medium">{kb.documents_count}</p>
-                                <p className="text-xs text-muted-foreground">Documents</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <HardDrive className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <p className="font-medium">{kb.chunks_count}</p>
-                                <p className="text-xs text-muted-foreground">Chunks</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Database className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <p className="font-medium">{formatBytes(kb.size_bytes)}</p>
-                                <p className="text-xs text-muted-foreground">Taille</p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <KnowledgeBasesTab
+                knowledgeBases={knowledgeBases}
+                loadingKnowledgeBases={loadingKnowledgeBases}
+                selectedKnowledgeBases={selectedKnowledgeBases}
+                onCreateKnowledgeBase={() => setCreateKbDialogOpen(true)}
+                onSelectForChat={(kbName) => {
+                  if (!selectedKnowledgeBases.includes(kbName)) {
+                    setSelectedKnowledgeBases(prev => [...prev, kbName]);
+                  }
+                  setActiveTab('chat');
+                }}
+                onOpenUpload={() => setUploadDialogOpen(true)}
+                onDeleteKnowledgeBase={(kb) => {
+                  setKbToDelete(kb);
+                  setDeleteKbDialogOpen(true);
+                }}
+              />
             </TabsContent>
 
             {/* Models Tab */}

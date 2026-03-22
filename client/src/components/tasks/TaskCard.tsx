@@ -1,0 +1,112 @@
+import React from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Task } from '@/lib/scheduling/types/scheduling';
+import { cn } from '@/lib/utils';
+import { Clock, CheckSquare } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+interface TaskCardProps {
+  task: Task;
+  isOverlay?: boolean;
+  onClick?: () => void;
+}
+
+export function TaskCard({ task, isOverlay = false, onClick }: TaskCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: task.id,
+    data: {
+      type: 'Task',
+      task,
+    },
+  });
+
+  const style = {
+    transition,
+    transform: CSS.Transform.toString(transform),
+  };
+
+  if (isDragging) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="w-full h-[100px] bg-blue-50/50 border-2 border-dashed border-blue-200 rounded-lg opacity-50"
+      />
+    );
+  }
+
+  const priorityColors = {
+    low: 'bg-green-100 text-green-700',
+    medium: 'bg-blue-100 text-blue-700',
+    high: 'bg-orange-100 text-orange-700',
+    urgent: 'bg-red-100 text-red-700',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={(e) => {
+        // Prevent sorting constraints from triggering click if it was a drag
+        if (onClick) onClick();
+      }}
+      className={cn(
+        "bg-background p-3 rounded-lg border shadow-sm cursor-grab hover:shadow-md hover:border-blue-200 transition-all active:cursor-grabbing group",
+        isOverlay && "rotate-2 scale-105 shadow-xl cursor-grabbing"
+      )}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex flex-wrap gap-1">
+          <span className={cn("text-[10px] uppercase font-bold px-2 py-0.5 rounded-sm", priorityColors[task.priority as keyof typeof priorityColors || 'medium'])}>
+            {task.priority || 'medium'}
+          </span>
+          {task.tags && task.tags.slice(0, 2).map(tag => (
+            <span key={tag} className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-sm bg-secondary text-secondary-foreground">
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+      
+      <h4 className="text-sm font-semibold text-[#202124] leading-tight mb-1 truncate">
+        {task.title}
+      </h4>
+      {task.description && (
+        <p className="text-xs text-[#5f6368] line-clamp-2 mb-3 leading-relaxed">
+          {task.description}
+        </p>
+      )}
+
+      <div className="flex items-center justify-between text-xs text-[#5f6368] mt-3">
+        {task.dueDate ? (
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-blue-600" />
+            <span className={cn("font-medium", task.dueDate < new Date() && "text-red-600")}>
+              {format(task.dueDate, "d MMM", { locale: fr })}
+            </span>
+          </div>
+        ) : <div />}
+
+        {task.subtasks && task.subtasks.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <CheckSquare className="w-3.5 h-3.5" />
+            <span className="font-medium">
+              {task.subtasks.filter(st => st.completed).length}/{task.subtasks.length}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

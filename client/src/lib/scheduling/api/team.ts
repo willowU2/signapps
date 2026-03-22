@@ -2,14 +2,13 @@
  * Team API Client
  *
  * React Query hooks for team member and availability management.
- * Uses local storage for MVP, will integrate with backend later.
+ * Integrates directly with the `signapps-workforce` microservice.
  */
 
 import { useQuery } from '@tanstack/react-query';
 import {
   startOfDay,
   endOfDay,
-  addHours,
   setHours,
   setMinutes,
   isWeekend,
@@ -19,27 +18,7 @@ import type {
   AvailabilitySlot,
   WorkingHours,
 } from '../types/scheduling';
-
-// ============================================================================
-// Storage Key
-// ============================================================================
-
-const TEAM_STORAGE_KEY = 'scheduling-team';
-
-// ============================================================================
-// Local Storage Helpers
-// ============================================================================
-
-function getStoredTeamMembers(): TeamMember[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const stored = localStorage.getItem(TEAM_STORAGE_KEY);
-    if (!stored) return getDefaultTeamMembers();
-    return JSON.parse(stored);
-  } catch {
-    return getDefaultTeamMembers();
-  }
-}
+import { getClient, ServiceName } from '@/lib/api/factory';
 
 // ============================================================================
 // Default Data (Demo)
@@ -56,81 +35,56 @@ const defaultWorkingHours: WorkingHours = {
   },
 };
 
-function getDefaultTeamMembers(): TeamMember[] {
-  return [
-    {
-      id: 'member-1',
-      name: 'Marie Dupont',
-      email: 'marie.dupont@example.com',
-      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=marie',
-      role: 'Chef de projet',
-      department: 'Gestion de projet',
-      workingHours: defaultWorkingHours,
-    },
-    {
-      id: 'member-2',
-      name: 'Pierre Martin',
-      email: 'pierre.martin@example.com',
-      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=pierre',
-      role: 'Développeur Senior',
-      department: 'Développement',
-      workingHours: defaultWorkingHours,
-    },
-    {
-      id: 'member-3',
-      name: 'Sophie Bernard',
-      email: 'sophie.bernard@example.com',
-      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sophie',
-      role: 'Designer UX',
-      department: 'Design',
-      workingHours: defaultWorkingHours,
-    },
-    {
-      id: 'member-4',
-      name: 'Thomas Petit',
-      email: 'thomas.petit@example.com',
-      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=thomas',
-      role: 'Développeur Full-Stack',
-      department: 'Développement',
-      workingHours: defaultWorkingHours,
-    },
-    {
-      id: 'member-5',
-      name: 'Julie Moreau',
-      email: 'julie.moreau@example.com',
-      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=julie',
-      role: 'Product Owner',
-      department: 'Produit',
-      workingHours: defaultWorkingHours,
-    },
-    {
-      id: 'member-6',
-      name: 'Nicolas Leroy',
-      email: 'nicolas.leroy@example.com',
-      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=nicolas',
-      role: 'DevOps Engineer',
-      department: 'Infrastructure',
-      workingHours: defaultWorkingHours,
-    },
-    {
-      id: 'member-7',
-      name: 'Camille Roux',
-      email: 'camille.roux@example.com',
-      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=camille',
-      role: 'QA Engineer',
-      department: 'Qualité',
-      workingHours: defaultWorkingHours,
-    },
-    {
-      id: 'member-8',
-      name: 'Alexandre Girard',
-      email: 'alexandre.girard@example.com',
-      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alexandre',
-      role: 'Tech Lead',
-      department: 'Développement',
-      workingHours: defaultWorkingHours,
-    },
-  ];
+/**
+ * Interface corresponding to the rust `Employee` model.
+ */
+interface BackendEmployee {
+  id: string;
+  tenant_id: string;
+  user_id?: string;
+  org_node_id: string;
+  employee_number?: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  functions: string[];
+  contract_type: string;
+  fte_ratio: number;
+  hire_date?: string;
+  termination_date?: string;
+  status: string;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BackendOrgTreeNode {
+  id: string;
+  parent_id?: string;
+  node_type: string;
+  name: string;
+  code?: string;
+  description?: string;
+  config: any;
+  sort_order: number;
+  children: BackendOrgTreeNode[];
+  depth: number;
+  employee_count: number;
+}
+
+function toTeamMember(employee: BackendEmployee, managerId?: string | null): TeamMember {
+  return {
+    id: employee.id,
+    name: `${employee.first_name} ${employee.last_name}`.trim(),
+    email: employee.email || '',
+    avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${employee.first_name}`,
+    role: employee.functions?.[0] || 'Employé',
+    department: 'Département',
+    managerId: managerId || null,
+    orgNodeId: employee.org_node_id,
+    workingHours: defaultWorkingHours,
+  };
 }
 
 // ============================================================================
@@ -267,6 +221,7 @@ export const teamKeys = {
   all: ['team'] as const,
   members: () => [...teamKeys.all, 'members'] as const,
   member: (id: string) => [...teamKeys.members(), id] as const,
+  orgTree: () => [...teamKeys.all, 'orgTree'] as const,
   availability: (date: Date) => [...teamKeys.all, 'availability', date.toISOString()] as const,
 };
 
@@ -280,7 +235,11 @@ export const teamKeys = {
 export function useTeamMembers() {
   return useQuery({
     queryKey: teamKeys.members(),
-    queryFn: () => getStoredTeamMembers(),
+    queryFn: async () => {
+      const client = getClient(ServiceName.WORKFORCE);
+      const res = await client.get<BackendEmployee[]>('/workforce/employees');
+      return res.data.map((emp) => toTeamMember(emp));
+    },
   });
 }
 
@@ -290,11 +249,35 @@ export function useTeamMembers() {
 export function useTeamMember(id: string) {
   return useQuery({
     queryKey: teamKeys.member(id),
-    queryFn: () => {
-      const members = getStoredTeamMembers();
-      return members.find((m) => m.id === id) ?? null;
+    queryFn: async () => {
+      const client = getClient(ServiceName.WORKFORCE);
+      const res = await client.get<any>(`/workforce/employees/${id}`);
+      if (!res.data) return null;
+      
+      const member = toTeamMember(res.data.employee);
+      if (res.data.function_names && res.data.function_names.length > 0) {
+        member.role = res.data.function_names[0];
+      }
+      if (res.data.org_node_name) {
+         member.department = res.data.org_node_name;
+      }
+      return member;
     },
     enabled: !!id,
+  });
+}
+
+/**
+ * Fetch Organizational Tree natively
+ */
+export function useOrgTree() {
+  return useQuery({
+    queryKey: teamKeys.orgTree(),
+    queryFn: async (): Promise<BackendOrgTreeNode[]> => {
+       const client = getClient(ServiceName.WORKFORCE);
+       const res = await client.get<BackendOrgTreeNode[]>('/workforce/org/tree');
+       return res.data;
+    }
   });
 }
 

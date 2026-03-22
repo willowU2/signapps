@@ -121,8 +121,8 @@ pub async fn convert_json(
     let format_str = format!("{:?}", query.format);
     let cache_key = format!("conv_{}_{}", format_str, hasher.finish());
 
-    if let Some(cached_data) = state.cache.get(&cache_key).await {
-        tracing::info!("Cache hit for Conversion: {}", cache_key);
+    if let Some(cached_data) = state.cache.get_with_ttl(&cache_key).await {
+        tracing::info!("Cache hit for conversion: {}", cache_key);
         let content_type = match query.format {
             OutputFormat::Docx => {
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -144,7 +144,7 @@ pub async fn convert_json(
             format!("document.{}", ext)
         });
 
-        return Ok(Response::builder()
+        match Response::builder()
             .status(StatusCode::OK)
             .header(header::CONTENT_TYPE, content_type)
             .header(
@@ -152,8 +152,12 @@ pub async fn convert_json(
                 format!("attachment; filename=\"{}\"", final_filename),
             )
             .header(header::CONTENT_LENGTH, cached_data.len())
+            .header("X-Cache-Hit", "true")
             .body(Body::from(cached_data))
-            .unwrap());
+        {
+            Ok(resp) => return Ok(resp),
+            Err(_) => return Err(ConversionErrorResponse(ConversionError::InternalError)),
+        }
     }
 
     let content_str = match request.input_format {
@@ -226,8 +230,15 @@ pub async fn convert_json(
 
     let content_type = result.mime_type;
 
-    // Save to cache
-    state.cache.set(&cache_key, result.data.clone()).await;
+    // Save to cache with 30-minute TTL
+    state
+        .cache
+        .set_with_ttl(
+            &cache_key,
+            result.data.clone(),
+            std::time::Duration::from_secs(30 * 60),
+        )
+        .await;
 
     Ok(Response::builder()
         .status(StatusCode::OK)
@@ -237,6 +248,7 @@ pub async fn convert_json(
             format!("attachment; filename=\"{}\"", final_filename),
         )
         .header(header::CONTENT_LENGTH, result.data.len())
+        .header("X-Cache-Hit", "false")
         .body(Body::from(result.data))
         .unwrap())
 }
@@ -289,6 +301,49 @@ pub async fn convert_upload(
     let input_format =
         input_format.ok_or_else(|| ConversionError::InvalidInput("No format provided".into()))?;
 
+    // Build cache key from content hash + output format
+    let cache_key = {
+        use std::hash::{DefaultHasher, Hash, Hasher};
+        let mut hasher = DefaultHasher::new();
+        content.hash(&mut hasher);
+        format!("upload_{}_{}", format!("{:?}", query.format), hasher.finish())
+    };
+
+    if let Some(cached_data) = state.cache.get_with_ttl(&cache_key).await {
+        tracing::info!("Cache hit for upload conversion: {}", cache_key);
+        let content_type = match query.format {
+            OutputFormat::Docx => {
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            },
+            OutputFormat::Pdf => "application/pdf",
+            OutputFormat::Markdown => "text/markdown",
+            OutputFormat::Html => "text/html",
+            OutputFormat::Text => "text/plain",
+        };
+        let ext = match query.format {
+            OutputFormat::Docx => "docx",
+            OutputFormat::Pdf => "pdf",
+            OutputFormat::Markdown => "md",
+            OutputFormat::Html => "html",
+            OutputFormat::Text => "txt",
+        };
+        let filename = query.filename.clone().unwrap_or_else(|| format!("document.{}", ext));
+        return match Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, content_type)
+            .header(
+                header::CONTENT_DISPOSITION,
+                format!("attachment; filename=\"{}\"", filename),
+            )
+            .header(header::CONTENT_LENGTH, cached_data.len())
+            .header("X-Cache-Hit", "true")
+            .body(Body::from(cached_data))
+        {
+            Ok(resp) => Ok(resp),
+            Err(_) => Err(ConversionErrorResponse(ConversionError::InternalError)),
+        };
+    }
+
     let result = state
         .converter
         .convert(&content, input_format, query.format.into())
@@ -298,6 +353,16 @@ pub async fn convert_upload(
         .filename
         .unwrap_or_else(|| format!("document.{}", result.extension));
 
+    // Store in cache with 30-minute TTL
+    state
+        .cache
+        .set_with_ttl(
+            &cache_key,
+            result.data.clone(),
+            std::time::Duration::from_secs(30 * 60),
+        )
+        .await;
+
     Ok(Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, result.mime_type)
@@ -306,6 +371,7 @@ pub async fn convert_upload(
             format!("attachment; filename=\"{}\"", filename),
         )
         .header(header::CONTENT_LENGTH, result.data.len())
+        .header("X-Cache-Hit", "false")
         .body(Body::from(result.data))
         .unwrap())
 }
@@ -360,6 +426,8 @@ pub struct BatchConversionResultItem {
     pub extension: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+    /// Whether this item was served from cache.
+    pub cache_hit: bool,
 }
 
 /// Batch conversion response
@@ -396,6 +464,7 @@ pub async fn convert_batch(
                         mime_type: None,
                         extension: None,
                         error: Some(e.to_string()),
+                        cache_hit: false,
                     });
                     continue;
                 },
@@ -411,6 +480,7 @@ pub async fn convert_batch(
                         mime_type: None,
                         extension: None,
                         error: Some("Content must be a string".to_string()),
+                        cache_hit: false,
                     });
                     continue;
                 },
@@ -423,6 +493,51 @@ pub async fn convert_batch(
             InputFormat::Markdown => crate::converter::InputFormat::Markdown,
         };
 
+        // Build cache key for this batch item
+        let cache_key = {
+            use std::hash::{DefaultHasher, Hash, Hasher};
+            let mut hasher = DefaultHasher::new();
+            content_str.hash(&mut hasher);
+            format!(
+                "batch_{}_{}",
+                format!("{:?}", item.output_format),
+                hasher.finish()
+            )
+        };
+
+        // Check cache first
+        if let Some(cached_data) = state.cache.get_with_ttl(&cache_key).await {
+            tracing::info!("Cache hit for batch item {}: {}", item.id, cache_key);
+            successful += 1;
+            let encoded = base64::engine::general_purpose::STANDARD.encode(&cached_data);
+            let ext = match item.output_format {
+                OutputFormat::Docx => "docx",
+                OutputFormat::Pdf => "pdf",
+                OutputFormat::Markdown => "md",
+                OutputFormat::Html => "html",
+                OutputFormat::Text => "txt",
+            };
+            let mime = match item.output_format {
+                OutputFormat::Docx => {
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                },
+                OutputFormat::Pdf => "application/pdf",
+                OutputFormat::Markdown => "text/markdown",
+                OutputFormat::Html => "text/html",
+                OutputFormat::Text => "text/plain",
+            };
+            results.push(BatchConversionResultItem {
+                id: item.id,
+                success: true,
+                data_base64: Some(encoded),
+                mime_type: Some(mime.to_string()),
+                extension: Some(ext.to_string()),
+                error: None,
+                cache_hit: true,
+            });
+            continue;
+        }
+
         match state
             .converter
             .convert(&content_str, input_format, item.output_format.into())
@@ -430,6 +545,15 @@ pub async fn convert_batch(
         {
             Ok(result) => {
                 successful += 1;
+                // Store in cache with 30-minute TTL
+                state
+                    .cache
+                    .set_with_ttl(
+                        &cache_key,
+                        result.data.clone(),
+                        std::time::Duration::from_secs(30 * 60),
+                    )
+                    .await;
                 let encoded = base64::engine::general_purpose::STANDARD.encode(&result.data);
                 results.push(BatchConversionResultItem {
                     id: item.id,
@@ -438,6 +562,7 @@ pub async fn convert_batch(
                     mime_type: Some(result.mime_type.to_string()),
                     extension: Some(result.extension.to_string()),
                     error: None,
+                    cache_hit: false,
                 });
             },
             Err(e) => {
@@ -449,6 +574,7 @@ pub async fn convert_batch(
                     mime_type: None,
                     extension: None,
                     error: Some(e.to_string()),
+                    cache_hit: false,
                 });
             },
         }
@@ -478,6 +604,9 @@ impl IntoResponse for ConversionErrorResponse {
             ConversionError::UnsupportedFormat(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
             ConversionError::ConversionFailed(msg) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, msg.clone())
+            },
+            ConversionError::InternalError => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string())
             },
         };
 

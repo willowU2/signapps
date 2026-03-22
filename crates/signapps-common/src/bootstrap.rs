@@ -32,8 +32,13 @@
 use crate::JwtConfig;
 use axum::{middleware, Router};
 use std::net::SocketAddr;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+// OpenTelemetry integrations
+use opentelemetry::KeyValue;
+use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_sdk::{trace as sdktrace, Resource};
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TRACING INITIALIZATION
@@ -49,13 +54,41 @@ pub fn init_tracing(service_name: &str) {
         service_name.replace('-', "_")
     );
 
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| default_filter.into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| default_filter.into());
+
+    let fmt_layer = tracing_subscriber::fmt::layer();
+
+    if let Ok(endpoint) = std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT") {
+        let tracer = opentelemetry_otlp::new_pipeline()
+            .tracing()
+            .with_exporter(
+                opentelemetry_otlp::new_exporter()
+                    .http()
+                    .with_endpoint(endpoint),
+            )
+            .with_trace_config(
+                sdktrace::config().with_resource(Resource::new(vec![KeyValue::new(
+                    "service.name",
+                    service_name.to_string(),
+                )])),
+            )
+            .install_batch(opentelemetry_sdk::runtime::Tokio)
+            .expect("Failed to initialize OTLP tracer");
+
+        let otel_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+
+        tracing_subscriber::registry()
+            .with(env_filter)
+            .with(fmt_layer)
+            .with(otel_layer)
+            .init();
+    } else {
+        tracing_subscriber::registry()
+            .with(env_filter)
+            .with(fmt_layer)
+            .init();
+    }
 }
 
 /// Initialize tracing with a custom filter.
@@ -86,6 +119,36 @@ pub fn env_or(key: &str, default: &str) -> String {
 /// Get an environment variable, panic if not set.
 pub fn env_required(key: &str) -> String {
     std::env::var(key).unwrap_or_else(|_| panic!("{} must be set", key))
+}
+
+/// Validates critical environment variables at startup.
+/// Logs warnings for missing optional vars, panics for invalid required vars.
+pub fn validate_env(service_name: &str) {
+    // DATABASE_URL is required
+    let db_url = std::env::var("DATABASE_URL").unwrap_or_default();
+    if db_url.is_empty() {
+        panic!("[{}] DATABASE_URL must be set", service_name);
+    }
+
+    // JWT_SECRET check
+    match std::env::var("JWT_SECRET") {
+        Ok(s) if s.contains("dev-secret") || s.contains("change-me") => {
+            tracing::warn!("[{}] JWT_SECRET contains default value - change for production!", service_name);
+        }
+        Ok(_) => {}
+        Err(_) => {
+            tracing::warn!("[{}] JWT_SECRET not set", service_name);
+        }
+    }
+
+    // SERVER_PORT check
+    if let Ok(port_str) = std::env::var("SERVER_PORT") {
+        if port_str.parse::<u16>().is_err() {
+            panic!("[{}] SERVER_PORT '{}' is not a valid port number", service_name, port_str);
+        }
+    }
+
+    tracing::info!("[{}] Environment validated", service_name);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -120,6 +183,8 @@ impl ServiceConfig {
     /// - `SERVER_HOST` (defaults to "0.0.0.0")
     /// - `SERVER_PORT` (defaults to provided default_port)
     pub fn from_env(name: &str, default_port: u16) -> Self {
+        validate_env(name);
+
         let database_url = env_or(
             "DATABASE_URL",
             "postgres://signapps:password@localhost:5432/signapps",
@@ -201,9 +266,13 @@ impl ServiceConfig {
 /// The router should have its state already applied via `.with_state()`.
 pub fn middleware_stack(router: Router) -> Router {
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "http://127.0.0.1:3000".parse().unwrap(),
+        ]))
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
+        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN])
+        .allow_credentials(true);
 
     router
         .layer(middleware::from_fn(
@@ -290,6 +359,51 @@ async fn shutdown_signal() {
     tokio::select! {
         _ = ctrl_c => {},
         _ = terminate => {},
+    }
+}
+
+/// Gracefully shutdown the service on receiving Ctrl+C or SIGTERM.
+///
+/// This function waits for a shutdown signal and logs when it's received.
+/// It handles both Unix signals (SIGTERM) and cross-platform signals (Ctrl+C).
+///
+/// # Usage
+///
+/// Typically used as a shutdown signal for Axum servers:
+///
+/// ```rust,ignore
+/// use signapps_common::bootstrap::graceful_shutdown;
+///
+/// let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+/// axum::serve(listener, router)
+///     .with_graceful_shutdown(graceful_shutdown())
+///     .await?;
+/// ```
+pub async fn graceful_shutdown() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("Failed to install SIGTERM handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {
+            tracing::info!("Received Ctrl+C, initiating graceful shutdown...");
+        }
+        _ = terminate => {
+            tracing::info!("Received SIGTERM, initiating graceful shutdown...");
+        }
     }
 }
 

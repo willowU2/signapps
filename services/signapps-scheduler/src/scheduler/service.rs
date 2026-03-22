@@ -40,9 +40,21 @@ impl SchedulerService {
     /// Start the background scheduler loop.
     pub async fn start_scheduler(self: Arc<Self>) {
         let mut check_interval = interval(Duration::from_secs(60));
+        const MAX_CONCURRENT_JOBS: usize = 10; // Guard against cascade execution
 
         loop {
             check_interval.tick().await;
+
+            // Check if we're at capacity before attempting to check/run jobs
+            let running_count = self.running_jobs.read().await.len();
+            if running_count >= MAX_CONCURRENT_JOBS {
+                tracing::warn!(
+                    "Skipping job check: {} jobs already running (max: {})",
+                    running_count,
+                    MAX_CONCURRENT_JOBS
+                );
+                continue; // Skip this cycle to prevent cascade
+            }
 
             if let Err(e) = self.check_and_run_jobs().await {
                 tracing::error!("Error checking jobs: {}", e);

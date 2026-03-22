@@ -173,6 +173,7 @@ pub struct UpdateRuleRequest {
 /// Query params for coverage rules
 #[derive(Debug, Deserialize, Default)]
 pub struct RuleQueryParams {
+    #[allow(dead_code)] // TODO: wire up to handlers
     pub org_node_id: Option<Uuid>,
     pub include_inactive: Option<bool>,
     pub effective_date: Option<NaiveDate>,
@@ -322,7 +323,7 @@ pub async fn update_template(
     let weekly_pattern_json = req
         .weekly_pattern
         .as_ref()
-        .map(|wp| serde_json::to_value(wp))
+        .map(serde_json::to_value)
         .transpose()
         .map_err(|e| {
             tracing::error!("Failed to serialize weekly pattern: {}", e);
@@ -553,7 +554,7 @@ pub async fn create_rule(
     let custom_slots_json = req
         .custom_slots
         .as_ref()
-        .map(|slots| serde_json::to_value(slots))
+        .map(serde_json::to_value)
         .transpose()
         .map_err(|e| {
             tracing::error!("Failed to serialize custom slots: {}", e);
@@ -631,7 +632,7 @@ pub async fn update_rule(
     let custom_slots_json = req
         .custom_slots
         .as_ref()
-        .map(|slots| serde_json::to_value(slots))
+        .map(serde_json::to_value)
         .transpose()
         .map_err(|e| {
             tracing::error!("Failed to serialize custom slots: {}", e);

@@ -1,5 +1,6 @@
 import React from "react"
-import { ExternalLink, X, Download, Upload, MoreVertical, Plus } from "lucide-react"
+import { ExternalLink, X, Download, Upload, MoreVertical, Plus, List, KanbanSquare } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,6 +17,8 @@ export interface TasksHeaderProps {
     onExportTasks: () => void
     onImportTasks: () => void
     onAddTask: () => void
+    viewMode: 'list' | 'board'
+    onViewModeChange: (mode: 'list' | 'board') => void
 }
 
 export function TasksHeader({
@@ -24,7 +27,9 @@ export function TasksHeader({
     onSelectProject,
     onExportTasks,
     onImportTasks,
-    onAddTask
+    onAddTask,
+    viewMode,
+    onViewModeChange
 }: TasksHeaderProps) {
     return (
         <>
@@ -77,7 +82,19 @@ export function TasksHeader({
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <DropdownMenu>
+                    <div className="flex items-center gap-2">
+                        <Tabs value={viewMode} onValueChange={(v) => onViewModeChange(v as 'list' | 'board')}>
+                            <TabsList className="h-8 py-0 px-1">
+                                <TabsTrigger value="list" className="h-6 px-2 text-xs">
+                                    <List className="h-3.5 w-3.5 mr-1" /> List
+                                </TabsTrigger>
+                                <TabsTrigger value="board" className="h-6 px-2 text-xs">
+                                    <KanbanSquare className="h-3.5 w-3.5 mr-1" /> Board
+                                </TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+
+                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5f6368] hover:bg-black/5 rounded-full">
                                 <MoreVertical className="h-5 w-5" />
@@ -87,6 +104,7 @@ export function TasksHeader({
                             <DropdownMenuItem>Paramètres</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    </div>
                 </div>
             </div>
 

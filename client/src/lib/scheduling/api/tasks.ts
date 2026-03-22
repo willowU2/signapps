@@ -2,149 +2,120 @@
  * Tasks API Client
  *
  * React Query hooks for task management.
- * Uses local storage for MVP, will integrate with backend later.
+ * Integrates directly with the `signapps-calendar` backend microservice.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Task, TaskStatus } from '../types/scheduling';
+import type { Task, TaskStatus, Subtask, Priority } from '../types/scheduling';
+import { getClient, ServiceName } from '@/lib/api/factory';
 
 // ============================================================================
-// Storage Key
+// Backend Mapping
 // ============================================================================
 
-const TASKS_STORAGE_KEY = 'scheduling-tasks';
+interface BackendTask {
+  id: string;
+  calendar_id: string;
+  parent_task_id: string | null;
+  title: string;
+  description: string | null;
+  status: string; // open|in_progress|completed|archived
+  priority: number; // 0=low, 1=medium, 2=high, 3=urgent
+  position: number;
+  due_date: string | null;
+  assigned_to: string | null;
+  created_by: string;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
-// ============================================================================
-// Local Storage Helpers
-// ============================================================================
+interface BackendTaskNode {
+  task: BackendTask;
+  children: BackendTaskNode[];
+}
 
-function getStoredTasks(): Task[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const stored = localStorage.getItem(TASKS_STORAGE_KEY);
-    if (!stored) return getDefaultTasks();
-    return JSON.parse(stored).map((t: Task) => ({
-      ...t,
-      start: new Date(t.start),
-      end: t.end ? new Date(t.end) : undefined,
-      dueDate: t.dueDate ? new Date(t.dueDate) : undefined,
-      completedAt: t.completedAt ? new Date(t.completedAt) : undefined,
-      createdAt: new Date(t.createdAt),
-      updatedAt: new Date(t.updatedAt),
-    }));
-  } catch {
-    return getDefaultTasks();
+function mapStatus(status: string): TaskStatus {
+  switch (status) {
+    case 'in_progress':
+      return 'in-progress';
+    case 'completed':
+    case 'archived':
+      return 'done';
+    case 'open':
+    default:
+      return 'backlog';
   }
 }
 
-function setStoredTasks(tasks: Task[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+function unmapStatus(status: TaskStatus | undefined): string {
+  switch (status) {
+    case 'in-progress':
+      return 'in_progress';
+    case 'done':
+      return 'completed';
+    case 'today':
+      return 'open'; // or track 'today' differently via tags
+    case 'backlog':
+    default:
+      return 'open';
+  }
 }
 
-// ============================================================================
-// Default Tasks (Demo Data)
-// ============================================================================
+function mapPriority(prio: number): Priority {
+  if (prio === 3) return 'urgent';
+  if (prio === 2) return 'high';
+  if (prio === 1) return 'medium';
+  return 'low';
+}
 
-function getDefaultTasks(): Task[] {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const nextWeek = new Date(now);
-  nextWeek.setDate(nextWeek.getDate() + 7);
+function unmapPriority(prio: Priority | undefined): number {
+  if (prio === 'urgent') return 3;
+  if (prio === 'high') return 2;
+  if (prio === 'medium') return 1;
+  return 0; // low or default
+}
 
-  return [
-    {
-      id: 'task-1',
-      type: 'task',
-      title: 'Réviser le document de spécifications',
-      description: 'Relire et valider les spécifications du projet avant la réunion.',
-      status: 'today',
-      priority: 'high',
-      dueDate: now,
-      estimatedMinutes: 60,
-      tags: ['documentation', 'urgent'],
-      subtasks: [
-        { id: 'st-1', title: 'Lire la section technique', completed: true },
-        { id: 'st-2', title: 'Vérifier les diagrammes', completed: false },
-        { id: 'st-3', title: 'Ajouter mes commentaires', completed: false },
-      ],
-      allDay: false,
-      start: now,
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: 'task-2',
-      type: 'task',
-      title: 'Préparer la présentation client',
-      description: 'Créer les slides pour la démo de vendredi.',
-      status: 'in-progress',
-      priority: 'urgent',
-      dueDate: tomorrow,
-      estimatedMinutes: 120,
-      tags: ['présentation', 'client'],
-      allDay: false,
-      start: now,
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: 'task-3',
-      type: 'task',
-      title: 'Corriger le bug de connexion',
-      description: 'Les utilisateurs rapportent des problèmes de déconnexion aléatoire.',
-      status: 'today',
-      priority: 'high',
-      estimatedMinutes: 90,
-      tags: ['bug', 'auth'],
-      allDay: false,
-      start: now,
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: 'task-4',
-      type: 'task',
-      title: 'Mettre à jour les dépendances',
-      description: 'npm audit a détecté des vulnérabilités.',
-      status: 'backlog',
-      priority: 'medium',
-      tags: ['maintenance', 'sécurité'],
-      allDay: false,
-      start: now,
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: 'task-5',
-      type: 'task',
-      title: 'Écrire les tests unitaires',
-      description: 'Couvrir les nouveaux composants du module scheduling.',
-      status: 'backlog',
-      priority: 'low',
-      dueDate: nextWeek,
-      estimatedMinutes: 180,
-      tags: ['tests', 'qualité'],
-      allDay: false,
-      start: now,
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: 'task-6',
-      type: 'task',
-      title: 'Refactoriser le module de notifications',
-      status: 'done',
-      priority: 'medium',
-      completedAt: now,
-      tags: ['refactoring'],
-      allDay: false,
-      start: now,
-      createdAt: now,
-      updatedAt: now,
-    },
-  ];
+function toFrontendTask(node: BackendTaskNode): Task {
+  const t = node.task;
+  
+  // Basic mapping of backend children as subtasks
+  const subtasks: Subtask[] = node.children.map(child => ({
+    id: child.task.id,
+    title: child.task.title,
+    completed: child.task.status === 'completed' || child.task.status === 'archived',
+  }));
+
+  return {
+    id: t.id,
+    type: 'task',
+    title: t.title,
+    description: t.description || undefined,
+    status: mapStatus(t.status),
+    priority: mapPriority(t.priority),
+    dueDate: t.due_date ? new Date(t.due_date) : undefined,
+    completedAt: t.completed_at ? new Date(t.completed_at) : undefined,
+    assigneeId: t.assigned_to || undefined,
+    subtasks: subtasks,
+    allDay: false,
+    start: new Date(t.created_at), // Fallback start to created_at
+    createdAt: new Date(t.created_at),
+    updatedAt: new Date(t.updated_at),
+  };
+}
+
+/**
+ * Fetch the primary calendar id for the user
+ */
+async function getPrimaryCalendarId(): Promise<string> {
+  const client = getClient(ServiceName.CALENDAR);
+  const { data } = await client.get<any[]>('/calendars');
+  if (!data || data.length === 0) {
+    throw new Error('No calendar found for the current user.');
+  }
+  // Try to find default or just first
+  // The 'is_primary' isn't explicitly in calendar model, but usually the first one is owned
+  return data[0].id;
 }
 
 // ============================================================================
@@ -169,7 +140,12 @@ export const taskKeys = {
 export function useTasks() {
   return useQuery({
     queryKey: taskKeys.lists(),
-    queryFn: () => getStoredTasks(),
+    queryFn: async (): Promise<Task[]> => {
+      const calendarId = await getPrimaryCalendarId();
+      const client = getClient(ServiceName.CALENDAR);
+      const res = await client.get<BackendTaskNode[]>(`/calendars/${calendarId}/tasks/tree`);
+      return res.data.map(toFrontendTask);
+    },
   });
 }
 
@@ -179,9 +155,11 @@ export function useTasks() {
 export function useTask(id: string) {
   return useQuery({
     queryKey: taskKeys.detail(id),
-    queryFn: () => {
-      const tasks = getStoredTasks();
-      return tasks.find((t) => t.id === id) ?? null;
+    queryFn: async (): Promise<Task | null> => {
+      const client = getClient(ServiceName.CALENDAR);
+      const res = await client.get<BackendTaskNode>(`/tasks/${id}`);
+      if (!res.data) return null;
+      return toFrontendTask(res.data);
     },
     enabled: !!id,
   });
@@ -195,17 +173,20 @@ export function useCreateTask() {
 
   return useMutation({
     mutationFn: async (data: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
-      const tasks = getStoredTasks();
-      const now = new Date();
-      const newTask: Task = {
-        ...data,
-        id: `task-${Date.now()}`,
-        createdAt: now,
-        updatedAt: now,
+      const calendarId = await getPrimaryCalendarId();
+      const client = getClient(ServiceName.CALENDAR);
+      
+      const payload = {
+        title: data.title,
+        description: data.description || null,
+        priority: unmapPriority(data.priority),
+        due_date: data.dueDate ? data.dueDate.toISOString().split('T')[0] : null,
+        assigned_to: data.assigneeId || null,
+        status: unmapStatus(data.status),
       };
-      tasks.push(newTask);
-      setStoredTasks(tasks);
-      return newTask;
+      
+      const res = await client.post<BackendTaskNode>(`/calendars/${calendarId}/tasks`, payload);
+      return toFrontendTask(res.data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
@@ -227,35 +208,21 @@ export function useUpdateTask() {
       id: string;
       updates: Partial<Task>;
     }) => {
-      const tasks = getStoredTasks();
-      const index = tasks.findIndex((t) => t.id === id);
-      if (index === -1) throw new Error('Task not found');
+      const client = getClient(ServiceName.CALENDAR);
+      
+      const payload: any = {};
+      if (updates.title !== undefined) payload.title = updates.title;
+      if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.status !== undefined) payload.status = unmapStatus(updates.status);
+      if (updates.priority !== undefined) payload.priority = unmapPriority(updates.priority);
+      if (updates.dueDate !== undefined) payload.due_date = updates.dueDate ? updates.dueDate.toISOString().split('T')[0] : null;
+      if (updates.assigneeId !== undefined) payload.assigned_to = updates.assigneeId;
 
-      const updatedTask: Task = {
-        ...tasks[index],
-        ...updates,
-        updatedAt: new Date(),
-      };
-      tasks[index] = updatedTask;
-      setStoredTasks(tasks);
-      return updatedTask;
+      await client.put(`/tasks/${id}`, payload);
+      // Wait, we just invalidate after, no need to return exact node since mutation output can just be void
+      return { id, updates } as any; 
     },
-    onMutate: async ({ id, updates }) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
-      const previous = queryClient.getQueryData<Task[]>(taskKeys.lists());
-
-      queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
-        old?.map((t) => (t.id === id ? { ...t, ...updates, updatedAt: new Date() } : t))
-      );
-
-      return { previous };
-    },
-    onError: (_, __, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(taskKeys.lists(), context.previous);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
   });
@@ -269,27 +236,11 @@ export function useDeleteTask() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const tasks = getStoredTasks();
-      const filtered = tasks.filter((t) => t.id !== id);
-      setStoredTasks(filtered);
+      const client = getClient(ServiceName.CALENDAR);
+      await client.delete(`/tasks/${id}`);
       return id;
     },
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
-      const previous = queryClient.getQueryData<Task[]>(taskKeys.lists());
-
-      queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
-        old?.filter((t) => t.id !== id)
-      );
-
-      return { previous };
-    },
-    onError: (_, __, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(taskKeys.lists(), context.previous);
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
   });
@@ -297,25 +248,25 @@ export function useDeleteTask() {
 
 /**
  * Reorder tasks (for drag and drop)
+ * No bulk reorder in backend yet, we'll mimic this by updating positions individually
  */
 export function useReorderTasks() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (tasks: Task[]) => {
-      setStoredTasks(tasks);
+      const client = getClient(ServiceName.CALENDAR);
+      // We assume index in the array is the desired position
+      // For simplicity/perf we only fire off updates for a few if needed,
+      // But currently we'll blindly put to all of them using Promise.all
+      // In a real prod environment we'd build a batch endpoint in rust
+      await Promise.all(
+          tasks.map((t, idx) => client.put(`/tasks/${t.id}`, { position: idx }))
+      );
       return tasks;
     },
-    onMutate: async (tasks) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
-      const previous = queryClient.getQueryData<Task[]>(taskKeys.lists());
-      queryClient.setQueryData(taskKeys.lists(), tasks);
-      return { previous };
-    },
-    onError: (_, __, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(taskKeys.lists(), context.previous);
-      }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
   });
 }

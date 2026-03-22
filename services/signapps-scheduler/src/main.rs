@@ -12,17 +12,29 @@ use axum::{
 };
 use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use std::sync::Arc;
-use tower_http::cors::{Any, CorsLayer};
+use tokio::sync::broadcast;
+use tokio_stream::StreamExt;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 mod crawlers;
 mod handlers;
 mod scheduler;
 
+use handlers::backups::{new_backup_store, SharedBackupStore};
+
 use scheduler::SchedulerService;
 use signapps_common::middleware::AuthState;
 use signapps_common::{JwtConfig, Result};
 use signapps_db::DatabasePool;
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct NotificationMessage {
+    pub user_id: uuid::Uuid,
+    pub title: String,
+    pub message: String,
+    pub action_url: Option<String>,
+}
 
 /// Application state.
 #[derive(Clone)]
@@ -30,6 +42,9 @@ pub struct AppState {
     pub pool: DatabasePool,
     pub scheduler: SchedulerService,
     pub jwt_config: JwtConfig,
+    pub tx_notifications: broadcast::Sender<NotificationMessage>,
+    pub redis_client: Option<redis::Client>,
+    pub backup_store: SharedBackupStore,
 }
 
 impl AuthState for AppState {
@@ -78,10 +93,72 @@ async fn main() -> Result<()> {
     };
 
     // Create application state
+    let (tx_notifications, _) = broadcast::channel(100);
+
+    // Try to connect to Redis for Pub/Sub notifications
+    let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+    let redis_client = match redis::Client::open(redis_url) {
+        Ok(client) => Some(client),
+        Err(e) => {
+            tracing::warn!("Failed to create Redis client for notifications: {}. Falling back to local-only broadcasts.", e);
+            None
+        }
+    };
+
+    // Spawn Redis Pub/Sub listener if client is available
+    if let Some(client) = redis_client.clone() {
+        let tx = tx_notifications.clone();
+        tokio::spawn(async move {
+            tracing::info!("Starting Redis Pub/Sub listener for notifications");
+            const MAX_REDIS_RETRIES: u32 = 10;
+            const INITIAL_BACKOFF_SECS: u64 = 5;
+            const MAX_BACKOFF_SECS: u64 = 300;
+
+            let mut retry_count = 0;
+            loop {
+                match client.get_async_pubsub().await {
+                    Ok(mut pubsub) => {
+                        retry_count = 0; // Reset on successful connection
+                        if let Err(e) = pubsub.subscribe("signapps_notifications").await {
+                            tracing::error!("Failed to subscribe to Redis channel: {}", e);
+                            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+                            continue;
+                        }
+
+                        let mut stream = pubsub.on_message();
+                        while let Some(msg) = stream.next().await {
+                            if let Ok(payload) = msg.get_payload::<String>() {
+                                if let Ok(notification) = serde_json::from_str::<NotificationMessage>(&payload) {
+                                    // Broadcast to local SSE clients
+                                    let _ = tx.send(notification);
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        retry_count += 1;
+                        if retry_count > MAX_REDIS_RETRIES {
+                            tracing::error!("Max Redis retries exceeded ({}), giving up: {}", MAX_REDIS_RETRIES, e);
+                            break; // Exit loop instead of infinite retry
+                        }
+                        let backoff = INITIAL_BACKOFF_SECS * 2_u64.pow(retry_count.saturating_sub(1));
+                        let backoff = backoff.min(MAX_BACKOFF_SECS);
+                        tracing::warn!("Redis connection failed (attempt {}/{}), retrying in {}s: {}",
+                                       retry_count, MAX_REDIS_RETRIES, backoff, e);
+                        tokio::time::sleep(tokio::time::Duration::from_secs(backoff)).await;
+                    }
+                }
+            }
+        });
+    }
+
     let state = AppState {
         pool,
         scheduler,
         jwt_config,
+        tx_notifications,
+        redis_client,
+        backup_store: new_backup_store(),
     };
 
     // Build router
@@ -96,9 +173,13 @@ async fn main() -> Result<()> {
 fn create_router(state: AppState) -> Router {
     // CORS configuration
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "http://127.0.0.1:3000".parse().unwrap(),
+        ]))
+        .allow_credentials(true)
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
+        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN]);
 
     // Job routes
     let job_routes = Router::new()
@@ -334,6 +415,40 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // Backup routes (admin)
+    let backup_store = state.backup_store.clone();
+    let backup_routes = Router::new()
+        .route(
+            "/",
+            get(handlers::backups::list_backups).post(handlers::backups::trigger_backup),
+        )
+        .route("/config", get(handlers::backups::get_backup_config).put(handlers::backups::update_backup_config))
+        .route(
+            "/{id}",
+            get(handlers::backups::get_backup).delete(handlers::backups::delete_backup),
+        )
+        .with_state(backup_store);
+
+    // Notifications routes
+    let notifications_routes = Router::new()
+        .route("/stream", get(handlers::notifications::sse_handler))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
+    // Metrics routes
+    let metrics_routes = Router::new()
+        .route("/workload", get(handlers::metrics::get_workload))
+        .route("/resources", get(handlers::metrics::get_resources))
+        .layer(axum::middleware::from_fn(
+            signapps_common::middleware::tenant_context_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Combine all routes
     Router::new()
         .nest("/api/v1/jobs", job_routes)
@@ -353,6 +468,9 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/scheduling/resources", scheduling_resource_routes)
         .nest("/api/v1/scheduling/templates", template_routes)
         .nest("/api/v1/scheduling/preferences", preferences_routes)
+        .nest("/api/v1/admin/backups", backup_routes)
+        .nest("/api/v1/notifications", notifications_routes)
+        .nest("/api/v1/metrics", metrics_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

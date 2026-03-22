@@ -126,8 +126,8 @@ export default function UsersPage() {
                                     <TableCell className="font-medium">{user.display_name || user.username}</TableCell>
                                     <TableCell>{user.email || '-'}</TableCell>
                                     <TableCell>
-                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isAdmin(user) ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
-                                            {isAdmin(user) ? 'Admin' : 'User'}
+                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${user.role >= 2 ? 'bg-primary/10 text-primary' : user.role === 1 ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
+                                            {user.role >= 2 ? 'Admin' : user.role === 1 ? 'User' : 'Guest'}
                                         </span>
                                     </TableCell>
                                     <TableCell>
