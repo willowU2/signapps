@@ -37,6 +37,8 @@ pub mod indexer;
 pub mod middleware;
 pub mod openapi;
 pub mod plugins;
+#[cfg(feature = "search")]
+pub mod search;
 pub mod traits;
 pub mod types;
 
@@ -54,6 +56,8 @@ pub use middleware::{
     AuthState, RequestClaimsExt, TenantContext,
 };
 pub use openapi::create_openapi_router;
+#[cfg(feature = "search")]
+pub use search::{SearchError, SearchHit, SearchIndex};
 pub use types::{Email, Password, PasswordHash, PgQueryResult, UserId, Username};
 
 /// Crate version from Cargo.toml

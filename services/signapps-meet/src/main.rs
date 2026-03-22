@@ -87,7 +87,7 @@ async fn main() -> anyhow::Result<()> {
 
 fn build_router(state: AppState) -> Router {
     use axum::routing::{get, post};
-    use handlers::{participants, recordings, rooms, tokens};
+    use handlers::{participants, recordings, rooms, tokens, waiting_room};
 
     // Public routes
     let public_routes = Router::new()
@@ -107,10 +107,18 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/meet/rooms/:id/participants", get(participants::list_participants))
         .route("/api/v1/meet/rooms/:id/participants/:user_id/kick", post(participants::kick_participant))
         .route("/api/v1/meet/rooms/:id/participants/:user_id/mute", post(participants::mute_participant))
-        // Recordings
+        // Recordings (list/start via rooms)
         .route("/api/v1/meet/rooms/:id/recordings", get(recordings::list_recordings).post(recordings::start_recording))
         .route("/api/v1/meet/recordings/:recording_id", get(recordings::get_recording).delete(recordings::delete_recording))
         .route("/api/v1/meet/recordings/:recording_id/stop", post(recordings::stop_recording))
+        // Room-scoped recording convenience endpoints
+        .route("/api/v1/meet/rooms/:id/recording", get(recordings::get_active_recording))
+        .route("/api/v1/meet/rooms/:id/recording/start", post(recordings::start_recording))
+        .route("/api/v1/meet/rooms/:id/recording/stop", post(recordings::stop_room_recording))
+        // Waiting room
+        .route("/api/v1/meet/rooms/:id/waiting-room", get(waiting_room::list_waiting).post(waiting_room::join_waiting_room))
+        .route("/api/v1/meet/rooms/:id/waiting-room/admit/:user_id", post(waiting_room::admit_user))
+        .route("/api/v1/meet/rooms/:id/waiting-room/deny/:user_id", post(waiting_room::deny_user))
         // Meeting history
         .route("/api/v1/meet/history", get(rooms::list_history))
         .route_layer(middleware::from_fn_with_state(

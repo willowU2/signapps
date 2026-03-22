@@ -168,12 +168,21 @@ pub async fn delete_event(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Add an attendee to an event.
+/// Invite an attendee to an event.
+///
+/// Either `user_id` (internal user) or `email` (external attendee) must be supplied.
+/// The attendee is created with `rsvp_status = "pending"`.
 pub async fn add_attendee(
     State(state): State<AppState>,
     Path(event_id): Path<Uuid>,
     Json(payload): Json<AddEventAttendee>,
 ) -> Result<(StatusCode, Json<EventAttendee>), CalendarError> {
+    if payload.user_id.is_none() && payload.email.is_none() {
+        return Err(CalendarError::InvalidInput(
+            "Either user_id or email must be provided to invite an attendee".to_string(),
+        ));
+    }
+
     let repo = EventAttendeeRepository::new(&state.pool);
     let attendee = repo
         .add_attendee(event_id, payload)
@@ -198,21 +207,24 @@ pub async fn list_attendees(
 }
 
 /// Update attendee RSVP status.
+///
+/// Accepts `{ "rsvp_status": "accepted" | "declined" | "tentative" | "pending" }`.
 pub async fn update_rsvp(
     State(state): State<AppState>,
     Path(attendee_id): Path<Uuid>,
-    Json(payload): Json<serde_json::Value>,
+    Json(payload): Json<UpdateAttendeeRsvp>,
 ) -> Result<StatusCode, CalendarError> {
-    let status =
-        payload
-            .get("rsvp_status")
-            .and_then(|v| v.as_str())
-            .ok_or(CalendarError::InvalidInput(
-                "Missing rsvp_status".to_string(),
-            ))?;
+    const VALID_STATUSES: &[&str] = &["pending", "accepted", "declined", "tentative"];
+    if !VALID_STATUSES.contains(&payload.rsvp_status.as_str()) {
+        return Err(CalendarError::InvalidInput(format!(
+            "Invalid rsvp_status '{}'. Must be one of: {}",
+            payload.rsvp_status,
+            VALID_STATUSES.join(", ")
+        )));
+    }
 
     let repo = EventAttendeeRepository::new(&state.pool);
-    repo.update_rsvp(attendee_id, status)
+    repo.update_rsvp(attendee_id, &payload.rsvp_status)
         .await
         .map_err(|_| CalendarError::InternalError)?;
 

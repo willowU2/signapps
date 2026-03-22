@@ -238,6 +238,10 @@ fn create_router(state: AppState) -> Router {
         .route("/preview/view/:bucket/*key", get(preview::get_preview))
         .route("/preview/info/:bucket/*key", get(preview::get_preview_info))
         .route(
+            "/preview/generate/:bucket/*key",
+            post(preview::generate_preview),
+        )
+        .route(
             "/preview/thumbnail/:bucket/*key",
             get(preview::get_thumbnail),
         )

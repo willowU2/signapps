@@ -54,5 +54,11 @@ dotenvy = { workspace = true }
 validator = { workspace = true }
 once_cell = { workspace = true }
 
+# Full-text search (optional, behind feature flag)
+tantivy = { workspace = true, optional = true }
+
+[features]
+search = ["dep:tantivy"]
+
 [dev-dependencies]
 tokio-test = { workspace = true }
