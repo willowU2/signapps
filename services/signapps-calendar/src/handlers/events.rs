@@ -71,7 +71,8 @@ pub async fn list_events(
 
     let start = query.start.unwrap_or_else(|| {
         now.with_day(1)
-            .unwrap_or_else(|| Utc.with_ymd_and_hms(year, month, 1, 0, 0, 0).unwrap())
+            .or_else(|| Utc.with_ymd_and_hms(year, month, 1, 0, 0, 0).single())
+            .unwrap_or_else(Utc::now)
     });
 
     let next_month = if month == 12 { 1 } else { month + 1 };
@@ -79,7 +80,8 @@ pub async fn list_events(
 
     let end = query.end.unwrap_or_else(|| {
         Utc.with_ymd_and_hms(next_year, next_month, 1, 0, 0, 0)
-            .unwrap()
+            .single()
+            .unwrap_or_else(Utc::now)
     });
 
     let repo = EventRepository::new(&state.pool);

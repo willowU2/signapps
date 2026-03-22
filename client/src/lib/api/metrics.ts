@@ -18,7 +18,7 @@ export interface MetricsQuery {
   end_date?: string;
 }
 
-export const metricsApi = {
+export const schedulerMetricsApi = {
   getWorkload: (params?: MetricsQuery) =>
     apiClient.get<WorkloadMetrics>('/metrics/workload', { params }).then((res: any) => res.data),
 

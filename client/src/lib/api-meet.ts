@@ -1,22 +1,7 @@
-import axios from 'axios'
+import { getClient, ServiceName } from '@/lib/api/factory'
 
-const API_URL = process.env.NEXT_PUBLIC_MEET_API_URL || 'http://localhost:3013/api/v1/meet'
-
-// Create axios instance with auth
-const meetClient = axios.create({
-    baseURL: API_URL,
-})
-
-// Add auth interceptor
-meetClient.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token')
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
-    }
-    return config
-})
+// Get meet client using factory with HttpOnly cookies
+const meetClient = getClient(ServiceName.MEET)
 
 // ============================================================================
 // Types

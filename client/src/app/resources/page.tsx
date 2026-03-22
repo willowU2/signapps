@@ -31,6 +31,7 @@ import {
     getResourceTypeIcon,
     getResourceTypeLabel,
 } from "@/lib/api/resources"
+import { toast } from "sonner"
 
 const resourceTypeOptions: { value: ResourceTypeCategory; label: string; icon: string }[] = [
     { value: "room", label: "Salle", icon: "🚪" },
@@ -87,7 +88,7 @@ export default function ResourcesPublicPage() {
             )
         } catch (error) {
             console.error("Failed to create reservation:", error)
-            alert("Erreur lors de la réservation. Veuillez réessayer.")
+            toast.error("Erreur lors de la réservation. Veuillez réessayer.")
         } finally {
             setIsSubmitting(false)
         }

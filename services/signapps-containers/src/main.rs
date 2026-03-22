@@ -22,7 +22,7 @@ use signapps_common::{AiIndexerClient, JwtConfig};
 use signapps_db::{create_pool, DatabasePool};
 use std::sync::Arc;
 use tower_http::{
-    cors::{Any, CorsLayer},
+    cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
 
@@ -129,9 +129,13 @@ impl AuthState for AppState {
 /// Create the main router with all routes.
 fn create_router(state: AppState) -> Router {
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "http://127.0.0.1:3000".parse().unwrap(),
+        ]))
+        .allow_credentials(true)
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
+        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN]);
 
     // Public routes
     let public_routes = Router::new().route("/health", get(handlers::health::health_check));
@@ -315,7 +319,7 @@ fn create_router(state: AppState) -> Router {
         )
         .route(
             "/api/v1/users/:user_id/containers",
-            get(handlers::containers::list), // TODO: Filter by user
+            get(handlers::containers::list_by_user),
         )
         .layer(middleware::from_fn(require_admin))
         .layer(middleware::from_fn_with_state(

@@ -1,7 +1,6 @@
 //! Authentication utilities for SignApps Identity.
 
 pub mod jwt;
-pub mod ldap;
 pub mod password;
 
 pub use jwt::{create_tokens, verify_token};

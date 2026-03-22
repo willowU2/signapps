@@ -277,7 +277,7 @@ pub async fn import_compose(
             labels: config
                 .labels
                 .as_ref()
-                .map(|l| serde_json::to_value(l).unwrap()),
+                .and_then(|l| serde_json::to_value(l).ok()),
             auto_update: None,
         };
 

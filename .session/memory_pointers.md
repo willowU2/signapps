@@ -1,23 +1,18 @@
+---
+title: "Memory Pointers"
+description: "Références vers données volumineuses stockées hors contexte"
+last_updated: 2026-03-21
+source: "https://arxiv.org/abs/2511.22729"
+---
+
 # Memory Pointers - Références aux Données Volumineuses
 
-> Basé sur [arXiv - Solving Context Window Overflow](https://arxiv.org/abs/2511.22729)
->
 > **Principe** : Stocker les grandes données hors contexte, utiliser des pointeurs courts.
+> Réduction tokens : ~7x moins de tokens (842 vs 6411 dans les études).
 
 ---
 
-## 🎯 Concept
-
-Au lieu de charger de grandes quantités de données dans le contexte :
-1. Stocker les données dans des fichiers
-2. Garder uniquement un **pointeur** (chemin + description courte)
-3. Charger **à la demande** quand nécessaire
-
-**Réduction tokens** : ~7x moins de tokens (842 vs 6411 dans les études)
-
----
-
-## 📍 Pointeurs Actifs
+## Pointeurs Actifs
 
 ### Code & Architecture
 
@@ -47,25 +42,22 @@ Au lieu de charger de grandes quantités de données dans le contexte :
 
 | ID | Sujet | Chemin | Date |
 |----|-------|--------|------|
-| `PTR_SEARCH_*` | [Recherche X] | `.session/cache/search-*.md` | - |
 
 ---
 
-## 📖 Comment Utiliser
+## Comment Utiliser
 
 ### Créer un Pointeur
 
-```markdown
-Quand tu génères une grande quantité de données :
-1. Écrire dans un fichier approprié
-2. Ajouter une entrée dans ce fichier
-3. Utiliser le PTR_ID dans le contexte
+```
+1. Écrire les données volumineuses dans un fichier approprié
+2. Ajouter une entrée dans ce fichier avec ID, chemin, description
+3. Utiliser le PTR_ID dans le contexte au lieu des données
 ```
 
 ### Charger un Pointeur
 
-```markdown
-Quand tu as besoin des données :
+```
 1. Lire le fichier référencé par le pointeur
 2. Utiliser les données
 3. Ne pas les garder en mémoire après usage
@@ -73,7 +65,7 @@ Quand tu as besoin des données :
 
 ---
 
-## 🗂️ Cache de Session
+## Cache de Session
 
 <!-- Données temporaires de cette session -->
 
@@ -83,7 +75,7 @@ Quand tu as besoin des données :
 
 ---
 
-## ♻️ Nettoyage
+## Nettoyage
 
 Les pointeurs obsolètes doivent être nettoyés régulièrement :
 - Cache de session : Fin de session

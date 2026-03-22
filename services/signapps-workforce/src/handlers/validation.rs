@@ -30,6 +30,7 @@ pub struct TimeSpan {
 }
 
 impl TimeSpan {
+    #[allow(dead_code)] // TODO: wire up to handlers
     pub fn new(start: DateTime<Utc>, end: DateTime<Utc>) -> Self {
         Self { start, end }
     }
@@ -42,6 +43,7 @@ impl TimeSpan {
         self.start < other.end && other.start < self.end
     }
 
+    #[allow(dead_code)] // TODO: wire up to handlers
     pub fn contains(&self, datetime: DateTime<Utc>) -> bool {
         datetime >= self.start && datetime < self.end
     }
@@ -52,6 +54,7 @@ impl TimeSpan {
 pub struct ValidateCoverageRequest {
     pub org_node_id: Uuid,
     pub date_range: DateRange,
+    #[allow(dead_code)] // TODO: wire up to handlers
     pub include_descendants: Option<bool>,
 }
 
@@ -178,6 +181,7 @@ pub struct ShiftChangeSimulationRequest {
     pub employee_id: Uuid,
     pub original_shift: TimeSpan,
     pub new_shift: Option<TimeSpan>,
+    #[allow(dead_code)] // TODO: wire up to handlers
     pub reason: Option<String>,
 }
 
@@ -231,8 +235,11 @@ pub enum ConflictType {
     CoverageGap,
     Overstaffing,
     DoubleBooking,
+    #[allow(dead_code)] // TODO: wire up to handlers
     RestTimeViolation,
+    #[allow(dead_code)] // TODO: wire up to handlers
     MaxHoursExceeded,
+    #[allow(dead_code)] // TODO: wire up to handlers
     FunctionMismatch,
 }
 
@@ -815,12 +822,12 @@ async fn get_effective_slots(
 /// Assignment record (placeholder)
 #[derive(Debug)]
 struct Assignment {
-    #[allow(dead_code)]
+    #[allow(dead_code)] // TODO: wire up to handlers
     employee_id: Uuid,
     date: NaiveDate,
     start_time: NaiveTime,
     end_time: NaiveTime,
-    #[allow(dead_code)]
+    #[allow(dead_code)] // TODO: wire up to handlers
     functions: Vec<String>,
 }
 

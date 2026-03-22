@@ -1,22 +1,7 @@
-import axios from 'axios'
+import { getClient, ServiceName } from '@/lib/api/factory'
 
-const API_URL = process.env.NEXT_PUBLIC_PXE_API_URL || 'http://localhost:3016/api/v1/pxe'
-
-// Create axios instance with auth
-const pxeClient = axios.create({
-    baseURL: API_URL,
-})
-
-// Add auth interceptor
-pxeClient.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token')
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
-    }
-    return config
-})
+// Get PXE client using factory with HttpOnly cookies
+const pxeClient = getClient(ServiceName.PXE)
 
 // ============================================================================
 // Types

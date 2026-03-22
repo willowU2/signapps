@@ -1,0 +1,65 @@
+[package]
+name = "signapps-gateway"
+version.workspace = true
+edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Single-binary gateway for SignApps Platform - spawns all services as tokio tasks"
+
+[[bin]]
+name = "signapps-gateway"
+path = "src/main.rs"
+
+[dependencies]
+# Internal crates (shared infrastructure)
+signapps-common = { path = "../../crates/signapps-common" }
+signapps-db = { path = "../../crates/signapps-db" }
+signapps-cache = { path = "../../crates/signapps-cache" }
+signapps-runtime = { path = "../../crates/signapps-runtime" }
+
+# Web framework
+axum = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+futures = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Observability
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# Utilities
+chrono = { workspace = true }
+dotenvy = { workspace = true }
+
+# NOTE: In the full implementation, each service would be an optional dependency:
+# signapps-identity = { path = "../signapps-identity", optional = true }
+# signapps-storage = { path = "../signapps-storage", optional = true }
+# ... etc.
+#
+# For this POC, we don't depend on the services directly because they don't
+# yet expose a library interface (lib.rs with create_router/init_state).
+# Instead, we demonstrate the gateway pattern with stub routers that show
+# how the real services would be integrated.
+
+[features]
+default = ["core"]
+
+# Service groups (will be wired to actual dependencies later)
+core = []
+collaboration = []
+infrastructure = []
+full = ["core", "collaboration", "infrastructure"]
+
+# Frontend embedding (future)
+# embed-frontend = ["dep:include_dir"]

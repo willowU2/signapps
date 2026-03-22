@@ -261,7 +261,7 @@ pub async fn add_time_item_user(
                     user_id: user.user_id,
                     title: "Nouvelle Assignation".to_string(),
                     message: format!("Vous avez été ajouté(e) à {} '{}'", type_label, item.title),
-                    action_url: Some(format!("/app/scheduling/hub")),
+                    action_url: Some("/app/scheduling/hub".to_string()),
                 };
 
                 let tx = state.tx_notifications.clone();

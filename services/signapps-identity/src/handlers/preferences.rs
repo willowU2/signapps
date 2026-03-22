@@ -326,7 +326,7 @@ fn section_to_update(section: &str, data: &serde_json::Value) -> UserPreferences
 
     let data_obj = data.get("data").unwrap_or(data);
 
-    match section.as_ref() {
+    match section {
         "appearance" => {
             update.theme = data_obj
                 .get("theme")

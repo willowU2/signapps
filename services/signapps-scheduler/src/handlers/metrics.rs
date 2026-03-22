@@ -20,13 +20,14 @@ pub struct MetricsQuery {
 pub async fn get_workload(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(tenant): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
     Query(query): Query<MetricsQuery>,
 ) -> Result<Json<WorkloadMetrics>> {
     let repo = MetricsRepository::new(&state.pool);
+
     let metrics = repo
         .get_workload_metrics(
-            tenant.tenant_id,
+            ctx.tenant_id,
             claims.sub,
             query.start_date,
             query.end_date,
@@ -40,11 +41,12 @@ pub async fn get_workload(
 pub async fn get_resources(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Extension(tenant): Extension<TenantContext>,
+    Extension(ctx): Extension<TenantContext>,
 ) -> Result<Json<ResourceMetrics>> {
     let repo = MetricsRepository::new(&state.pool);
+
     let metrics = repo
-        .get_resource_metrics(tenant.tenant_id, claims.sub)
+        .get_resource_metrics(ctx.tenant_id, claims.sub)
         .await?;
 
     Ok(Json(metrics))

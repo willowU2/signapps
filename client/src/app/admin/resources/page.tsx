@@ -52,6 +52,7 @@ import {
     getReservationStatusColor,
     getReservationStatusLabel,
 } from "@/lib/api/resources"
+import { toast } from "sonner"
 
 const resourceTypeOptions: { value: ResourceTypeCategory; label: string; icon: string }[] = [
     { value: "room", label: "Salle", icon: "🚪" },
@@ -134,6 +135,7 @@ export default function ResourcesPage() {
             })
         } catch (error) {
             console.error("Failed to create resource:", error)
+            toast.error("Erreur lors de la création de la ressource")
         } finally {
             setIsSubmitting(false)
         }
@@ -145,6 +147,7 @@ export default function ResourcesPage() {
             await deleteResource(resource.id)
         } catch (error) {
             console.error("Failed to delete resource:", error)
+            toast.error("Erreur lors de la suppression de la ressource")
         }
     }
 
@@ -153,6 +156,7 @@ export default function ResourcesPage() {
             await approveReservation(reservationId)
         } catch (error) {
             console.error("Failed to approve reservation:", error)
+            toast.error("Erreur lors de l'approbation de la réservation")
         }
     }
 
@@ -162,6 +166,7 @@ export default function ResourcesPage() {
             await rejectReservation(reservationId, reason || undefined)
         } catch (error) {
             console.error("Failed to reject reservation:", error)
+            toast.error("Erreur lors du refus de la réservation")
         }
     }
 

@@ -84,7 +84,7 @@ export function getServiceUrl(service: ServiceName): string {
     ? (process.env[config.envVar] || null)
     : process.env[config.envVar];
 
-  return envValue || `http://127.0.0.1:${config.port}/api/v1`;
+  return envValue || `http://localhost:${config.port}/api/v1`;
 }
 
 /**
@@ -100,7 +100,7 @@ export function getServiceBaseUrl(service: ServiceName): string {
     // Remove /api/v1 suffix if present
     return envValue.replace(/\/api\/v1\/?$/, '');
   }
-  return `http://127.0.0.1:${config.port}`;
+  return `http://localhost:${config.port}`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -112,6 +112,8 @@ const clientCache = new Map<ServiceName, AxiosInstance>();
 // ═══════════════════════════════════════════════════════════════════════════
 // INTERCEPTORS
 // ═══════════════════════════════════════════════════════════════════════════
+
+let refreshPromise: Promise<void> | null = null;
 
 function addAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
   // Cookies are automatically sent via withCredentials: true
@@ -133,10 +135,17 @@ async function handleAuthError(error: AxiosError, client: AxiosInstance): Promis
 
     if (typeof window !== 'undefined') {
       try {
-        const identityUrl = getServiceUrl(ServiceName.IDENTITY);
-        await axios.post(`${identityUrl}/auth/refresh`, null, {
-          withCredentials: true,
-        });
+        // Prevent race condition: only one refresh at a time
+        if (!refreshPromise) {
+          const identityUrl = getServiceUrl(ServiceName.IDENTITY);
+          refreshPromise = axios.post(`${identityUrl}/auth/refresh`, null, {
+            withCredentials: true,
+          }).then(() => {}).finally(() => {
+            refreshPromise = null;
+          });
+        }
+
+        await refreshPromise;
 
         // Retry original request (the cookie is now updated)
         return client(originalRequest);
@@ -153,7 +162,10 @@ async function handleAuthError(error: AxiosError, client: AxiosInstance): Promis
 function clearAuthAndRedirect(): void {
   localStorage.removeItem('auth-storage');
   document.cookie = 'auth-storage=; path=/; max-age=0';
-  window.location.href = '/login';
+  // Don't hard-redirect if already on login page (preserves query params like ?auto=admin)
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.href = '/login';
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

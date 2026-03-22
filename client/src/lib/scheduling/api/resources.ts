@@ -40,25 +40,6 @@ function toFrontendResource(r: BackendResource): Resource {
   };
 }
 
-// Floorplans feature
-const FLOORPLAN_STORAGE_KEY = 'scheduling-floorplans';
-
-function getStoredFloorPlans(): import('../types/scheduling').FloorPlanData[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const stored = localStorage.getItem(FLOORPLAN_STORAGE_KEY);
-    if (!stored) return [];
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-function setStoredFloorPlans(floorPlans: import('../types/scheduling').FloorPlanData[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(FLOORPLAN_STORAGE_KEY, JSON.stringify(floorPlans));
-}
-
 // ============================================================================
 // Query Keys
 // ============================================================================
@@ -96,7 +77,7 @@ export function useResources() {
     queryKey: resourceKeys.lists(),
     queryFn: async (): Promise<Resource[]> => {
       const client = getClient(ServiceName.CALENDAR);
-      const res = await client.get<BackendResource[]>('/api/v1/resources');
+      const res = await client.get<BackendResource[]>('/resources');
       return res.data.map(toFrontendResource);
     },
   });
@@ -107,7 +88,7 @@ export function useResource(id: string) {
     queryKey: resourceKeys.detail(id),
     queryFn: async (): Promise<Resource | null> => {
       const client = getClient(ServiceName.CALENDAR);
-      const res = await client.get<BackendResource>(`/api/v1/resources/${id}`);
+      const res = await client.get<BackendResource>(`/resources/${id}`);
       if (!res.data) return null;
       return toFrontendResource(res.data);
     },
@@ -128,7 +109,7 @@ export function useCreateResource() {
         capacity: data.capacity || null,
         location: data.location || null,
       };
-      const res = await client.post<BackendResource>('/api/v1/resources', payload);
+      const res = await client.post<BackendResource>('/resources', payload);
       return toFrontendResource(res.data);
     },
     onSuccess: () => {
@@ -153,7 +134,7 @@ export function useUpdateResource() {
       if (updates.name !== undefined) payload.name = updates.name;
       if (updates.available !== undefined) payload.is_available = updates.available;
 
-      const res = await client.put<BackendResource>(`/api/v1/resources/${id}`, payload);
+      const res = await client.put<BackendResource>(`/resources/${id}`, payload);
       return toFrontendResource(res.data);
     },
     onSuccess: () => {
@@ -198,7 +179,7 @@ export function useCreateBooking() {
         resource_ids: [data.resourceId],
       };
       
-      await client.post(`/api/v1/resources/${data.resourceId}/book`, payload);
+      await client.post(`/resources/${data.resourceId}/book`, payload);
 
       const now = new Date();
       return {
@@ -268,7 +249,7 @@ export function useFloorPlans() {
     queryKey: floorPlanKeys.lists(),
     queryFn: async (): Promise<import('../types/scheduling').FloorPlanData[]> => {
       const client = getClient(ServiceName.CALENDAR);
-      const res = await client.get('/api/v1/floorplans');
+      const res = await client.get('/floorplans');
       return res.data;
     },
   });
@@ -280,7 +261,7 @@ export function useFloorPlan(id: string) {
     queryFn: async (): Promise<import('../types/scheduling').FloorPlanData | null> => {
       const client = getClient(ServiceName.CALENDAR);
       try {
-        const res = await client.get(`/api/v1/floorplans/${id}`);
+        const res = await client.get(`/floorplans/${id}`);
         return res.data;
       } catch (e: any) {
         if (e.response?.status === 404) return null;
@@ -297,7 +278,7 @@ export function useCreateFloorPlan() {
   return useMutation({
     mutationFn: async (data: Omit<import('../types/scheduling').FloorPlanData, 'id'>) => {
       const client = getClient(ServiceName.CALENDAR);
-      const res = await client.post('/api/v1/floorplans', data);
+      const res = await client.post('/floorplans', data);
       return res.data;
     },
     onSuccess: () => {
@@ -312,7 +293,7 @@ export function useUpdateFloorPlan() {
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<import('../types/scheduling').FloorPlanData> }) => {
       const client = getClient(ServiceName.CALENDAR);
-      const res = await client.put(`/api/v1/floorplans/${id}`, updates);
+      const res = await client.put(`/floorplans/${id}`, updates);
       return res.data;
     },
     onSuccess: (_, { id }) => {
@@ -328,7 +309,7 @@ export function useDeleteFloorPlan() {
   return useMutation({
     mutationFn: async (id: string) => {
       const client = getClient(ServiceName.CALENDAR);
-      await client.delete(`/api/v1/floorplans/${id}`);
+      await client.delete(`/floorplans/${id}`);
       return id;
     },
     onSuccess: () => {

@@ -1,38 +1,37 @@
-# Fichiers Actifs
-
-> **Dernière mise à jour** : `YYYY-MM-DD HH:MM`
-
+---
+title: "Active Files"
+description: "Fichiers actuellement en cours de modification"
+last_updated: 2026-03-21
 ---
 
-## 🔴 En Modification
+# Fichiers Actifs
+
+## En Modification
 
 <!-- Fichiers actuellement ouverts et en cours de modification -->
 
 | Fichier | État | Dernière modif | Notes |
 |---------|------|----------------|-------|
-| `path/to/file.rs` | 🟡 Draft | HH:MM | [Description changements] |
 
 ---
 
-## 🟡 En Review / Test
+## En Review / Test
 
 <!-- Fichiers modifiés, en attente de validation -->
 
 | Fichier | Tests | Lint | Prêt |
 |---------|-------|------|------|
-| `path/to/file.rs` | ✅ | ✅ | 🟢 |
 
 ---
 
-## 🟢 Complétés (Cette Session)
+## Complétés (Cette Session)
 
 | Fichier | Changement | Commit |
 |---------|------------|--------|
-| `path/to/file.rs` | [Description] | `abc123` |
 
 ---
 
-## 📁 Fichiers Liés (Contexte)
+## Fichiers Liés (Contexte)
 
 <!-- Fichiers à lire mais pas à modifier -->
 
@@ -40,11 +39,10 @@
 |---------|--------|
 | `STACK.md` | Référence stack technique |
 | `CONVENTIONS.md` | Conventions de code |
-| `.context/xxx.md` | Contexte technologique |
 
 ---
 
-## ⚠️ Fichiers à NE PAS Toucher
+## Fichiers à NE PAS Toucher
 
 <!-- Fichiers critiques à éviter -->
 

@@ -2,22 +2,22 @@ import axios, { AxiosInstance } from 'axios';
 import { useEntityStore } from '@/stores/entity-hub-store';
 
 // Service-specific base URLs
-export const IDENTITY_URL = process.env.NEXT_PUBLIC_IDENTITY_URL || 'http://127.0.0.1:3001/api/v1';
-export const CONTAINERS_URL = process.env.NEXT_PUBLIC_CONTAINERS_URL || 'http://127.0.0.1:3002/api/v1';
-export const PROXY_URL = process.env.NEXT_PUBLIC_PROXY_URL || 'http://127.0.0.1:3003/api/v1';
-export const STORAGE_URL = process.env.NEXT_PUBLIC_STORAGE_URL || 'http://127.0.0.1:3004/api/v1';
-export const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://127.0.0.1:3005/api/v1';
-export const SECURELINK_URL = process.env.NEXT_PUBLIC_SECURELINK_URL || 'http://127.0.0.1:3006/api/v1';
-export const SCHEDULER_URL = process.env.NEXT_PUBLIC_SCHEDULER_URL || 'http://127.0.0.1:3007/api/v1';
-export const METRICS_URL = process.env.NEXT_PUBLIC_METRICS_URL || 'http://127.0.0.1:3008/api/v1';
-export const MEDIA_URL = process.env.NEXT_PUBLIC_MEDIA_URL || 'http://127.0.0.1:3009/api/v1';
-export const DOCS_URL = process.env.NEXT_PUBLIC_DOCS_URL || 'http://127.0.0.1:3010/api/v1';
-export const CALENDAR_URL = process.env.NEXT_PUBLIC_CALENDAR_URL || 'http://127.0.0.1:3011/api/v1';
-export const MAIL_URL = process.env.NEXT_PUBLIC_MAIL_URL || 'http://127.0.0.1:3012/api/v1';
-export const MEET_URL = process.env.NEXT_PUBLIC_MEET_URL || 'http://127.0.0.1:3013/api/v1';
-export const IT_ASSETS_URL = process.env.NEXT_PUBLIC_IT_ASSETS_URL || 'http://127.0.0.1:3015/api/v1';
-export const PXE_URL = process.env.NEXT_PUBLIC_PXE_URL || 'http://127.0.0.1:3016/api/v1';
-export const REMOTE_URL = process.env.NEXT_PUBLIC_REMOTE_URL || 'http://127.0.0.1:3017/api/v1';
+export const IDENTITY_URL = process.env.NEXT_PUBLIC_IDENTITY_URL || 'http://localhost:3001/api/v1';
+export const CONTAINERS_URL = process.env.NEXT_PUBLIC_CONTAINERS_URL || 'http://localhost:3002/api/v1';
+export const PROXY_URL = process.env.NEXT_PUBLIC_PROXY_URL || 'http://localhost:3003/api/v1';
+export const STORAGE_URL = process.env.NEXT_PUBLIC_STORAGE_URL || 'http://localhost:3004/api/v1';
+export const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:3005/api/v1';
+export const SECURELINK_URL = process.env.NEXT_PUBLIC_SECURELINK_URL || 'http://localhost:3006/api/v1';
+export const SCHEDULER_URL = process.env.NEXT_PUBLIC_SCHEDULER_URL || 'http://localhost:3007/api/v1';
+export const METRICS_URL = process.env.NEXT_PUBLIC_METRICS_URL || 'http://localhost:3008/api/v1';
+export const MEDIA_URL = process.env.NEXT_PUBLIC_MEDIA_URL || 'http://localhost:3009/api/v1';
+export const DOCS_URL = process.env.NEXT_PUBLIC_DOCS_URL || 'http://localhost:3010/api/v1';
+export const CALENDAR_URL = process.env.NEXT_PUBLIC_CALENDAR_URL || 'http://localhost:3011/api/v1';
+export const MAIL_URL = process.env.NEXT_PUBLIC_MAIL_URL || 'http://localhost:3012/api/v1';
+export const MEET_URL = process.env.NEXT_PUBLIC_MEET_URL || 'http://localhost:3013/api/v1';
+export const IT_ASSETS_URL = process.env.NEXT_PUBLIC_IT_ASSETS_URL || 'http://localhost:3015/api/v1';
+export const PXE_URL = process.env.NEXT_PUBLIC_PXE_URL || 'http://localhost:3016/api/v1';
+export const REMOTE_URL = process.env.NEXT_PUBLIC_REMOTE_URL || 'http://localhost:3017/api/v1';
 
 // Create axios instance with auth interceptors
 export function createApiClient(baseURL: string): AxiosInstance {
@@ -61,7 +61,9 @@ export function createApiClient(baseURL: string): AxiosInstance {
                         return client(originalRequest);
                     } catch (refreshError) {
                         localStorage.removeItem('auth-storage');
-                        window.location.href = '/login';
+                        if (!window.location.pathname.startsWith('/login')) {
+                            window.location.href = '/login';
+                        }
                         return Promise.reject(refreshError);
                     }
                 }

@@ -1,51 +1,44 @@
-# File de Tâches
-
-> **Dernière mise à jour** : `YYYY-MM-DD HH:MM`
-
+---
+title: "Task Queue"
+description: "File de tâches en attente, en cours et terminées"
+last_updated: 2026-03-21
 ---
 
-## 🔴 DOING (En Cours)
+# File de Tâches
+
+## DOING (En Cours)
 
 <!-- Une seule tâche à la fois idéalement -->
 
 | # | Tâche | Module | Priorité | Démarrée |
 |---|-------|--------|----------|----------|
-| 1 | [Tâche active] | `module` | 🔴 Haute | HH:MM |
 
 ---
 
-## 🟡 TODO (À Faire)
+## TODO (À Faire)
 
 | # | Tâche | Module | Priorité | Dépendances |
 |---|-------|--------|----------|-------------|
-| 1 | [Prochaine tâche] | `module` | 🔴 Haute | - |
-| 2 | [Autre tâche] | `module` | 🟡 Moyenne | #1 |
-| 3 | [Autre tâche] | `module` | 🟢 Basse | - |
 
 ---
 
-## 🟢 DONE (Terminées - Cette Session)
+## DONE (Terminées - Cette Session)
 
 | # | Tâche | Module | Complétée | Commit |
 |---|-------|--------|-----------|--------|
-| 1 | [Tâche terminée] | `module` | HH:MM | `abc123` |
 
 ---
 
-## 🔵 BLOCKED (Bloquées)
+## BLOCKED (Bloquées)
 
 | # | Tâche | Raison | Action requise |
 |---|-------|--------|----------------|
-| - | - | - | - |
 
 ---
 
-## 📋 BACKLOG (File d'attente)
+## BACKLOG (File d'attente)
 
 <!-- Tâches identifiées mais pas encore priorisées -->
-
-- [ ] [Tâche future 1]
-- [ ] [Tâche future 2]
 
 ---
 

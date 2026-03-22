@@ -5,6 +5,7 @@
 //! - Authorization (role-based access control)
 //! - Request logging with tracing
 //! - Request ID propagation
+//! - Prometheus metrics
 
 use axum::{
     body::Body,
@@ -382,6 +383,123 @@ impl RequestClaimsExt for Request<Body> {
     }
 }
 
+/// Prometheus metrics middleware and handlers.
+///
+/// Tracks HTTP request metrics:
+/// - `http_requests_total`: Counter with labels (method, path, status)
+/// - `http_request_duration_seconds`: Histogram with labels (method, path)
+///
+/// # Usage
+///
+/// Add the metrics middleware to your Axum router:
+///
+/// ```ignore
+/// use axum::middleware;
+/// use signapps_common::metrics_middleware;
+///
+/// let app = Router::new()
+///     .route("/api/users", post(create_user))
+///     .route("/metrics", get(metrics_handler))
+///     .layer(middleware::from_fn(metrics_middleware));
+/// ```
+///
+/// The `/metrics` endpoint will expose metrics in Prometheus text format.
+pub mod metrics {
+    use axum::response::IntoResponse;
+    use prometheus::{HistogramVec, TextEncoder, Encoder, Registry, IntCounterVec};
+    use std::time::Instant;
+    use once_cell::sync::Lazy;
+
+    /// Global registry for metrics.
+    pub static REGISTRY: Lazy<Registry> = Lazy::new(|| Registry::new());
+
+    /// Total HTTP requests counter.
+    pub static HTTP_REQUESTS_TOTAL: Lazy<IntCounterVec> = Lazy::new(|| {
+        let counter = IntCounterVec::new(
+            prometheus::Opts::new("http_requests_total", "Total HTTP requests"),
+            &["method", "path", "status"],
+        ).expect("Failed to create http_requests_total counter");
+        REGISTRY.register(Box::new(counter.clone())).expect("Failed to register counter");
+        counter
+    });
+
+    /// HTTP request duration histogram.
+    pub static HTTP_REQUEST_DURATION_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
+        let histogram = HistogramVec::new(
+            prometheus::HistogramOpts::new("http_request_duration_seconds", "HTTP request duration in seconds"),
+            &["method", "path"],
+        ).expect("Failed to create http_request_duration_seconds histogram");
+        REGISTRY.register(Box::new(histogram.clone())).expect("Failed to register histogram");
+        histogram
+    });
+
+    /// Metrics collector for HTTP requests.
+    #[derive(Clone, Default)]
+    pub struct MetricsCollector;
+
+    impl MetricsCollector {
+        /// Create a new metrics collector.
+        pub fn new() -> Self {
+            // Ensure statics are initialized
+            let _ = &*HTTP_REQUESTS_TOTAL;
+            let _ = &*HTTP_REQUEST_DURATION_SECONDS;
+            Self
+        }
+
+        /// Record an HTTP request with method, path, and status.
+        pub fn record_request(&self, method: &str, path: &str, status: u16, duration_secs: f64) {
+            // Record counter with labels
+            HTTP_REQUESTS_TOTAL
+                .with_label_values(&[method, path, &status.to_string()])
+                .inc();
+
+            // Record histogram with labels (duration in seconds)
+            HTTP_REQUEST_DURATION_SECONDS
+                .with_label_values(&[method, path])
+                .observe(duration_secs);
+        }
+    }
+
+    /// Metrics middleware handler.
+    ///
+    /// Tracks request duration and records metrics when request completes.
+    pub async fn metrics_middleware(
+        request: axum::extract::Request,
+        next: axum::middleware::Next,
+    ) -> axum::response::Response {
+        let method = request.method().to_string();
+        let path = request.uri().path().to_string();
+        let start = Instant::now();
+
+        let response = next.run(request).await;
+
+        let duration = start.elapsed();
+        let duration_secs = duration.as_secs_f64();
+        let status = response.status().as_u16();
+
+        let collector = MetricsCollector::new();
+        collector.record_request(&method, &path, status, duration_secs);
+
+        response
+    }
+
+    /// Handler to expose metrics in Prometheus text format.
+    ///
+    /// Collects metrics from all collectors registered in the global registry
+    /// and returns them in Prometheus exposition format.
+    pub async fn metrics_handler() -> impl IntoResponse {
+        let encoder = TextEncoder::new();
+        let metric_families = REGISTRY.gather();
+        let mut buffer = vec![];
+        encoder.encode(&metric_families, &mut buffer).unwrap_or(());
+
+        (
+            [(axum::http::header::CONTENT_TYPE, "text/plain; charset=utf-8")],
+            String::from_utf8(buffer).unwrap_or_default(),
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -391,5 +509,13 @@ mod tests {
         let config = JwtConfig::default();
         assert_eq!(config.access_expiration, 900);
         assert_eq!(config.refresh_expiration, 604800);
+    }
+
+    #[test]
+    fn test_metrics_collector_creation() {
+        let collector = metrics::MetricsCollector::new();
+        // Record a test metric
+        collector.record_request("GET", "/api/test", 200, 0.1);
+        // If this runs without panic, the metrics collector is working
     }
 }

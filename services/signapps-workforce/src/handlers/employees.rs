@@ -27,6 +27,7 @@ use signapps_common::{Claims, TenantContext};
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, PartialEq)]
 #[sqlx(type_name = "varchar", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
+#[allow(dead_code)] // TODO: wire up to handlers
 pub enum EmployeeStatus {
     Active,
     OnLeave,
@@ -38,6 +39,7 @@ pub enum EmployeeStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "kebab-case")]
 #[serde(rename_all = "kebab-case")]
+#[allow(dead_code)] // TODO: wire up to handlers
 pub enum ContractType {
     FullTime,
     PartTime,
@@ -176,8 +178,11 @@ pub struct UpdateFunctionDefinitionRequest {
 /// Query params for employee listing
 #[derive(Debug, Deserialize, Default)]
 pub struct EmployeeQueryParams {
+    #[allow(dead_code)] // TODO: wire up to handlers
     pub status: Option<String>,
+    #[allow(dead_code)] // TODO: wire up to handlers
     pub contract_type: Option<String>,
+    #[allow(dead_code)] // TODO: wire up to handlers
     pub function: Option<String>,
     pub include_terminated: Option<bool>,
     pub limit: Option<i64>,
@@ -279,7 +284,7 @@ pub async fn create_employee(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let functions_json = serde_json::to_value(&req.functions.unwrap_or_default()).map_err(|e| {
+    let functions_json = serde_json::to_value(req.functions.unwrap_or_default()).map_err(|e| {
         tracing::error!("Failed to serialize functions: {}", e);
         StatusCode::INTERNAL_SERVER_ERROR
     })?;

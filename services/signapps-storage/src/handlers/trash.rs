@@ -293,15 +293,31 @@ pub async fn list_trash(
 }
 
 /// Get trash statistics.
-#[tracing::instrument(skip(_state))]
-pub async fn get_trash_stats(State(_state): State<AppState>) -> Result<Json<TrashStats>> {
-    // TODO: Calculate from database
+#[tracing::instrument(skip(state, user_id))]
+pub async fn get_trash_stats(
+    State(state): State<AppState>,
+    axum::Extension(user_id): axum::Extension<Uuid>,
+) -> Result<Json<TrashStats>> {
+    let row = sqlx::query(
+        r#"
+        SELECT
+            COUNT(*)                                                        AS total_items,
+            COALESCE(SUM(size), 0)                                          AS total_size,
+            MIN(deleted_at)                                                 AS oldest_item,
+            COUNT(*) FILTER (WHERE expires_at <= NOW() + INTERVAL '7 days') AS items_expiring_soon
+        FROM storage.trash
+        WHERE user_id = $1
+        "#,
+    )
+    .bind(user_id)
+    .fetch_one(state.pool.inner())
+    .await?;
 
     Ok(Json(TrashStats {
-        total_items: 0,
-        total_size: 0,
-        oldest_item: None,
-        items_expiring_soon: 0,
+        total_items: row.get::<i64, _>("total_items"),
+        total_size: row.get::<i64, _>("total_size"),
+        oldest_item: row.get::<Option<DateTime<Utc>>, _>("oldest_item"),
+        items_expiring_soon: row.get::<i64, _>("items_expiring_soon"),
     }))
 }
 

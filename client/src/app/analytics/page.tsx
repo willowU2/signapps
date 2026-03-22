@@ -2,7 +2,7 @@
 
 import { AppLayout } from '@/components/layout/app-layout';
 import { useQuery } from '@tanstack/react-query';
-import { metricsApi } from '@/lib/api/metrics';
+import { schedulerMetricsApi as metricsApi } from '@/lib/api/metrics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

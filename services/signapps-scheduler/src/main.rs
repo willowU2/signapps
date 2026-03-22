@@ -14,7 +14,7 @@ use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio_stream::StreamExt;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 mod crawlers;
@@ -107,15 +107,21 @@ async fn main() -> Result<()> {
         let tx = tx_notifications.clone();
         tokio::spawn(async move {
             tracing::info!("Starting Redis Pub/Sub listener for notifications");
+            const MAX_REDIS_RETRIES: u32 = 10;
+            const INITIAL_BACKOFF_SECS: u64 = 5;
+            const MAX_BACKOFF_SECS: u64 = 300;
+
+            let mut retry_count = 0;
             loop {
                 match client.get_async_pubsub().await {
                     Ok(mut pubsub) => {
+                        retry_count = 0; // Reset on successful connection
                         if let Err(e) = pubsub.subscribe("signapps_notifications").await {
                             tracing::error!("Failed to subscribe to Redis channel: {}", e);
                             tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
                             continue;
                         }
-                        
+
                         let mut stream = pubsub.on_message();
                         while let Some(msg) = stream.next().await {
                             if let Ok(payload) = msg.get_payload::<String>() {
@@ -127,8 +133,16 @@ async fn main() -> Result<()> {
                         }
                     }
                     Err(e) => {
-                        tracing::error!("Failed to establish Redis Pub/Sub connection: {}", e);
-                        tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+                        retry_count += 1;
+                        if retry_count > MAX_REDIS_RETRIES {
+                            tracing::error!("Max Redis retries exceeded ({}), giving up: {}", MAX_REDIS_RETRIES, e);
+                            break; // Exit loop instead of infinite retry
+                        }
+                        let backoff = INITIAL_BACKOFF_SECS * 2_u64.pow(retry_count.saturating_sub(1));
+                        let backoff = backoff.min(MAX_BACKOFF_SECS);
+                        tracing::warn!("Redis connection failed (attempt {}/{}), retrying in {}s: {}",
+                                       retry_count, MAX_REDIS_RETRIES, backoff, e);
+                        tokio::time::sleep(tokio::time::Duration::from_secs(backoff)).await;
                     }
                 }
             }
@@ -155,9 +169,13 @@ async fn main() -> Result<()> {
 fn create_router(state: AppState) -> Router {
     // CORS configuration
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "http://127.0.0.1:3000".parse().unwrap(),
+        ]))
+        .allow_credentials(true)
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
+        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN]);
 
     // Job routes
     let job_routes = Router::new()
@@ -396,15 +414,12 @@ fn create_router(state: AppState) -> Router {
     // Notifications routes
     let notifications_routes = Router::new()
         .route("/stream", get(handlers::notifications::sse_handler))
-        .layer(axum::middleware::from_fn(
-            signapps_common::middleware::tenant_context_middleware,
-        ))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
-    // Metrics routes (Option C)
+    // Metrics routes
     let metrics_routes = Router::new()
         .route("/workload", get(handlers::metrics::get_workload))
         .route("/resources", get(handlers::metrics::get_resources))

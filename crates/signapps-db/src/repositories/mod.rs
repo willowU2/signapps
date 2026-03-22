@@ -71,3 +71,6 @@ pub use scheduling_repository::{
 };
 pub mod metrics_repository;
 pub use metrics_repository::{MetricsRepository, WorkloadMetrics, ResourceMetrics};
+
+pub mod quota_repository;
+pub use quota_repository::QuotaRepository;

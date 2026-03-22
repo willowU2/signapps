@@ -5,6 +5,7 @@
  * @see factory.ts for client creation details
  */
 import { getClient, ServiceName } from './factory';
+import type { AxiosRequestConfig } from 'axios';
 import type {
   OrgNodeType,
   CreateOrgNodeType,
@@ -254,15 +255,15 @@ export const workforceApi = {
   validation: validationApi,
 
   // Raw HTTP access for custom endpoints
-  get: <T = unknown>(url: string, config?: unknown) =>
-    workforceClient.get<T>(url, config as any),
+  get: <T = unknown>(url: string, config?: AxiosRequestConfig) =>
+    workforceClient.get<T>(url, config),
 
-  post: <T = unknown>(url: string, data?: unknown, config?: unknown) =>
-    workforceClient.post<T>(url, data, config as any),
+  post: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
+    workforceClient.post<T>(url, data, config),
 
-  put: <T = unknown>(url: string, data?: unknown, config?: unknown) =>
-    workforceClient.put<T>(url, data, config as any),
+  put: <T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig) =>
+    workforceClient.put<T>(url, data, config),
 
-  delete: <T = unknown>(url: string, config?: unknown) =>
-    workforceClient.delete<T>(url, config as any),
+  delete: <T = unknown>(url: string, config?: AxiosRequestConfig) =>
+    workforceClient.delete<T>(url, config),
 };

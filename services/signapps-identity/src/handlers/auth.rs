@@ -62,6 +62,7 @@ pub struct UserResponse {
 }
 
 /// Refresh token request.
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct RefreshRequest {
     pub refresh_token: String,
@@ -93,8 +94,8 @@ pub async fn login(
                 .ok_or(Error::InvalidCredentials)?;
 
             if !verify_password(&payload.password, password_hash)? {
-                tracing::warn!(username = %payload.username, "Invalid password attempt - BYPASSED FOR LOCAL DEV");
-                // return Err(Error::InvalidCredentials);
+                tracing::warn!(username = %payload.username, "Invalid password attempt");
+                return Err(Error::InvalidCredentials);
             }
         },
         "ldap" => {
@@ -188,11 +189,11 @@ pub async fn login(
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "User logged in successfully");
 
     let access_cookie = format!(
-        "access_token={}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age={}",
+        "access_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}",
         tokens.access_token, tokens.expires_in
     );
     let refresh_cookie = format!(
-        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/refresh; Max-Age=604800",
+        "refresh_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800",
         tokens.refresh_token
     );
 
@@ -245,8 +246,8 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result
         tracing::info!("User logged out, token blacklisted");
     }
 
-    let access_cookie = "access_token=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0";
-    let refresh_cookie = "refresh_token=; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/refresh; Max-Age=0";
+    let access_cookie = "access_token=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0";
+    let refresh_cookie = "refresh_token=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0";
     
     let mut response_headers = HeaderMap::new();
     if let Ok(c) = access_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
@@ -377,11 +378,11 @@ pub async fn refresh(
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "Token refreshed");
 
     let access_cookie = format!(
-        "access_token={}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age={}",
+        "access_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}",
         tokens.access_token, tokens.expires_in
     );
     let refresh_cookie = format!(
-        "refresh_token={}; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth/refresh; Max-Age=604800",
+        "refresh_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800",
         tokens.refresh_token
     );
 

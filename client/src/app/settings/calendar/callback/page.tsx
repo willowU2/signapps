@@ -17,6 +17,7 @@ import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import { useExternalSyncStore } from '@/stores/external-sync-store';
 import type { CalendarProvider } from '@/lib/calendar/external-sync/types';
 import { PROVIDER_LABELS } from '@/lib/calendar/external-sync/types';
+import { toast } from 'sonner';
 
 type CallbackStatus = 'processing' | 'success' | 'error';
 
@@ -39,6 +40,7 @@ export default function OAuthCallbackPage() {
       // Handle OAuth error
       if (errorParam) {
         console.error('OAuth error:', errorParam, errorDescription);
+        toast.error(`Erreur OAuth: ${errorDescription || errorParam}`);
         setStatus('error');
         return;
       }
@@ -46,6 +48,7 @@ export default function OAuthCallbackPage() {
       // Validate required params
       if (!code || !state || !provider) {
         console.error('Missing OAuth parameters');
+        toast.error('Paramètres OAuth manquants ou invalides');
         setStatus('error');
         return;
       }
@@ -66,6 +69,7 @@ export default function OAuthCallbackPage() {
         }
       } catch (err) {
         console.error('OAuth callback error:', err);
+        toast.error('Erreur lors du traitement du callback OAuth');
         setStatus('error');
       }
     };

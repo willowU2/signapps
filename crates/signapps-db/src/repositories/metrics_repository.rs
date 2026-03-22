@@ -39,15 +39,15 @@ impl<'a> MetricsRepository<'a> {
         // We aggregate by status from the time_items table 
         // considering the user's assignments or ownership
         let query = r#"
-            SELECT 
+            SELECT
                 COUNT(*) as total,
-                COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
+                COUNT(CASE WHEN status = 'todo' OR status = 'pending' THEN 1 END) as pending_count,
                 COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress_count,
-                COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_count,
-                COUNT(CASE WHEN status = 'blocked' THEN 1 END) as blocked_count
+                COUNT(CASE WHEN status = 'done' THEN 1 END) as completed_count,
+                COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as blocked_count
             FROM scheduling.time_items ti
             WHERE ti.tenant_id = $1
-            AND ti.type = 'task'
+            AND ti.item_type = 'task'
             AND ti.deleted_at IS NULL
             AND (ti.owner_id = $2 OR ti.id IN (SELECT time_item_id FROM scheduling.time_item_users WHERE user_id = $2))
         "#;
@@ -80,7 +80,7 @@ impl<'a> MetricsRepository<'a> {
                 COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/3600), 0) as hours_booked
             FROM scheduling.time_items ti
             WHERE ti.tenant_id = $1
-            AND ti.type != 'task'
+            AND ti.item_type != 'task'
             AND ti.deleted_at IS NULL
             AND (ti.owner_id = $2 OR ti.id IN (SELECT time_item_id FROM scheduling.time_item_users WHERE user_id = $2))
         "#;

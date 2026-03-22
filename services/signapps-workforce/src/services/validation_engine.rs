@@ -10,12 +10,12 @@ use crate::handlers::validation::{CoverageGap, GapSeverity, TimeSpan, Validation
 
 /// Validation engine for workforce scheduling
 #[derive(Clone)]
-#[allow(dead_code)]
+#[allow(dead_code)] // TODO: wire up to handlers
 pub struct ValidationEngine {
     pool: PgPool,
 }
 
-#[allow(dead_code)]
+#[allow(dead_code)] // TODO: wire up to handlers
 impl ValidationEngine {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }

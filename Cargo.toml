@@ -29,6 +29,8 @@ members = [
     "services/signapps-meet",
     "services/signapps-office",
     "services/signapps-workforce",
+    # Single-binary gateway (LT-05 POC)
+    "services/signapps-gateway",
 ]
 
 [workspace.package]
@@ -86,6 +88,10 @@ opendal = { version = "0.51", features = ["services-fs", "services-s3"] }
 # Observability
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-opentelemetry = "0.22"
+opentelemetry = { version = "0.21", features = ["trace"] }
+opentelemetry_sdk = { version = "0.21", features = ["tokio", "rt-tokio"] }
+opentelemetry-otlp = { version = "0.14", features = ["http-proto", "reqwest-client", "reqwest-rustls"] }
 prometheus = "0.13"
 
 # Error handling

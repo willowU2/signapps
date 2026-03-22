@@ -6,10 +6,15 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 description = "Identity and authentication service for SignApps Platform"
+default-run = "signapps-identity"
 
 [[bin]]
 name = "signapps-identity"
 path = "src/main.rs"
+
+[[bin]]
+name = "seed_db"
+path = "src/bin/seed.rs"
 
 [dependencies]
 # Internal crates

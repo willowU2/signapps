@@ -12,6 +12,40 @@ use validator::validate_email;
 use crate::error::{Error, Result};
 
 // =============================================================================
+// SQLx Type Aliases
+// =============================================================================
+
+/// Type alias for `sqlx::postgres::PgQueryResult`.
+///
+/// Use this when calling `.rows_affected()` on the result of `sqlx::query!(...).execute(pool).await?`
+/// to avoid the E0282 "type annotations needed" compiler error.
+///
+/// ## Example
+///
+/// ```rust,ignore
+/// use signapps_common::PgQueryResult;
+///
+/// pub async fn delete_item(pool: &PgPool, id: Uuid) -> Result<u64, sqlx::Error> {
+///     let result: PgQueryResult = sqlx::query!(
+///         "DELETE FROM schema.table WHERE id = $1",
+///         id
+///     )
+///     .execute(pool)
+///     .await?;
+///
+///     Ok(result.rows_affected())
+/// }
+/// ```
+///
+/// ## Why this alias exists
+///
+/// `sqlx::query!` returns an opaque type. When you assign the result to a variable and
+/// call `.rows_affected()`, rustc cannot infer the type without an explicit annotation.
+/// Writing `sqlx::postgres::PgQueryResult` each time is verbose; this alias is the
+/// canonical short form for the entire project.
+pub type PgQueryResult = sqlx::postgres::PgQueryResult;
+
+// =============================================================================
 // UserId
 // =============================================================================
 

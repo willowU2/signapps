@@ -1,22 +1,7 @@
-import axios from 'axios'
+import { getClient, ServiceName } from '@/lib/api/factory'
 
-const API_URL = process.env.NEXT_PUBLIC_IT_ASSETS_API_URL || 'http://localhost:3015/api/v1/it-assets'
-
-// Create axios instance with auth
-const itAssetsClient = axios.create({
-    baseURL: API_URL,
-})
-
-// Add auth interceptor
-itAssetsClient.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token')
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
-    }
-    return config
-})
+// Get IT Assets client using factory with HttpOnly cookies
+const itAssetsClient = getClient(ServiceName.IT_ASSETS)
 
 // ============================================================================
 // Types

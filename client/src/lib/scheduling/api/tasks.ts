@@ -109,7 +109,7 @@ function toFrontendTask(node: BackendTaskNode): Task {
  */
 async function getPrimaryCalendarId(): Promise<string> {
   const client = getClient(ServiceName.CALENDAR);
-  const { data } = await client.get<any[]>('/api/v1/calendars');
+  const { data } = await client.get<any[]>('/calendars');
   if (!data || data.length === 0) {
     throw new Error('No calendar found for the current user.');
   }
@@ -143,7 +143,7 @@ export function useTasks() {
     queryFn: async (): Promise<Task[]> => {
       const calendarId = await getPrimaryCalendarId();
       const client = getClient(ServiceName.CALENDAR);
-      const res = await client.get<BackendTaskNode[]>(`/api/v1/calendars/${calendarId}/tasks/tree`);
+      const res = await client.get<BackendTaskNode[]>(`/calendars/${calendarId}/tasks/tree`);
       return res.data.map(toFrontendTask);
     },
   });
@@ -157,7 +157,7 @@ export function useTask(id: string) {
     queryKey: taskKeys.detail(id),
     queryFn: async (): Promise<Task | null> => {
       const client = getClient(ServiceName.CALENDAR);
-      const res = await client.get<BackendTaskNode>(`/api/v1/tasks/${id}`);
+      const res = await client.get<BackendTaskNode>(`/tasks/${id}`);
       if (!res.data) return null;
       return toFrontendTask(res.data);
     },
@@ -185,7 +185,7 @@ export function useCreateTask() {
         status: unmapStatus(data.status),
       };
       
-      const res = await client.post<BackendTaskNode>(`/api/v1/calendars/${calendarId}/tasks`, payload);
+      const res = await client.post<BackendTaskNode>(`/calendars/${calendarId}/tasks`, payload);
       return toFrontendTask(res.data);
     },
     onSuccess: () => {
@@ -218,7 +218,7 @@ export function useUpdateTask() {
       if (updates.dueDate !== undefined) payload.due_date = updates.dueDate ? updates.dueDate.toISOString().split('T')[0] : null;
       if (updates.assigneeId !== undefined) payload.assigned_to = updates.assigneeId;
 
-      await client.put(`/api/v1/tasks/${id}`, payload);
+      await client.put(`/tasks/${id}`, payload);
       // Wait, we just invalidate after, no need to return exact node since mutation output can just be void
       return { id, updates } as any; 
     },
@@ -237,7 +237,7 @@ export function useDeleteTask() {
   return useMutation({
     mutationFn: async (id: string) => {
       const client = getClient(ServiceName.CALENDAR);
-      await client.delete(`/api/v1/tasks/${id}`);
+      await client.delete(`/tasks/${id}`);
       return id;
     },
     onSuccess: () => {
@@ -261,7 +261,7 @@ export function useReorderTasks() {
       // But currently we'll blindly put to all of them using Promise.all
       // In a real prod environment we'd build a batch endpoint in rust
       await Promise.all(
-          tasks.map((t, idx) => client.put(`/api/v1/tasks/${t.id}`, { position: idx }))
+          tasks.map((t, idx) => client.put(`/tasks/${t.id}`, { position: idx }))
       );
       return tasks;
     },

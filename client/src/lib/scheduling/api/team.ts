@@ -9,7 +9,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   startOfDay,
   endOfDay,
-  addHours,
   setHours,
   setMinutes,
   isWeekend,
@@ -238,7 +237,7 @@ export function useTeamMembers() {
     queryKey: teamKeys.members(),
     queryFn: async () => {
       const client = getClient(ServiceName.WORKFORCE);
-      const res = await client.get<BackendEmployee[]>('/api/v1/workforce/employees');
+      const res = await client.get<BackendEmployee[]>('/workforce/employees');
       return res.data.map((emp) => toTeamMember(emp));
     },
   });
@@ -252,7 +251,7 @@ export function useTeamMember(id: string) {
     queryKey: teamKeys.member(id),
     queryFn: async () => {
       const client = getClient(ServiceName.WORKFORCE);
-      const res = await client.get<any>(`/api/v1/workforce/employees/${id}`);
+      const res = await client.get<any>(`/workforce/employees/${id}`);
       if (!res.data) return null;
       
       const member = toTeamMember(res.data.employee);
@@ -276,7 +275,7 @@ export function useOrgTree() {
     queryKey: teamKeys.orgTree(),
     queryFn: async (): Promise<BackendOrgTreeNode[]> => {
        const client = getClient(ServiceName.WORKFORCE);
-       const res = await client.get<BackendOrgTreeNode[]>('/api/v1/workforce/org/tree');
+       const res = await client.get<BackendOrgTreeNode[]>('/workforce/org/tree');
        return res.data;
     }
   });

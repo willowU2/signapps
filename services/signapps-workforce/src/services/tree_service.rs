@@ -10,12 +10,12 @@ use signapps_common::Result;
 
 /// Service for organizational tree operations
 #[derive(Clone)]
-#[allow(dead_code)]
+#[allow(dead_code)] // TODO: wire up to handlers
 pub struct TreeService {
     pool: PgPool,
 }
 
-#[allow(dead_code)]
+#[allow(dead_code)] // TODO: wire up to handlers
 impl TreeService {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }

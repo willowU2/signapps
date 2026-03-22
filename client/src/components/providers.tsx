@@ -2,7 +2,9 @@
 import { SpinnerInfinity } from 'spinners-react';
 
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { get, set, del } from 'idb-keyval';
 import { useState, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { Toaster } from '@/components/ui/sonner';
@@ -38,14 +40,37 @@ export function Providers({ children }: { children: React.ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 60 * 1000,
+            gcTime: 1000 * 60 * 60 * 24, // 24 hours caching offline
             retry: false,
           },
         },
       })
   );
 
+  const [persister] = useState(() => ({
+    persistClient: async (client: any) => {
+      try {
+        await set('react-query-cache', client);
+      } catch (e) {
+        console.warn('IDB store failed', e);
+      }
+    },
+    restoreClient: async () => {
+      try {
+        return await get('react-query-cache');
+      } catch (e) {
+        return undefined;
+      }
+    },
+    removeClient: async () => {
+      try {
+        await del('react-query-cache');
+      } catch (e) {}
+    },
+  }));
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
       <ThemeProvider
         attribute="class"
         defaultTheme="system"
@@ -76,6 +101,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <NotificationPermissionDialog />
         </TooltipProvider>
       </ThemeProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }

@@ -28,7 +28,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser, setMfaSessionToken, redirectAfterLogin, setRedirectAfterLogin } = useAuthStore();
+  const { isAuthenticated, setUser, setMfaSessionToken, redirectAfterLogin, setRedirectAfterLogin } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showLdapDialog, setShowLdapDialog] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -62,31 +62,29 @@ export default function LoginPage() {
         return;
       }
 
-      // Store tokens
-      if (response.data.access_token && response.data.refresh_token) {
-        // Tokens are now stored securely in HttpOnly cookies by the backend
+      // Authentication succeeded — tokens are stored in HttpOnly cookies by the backend
+      // (response body tokens are optional and may be removed in the future)
 
-        // Set user data from response or fetch it
-        if (response.data.user) {
-          setUser(response.data.user);
-        } else {
-          const userResponse = await authApi.me();
-          setUser(userResponse.data);
-        }
-
-        // Sync cookie immediately so middleware sees authenticated state
-        const cookieValue = JSON.stringify({ state: { isAuthenticated: true } });
-        const cookieProps = rememberMe ? 'max-age=31536000;' : '';
-        document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/; ${cookieProps} SameSite=Lax`;
-        
-        // Save remember state for session lifecycle tracking
-        localStorage.setItem('remember_me', rememberMe ? 'true' : 'false');
-
-        // Redirect to saved path or dashboard
-        const redirectPath = redirectAfterLogin || '/dashboard';
-        setRedirectAfterLogin(null);
-        router.push(redirectPath);
+      // Set user data from response or fetch it
+      if (response.data.user) {
+        setUser(response.data.user);
+      } else {
+        const userResponse = await authApi.me();
+        setUser(userResponse.data);
       }
+
+      // Sync cookie immediately so middleware sees authenticated state
+      const cookieValue = JSON.stringify({ state: { isAuthenticated: true } });
+      const cookieProps = rememberMe ? 'max-age=31536000;' : '';
+      document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/; ${cookieProps} SameSite=Lax`;
+
+      // Save remember state for session lifecycle tracking
+      localStorage.setItem('remember_me', rememberMe ? 'true' : 'false');
+
+      // Redirect to saved path or dashboard
+      const redirectPath = redirectAfterLogin || '/dashboard';
+      setRedirectAfterLogin(null);
+      router.push(redirectPath);
     } catch (err: unknown) {
       setError(parseApiError(err));
     }
@@ -95,9 +93,8 @@ export default function LoginPage() {
   // Auto-login logic for Development Environment
   useEffect(() => {
     if (process.env.NODE_ENV === 'development' && autoParam === 'admin') {
-      const savedToken = localStorage.getItem('access_token');
-      // Only auto-login if not already authenticated (no token)
-      if (!savedToken) {
+      // Only auto-login if not already authenticated
+      if (!isAuthenticated) {
         onSubmit({ username: 'admin', password: 'admin' });
       } else {
         // If already logged in, redirect straight to dashboard
@@ -105,7 +102,7 @@ export default function LoginPage() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoParam]);
+  }, [autoParam, isAuthenticated]);
 
   return (
     <div

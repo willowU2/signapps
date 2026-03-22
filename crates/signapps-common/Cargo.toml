@@ -36,6 +36,11 @@ async-trait = { workspace = true }
 # Observability
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+tracing-opentelemetry = { workspace = true }
+opentelemetry = { workspace = true }
+opentelemetry_sdk = { workspace = true }
+opentelemetry-otlp = { workspace = true }
+prometheus = { workspace = true }
 
 # Utilities
 uuid = { workspace = true }
@@ -43,6 +48,7 @@ chrono = { workspace = true }
 config = { workspace = true }
 dotenvy = { workspace = true }
 validator = { workspace = true }
+once_cell = { workspace = true }
 
 [dev-dependencies]
 tokio-test = { workspace = true }

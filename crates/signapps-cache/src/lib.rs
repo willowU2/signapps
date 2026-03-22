@@ -42,8 +42,55 @@ impl BinaryCacheService {
         self.cache.get(key).await
     }
 
+    /// Insert with the cache's default TTL.
     pub async fn set(&self, key: &str, value: Vec<u8>) {
         self.cache.insert(key.to_string(), value).await;
+    }
+
+    /// Insert with a custom TTL using moka's per-entry expiry policy.
+    ///
+    /// Because moka 0.12 `Cache` applies a single global TTL at build-time,
+    /// we encode the expiry timestamp as the first 8 bytes of the stored value
+    /// (big-endian u64 Unix seconds) and honour it on retrieval.
+    /// This avoids the overhead of a second Cache instance while keeping the
+    /// API simple.
+    pub async fn set_with_ttl(&self, key: &str, value: Vec<u8>, ttl: Duration) {
+        let expires_at = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs()
+            .saturating_add(ttl.as_secs());
+
+        // Layout: [8 bytes big-endian expiry] ++ [payload]
+        let mut entry = Vec::with_capacity(8 + value.len());
+        entry.extend_from_slice(&expires_at.to_be_bytes());
+        entry.extend_from_slice(&value);
+        self.cache.insert(key.to_string(), entry).await;
+    }
+
+    /// Retrieve an entry stored with [`set_with_ttl`], respecting the embedded
+    /// expiry.  Entries stored with plain [`set`] are returned as-is (their
+    /// first 8 bytes would be interpreted as a timestamp, which may cause a
+    /// false expiry — callers must use matching set/get pairs).
+    pub async fn get_with_ttl(&self, key: &str) -> Option<Vec<u8>> {
+        let entry = self.cache.get(key).await?;
+
+        if entry.len() < 8 {
+            return Some(entry);
+        }
+
+        let expires_at = u64::from_be_bytes(entry[..8].try_into().ok()?);
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
+        if now >= expires_at {
+            self.cache.invalidate(key).await;
+            return None;
+        }
+
+        Some(entry[8..].to_vec())
     }
 }
 

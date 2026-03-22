@@ -1,3 +1,9 @@
+---
+title: "Decisions Log"
+description: "Journal immuable des décisions prises - on ajoute, on ne modifie jamais"
+last_updated: 2026-03-21
+---
+
 # Journal des Décisions
 
 > Ce fichier est **immuable** - on ajoute, on ne modifie jamais.
@@ -25,7 +31,7 @@
 
 ## Décisions de cette Session
 
-*Aucune décision enregistrée pour cette session.*
+<!-- Ajouter les nouvelles décisions ici -->
 
 ---
 
