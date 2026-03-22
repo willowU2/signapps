@@ -11,6 +11,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useUsersMap } from "@/lib/store/chat-store";
 
 export interface ChatMessage {
     id: string;
@@ -32,12 +33,52 @@ interface MessageItemProps {
 }
 
 export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddReaction }: MessageItemProps) {
+    const usersMap = useUsersMap();
     const [isHovered, setIsHovered] = useState(false);
     const date = new Date(message.timestamp);
     const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+    // Resolve user avatar
+    const targetUser = usersMap[message.senderId] || Object.values(usersMap).find(u => u.username === message.senderName);
+    const resolvedAvatar = message.avatar || targetUser?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${message.senderId}`;
+
     // Quick reaction picker options
     const quickReactions = ["👍", "❤️", "😂", "🎉"];
+
+    const renderContent = (content: string) => {
+        // Simple regex to match ![alt](url)
+        const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+        if (!imgRegex.test(content)) return content;
+        
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+        
+        imgRegex.lastIndex = 0;
+        
+        while ((match = imgRegex.exec(content)) !== null) {
+            if (match.index > lastIndex) {
+                parts.push(content.substring(lastIndex, match.index));
+            }
+            const alt = match[1];
+            const url = match[2];
+            parts.push(
+                <img 
+                    key={match.index} 
+                    src={url} 
+                    alt={alt || "image"} 
+                    className="max-w-full max-h-[300px] rounded-md my-2 object-contain bg-muted/20" 
+                    loading="lazy"
+                />
+            );
+            lastIndex = imgRegex.lastIndex;
+        }
+        if (lastIndex < content.length) {
+            parts.push(content.substring(lastIndex));
+        }
+        
+        return <>{parts}</>;
+    };
 
     return (
         <div
@@ -119,7 +160,7 @@ export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddR
             <div className="w-10 shrink-0 flex justify-center">
                 {showAvatar ? (
                     <Avatar className="h-9 w-9 ring-1 ring-border/50 transition-transform hover:scale-105 cursor-pointer">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${message.senderId}`} />
+                        <AvatarImage src={resolvedAvatar} />
                         <AvatarFallback className="text-xs font-medium bg-primary/10 text-primary">
                             {message.senderName.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
@@ -145,7 +186,7 @@ export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddR
                 )}
 
                 <div className="text-[15px] text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">
-                    {message.content}
+                    {renderContent(message.content)}
                     {message.isEdited && (
                         <span className="text-[10px] text-muted-foreground ml-2 select-none">(edited)</span>
                     )}
