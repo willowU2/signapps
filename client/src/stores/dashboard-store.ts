@@ -23,6 +23,9 @@ export type WidgetType =
   | 'recent-tasks'
   | 'upcoming-events'
   | 'recent-files'
+  | 'recent-emails'
+  | 'today-calendar'
+  | 'tasks-summary'
   | 'team-activity'
   | 'recent-activity'
   | 'notifications'
@@ -65,6 +68,9 @@ export const WIDGET_CATALOG: { type: WidgetType; label: string; description: str
   { type: 'upcoming-events', label: 'Événements à Venir', description: 'Calendrier des prochains événements', defaultW: 6, defaultH: 4, category: 'productivity' },
   { type: 'quick-actions', label: 'Actions rapides', description: 'Boutons raccourcis', defaultW: 4, defaultH: 5, category: 'productivity' },
   { type: 'bookmarks', label: 'Favoris', description: 'Liens rapides personnalisés', defaultW: 6, defaultH: 3, category: 'productivity' },
+  { type: 'today-calendar', label: 'Agenda d\'Aujourd\'hui', description: 'Événements du jour', defaultW: 6, defaultH: 4, category: 'productivity' },
+  { type: 'tasks-summary', label: 'Résumé des Tâches', description: 'Statistiques et compteurs de tâches', defaultW: 4, defaultH: 3, category: 'productivity' },
+  { type: 'recent-emails', label: 'Emails Récents', description: 'Derniers emails reçus', defaultW: 6, defaultH: 4, category: 'productivity' },
   // Content
   { type: 'recent-files', label: 'Fichiers Récents', description: 'Derniers fichiers consultés', defaultW: 6, defaultH: 4, category: 'content' },
   { type: 'recent-activity', label: 'Activité Récente', description: 'Votre activité récente', defaultW: 4, defaultH: 4, category: 'content' },

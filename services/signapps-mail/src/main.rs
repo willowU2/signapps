@@ -1,5 +1,6 @@
 pub mod api;
 pub mod auth;
+pub mod handlers;
 pub mod models;
 pub mod sync_service;
 
@@ -8,12 +9,16 @@ use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::{AiIndexerClient, JwtConfig};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use handlers::signatures::SignatureStore;
+use handlers::rules::RuleStore;
 
 #[derive(Clone)]
 pub struct AppState {
     pub pool: Pool<Postgres>,
     pub jwt_config: JwtConfig,
     pub indexer: AiIndexerClient,
+    pub signatures: SignatureStore,
+    pub rules: RuleStore,
 }
 
 impl AuthState for AppState {
@@ -56,6 +61,8 @@ async fn main() {
         pool: pool.clone(),
         jwt_config,
         indexer: AiIndexerClient::from_env(),
+        signatures: SignatureStore::new(),
+        rules: RuleStore::new(),
     };
 
     // Start background sync service

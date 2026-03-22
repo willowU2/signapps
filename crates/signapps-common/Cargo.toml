@@ -54,6 +54,9 @@ hex = { workspace = true }
 # Concurrent collections
 dashmap = { workspace = true }
 
+# Random number generation
+rand = { workspace = true }
+
 # Utilities
 uuid = { workspace = true }
 chrono = { workspace = true }
@@ -61,6 +64,9 @@ config = { workspace = true }
 dotenvy = { workspace = true }
 validator = { workspace = true }
 once_cell = { workspace = true }
+
+# QR Code generation
+qrcode = { workspace = true }
 
 # Full-text search (optional, behind feature flag)
 tantivy = { workspace = true, optional = true }

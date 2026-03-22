@@ -148,6 +148,9 @@ instant-acme = "0.7"
 utoipa = { version = "5", features = ["axum_extras"] }
 utoipa-swagger-ui = { version = "8", features = ["axum"] }
 
+# QR Code generation
+qrcode = { version = "0.14", features = ["svg"] }
+
 # Testing
 tokio-test = "0.4"
 

@@ -18,6 +18,9 @@ import { WidgetProxyStatus } from './widget-proxy-status';
 import { WidgetRecentTasks } from './widgets/widget-recent-tasks';
 import { WidgetUpcomingEvents } from './widgets/widget-upcoming-events';
 import { WidgetRecentFiles } from './widgets/widget-recent-files';
+import { WidgetRecentEmails } from './widgets/widget-recent-emails';
+import { WidgetTodayCalendar } from './widgets/widget-today-calendar';
+import { WidgetTasksSummary } from './widgets/widget-tasks-summary';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -52,6 +55,12 @@ function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
       return <WidgetUpcomingEvents {...renderProps} />;
     case 'recent-files':
       return <WidgetRecentFiles {...renderProps} />;
+    case 'recent-emails':
+      return <WidgetRecentEmails {...renderProps} />;
+    case 'today-calendar':
+      return <WidgetTodayCalendar {...renderProps} />;
+    case 'tasks-summary':
+      return <WidgetTasksSummary {...renderProps} />;
     default:
       return <div className="p-4 text-muted-foreground text-center">Widget inconnu: {widget.type}</div>;
   }

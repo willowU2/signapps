@@ -16,6 +16,8 @@ use signapps_common::Claims;
 use uuid::Uuid;
 
 use crate::models::{Attachment, Email, MailAccount, MailFolder, MailLabel};
+use crate::handlers::signatures::{get_signature, upsert_signature};
+use crate::handlers::rules::{list_rules, get_rule, create_rule, update_rule, delete_rule};
 use crate::AppState;
 
 pub fn router() -> Router<AppState> {
@@ -44,6 +46,17 @@ pub fn router() -> Router<AppState> {
             "/api/v1/mail/labels/:id",
             patch(update_label).delete(delete_label),
         )
+        // Signatures
+        .route(
+            "/api/v1/mail/signatures/me",
+            get(get_signature).put(upsert_signature),
+        )
+        // Rules
+        .route("/api/v1/mail/rules", get(list_rules).post(create_rule))
+        .route(
+            "/api/v1/mail/rules/:id",
+            get(get_rule).put(update_rule).delete(delete_rule),
+        )
         // Search
         .route("/api/v1/mail/search", get(search_emails))
         // Stats
@@ -57,6 +70,15 @@ where
     S: Clone + Send + Sync + 'static,
 {
     axum::routing::patch(handler)
+}
+
+fn put<H, T, S>(handler: H) -> axum::routing::MethodRouter<S>
+where
+    H: axum::handler::Handler<T, S>,
+    T: 'static,
+    S: Clone + Send + Sync + 'static,
+{
+    axum::routing::put(handler)
 }
 
 // ============================================================================

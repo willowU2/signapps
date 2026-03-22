@@ -17,3 +17,6 @@ export { WidgetProxyStatus } from "../widget-proxy-status";
 export { WidgetRecentTasks } from "./widget-recent-tasks";
 export { WidgetUpcomingEvents } from "./widget-upcoming-events";
 export { WidgetRecentFiles } from "./widget-recent-files";
+export { WidgetRecentEmails } from "./widget-recent-emails";
+export { WidgetTodayCalendar } from "./widget-today-calendar";
+export { WidgetTasksSummary } from "./widget-tasks-summary";
