@@ -21,6 +21,8 @@ mod crawlers;
 mod handlers;
 mod scheduler;
 
+use handlers::backups::{new_backup_store, SharedBackupStore};
+
 use scheduler::SchedulerService;
 use signapps_common::middleware::AuthState;
 use signapps_common::{JwtConfig, Result};
@@ -42,6 +44,7 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     pub tx_notifications: broadcast::Sender<NotificationMessage>,
     pub redis_client: Option<redis::Client>,
+    pub backup_store: SharedBackupStore,
 }
 
 impl AuthState for AppState {
@@ -155,6 +158,7 @@ async fn main() -> Result<()> {
         jwt_config,
         tx_notifications,
         redis_client,
+        backup_store: new_backup_store(),
     };
 
     // Build router
@@ -411,6 +415,20 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // Backup routes (admin)
+    let backup_store = state.backup_store.clone();
+    let backup_routes = Router::new()
+        .route(
+            "/",
+            get(handlers::backups::list_backups).post(handlers::backups::trigger_backup),
+        )
+        .route("/config", get(handlers::backups::get_backup_config).put(handlers::backups::update_backup_config))
+        .route(
+            "/{id}",
+            get(handlers::backups::get_backup).delete(handlers::backups::delete_backup),
+        )
+        .with_state(backup_store);
+
     // Notifications routes
     let notifications_routes = Router::new()
         .route("/stream", get(handlers::notifications::sse_handler))
@@ -450,6 +468,7 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/scheduling/resources", scheduling_resource_routes)
         .nest("/api/v1/scheduling/templates", template_routes)
         .nest("/api/v1/scheduling/preferences", preferences_routes)
+        .nest("/api/v1/admin/backups", backup_routes)
         .nest("/api/v1/notifications", notifications_routes)
         .nest("/api/v1/metrics", metrics_routes)
         .nest("/health", health_routes)

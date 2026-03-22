@@ -117,6 +117,21 @@ fn create_router(state: AppState) -> Router {
             post(handlers::alerts::acknowledge_alert),
         );
 
+    // Admin analytics routes
+    let analytics_routes = Router::new()
+        .route(
+            "/overview",
+            get(handlers::analytics::get_overview),
+        )
+        .route(
+            "/storage",
+            get(handlers::analytics::get_storage),
+        )
+        .route(
+            "/activity",
+            get(handlers::analytics::get_activity),
+        );
+
     // Prometheus endpoint
     let prometheus_routes = Router::new().route("/", get(handlers::prometheus_metrics));
 
@@ -127,6 +142,7 @@ fn create_router(state: AppState) -> Router {
     Router::new()
         .nest("/api/v1/metrics", metrics_routes)
         .nest("/api/v1/alerts", alert_routes)
+        .nest("/api/v1/admin/analytics", analytics_routes)
         .nest("/metrics", prometheus_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())

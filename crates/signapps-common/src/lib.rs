@@ -6,13 +6,16 @@
 //!
 //! - [`audit`] - Audit trail / activity log (in-memory, middleware + query endpoint)
 //! - [`auth`] - Authentication types (JWT claims, tokens)
+//! - [`comments`] - Universal inline comments with @mentions, threads, reactions
 //! - [`config`] - Application configuration
 //! - [`error`] - RFC 7807 Problem Details error handling
 //! - [`events`] - Inter-service event bus (publish/subscribe domain events)
 //! - [`middleware`] - HTTP middleware (auth, logging, request ID, Prometheus metrics)
 //! - [`middleware::metrics`] - Prometheus metrics middleware and handlers
 //! - [`plugins`] - Plugin system architecture (trait, manifest, registry)
+//! - [`retention`] - RGPD data retention policies (policy engine, expiry checks)
 //! - [`types`] - Value Objects (Email, Password, UserId, Username)
+//! - [`workflows`] - AI Workflow Automation engine (trigger, conditions, actions)
 //!
 //! ## Example
 //!
@@ -30,6 +33,7 @@
 pub mod audit;
 pub mod auth;
 pub mod bootstrap;
+pub mod comments;
 pub mod config;
 pub mod error;
 pub mod events;
@@ -37,20 +41,25 @@ pub mod indexer;
 pub mod middleware;
 pub mod openapi;
 pub mod plugins;
+pub mod retention;
 #[cfg(feature = "search")]
 pub mod search;
 pub mod traits;
 pub mod types;
+pub mod webhooks;
+pub mod workflows;
 
 // Re-export commonly used items
 pub use audit::{AuditAction, AuditEntry, AuditLog, AuditState, audit_middleware, list_audit_entries};
 pub use auth::{Claims, JwtConfig, TokenPair};
 pub use bootstrap::graceful_shutdown;
+pub use comments::{Comment, CommentStore, extract_mentions};
 pub use config::AppConfig;
 pub use error::{Error, ProblemDetails, Result};
 pub use events::{DomainEvent, EventBus, EventEnvelope};
 pub use indexer::AiIndexerClient;
 pub use plugins::{Plugin, PluginManifest, PluginRegistry};
+pub use retention::{RetentionAction, RetentionEngine, RetentionPolicy};
 pub use middleware::{
     metrics::{MetricsCollector, metrics_handler, metrics_middleware},
     AuthState, RequestClaimsExt, TenantContext,
@@ -59,6 +68,11 @@ pub use openapi::create_openapi_router;
 #[cfg(feature = "search")]
 pub use search::{SearchError, SearchHit, SearchIndex};
 pub use types::{Email, Password, PasswordHash, PgQueryResult, UserId, Username};
+pub use webhooks::{DeliveryStatus, WebhookConfig, WebhookDelivery, WebhookManager};
+pub use workflows::{
+    Condition, ConditionOp, WorkflowAction, WorkflowDefinition, WorkflowEngine, WorkflowExecution,
+    WorkflowTrigger,
+};
 
 /// Crate version from Cargo.toml
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

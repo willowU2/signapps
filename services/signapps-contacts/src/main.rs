@@ -1,12 +1,14 @@
 //! SignApps Contacts Service
 //! Manages contacts and address book with group support
 
+mod carddav;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     middleware,
     response::IntoResponse,
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use chrono::Utc;
@@ -213,6 +215,8 @@ fn create_router(state: AppState) -> Router {
     let protected_routes = Router::new()
         .route("/api/v1/contacts", get(list_contacts).post(create_contact))
         .route("/api/v1/contacts/groups", get(list_groups))
+        .route("/api/v1/contacts/export/vcf", get(carddav::export_vcf))
+        .route("/api/v1/contacts/import/vcf", post(carddav::import_vcf))
         .route(
             "/api/v1/contacts/:id",
             get(get_contact).put(update_contact).delete(delete_contact),

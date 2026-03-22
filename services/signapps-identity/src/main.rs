@@ -70,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
         active_sessions: handlers::admin_security::ActiveSessionsStore::new(),
         login_attempts: handlers::admin_security::LoginAttemptsStore::new(),
         migration: handlers::migration::MigrationStore::new(),
+        data_export: handlers::data_export::DataExportStore::new(),
     };
 
     // Build router
@@ -94,6 +95,8 @@ pub struct AppState {
     pub login_attempts: handlers::admin_security::LoginAttemptsStore,
     /// In-memory migration job store (V2-15).
     pub migration: handlers::migration::MigrationStore,
+    /// In-memory RGPD data export job store (V3-02).
+    pub data_export: handlers::data_export::DataExportStore,
 }
 
 impl AuthState for AppState {
@@ -141,6 +144,10 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/users/me/preferences/reset", post(handlers::preferences::reset_preferences))
         .route("/api/v1/users/me/preferences/export", get(handlers::preferences::export_preferences))
         .route("/api/v1/users/me/preferences/import", post(handlers::preferences::import_preferences))
+        // RGPD data export (V3-02)
+        .route("/api/v1/users/me/export", post(handlers::data_export::request_export))
+        .route("/api/v1/users/me/export/status", get(handlers::data_export::export_status))
+        .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -265,6 +272,19 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/admin/security/login-attempts",
             get(admin_security::list_login_attempts),
+        )
+        // Bulk user management (V3-09)
+        .route(
+            "/api/v1/admin/users/import",
+            post(handlers::bulk_users::import_users),
+        )
+        .route(
+            "/api/v1/admin/users/export",
+            get(handlers::bulk_users::export_users),
+        )
+        .route(
+            "/api/v1/admin/users/bulk-action",
+            post(handlers::bulk_users::bulk_action),
         )
         // Migration wizard (V2-15)
         .route(

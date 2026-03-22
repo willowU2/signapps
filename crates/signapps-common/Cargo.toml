@@ -46,6 +46,14 @@ prometheus = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
 
+# Crypto/HMAC signing
+hmac = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+
+# Concurrent collections
+dashmap = { workspace = true }
+
 # Utilities
 uuid = { workspace = true }
 chrono = { workspace = true }
