@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import Link from 'next/link';
@@ -37,7 +39,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Link as LinkIcon, MoreVertical, Loader2, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2, ExternalLink } from 'lucide-react';
+import { Plus, Link as LinkIcon, MoreVertical, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2, ExternalLink } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -568,7 +570,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <Button onClick={handleGeneralSave} disabled={generalSaving}>
-                  {generalSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {generalSaving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                   Save Changes
                 </Button>
               </CardContent>
@@ -702,11 +704,11 @@ export default function SettingsPage() {
                     onClick={handleLdapTest}
                     disabled={ldapTesting || !ldapConfig.server_url}
                   >
-                    {ldapTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {ldapTesting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                     Test Connection
                   </Button>
                   <Button onClick={handleLdapSave} disabled={ldapSaving}>
-                    {ldapSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {ldapSaving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                     Save Configuration
                   </Button>
                 </div>

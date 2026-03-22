@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * VersionDiffViewer
  *
@@ -7,16 +9,7 @@
  */
 
 import React, { useMemo } from 'react';
-import {
-  GitCompare,
-  Plus,
-  Minus,
-  Edit3,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-} from 'lucide-react';
+import { GitCompare, Plus, Minus, Edit3, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -311,7 +304,7 @@ export function VersionDiffViewer({ className, onClose }: VersionDiffViewerProps
   if (isComparing) {
     return (
       <div className={cn('flex items-center justify-center h-64', className)}>
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
       </div>
     );
   }

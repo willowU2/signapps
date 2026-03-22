@@ -1,20 +1,9 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useCallback, useEffect } from 'react';
-import {
-  ChevronRight,
-  ChevronDown,
-  Loader2,
-  MoreHorizontal,
-  Plus,
-  Edit,
-  Trash2,
-  Users,
-  Building2,
-  MapPin,
-  Briefcase,
-  UserCircle,
-} from 'lucide-react';
+import { ChevronRight, ChevronDown, MoreHorizontal, Plus, Edit, Trash2, Users, Building2, MapPin, Briefcase, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -195,7 +184,7 @@ export function OrgTreeList({
             disabled={!hasChildren}
           >
             {nodeLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3.5 w-3.5  text-muted-foreground" />
             ) : hasChildren ? (
               expanded ? (
                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -297,7 +286,7 @@ export function OrgTreeList({
   if (loading) {
     return (
       <div className={cn('flex items-center justify-center py-8', className)}>
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
         <span className="ml-2 text-sm text-muted-foreground">Chargement...</span>
       </div>
     );

@@ -1,7 +1,9 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useCallback } from 'react';
-import { ChevronRight, ChevronDown, Folder, FolderOpen, Loader2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { storageApi } from '@/lib/api';
 
@@ -103,7 +105,7 @@ export function FolderTree({ bucket, currentPath, onSelectFolder }: FolderTreePr
           }}
         >
           {node.loading ? (
-            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3.5 w-3.5 shrink-0  text-muted-foreground" />
           ) : node.expanded ? (
             <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           ) : (
@@ -137,7 +139,7 @@ export function FolderTree({ bucket, currentPath, onSelectFolder }: FolderTreePr
 
       {rootLoading ? (
         <div className="flex items-center gap-2 px-2 py-4 text-muted-foreground text-xs">
-          <Loader2 className="h-3 w-3 animate-spin" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3 " />
           Loading...
         </div>
       ) : (

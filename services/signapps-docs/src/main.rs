@@ -83,6 +83,7 @@ async fn main() -> anyhow::Result<()> {
         // Direct messages
         .route("/api/v1/dms", get(chat::get_direct_messages))
         .route("/api/v1/dms", post(chat::create_direct_message))
+        .route("/api/v1/dms/:id", delete(chat::delete_direct_message))
         // Channel read status (unread counts)
         .route("/api/v1/channels/:channel_id/read-status", get(chat::get_channel_read_status))
         .route("/api/v1/channels/:channel_id/read-status", post(chat::mark_channel_read))

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -26,12 +28,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { User, Shield, Key, Loader2, Check, Copy, ArrowLeft, Upload, Trash2 } from 'lucide-react';
+import { User, Shield, Key, Check, Copy, ArrowLeft, Upload, Trash2 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import { authApi, usersApi } from '@/lib/api';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { FileUploadProgressBar } from '@/components/application/file-upload/file-upload-progress-bar';
 
 const roleLabels: Record<number, string> = {
   0: 'Administrator',
@@ -63,6 +66,59 @@ export default function ProfilePage() {
   const [mfaCode, setMfaCode] = useState('');
   const [mfaLoading, setMfaLoading] = useState(false);
   const [copiedCodes, setCopiedCodes] = useState(false);
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  
+  const handleAvatarUploadStrategy = async (
+    id: string,
+    file: File,
+    onProgress: (progress: number) => void,
+    onSuccess: () => void,
+    onError: (error: string) => void
+  ) => {
+    try {
+      onProgress(10);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+              onProgress(50);
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+              const MAX_SIZE = 256;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                  if (width > MAX_SIZE) {
+                      height *= MAX_SIZE / width;
+                      width = MAX_SIZE;
+                  }
+              } else {
+                  if (height > MAX_SIZE) {
+                      width *= MAX_SIZE / height;
+                      height = MAX_SIZE;
+                  }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              ctx.drawImage(img, 0, 0, width, height);
+
+              const dataUrl = canvas.toDataURL('image/webp', 0.8);
+              setAvatarUrl(dataUrl);
+              onProgress(100);
+              onSuccess();
+              setAvatarDialogOpen(false);
+          };
+          img.onerror = () => onError("Failed to load image");
+          img.src = event.target?.result as string;
+      };
+      reader.onerror = () => onError("Failed to read file");
+      reader.readAsDataURL(file);
+    } catch (err) {
+      onError((err as Error).message);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -192,7 +248,7 @@ export default function ProfilePage() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8 " />
         </div>
       </AppLayout>
     );
@@ -241,57 +297,28 @@ export default function ProfilePage() {
                 
                 <div 
                   className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer overflow-hidden backdrop-blur-sm"
-                  onClick={() => document.getElementById('profile-avatar-upload')?.click()}
+                  onClick={() => setAvatarDialogOpen(true)}
                 >
                   <Upload className="h-5 w-5 text-white mb-1" />
                   <span className="text-[9px] text-white font-medium uppercase tracking-wider">Change</span>
                 </div>
                 
-                <input
-                    id="profile-avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={saving}
-                    onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => {
-                                const img = new Image();
-                                img.onload = () => {
-                                    const canvas = document.createElement('canvas');
-                                    const ctx = canvas.getContext('2d');
-                                    const MAX_SIZE = 256;
-                                    let width = img.width;
-                                    let height = img.height;
-
-                                    if (width > height) {
-                                        if (width > MAX_SIZE) {
-                                            height *= MAX_SIZE / width;
-                                            width = MAX_SIZE;
-                                        }
-                                    } else {
-                                        if (height > MAX_SIZE) {
-                                            width *= MAX_SIZE / height;
-                                            height = MAX_SIZE;
-                                        }
-                                    }
-
-                                    canvas.width = width;
-                                    canvas.height = height;
-                                    ctx?.drawImage(img, 0, 0, width, height);
-
-                                    const dataUrl = canvas.toDataURL('image/webp', 0.8);
-                                    setAvatarUrl(dataUrl);
-                                };
-                                img.src = event.target?.result as string;
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                        e.target.value = '';
-                    }}
-                />
+                <Dialog open={avatarDialogOpen} onOpenChange={setAvatarDialogOpen}>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle>Update Profile Picture</DialogTitle>
+                      <DialogDescription>
+                        Upload a new image for your avatar
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-2">
+                      <FileUploadProgressBar 
+                        customUploadStrategy={handleAvatarUploadStrategy}
+                        acceptedTypes="image/*"
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
               <div className="flex flex-col gap-1 w-full justify-center">
                 <div className="flex items-center justify-between w-full">
@@ -357,7 +384,7 @@ export default function ProfilePage() {
               </div>
 
               <Button onClick={handleSaveProfile} disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {saving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                 Save Changes
               </Button>
             </div>
@@ -400,7 +427,7 @@ export default function ProfilePage() {
                 </Button>
               ) : (
                 <Button onClick={handleSetupMfa} disabled={mfaLoading}>
-                  {mfaLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {mfaLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                   Enable 2FA
                 </Button>
               )}
@@ -451,7 +478,7 @@ export default function ProfilePage() {
                     onClick={handleChangePassword}
                     disabled={changingPassword || !newPassword || !confirmPassword}
                   >
-                    {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {changingPassword && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                     Change Password
                   </Button>
                 </div>
@@ -558,7 +585,7 @@ export default function ProfilePage() {
               onClick={handleVerifyMfa}
               disabled={mfaLoading || mfaCode.length !== 6}
             >
-              {mfaLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {mfaLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               Verify & Enable
             </Button>
           </DialogFooter>
@@ -581,7 +608,7 @@ export default function ProfilePage() {
               onClick={handleDisableMfa}
               className="bg-destructive text-destructive-foreground"
             >
-              {mfaLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {mfaLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               Disable 2FA
             </AlertDialogAction>
           </AlertDialogFooter>

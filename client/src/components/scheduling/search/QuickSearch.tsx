@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * Quick Search Component
  *
@@ -9,15 +11,7 @@
 import * as React from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Search,
-  Calendar,
-  CheckSquare,
-  Building,
-  Clock,
-  Loader2,
-  ArrowRight,
-} from 'lucide-react';
+import { Search, Calendar, CheckSquare, Building, Clock, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuickSearch } from '@/lib/scheduling/hooks/use-schedule-search';
 import type { ScheduleBlock, BlockType } from '@/lib/scheduling/types/scheduling';
@@ -136,7 +130,7 @@ export function QuickSearch({
         >
           {isLoading && (
             <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
               Recherche...
             </div>
           )}

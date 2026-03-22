@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { Editor } from '@tiptap/react';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,15 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Download,
-  FileText,
-  FileType,
-  FileCode,
-  FileJson,
-  Loader2,
-  MessageSquare,
-} from 'lucide-react';
+import { Download, FileText, FileType, FileCode, FileJson, MessageSquare } from 'lucide-react';
 import { useDocumentExport } from '@/hooks/use-document-export';
 import { ExportComment } from '@/lib/api/office';
 
@@ -52,7 +46,7 @@ export function ExportMenu({ editor, documentTitle = 'document', comments }: Exp
         >
           {isExporting ? (
             <>
-              <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 mr-1.5 " />
               Export...
             </>
           ) : (
@@ -86,7 +80,7 @@ export function ExportMenu({ editor, documentTitle = 'document', comments }: Exp
             </span>
           </div>
           {isExporting && exportFormat === 'docx' && (
-            <Loader2 className="h-4 w-4 ml-auto animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
           )}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -100,7 +94,7 @@ export function ExportMenu({ editor, documentTitle = 'document', comments }: Exp
             <span className="text-xs text-muted-foreground">.pdf</span>
           </div>
           {isExporting && exportFormat === 'pdf' && (
-            <Loader2 className="h-4 w-4 ml-auto animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
           )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -115,7 +109,7 @@ export function ExportMenu({ editor, documentTitle = 'document', comments }: Exp
             <span className="text-xs text-muted-foreground">.md</span>
           </div>
           {isExporting && exportFormat === 'markdown' && (
-            <Loader2 className="h-4 w-4 ml-auto animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
           )}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -129,7 +123,7 @@ export function ExportMenu({ editor, documentTitle = 'document', comments }: Exp
             <span className="text-xs text-muted-foreground">.html</span>
           </div>
           {isExporting && exportFormat === 'html' && (
-            <Loader2 className="h-4 w-4 ml-auto animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
           )}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -143,7 +137,7 @@ export function ExportMenu({ editor, documentTitle = 'document', comments }: Exp
             <span className="text-xs text-muted-foreground">.txt</span>
           </div>
           {isExporting && exportFormat === 'text' && (
-            <Loader2 className="h-4 w-4 ml-auto animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 ml-auto " />
           )}
         </DropdownMenuItem>
       </DropdownMenuContent>

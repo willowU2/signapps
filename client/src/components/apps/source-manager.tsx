@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from 'react';
 import {
   Dialog,
@@ -11,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, RefreshCw, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, RefreshCw, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { storeApi } from '@/lib/api';
 import type { AppSource } from '@/lib/api';
 import { toast } from 'sonner';
@@ -158,7 +160,7 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
                 disabled={validating || !newUrl.trim()}
               >
                 {validating ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                 ) : (
                   <CheckCircle2 className="mr-2 h-4 w-4" />
                 )}
@@ -179,7 +181,7 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
             disabled={adding || !newName.trim() || !newUrl.trim() || !validation?.valid}
           >
             {adding ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
             ) : (
               <Plus className="mr-2 h-4 w-4" />
             )}
@@ -191,7 +193,7 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
         <div className="space-y-3">
           {loading && sources.length === 0 && (
             <div className="flex justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
             </div>
           )}
 

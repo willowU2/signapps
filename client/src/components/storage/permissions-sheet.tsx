@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useEffect } from "react";
 import {
   Sheet,
@@ -17,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2 } from "lucide-react";
+
 import { storageApi } from "@/lib/api";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -227,7 +229,7 @@ export function PermissionsSheet({
         <div className="flex-1 overflow-hidden mt-6 -mx-6 px-6 relative">
           {fetching ? (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
             </div>
           ) : (
             <ScrollArea className="h-full">
@@ -319,7 +321,7 @@ export function PermissionsSheet({
             Annuler
           </Button>
           <Button onClick={handleSave} disabled={loading || fetching}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
             Appliquer
           </Button>
         </div>

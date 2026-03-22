@@ -1,4 +1,6 @@
 'use client';
+import { SpinnerInfinity } from 'spinners-react';
+
 
 import { useEffect, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -95,7 +97,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         suppressHydrationWarning
       >
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <SpinnerInfinity size={32} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
           <span>Loading...</span>
         </div>
       </div>

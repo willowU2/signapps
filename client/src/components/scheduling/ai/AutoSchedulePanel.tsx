@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * AutoSchedulePanel Component
  *
@@ -10,22 +12,7 @@
 import * as React from 'react';
 import { format, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Sparkles,
-  Play,
-  Pause,
-  Settings,
-  Calendar,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  ChevronDown,
-  ChevronRight,
-  RotateCcw,
-  Loader2,
-  Zap,
-} from 'lucide-react';
+import { Sparkles, Play, Pause, Settings, Calendar, Clock, AlertTriangle, CheckCircle2, XCircle, ChevronDown, ChevronRight, RotateCcw, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -481,7 +468,7 @@ export function AutoSchedulePanel({
                 >
                   {isScheduling ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 mr-2 " />
                       Planification...
                     </>
                   ) : (

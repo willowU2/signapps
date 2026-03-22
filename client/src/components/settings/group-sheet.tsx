@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+
 import { Group, CreateGroupRequest } from "@/lib/api";
 
 const groupFormSchema = z.object({
@@ -136,7 +138,7 @@ export function GroupSheet({
 
             <div className="flex justify-end pt-4">
               <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                 {isEditing ? "Save Changes" : "Create Group"}
               </Button>
             </div>

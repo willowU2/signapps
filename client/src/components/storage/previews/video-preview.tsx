@@ -1,14 +1,9 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useRef, useEffect, useState } from 'react';
-import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Maximize,
-  Loader2,
-} from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 
@@ -129,7 +124,7 @@ export function VideoPreview({ src, fileName }: VideoPreviewProps) {
         {/* Loading indicator */}
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <Loader2 className="h-8 w-8 animate-spin text-white" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-white" />
           </div>
         )}
 

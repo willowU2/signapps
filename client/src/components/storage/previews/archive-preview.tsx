@@ -1,7 +1,9 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from 'react';
-import { FileArchive, Loader2, Download } from 'lucide-react';
+import { FileArchive, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { previewApi } from '@/lib/api';
@@ -69,7 +71,7 @@ export function ArchivePreview({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
       </div>
     );
   }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { useSpreadsheet } from "./use-spreadsheet"
 import { AiSheetsDialog } from "./ai-sheets-dialog"
@@ -24,6 +24,7 @@ import {
     ListChecks, ExternalLink, StretchHorizontal, Lock, Unlock, Hash
 } from "lucide-react"
 import { toast } from "sonner"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 const ALIGN_CYCLE: ('left' | 'center' | 'right')[] = ['left', 'center', 'right']
 const VALIGN_CYCLE: ('top' | 'middle' | 'bottom')[] = ['top', 'middle', 'bottom']
@@ -124,15 +125,20 @@ function formatDisplayValue(value: string, style?: CellStyle): string {
 }
 
 // ---- Toolbar Button ----
-function TBtn({ onClick, active, title, children, className }: {
-    onClick: () => void, active?: boolean, title?: string, children: React.ReactNode, className?: string
-}) {
+const TBtn = React.forwardRef<HTMLButtonElement, {
+    onClick?: React.MouseEventHandler<HTMLButtonElement>;
+    active?: boolean;
+    title?: string;
+    children: React.ReactNode;
+    className?: string;
+} & React.ButtonHTMLAttributes<HTMLButtonElement>>(({ onClick, active, title, children, className, ...props }, ref) => {
     return (
-        <ToolbarButton onClick={onClick} isActive={active} title={title} className={className} onMouseDown={(e) => e.preventDefault()}>
+        <ToolbarButton ref={ref} onClick={onClick} isActive={active} title={title} className={className} onMouseDown={(e) => { e.preventDefault(); props.onMouseDown?.(e); }} {...props}>
             {children}
         </ToolbarButton>
     )
-}
+});
+TBtn.displayName = 'TBtn';
 
 const Sep = () => <ToolbarDivider />
 
@@ -1466,10 +1472,6 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 { label: 'Importer', action: 'import' },
                 { label: 'Créer une copie', action: 'copyFile' },
                 { sep: true },
-                { label: 'Partager', subItems: [
-                    { label: 'Partager avec d\'autres personnes', action: 'share' },
-                    { label: 'Publier sur le Web', action: 'publish_web' }
-                ] },
                 { label: 'Envoyer par e-mail', action: 'email_send' },
                 { label: 'Télécharger', subItems: [
                     { label: 'Microsoft Excel (.xlsx)', action: 'export_xlsx' },
@@ -1883,40 +1885,40 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     <TBtn onClick={() => changeDecimals(-1)} title="R\u00E9duire d\u00E9cimales" className="tracking-tighter font-semibold text-xs">{".0\u2190"}</TBtn>
                     <TBtn onClick={() => changeDecimals(1)} title="Augmenter d\u00E9cimales" className="tracking-tighter font-semibold text-xs">{".00\u2192"}</TBtn>
                     {/* Number Format Dropdown */}
-                    <div className="relative" data-popover>
-                        <TBtn onClick={() => setShowNumberFormat(!showNumberFormat)} title="Format num\u00E9rique"><Hash className="w-[18px] h-[18px]" /></TBtn>
-                        {showNumberFormat && (
-                            <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 py-1 w-44">
-                                {([
-                                    { fmt: 'auto', label: 'Automatique' },
-                                    { fmt: 'number', label: 'Nombre (1 000,00)' },
-                                    { fmt: 'currency', label: 'Mon\u00E9taire (\u20AC)' },
-                                    { fmt: 'accounting', label: 'Comptabilit\u00E9' },
-                                    { fmt: 'percent', label: 'Pourcentage (%)' },
-                                    { fmt: 'scientific', label: 'Scientifique (1E+3)' },
-                                    { fmt: 'date', label: 'Date (AAAA-MM-JJ)' },
-                                    { fmt: 'time', label: 'Heure (HH:MM:SS)' },
-                                ] as { fmt: CellStyle['numberFormat'], label: string }[]).map(({ fmt, label }) => (
-                                    <button key={fmt} className={cn("w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]", activeCellStyle.numberFormat === fmt && "bg-[#e8f0fe] font-medium")} onClick={() => { applyToSelection({ numberFormat: fmt }); setShowNumberFormat(false) }}>{label}</button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    <Popover open={showNumberFormat} onOpenChange={setShowNumberFormat}>
+                        <PopoverTrigger asChild>
+                            <TBtn title="Format num\u00E9rique"><Hash className="w-[18px] h-[18px]" /></TBtn>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-44 p-1" align="start" sideOffset={8}>
+                            {([
+                                { fmt: 'auto', label: 'Automatique' },
+                                { fmt: 'number', label: 'Nombre (1 000,00)' },
+                                { fmt: 'currency', label: 'Mon\u00E9taire (\u20AC)' },
+                                { fmt: 'accounting', label: 'Comptabilit\u00E9' },
+                                { fmt: 'percent', label: 'Pourcentage (%)' },
+                                { fmt: 'scientific', label: 'Scientifique (1E+3)' },
+                                { fmt: 'date', label: 'Date (AAAA-MM-JJ)' },
+                                { fmt: 'time', label: 'Heure (HH:MM:SS)' },
+                            ] as { fmt: CellStyle['numberFormat'], label: string }[]).map(({ fmt, label }) => (
+                                <button key={fmt} className={cn("w-full text-left px-3 py-1.5 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded-sm", activeCellStyle.numberFormat === fmt && "bg-[#e8f0fe] dark:bg-[#3c4043] font-medium")} onClick={() => { applyToSelection({ numberFormat: fmt }); setShowNumberFormat(false) }}>{label}</button>
+                            ))}
+                        </PopoverContent>
+                    </Popover>
                     <Sep />
                     {/* Font Picker */}
-                    <div className="relative" data-popover>
-                        <button className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] border border-transparent hover:border-[#c7c7c7] hover:bg-background rounded flex items-center cursor-pointer h-7 w-24 justify-between mx-0.5" onClick={() => setShowFontPicker(!showFontPicker)}>
-                            <span className="truncate">{activeCellStyle.fontFamily || 'Arial'}</span>
-                            <ChevronDown className="w-3 h-3 ml-1 shrink-0" />
-                        </button>
-                        {showFontPicker && (
-                            <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 w-48 max-h-48 overflow-y-auto py-1">
-                                {FONTS.map(font => (
-                                    <button key={font} className={cn("w-full px-3 py-1.5 text-left text-[13px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043]", activeCellStyle.fontFamily === font && "bg-[#e8f0fe]")} style={{ fontFamily: font }} onClick={() => { applyToSelection({ fontFamily: font }); setShowFontPicker(false) }}>{font}</button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    <Popover open={showFontPicker} onOpenChange={setShowFontPicker}>
+                        <PopoverTrigger asChild>
+                            <button className="px-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] border border-transparent hover:border-[#c7c7c7] border hover:bg-background rounded flex items-center cursor-pointer h-7 w-24 justify-between mx-0.5" >
+                                <span className="truncate">{activeCellStyle.fontFamily || 'Arial'}</span>
+                                <ChevronDown className="w-3 h-3 ml-1 shrink-0" />
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 max-h-64 p-1 overflow-y-auto" align="start" sideOffset={8}>
+                            {FONTS.map(font => (
+                                <button key={font} className={cn("w-full px-3 py-1.5 text-left text-[13px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded-sm", activeCellStyle.fontFamily === font && "bg-[#e8f0fe] dark:bg-[#3c4043]")} style={{ fontFamily: font }} onClick={() => { applyToSelection({ fontFamily: font }); setShowFontPicker(false) }}>{font}</button>
+                            ))}
+                        </PopoverContent>
+                    </Popover>
                     {/* Font Size */}
                     <div className="flex items-center border border-transparent hover:border-[#c7c7c7] rounded h-7 ml-0.5 bg-transparent hover:bg-background transition-colors">
                         <button className="px-1.5 text-[13px] text-[#444746] cursor-pointer hover:bg-gray-100 h-full flex items-center" onClick={() => changeFontSize(-1)}><Minus className="w-[14px] h-[14px]" /></button>
@@ -1929,41 +1931,45 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     <TBtn onClick={() => toggleBoolFormat('underline')} active={activeCellStyle.underline} title="Soulign\u00E9 (Ctrl+U)" className="font-serif underline">U</TBtn>
                     <TBtn onClick={() => toggleBoolFormat('strikethrough')} active={activeCellStyle.strikethrough} title="Barr\u00E9"><Strikethrough className="w-[18px] h-[18px]" /></TBtn>
                     {/* Text Color */}
-                    <div className="relative" data-popover>
-                        <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative" title="Couleur du texte" onClick={() => { setShowTextColor(!showTextColor); setShowFillColor(false) }}>
-                            <Type className="w-[18px] h-[18px]" />
-                            <div className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm" style={{ backgroundColor: activeCellStyle.textColor || '#000000' }} />
-                        </button>
-                        {showTextColor && (
-                            <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-[220px]">
-                                <div className="grid grid-cols-10 gap-1">
-                                    {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ textColor: color }); setShowTextColor(false) }} />))}
-                                </div>
-                                <button className="mt-2 text-xs text-[#1a73e8] hover:underline" onClick={() => { applyToSelection({ textColor: undefined }); setShowTextColor(false) }}>R\u00E9initialiser</button>
+                    <Popover open={showTextColor} onOpenChange={setShowTextColor}>
+                        <PopoverTrigger asChild>
+                            <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative" title="Couleur du texte" onClick={() => setShowFillColor(false)}>
+                                <Type className="w-[18px] h-[18px]" />
+                                <div className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm" style={{ backgroundColor: activeCellStyle.textColor || '#000000' }} />
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[220px] p-2" align="start" sideOffset={8}>
+                            <div className="grid grid-cols-10 gap-1">
+                                {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ textColor: color }); setShowTextColor(false) }} />))}
                             </div>
-                        )}
-                    </div>
+                            <button className="mt-2 text-xs text-[#1a73e8] hover:underline" onClick={() => { applyToSelection({ textColor: undefined }); setShowTextColor(false) }}>R\u00E9initialiser</button>
+                        </PopoverContent>
+                    </Popover>
                     {/* Fill Color */}
-                    <div className="relative" data-popover>
-                        <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative" title="Couleur de remplissage" onClick={() => { setShowFillColor(!showFillColor); setShowTextColor(false) }}>
-                            <PaintBucket className="w-[18px] h-[18px]" />
-                            <div className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm" style={{ backgroundColor: activeCellStyle.fillColor || 'transparent' }} />
-                        </button>
-                        {showFillColor && (
-                            <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-[220px]">
-                                <div className="grid grid-cols-10 gap-1">
-                                    {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ fillColor: color }); setShowFillColor(false) }} />))}
-                                </div>
-                                <button className="mt-2 text-xs text-[#1a73e8] hover:underline" onClick={() => { applyToSelection({ fillColor: undefined }); setShowFillColor(false) }}>Aucun</button>
+                    <Popover open={showFillColor} onOpenChange={setShowFillColor}>
+                        <PopoverTrigger asChild>
+                            <button className="p-1 px-1.5 hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] text-[#444746] dark:text-[#e3e3e3] rounded flex items-center justify-center transition-colors relative" title="Couleur de remplissage" onClick={() => setShowTextColor(false)}>
+                                <PaintBucket className="w-[18px] h-[18px]" />
+                                <div className="absolute bottom-0.5 left-1.5 right-1.5 h-[3px] rounded-sm" style={{ backgroundColor: activeCellStyle.fillColor || 'transparent' }} />
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[220px] p-2" align="start" sideOffset={8}>
+                            <div className="grid grid-cols-10 gap-1">
+                                {PRESET_COLORS.map(color => (<button key={color} className="w-5 h-5 rounded-sm border border-gray-200 hover:scale-125 transition-transform" style={{ backgroundColor: color }} onClick={() => { applyToSelection({ fillColor: color }); setShowFillColor(false) }} />))}
                             </div>
-                        )}
-                    </div>
+                            <button className="mt-2 text-xs text-[#1a73e8] hover:underline" onClick={() => { applyToSelection({ fillColor: undefined }); setShowFillColor(false) }}>Aucun</button>
+                        </PopoverContent>
+                    </Popover>
                     <Sep />
                     {/* Borders */}
-                    <div className="relative" data-popover>
-                        <TBtn onClick={() => setShowBorderPicker(!showBorderPicker)} title="Bordures"><Grid3X3 className="w-[18px] h-[18px]" /></TBtn>
-                        {showBorderPicker && <BorderPicker onSelect={applyBorders} onClose={() => setShowBorderPicker(false)} />}
-                    </div>
+                    <Popover open={showBorderPicker} onOpenChange={setShowBorderPicker}>
+                        <PopoverTrigger asChild>
+                            <TBtn title="Bordures"><Grid3X3 className="w-[18px] h-[18px]" /></TBtn>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-1" align="start" sideOffset={8}>
+                            <BorderPicker onSelect={applyBorders} onClose={() => setShowBorderPicker(false)} />
+                        </PopoverContent>
+                    </Popover>
                     <TBtn onClick={handleMerge} active={!!activeCellStyle.mergeRows} title="Fusionner"><Maximize className="w-[18px] h-[18px]" /></TBtn>
                     <Sep />
                     <TBtn onClick={cycleAlign} title={`Alignement: ${activeCellStyle.align || 'left'}`}>
@@ -1971,79 +1977,75 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     </TBtn>
                     <TBtn onClick={cycleVerticalAlign} title={`V-Align: ${activeCellStyle.verticalAlign || 'middle'}`}><AlignVerticalJustifyCenter className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => toggleBoolFormat('wrap')} active={activeCellStyle.wrap} title="Retour \u00E0 la ligne"><WrapText className="w-[18px] h-[18px]" /></TBtn>
-                    <div className="relative" data-popover>
-                        <TBtn onClick={() => setShowRotationInput(!showRotationInput)} active={!!activeCellStyle.rotation} title="Rotation du texte"><RotateCw className="w-[18px] h-[18px]" /></TBtn>
-                        {showRotationInput && (
-                            <div className="absolute top-8 left-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-3 w-48">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-[12px] font-medium">Angle</span>
-                                    <button onClick={() => setShowRotationInput(false)}><X className="w-3 h-3" /></button>
-                                </div>
-                                <div className="flex gap-1 mb-2">
-                                    {[0, 45, 90, -45, -90, 180].map(deg => (
-                                        <button key={deg} className={cn("px-2 py-1 text-[11px] rounded border", activeCellStyle.rotation === deg ? "bg-[#e8f0fe] border-[#1a73e8]" : "border-gray-200 hover:bg-gray-100")} onClick={() => { applyToSelection({ rotation: deg === 0 ? undefined : deg }); setShowRotationInput(false) }}>{deg}°</button>
-                                    ))}
-                                </div>
-                                <input type="range" min={-90} max={90} value={activeCellStyle.rotation || 0} className="w-full" onChange={(e) => applyToSelection({ rotation: Number(e.target.value) || undefined })} />
+                    <Popover open={showRotationInput} onOpenChange={setShowRotationInput}>
+                        <PopoverTrigger asChild>
+                            <TBtn active={!!activeCellStyle.rotation} title="Rotation du texte"><RotateCw className="w-[18px] h-[18px]" /></TBtn>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-3" align="start" sideOffset={8}>
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-[12px] font-medium">Angle</span>
+                                <button onClick={() => setShowRotationInput(false)}><X className="w-3 h-3" /></button>
                             </div>
-                        )}
-                    </div>
+                            <div className="flex gap-1 mb-2">
+                                {[0, 45, 90, -45, -90, 180].map(deg => (
+                                    <button key={deg} className={cn("px-2 py-1 text-[11px] rounded border", activeCellStyle.rotation === deg ? "bg-[#e8f0fe] border-[#1a73e8]" : "border-gray-200 hover:bg-gray-100")} onClick={() => { applyToSelection({ rotation: deg === 0 ? undefined : deg }); setShowRotationInput(false) }}>{deg}°</button>
+                                ))}
+                            </div>
+                            <input type="range" min={-90} max={90} value={activeCellStyle.rotation || 0} className="w-full" onChange={(e) => applyToSelection({ rotation: Number(e.target.value) || undefined })} />
+                        </PopoverContent>
+                    </Popover>
                     <Sep />
                     <TBtn onClick={() => { const url = prompt("URL:"); if (url && activeCell) { setCell(activeCell.r, activeCell.c, url); toast.success("Lien ins\u00E9r\u00E9") } }} title="Lien"><Link className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => { if (!activeCell) return; const existing = data[`${activeCell.r},${activeCell.c}`]?.comment || ''; const c = prompt("Commentaire:", existing); if (c !== null) { setCellComment(activeCell.r, activeCell.c, c || undefined); toast.success(c ? 'Commentaire ajouté' : 'Commentaire supprimé') } }} title="Commentaire"><MessageSquare className="w-[18px] h-[18px]" /></TBtn>
                     {/* Chart picker */}
-                    <div className="relative" data-popover>
-                        <TBtn onClick={() => setShowChartPicker(!showChartPicker)} title="Graphique"><BarChart2 className="w-[18px] h-[18px]" /></TBtn>
-                        {showChartPicker && (
-                            <div className="absolute top-8 right-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-2 w-36">
-                                <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => openChart('bar')}>Barres</button>
-                                <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => openChart('line')}>Ligne</button>
-                                <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => openChart('pie')}>Circulaire</button>
-                            </div>
-                        )}
-                    </div>
+                    <Popover open={showChartPicker} onOpenChange={setShowChartPicker}>
+                        <PopoverTrigger asChild>
+                            <TBtn title="Graphique"><BarChart2 className="w-[18px] h-[18px]" /></TBtn>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-36 p-1" align="end" sideOffset={8}>
+                            <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => { openChart('bar'); setShowChartPicker(false); }}>Barres</button>
+                            <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => { openChart('line'); setShowChartPicker(false); }}>Ligne</button>
+                            <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => { openChart('pie'); setShowChartPicker(false); }}>Circulaire</button>
+                        </PopoverContent>
+                    </Popover>
                     <TBtn onClick={toggleFilter} active={filterCol !== null} title="Filtre"><Filter className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={toggleFreeze} active={freezeRows > 0 || freezeCols > 0} title="Figer lignes/colonnes"><Snowflake className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => setShowCondFormat(true)} active={condRules.length > 0} title="Mise en forme conditionnelle"><Palette className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => exportXLSX('csv')} title="Exporter CSV"><Download className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => fileInputRef.current?.click()} title="Importer (CSV/XLSX)"><Upload className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => { if (!activeCell) return; const vals = prompt("Valeurs de la liste (séparées par des virgules):"); if (vals) { setCellValidation(activeCell.r, activeCell.c, { type: 'list', values: vals.split(',').map(v => v.trim()) }); toast.success('Validation ajoutée') } }} title="Validation des données"><ListChecks className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => setBandedRows(!bandedRows)} active={bandedRows} title="Couleurs alternées"><StretchHorizontal className="w-[18px] h-[18px]" /></TBtn>
-                    <TBtn onClick={() => { if (!selectionBounds) return; const isLocked = activeCellStyle.locked; applyToSelection({ locked: !isLocked }); toast.success(isLocked ? 'Cellules d\u00E9verrouill\u00E9es' : 'Cellules verrouill\u00E9es') }} active={!!activeCellStyle.locked} title={activeCellStyle.locked ? "D\u00E9verrouiller" : "Verrouiller"}>{activeCellStyle.locked ? <Lock className="w-[18px] h-[18px]" /> : <Unlock className="w-[18px] h-[18px]" />}</TBtn>
+
                     {/* Functions helper */}
-                    <div className="relative" data-popover>
-                        <TBtn onClick={() => setShowFunctionHelper(!showFunctionHelper)} title="Fonctions"><Sigma className="w-[18px] h-[18px]" /></TBtn>
-                        {showFunctionHelper && (
-                            <div className="absolute top-8 right-0 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-lg shadow-lg z-50 p-3 w-64 max-h-72 overflow-y-auto">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="font-medium text-[13px]">Fonctions</span>
-                                    <button onClick={() => setShowFunctionHelper(false)}><X className="w-4 h-4" /></button>
-                                </div>
-                                {[
-                                    { fn: '=SUM(A1:A10)', desc: 'Somme' },
-                                    { fn: '=AVERAGE(A1:A10)', desc: 'Moyenne' },
-                                    { fn: '=COUNT(A1:A10)', desc: 'Nombre' },
-                                    { fn: '=MAX(A1:A10)', desc: 'Maximum' },
-                                    { fn: '=MIN(A1:A10)', desc: 'Minimum' },
-                                    { fn: '=IF(A1>5,"Oui","Non")', desc: 'Condition' },
-                                    { fn: '=VLOOKUP(A1,B1:C10,2)', desc: 'Recherche V' },
-                                    { fn: '=CONCATENATE(A1,B1)', desc: 'Concat\u00E9ner' },
-                                    { fn: '=ROUND(A1,2)', desc: 'Arrondir' },
-                                    { fn: '=COUNTIF(A1:A10,">5")', desc: 'NB.SI' },
-                                    { fn: '=SUMIF(A1:A10,">5")', desc: 'SOMME.SI' },
-                                    { fn: '=TODAY()', desc: "Date du jour" },
-                                    { fn: '=LEN(A1)', desc: 'Longueur' },
-                                    { fn: '=UPPER(A1)', desc: 'Majuscules' },
-                                    { fn: '=IFERROR(A1/B1,0)', desc: 'Si erreur' },
-                                ].map(({ fn, desc }) => (
-                                    <button key={fn} className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded" onClick={() => { if (activeCell) { setEditValue(fn); setCell(activeCell.r, activeCell.c, fn); setIsEditing(true); setShowFunctionHelper(false); setTimeout(() => formulaBarRef.current?.focus(), 0) } }}>
-                                        <span className="font-mono text-[#1a73e8]">{fn}</span>
-                                        <span className="ml-2 text-[#5f6368]">{desc}</span>
-                                    </button>
-                                ))}
+                    <Popover open={showFunctionHelper} onOpenChange={setShowFunctionHelper}>
+                        <PopoverTrigger asChild>
+                            <TBtn title="Fonctions"><Sigma className="w-[18px] h-[18px]" /></TBtn>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 max-h-72 p-1 overflow-y-auto" align="end" sideOffset={8}>
+                            <div className="flex items-center justify-between mb-2 px-2 pt-1">
+                                <span className="font-medium text-[13px]">Fonctions</span>
+                                <button onClick={() => setShowFunctionHelper(false)}><X className="w-4 h-4" /></button>
                             </div>
-                        )}
-                    </div>
+                            {[
+                                { fn: '=SUM(A1:A10)', desc: 'Somme' },
+                                { fn: '=AVERAGE(A1:A10)', desc: 'Moyenne' },
+                                { fn: '=COUNT(A1:A10)', desc: 'Nombre' },
+                                { fn: '=MAX(A1:A10)', desc: 'Maximum' },
+                                { fn: '=MIN(A1:A10)', desc: 'Minimum' },
+                                { fn: '=IF(A1>5,"Oui","Non")', desc: 'Condition' },
+                                { fn: '=VLOOKUP(A1,B1:C10,2)', desc: 'Recherche V' },
+                                { fn: '=CONCATENATE(A1,B1)', desc: 'Concat\u00E9ner' },
+                                { fn: '=ROUND(A1,2)', desc: 'Arrondir' },
+                                { fn: '=COUNTIF(A1:A10,">5")', desc: 'NB.SI' },
+                                { fn: '=SUMIF(A1:A10,">5")', desc: 'SOMME.SI' },
+                                { fn: '=TODAY()', desc: "Date du jour" },
+                                { fn: '=LEN(A1)', desc: 'Longueur' },
+                                { fn: '=UPPER(A1)', desc: 'Majuscules' },
+                                { fn: '=IFERROR(A1/B1,0)', desc: 'Si erreur' },
+                            ].map(({ fn, desc }) => (
+                                <button key={fn} className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] dark:hover:bg-[#3c4043] rounded" onClick={() => { if (activeCell) { setEditValue(fn); setCell(activeCell.r, activeCell.c, fn); setIsEditing(true); setShowFunctionHelper(false); setTimeout(() => formulaBarRef.current?.focus(), 0) } }}>
+                                    <span className="font-mono text-[#1a73e8]">{fn}</span>
+                                    <span className="ml-2 text-[#5f6368]">{desc}</span>
+                                </button>
+                            ))}
+                        </PopoverContent>
+                    </Popover>
                     <div className="ml-auto flex items-center pr-1 shrink-0 relative">
                         <button
                             className={cn(

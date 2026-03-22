@@ -1,11 +1,13 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download, Package, ArrowUpCircle, CheckCircle2, Loader2, Layers, ExternalLink } from 'lucide-react';
+import { Download, Package, ArrowUpCircle, CheckCircle2, Layers, ExternalLink } from 'lucide-react';
 import type { StoreApp } from '@/lib/api';
 import { containersApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -121,7 +123,7 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, contai
                 disabled={updating}
               >
                 {updating ? (
-                  <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-1 h-3.5 w-3.5 " />
                 ) : (
                   <ArrowUpCircle className="mr-1 h-3.5 w-3.5" />
                 )}

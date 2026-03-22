@@ -1,9 +1,11 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useRef, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sparkles, Hash, Phone, Video, Search, ChevronDown, Bot, X, Loader2, CheckCircle, Info, LogIn } from "lucide-react"
+import { Sparkles, Hash, Phone, Video, Search, ChevronDown, Bot, X, CheckCircle, Info, LogIn } from 'lucide-react';
 import { useChat } from "@/hooks/use-chat"
 import { cn } from "@/lib/utils"
 import { MessageItem, ChatMessage } from "./message-item"
@@ -16,9 +18,12 @@ import Link from "next/link"
 
 interface ChatWindowProps {
     channelId: string
+    channelName?: string
+    isDm?: boolean | null
 }
 
-export function ChatWindow({ channelId }: ChatWindowProps) {
+export function ChatWindow({ channelId, channelName, isDm }: ChatWindowProps) {
+    const displayName = channelName || channelId;
     const scrollRef = useRef<HTMLDivElement>(null)
 
     // Use real authenticated user
@@ -163,13 +168,13 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2">
                                 <span className="font-bold text-[15px] leading-tight flex items-center gap-1 cursor-pointer hover:underline">
-                                    {channelId}
+                                    {displayName}
                                     <ChevronDown className="h-3 w-3 text-muted-foreground" />
                                 </span>
                             </div>
                             <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                                 <span className={cn("w-1.5 h-1.5 rounded-full", isConnected ? "bg-green-500" : "bg-yellow-500")} />
-                                {isConnected ? "34 members" : "Connecting..."}
+                                {isConnected ? (isDm ? "En ligne" : "34 members") : "Connecting..."}
                             </span>
                         </div>
                     </div>
@@ -217,16 +222,16 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                 </div>
 
                 {/* Messages List Area */}
-                <ScrollArea className="flex-1 px-4 relative" ref={scrollRef}>
+                <ScrollArea className="flex-1 min-h-0 px-4 relative" ref={scrollRef}>
                     <div className="flex flex-col min-h-full justify-end py-4">
                         {formattedMessages.length === 0 && isConnected && (
                             <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500">
                                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
                                     <Hash className="h-8 w-8" />
                                 </div>
-                                <h2 className="text-xl font-bold mb-2">Welcome to #{channelId}</h2>
+                                <h2 className="text-xl font-bold mb-2">Welcome to #{displayName}</h2>
                                 <p className="text-muted-foreground text-sm max-w-[300px]">
-                                    This is the start of the #{channelId} channel. You can message, share files, and collaborate.
+                                    This is the start of the #{displayName} channel. You can message, share files, and collaborate.
                                 </p>
                             </div>
                         )}
@@ -252,7 +257,7 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                                             <h4 className="text-sm font-semibold tracking-tight">{aiCard.title}</h4>
 
                                             {aiCard.status === 'generating' && (
-                                                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-2" />
+                                                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3  text-muted-foreground ml-2" />
                                             )}
                                         </div>
                                         <Button
@@ -314,10 +319,10 @@ export function ChatWindow({ channelId }: ChatWindowProps) {
                 </ScrollArea>
 
                 {/* Main Input Component */}
-                <div className="p-4 bg-background">
+                <div className="p-4 bg-background shrink-0">
                     <ChatInput
                         onSend={handleSendMessage}
-                        placeholder={`Message #${channelId}`}
+                        placeholder={`Message #${displayName}`}
                         disabled={!isConnected}
                     />
                 </div>

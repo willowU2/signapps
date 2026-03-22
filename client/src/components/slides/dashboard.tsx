@@ -1,10 +1,12 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { driveApi, DriveNode } from '@/lib/api';
 import { useEntityStore } from '@/stores/entity-hub-store';
-import { Loader2, Presentation, Plus, MoreVertical } from 'lucide-react';
+import { Presentation, Plus, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -85,7 +87,7 @@ export default function SlidesDashboard() {
     if (loading) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center p-8 h-full bg-background/50 backdrop-blur-sm">
-                <Loader2 className="h-8 w-8 animate-spin text-yellow-600 mb-4" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-yellow-600 mb-4" />
                 <p className="text-muted-foreground animate-pulse">Chargement de vos présentations...</p>
             </div>
         );
@@ -223,7 +225,7 @@ export default function SlidesDashboard() {
                             </Button>
                             <Button type="submit" disabled={isCreating || !newDocName.trim()} className="px-6 relative overflow-hidden group bg-yellow-600 hover:bg-yellow-700 text-white">
                                 {isCreating ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                                 ) : (
                                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                                 )}

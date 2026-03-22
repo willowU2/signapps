@@ -1,5 +1,7 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState, useRef, useCallback } from "react"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
@@ -10,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { MonitorSmartphone, Shield, Server, Plug, Settings, History, Lock, Eye, Terminal, X, Trash2, Loader2, RefreshCw, Edit } from "lucide-react"
+import { MonitorSmartphone, Shield, Server, Plug, Settings, History, Lock, Eye, Terminal, X, Trash2, RefreshCw, Edit } from 'lucide-react';
 import { remoteApi, RemoteConnection, CreateConnectionRequest, UpdateConnectionRequest } from "@/lib/api-remote"
 import { toast } from "sonner"
 
@@ -281,7 +283,7 @@ export default function RemoteAccessDashboard() {
                                         Annuler
                                     </Button>
                                     <Button onClick={handleCreateConnection} disabled={creating}>
-                                        {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        {creating && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                                         Crer
                                     </Button>
                                 </DialogFooter>
@@ -344,7 +346,7 @@ export default function RemoteAccessDashboard() {
                 {/* Connections Grid */}
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
                     </div>
                 ) : connections.length === 0 ? (
                     <Card className="p-12 text-center">
@@ -498,7 +500,7 @@ export default function RemoteAccessDashboard() {
                             Annuler
                         </Button>
                         <Button onClick={handleUpdateConnection} disabled={editing}>
-                            {editing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {editing && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                             Sauvegarder
                         </Button>
                     </DialogFooter>

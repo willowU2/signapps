@@ -1,5 +1,7 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState } from "react"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
@@ -19,10 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { identityApiClient as identityApi } from "@/lib/api"
-import {
-    Server, RefreshCw, Users, Shield, CheckCircle2, XCircle, Loader2,
-    FolderTree, Play, Settings, Lock, Eye, EyeOff
-} from "lucide-react"
+import { Server, RefreshCw, Users, Shield, CheckCircle2, XCircle, FolderTree, Play, Settings, Lock, Eye, EyeOff } from 'lucide-react';
 
 interface LdapConfig {
     id: string
@@ -192,7 +191,7 @@ export default function LdapPage() {
         return (
             <AppLayout>
                 <div className="flex items-center justify-center h-64">
-                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                    <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-8 h-8  text-muted-foreground" />
                 </div>
             </AppLayout>
         )
@@ -210,11 +209,11 @@ export default function LdapPage() {
                         {config?.enabled && (
                             <>
                                 <Button variant="outline" onClick={testConnection} disabled={testing}>
-                                    {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+                                    {testing ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " /> : <Play className="mr-2 h-4 w-4" />}
                                     Tester
                                 </Button>
                                 <Button variant="outline" onClick={syncUsers} disabled={syncing}>
-                                    {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                                    {syncing ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " /> : <RefreshCw className="mr-2 h-4 w-4" />}
                                     Synchroniser
                                 </Button>
                             </>
@@ -453,7 +452,7 @@ export default function LdapPage() {
                         {/* Save Button */}
                         <div className="flex justify-end">
                             <Button onClick={saveConfig} disabled={saving}>
-                                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {saving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                                 Enregistrer la configuration
                             </Button>
                         </div>

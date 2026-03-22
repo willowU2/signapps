@@ -1,7 +1,9 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState } from "react"
-import { Bot, Sparkles, Loader2 } from "lucide-react"
+import { Bot, Sparkles } from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import { useOmniActions } from "@/stores/omni-store"
 import { usePageContext } from "@/lib/store/page-context"
@@ -64,7 +66,7 @@ export function ContextAssistant() {
         aria-label="Ask AI Assistant"
         title={tooltipText || undefined}
       >
-        {isExecuting ? <Loader2 className="h-6 w-6 animate-spin" /> :
+        {isExecuting ? <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6 " /> :
           isProactive ? <Sparkles className="h-6 w-6" /> : 
           <Bot className="h-6 w-6" />}
       </Button>

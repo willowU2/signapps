@@ -12,14 +12,35 @@ export async function fetchAndParseDocument(bucket: string, fileKey: string, fil
         // Files created natively without extensions are considered 'docx' blobs by signapps editor
         ext = 'docx';
     }
-    
     // 1. Download file stream/blob
-    let arrayBuffer: ArrayBuffer;
+    let arrayBuffer: ArrayBuffer | null = null;
     try {
         const blob = await storageApi.downloadFile(bucket, fileKey);
         arrayBuffer = await blob.arrayBuffer();
     } catch (e: any) {
-        throw new Error(`Failed to download file: ${e.message}`);
+        if (e.response?.status === 404 || e.response?.status === 502) {
+            console.warn(`File ${fileKey} not found (status ${e.response.status}). Treating as a new/empty file.`);
+            // It will be handled below by passing null or creating empty defaults.
+        } else {
+            throw new Error(`Failed to download file: ${e.message}`);
+        }
+    }
+
+    if (!arrayBuffer) {
+        // Return default empty state based on file type
+        if (['xlsx', 'xls', 'xlsb', 'csv', 'ods'].includes(ext)) {
+            return { type: 'spreadsheet', data: {}, sheets: ['Feuille 1'] };
+        }
+        if (['docx'].includes(ext)) {
+            return { type: 'document', html: '', warnings: [] };
+        }
+        if (['md', 'txt', 'html'].includes(ext)) {
+            return { type: 'document', text: '' };
+        }
+        if (['signslides', 'json'].includes(ext)) {
+            return { type: 'slides', format: { version: 1, slides: [] } };
+        }
+        throw new Error(`Unsupported file type for empty file: ${ext}`);
     }
 
     // 2. Parse content based on file type

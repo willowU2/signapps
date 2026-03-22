@@ -1,4 +1,6 @@
 'use client';
+import { SpinnerInfinity } from 'spinners-react';
+
 
 import { Suspense } from 'react';
 import { TextEditor } from './TextEditor';
@@ -38,7 +40,7 @@ function LoadingFallback() {
     return (
         <div className="flex items-center justify-center h-full">
             <div className="text-center">
-                <div className="animate-spin text-2xl">⏳</div>
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
                 <p className="text-gray-500 mt-2">Loading editor...</p>
             </div>
         </div>

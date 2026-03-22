@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useCallback, useEffect, useState } from 'react';
 import {
   Dialog,
@@ -19,16 +21,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import {
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-  ChevronDown,
-  AlertTriangle,
-  Plus,
-  Trash2,
-  Globe,
-} from 'lucide-react';
+import { CheckCircle, AlertCircle, ChevronDown, AlertTriangle, Plus, Trash2, Globe } from 'lucide-react';
 import { storeApi, routesApi } from '@/lib/api';
 import type {
   StoreApp,
@@ -890,7 +883,7 @@ export function InstallDialog({
             >
               {installing ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                   Installing...
                 </>
               ) : (

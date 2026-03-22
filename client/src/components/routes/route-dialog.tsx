@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -27,19 +29,7 @@ import {
 } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import {
-  Loader2,
-  Plus,
-  Trash2,
-  Globe,
-  Shield,
-  FileCode,
-  AlertTriangle,
-  Lock,
-  Unlock,
-  Server,
-  Info,
-} from 'lucide-react';
+import { Plus, Trash2, Globe, Shield, FileCode, AlertTriangle, Lock, Unlock, Server, Info } from 'lucide-react';
 import { routesApi, Route, CreateRouteRequest, ShieldConfig, HeadersConfig, HeaderEntry, TlsConfig, DnsRecord, GeoBlockConfig } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -1093,7 +1083,7 @@ export function RouteDialog({ open, onOpenChange, route, onSuccess }: RouteDialo
               Annuler
             </Button>
             <Button type="submit" disabled={loading || !name || !host || !target}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
               {isEdit ? 'Mettre à jour' : 'Créer la route'}
             </Button>
           </DialogFooter>

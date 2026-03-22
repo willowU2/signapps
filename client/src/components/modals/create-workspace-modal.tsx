@@ -1,3 +1,4 @@
+import { SpinnerInfinity } from 'spinners-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Loader2, Building2 } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 
 const workspaceSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -142,7 +143,7 @@ export function CreateWorkspaceModal({ open, onOpenChange }: CreateWorkspaceModa
                   className="h-[52px] px-8 rounded-xl text-[15px] bg-[#4d51f2] hover:bg-[#4d51f2]/90 text-white shadow-sm font-bold transition-all hover:-translate-y-0.5"
                 >
                   {isSubmitting ? (
-                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Creating...</>
+                    <><SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-5 w-5 " /> Creating...</>
                   ) : (
                     'Create Workspace'
                   )}

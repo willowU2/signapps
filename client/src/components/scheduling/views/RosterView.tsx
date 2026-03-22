@@ -1,4 +1,6 @@
 'use client';
+import { SpinnerInfinity } from 'spinners-react';
+
 
 /**
  * RosterView Component
@@ -294,7 +296,7 @@ export function RosterView({
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
         <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <SpinnerInfinity size={32} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
           <p className="text-sm text-muted-foreground">Chargement...</p>
         </div>
       </div>

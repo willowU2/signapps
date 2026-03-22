@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { sharesApi } from "@/lib/api";
 import { toast } from "sonner";
-import { Loader2, Link as LinkIcon, Lock, Calendar } from "lucide-react";
+import { Link as LinkIcon, Lock, Calendar } from 'lucide-react';
 import { FileItem } from "./types";
 
 interface ShareSheetProps {
@@ -144,7 +146,7 @@ export function ShareSheet({ open, onOpenChange, item }: ShareSheetProps) {
             </Button>
             <Button onClick={handleShare} disabled={loading} className="gap-2">
               {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="w-4 h-4 " />
               ) : (
                 <LinkIcon className="w-4 h-4" />
               )}

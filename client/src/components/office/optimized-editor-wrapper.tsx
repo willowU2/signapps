@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * OptimizedEditorWrapper
  *
@@ -8,7 +10,7 @@
  */
 
 import React, { Suspense, useCallback, useState } from 'react';
-import { Loader2, Download, AlertCircle, RefreshCw } from 'lucide-react';
+import { Download, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -131,7 +133,7 @@ function ExportMenu({ type, isExporting, onExport }: ExportMenuProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" disabled={isExporting}>
           {isExporting ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
           ) : (
             <Download className="mr-2 h-4 w-4" />
           )}

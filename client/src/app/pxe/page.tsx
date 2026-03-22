@@ -1,5 +1,7 @@
 "use client"
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useState, useCallback } from "react"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -12,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import { Terminal, Upload, Play, Settings, RefreshCw, HardDrive, Cpu, FileJson, CheckCircle2, Loader2, Trash2, Edit, Plus, Network, Clock } from "lucide-react"
+import { Terminal, Upload, Play, Settings, RefreshCw, HardDrive, Cpu, FileJson, CheckCircle2, Trash2, Edit, Plus, Network, Clock } from 'lucide-react';
 import { pxeApi, PxeProfile, PxeAsset, CreatePxeProfileRequest, UpdatePxeProfileRequest, RegisterPxeAssetRequest, UpdatePxeAssetRequest } from "@/lib/api-pxe"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
@@ -309,7 +311,7 @@ export default function PXEDashboard() {
                             <CardContent>
                                 {loading ? (
                                     <div className="flex items-center justify-center py-12">
-                                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
                                     </div>
                                 ) : profiles.length === 0 ? (
                                     <div className="text-center py-12">
@@ -379,7 +381,7 @@ export default function PXEDashboard() {
                             <CardContent>
                                 {loading ? (
                                     <div className="flex items-center justify-center py-12">
-                                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
                                     </div>
                                 ) : assets.length === 0 ? (
                                     <div className="text-center py-12">
@@ -411,7 +413,7 @@ export default function PXEDashboard() {
                                                         <TableCell>
                                                             <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border font-medium text-xs ${getStatusColor(asset.status)}`}>
                                                                 {asset.status === 'deployed' && <CheckCircle2 className="h-3 w-3" />}
-                                                                {asset.status === 'provisioning' && <Loader2 className="h-3 w-3 animate-spin" />}
+                                                                {asset.status === 'provisioning' && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3 " />}
                                                                 {asset.status}
                                                             </span>
                                                         </TableCell>
@@ -523,7 +525,7 @@ export default function PXEDashboard() {
                             Annuler
                         </Button>
                         <Button onClick={handleSaveProfile} disabled={saving}>
-                            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {saving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                             {editingProfile ? 'Sauvegarder' : 'Crer'}
                         </Button>
                     </DialogFooter>
@@ -582,7 +584,7 @@ export default function PXEDashboard() {
                             Annuler
                         </Button>
                         <Button onClick={handleSaveAsset} disabled={saving}>
-                            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {saving && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
                             {editingAsset ? 'Sauvegarder' : 'Enregistrer'}
                         </Button>
                     </DialogFooter>

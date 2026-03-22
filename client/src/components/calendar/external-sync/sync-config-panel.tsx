@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * SyncConfigPanel Component
  *
@@ -29,20 +31,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  RefreshCw,
-  Settings2,
-  Trash2,
-  ArrowLeftRight,
-  ArrowRight,
-  ArrowLeft,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  Loader2,
-  Play,
-  Pause,
-} from 'lucide-react';
+import { RefreshCw, Settings2, Trash2, ArrowLeftRight, ArrowRight, ArrowLeft, Clock, AlertTriangle, CheckCircle2, Play, Pause } from 'lucide-react';
 import { useExternalSyncStore } from '@/stores/external-sync-store';
 import { useCalendarStore } from '@/stores/calendar-store';
 import type {
@@ -515,7 +504,7 @@ export function SyncConfigPanel({ className }: SyncConfigPanelProps) {
 
       {isLoadingConfigs ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
         </div>
       ) : syncConfigs.length === 0 ? (
         <Card>

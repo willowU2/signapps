@@ -12,10 +12,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Moon, Sun, Menu, LogOut, User as UserIcon, Settings, PanelLeft, PanelRight, Clock, Share2, MessageSquare, History } from 'lucide-react';
+import { Moon, Sun, Menu, LogOut, User as UserIcon, Settings, PanelLeft, PanelRight, Clock, History } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useSimulatedMultiplayer } from '@/hooks/use-simulated-multiplayer';
 
 interface EditorHeaderProps {
     documentId: string;
@@ -28,9 +27,6 @@ export function EditorHeader({ documentId, icon }: EditorHeaderProps) {
     const { theme, setTheme } = useTheme();
     const router = useRouter();
     const [mounted, setMounted] = useState(false);
-
-    // Fetch simulated collaborators for the header
-    const { collaborators } = useSimulatedMultiplayer(documentId, true);
 
     useEffect(() => {
         setMounted(true);
@@ -94,30 +90,7 @@ export function EditorHeader({ documentId, icon }: EditorHeaderProps) {
             </div>
 
             <div className="flex items-center gap-2">
-                {/* Collaborators */}
-                <div className="hidden md:flex items-center mr-2 -space-x-2">
-                    {collaborators.map((c) => (
-                        <div
-                            key={c.id}
-                            className="w-8 h-8 rounded-full border-2 border-background flex items-center justify-center font-bold text-sm text-white shadow-sm transition-transform hover:-translate-y-1 hover:z-10 cursor-pointer"
-                            style={{ backgroundColor: c.color }}
-                            title={c.name}
-                        >
-                            {c.name.charAt(0)}
-                        </div>
-                    ))}
-                </div>
 
-                {/* Global Editor Actions */}
-                <Button variant="outline" size="sm" className="hidden sm:flex gap-2 h-9">
-                    <MessageSquare className="h-4 w-4" />
-                    <span className="hidden lg:inline">Comments</span>
-                </Button>
-
-                <Button variant="default" size="sm" className="hidden sm:flex gap-2 h-9 mr-2">
-                    <Share2 className="h-4 w-4" />
-                    <span>Share</span>
-                </Button>
 
                 {/* Right Sidebar Toggle */}
                 <Button

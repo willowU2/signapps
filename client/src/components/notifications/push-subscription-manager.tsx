@@ -1,10 +1,12 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Loader2, MonitorSmartphone } from 'lucide-react';
+import { Trash2, MonitorSmartphone } from 'lucide-react';
 import { calendarApi } from '@/lib/api';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -54,7 +56,7 @@ export function PushSubscriptionManager() {
           <CardTitle>Registered Devices</CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center py-4">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
         </CardContent>
       </Card>
     );
@@ -100,7 +102,7 @@ export function PushSubscriptionManager() {
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
               >
                 {deletingId === sub.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
                 ) : (
                   <Trash2 className="h-4 w-4" />
                 )}

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useEffect, useRef, useState } from 'react';
 import {
   Dialog,
@@ -9,7 +11,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Loader2, XCircle, Download, Circle } from 'lucide-react';
+import { CheckCircle2, XCircle, Download, Circle } from 'lucide-react';
 import { getInstallProgressUrl } from '@/lib/api';
 import type { InstallEvent } from '@/lib/api';
 import { toast } from 'sonner';
@@ -142,7 +144,7 @@ export function InstallProgress({
       case 'pulling':
       case 'creating':
       case 'starting':
-        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+        return <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  text-blue-500" />;
       case 'done':
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case 'error':
@@ -212,7 +214,7 @@ export function InstallProgress({
             </Button>
           ) : (
             <Button variant="outline" disabled>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
               Installing...
             </Button>
           )}

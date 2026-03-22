@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState } from "react";
 import {
   Sheet,
@@ -13,15 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  Loader2,
-  Upload,
-  FileCode,
-  Box,
-  Network,
-  HardDrive,
-  Eye,
-} from "lucide-react";
+import { Upload, FileCode, Box, Network, HardDrive, Eye } from 'lucide-react';
 import { composeApi, ComposeServicePreview } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -159,7 +153,7 @@ export function ComposeImportSheet({
               disabled={!yaml.trim() || previewing}
             >
               {previewing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
               ) : (
                 <Eye className="h-4 w-4" />
               )}
@@ -222,7 +216,7 @@ export function ComposeImportSheet({
             disabled={loading || !yaml.trim()}
             className="gap-2"
           >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+            {loading && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />}
             Importer
           </Button>
         </div>

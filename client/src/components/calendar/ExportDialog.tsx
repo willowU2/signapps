@@ -1,3 +1,4 @@
+import { SpinnerInfinity } from 'spinners-react';
 import React, { useState } from "react";
 import {
   Dialog,
@@ -9,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Download, Loader } from "lucide-react";
+import { Download } from 'lucide-react';
 import { calendarApi } from "@/lib/api";
 
 interface ExportDialogProps {
@@ -184,7 +185,7 @@ export function ExportDialog({
             >
               {isExporting ? (
                 <>
-                  <Loader className="h-4 w-4 animate-spin" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
                   Exporting...
                 </>
               ) : (

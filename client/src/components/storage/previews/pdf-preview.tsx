@@ -1,20 +1,10 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import {
-  ZoomIn,
-  ZoomOut,
-  ChevronLeft,
-  ChevronRight,
-  Maximize2,
-  Minimize2,
-  Download,
-  Search,
-  Loader2,
-  FileWarning,
-  RotateCw,
-} from 'lucide-react';
+import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, Maximize2, Minimize2, Download, Search, FileWarning, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -244,7 +234,7 @@ export function PDFPreview({
   if (loading && !numPages) {
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-primary" />
         <p className="text-sm text-muted-foreground">Chargement du document...</p>
       </div>
     );
@@ -409,7 +399,7 @@ export function PDFPreview({
           onLoadError={handleLoadError}
           loading={
             <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-primary" />
             </div>
           }
           className="flex flex-col items-center gap-4"
@@ -436,7 +426,7 @@ export function PDFPreview({
                   className="max-w-full"
                   loading={
                     <div className="flex items-center justify-center h-32 w-64">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-6 w-6  text-muted-foreground" />
                     </div>
                   }
                   // Highlight search terms - cast needed because react-pdf types are strict
@@ -519,7 +509,7 @@ export function PDFThumbnail({ src, className, onClick }: PDFThumbnailProps) {
 
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted">
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  text-muted-foreground" />
         </div>
       )}
 

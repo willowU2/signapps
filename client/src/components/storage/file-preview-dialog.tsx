@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Dialog,
@@ -9,24 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  X,
-  FileText,
-  Image as ImageIcon,
-  FileCode,
-  File as FileIcon,
-  FileArchive,
-  Loader2,
-  Maximize2,
-  Minimize2,
-  ZoomIn,
-  ZoomOut,
-  Video,
-  Music,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, X, FileText, Image as ImageIcon, FileCode, File as FileIcon, FileArchive, Maximize2, Minimize2, ZoomIn, ZoomOut, Video, Music } from 'lucide-react';
 import { storageApi } from '@/lib/api';
 import { VideoPreview } from './previews/video-preview';
 import { ArchivePreview } from './previews/archive-preview';
@@ -363,7 +348,7 @@ export function FilePreviewDialog({
     if (loading) {
       return (
         <div className="flex items-center justify-center h-full min-h-[300px]">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
         </div>
       );
     }
@@ -423,7 +408,7 @@ export function FilePreviewDialog({
             {parsedDocsContent !== null ? (
                 <Editor documentId={file.key.replace(/[/.]/g, '-')} initialContent={parsedDocsContent} className="h-full" />
             ) : (
-                <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+                <div className="flex items-center justify-center h-full"><SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" /></div>
             )}
           </div>
         );
@@ -434,7 +419,7 @@ export function FilePreviewDialog({
             {parsedSheetsData !== null ? (
                 <Spreadsheet documentId={file.key.replace(/[/.]/g, '-')} initialData={parsedSheetsData} />
             ) : (
-               <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+               <div className="flex items-center justify-center h-full"><SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" /></div>
             )}
           </div>
         );

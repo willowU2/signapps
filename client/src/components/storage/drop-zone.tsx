@@ -1,13 +1,9 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useRef, useCallback } from 'react';
-import {
-  Upload,
-  X,
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-} from 'lucide-react';
+import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -377,7 +373,7 @@ export function DropZone({
                     </div>
                     <div className="flex items-center gap-1.5">
                       {upload.status === 'uploading' && (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
+                        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3.5 w-3.5  text-blue-500" />
                       )}
                       {upload.status === 'success' && (
                         <CheckCircle className="h-3.5 w-3.5 text-green-500" />

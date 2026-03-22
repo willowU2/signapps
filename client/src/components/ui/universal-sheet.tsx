@@ -1,3 +1,4 @@
+import { SpinnerInfinity } from 'spinners-react';
 /**
  * Universal Sheet Component
  *
@@ -8,7 +9,7 @@
 "use client";
 
 import * as React from "react";
-import { LucideIcon, X, ChevronLeft, MoreVertical, Loader2 } from "lucide-react";
+import { LucideIcon, X, ChevronLeft, MoreVertical } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
@@ -187,7 +188,7 @@ function HeaderActionsMenu({
         disabled={action.disabled || action.loading}
       >
         {action.loading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
         ) : Icon ? (
           <Icon className="mr-2 h-4 w-4" />
         ) : null}
@@ -222,7 +223,7 @@ function HeaderActionsMenu({
                 className={cn(isDestructive && "text-destructive focus:text-destructive")}
               >
                 {action.loading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
                 ) : Icon ? (
                   <Icon className="mr-2 h-4 w-4" />
                 ) : null}
@@ -267,7 +268,7 @@ function FooterActions({
               disabled={action.disabled || action.loading}
             >
               {action.loading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
               ) : Icon ? (
                 <Icon className="mr-2 h-4 w-4" />
               ) : null}

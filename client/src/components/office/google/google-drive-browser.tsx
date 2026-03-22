@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 /**
  * GoogleDriveBrowser
  *
@@ -9,27 +11,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Cloud,
-  Folder,
-  FileText,
-  Table,
-  Presentation,
-  ArrowLeft,
-  Search,
-  Star,
-  Clock,
-  Upload,
-  Download,
-  RefreshCw,
-  MoreHorizontal,
-  ChevronRight,
-  Loader2,
-  Link2,
-  LogOut,
-  Settings,
-  X,
-} from 'lucide-react';
+import { Cloud, Folder, FileText, Table, Presentation, ArrowLeft, Search, Star, Clock, Upload, Download, RefreshCw, MoreHorizontal, ChevronRight, Link2, LogOut, Settings, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -213,7 +195,7 @@ function ConnectionPrompt({ onConnect, isLoading, error }: ConnectionPromptProps
       )}
       <Button onClick={onConnect} disabled={isLoading}>
         {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />
         ) : (
           <Cloud className="mr-2 h-4 w-4" />
         )}
@@ -415,7 +397,7 @@ export function GoogleDriveBrowser({
         <div className="p-3 space-y-1">
           {isLoadingFiles && driveFiles.length === 0 ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-muted-foreground" />
             </div>
           ) : driveFiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -447,7 +429,7 @@ export function GoogleDriveBrowser({
                     disabled={isLoadingFiles}
                   >
                     {isLoadingFiles ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  mr-2" />
                     ) : null}
                     Charger plus
                   </Button>

@@ -1,5 +1,7 @@
 'use client';
 
+import { SpinnerInfinity } from 'spinners-react';
+
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,20 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import {
-  Cpu,
-  HardDrive,
-  Download,
-  Trash2,
-  Loader2,
-  RefreshCw,
-  Monitor,
-  MemoryStick,
-  CircuitBoard,
-  Play,
-  AlertTriangle,
-  Search,
-} from 'lucide-react';
+import { Cpu, HardDrive, Download, Trash2, RefreshCw, Monitor, MemoryStick, CircuitBoard, Play, AlertTriangle, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   aiApi,
@@ -69,7 +58,7 @@ function getStatusBadge(status: ModelStatus) {
     if ('downloading' in status) {
       return (
         <div className="flex items-center gap-2">
-          <Loader2 className="h-3 w-3 animate-spin" />
+          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3 " />
           <Progress value={status.downloading.progress * 100} className="w-20 h-2" />
           <span className="text-xs">{(status.downloading.progress * 100).toFixed(0)}%</span>
         </div>
@@ -336,7 +325,7 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8 " />
       </div>
     );
   }
@@ -570,7 +559,7 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
               Modeles disponibles
               <Badge variant="outline" className="ml-2">{filteredAvailable.length}</Badge>
               {isSearching && (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />
+                <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4  text-muted-foreground ml-2" />
               )}
             </CardTitle>
             <div className="relative w-full sm:w-72">
@@ -634,7 +623,7 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
                       {downloadingIds.has(model.id) ? (
                         <>
                           <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-4 w-4 " />
                             <span className="text-xs text-muted-foreground">
                               {((downloadProgress[model.id] ?? 0) * 100).toFixed(0)}%
                             </span>
