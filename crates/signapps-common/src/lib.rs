@@ -12,6 +12,9 @@
 //! - [`bridge`] - Slack/Teams bridge for external messaging platform integrations
 //! - [`comments`] - Universal inline comments with @mentions, threads, reactions
 //! - [`config`] - Application configuration
+//! - [`data_connectors`] - Multi-source data connector system (PostgreSQL, CSV, JSON API)
+//! - [`dlp`] - Data Loss Prevention (DLP) with sensitive data pattern detection
+//! - [`e2e_crypto`] - End-to-End encrypted channels with XOR cipher stub
 //! - [`error`] - RFC 7807 Problem Details error handling
 //! - [`events`] - Inter-service event bus (publish/subscribe domain events)
 //! - [`middleware`] - HTTP middleware (auth, logging, request ID, Prometheus metrics)
@@ -23,8 +26,12 @@
 //! - [`types`] - Value Objects (Email, Password, UserId, Username)
 //! - [`vault`] - Password manager vault with secure entry storage and password generation
 //! - [`workflows`] - AI Workflow Automation engine (trigger, conditions, actions)
+//! - [`graphql_layer`] - GraphQL federation configuration and playground support
 //! - [`marketplace`] - App Store marketplace with install/uninstall capabilities
+//! - [`sql_dashboard`] - SQL query builder with multiple chart visualization types
 //! - [`tenant`] - Multi-tenant management with schema isolation and quotas
+//! - [`triggers`] - Event-driven trigger rule engine with condition evaluation
+//! - [`ueba`] - User and Entity Behavior Analytics (UEBA) for anomaly detection
 //!
 //! ## Example
 //!
@@ -48,8 +55,12 @@ pub mod bootstrap;
 pub mod bridge;
 pub mod comments;
 pub mod config;
+pub mod data_connectors;
+pub mod dlp;
+pub mod e2e_crypto;
 pub mod error;
 pub mod events;
+pub mod graphql_layer;
 pub mod indexer;
 pub mod marketplace;
 pub mod middleware;
@@ -60,10 +71,13 @@ pub mod reporting;
 pub mod retention;
 #[cfg(feature = "search")]
 pub mod search;
+pub mod sql_dashboard;
 pub mod sso;
 pub mod tenant;
 pub mod traits;
+pub mod triggers;
 pub mod types;
+pub mod ueba;
 pub mod vault;
 pub mod webhooks;
 pub mod workflows;
@@ -78,13 +92,18 @@ pub use bootstrap::graceful_shutdown;
 pub use bridge::{BridgeConfig, BridgeManager, BridgeSource};
 pub use comments::{Comment, CommentStore, extract_mentions};
 pub use config::AppConfig;
+pub use data_connectors::{DataConnectors, DataSource, SourceType};
+pub use dlp::{DlpFinding, DlpPattern, DlpRule, DlpScanner, Severity};
+pub use e2e_crypto::{E2eChannel, E2eChannelManager};
 pub use error::{Error, ProblemDetails, Result};
 pub use events::{DomainEvent, EventBus, EventEnvelope};
+pub use graphql_layer::GraphQlConfig;
 pub use indexer::AiIndexerClient;
 pub use plugins::{Plugin, PluginManifest, PluginRegistry};
 pub use marketplace::{AppListing, AppStore};
 pub use reporting::{ReportConfig, ReportData, ReportEngine, ReportTemplate};
 pub use retention::{RetentionAction, RetentionEngine, RetentionPolicy};
+pub use sql_dashboard::{ChartType, SqlDashboard, SqlQuery};
 pub use sso::{SsoConfig, SsoProtocol, SsoProvider, SsoProviderRegistry};
 pub use middleware::{
     metrics::{MetricsCollector, metrics_handler, metrics_middleware},
@@ -95,9 +114,11 @@ pub use qrcode_gen::generate_qr_svg;
 #[cfg(feature = "search")]
 pub use search::{SearchError, SearchHit, SearchIndex};
 pub use types::{Email, Password, PasswordHash, PgQueryResult, UserId, Username};
+pub use ueba::{Anomaly, AnomalyDetector, BehaviorBaseline, UserBehavior};
 pub use vault::{VaultEntry, VaultStore};
 pub use webhooks::{DeliveryStatus, WebhookConfig, WebhookDelivery, WebhookManager};
 pub use tenant::{Tenant, TenantManager};
+pub use triggers::{TriggerEngine, TriggerRule};
 pub use workflows::{
     Condition, ConditionOp, WorkflowAction, WorkflowDefinition, WorkflowEngine, WorkflowExecution,
     WorkflowTrigger,
