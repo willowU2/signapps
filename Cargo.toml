@@ -29,6 +29,8 @@ members = [
     "services/signapps-meet",
     "services/signapps-office",
     "services/signapps-workforce",
+    "services/signapps-contacts",
+    "services/signapps-forms",
     # Single-binary gateway (LT-05 POC)
     "services/signapps-gateway",
 ]
@@ -134,6 +136,10 @@ rustls = { version = "0.23", features = ["ring"] }
 rustls-pemfile = "2"
 rcgen = "0.13"
 instant-acme = "0.7"
+
+# OpenAPI documentation
+utoipa = { version = "5", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "8", features = ["axum"] }
 
 # Testing
 tokio-test = "0.4"

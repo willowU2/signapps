@@ -4,6 +4,7 @@
 //!
 //! ## Modules
 //!
+//! - [`audit`] - Audit trail / activity log (in-memory, middleware + query endpoint)
 //! - [`auth`] - Authentication types (JWT claims, tokens)
 //! - [`config`] - Application configuration
 //! - [`error`] - RFC 7807 Problem Details error handling
@@ -26,6 +27,7 @@
 //! }
 //! ```
 
+pub mod audit;
 pub mod auth;
 pub mod bootstrap;
 pub mod config;
@@ -33,11 +35,13 @@ pub mod error;
 pub mod events;
 pub mod indexer;
 pub mod middleware;
+pub mod openapi;
 pub mod plugins;
 pub mod traits;
 pub mod types;
 
 // Re-export commonly used items
+pub use audit::{AuditAction, AuditEntry, AuditLog, AuditState, audit_middleware, list_audit_entries};
 pub use auth::{Claims, JwtConfig, TokenPair};
 pub use bootstrap::graceful_shutdown;
 pub use config::AppConfig;
@@ -49,6 +53,7 @@ pub use middleware::{
     metrics::{MetricsCollector, metrics_handler, metrics_middleware},
     AuthState, RequestClaimsExt, TenantContext,
 };
+pub use openapi::create_openapi_router;
 pub use types::{Email, Password, PasswordHash, PgQueryResult, UserId, Username};
 
 /// Crate version from Cargo.toml
