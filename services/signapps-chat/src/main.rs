@@ -5,9 +5,10 @@
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
-        Path, State,
+        Extension, Path, State,
     },
     http::StatusCode,
+    middleware,
     response::IntoResponse,
     routing::{get, post},
     Json, Router,
@@ -17,6 +18,8 @@ use dashmap::DashMap;
 use futures_util::{stream::StreamExt, SinkExt};
 use serde::{Deserialize, Serialize};
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
+use signapps_common::middleware::auth_middleware;
+use signapps_common::{AuthState, Claims, JwtConfig};
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tower_http::cors::CorsLayer;
@@ -70,8 +73,6 @@ pub struct CreateChannelRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct SendMessageRequest {
-    pub author_id: Uuid,
-    pub author_name: String,
     pub content: String,
 }
 
@@ -98,15 +99,23 @@ pub struct AppState {
     pub channels: Arc<DashMap<Uuid, Channel>>,
     pub messages: Arc<DashMap<Uuid, Vec<ChatMessage>>>, // channel_id -> messages
     pub broadcast_tx: broadcast::Sender<String>,
+    pub jwt_config: JwtConfig,
+}
+
+impl AuthState for AppState {
+    fn jwt_config(&self) -> &JwtConfig {
+        &self.jwt_config
+    }
 }
 
 impl AppState {
-    fn new() -> Self {
+    fn new(jwt_config: JwtConfig) -> Self {
         let (tx, _) = broadcast::channel::<String>(1024);
         Self {
             channels: Arc::new(DashMap::new()),
             messages: Arc::new(DashMap::new()),
             broadcast_tx: tx,
+            jwt_config,
         }
     }
 }
@@ -163,6 +172,7 @@ async fn list_messages(
 
 async fn send_message(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(channel_id): Path<Uuid>,
     Json(payload): Json<SendMessageRequest>,
 ) -> impl IntoResponse {
@@ -173,12 +183,16 @@ async fn send_message(
         );
     }
 
+    // Derive author identity from JWT claims — never trust the client
+    let author_id = claims.sub;
+    let author_name = claims.username.clone();
+
     let now = Utc::now().to_rfc3339();
     let msg = ChatMessage {
         id: Uuid::new_v4(),
         channel_id,
-        author_id: payload.author_id,
-        author_name: payload.author_name,
+        author_id,
+        author_name,
         content: payload.content,
         reactions: Vec::new(),
         created_at: now.clone(),
@@ -308,9 +322,12 @@ async fn handle_ws(socket: WebSocket, state: AppState) {
 // ---------------------------------------------------------------------------
 
 fn create_router(state: AppState) -> Router {
-    Router::new()
-        // Health
-        .route("/health", get(health_check))
+    // Public routes (no auth required)
+    let public_routes = Router::new()
+        .route("/health", get(health_check));
+
+    // Protected routes (auth required)
+    let protected_routes = Router::new()
         // Channels
         .route("/api/v1/channels", get(list_channels).post(create_channel))
         // Messages
@@ -322,6 +339,13 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/messages/:id/reactions", post(add_reaction))
         // WebSocket
         .route("/api/v1/ws", get(ws_upgrade))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    public_routes
+        .merge(protected_routes)
         // Middleware
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
@@ -340,7 +364,8 @@ async fn main() -> anyhow::Result<()> {
     let config = ServiceConfig::from_env("signapps-chat", 3020);
     config.log_startup();
 
-    let state = AppState::new();
+    let jwt_config = config.jwt_config();
+    let state = AppState::new(jwt_config);
     tracing::info!("In-memory store initialized (skeleton -- no DB yet)");
 
     let app = create_router(state);

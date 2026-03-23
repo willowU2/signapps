@@ -52,18 +52,32 @@ export const TableOfContents = Node.create({
                     }
                 })
 
-                dom.innerHTML = `
-                    <nav class="toc-nav">
-                        <h3 class="toc-title">Table of Contents</h3>
-                        <ul class="toc-list">
-                            ${headings.map(h => `
-                                <li class="toc-level-${h.level}">
-                                    <a href="#${h.id}" class="toc-link">${h.text}</a>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </nav>
-                `
+                dom.textContent = ''
+
+                const nav = document.createElement('nav')
+                nav.className = 'toc-nav'
+
+                const h3 = document.createElement('h3')
+                h3.className = 'toc-title'
+                h3.textContent = 'Table of Contents'
+                nav.appendChild(h3)
+
+                const ul = document.createElement('ul')
+                ul.className = 'toc-list'
+
+                headings.forEach(h => {
+                    const li = document.createElement('li')
+                    li.className = `toc-level-${Number(h.level)}`
+                    const a = document.createElement('a')
+                    a.href = `#${encodeURIComponent(h.id || '')}`
+                    a.className = 'toc-link'
+                    a.textContent = h.text
+                    li.appendChild(a)
+                    ul.appendChild(li)
+                })
+
+                nav.appendChild(ul)
+                dom.appendChild(nav)
             }
 
             updateToc()

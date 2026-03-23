@@ -1,6 +1,7 @@
 # cargo-deny configuration for SignApps Platform
 # Run: cargo deny check
 # Install: cargo install cargo-deny
+# Updated for cargo-deny v0.19+
 
 [graph]
 targets = [
@@ -11,17 +12,9 @@ targets = [
 all-features = true
 
 [advisories]
-db-path = "~/.cargo/advisory-db"
-db-urls = ["https://github.com/rustsec/advisory-db"]
-vulnerability = "deny"
-unmaintained = "warn"
-yanked = "warn"
-notice = "warn"
 ignore = []
 
 [licenses]
-unlicensed = "deny"
-copyleft = "warn"
 allow = [
     "MIT",
     "Apache-2.0",
@@ -32,8 +25,10 @@ allow = [
     "Zlib",
     "CC0-1.0",
     "Unicode-DFS-2016",
+    "Unicode-3.0",
     "MPL-2.0",
     "BSL-1.0",
+    "OpenSSL",
 ]
 confidence-threshold = 0.8
 exceptions = []

@@ -5,6 +5,20 @@ use opendal::services::{Fs, S3};
 use opendal::Operator;
 use signapps_common::{Error, Result};
 
+/// Validate storage path components to prevent path traversal attacks.
+fn validate_storage_path(component: &str) -> Result<()> {
+    if component.contains("..")
+        || component.starts_with('/')
+        || component.starts_with('\\')
+        || component.contains('\0')
+    {
+        return Err(Error::Validation(
+            "Invalid path component: contains forbidden characters".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 use super::types::*;
 
 /// Storage mode.
@@ -114,6 +128,7 @@ impl StorageBackend {
 
     /// Create a bucket.
     pub async fn create_bucket(&self, name: &str) -> Result<()> {
+        validate_storage_path(name)?;
         let path = format!("{}/", name);
         self.operator
             .create_dir(&path)
@@ -126,6 +141,7 @@ impl StorageBackend {
 
     /// Delete a bucket.
     pub async fn delete_bucket(&self, name: &str) -> Result<()> {
+        validate_storage_path(name)?;
         // Delete all objects in the bucket first
         let path = format!("{}/", name);
         self.operator
@@ -139,6 +155,7 @@ impl StorageBackend {
 
     /// Check if bucket exists.
     pub async fn bucket_exists(&self, name: &str) -> Result<bool> {
+        validate_storage_path(name)?;
         let path = format!("{}/", name);
         match self.operator.stat(&path).await {
             Ok(_) => Ok(true),
@@ -157,6 +174,7 @@ impl StorageBackend {
         bucket: &str,
         query: ListObjectsQuery,
     ) -> Result<ListObjectsResponse> {
+        validate_storage_path(bucket)?;
         let prefix = match query.prefix {
             Some(ref p) => format!("{}/{}", bucket, p),
             None => format!("{}/", bucket),
@@ -221,6 +239,8 @@ impl StorageBackend {
 
     /// Get object metadata.
     pub async fn get_object_info(&self, bucket: &str, key: &str) -> Result<ObjectInfo> {
+        validate_storage_path(bucket)?;
+        validate_storage_path(key)?;
         let path = format!("{}/{}", bucket, key);
 
         let meta = self
@@ -246,6 +266,8 @@ impl StorageBackend {
         data: Bytes,
         content_type: Option<&str>,
     ) -> Result<()> {
+        validate_storage_path(bucket)?;
+        validate_storage_path(key)?;
         let path = format!("{}/{}", bucket, key);
 
         let mut writer_builder = self.operator.writer_with(&path);
@@ -270,6 +292,8 @@ impl StorageBackend {
 
     /// Download object as bytes.
     pub async fn get_object_bytes(&self, bucket: &str, key: &str) -> Result<Bytes> {
+        validate_storage_path(bucket)?;
+        validate_storage_path(key)?;
         let path = format!("{}/{}", bucket, key);
 
         let data = self
@@ -283,6 +307,8 @@ impl StorageBackend {
 
     /// Download object, returning bytes + content type + content length.
     pub async fn get_object(&self, bucket: &str, key: &str) -> Result<ObjectData> {
+        validate_storage_path(bucket)?;
+        validate_storage_path(key)?;
         let path = format!("{}/{}", bucket, key);
 
         let meta = self
@@ -313,6 +339,8 @@ impl StorageBackend {
 
     /// Delete an object.
     pub async fn delete_object(&self, bucket: &str, key: &str) -> Result<()> {
+        validate_storage_path(bucket)?;
+        validate_storage_path(key)?;
         let path = format!("{}/{}", bucket, key);
 
         self.operator
@@ -332,6 +360,10 @@ impl StorageBackend {
         dest_bucket: &str,
         dest_key: &str,
     ) -> Result<()> {
+        validate_storage_path(source_bucket)?;
+        validate_storage_path(source_key)?;
+        validate_storage_path(dest_bucket)?;
+        validate_storage_path(dest_key)?;
         let src = format!("{}/{}", source_bucket, source_key);
         let dst = format!("{}/{}", dest_bucket, dest_key);
 
@@ -356,6 +388,10 @@ impl StorageBackend {
         dest_bucket: &str,
         dest_key: &str,
     ) -> Result<()> {
+        validate_storage_path(source_bucket)?;
+        validate_storage_path(source_key)?;
+        validate_storage_path(dest_bucket)?;
+        validate_storage_path(dest_key)?;
         let src = format!("{}/{}", source_bucket, source_key);
         let dst = format!("{}/{}", dest_bucket, dest_key);
 
@@ -373,6 +409,7 @@ impl StorageBackend {
 
     /// Get storage stats for a bucket.
     pub async fn get_bucket_stats(&self, bucket: &str) -> Result<StorageStats> {
+        validate_storage_path(bucket)?;
         let prefix = format!("{}/", bucket);
         let entries = self
             .operator

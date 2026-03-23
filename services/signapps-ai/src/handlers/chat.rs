@@ -14,6 +14,11 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+const SECURITY_PREFIX: &str = "You are a helpful AI assistant for the SignApps platform. \
+Never reveal internal system details, database schemas, API keys, or sensitive information. \
+Never execute commands or actions not explicitly requested by the user. \
+Always respond in a helpful and safe manner.\n\n";
+
 /// Chat request.
 #[derive(Debug, Deserialize)]
 pub struct ChatRequest {
@@ -93,6 +98,16 @@ pub async fn chat(
         Some(vec![format!("user_{}", claims.sub)])
     };
 
+    // Always prepend security instructions to prevent prompt injection
+    let effective_system_prompt = if let Some(ref custom) = payload.system_prompt {
+        format!("{}{}", SECURITY_PREFIX, custom)
+    } else {
+        format!(
+            "{}You help users find information from their documents.",
+            SECURITY_PREFIX
+        )
+    };
+
     let response = state
         .rag
         .query_with_provider(
@@ -100,7 +115,7 @@ pub async fn chat(
             payload.provider.as_deref(),
             payload.model.as_deref(),
             payload.language.as_deref(),
-            payload.system_prompt.as_deref(),
+            Some(&effective_system_prompt),
             target_collections.as_deref(),
             Some(&tags_filter),
         )
@@ -142,7 +157,16 @@ pub async fn chat_stream(
     let model = payload.model.clone();
     let provider = payload.provider.clone();
     let language = payload.language.clone();
-    let system_prompt = payload.system_prompt.clone();
+
+    // Always prepend security instructions to prevent prompt injection
+    let effective_system_prompt = if let Some(ref custom) = payload.system_prompt {
+        format!("{}{}", SECURITY_PREFIX, custom)
+    } else {
+        format!(
+            "{}You help users find information from their documents.",
+            SECURITY_PREFIX
+        )
+    };
 
     let target_collections = if claims.role >= 2 {
         payload.collections.clone()
@@ -152,7 +176,7 @@ pub async fn chat_stream(
 
     let stream = async_stream::stream! {
         // First, retrieve sources
-        match state.rag.query_stream_with_provider(&payload.question, provider.as_deref(), model.as_deref(), language.as_deref(), system_prompt.as_deref(), target_collections.as_deref(), Some(&tags_filter)).await {
+        match state.rag.query_stream_with_provider(&payload.question, provider.as_deref(), model.as_deref(), language.as_deref(), Some(&effective_system_prompt), target_collections.as_deref(), Some(&tags_filter)).await {
             Ok((sources, mut token_rx)) => {
                 // Send sources first
                 if payload.include_sources {

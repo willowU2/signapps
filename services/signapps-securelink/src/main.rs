@@ -8,10 +8,13 @@
 //! Runs standalone without database - perfect for home servers.
 
 use axum::{
+    middleware,
     routing::{delete, get, post, put},
     Router,
 };
 use signapps_common::bootstrap::{init_tracing, load_env};
+use signapps_common::middleware::auth_middleware;
+use signapps_common::{AuthState, JwtConfig};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_http::cors::{AllowOrigin, CorsLayer};
@@ -39,6 +42,14 @@ pub struct AppState {
     pub blocklists: Arc<RwLock<Vec<DnsBlocklist>>>,
     /// DNS statistics.
     pub dns_stats: Arc<RwLock<DnsStats>>,
+    /// JWT configuration for auth middleware.
+    pub jwt_config: JwtConfig,
+}
+
+impl AuthState for AppState {
+    fn jwt_config(&self) -> &JwtConfig {
+        &self.jwt_config
+    }
 }
 
 /// Service configuration.
@@ -152,12 +163,32 @@ async fn main() -> std::io::Result<()> {
         },
     ];
 
+    // Initialize JWT config from environment
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+        if cfg!(debug_assertions) {
+            tracing::warn!(
+                "JWT_SECRET not set, using insecure dev default"
+            );
+            "dev_secret_change_in_production_32chars".to_string()
+        } else {
+            panic!("JWT_SECRET must be set in production");
+        }
+    });
+    let jwt_config = JwtConfig {
+        secret: jwt_secret,
+        issuer: "signapps".to_string(),
+        audience: "signapps-securelink".to_string(),
+        access_expiration: 900,
+        refresh_expiration: 604800,
+    };
+
     // Create application state
     let state = AppState {
         tunnel_client,
         dns_config: Arc::new(RwLock::new(dns_config)),
         blocklists: Arc::new(RwLock::new(default_blocklists)),
         dns_stats: Arc::new(RwLock::new(DnsStats::default())),
+        jwt_config,
     };
 
     // Build router
@@ -228,21 +259,32 @@ fn create_router(state: AppState) -> Router {
         .route("/query", post(handlers::query_dns))
         .route("/cache/flush", post(handlers::flush_dns_cache));
 
-    // Dashboard routes
+    // Dashboard routes (public)
     let dashboard_routes = Router::new()
         .route("/stats", get(handlers::dashboard_stats))
         .route("/traffic", get(handlers::dashboard_traffic));
 
-    // Health check
+    // Health check (public)
     let health_routes = Router::new().route("/", get(handlers::health_check_standalone));
 
-    // Combine all routes
-    Router::new()
+    // Public routes (no auth required)
+    let public_routes = Router::new()
+        .nest("/health", health_routes)
+        .nest("/api/v1/dashboard", dashboard_routes);
+
+    // Protected routes (auth required)
+    let protected_routes = Router::new()
         .nest("/api/v1/tunnels", tunnel_routes)
         .nest("/api/v1/relays", relay_routes)
         .nest("/api/v1/dns", dns_routes)
-        .nest("/api/v1/dashboard", dashboard_routes)
-        .nest("/health", health_routes)
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Combine all routes
+    public_routes
+        .merge(protected_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)

@@ -8,6 +8,22 @@ use tracing::{debug, error, info, warn};
 use signapps_common::{Error, Result};
 use signapps_db::models::{LdapConfig, LdapGroup, LdapSyncResult, LdapTestResult};
 
+/// Escape special characters in LDAP filter values per RFC 4515.
+fn escape_ldap_filter_value(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for c in value.chars() {
+        match c {
+            '\\' => escaped.push_str("\\5c"),
+            '*' => escaped.push_str("\\2a"),
+            '(' => escaped.push_str("\\28"),
+            ')' => escaped.push_str("\\29"),
+            '\0' => escaped.push_str("\\00"),
+            _ => escaped.push(c),
+        }
+    }
+    escaped
+}
+
 /// LDAP service for Active Directory operations.
 pub struct LdapService;
 
@@ -128,7 +144,7 @@ impl LdapService {
             .user_filter
             .as_deref()
             .unwrap_or("(&(objectClass=user)(sAMAccountName={username}))")
-            .replace("{username}", username);
+            .replace("{username}", &escape_ldap_filter_value(username));
 
         let (rs, _) = ldap
             .search(

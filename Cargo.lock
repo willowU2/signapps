@@ -9524,6 +9524,7 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
+ "url",
  "uuid",
  "validator",
 ]
@@ -9887,6 +9888,7 @@ dependencies = [
  "reqwest 0.11.27",
  "serde",
  "serde_json",
+ "signapps-cache",
  "signapps-common",
  "signapps-db",
  "sqlx",

@@ -359,10 +359,21 @@ pub async fn access_share(
         .unwrap_or(&share.key)
         .to_string();
 
+    // Generate a time-limited share access token instead of leaking the password
+    let share_token = uuid::Uuid::new_v4().to_string();
+    let cache_key = format!("share_access:{}", share_token);
+    state
+        .cache
+        .set(
+            &cache_key,
+            &token,
+            std::time::Duration::from_secs(300),
+        )
+        .await;
+
     let download_url = format!(
-        "/api/v1/shares/{}/download?password={}",
-        token,
-        request.password.unwrap_or_default()
+        "/api/v1/shares/{}/download?access_token={}",
+        token, share_token
     );
 
     Ok(Json(AccessShareResponse {
@@ -381,18 +392,43 @@ pub async fn access_share(
     }))
 }
 
+/// Query parameters for shared file download.
+#[derive(Debug, Deserialize)]
+pub struct DownloadSharedQuery {
+    pub access_token: Option<String>,
+    pub password: Option<String>,
+}
+
 /// Download shared file directly.
 #[tracing::instrument(skip(state))]
 pub async fn download_shared(
     State(state): State<AppState>,
     Path(token): Path<String>,
-    Query(password): Query<Option<String>>,
+    Query(params): Query<DownloadSharedQuery>,
 ) -> Result<axum::response::Response> {
     let share = StorageTier3Repository::get_share_by_token(state.pool.inner(), &token)
         .await
         .map_err(|_| Error::NotFound("Share not found".into()))?;
 
-    validate_public_share(&share, password.as_ref())?;
+    // Validate access: prefer time-limited access_token, fall back to password
+    if let Some(ref access_token) = params.access_token {
+        let cache_key = format!("share_access:{}", access_token);
+        let cached = state.cache.get_checked(&cache_key).await;
+        match cached {
+            Some(ref cached_token) if cached_token == &token => {
+                // Valid access token — consume it (single-use)
+                state.cache.del(&cache_key).await;
+            }
+            _ => {
+                return Err(Error::Forbidden(
+                    "Invalid or expired access token".to_string(),
+                ));
+            }
+        }
+    } else {
+        // Fallback: direct password validation
+        validate_public_share(&share, params.password.as_ref())?;
+    }
 
     // Increment download count
     let _ = StorageTier3Repository::increment_download_count(state.pool.inner(), share.id).await;

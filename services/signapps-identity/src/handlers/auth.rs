@@ -189,11 +189,11 @@ pub async fn login(
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "User logged in successfully");
 
     let access_cookie = format!(
-        "access_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}",
+        "access_token={}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age={}",
         tokens.access_token, tokens.expires_in
     );
     let refresh_cookie = format!(
-        "refresh_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800",
+        "refresh_token={}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800",
         tokens.refresh_token
     );
 
@@ -246,8 +246,8 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result
         tracing::info!("User logged out, token blacklisted");
     }
 
-    let access_cookie = "access_token=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0";
-    let refresh_cookie = "refresh_token=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0";
+    let access_cookie = "access_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
+    let refresh_cookie = "refresh_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
     
     let mut response_headers = HeaderMap::new();
     if let Ok(c) = access_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
@@ -348,6 +348,16 @@ pub async fn refresh(
         return Err(Error::TokenExpired);
     }
 
+    // Blacklist the old refresh token to prevent reuse
+    let ttl = claims.exp - now;
+    if ttl > 0 {
+        let key = format!("blacklist:{}", refresh_token);
+        state
+            .cache
+            .set(&key, "1", std::time::Duration::from_secs(ttl as u64))
+            .await;
+    }
+
     // Get fresh user data
     let user = UserRepository::find_by_id(&state.pool, claims.sub)
         .await?
@@ -378,11 +388,11 @@ pub async fn refresh(
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "Token refreshed");
 
     let access_cookie = format!(
-        "access_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}",
+        "access_token={}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age={}",
         tokens.access_token, tokens.expires_in
     );
     let refresh_cookie = format!(
-        "refresh_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800",
+        "refresh_token={}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800",
         tokens.refresh_token
     );
 
@@ -425,9 +435,12 @@ pub async fn me(
 /// This is a one-time operation for initial setup.
 #[tracing::instrument(skip(state))]
 pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
-    // Check if any admin already exists
-    let users = UserRepository::list(&state.pool, 100, 0).await?;
-    let has_admin = users.iter().any(|u| u.role >= 2);
+    // Check if any admin already exists (direct SQL — checks ALL users, not just first N)
+    let has_admin: bool =
+        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM identity.users WHERE role >= 2)")
+            .fetch_one(&*state.pool)
+            .await
+            .unwrap_or(true); // Default to true (block bootstrap) on error
 
     if has_admin {
         return Err(Error::Forbidden(
@@ -435,6 +448,7 @@ pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<serde_json:
         ));
     }
 
+    let users = UserRepository::list(&state.pool, 1, 0).await?;
     if users.is_empty() {
         return Err(Error::NotFound(
             "No users found. Register a user first via /api/v1/auth/register".to_string(),
@@ -464,14 +478,18 @@ pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<serde_json:
 
 /// Verify TOTP code.
 fn verify_totp(secret: &str, code: &str) -> Result<bool> {
-    use totp_rs::{Algorithm, TOTP};
+    use totp_rs::{Algorithm, Secret, TOTP};
+
+    let secret_bytes = Secret::Encoded(secret.to_string())
+        .to_bytes()
+        .map_err(|e| Error::Internal(format!("TOTP secret decode error: {}", e)))?;
 
     let totp = TOTP::new(
         Algorithm::SHA1,
         6,
         1,
         30,
-        secret.as_bytes().to_vec(),
+        secret_bytes,
         Some("SignApps".to_string()),
         "user".to_string(),
     )

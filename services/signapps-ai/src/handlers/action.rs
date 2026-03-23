@@ -1,10 +1,23 @@
-use axum::{extract::State, Json};
+use axum::{
+    extract::State,
+    http::HeaderMap,
+    Json,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use signapps_common::{Error, Result};
 
 use crate::llm::types::ChatMessage;
 use crate::AppState;
+
+/// Validate that a container target name is safe (no path traversal).
+fn is_valid_target(target: &str) -> bool {
+    !target.is_empty()
+        && target.len() <= 128
+        && target
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.')
+}
 
 /// Request to execute a natural language action.
 #[derive(Debug, Deserialize)]
@@ -24,9 +37,10 @@ pub struct ActionResponse {
 }
 
 /// Execute a natural language action using Claude Opus as an orchestrator.
-#[tracing::instrument(skip(state))]
+#[tracing::instrument(skip(state, headers))]
 pub async fn execute_action(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(payload): Json<ActionRequest>,
 ) -> Result<Json<ActionResponse>> {
     tracing::info!("Received Action Request: {}", payload.prompt);
@@ -110,18 +124,28 @@ pub async fn execute_action(
 
     match intent {
         "restart_container" => {
+            if !is_valid_target(target) {
+                return Err(Error::Validation(
+                    "Invalid target identifier".to_string(),
+                ));
+            }
+
             tracing::info!("Executing real container restart for: {}", target);
             let containers_url =
                 std::env::var("CONTAINERS_URL").unwrap_or_else(|_| "http://localhost:3002".into());
 
-            // Try to hit the docker restart endpoint. For a more robust solution, we'd query the list first,
-            // but for this Unicorn Autopilot demo, we assume the target is a valid name or docker ID.
             let url = format!(
                 "{}/api/v1/containers/docker/{}/restart",
                 containers_url, target
             );
 
-            let res = client.post(&url).send().await;
+            // Forward the Authorization header from the incoming request
+            let mut req = client.post(&url);
+            if let Some(auth) = headers.get("authorization") {
+                req = req.header("Authorization", auth);
+            }
+
+            let res = req.send().await;
             match res {
                 Ok(response) if response.status().is_success() => Ok(Json(ActionResponse {
                     success: true,
@@ -200,6 +224,22 @@ mod tests {
 
         // This should fail standard serde parsing, forcing the handler into the error path
         assert!(parsed_intent.is_err());
+    }
+
+    #[test]
+    fn test_valid_target_names() {
+        assert!(is_valid_target("web-ui"));
+        assert!(is_valid_target("my_container.v2"));
+        assert!(is_valid_target("abc123"));
+    }
+
+    #[test]
+    fn test_invalid_target_names() {
+        assert!(!is_valid_target(""));
+        assert!(!is_valid_target("../etc/passwd"));
+        assert!(!is_valid_target("foo/bar"));
+        assert!(!is_valid_target("http://evil.com"));
+        assert!(!is_valid_target(&"a".repeat(129)));
     }
 
     #[test]

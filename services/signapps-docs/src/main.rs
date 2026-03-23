@@ -1,9 +1,12 @@
 use axum::{
+    middleware,
     routing::{delete, get, post, put},
     Router,
 };
 use signapps_cache::CacheService;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
+use signapps_common::middleware::auth_middleware;
+use signapps_common::{AuthState, JwtConfig};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -27,6 +30,13 @@ pub struct AppState {
     pub docs: Arc<dashmap::DashMap<String, yrs::Doc>>,
     pub broadcasts: Arc<dashmap::DashMap<String, tokio::sync::broadcast::Sender<Vec<u8>>>>,
     pub indexer: AiIndexerClient,
+    pub jwt_config: JwtConfig,
+}
+
+impl AuthState for AppState {
+    fn jwt_config(&self) -> &JwtConfig {
+        &self.jwt_config
+    }
 }
 
 #[tokio::main]
@@ -44,6 +54,9 @@ async fn main() -> anyhow::Result<()> {
     // Initialize cache
     let cache = Arc::new(CacheService::new(1000, Duration::from_secs(3600)));
 
+    // Initialize JWT config
+    let jwt_config = config.jwt_config();
+
     // Initialize app state
     let app_state = AppState {
         pool,
@@ -51,13 +64,16 @@ async fn main() -> anyhow::Result<()> {
         docs: Arc::new(dashmap::DashMap::new()),
         broadcasts: Arc::new(dashmap::DashMap::new()),
         indexer: AiIndexerClient::from_env(),
+        jwt_config,
     };
 
     // Build router with document type endpoints
-    let app = Router::new()
-        // Health check
-        .route("/health", get(health_handler))
+    // Public routes (no auth required)
+    let public_routes = Router::new()
+        .route("/health", get(health_handler));
 
+    // Protected routes (auth required)
+    let protected_routes = Router::new()
         // WebSocket endpoint for real-time collaboration
         .route("/api/v1/docs/:doc_type/:doc_id/ws", get(websocket_handler))
         // y-websocket sends connections to /{base}/{roomname} without /ws suffix
@@ -95,11 +111,16 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/docs/templates", get(list_templates))
         .route("/api/v1/docs/templates", post(create_template))
         .route("/api/v1/docs/templates/:id", get(get_template))
+        .route_layer(middleware::from_fn_with_state(
+            app_state.clone(),
+            auth_middleware::<AppState>,
+        ));
 
+    let app = public_routes
+        .merge(protected_routes)
         // Global middleware
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
-
         // State
         .with_state(app_state);
 

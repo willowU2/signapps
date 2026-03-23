@@ -14,6 +14,18 @@ import {
 } from "@/components/ui/breadcrumb";
 import { cn } from "@/lib/utils";
 
+/**
+ * Sanitize HTML to prevent XSS attacks.
+ * Removes script tags, event handlers, javascript: URLs, and iframes.
+ */
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript\s*:/gi, 'blocked:')
+    .replace(/<iframe\b[^>]*>/gi, '');
+}
+
 interface TableOfContentsItem {
   id: string;
   title: string;
@@ -154,7 +166,7 @@ export function WikiPage({
               "prose-code:bg-muted prose-code:px-2 prose-code:py-1 prose-code:rounded",
               "prose-ul:list-disc prose-ul:pl-6 prose-li:text-muted-foreground"
             )}
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }}
           />
         </Card>
       </div>

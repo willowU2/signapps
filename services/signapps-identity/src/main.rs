@@ -103,6 +103,15 @@ impl AuthState for AppState {
     fn jwt_config(&self) -> &JwtConfig {
         &self.jwt_config
     }
+
+    fn check_token_blacklist(
+        &self,
+        token: &str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = bool> + Send + '_>> {
+        let cache = self.cache.clone();
+        let key = format!("blacklist:{}", token);
+        Box::pin(async move { cache.get(&key).await.is_some() })
+    }
 }
 
 /// Create the main router with all routes.

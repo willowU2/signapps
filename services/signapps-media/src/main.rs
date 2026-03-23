@@ -1,9 +1,11 @@
 use axum::{
+    middleware,
     response::IntoResponse,
     routing::{get, post},
     Json, Router,
 };
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
+use signapps_common::middleware::auth_middleware;
 use signapps_common::{AuthState, JwtConfig};
 use signapps_runtime::ModelManager;
 use sqlx::PgPool;
@@ -77,6 +79,7 @@ impl AuthState for AppState {
         })
     }
 }
+
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -203,9 +206,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // Build router
-    let app = Router::new()
-        // Health check
-        .route("/health", get(health_check))
+
+    // Public routes (no auth required)
+    let public_routes = Router::new().route("/health", get(health_check));
+
+    // Protected routes (auth required)
+    let protected_routes = Router::new()
         // OCR endpoints
         .route("/api/v1/ocr", post(handlers::ocr::extract_text))
         .route(
@@ -231,6 +237,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/v1/voice", get(handlers::voice::voice_ws))
         // Jobs/Status
         .route("/api/v1/jobs/:id", get(handlers::jobs::get_job_status))
+        .route_layer(middleware::from_fn_with_state(
+            (*state).clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    let app = Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(CorsLayer::permissive())
         .with_state(state);
 

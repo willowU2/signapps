@@ -513,10 +513,27 @@ pub async fn restart(
     }))
 }
 
+/// Validate a database name to prevent SQL injection.
+fn validate_db_name(name: &str) -> Result<()> {
+    if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return Err(Error::Validation(
+            "Invalid database name: must contain only alphanumeric characters and underscores"
+                .to_string(),
+        ));
+    }
+    if name.len() > 63 {
+        return Err(Error::Validation(
+            "Database name too long: maximum 63 characters".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 /// Helper to drop a dedicated PostgreSQL database for an app when uninstalled.
 async fn deprovision_app_database(pool: &signapps_db::DatabasePool, app_id: &str) -> Result<()> {
     let sanitized_id = app_id.replace('-', "_").to_lowercase();
     let db_name = format!("app_{}", sanitized_id);
+    validate_db_name(&db_name)?;
 
     // Check if it exists first
     let exists: bool =

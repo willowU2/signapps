@@ -10,7 +10,7 @@ const withSerwist = withSerwistInit({
 const nextConfig = {
   images: { unoptimized: true },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   turbopack: {
     root: path.resolve(__dirname, ".."),

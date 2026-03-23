@@ -24,7 +24,7 @@ mod scheduler;
 use handlers::backups::{new_backup_store, SharedBackupStore};
 
 use scheduler::SchedulerService;
-use signapps_common::middleware::AuthState;
+use signapps_common::middleware::{require_admin, AuthState};
 use signapps_common::{JwtConfig, Result};
 use signapps_db::DatabasePool;
 
@@ -181,7 +181,7 @@ fn create_router(state: AppState) -> Router {
         .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
         .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN]);
 
-    // Job routes
+    // Job routes (admin only)
     let job_routes = Router::new()
         .route("/", get(handlers::list_jobs))
         .route("/", post(handlers::create_job))
@@ -194,7 +194,12 @@ fn create_router(state: AppState) -> Router {
         .route("/{id}/enable", post(handlers::enable_job))
         .route("/{id}/disable", post(handlers::disable_job))
         .route("/{id}/run", post(handlers::run_job))
-        .route("/{id}/runs", get(handlers::get_job_runs));
+        .route("/{id}/runs", get(handlers::get_job_runs))
+        .layer(axum::middleware::from_fn(require_admin))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
 
     // Run routes
     let run_routes = Router::new().route("/{id}", get(handlers::get_run));

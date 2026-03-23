@@ -156,8 +156,8 @@ impl CacheService {
         self.cache.insert(key.to_string(), value.to_string()).await;
     }
 
-    /// Internal: get raw value checking custom expiry.
-    async fn get_checked(&self, key: &str) -> Option<String> {
+    /// Get a value by key, checking custom expiry for TTL-encoded entries.
+    pub async fn get_checked(&self, key: &str) -> Option<String> {
         let raw = self.cache.get(key).await?;
 
         // Check if this is a TTL-encoded entry (timestamp:value)
