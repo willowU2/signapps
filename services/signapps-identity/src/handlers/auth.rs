@@ -94,7 +94,7 @@ pub async fn login(
                 .as_ref()
                 .ok_or(Error::InvalidCredentials)?;
 
-            if !verify_password(&payload.password, password_hash)? {
+            if !verify_password(&payload.password, password_hash).await? {
                 tracing::warn!(username = %payload.username, "Invalid password attempt");
                 return Err(Error::InvalidCredentials);
             }
@@ -114,7 +114,7 @@ pub async fn login(
                         .as_ref()
                         .ok_or(Error::InvalidCredentials)?;
 
-                    if !verify_password(&payload.password, password_hash)? {
+                    if !verify_password(&payload.password, password_hash).await? {
                         tracing::warn!(username = %payload.username, "Invalid password (LDAP fallback)");
                         return Err(Error::InvalidCredentials);
                     }
@@ -304,7 +304,7 @@ pub async fn register(
     }
 
     // Hash password
-    let password_hash = crate::auth::hash_password(&payload.password)?;
+    let password_hash = crate::auth::hash_password(&payload.password).await?;
 
     // Create user
     let create_user = signapps_db::models::CreateUser {

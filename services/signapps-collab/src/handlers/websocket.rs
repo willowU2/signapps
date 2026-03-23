@@ -6,14 +6,21 @@ use axum::{
     response::IntoResponse,
 };
 use futures::{stream::StreamExt, SinkExt};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::sync::broadcast;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 use yrs::updates::decoder::Decode;
 use yrs::{Doc, ReadTxn, Transact};
 // Import Transact and ReadTxn for state_vector
 
 use crate::{models::BroadcastMessage, AppState};
+
+/// Maximum number of concurrent WebSocket connections.
+const MAX_CONNECTIONS: usize = 1000;
+
+/// Global counter for active WebSocket connections.
+static ACTIVE_CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
 
 /// WebSocket handler for collaborative document editing
 /// Endpoint: GET /api/v1/collab/ws/:doc_id?token=JWT_TOKEN
@@ -31,11 +38,29 @@ pub async fn websocket_handler(
             .into_response();
     }
 
+    // Enforce connection limit to prevent resource exhaustion
+    let current = ACTIVE_CONNECTIONS.fetch_add(1, Ordering::Relaxed);
+    if current >= MAX_CONNECTIONS {
+        ACTIVE_CONNECTIONS.fetch_sub(1, Ordering::Relaxed);
+        warn!(
+            current_connections = current,
+            max_connections = MAX_CONNECTIONS,
+            "WebSocket connection rejected: too many active connections"
+        );
+        return (
+            axum::http::StatusCode::SERVICE_UNAVAILABLE,
+            "Too many active connections",
+        )
+            .into_response();
+    }
+
     ws.on_upgrade(move |socket| handle_socket(socket, doc_id, state))
         .into_response()
 }
 
 async fn handle_socket(socket: WebSocket, doc_id: String, state: AppState) {
+    // Ensure the connection counter is decremented when this handler exits
+    let _guard = ConnectionGuard;
     let doc_id_main = doc_id.clone();
     let session_id = Uuid::new_v4();
 
@@ -198,4 +223,15 @@ async fn handle_socket(socket: WebSocket, doc_id: String, state: AppState) {
     // Persist document before closing
     // (implement in persistence module)
     // save_document(&doc_id, &doc, &state.pool).await.ok();
+
+    // _guard is dropped here, decrementing ACTIVE_CONNECTIONS
+}
+
+/// RAII guard that decrements the active connection counter on drop.
+struct ConnectionGuard;
+
+impl Drop for ConnectionGuard {
+    fn drop(&mut self) {
+        ACTIVE_CONNECTIONS.fetch_sub(1, Ordering::Relaxed);
+    }
 }

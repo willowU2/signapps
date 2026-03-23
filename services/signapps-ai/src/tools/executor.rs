@@ -445,7 +445,12 @@ fn truncate_result(value: Value) -> Value {
         }
         Value::String(s) => {
             if s.len() > MAX_RESULT_LEN {
-                Value::String(format!("{}... (truncated)", &s[..MAX_RESULT_LEN]))
+                // Find a valid UTF-8 boundary to avoid panic on multi-byte characters
+                let mut end = MAX_RESULT_LEN;
+                while end > 0 && !s.is_char_boundary(end) {
+                    end -= 1;
+                }
+                Value::String(format!("{}... (truncated)", &s[..end]))
             } else {
                 Value::String(s)
             }

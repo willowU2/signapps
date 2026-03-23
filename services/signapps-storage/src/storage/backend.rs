@@ -188,15 +188,16 @@ impl StorageBackend {
 
         let delimiter = query.delimiter.as_deref().unwrap_or("/");
         let max_keys = query.max_keys.unwrap_or(1000) as usize;
-        let mut objects = Vec::new();
         let mut prefixes = Vec::new();
 
+        // Collect file entries that need stat() calls, up to max_keys.
+        let bucket_prefix = format!("{}/", bucket);
+        let mut file_entries: Vec<(String, String)> = Vec::new();
         for entry in &entries {
             let meta = entry.metadata();
             let full_path = entry.path();
-            // Strip bucket prefix to get the key
             let key = full_path
-                .strip_prefix(&format!("{}/", bucket))
+                .strip_prefix(&bucket_prefix)
                 .unwrap_or(full_path)
                 .to_string();
 
@@ -207,25 +208,53 @@ impl StorageBackend {
             if meta.is_dir() {
                 prefixes.push(key);
             } else {
-                // Stat each file to get full metadata (size, last_modified, etc.)
-                let full_meta = self
-                    .operator
-                    .stat(full_path)
-                    .await
-                    .unwrap_or_else(|_| meta.clone());
-                objects.push(ObjectInfo {
-                    key,
-                    size: full_meta.content_length() as i64,
-                    last_modified: full_meta.last_modified().map(|d| d.to_rfc3339()),
-                    etag: full_meta.etag().map(|s| s.to_string()),
-                    content_type: full_meta.content_type().map(|s| s.to_string()),
-                });
-            }
-
-            if objects.len() >= max_keys {
-                break;
+                file_entries.push((key, full_path.to_string()));
+                if file_entries.len() >= max_keys {
+                    break;
+                }
             }
         }
+
+        // Fetch metadata for all files concurrently instead of sequentially
+        // (N+1 stat calls). OpenDAL 0.51 does not support metakey() on
+        // list_with(), so we parallelize individual stat() calls.
+        let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(16));
+        let mut join_set = tokio::task::JoinSet::new();
+        for (idx, (key, full_path)) in file_entries.into_iter().enumerate() {
+            let op = self.operator.clone();
+            let permit = semaphore.clone();
+            join_set.spawn(async move {
+                let _permit = permit.acquire().await;
+                let meta = op.stat(&full_path).await.ok();
+                (idx, key, meta)
+            });
+        }
+
+        // Collect results and sort by original index to preserve order.
+        let mut indexed_objects: Vec<(usize, ObjectInfo)> = Vec::new();
+        while let Some(result) = join_set.join_next().await {
+            if let Ok((idx, key, meta)) = result {
+                let (size, last_modified, etag, content_type) = match meta {
+                    Some(m) => (
+                        m.content_length() as i64,
+                        m.last_modified().map(|d| d.to_rfc3339()),
+                        m.etag().map(|s| s.to_string()),
+                        m.content_type().map(|s| s.to_string()),
+                    ),
+                    None => (0, None, None, None),
+                };
+                indexed_objects.push((idx, ObjectInfo {
+                    key,
+                    size,
+                    last_modified,
+                    etag,
+                    content_type,
+                }));
+            }
+        }
+        indexed_objects.sort_by_key(|(idx, _)| *idx);
+        let objects: Vec<ObjectInfo> =
+            indexed_objects.into_iter().map(|(_, obj)| obj).collect();
 
         let _ = delimiter; // Used for prefix grouping (simplified)
 

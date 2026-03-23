@@ -12,8 +12,23 @@ use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextPar
 use super::*;
 
 /// Native STT backend using whisper.cpp.
+///
+/// NOTE: WhisperContext is wrapped in `Mutex` because `WhisperState` (created
+/// from `WhisperContext::create_state()`) is not `Send`/`Sync`, so the context
+/// must be held locked for the entire duration of a transcription. This
+/// effectively serializes all transcription requests.
+///
+/// A `Semaphore` is used to limit the number of queued transcriptions so that
+/// callers get back-pressure rather than unbounded queueing.
+///
+/// For higher throughput, consider creating a pool of N `WhisperContext`
+/// instances (one per CPU core) and dispatching requests round-robin.
 pub struct NativeSttBackend {
     context: Arc<Mutex<WhisperContext>>,
+    /// Semaphore to limit how many transcription requests can queue up
+    /// concurrently. This prevents unbounded task accumulation when the
+    /// single-threaded whisper context is busy.
+    transcription_semaphore: Arc<tokio::sync::Semaphore>,
     model_name: String,
     #[allow(dead_code)]
     model_manager: Arc<ModelManager>,
@@ -51,8 +66,17 @@ impl NativeSttBackend {
 
         tracing::info!("Whisper model '{}' loaded successfully", model_name);
 
+        // Allow up to 4 transcription requests to queue up. Additional
+        // requests will wait at the semaphore, providing back-pressure
+        // rather than accumulating unbounded tasks.
+        let max_queued = std::env::var("STT_MAX_CONCURRENT")
+            .ok()
+            .and_then(|v| v.parse::<usize>().ok())
+            .unwrap_or(4);
+
         Ok(Self {
             context: Arc::new(Mutex::new(context)),
+            transcription_semaphore: Arc::new(tokio::sync::Semaphore::new(max_queued)),
             model_name: model_name.to_string(),
             model_manager,
         })
@@ -67,6 +91,15 @@ impl SttBackend for NativeSttBackend {
         filename: &str,
         opts: Option<TranscribeRequest>,
     ) -> Result<TranscribeResult, SttError> {
+        // Acquire a semaphore permit to limit queued transcription requests.
+        // This provides back-pressure instead of letting tasks pile up
+        // unboundedly behind the Mutex-serialized WhisperContext.
+        let _permit = self
+            .transcription_semaphore
+            .acquire()
+            .await
+            .map_err(|_| SttError::ServiceError("Transcription semaphore closed".to_string()))?;
+
         let start = std::time::Instant::now();
         let opts = opts.unwrap_or_default();
 

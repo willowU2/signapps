@@ -194,7 +194,7 @@ pub async fn create(
 
     // Hash password if provided and create user
     let user = if let Some(ref password) = payload.password {
-        let password_hash = crate::auth::hash_password(password)?;
+        let password_hash = crate::auth::hash_password(password).await?;
         UserRepository::create_with_hash(&state.pool, create_user, &password_hash).await?
     } else {
         UserRepository::create(&state.pool, create_user).await?
@@ -371,12 +371,12 @@ pub async fn update_me(
             "Cannot change password for LDAP users".to_string(),
         ))?;
 
-        if !crate::auth::verify_password(current_password, password_hash)? {
+        if !crate::auth::verify_password(current_password, password_hash).await? {
             return Err(Error::InvalidCredentials);
         }
 
         // Hash new password and update
-        let new_hash = crate::auth::hash_password(new_password)?;
+        let new_hash = crate::auth::hash_password(new_password).await?;
         UserRepository::update_password(&state.pool, claims.sub, &new_hash).await?;
         tracing::info!(user_id = %claims.sub, "User changed password");
     }

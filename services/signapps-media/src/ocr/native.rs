@@ -16,7 +16,10 @@ pub struct NativeOcrBackend {
     model_manager: Arc<ModelManager>,
 }
 
-// OcrEngine uses Arc internally and is safe to share
+// SAFETY: OcrEngine uses rten::Model internally which runs ONNX operators that are thread-safe.
+// Verified: rten Model uses Arc<ModelData> internally. OcrEngine holds no mutable state after
+// initialization — all inference methods take &self. The engine is also wrapped in Arc above,
+// ensuring the backing data lives long enough across threads.
 unsafe impl Send for NativeOcrBackend {}
 unsafe impl Sync for NativeOcrBackend {}
 

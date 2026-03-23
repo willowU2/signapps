@@ -198,7 +198,7 @@ pub async fn disable(
         "Cannot disable MFA for LDAP users".to_string(),
     ))?;
 
-    if !crate::auth::verify_password(&payload.password, password_hash)? {
+    if !crate::auth::verify_password(&payload.password, password_hash).await? {
         return Err(Error::InvalidCredentials);
     }
 

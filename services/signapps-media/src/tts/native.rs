@@ -23,7 +23,9 @@ struct LoadedVoice {
     info: Voice,
 }
 
-// Safety: PiperSynthesizer uses ONNX runtime which is thread-safe
+// SAFETY: PiperSynthesizer uses ONNX Runtime which is thread-safe.
+// Verified: ort crate (ONNX Runtime wrapper) implements Send+Sync for Session.
+// LoadedVoice is only accessed behind an RwLock, providing additional synchronization.
 unsafe impl Send for LoadedVoice {}
 unsafe impl Sync for LoadedVoice {}
 
