@@ -7,7 +7,7 @@ import { AiSheetsDialog } from "./ai-sheets-dialog"
 import { CellStyle, CellData, CellValidation, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
 import { fetchAndParseDocument } from '@/lib/file-parsers'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu'
 import { GenericFeatureModal } from '@/components/editor/generic-feature-modal'
 import { Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup } from '@/components/editor/toolbar'
@@ -1038,42 +1038,46 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     }, [editValue, activeCell, setCell])
 
     // ---- File Import (CSV/XLSX) ----
-    const importFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const importFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
-        const reader = new FileReader()
-        reader.onload = (ev) => {
-            try {
-                const dataBuffer = ev.target?.result
-                if (!dataBuffer) return
-                const workbook = XLSX.read(dataBuffer, { type: 'binary' });
-                const firstSheet = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheet];
-                const json: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                
-                let count = 0;
-                for (let r = 0; r < json.length && r < ROWS; r++) {
-                    const row = json[r] || [];
-                    for (let c = 0; c < row.length && c < COLS; c++) {
-                        const val = row[c];
-                        if (val !== undefined && val !== null && val !== "") { setCell(r, c, String(val)); count++; }
-                    }
-                }
-                toast.success(`${count} cellules importées de ${file.name}`);
-            } catch(err) {
-                toast.error("Format de fichier invalide");
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const workbook = new ExcelJS.Workbook();
+            const ext = file.name.split('.').pop()?.toLowerCase() || '';
+            if (ext === 'csv' || ext === 'tsv' || ext === 'txt') {
+                await workbook.csv.read(new Blob([arrayBuffer]).stream() as any);
+            } else {
+                await workbook.xlsx.load(arrayBuffer);
             }
+            const firstSheet = workbook.worksheets[0];
+            if (!firstSheet) { toast.error("Aucune feuille trouvée"); return; }
+
+            let count = 0;
+            firstSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                if (rowNumber - 1 >= ROWS) return;
+                row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+                    if (colNumber - 1 >= COLS) return;
+                    const val = cell.value;
+                    if (val !== undefined && val !== null && val !== "") {
+                        setCell(rowNumber - 1, colNumber - 1, String(val));
+                        count++;
+                    }
+                });
+            });
+            toast.success(`${count} cellules importées de ${file.name}`);
+        } catch(err) {
+            toast.error("Format de fichier invalide");
         }
-        reader.readAsArrayBuffer(file)
         e.target.value = ''
     }, [setCell])
 
     // ---- File Export (CSV/XLSX) ----
-    const exportXLSX = useCallback((type: 'xlsx' | 'csv') => {
+    const exportXLSX = useCallback(async (type: 'xlsx' | 'csv') => {
         const rowsToExport: any[][] = []
         let maxR = 0;
         let maxC = 0;
-        
+
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 if (data[`${r},${c}`]?.value) {
@@ -1082,7 +1086,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 }
             }
         }
-        
+
         for (let r = 0; r <= maxR; r++) {
             const row: any[] = []
             for (let c = 0; c <= maxC; c++) {
@@ -1090,12 +1094,28 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             }
             rowsToExport.push(row)
         }
-        
+
         try {
-            const worksheet = XLSX.utils.aoa_to_sheet(rowsToExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, sheets[activeSheetIndex]?.name || 'Sheet1');
-            XLSX.writeFile(workbook, `${sheets[activeSheetIndex]?.name || 'document'}.${type}`);
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet(sheets[activeSheetIndex]?.name || 'Sheet1');
+            rowsToExport.forEach(row => worksheet.addRow(row));
+
+            let buffer: ArrayBuffer;
+            let mimeType: string;
+            if (type === 'csv') {
+                buffer = await workbook.csv.writeBuffer() as ArrayBuffer;
+                mimeType = 'text/csv';
+            } else {
+                buffer = await workbook.xlsx.writeBuffer() as ArrayBuffer;
+                mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            }
+            const blob = new Blob([buffer], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${sheets[activeSheetIndex]?.name || 'document'}.${type}`;
+            a.click();
+            URL.revokeObjectURL(url);
             toast.success(`Exporté en ${type.toUpperCase()}`);
         } catch (err) {
             toast.error(`Erreur d'export ${type.toUpperCase()}`);
@@ -1112,12 +1132,12 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         const tId = toast.loading("Enregistrement dans le Drive...");
 
         try {
-            const workbook = XLSX.utils.book_new();
-            
+            const workbook = new ExcelJS.Workbook();
+
             // On convertit chaque feuille du classeur S'il n'y a que le data global on fait une seule sheet
             const rowsToExport: any[][] = [];
             let maxR = 0; let maxC = 0;
-            
+
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
                     if (data[`${r},${c}`]?.value) {
@@ -1126,7 +1146,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     }
                 }
             }
-            
+
             for (let r = 0; r <= maxR; r++) {
                 const row: any[] = [];
                 for (let c = 0; c <= maxC; c++) {
@@ -1134,12 +1154,12 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 }
                 rowsToExport.push(row);
             }
-            
-            const worksheet = XLSX.utils.aoa_to_sheet(rowsToExport);
-            XLSX.utils.book_append_sheet(workbook, worksheet, sheets[activeSheetIndex]?.name || 'Sheet1');
-            
+
+            const worksheet = workbook.addWorksheet(sheets[activeSheetIndex]?.name || 'Sheet1');
+            rowsToExport.forEach(row => worksheet.addRow(row));
+
             // Créer un blob type XLSX
-            const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const wbout = await workbook.xlsx.writeBuffer();
             const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             
             // Envoyer à l'API backend

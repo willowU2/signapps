@@ -10,7 +10,7 @@ use signapps_common::{AuthState, JwtConfig};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 mod handlers;
@@ -120,7 +120,14 @@ async fn main() -> anyhow::Result<()> {
         .merge(protected_routes)
         // Global middleware
         .layer(TraceLayer::new_for_http())
-        .layer(CorsLayer::permissive())
+        .layer(CorsLayer::new()
+            .allow_origin(AllowOrigin::list([
+                "http://localhost:3000".parse().unwrap(),
+                "http://127.0.0.1:3000".parse().unwrap(),
+            ]))
+            .allow_credentials(true)
+            .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
+            .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN]))
         // State
         .with_state(app_state);
 

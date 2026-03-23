@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import * as mammoth from 'mammoth';
 import { storageApi } from './api';
 
@@ -64,25 +64,29 @@ export async function fetchAndParseDocument(bucket: string, fileKey: string, fil
 }
 
 async function parseSpreadsheet(buffer: ArrayBuffer, ext: string) {
-    const workbook = XLSX.read(buffer, { type: 'array' });
+    const workbook = new ExcelJS.Workbook();
+    if (ext === 'csv') {
+        await workbook.csv.read(new Blob([buffer]).stream() as any);
+    } else {
+        await workbook.xlsx.load(buffer);
+    }
     const sheetsMap: Record<string, Record<string, { value: string; format?: any }>> = {};
 
-    workbook.SheetNames.forEach(sheetName => {
-        const worksheet = workbook.Sheets[sheetName];
-        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" }) as any[][];
-        
+    workbook.eachSheet((worksheet, sheetId) => {
         const cells: Record<string, { value: string }> = {};
-        data.forEach((row, r) => {
-            row.forEach((cellVal, c) => {
-                 if (cellVal !== "") {
-                     cells[`${r},${c}`] = { value: String(cellVal) };
-                 }
+        worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+            row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+                const val = cell.value;
+                if (val !== null && val !== undefined && val !== "") {
+                    cells[`${rowNumber - 1},${colNumber - 1}`] = { value: String(val) };
+                }
             });
         });
-        sheetsMap[sheetName] = cells;
+        sheetsMap[worksheet.name] = cells;
     });
 
-    return { type: 'spreadsheet', data: sheetsMap, sheets: workbook.SheetNames };
+    const sheetNames = workbook.worksheets.map(ws => ws.name);
+    return { type: 'spreadsheet', data: sheetsMap, sheets: sheetNames };
 }
 
 async function parseDocx(buffer: ArrayBuffer) {

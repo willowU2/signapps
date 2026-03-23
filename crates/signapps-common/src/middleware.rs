@@ -336,8 +336,9 @@ fn verify_token(token: &str, config: &JwtConfig) -> Result<Claims, Error> {
     use jsonwebtoken::{decode, DecodingKey, Validation};
 
     let mut validation = Validation::default();
-    // Tokens don't include iss/aud claims, so disable validation for these
-    validation.validate_aud = false;
+    validation.validate_aud = true;
+    validation.set_audience(&["signapps"]);
+    validation.set_issuer(&["signapps"]);
     validation.set_required_spec_claims(&["exp", "sub"]);
 
     let key = DecodingKey::from_secret(config.secret.as_bytes());
