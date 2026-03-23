@@ -9,8 +9,48 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 use signapps_db::repositories::GroupRepository;
+use std::net::IpAddr;
 use std::time::Instant;
 use uuid::Uuid;
+
+/// Check if a URL targets a private/internal network address.
+fn is_private_url(url: &str) -> bool {
+    if let Ok(parsed) = url::Url::parse(url) {
+        if let Some(host) = parsed.host_str() {
+            // Block localhost
+            if host == "localhost"
+                || host == "127.0.0.1"
+                || host == "::1"
+                || host == "[::1]"
+            {
+                return true;
+            }
+            // Block common metadata endpoints
+            if host == "169.254.169.254" || host == "metadata.google.internal" {
+                return true;
+            }
+            // Block private IP ranges
+            if let Ok(ip) = host.parse::<IpAddr>() {
+                return match ip {
+                    IpAddr::V4(v4) => {
+                        v4.is_private() || v4.is_loopback() || v4.is_link_local()
+                    },
+                    IpAddr::V6(v6) => v6.is_loopback(),
+                };
+            }
+            // Block internal service names
+            if host.starts_with("signapps-")
+                || host.ends_with(".internal")
+                || host.ends_with(".local")
+            {
+                return true;
+            }
+            // Host is a non-private hostname — allow
+            return false;
+        }
+    }
+    true // Default to blocking if we can't parse
+}
 
 /// Webhook configuration response.
 #[derive(Debug, Clone, Serialize)]
@@ -20,7 +60,8 @@ pub struct WebhookResponse {
     pub url: String,
     pub events: Vec<String>,
     pub enabled: bool,
-    pub secret: Option<String>,
+    /// Whether a signing secret is configured (secret value is never exposed).
+    pub has_secret: bool,
     pub headers: serde_json::Value,
     pub last_triggered: Option<chrono::DateTime<chrono::Utc>>,
     pub last_status: Option<i32>,
@@ -87,7 +128,7 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<WebhookRespo
             url: w.url,
             events: w.events,
             enabled: w.enabled,
-            secret: w.secret,
+            has_secret: w.secret.is_some(),
             headers: w.headers,
             last_triggered: w.last_triggered,
             last_status: w.last_status,
@@ -117,7 +158,7 @@ pub async fn get(
         url: webhook.url,
         events: webhook.events,
         enabled: webhook.enabled,
-        secret: webhook.secret,
+        has_secret: webhook.secret.is_some(),
         headers: webhook.headers,
         last_triggered: webhook.last_triggered,
         last_status: webhook.last_status,
@@ -165,7 +206,7 @@ pub async fn create(
         url: webhook.url,
         events: webhook.events,
         enabled: webhook.enabled,
-        secret: webhook.secret,
+        has_secret: webhook.secret.is_some(),
         headers: webhook.headers,
         last_triggered: webhook.last_triggered,
         last_status: webhook.last_status,
@@ -229,7 +270,7 @@ pub async fn update(
         url: webhook.url,
         events: webhook.events,
         enabled: webhook.enabled,
-        secret: webhook.secret,
+        has_secret: webhook.secret.is_some(),
         headers: webhook.headers,
         last_triggered: webhook.last_triggered,
         last_status: webhook.last_status,
@@ -269,6 +310,13 @@ pub async fn test(
         .find_webhook(id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("Webhook {}", id)))?;
+
+    // Validate that webhook URL does not target private/internal networks
+    if is_private_url(&webhook.url) {
+        return Err(Error::BadRequest(
+            "Webhook URL must not target private/internal networks".to_string(),
+        ));
+    }
 
     // Build test payload
     let test_payload = WebhookTestPayload {

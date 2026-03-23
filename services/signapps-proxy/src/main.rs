@@ -189,7 +189,7 @@ fn create_router(state: AppState) -> Router {
     // Public routes (health check)
     let public_routes = Router::new().route("/health", get(health::health_check));
 
-    // Protected route management
+    // Admin route management (CRUD on proxy routes requires admin)
     let route_routes = Router::new()
         .route("/routes", get(routes::list_routes))
         .route("/routes", post(routes::create_route))
@@ -198,12 +198,13 @@ fn create_router(state: AppState) -> Router {
         .route("/routes/:id", delete(routes::delete_route))
         .route("/routes/:id/enable", post(routes::enable_route))
         .route("/routes/:id/disable", post(routes::disable_route))
+        .route_layer(middleware::from_fn(require_admin))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
 
-    // Protected shield routes
+    // Admin shield routes (block/unblock IP requires admin)
     let shield_routes = Router::new()
         .route("/shield/stats", get(shield_handlers::get_stats))
         .route("/shield/:route_id/block", post(shield_handlers::block_ip))
@@ -215,12 +216,13 @@ fn create_router(state: AppState) -> Router {
             "/shield/:route_id/check/:ip",
             get(shield_handlers::check_blocked),
         )
+        .route_layer(middleware::from_fn(require_admin))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
         ));
 
-    // Protected certificate routes
+    // Admin certificate routes (certificate management requires admin)
     let cert_routes = Router::new()
         .route("/certificates", get(certificates::list_certificates))
         .route("/certificates", post(certificates::upload_certificate))
@@ -236,6 +238,7 @@ fn create_router(state: AppState) -> Router {
             "/certificates/:id",
             delete(certificates::delete_certificate),
         )
+        .route_layer(middleware::from_fn(require_admin))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

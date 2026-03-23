@@ -7,6 +7,7 @@
 //! - Summary dashboard data
 
 use axum::{
+    middleware,
     routing::{delete, get, post, put},
     Router,
 };
@@ -19,7 +20,7 @@ mod handlers;
 mod metrics;
 
 use metrics::{MetricsCollector, PrometheusExporter};
-use signapps_common::middleware::AuthState;
+use signapps_common::middleware::{auth_middleware, require_admin, AuthState};
 use signapps_common::{JwtConfig, Result};
 use signapps_db::DatabasePool;
 
@@ -138,13 +139,34 @@ fn create_router(state: AppState) -> Router {
     // Health check
     let health_routes = Router::new().route("/", get(handlers::health_check));
 
-    // Combine all routes
-    Router::new()
+    // Public routes (no auth required)
+    let public_routes = Router::new()
+        .nest("/health", health_routes)
+        .nest("/metrics", prometheus_routes);
+
+    // Protected routes (auth required)
+    let protected_routes = Router::new()
         .nest("/api/v1/metrics", metrics_routes)
         .nest("/api/v1/alerts", alert_routes)
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Admin routes (auth + admin role required)
+    let admin_routes = Router::new()
         .nest("/api/v1/admin/analytics", analytics_routes)
-        .nest("/metrics", prometheus_routes)
-        .nest("/health", health_routes)
+        .layer(middleware::from_fn(require_admin))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Combine all routes
+    Router::new()
+        .merge(public_routes)
+        .merge(protected_routes)
+        .merge(admin_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state)

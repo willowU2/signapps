@@ -35,6 +35,16 @@ pub struct TenantContext {
 pub trait AuthState: Clone + Send + Sync + 'static {
     /// Get the JWT configuration.
     fn jwt_config(&self) -> &JwtConfig;
+
+    /// Check if a token has been blacklisted (e.g., after logout).
+    /// Default implementation: no blacklist check (always returns false).
+    /// Override in services that have a cache to check `blacklist:{token}` keys.
+    fn check_token_blacklist(
+        &self,
+        _token: &str,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = bool> + Send + '_>> {
+        Box::pin(async { false })
+    }
 }
 
 /// Extract and verify JWT token from Authorization header.
@@ -84,6 +94,11 @@ pub async fn auth_middleware<S: AuthState>(
     // Check token type
     if claims.token_type != "access" {
         return Err(Error::InvalidToken);
+    }
+
+    // Check if token has been blacklisted (e.g., after logout)
+    if state.check_token_blacklist(token).await {
+        return Err(Error::Unauthorized);
     }
 
     // Add claims and user ID to request extensions for handlers to access
@@ -321,8 +336,9 @@ fn verify_token(token: &str, config: &JwtConfig) -> Result<Claims, Error> {
     use jsonwebtoken::{decode, DecodingKey, Validation};
 
     let mut validation = Validation::default();
-    // Tokens don't include iss/aud claims, so disable validation for these
-    validation.validate_aud = false;
+    validation.validate_aud = true;
+    validation.set_audience(&["signapps"]);
+    validation.set_issuer(&["signapps"]);
     validation.set_required_spec_claims(&["exp", "sub"]);
 
     let key = DecodingKey::from_secret(config.secret.as_bytes());

@@ -165,13 +165,29 @@ pub struct SummaryMetrics {
 }
 
 /// SSE stream of system metrics, updated every 2 seconds.
+/// The stream automatically closes after 30 minutes to prevent unbounded connections.
+/// Clients should reconnect when the stream ends.
 pub async fn metrics_stream(
     State(state): State<AppState>,
 ) -> Sse<impl Stream<Item = std::result::Result<Event, Infallible>>> {
+    // Maximum stream duration: 30 minutes (900 events at 2-second intervals).
+    // This prevents connections from lasting forever and leaking resources.
+    const MAX_EVENTS: u64 = 900;
+
     let stream = async_stream::stream! {
         let mut interval = tokio::time::interval(Duration::from_secs(2));
+        let mut event_count: u64 = 0;
+
         loop {
             interval.tick().await;
+
+            event_count += 1;
+            if event_count > MAX_EVENTS {
+                // Close the stream after the maximum duration
+                tracing::debug!("SSE metrics stream closing after {} events", MAX_EVENTS);
+                break;
+            }
+
             let metrics = state.collector.get_all_metrics().await;
 
             let total_disk_bytes: u64 = metrics.disks.iter()

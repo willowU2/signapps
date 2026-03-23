@@ -7,6 +7,11 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     return null;
   }
 
+  // Skip SW registration in development (sw.js is only generated in production builds)
+  if (process.env.NODE_ENV === "development") {
+    return null;
+  }
+
   try {
     const registration = await navigator.serviceWorker.register("/sw.js", {
       scope: "/",

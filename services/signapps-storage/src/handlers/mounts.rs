@@ -15,6 +15,20 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+/// Check if a filesystem type is in the allowlist.
+fn is_valid_fs_type(fs_type: &str) -> bool {
+    matches!(
+        fs_type,
+        "ext4" | "ext3" | "xfs" | "btrfs" | "ntfs" | "vfat" | "nfs" | "cifs" | "tmpfs"
+    )
+}
+
+/// Check that a mount option contains no shell metacharacters.
+fn is_valid_mount_option(opt: &str) -> bool {
+    opt.chars()
+        .all(|c| c.is_alphanumeric() || c == '=' || c == ',' || c == '_' || c == '-' || c == '.')
+}
+
 /// Mount point information.
 #[derive(Debug, Clone, Serialize)]
 pub struct MountPoint {
@@ -96,6 +110,28 @@ pub async fn mount(
         tokio::fs::create_dir_all(&payload.mount_path)
             .await
             .map_err(|e| Error::Storage(format!("Failed to create mount point: {}", e)))?;
+    }
+
+    // Validate filesystem type if specified
+    if let Some(ref fs_type) = payload.fs_type {
+        if !is_valid_fs_type(fs_type) {
+            return Err(Error::Validation(format!(
+                "Unsupported filesystem type: {}. Allowed: ext4, ext3, xfs, btrfs, ntfs, vfat, nfs, cifs, tmpfs",
+                fs_type
+            )));
+        }
+    }
+
+    // Validate mount options if specified
+    if let Some(ref options) = payload.options {
+        for opt in options {
+            if !is_valid_mount_option(opt) {
+                return Err(Error::Validation(format!(
+                    "Invalid mount option: {}. Options must only contain alphanumeric characters, '=', ',', '_', '-', '.'",
+                    opt
+                )));
+            }
+        }
     }
 
     // Build mount command

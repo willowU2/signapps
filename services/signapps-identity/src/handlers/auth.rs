@@ -12,6 +12,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::auth::{create_tokens, verify_password, verify_token};
+use crate::handlers::admin_security::ActiveSession;
 use crate::ldap::LdapService;
 use crate::AppState;
 
@@ -93,7 +94,7 @@ pub async fn login(
                 .as_ref()
                 .ok_or(Error::InvalidCredentials)?;
 
-            if !verify_password(&payload.password, password_hash)? {
+            if !verify_password(&payload.password, password_hash).await? {
                 tracing::warn!(username = %payload.username, "Invalid password attempt");
                 return Err(Error::InvalidCredentials);
             }
@@ -113,7 +114,7 @@ pub async fn login(
                         .as_ref()
                         .ok_or(Error::InvalidCredentials)?;
 
-                    if !verify_password(&payload.password, password_hash)? {
+                    if !verify_password(&payload.password, password_hash).await? {
                         tracing::warn!(username = %payload.username, "Invalid password (LDAP fallback)");
                         return Err(Error::InvalidCredentials);
                     }
@@ -186,14 +187,31 @@ pub async fn login(
         &state.jwt_secret,
     )?;
 
+    // Register this session in the active sessions store
+    let session_id = tokens.access_token.chars().take(16).collect::<String>();
+    let session_expires_at = chrono::Utc::now()
+        + chrono::Duration::seconds(tokens.expires_in);
+    state
+        .active_sessions
+        .add(ActiveSession {
+            id: session_id,
+            user_id: user.id,
+            username: user.username.clone(),
+            created_at: chrono::Utc::now(),
+            expires_at: session_expires_at,
+            ip_address: None,
+            user_agent: None,
+        })
+        .await;
+
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "User logged in successfully");
 
     let access_cookie = format!(
-        "access_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}",
+        "access_token={}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age={}",
         tokens.access_token, tokens.expires_in
     );
     let refresh_cookie = format!(
-        "refresh_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800",
+        "refresh_token={}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800",
         tokens.refresh_token
     );
 
@@ -246,8 +264,8 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result
         tracing::info!("User logged out, token blacklisted");
     }
 
-    let access_cookie = "access_token=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0";
-    let refresh_cookie = "refresh_token=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0";
+    let access_cookie = "access_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
+    let refresh_cookie = "refresh_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
     
     let mut response_headers = HeaderMap::new();
     if let Ok(c) = access_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
@@ -286,7 +304,7 @@ pub async fn register(
     }
 
     // Hash password
-    let password_hash = crate::auth::hash_password(&payload.password)?;
+    let password_hash = crate::auth::hash_password(&payload.password).await?;
 
     // Create user
     let create_user = signapps_db::models::CreateUser {
@@ -348,6 +366,16 @@ pub async fn refresh(
         return Err(Error::TokenExpired);
     }
 
+    // Blacklist the old refresh token to prevent reuse
+    let ttl = claims.exp - now;
+    if ttl > 0 {
+        let key = format!("blacklist:{}", refresh_token);
+        state
+            .cache
+            .set(&key, "1", std::time::Duration::from_secs(ttl as u64))
+            .await;
+    }
+
     // Get fresh user data
     let user = UserRepository::find_by_id(&state.pool, claims.sub)
         .await?
@@ -378,11 +406,11 @@ pub async fn refresh(
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "Token refreshed");
 
     let access_cookie = format!(
-        "access_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age={}",
+        "access_token={}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age={}",
         tokens.access_token, tokens.expires_in
     );
     let refresh_cookie = format!(
-        "refresh_token={}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800",
+        "refresh_token={}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800",
         tokens.refresh_token
     );
 
@@ -425,9 +453,12 @@ pub async fn me(
 /// This is a one-time operation for initial setup.
 #[tracing::instrument(skip(state))]
 pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<serde_json::Value>> {
-    // Check if any admin already exists
-    let users = UserRepository::list(&state.pool, 100, 0).await?;
-    let has_admin = users.iter().any(|u| u.role >= 2);
+    // Check if any admin already exists (direct SQL — checks ALL users, not just first N)
+    let has_admin: bool =
+        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM identity.users WHERE role >= 2)")
+            .fetch_one(&*state.pool)
+            .await
+            .unwrap_or(true); // Default to true (block bootstrap) on error
 
     if has_admin {
         return Err(Error::Forbidden(
@@ -435,6 +466,7 @@ pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<serde_json:
         ));
     }
 
+    let users = UserRepository::list(&state.pool, 1, 0).await?;
     if users.is_empty() {
         return Err(Error::NotFound(
             "No users found. Register a user first via /api/v1/auth/register".to_string(),
@@ -464,14 +496,18 @@ pub async fn bootstrap(State(state): State<AppState>) -> Result<Json<serde_json:
 
 /// Verify TOTP code.
 fn verify_totp(secret: &str, code: &str) -> Result<bool> {
-    use totp_rs::{Algorithm, TOTP};
+    use totp_rs::{Algorithm, Secret, TOTP};
+
+    let secret_bytes = Secret::Encoded(secret.to_string())
+        .to_bytes()
+        .map_err(|e| Error::Internal(format!("TOTP secret decode error: {}", e)))?;
 
     let totp = TOTP::new(
         Algorithm::SHA1,
         6,
         1,
         30,
-        secret.as_bytes().to_vec(),
+        secret_bytes,
         Some("SignApps".to_string()),
         "user".to_string(),
     )
@@ -481,6 +517,7 @@ fn verify_totp(secret: &str, code: &str) -> Result<bool> {
 }
 
 /// Decrypt LDAP bind password (placeholder - use proper encryption in production).
+// TODO: Replace base64 with proper AES-256-GCM encryption using LDAP_ENCRYPTION_KEY env var
 fn decrypt_ldap_password(encrypted: &str) -> Result<String> {
     use base64::Engine;
 

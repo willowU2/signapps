@@ -1,10 +1,8 @@
 "use client";
 
-import type { ComponentProps, ComponentPropsWithRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 import { useId, useRef, useState } from "react";
-import type { FileIcon } from "@untitledui/file-icons";
-import { FileIcon as FileTypeIcon } from "@untitledui/file-icons";
-import { CheckCircle, Trash01, UploadCloud02, XCircle } from "@untitledui/icons";
+import { CheckCircle2, Trash2, UploadCloud, XCircle, File as LucideFileIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/base/buttons/button";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
@@ -208,7 +206,7 @@ export const FileUploadDropZone = ({
             )}
         >
             <FeaturedIcon color="gray" theme="modern" size="md">
-                <UploadCloud02 className="size-5" />
+                <UploadCloud className="size-5" />
             </FeaturedIcon>
 
             <div className="flex flex-col gap-1 text-center">
@@ -247,12 +245,12 @@ export interface FileListItemProps {
     progress: number;
     /** Whether the file failed to upload. */
     failed?: boolean;
-    /** The type of the file. */
-    type?: ComponentProps<typeof FileIcon>["type"];
+    /** The type of the file (for icon display purposes). */
+    type?: string;
     /** The class name of the file list item. */
     className?: string;
-    /** The variant of the file icon. */
-    fileIconVariant?: ComponentProps<typeof FileTypeIcon>["variant"];
+    /** The variant of the file icon (kept for API compatibility). */
+    fileIconVariant?: string;
     /** The function to call when the file is deleted. */
     onDelete?: () => void;
     /** The function to call when the file upload is retried. */
@@ -271,8 +269,7 @@ export const FileListItemProgressBar = ({ name, size, progress, failed, type, fi
                 className,
             )}
         >
-            <FileTypeIcon className="size-10 shrink-0 dark:hidden" type={type ?? "empty"} theme="light" variant={fileIconVariant ?? "default"} />
-            <FileTypeIcon className="size-10 shrink-0 not-dark:hidden" type={type ?? "empty"} theme="dark" variant={fileIconVariant ?? "default"} />
+            <LucideFileIcon className="size-10 shrink-0 text-muted-foreground" />
 
             <div className="flex min-w-0 flex-1 flex-col items-start">
                 <div className="flex w-full max-w-full min-w-0 flex-1">
@@ -285,10 +282,10 @@ export const FileListItemProgressBar = ({ name, size, progress, failed, type, fi
                             <hr className="h-3 w-px rounded-t-full rounded-b-full border-none bg-border-primary" />
 
                             <div className="flex items-center gap-1">
-                                {isComplete && <CheckCircle className="size-4 stroke-[2.5px] text-fg-success-primary" />}
+                                {isComplete && <CheckCircle2 className="size-4 stroke-[2.5px] text-fg-success-primary" />}
                                 {isComplete && <p className="text-sm font-medium text-success-primary">Complete</p>}
 
-                                {!isComplete && !failed && <UploadCloud02 className="stroke-[2.5px size-4 text-fg-quaternary" />}
+                                {!isComplete && !failed && <UploadCloud className="stroke-[2.5px size-4 text-fg-quaternary" />}
                                 {!isComplete && !failed && <p className="text-sm font-medium text-quaternary">Uploading...</p>}
 
                                 {failed && <XCircle className="size-4 text-fg-error-primary" />}
@@ -297,7 +294,7 @@ export const FileListItemProgressBar = ({ name, size, progress, failed, type, fi
                         </div>
                     </div>
 
-                    <ButtonUtility color="tertiary" tooltip="Delete" icon={Trash01} size="xs" className="-mt-2 -mr-2 self-start" onClick={onDelete} />
+                    <ButtonUtility color="tertiary" tooltip="Delete" icon={Trash2} size="xs" className="-mt-2 -mr-2 self-start" onClick={onDelete} />
                 </div>
 
                 {!failed && (
@@ -337,8 +334,7 @@ export const FileListItemProgressFill = ({ name, size, progress, failed, type, f
                     failed && "ring-2 ring-error",
                 )}
             />
-            <FileTypeIcon className="relative size-10 shrink-0 dark:hidden" type={type ?? "empty"} theme="light" variant={fileIconVariant ?? "solid"} />
-            <FileTypeIcon className="relative size-10 shrink-0 not-dark:hidden" type={type ?? "empty"} theme="dark" variant={fileIconVariant ?? "solid"} />
+            <LucideFileIcon className="relative size-10 shrink-0 text-muted-foreground" />
 
             <div className="relative flex min-w-0 flex-1">
                 <div className="relative flex min-w-0 flex-1 flex-col items-start">
@@ -352,8 +348,8 @@ export const FileListItemProgressFill = ({ name, size, progress, failed, type, f
                                 <>
                                     <hr className="h-3 w-px rounded-t-full rounded-b-full border-none bg-border-primary" />
                                     <div className="flex items-center gap-1">
-                                        {isComplete && <CheckCircle className="size-4 stroke-[2.5px] text-fg-success-primary" />}
-                                        {!isComplete && <UploadCloud02 className="size-4 stroke-[2.5px] text-fg-quaternary" />}
+                                        {isComplete && <CheckCircle2 className="size-4 stroke-[2.5px] text-fg-success-primary" />}
+                                        {!isComplete && <UploadCloud className="size-4 stroke-[2.5px] text-fg-quaternary" />}
 
                                         <p className="text-sm text-muted-foreground">{progress}%</p>
                                     </div>
@@ -369,7 +365,7 @@ export const FileListItemProgressFill = ({ name, size, progress, failed, type, f
                     )}
                 </div>
 
-                <ButtonUtility color="tertiary" tooltip="Delete" icon={Trash01} size="xs" className="-mt-2 -mr-2 self-start" onClick={onDelete} />
+                <ButtonUtility color="tertiary" tooltip="Delete" icon={Trash2} size="xs" className="-mt-2 -mr-2 self-start" onClick={onDelete} />
             </div>
         </motion.li>
     );

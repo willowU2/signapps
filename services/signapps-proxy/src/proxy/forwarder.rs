@@ -98,10 +98,8 @@ impl HttpForwarder {
                 let (parts, body) = resp.into_parts();
                 let boxed_body = body
                     .map_err(|e| {
-                        // Convert the legacy client error into hyper::Error
-                        // This is a type-erased error path
-                        let _ = e;
-                        unreachable!("body stream error")
+                        tracing::error!("Body stream error from backend: {e}");
+                        e
                     })
                     .boxed();
                 Ok(Response::from_parts(parts, boxed_body))

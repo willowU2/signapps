@@ -20,7 +20,7 @@ import { CodePreview } from './previews/code-preview';
 import { PDFPreview } from './previews/pdf-preview';
 import dynamic from 'next/dynamic';
 import mammoth from 'mammoth';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { CellData } from '@/components/sheets/types';
 
 const Editor = dynamic(
@@ -228,19 +228,26 @@ export function FilePreviewDialog({
         }
       } else if (type === 'spreadsheet') {
         const arrayBuffer = await blob.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const jsonData = XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1, defval: '' });
-        
+        const workbook = new ExcelJS.Workbook();
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        if (ext === 'csv') {
+            await workbook.csv.read(new Blob([arrayBuffer]).stream() as any);
+        } else {
+            await workbook.xlsx.load(arrayBuffer);
+        }
+        const firstSheet = workbook.worksheets[0];
+
         const cellData: Record<string, CellData> = {};
-        jsonData.forEach((row, rowIndex) => {
-            row.forEach((colValue, colIndex) => {
-                if (colValue !== undefined && colValue !== null && colValue !== '') {
-                    cellData[`${rowIndex},${colIndex}`] = { value: String(colValue) };
-                }
+        if (firstSheet) {
+            firstSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+                    const val = cell.value;
+                    if (val !== undefined && val !== null && val !== '') {
+                        cellData[`${rowNumber - 1},${colNumber - 1}`] = { value: String(val) };
+                    }
+                });
             });
-        });
+        }
         setParsedSheetsData(cellData);
       } else {
         // Text-based content

@@ -118,8 +118,12 @@ impl CacheService {
     }
 
     /// Get a value by key.
+    ///
+    /// Delegates to [`get_checked`] so that TTL-encoded entries are properly
+    /// decoded and expired entries are pruned. Callers always receive the
+    /// plain value, never the internal `"timestamp:value"` representation.
     pub async fn get(&self, key: &str) -> Option<String> {
-        self.cache.get(key).await
+        self.get_checked(key).await
     }
 
     /// Set a value with an explicit TTL.
@@ -156,8 +160,8 @@ impl CacheService {
         self.cache.insert(key.to_string(), value.to_string()).await;
     }
 
-    /// Internal: get raw value checking custom expiry.
-    async fn get_checked(&self, key: &str) -> Option<String> {
+    /// Get a value by key, checking custom expiry for TTL-encoded entries.
+    pub async fn get_checked(&self, key: &str) -> Option<String> {
         let raw = self.cache.get(key).await?;
 
         // Check if this is a TTL-encoded entry (timestamp:value)
@@ -191,7 +195,20 @@ impl CacheService {
     }
 
     /// Increment an atomic counter. Returns the new value.
+    ///
+    /// Includes a safety valve: if the counter map exceeds 100 000 entries
+    /// (e.g. from unbounded rate-limit keys), all counters are cleared to
+    /// prevent memory exhaustion. Callers should also invoke
+    /// [`cleanup_stale_counters`] periodically from a background task.
     pub fn incr(&self, key: &str) -> i64 {
+        // Prevent unbounded growth of the counter map
+        if self.counters.len() > 100_000 {
+            tracing::warn!(
+                "Counter map exceeded 100 000 entries — clearing all counters"
+            );
+            self.counters.clear();
+        }
+
         self.counters
             .entry(key.to_string())
             .or_insert_with(|| AtomicI64::new(0))
@@ -220,6 +237,23 @@ impl CacheService {
     pub fn reset_counter(&self, key: &str) {
         if let Some(entry) = self.counters.get(key) {
             entry.store(0, Ordering::Relaxed);
+        }
+    }
+
+    /// Remove counter entries whose value has dropped to zero.
+    ///
+    /// Call this periodically (e.g. every 60 seconds from a background task)
+    /// to reclaim memory from expired rate-limit windows.
+    pub fn cleanup_stale_counters(&self) {
+        let before = self.counters.len();
+        self.counters
+            .retain(|_, v| v.load(Ordering::Relaxed) > 0);
+        let removed = before - self.counters.len();
+        if removed > 0 {
+            tracing::debug!(
+                "Cleaned up {removed} stale counters ({} remaining)",
+                self.counters.len()
+            );
         }
     }
 

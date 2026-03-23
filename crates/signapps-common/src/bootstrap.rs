@@ -191,8 +191,12 @@ impl ServiceConfig {
         );
 
         let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
-            tracing::warn!("JWT_SECRET not set, using insecure default");
-            "dev_secret_change_in_production_32chars".to_string()
+            if std::env::var("SIGNAPPS_DEV").is_ok() || cfg!(debug_assertions) {
+                tracing::warn!("JWT_SECRET not set, using insecure dev default — set JWT_SECRET in production!");
+                "dev_secret_change_in_production_32chars".to_string()
+            } else {
+                panic!("JWT_SECRET environment variable must be set in production. Set SIGNAPPS_DEV=1 to use an insecure default for development.");
+            }
         });
 
         let host = env_or("SERVER_HOST", "0.0.0.0");

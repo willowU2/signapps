@@ -6,7 +6,9 @@ use axum::{
     Router,
 };
 use signapps_common::bootstrap::{env_or, init_tracing, load_env, ServiceConfig};
-use signapps_common::middleware::{auth_middleware, logging_middleware, request_id_middleware};
+use signapps_common::middleware::{
+    auth_middleware, logging_middleware, request_id_middleware, require_admin,
+};
 use signapps_common::{AiIndexerClient, AuthState, JwtConfig};
 use signapps_db::DatabasePool;
 use tower::ServiceBuilder;
@@ -29,6 +31,7 @@ pub struct AppState {
     pub storage: StorageBackend,
     pub jwt_config: JwtConfig,
     pub indexer: AiIndexerClient,
+    pub cache: signapps_cache::CacheService,
 }
 
 impl AuthState for AppState {
@@ -95,6 +98,7 @@ async fn main() -> anyhow::Result<()> {
         storage,
         jwt_config,
         indexer: AiIndexerClient::from_env(),
+        cache: signapps_cache::CacheService::default_config(),
     };
 
     // Start background jobs
@@ -220,10 +224,13 @@ fn create_router(state: AppState) -> Router {
         .route("/search/suggest", get(search::suggest))
         .route("/search/omni", get(search::omni_search));
 
-    // Quota routes
-    let quota_routes = Router::new()
+    // Quota routes (user - accessible to authenticated users)
+    let user_quota_routes = Router::new()
         .route("/quotas/me", get(quotas::get_my_quota))
-        .route("/quotas/me/alerts", get(quotas::get_quota_alerts))
+        .route("/quotas/me/alerts", get(quotas::get_quota_alerts));
+
+    // Quota routes (admin - require admin role)
+    let admin_quota_routes = Router::new()
         .route("/quotas/users/:user_id", get(quotas::get_user_quota))
         .route("/quotas/users/:user_id", put(quotas::set_user_quota))
         .route("/quotas/users/:user_id", delete(quotas::delete_user_quota))
@@ -348,7 +355,19 @@ fn create_router(state: AppState) -> Router {
             put(storage_settings::update_system_setting),
         );
 
-    // Combine protected routes
+    // Admin routes (require admin role + authentication)
+    let admin_routes = Router::new()
+        .merge(admin_quota_routes)
+        .merge(storage_settings_routes)
+        .merge(mount_routes)
+        .merge(external_routes)
+        .route_layer(middleware::from_fn(require_admin))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    // Combine protected routes (require authentication)
     let protected_routes = Router::new()
         .merge(file_routes)
         .merge(bucket_routes)
@@ -360,15 +379,12 @@ fn create_router(state: AppState) -> Router {
         .merge(trash_routes)
         .merge(favorites_routes)
         .merge(search_routes)
-        .merge(quota_routes)
+        .merge(user_quota_routes)
         .merge(preview_routes)
         .merge(permissions_routes)
         .merge(tags_routes)
         .merge(versions_routes)
-        .merge(mount_routes)
-        .merge(external_routes)
         .merge(stats_routes)
-        .merge(storage_settings_routes)
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -387,6 +403,7 @@ fn create_router(state: AppState) -> Router {
     // Combine all routes into a single v1 router to prevent path shadowing
     let v1_routes = public_routes
         .merge(public_share_routes)
+        .merge(admin_routes)
         .merge(protected_routes);
 
     Router::new()

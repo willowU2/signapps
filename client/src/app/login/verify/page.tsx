@@ -80,6 +80,11 @@ export default function VerifyPage() {
           setUser(response.data.user);
         }
 
+        // Sync cookie immediately so middleware sees authenticated state
+        const cookieValue = JSON.stringify({ state: { isAuthenticated: true } });
+        const secure = window.location.protocol === 'https:' ? ' Secure;' : '';
+        document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/;${secure} max-age=31536000; SameSite=Lax`;
+
         // Clear MFA session token
         setMfaSessionToken(null);
 

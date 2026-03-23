@@ -10,6 +10,13 @@ import { useAuthStore } from '@/lib/store';
 // Routes that don't require authentication
 const publicRoutes = ['/login', '/login/verify'];
 
+/**
+ * Validate that a redirect URL is safe (relative path only, no protocol-relative URLs).
+ */
+function isValidRedirect(url: string): boolean {
+  return url.startsWith('/') && !url.startsWith('//');
+}
+
 interface AuthProviderProps {
   children: React.ReactNode;
 }
@@ -31,7 +38,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const syncAuthCookie = useCallback((authenticated: boolean) => {
     if (typeof document !== 'undefined') {
       const value = JSON.stringify({ state: { isAuthenticated: authenticated } });
-      document.cookie = `auth-storage=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+      const secure = window.location.protocol === 'https:' ? ' Secure;' : '';
+      document.cookie = `auth-storage=${encodeURIComponent(value)}; path=/; max-age=31536000;${secure} SameSite=Lax`;
     }
   }, []);
 
@@ -90,7 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Handle redirect parameter after login
     if (isAuthenticated && pathname === '/login') {
       const redirect = searchParams.get('redirect');
-      if (redirect) {
+      if (redirect && isValidRedirect(redirect)) {
         router.push(redirect);
       } else {
         router.push('/dashboard');

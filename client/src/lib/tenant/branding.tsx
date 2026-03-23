@@ -11,6 +11,28 @@ import { useTenantBranding } from "./context";
 import type { TenantBranding, TenantColors } from "./types";
 
 // ============================================================================
+// Sanitization Utilities
+// ============================================================================
+
+/**
+ * Sanitize CSS to prevent injection attacks.
+ * Removes @import, expression(), and dangerous url() schemes.
+ */
+function sanitizeCss(css: string): string {
+  return css
+    .replace(/@import\b[^;]*;/gi, '/* blocked @import */')
+    .replace(/expression\s*\(/gi, '/* blocked expression */(')
+    .replace(/url\s*\(\s*['"]?\s*(?:javascript|data):/gi, 'url(blocked:');
+}
+
+/**
+ * Sanitize font-family values to only allow safe characters.
+ */
+function sanitizeFontFamily(font: string): string {
+  return font.replace(/[^a-zA-Z0-9\s,\-'"]/g, '');
+}
+
+// ============================================================================
 // Color Utilities
 // ============================================================================
 
@@ -145,10 +167,10 @@ export function BrandingStyles({ branding: propBranding }: BrandingStylesProps) 
     if (branding.typography) {
       const fontVars: string[] = [];
       if (branding.typography.fontFamily) {
-        fontVars.push(`--font-sans: ${branding.typography.fontFamily};`);
+        fontVars.push(`--font-sans: ${sanitizeFontFamily(branding.typography.fontFamily)};`);
       }
       if (branding.typography.headingFontFamily) {
-        fontVars.push(`--font-heading: ${branding.typography.headingFontFamily};`);
+        fontVars.push(`--font-heading: ${sanitizeFontFamily(branding.typography.headingFontFamily)};`);
       }
       if (branding.typography.baseFontSize) {
         fontVars.push(`font-size: ${branding.typography.baseFontSize}px;`);
@@ -158,9 +180,9 @@ export function BrandingStyles({ branding: propBranding }: BrandingStylesProps) 
       }
     }
 
-    // Custom CSS
+    // Custom CSS (sanitized)
     if (branding.customCss) {
-      parts.push(branding.customCss);
+      parts.push(sanitizeCss(branding.customCss));
     }
 
     return parts.join("\n\n").replace(/<\/style/gi, "<\\/style");

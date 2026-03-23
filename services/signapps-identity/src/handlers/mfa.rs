@@ -90,10 +90,19 @@ pub async fn setup(
         .map_err(|e| Error::Internal(format!("QR code generation failed: {}", e)))?;
 
     // Generate backup codes
+    // TODO: Hash and persist backup codes to database for account recovery
     let backup_codes = generate_backup_codes(8);
 
-    // Store secret temporarily (will be confirmed on verify)
-    UserRepository::enable_mfa(&state.pool, user.id, &secret_base32).await?;
+    // Store secret in cache pending verification (10 min TTL)
+    // MFA is NOT enabled yet — verify handler will enable it after code check
+    state
+        .cache
+        .set(
+            &format!("mfa_pending:{}", user.id),
+            &secret_base32,
+            std::time::Duration::from_secs(600),
+        )
+        .await;
 
     tracing::info!(user_id = %user.id, "MFA setup initiated");
 
@@ -123,18 +132,26 @@ pub async fn verify(
         .await?
         .ok_or(Error::NotFound("User not found".to_string()))?;
 
-    // Get MFA secret
-    let secret = user
-        .mfa_secret
-        .ok_or(Error::BadRequest("MFA not set up".to_string()))?;
+    // Retrieve pending MFA secret from cache (set during setup)
+    let cache_key = format!("mfa_pending:{}", user.id);
+    let secret = state
+        .cache
+        .get_checked(&cache_key)
+        .await
+        .ok_or(Error::BadRequest(
+            "MFA setup not found or expired. Please run setup again.".to_string(),
+        ))?;
 
-    // Verify TOTP code
+    // Verify TOTP code using base32-encoded secret
+    let secret_bytes = Secret::Encoded(secret.clone())
+        .to_bytes()
+        .map_err(|e| Error::Internal(format!("TOTP secret decode error: {}", e)))?;
     let totp = TOTP::new(
         Algorithm::SHA1,
         6,
         1,
         30,
-        secret.as_bytes().to_vec(),
+        secret_bytes,
         Some("SignApps".to_string()),
         user.username.clone(),
     )
@@ -150,8 +167,11 @@ pub async fn verify(
         }));
     }
 
-    // MFA is now confirmed/enabled
+    // Code verified — NOW enable MFA in the database
     UserRepository::enable_mfa(&state.pool, user.id, &secret).await?;
+
+    // Remove pending cache entry
+    state.cache.del(&cache_key).await;
 
     tracing::info!(user_id = %user.id, "MFA enabled successfully");
 
@@ -178,7 +198,7 @@ pub async fn disable(
         "Cannot disable MFA for LDAP users".to_string(),
     ))?;
 
-    if !crate::auth::verify_password(&payload.password, password_hash)? {
+    if !crate::auth::verify_password(&payload.password, password_hash).await? {
         return Err(Error::InvalidCredentials);
     }
 
@@ -188,12 +208,15 @@ pub async fn disable(
         .as_ref()
         .ok_or(Error::BadRequest("MFA is not enabled".to_string()))?;
 
+    let secret_bytes = Secret::Encoded(secret.to_string())
+        .to_bytes()
+        .map_err(|e| Error::Internal(format!("TOTP secret decode error: {}", e)))?;
     let totp = TOTP::new(
         Algorithm::SHA1,
         6,
         1,
         30,
-        secret.as_bytes().to_vec(),
+        secret_bytes,
         Some("SignApps".to_string()),
         user.username.clone(),
     )

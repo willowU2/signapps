@@ -1,5 +1,6 @@
 //! Embeddings client supporting TEI and Ollama.
 
+use futures_util::stream::{self, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
@@ -223,16 +224,22 @@ impl EmbeddingsClient {
         Ok(result.data.into_iter().map(|d| d.embedding).collect())
     }
 
-    /// Ollama batch embedding (sequential, Ollama doesn't support batch).
+    /// Ollama batch embedding with bounded concurrency.
+    /// Ollama doesn't support native batch embedding, so we parallelize
+    /// individual requests with a concurrency limit of 4 to avoid
+    /// overwhelming the Ollama server while still achieving speedup.
     async fn embed_batch_ollama(&self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
-        let mut results = Vec::with_capacity(texts.len());
+        let texts_owned: Vec<String> = texts.to_vec();
+        let results: Vec<Result<Vec<f32>>> = stream::iter(texts_owned.into_iter())
+            .map(|text| {
+                let this = self.clone();
+                async move { this.embed_single_ollama(&text).await }
+            })
+            .buffer_unordered(4)
+            .collect()
+            .await;
 
-        for text in texts {
-            let embedding = self.embed_single_ollama(text).await?;
-            results.push(embedding);
-        }
-
-        Ok(results)
+        results.into_iter().collect()
     }
 
     /// Ollama single embedding.

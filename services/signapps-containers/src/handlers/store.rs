@@ -509,6 +509,22 @@ struct StoreAppMeta {
     app_tags: Vec<String>,
 }
 
+/// Validate a database name to prevent SQL injection.
+fn validate_db_name(name: &str) -> Result<()> {
+    if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return Err(Error::Validation(
+            "Invalid database name: must contain only alphanumeric characters and underscores"
+                .to_string(),
+        ));
+    }
+    if name.len() > 63 {
+        return Err(Error::Validation(
+            "Database name too long: maximum 63 characters".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 /// Provision a dedicated PostgreSQL database for an app, including the vector extension.
 pub async fn provision_app_database(
     pool: &signapps_db::DatabasePool,
@@ -517,6 +533,7 @@ pub async fn provision_app_database(
     // Sanitize app_id to create a safe database name
     let sanitized_id = app_id.replace('-', "_").to_lowercase();
     let db_name = format!("app_{}", sanitized_id);
+    validate_db_name(&db_name)?;
 
     // We cannot use prepared statements for CREATE DATABASE
     // Also, we need to check if it exists first

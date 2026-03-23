@@ -240,6 +240,9 @@ pub async fn download(
     Ok(response)
 }
 
+/// Maximum upload size per file (500 MB).
+const MAX_UPLOAD_SIZE: usize = 500 * 1024 * 1024;
+
 /// Upload a file via multipart form.
 #[tracing::instrument(skip(state, multipart))]
 pub async fn upload(
@@ -278,7 +281,15 @@ pub async fn upload(
 
         let size = data.len();
 
-        // Check quota before upload
+        // Enforce maximum upload size to prevent OOM
+        if size > MAX_UPLOAD_SIZE {
+            return Err(Error::BadRequest(format!(
+                "File too large: max {} MB",
+                MAX_UPLOAD_SIZE / 1024 / 1024
+            )));
+        }
+
+        // Check quota BEFORE writing to storage to avoid orphaned files
         quotas::check_quota(&state, user_id, size as i64).await?;
 
         state
@@ -356,7 +367,15 @@ pub async fn upload_with_key(
 
     let size = body.len();
 
-    // Check quota before upload
+    // Enforce maximum upload size to prevent OOM
+    if size > MAX_UPLOAD_SIZE {
+        return Err(Error::BadRequest(format!(
+            "File too large: max {} MB",
+            MAX_UPLOAD_SIZE / 1024 / 1024
+        )));
+    }
+
+    // Check quota BEFORE writing to storage to avoid orphaned files
     quotas::check_quota(&state, user_id, size as i64).await?;
 
     state

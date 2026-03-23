@@ -76,7 +76,8 @@ export default function LoginPage() {
       // Sync cookie immediately so middleware sees authenticated state
       const cookieValue = JSON.stringify({ state: { isAuthenticated: true } });
       const cookieProps = rememberMe ? 'max-age=31536000;' : '';
-      document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/; ${cookieProps} SameSite=Lax`;
+      const secure = window.location.protocol === 'https:' ? ' Secure;' : '';
+      document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/;${secure} ${cookieProps} SameSite=Lax`;
 
       // Save remember state for session lifecycle tracking
       localStorage.setItem('remember_me', rememberMe ? 'true' : 'false');
