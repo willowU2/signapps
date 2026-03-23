@@ -288,6 +288,7 @@ pub async fn list_docker(
 #[tracing::instrument(skip(state))]
 pub async fn get(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ContainerResponse>> {
     let repo = ContainerRepository::new(&state.pool);
@@ -296,6 +297,17 @@ pub async fn get(
         .find_by_id(id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("Container {}", id)))?;
+
+    // Check ownership for non-admin users
+    if claims.role < 2 {
+        if let Some(owner_id) = &container.owner_id {
+            if *owner_id != claims.sub {
+                return Err(Error::Forbidden(
+                    "You don't have access to this container".to_string(),
+                ));
+            }
+        }
+    }
 
     // Get Docker info if available
     let docker_info = if let Some(ref docker_id) = container.docker_id {
@@ -712,6 +724,7 @@ pub async fn update(
 #[tracing::instrument(skip(state))]
 pub async fn logs(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(query): Query<LogsQuery>,
 ) -> Result<Json<Vec<String>>> {
@@ -721,6 +734,17 @@ pub async fn logs(
         .find_by_id(id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("Container {}", id)))?;
+
+    // Check ownership for non-admin users
+    if claims.role < 2 {
+        if let Some(owner_id) = &container.owner_id {
+            if *owner_id != claims.sub {
+                return Err(Error::Forbidden(
+                    "You don't have access to this container".to_string(),
+                ));
+            }
+        }
+    }
 
     let docker_id = container
         .docker_id
@@ -735,6 +759,7 @@ pub async fn logs(
 #[tracing::instrument(skip(state))]
 pub async fn stats(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ContainerStats>> {
     let repo = ContainerRepository::new(&state.pool);
@@ -743,6 +768,17 @@ pub async fn stats(
         .find_by_id(id)
         .await?
         .ok_or_else(|| Error::NotFound(format!("Container {}", id)))?;
+
+    // Check ownership for non-admin users
+    if claims.role < 2 {
+        if let Some(owner_id) = &container.owner_id {
+            if *owner_id != claims.sub {
+                return Err(Error::Forbidden(
+                    "You don't have access to this container".to_string(),
+                ));
+            }
+        }
+    }
 
     let docker_id = container
         .docker_id
@@ -789,6 +825,22 @@ pub async fn restart_docker(
     State(state): State<AppState>,
     Path(docker_id): Path<String>,
 ) -> Result<Json<ActionResponse>> {
+    // Check if this is a system container - block if so
+    let info = state.docker.get_container(&docker_id).await?;
+    let is_system = info.name.starts_with("signapps-")
+        || info.name.starts_with("signapps_")
+        || info
+            .labels
+            .get("com.docker.compose.project")
+            .map(|p| p.contains("signapps"))
+            .unwrap_or(false);
+
+    if is_system {
+        return Err(Error::Forbidden(
+            "Cannot modify system containers".to_string(),
+        ));
+    }
+
     state.docker.restart_container(&docker_id, None).await?;
 
     Ok(Json(ActionResponse {
@@ -835,6 +887,22 @@ pub async fn stop_docker(
     Path(docker_id): Path<String>,
     Json(payload): Json<Option<StopRequest>>,
 ) -> Result<Json<ActionResponse>> {
+    // Check if this is a system container - block if so
+    let info = state.docker.get_container(&docker_id).await?;
+    let is_system = info.name.starts_with("signapps-")
+        || info.name.starts_with("signapps_")
+        || info
+            .labels
+            .get("com.docker.compose.project")
+            .map(|p| p.contains("signapps"))
+            .unwrap_or(false);
+
+    if is_system {
+        return Err(Error::Forbidden(
+            "Cannot modify system containers".to_string(),
+        ));
+    }
+
     let timeout = payload.and_then(|p| p.timeout_secs);
     state.docker.stop_container(&docker_id, timeout).await?;
 
@@ -850,6 +918,22 @@ pub async fn remove_docker(
     State(state): State<AppState>,
     Path(docker_id): Path<String>,
 ) -> Result<StatusCode> {
+    // Check if this is a system container - block if so
+    let info = state.docker.get_container(&docker_id).await?;
+    let is_system = info.name.starts_with("signapps-")
+        || info.name.starts_with("signapps_")
+        || info
+            .labels
+            .get("com.docker.compose.project")
+            .map(|p| p.contains("signapps"))
+            .unwrap_or(false);
+
+    if is_system {
+        return Err(Error::Forbidden(
+            "Cannot modify system containers".to_string(),
+        ));
+    }
+
     // Try to stop first, ignore errors
     let _ = state.docker.stop_container(&docker_id, Some(5)).await;
     state

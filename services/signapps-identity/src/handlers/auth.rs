@@ -12,6 +12,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::auth::{create_tokens, verify_password, verify_token};
+use crate::handlers::admin_security::ActiveSession;
 use crate::ldap::LdapService;
 use crate::AppState;
 
@@ -185,6 +186,23 @@ pub async fn login(
         workspace_ids,
         &state.jwt_secret,
     )?;
+
+    // Register this session in the active sessions store
+    let session_id = tokens.access_token.chars().take(16).collect::<String>();
+    let session_expires_at = chrono::Utc::now()
+        + chrono::Duration::seconds(tokens.expires_in);
+    state
+        .active_sessions
+        .add(ActiveSession {
+            id: session_id,
+            user_id: user.id,
+            username: user.username.clone(),
+            created_at: chrono::Utc::now(),
+            expires_at: session_expires_at,
+            ip_address: None,
+            user_agent: None,
+        })
+        .await;
 
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "User logged in successfully");
 
@@ -499,6 +517,7 @@ fn verify_totp(secret: &str, code: &str) -> Result<bool> {
 }
 
 /// Decrypt LDAP bind password (placeholder - use proper encryption in production).
+// TODO: Replace base64 with proper AES-256-GCM encryption using LDAP_ENCRYPTION_KEY env var
 fn decrypt_ldap_password(encrypted: &str) -> Result<String> {
     use base64::Engine;
 

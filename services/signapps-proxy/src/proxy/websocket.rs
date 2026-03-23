@@ -78,12 +78,20 @@ pub async fn handle_websocket_upgrade(
         Client::builder(TokioExecutor::new()).build_http();
 
     match client.request(req).await {
-        Ok(mut backend_resp) => {
+        Ok(backend_resp) => {
             if backend_resp.status() == StatusCode::SWITCHING_PROTOCOLS {
-                // Get the upgraded connection from the backend
-                let _backend_upgraded = hyper::upgrade::on(&mut backend_resp);
+                // TODO: Implement full bidirectional WebSocket tunneling.
+                // This requires calling `hyper::upgrade::on()` on both the
+                // client request and the backend response, then using
+                // `tokio::io::copy_bidirectional()` to shuttle bytes between
+                // the two upgraded connections. Until then, the connection
+                // will hang after the 101 handshake completes.
+                tracing::warn!(
+                    "WebSocket tunneling not yet implemented — \
+                     connection will hang after upgrade"
+                );
 
-                // Return 101 to client and spawn tunnel
+                // Return 101 to client
                 let mut resp = Response::builder().status(StatusCode::SWITCHING_PROTOCOLS);
 
                 // Copy relevant headers
@@ -100,8 +108,8 @@ pub async fn handle_websocket_upgrade(
                 let (parts, body) = backend_resp.into_parts();
                 let boxed = body
                     .map_err(|e| {
-                        let _ = e;
-                        unreachable!()
+                        tracing::error!("Body stream error from WebSocket backend: {e}");
+                        e
                     })
                     .boxed();
                 Ok(Response::from_parts(parts, boxed))

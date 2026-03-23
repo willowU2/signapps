@@ -80,6 +80,11 @@ export function LdapLoginDialog({ open, onOpenChange }: LdapLoginDialogProps) {
           setUser(userResponse.data);
         }
 
+        // Sync cookie immediately so middleware sees authenticated state
+        const cookieValue = JSON.stringify({ state: { isAuthenticated: true } });
+        const secure = window.location.protocol === 'https:' ? ' Secure;' : '';
+        document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/;${secure} max-age=31536000; SameSite=Lax`;
+
         // Redirect
         const redirectPath = redirectAfterLogin || '/dashboard';
         setRedirectAfterLogin(null);

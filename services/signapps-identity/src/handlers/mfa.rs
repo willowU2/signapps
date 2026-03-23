@@ -90,6 +90,7 @@ pub async fn setup(
         .map_err(|e| Error::Internal(format!("QR code generation failed: {}", e)))?;
 
     // Generate backup codes
+    // TODO: Hash and persist backup codes to database for account recovery
     let backup_codes = generate_backup_codes(8);
 
     // Store secret in cache pending verification (10 min TTL)

@@ -227,17 +227,21 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsRespon
     }))
 }
 
-/// Reindex all documents (placeholder).
+/// Reindex all documents (not yet implemented).
 #[tracing::instrument(skip(_state))]
-pub async fn reindex_all(State(_state): State<AppState>) -> Result<Json<serde_json::Value>> {
+pub async fn reindex_all(
+    State(_state): State<AppState>,
+) -> std::result::Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
     // This would typically:
     // 1. Fetch all documents from storage
     // 2. Clear the index
     // 3. Re-index all documents
 
-    // For now, just return a message
-    Ok(Json(serde_json::json!({
-        "status": "started",
-        "message": "Reindexing started in background"
-    })))
+    Err((
+        StatusCode::NOT_IMPLEMENTED,
+        Json(serde_json::json!({
+            "status": "not_implemented",
+            "message": "Reindexing is not yet implemented"
+        })),
+    ))
 }

@@ -252,32 +252,34 @@ impl SchedulerService {
 }
 
 /// Parse a simple interval from cron-like expression.
-/// This is a simplified implementation - in production use cron crate.
+/// Returns the interval in minutes between expected runs.
 fn parse_simple_interval(cron: &str) -> Option<i64> {
     let parts: Vec<&str> = cron.split_whitespace().collect();
     if parts.len() < 5 {
         return None;
     }
 
-    // Very simplified parsing
-    // */5 * * * * -> every 5 minutes
-    // 0 * * * * -> every hour
-    // 0 0 * * * -> every day
-    if parts[0].starts_with("*/") {
-        if let Ok(n) = parts[0][2..].parse::<i64>() {
-            return Some(n);
+    // Handle common patterns
+    match (parts[0], parts[1], parts[2], parts[3], parts[4]) {
+        // Every N minutes: */N * * * *
+        (min, "*", "*", "*", "*") if min.starts_with("*/") => {
+            min[2..].parse::<i64>().ok()
         }
+        // Every N hours: 0 */N * * *
+        ("0", hour, "*", "*", "*") if hour.starts_with("*/") => {
+            hour[2..].parse::<i64>().ok().map(|h| h * 60)
+        }
+        // Every minute: * * * * *
+        ("*", "*", "*", "*", "*") => Some(1),
+        // Every hour: 0 * * * *
+        ("0", "*", "*", "*", "*") => Some(60),
+        // Every day at specific time: M H * * *
+        (_, _, "*", "*", "*") => Some(60 * 24),
+        // Every week: M H * * D
+        (_, _, "*", "*", _) => Some(60 * 24 * 7),
+        // Default: 1 hour
+        _ => Some(60),
     }
-
-    if parts[0] == "0" && parts[1] == "*" {
-        return Some(60); // hourly
-    }
-
-    if parts[0] == "0" && parts[1] == "0" {
-        return Some(60 * 24); // daily
-    }
-
-    Some(60) // default to hourly
 }
 
 /// Validate a cron expression (simplified).
