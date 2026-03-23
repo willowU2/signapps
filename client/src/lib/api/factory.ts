@@ -41,6 +41,7 @@ export enum ServiceName {
   REMOTE = 'remote',
   OFFICE = 'office',
   WORKFORCE = 'workforce',
+  CONTACTS = 'contacts',
 }
 
 interface ServiceConfig {
@@ -69,6 +70,7 @@ const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
   [ServiceName.REMOTE]: { port: 3017, envVar: 'NEXT_PUBLIC_REMOTE_URL', healthPath: '/health' },
   [ServiceName.OFFICE]: { port: 3018, envVar: 'NEXT_PUBLIC_OFFICE_URL', healthPath: '/health' },
   [ServiceName.WORKFORCE]: { port: 3019, envVar: 'NEXT_PUBLIC_WORKFORCE_URL', healthPath: '/health' },
+  [ServiceName.CONTACTS]: { port: 3014, envVar: 'NEXT_PUBLIC_CONTACTS_URL', healthPath: '/health' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
