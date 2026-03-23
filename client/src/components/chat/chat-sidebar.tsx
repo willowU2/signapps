@@ -210,7 +210,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
     )
 
     return (
-        <div className="flex flex-col h-full bg-[#f2f6fc] text-[#1f1f1f]">
+        <div className="flex flex-col h-full bg-muted/30 dark:bg-background text-foreground">
             {/* Header Area */}
             <div className="p-4 py-3 flex items-center justify-between">
                 <Button
@@ -224,7 +224,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-full text-muted-foreground hover:bg-black/5"
+                        className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted"
                         onClick={() => setCreateDialogOpen(true)}
                     >
                         <Plus className="h-4 w-4" />
@@ -241,8 +241,8 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                             className={cn(
                                 "w-full justify-start gap-3 h-8 px-3 text-sm font-medium rounded-full transition-colors",
                                 selectedChannel === "accueil"
-                                    ? "bg-[#d3e3fd] text-[#001d35] font-semibold"
-                                    : "text-[#444746] hover:bg-black/5"
+                                    ? "bg-primary/15 text-primary font-semibold dark:bg-primary/20"
+                                    : "text-muted-foreground hover:bg-muted"
                             )}
                             onClick={() => onSelectChannel("accueil", "Accueil", false)}
                         >
@@ -251,14 +251,14 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                         </Button>
                         <Button
                             variant="ghost"
-                            className="w-full justify-start gap-3 h-8 px-3 text-sm font-medium rounded-full transition-colors text-[#444746] hover:bg-black/5"
+                            className="w-full justify-start gap-3 h-8 px-3 text-sm font-medium rounded-full transition-colors text-muted-foreground hover:bg-muted"
                         >
                             <span className="font-bold text-lg leading-none mt-[-4px]">@</span>
                             <span className="truncate flex-1 text-left">Mentions</span>
                         </Button>
                         <Button
                             variant="ghost"
-                            className="w-full justify-start gap-3 h-8 px-3 text-sm font-medium rounded-full transition-colors text-[#444746] hover:bg-black/5"
+                            className="w-full justify-start gap-3 h-8 px-3 text-sm font-medium rounded-full transition-colors text-muted-foreground hover:bg-muted"
                         >
                             <span className="font-bold text-lg leading-none mt-[-4px]">☆</span>
                             <span className="truncate flex-1 text-left">Suivis</span>
@@ -267,18 +267,18 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
 
                     {/* Messages privés */}
                     <div>
-                        <div className="flex items-center justify-between px-3 h-8 group hover:bg-black/5 rounded-full cursor-pointer transition-colors mb-1">
-                            <h3 className="text-xs font-semibold text-[#444746] flex items-center gap-2">
+                        <div className="flex items-center justify-between px-3 h-8 group hover:bg-muted rounded-full cursor-pointer transition-colors mb-1">
+                            <h3 className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
                                 <ChevronDown className="h-3 w-3" />
                                 Messages privés
                             </h3>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-5 w-5 bg-transparent hover:bg-black/10 rounded overflow-hidden"
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 bg-transparent hover:bg-muted rounded overflow-hidden"
                                 onClick={(e) => { e.stopPropagation(); setDmDialogOpen(true); }}
                             >
-                                <Plus className="h-4 w-4 text-[#444746]" />
+                                <Plus className="h-4 w-4 text-muted-foreground" />
                             </Button>
                         </div>
                         <div className="space-y-0.5">
@@ -308,8 +308,8 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                                         className={cn(
                                             "w-full justify-start gap-3 h-8 px-3 text-sm rounded-full transition-colors group relative pr-8",
                                             selectedChannel === dm.id
-                                                ? "bg-[#d3e3fd] text-[#001d35] font-semibold"
-                                                : "text-[#444746] hover:bg-black/5"
+                                                ? "bg-primary/15 text-primary font-semibold dark:bg-primary/20"
+                                                : "text-muted-foreground hover:bg-muted"
                                         )}
                                         onClick={() => onSelectChannel(dm.id, dynamicName, true)}
                                     >
@@ -334,7 +334,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                                         )}
                                         
                                         <div 
-                                            className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-black/10 rounded-full"
+                                            className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded-full"
                                             onClick={(e) => handleDeleteDm(e, dm.id)}
                                             title="Supprimer la conversation"
                                         >
@@ -348,15 +348,15 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                     
                     {/* Espaces */}
                     <div>
-                         <div className="flex items-center justify-between px-3 h-8 group hover:bg-black/5 rounded-full cursor-pointer transition-colors mb-1">
-                            <h3 className="text-xs font-semibold text-[#444746] flex items-center gap-2">
+                         <div className="flex items-center justify-between px-3 h-8 group hover:bg-muted rounded-full cursor-pointer transition-colors mb-1">
+                            <h3 className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
                                 <ChevronDown className="h-3 w-3" />
                                 Espaces
                             </h3>
-                            <Plus className="h-4 w-4 text-[#444746] opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                         {isLoading ? (
-                            <div className="px-3 flex items-center gap-2 text-[#444746] text-sm pt-2">
+                            <div className="px-3 flex items-center gap-2 text-muted-foreground text-sm pt-2">
                                 <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3 " /> Chargement...
                             </div>
                         ) : (
@@ -368,12 +368,12 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
                                         className={cn(
                                             "w-full justify-start gap-3 h-8 px-3 text-sm font-medium rounded-full transition-colors",
                                             selectedChannel === channel.id
-                                                ? "bg-[#d3e3fd] text-[#001d35] font-semibold"
-                                                : "text-[#444746] hover:bg-black/5"
+                                                ? "bg-primary/15 text-primary font-semibold dark:bg-primary/20"
+                                                : "text-muted-foreground hover:bg-muted"
                                         )}
                                         onClick={() => onSelectChannel(channel.id, channel.name, false)}
                                     >
-                                        <div className="flex items-center justify-center w-6 h-6 rounded bg-[#e8eaed] text-[#444746] shrink-0">
+                                        <div className="flex items-center justify-center w-6 h-6 rounded bg-muted text-muted-foreground shrink-0">
                                             {(channel as any).is_private ? <Hash className="h-3.5 w-3.5" /> : <Hash className="h-3.5 w-3.5" />}
                                         </div>
                                         <span className="truncate flex-1 text-left">{channel.name}</span>

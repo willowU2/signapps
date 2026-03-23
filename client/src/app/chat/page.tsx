@@ -35,40 +35,40 @@ export default function ChatPage() {
 
     return (
         <WorkspaceShell
-            className="bg-[#f2f6fc]"
+            className="bg-muted/30 dark:bg-background"
             header={
-                <header className="h-16 flex items-center justify-between px-4 bg-[#f2f6fc] shrink-0">
+                <header className="h-16 flex items-center justify-between px-4 bg-muted/30 dark:bg-background shrink-0">
                     <div className="flex items-center gap-4 w-[250px]">
-                        <Button variant="ghost" size="icon" className="text-[#444746] hover:bg-black/5 rounded-full">
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted rounded-full">
                             <Menu className="h-6 w-6" />
                         </Button>
                         <div className="flex items-center gap-2">
-                            <MessageSquare className="h-6 w-6 text-[#1a73e8]" />
-                            <span className="text-xl font-normal text-[#444746]">Chat</span>
+                            <MessageSquare className="h-6 w-6 text-primary" />
+                            <span className="text-xl font-normal text-muted-foreground">Chat</span>
                         </div>
                     </div>
 
                     <div className="flex-1 max-w-[720px] px-4">
-                        <div className="flex items-center bg-[#eaf1fb] px-4 py-2 rounded-full h-12 w-full">
-                            <Search className="h-5 w-5 text-[#444746] mr-4" />
-                            <input 
-                                type="text" 
-                                placeholder="Rechercher une discussion" 
-                                className="bg-transparent border-none outline-none flex-1 text-base placeholder-[#444746]"
+                        <div className="flex items-center bg-muted dark:bg-muted/50 px-4 py-2 rounded-full h-12 w-full">
+                            <Search className="h-5 w-5 text-muted-foreground mr-4" />
+                            <input
+                                type="text"
+                                placeholder="Rechercher une discussion"
+                                className="bg-transparent border-none outline-none flex-1 text-base placeholder:text-muted-foreground"
                             />
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <div className="hidden md:flex items-center bg-background px-3 py-1.5 rounded-full border shadow-sm mr-2 cursor-pointer hover:bg-gray-50">
+                        <div className="hidden md:flex items-center bg-background px-3 py-1.5 rounded-full border shadow-sm mr-2 cursor-pointer hover:bg-muted">
                             <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                            <span className="text-sm font-medium text-[#444746]">Actif</span>
-                            <ChevronDown className="h-4 w-4 text-[#444746] ml-2" />
+                            <span className="text-sm font-medium text-muted-foreground">Actif</span>
+                            <ChevronDown className="h-4 w-4 text-muted-foreground ml-2" />
                         </div>
-                        <Button variant="ghost" size="icon" className="text-[#444746] hover:bg-black/5 rounded-full">
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted rounded-full">
                             <Settings className="h-6 w-6" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="text-[#444746] hover:bg-black/5 rounded-full">
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted rounded-full">
                             <Settings className="h-6 w-6" />
                         </Button>
                         <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-medium ml-2 cursor-pointer">
