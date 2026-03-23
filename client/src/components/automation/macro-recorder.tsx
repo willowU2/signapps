@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Record, Square, Play, Trash2 } from 'lucide-react';
+import { Circle, Square, Play, Trash2 } from 'lucide-react';
 
 interface MacroAction {
   label: string;
@@ -69,7 +69,7 @@ export function MacroRecorder() {
             {isRecording ? (
               <><Square className="w-4 h-4 mr-1" />Stop</>
             ) : (
-              <><Record className="w-4 h-4 mr-1" />Start</>
+              <><Circle className="w-4 h-4 mr-1 text-red-500 fill-red-500" />Start</>
             )}
           </Button>
         </div>

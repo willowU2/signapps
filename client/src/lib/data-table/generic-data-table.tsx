@@ -1,4 +1,5 @@
-import { SpinnerInfinity } from 'spinners-react';
+"use client";
+
 /**
  * Generic DataTable Component
  *
@@ -6,7 +7,7 @@ import { SpinnerInfinity } from 'spinners-react';
  * Utilise EntityConfig pour la configuration automatique.
  */
 
-"use client";
+import { SpinnerInfinity } from 'spinners-react';
 
 import * as React from "react";
 import {

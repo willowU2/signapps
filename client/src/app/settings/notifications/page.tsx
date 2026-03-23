@@ -1,10 +1,11 @@
-import { SpinnerInfinity } from 'spinners-react';
+'use client';
+
 /**
  * Notification Settings Page
  * Configure email, SMS, and push notifications
  */
 
-'use client';
+import { SpinnerInfinity } from 'spinners-react';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
