@@ -1,10 +1,11 @@
-import { SpinnerInfinity } from 'spinners-react';
+'use client';
+
 /**
  * Notification History Component
  * Display and manage sent notifications
  */
 
-'use client';
+import { SpinnerInfinity } from 'spinners-react';
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
