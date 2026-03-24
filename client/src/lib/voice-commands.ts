@@ -41,17 +41,18 @@ export function parseVoiceCommand(transcript: string): ParsedCommand | null {
  * Start listening with Web Speech API
  */
 export function startListening(onResult: (transcript: string) => void, onError?: (err: string) => void): (() => void) | null {
-  const SpeechRecognition = (window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
-  if (!SpeechRecognition) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  if (!SR) {
     onError?.("Speech API non supportee");
     return null;
   }
-  const recognition = new (SpeechRecognition as new () => SpeechRecognition)();
+  const recognition = new SR();
   recognition.lang = "fr-FR";
   recognition.continuous = false;
   recognition.interimResults = false;
-  recognition.onresult = (e: SpeechRecognitionEvent) => { onResult(e.results[0][0].transcript); };
-  recognition.onerror = (e: SpeechRecognitionErrorEvent) => { onError?.(e.error); };
+  recognition.onresult = (e: { results: { 0: { 0: { transcript: string } } } }) => { onResult(e.results[0][0].transcript); };
+  recognition.onerror = (e: { error: string }) => { onError?.(e.error); };
   recognition.start();
   return () => recognition.stop();
 }

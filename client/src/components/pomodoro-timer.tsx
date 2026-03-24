@@ -7,7 +7,7 @@ export function PomodoroTimer() {
   const [seconds, setSeconds] = useState(25 * 60);
   const [isBreak, setIsBreak] = useState(false);
   const [sessions, setSessions] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
     if (!running) return;
