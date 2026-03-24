@@ -327,7 +327,7 @@ pub async fn install_app(
         labels: config
             .labels
             .as_ref()
-            .map(|l| serde_json::to_value(l).unwrap()),
+            .map(|l| serde_json::to_value(l).unwrap_or_default()),
         auto_update: None,
     };
 
@@ -961,7 +961,7 @@ async fn run_multi_install(
             labels: config
                 .labels
                 .as_ref()
-                .map(|l| serde_json::to_value(l).unwrap()),
+                .map(|l| serde_json::to_value(l).unwrap_or_default()),
             auto_update: None,
         };
 

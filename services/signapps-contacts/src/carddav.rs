@@ -156,7 +156,7 @@ fn split_vcards(input: &str) -> Vec<&str> {
 ///
 /// Returns all contacts in the in-memory store as a `text/vcard` collection.
 pub async fn export_vcf(State(state): State<AppState>) -> Response {
-    let contacts = state.contacts.lock().unwrap();
+    let contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     let body: String = contacts.iter().map(contact_to_vcard).collect();
 
     (
@@ -192,7 +192,7 @@ pub async fn import_vcf(
     }
 
     let mut created: Vec<Contact> = Vec::new();
-    let mut store = state.contacts.lock().unwrap();
+    let mut store = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
 
     for block in blocks {
         if let Some(mut contact) = vcard_to_contact(block) {

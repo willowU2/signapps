@@ -142,7 +142,7 @@ impl DnsResolver {
     /// Add a custom DNS record for local resolution.
     pub fn add_custom_record(&self, name: &str, record_type: &str, value: &str, ttl: u32) {
         let normalized_name = Self::normalize_domain(name);
-        let mut records = self.custom_records.write().unwrap();
+        let mut records = self.custom_records.write().unwrap_or_else(|e| e.into_inner());
         records.insert(
             format!("{}:{}", normalized_name, record_type.to_uppercase()),
             CustomRecord {
@@ -162,7 +162,7 @@ impl DnsResolver {
     /// Remove a custom DNS record.
     pub fn remove_custom_record(&self, name: &str, record_type: &str) {
         let normalized_name = Self::normalize_domain(name);
-        let mut records = self.custom_records.write().unwrap();
+        let mut records = self.custom_records.write().unwrap_or_else(|e| e.into_inner());
         records.remove(&format!(
             "{}:{}",
             normalized_name,
@@ -178,7 +178,7 @@ impl DnsResolver {
 
         // Check custom records first
         {
-            let custom = self.custom_records.read().unwrap();
+            let custom = self.custom_records.read().unwrap_or_else(|e| e.into_inner());
             if let Some(record) = custom.get(&cache_key) {
                 return Ok(ResolveResult {
                     name: normalized_name,
@@ -192,7 +192,7 @@ impl DnsResolver {
 
         // Check cache
         {
-            let cache = self.cache.read().unwrap();
+            let cache = self.cache.read().unwrap_or_else(|e| e.into_inner());
             if let Some(cached) = cache.get(&cache_key) {
                 if !cached.is_expired() {
                     return Ok(ResolveResult {
@@ -217,7 +217,7 @@ impl DnsResolver {
 
         // Cache the result
         {
-            let mut cache = self.cache.write().unwrap();
+            let mut cache = self.cache.write().unwrap_or_else(|e| e.into_inner());
             cache.insert(
                 cache_key,
                 CachedRecord {
@@ -470,14 +470,14 @@ impl DnsResolver {
 
     /// Clear the DNS cache.
     pub fn clear_cache(&self) {
-        let mut cache = self.cache.write().unwrap();
+        let mut cache = self.cache.write().unwrap_or_else(|e| e.into_inner());
         cache.clear();
         tracing::info!("DNS cache cleared");
     }
 
     /// Remove expired entries from cache.
     pub fn cleanup_cache(&self) {
-        let mut cache = self.cache.write().unwrap();
+        let mut cache = self.cache.write().unwrap_or_else(|e| e.into_inner());
         let before = cache.len();
         cache.retain(|_, v| !v.is_expired());
         let removed = before - cache.len();
@@ -488,7 +488,7 @@ impl DnsResolver {
 
     /// Get cache statistics.
     pub fn cache_stats(&self) -> (usize, usize) {
-        let cache = self.cache.read().unwrap();
+        let cache = self.cache.read().unwrap_or_else(|e| e.into_inner());
         let total = cache.len();
         let expired = cache.values().filter(|v| v.is_expired()).count();
         (total, total - expired)

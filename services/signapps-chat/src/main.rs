@@ -162,7 +162,7 @@ async fn list_messages(
     Path(channel_id): Path<Uuid>,
 ) -> impl IntoResponse {
     match state.messages.get(&channel_id) {
-        Some(msgs) => (StatusCode::OK, Json(serde_json::to_value(&*msgs).unwrap())),
+        Some(msgs) => (StatusCode::OK, Json(serde_json::to_value(&*msgs).unwrap_or_default())),
         None => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Channel not found" })),
@@ -209,13 +209,13 @@ async fn send_message(
     // Broadcast via WebSocket
     let event = WsEvent {
         event_type: "new_message".to_string(),
-        payload: serde_json::to_value(&msg).unwrap(),
+        payload: serde_json::to_value(&msg).unwrap_or_default(),
     };
     let event_json = serde_json::to_string(&event).unwrap_or_default();
     let _ = state.broadcast_tx.send(event_json);
 
     tracing::info!(id = %msg.id, channel = %channel_id, "Message sent");
-    (StatusCode::CREATED, Json(serde_json::to_value(&msg).unwrap()))
+    (StatusCode::CREATED, Json(serde_json::to_value(&msg).unwrap_or_default()))
 }
 
 // ---------------------------------------------------------------------------
