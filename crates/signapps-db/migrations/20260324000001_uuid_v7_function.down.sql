@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS gen_uuid_v7();
