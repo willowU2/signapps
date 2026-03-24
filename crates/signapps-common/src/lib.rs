@@ -66,6 +66,7 @@ pub mod indexer;
 pub mod marketplace;
 pub mod middleware;
 pub mod openapi;
+pub mod pg_listener;
 pub mod pii;
 pub mod plugins;
 pub mod qrcode_gen;
