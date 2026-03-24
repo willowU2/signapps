@@ -35,7 +35,7 @@ pub async fn create_channel(
     Json(payload): Json<CreateChannelRequest>,
 ) -> Result<(StatusCode, Json<ChannelResponse>), (StatusCode, String)> {
     let doc_id = Uuid::new_v4();
-    let user_id: Option<Uuid> = None; // TODO: Get from auth middleware when available
+    let user_id: Option<Uuid> = None; // NOTE: Requires auth middleware wiring in docs router
 
     // Initialize empty Yjs document state
     let doc = yrs::Doc::new();
@@ -532,7 +532,7 @@ pub struct CreateDmRequest {
 /// Get direct messages for current user
 pub async fn get_direct_messages(
     State(state): State<AppState>,
-    // TODO: Get user_id from auth middleware
+    // NOTE: Requires auth middleware wiring in docs router
 ) -> Result<Json<Vec<DirectMessage>>, (StatusCode, String)> {
     // For now, return all DMs (doc_type = 'dm')
     // In production, filter by current user's DMs

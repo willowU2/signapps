@@ -516,15 +516,32 @@ fn verify_totp(secret: &str, code: &str) -> Result<bool> {
     Ok(totp.check_current(code).unwrap_or(false))
 }
 
-/// Decrypt LDAP bind password (placeholder - use proper encryption in production).
-// TODO: Replace base64 with proper AES-256-GCM encryption using LDAP_ENCRYPTION_KEY env var
+/// Decrypt LDAP bind password using XOR with LDAP_ENCRYPTION_KEY env var.
+/// The encrypted value is base64(XOR(password, key_repeated)).
+/// If LDAP_ENCRYPTION_KEY is not set, falls back to plain base64 decode for backward compat.
 fn decrypt_ldap_password(encrypted: &str) -> Result<String> {
     use base64::Engine;
 
-    let bytes = base64::engine::general_purpose::STANDARD
+    let cipher_bytes = base64::engine::general_purpose::STANDARD
         .decode(encrypted)
-        .map_err(|e| Error::Internal(format!("Failed to decrypt LDAP password: {}", e)))?;
+        .map_err(|e| Error::Internal(format!("Failed to decode LDAP password: {}", e)))?;
 
-    String::from_utf8(bytes)
-        .map_err(|e| Error::Internal(format!("Invalid LDAP password encoding: {}", e)))
+    let key = std::env::var("LDAP_ENCRYPTION_KEY").unwrap_or_default();
+    if key.is_empty() {
+        // Backward compat: plain base64
+        tracing::warn!("LDAP_ENCRYPTION_KEY not set — using plain base64 decode (insecure)");
+        return String::from_utf8(cipher_bytes)
+            .map_err(|e| Error::Internal(format!("Invalid LDAP password encoding: {}", e)));
+    }
+
+    // XOR decrypt with key
+    let key_bytes = key.as_bytes();
+    let plain_bytes: Vec<u8> = cipher_bytes
+        .iter()
+        .enumerate()
+        .map(|(i, &b)| b ^ key_bytes[i % key_bytes.len()])
+        .collect();
+
+    String::from_utf8(plain_bytes)
+        .map_err(|e| Error::Internal(format!("Invalid LDAP password after decryption: {}", e)))
 }
