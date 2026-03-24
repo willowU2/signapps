@@ -78,8 +78,8 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, contai
         </div>
 
         <div className="flex flex-wrap gap-1">
-          {app.tags.slice(0, 3).map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs">
+          {app.tags.slice(0, 3).map((tag, i) => (
+            <Badge key={`${tag}-${i}`} variant="secondary" className="text-xs">
               {tag}
             </Badge>
           ))}

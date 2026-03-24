@@ -83,8 +83,8 @@ export function AppDetailDialog({
                 {app.description}
               </p>
               <div className="mt-2 flex flex-wrap gap-1">
-                {app.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
+                {app.tags.map((tag, idx) => (
+                  <Badge key={`${tag}-${idx}`} variant="secondary" className="text-xs">
                     {tag}
                   </Badge>
                 ))}
