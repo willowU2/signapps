@@ -660,8 +660,8 @@ pub async fn create_direct_message(
 
 /// Delete a direct message
 pub async fn delete_direct_message(
-    State(state): State<AppState>,
-    Path(dm_id): Path<Uuid>,
+    State(_state): State<AppState>,
+    Path(_dm_id): Path<Uuid>,
     // TODO: Get user_id from auth middleware and verify participation
 ) -> Result<StatusCode, (StatusCode, String)> {
     // We no longer hard-delete the document to preserve chat history.
