@@ -396,18 +396,24 @@ export function EventSheet({
                       !date && 'text-muted-foreground'
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                     {date
                       ? format(date, 'EEEE d MMMM yyyy', { locale: fr })
                       : 'Sélectionner une date'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 border-border/50 shadow-xl rounded-xl" align="start">
                   <Calendar
                     mode="single"
                     selected={date}
                     onSelect={(d) => d && setDate(d)}
                     locale={fr}
+                    classNames={{
+                      day_button: "rounded-full transition-all hover:scale-105 hover:bg-muted focus:bg-primary/20",
+                      day: "rounded-full h-10 w-10 p-0 font-medium text-sm aria-selected:opacity-100",
+                      today: "rounded-full bg-primary/10 text-primary font-bold",
+                      selected: "bg-[#4d51f2] text-white hover:bg-[#4d51f2] hover:text-white focus:bg-[#4d51f2] focus:text-white rounded-full font-bold shadow-md",
+                    }}
                   />
                 </PopoverContent>
               </Popover>
