@@ -6,6 +6,8 @@ import { ContextAssistant } from "@/components/ai/context-assistant";
 import ClickSpark from "@/components/ui/click-spark";
 import { PwaRegister } from "@/components/pwa-register";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { OfflineIndicator } from "@/components/offline-indicator";
+import { FeedbackWidget } from "@/components/feedback-widget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,6 +54,8 @@ export default function RootLayout({
           <ContextAssistant />
           <PwaRegister />
           <MobileBottomNav />
+          <OfflineIndicator />
+          <FeedbackWidget />
         </ClickSpark>
       </body>
     </html>

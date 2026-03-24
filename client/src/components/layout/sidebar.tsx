@@ -9,6 +9,7 @@ import { useUIStore } from '@/lib/store';
 import { useEntityStore } from '@/stores/entity-hub-store';
 import { FEATURES } from '@/lib/features';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { StreakCounter } from '@/components/streak-counter';
 import { usePermissions } from '@/lib/permissions';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -436,9 +437,12 @@ export function Sidebar() {
         <div className="border-t p-2 shrink-0 flex items-center justify-center gap-2">
           <ThemeToggle />
           {!isCollapsed && (
-            <p className="text-xs text-muted-foreground">
-              SignApps v0.1.0
-            </p>
+            <>
+              <StreakCounter />
+              <p className="text-xs text-muted-foreground">
+                SignApps v0.1.0
+              </p>
+            </>
           )}
         </div>
       </aside>
