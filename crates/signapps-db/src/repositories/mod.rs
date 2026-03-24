@@ -84,4 +84,7 @@ pub use entity_reference_repository::EntityReferenceRepository;
 pub mod activity_repository;
 pub use activity_repository::ActivityRepository;
 
+pub mod signature_repository;
+pub use signature_repository::SignatureRepository;
+
 pub mod test_helpers;

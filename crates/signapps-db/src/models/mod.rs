@@ -18,6 +18,7 @@ pub mod notification;
 pub mod raid;
 pub mod route;
 pub mod scheduling;
+pub mod signature;
 pub mod storage_quota;
 pub mod storage_tier2;
 pub mod storage_tier3;
