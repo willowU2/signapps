@@ -68,6 +68,7 @@ pub struct AdminCreateUserRequest {
 
 /// Update user request (admin).
 #[derive(Debug, Deserialize, Validate)]
+#[allow(dead_code)]
 pub struct AdminUpdateUserRequest {
     #[validate(email)]
     pub email: Option<String>,

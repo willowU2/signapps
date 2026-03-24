@@ -139,6 +139,7 @@ pub struct TemplateDetail {
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 pub struct CreateTemplateRequest {
     pub id: String,
     pub name: String,

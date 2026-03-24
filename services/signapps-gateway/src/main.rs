@@ -23,6 +23,7 @@ use tokio::task::JoinHandle;
 
 /// Shared resources that would be passed to all services.
 #[derive(Clone)]
+#[allow(dead_code)]
 struct SharedResources {
     /// Single database pool shared across all services.
     /// In the full implementation: `pool: signapps_db::DatabasePool`

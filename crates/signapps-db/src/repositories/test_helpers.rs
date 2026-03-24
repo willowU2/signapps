@@ -47,14 +47,14 @@
 //!         }
 //!     }
 //!
-//!     #[test]
+//!     // Example test:
 //!     fn test_my_model_serializes() {
 //!         let m = make_my_model();
 //!         let json = serde_json::to_string(&m).unwrap();
 //!         assert!(json.contains("test"));
 //!     }
 //!
-//!     #[test]
+//!     // Example test:
 //!     fn test_sql_select_uses_correct_table() {
 //!         let sql = "SELECT * FROM my_schema.my_table WHERE id = $1";
 //!         assert!(sql.contains("my_schema.my_table"));

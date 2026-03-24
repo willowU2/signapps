@@ -1,6 +1,7 @@
 //! Windows Service support
 //!
 //! This module provides the Windows Service wrapper for SignApps services.
+#![allow(dead_code)]
 
 use crate::ShutdownSignal;
 use std::ffi::OsString;

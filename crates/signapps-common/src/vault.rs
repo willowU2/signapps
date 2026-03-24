@@ -78,7 +78,7 @@ impl VaultStore {
     /// # Arguments
     /// * `length` - Desired password length (minimum 8, maximum 128)
     pub fn generate_password(length: usize) -> String {
-        let length = length.max(8).min(128);
+        let length = length.clamp(8, 128);
         let mut rng = rand::thread_rng();
 
         let lowercase = "abcdefghijklmnopqrstuvwxyz".chars().collect::<Vec<_>>();

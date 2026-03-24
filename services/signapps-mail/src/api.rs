@@ -72,6 +72,7 @@ where
     axum::routing::patch(handler)
 }
 
+#[allow(dead_code)]
 fn put<H, T, S>(handler: H) -> axum::routing::MethodRouter<S>
 where
     H: axum::handler::Handler<T, S>,

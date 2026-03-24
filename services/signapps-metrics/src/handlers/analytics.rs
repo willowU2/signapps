@@ -198,15 +198,15 @@ pub async fn get_activity(State(state): State<AppState>) -> Result<Json<Vec<Acti
     // dashboard renders something meaningful (business-hours bell curve).
     let has_data = rows.iter().any(|(_, _, c)| *c > 0);
     if !has_data {
-        for d in 0usize..7 {
-            for h in 0usize..24 {
+        for (d, row) in grid.iter_mut().enumerate() {
+            for (h, cell) in row.iter_mut().enumerate() {
                 // Weight: higher during business hours Mon–Fri (dow 1–5), lower at night
                 let weekday_weight: u32 = if (1..=5).contains(&d) { 1 } else { 0 };
                 let hour_weight: u32 = if (8..=18).contains(&h) { 3 } else { 1 };
                 // Slight bump at the current hour/day to anchor "live" feel
                 let live_bump: u32 =
                     if d == seed_dow && h == seed_hour as usize { 5 } else { 0 };
-                grid[d][h] = weekday_weight * hour_weight + live_bump;
+                *cell = weekday_weight * hour_weight + live_bump;
             }
         }
     }
