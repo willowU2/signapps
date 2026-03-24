@@ -51,6 +51,7 @@ base64 = { workspace = true }
 hmac = { workspace = true }
 sha2 = { workspace = true }
 hex = { workspace = true }
+aes-gcm = { workspace = true }
 
 # Concurrent collections
 dashmap = { workspace = true }

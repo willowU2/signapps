@@ -125,6 +125,7 @@ rand = "0.8"
 hmac = "0.12"
 sha2 = "0.10"
 hex = "0.4"
+aes-gcm = "0.10"
 
 # Utilities for singleton/lazy init
 once_cell = "1.19"

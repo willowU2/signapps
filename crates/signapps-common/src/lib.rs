@@ -19,6 +19,7 @@
 //! - [`events`] - Inter-service event bus (publish/subscribe domain events)
 //! - [`middleware`] - HTTP middleware (auth, logging, request ID, Prometheus metrics)
 //! - [`middleware::metrics`] - Prometheus metrics middleware and handlers
+//! - [`pii`] - PII Cipher (AES-256-GCM) for encrypting PII fields (email, name) before DB storage
 //! - [`plugins`] - Plugin system architecture (trait, manifest, registry)
 //! - [`reporting`] - Auto-PDF reporting with scheduling and multi-recipient delivery
 //! - [`retention`] - RGPD data retention policies (policy engine, expiry checks)
@@ -65,6 +66,7 @@ pub mod indexer;
 pub mod marketplace;
 pub mod middleware;
 pub mod openapi;
+pub mod pii;
 pub mod plugins;
 pub mod qrcode_gen;
 pub mod reporting;
@@ -84,13 +86,17 @@ pub mod workflows;
 
 // Re-export commonly used items
 pub use accounting::{FecEntry, FecExporter};
-pub use alerts::{Alert, AlertChannel, AlertCondition, AlertManager, AlertRule, ComparisonOperator};
+pub use alerts::{
+    Alert, AlertChannel, AlertCondition, AlertManager, AlertRule, ComparisonOperator,
+};
 pub use approval::{ApprovalComment, ApprovalRequest, ApprovalStatus, ApprovalStore};
-pub use audit::{AuditAction, AuditEntry, AuditLog, AuditState, audit_middleware, list_audit_entries};
+pub use audit::{
+    audit_middleware, list_audit_entries, AuditAction, AuditEntry, AuditLog, AuditState,
+};
 pub use auth::{Claims, JwtConfig, TokenPair};
 pub use bootstrap::graceful_shutdown;
 pub use bridge::{BridgeConfig, BridgeManager, BridgeSource};
-pub use comments::{Comment, CommentStore, extract_mentions};
+pub use comments::{extract_mentions, Comment, CommentStore};
 pub use config::AppConfig;
 pub use data_connectors::{DataConnectors, DataSource, SourceType};
 pub use dlp::{DlpFinding, DlpPattern, DlpRule, DlpScanner, Severity};
@@ -99,26 +105,26 @@ pub use error::{Error, ProblemDetails, Result};
 pub use events::{DomainEvent, EventBus, EventEnvelope};
 pub use graphql_layer::GraphQlConfig;
 pub use indexer::AiIndexerClient;
-pub use plugins::{Plugin, PluginManifest, PluginRegistry};
 pub use marketplace::{AppListing, AppStore};
-pub use reporting::{ReportConfig, ReportData, ReportEngine, ReportTemplate};
-pub use retention::{RetentionAction, RetentionEngine, RetentionPolicy};
-pub use sql_dashboard::{ChartType, SqlDashboard, SqlQuery};
-pub use sso::{SsoConfig, SsoProtocol, SsoProvider, SsoProviderRegistry};
 pub use middleware::{
-    metrics::{MetricsCollector, metrics_handler, metrics_middleware},
+    metrics::{metrics_handler, metrics_middleware, MetricsCollector},
     AuthState, RequestClaimsExt, TenantContext,
 };
 pub use openapi::create_openapi_router;
+pub use plugins::{Plugin, PluginManifest, PluginRegistry};
 pub use qrcode_gen::generate_qr_svg;
+pub use reporting::{ReportConfig, ReportData, ReportEngine, ReportTemplate};
+pub use retention::{RetentionAction, RetentionEngine, RetentionPolicy};
 #[cfg(feature = "search")]
 pub use search::{SearchError, SearchHit, SearchIndex};
+pub use sql_dashboard::{ChartType, SqlDashboard, SqlQuery};
+pub use sso::{SsoConfig, SsoProtocol, SsoProvider, SsoProviderRegistry};
+pub use tenant::{Tenant, TenantManager};
+pub use triggers::{TriggerEngine, TriggerRule};
 pub use types::{Email, Password, PasswordHash, PgQueryResult, UserId, Username};
 pub use ueba::{Anomaly, AnomalyDetector, BehaviorBaseline, UserBehavior};
 pub use vault::{VaultEntry, VaultStore};
 pub use webhooks::{DeliveryStatus, WebhookConfig, WebhookDelivery, WebhookManager};
-pub use tenant::{Tenant, TenantManager};
-pub use triggers::{TriggerEngine, TriggerRule};
 pub use workflows::{
     Condition, ConditionOp, WorkflowAction, WorkflowDefinition, WorkflowEngine, WorkflowExecution,
     WorkflowTrigger,
