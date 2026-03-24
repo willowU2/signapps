@@ -145,7 +145,7 @@ async fn run_conversion_job(
         serde_json::to_string(&req.conversion)
             .unwrap_or_default()
             .hash(&mut hasher);
-        format!("job_{}_{}", format!("{:?}", req.format), hasher.finish())
+        format!("job_{:?}_{}", req.format, hasher.finish())
     };
 
     // Convert content string

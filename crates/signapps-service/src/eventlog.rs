@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Windows Event Log integration
 //!
 //! Provides logging to Windows Event Log for services.

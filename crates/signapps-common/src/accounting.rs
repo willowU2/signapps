@@ -55,6 +55,7 @@ pub struct FecEntry {
 
 impl FecEntry {
     /// Create a new FEC entry with validation
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         journal_code: String,
         journal_label: String,
@@ -90,6 +91,7 @@ impl FecEntry {
 
 /// FEC exporter with validation and CSV generation (DGFiP-compliant).
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct FecExporter {
     entries: Vec<FecEntry>,
     journal_codes: HashMap<String, u64>,

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! Graceful shutdown signal handling
 //!
 //! Provides a cross-platform way to handle shutdown signals (Ctrl+C, SIGTERM, Windows service stop).

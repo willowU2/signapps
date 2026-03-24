@@ -306,7 +306,7 @@ pub async fn convert_upload(
         use std::hash::{DefaultHasher, Hash, Hasher};
         let mut hasher = DefaultHasher::new();
         content.hash(&mut hasher);
-        format!("upload_{}_{}", format!("{:?}", query.format), hasher.finish())
+        format!("upload_{:?}_{}", query.format, hasher.finish())
     };
 
     if let Some(cached_data) = state.cache.get_with_ttl(&cache_key).await {
@@ -498,11 +498,7 @@ pub async fn convert_batch(
             use std::hash::{DefaultHasher, Hash, Hasher};
             let mut hasher = DefaultHasher::new();
             content_str.hash(&mut hasher);
-            format!(
-                "batch_{}_{}",
-                format!("{:?}", item.output_format),
-                hasher.finish()
-            )
+            format!("batch_{:?}_{}", item.output_format, hasher.finish())
         };
 
         // Check cache first
