@@ -95,7 +95,7 @@ impl AuthState for AppState {
 // ---------------------------------------------------------------------------
 
 async fn list_contacts(State(state): State<AppState>) -> impl IntoResponse {
-    let contacts = state.contacts.lock().unwrap();
+    let contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     Json(contacts.clone())
 }
 
@@ -117,7 +117,7 @@ async fn create_contact(
         created_at: now.clone(),
         updated_at: now,
     };
-    state.contacts.lock().unwrap().push(contact.clone());
+    state.contacts.lock().unwrap_or_else(|e| e.into_inner()).push(contact.clone());
     tracing::info!(id = %contact.id, "Contact created");
     (StatusCode::CREATED, Json(contact))
 }
@@ -126,9 +126,9 @@ async fn get_contact(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let contacts = state.contacts.lock().unwrap();
+    let contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     match contacts.iter().find(|c| c.id == id) {
-        Some(c) => (StatusCode::OK, Json(serde_json::to_value(c).unwrap())),
+        Some(c) => (StatusCode::OK, Json(serde_json::to_value(c).unwrap_or_default())),
         None => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Contact not found" })),
@@ -141,7 +141,7 @@ async fn update_contact(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateContactRequest>,
 ) -> impl IntoResponse {
-    let mut contacts = state.contacts.lock().unwrap();
+    let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     match contacts.iter_mut().find(|c| c.id == id) {
         Some(c) => {
             if let Some(v) = payload.first_name { c.first_name = v; }
@@ -152,7 +152,7 @@ async fn update_contact(
             if payload.job_title.is_some()    { c.job_title = payload.job_title; }
             if let Some(v) = payload.group_ids { c.group_ids = v; }
             c.updated_at = Utc::now().to_rfc3339();
-            (StatusCode::OK, Json(serde_json::to_value(&*c).unwrap()))
+            (StatusCode::OK, Json(serde_json::to_value(&*c).unwrap_or_default()))
         }
         None => (
             StatusCode::NOT_FOUND,
@@ -165,7 +165,7 @@ async fn delete_contact(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> StatusCode {
-    let mut contacts = state.contacts.lock().unwrap();
+    let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     let before = contacts.len();
     contacts.retain(|c| c.id != id);
     if contacts.len() < before {
@@ -177,7 +177,7 @@ async fn delete_contact(
 }
 
 async fn list_groups(State(state): State<AppState>) -> impl IntoResponse {
-    let groups = state.groups.lock().unwrap();
+    let groups = state.groups.lock().unwrap_or_else(|e| e.into_inner());
     Json(groups.clone())
 }
 

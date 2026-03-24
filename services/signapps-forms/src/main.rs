@@ -125,7 +125,7 @@ impl AuthState for AppState {
 // ---------------------------------------------------------------------------
 
 async fn list_forms(State(state): State<AppState>) -> impl IntoResponse {
-    let forms = state.forms.lock().unwrap();
+    let forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
     Json(forms.clone())
 }
 
@@ -156,7 +156,7 @@ async fn create_form(
         updated_at: now,
         is_published: false,
     };
-    state.forms.lock().unwrap().push(form.clone());
+    state.forms.lock().unwrap_or_else(|e| e.into_inner()).push(form.clone());
     tracing::info!(id = %form.id, "Form created");
     (StatusCode::CREATED, Json(form))
 }
@@ -165,9 +165,9 @@ async fn get_form(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let forms = state.forms.lock().unwrap();
+    let forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
     match forms.iter().find(|f| f.id == id) {
-        Some(f) => (StatusCode::OK, Json(serde_json::to_value(f).unwrap())),
+        Some(f) => (StatusCode::OK, Json(serde_json::to_value(f).unwrap_or_default())),
         None => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Form not found" })),
@@ -180,7 +180,7 @@ async fn update_form(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateFormRequest>,
 ) -> impl IntoResponse {
-    let mut forms = state.forms.lock().unwrap();
+    let mut forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
     match forms.iter_mut().find(|f| f.id == id) {
         Some(f) => {
             if let Some(v) = payload.title {
@@ -202,7 +202,7 @@ async fn update_form(
                     .collect();
             }
             f.updated_at = Utc::now().to_rfc3339();
-            (StatusCode::OK, Json(serde_json::to_value(&*f).unwrap()))
+            (StatusCode::OK, Json(serde_json::to_value(&*f).unwrap_or_default()))
         }
         None => (
             StatusCode::NOT_FOUND,
@@ -215,7 +215,7 @@ async fn publish_form(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let mut forms = state.forms.lock().unwrap();
+    let mut forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
     match forms.iter_mut().find(|f| f.id == id) {
         Some(f) => {
             f.is_published = !f.is_published;
@@ -241,7 +241,7 @@ async fn submit_response(
 ) -> impl IntoResponse {
     // Verify form exists and is published (no auth needed for public forms)
     let is_published = {
-        let forms = state.forms.lock().unwrap();
+        let forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
         forms.iter().find(|f| f.id == id).map(|f| f.is_published)
     };
     match is_published {
@@ -256,22 +256,22 @@ async fn submit_response(
         answers: payload.answers,
         submitted_at: Utc::now().to_rfc3339(),
     };
-    state.responses.lock().unwrap().push(response.clone());
+    state.responses.lock().unwrap_or_else(|e| e.into_inner()).push(response.clone());
     tracing::info!(id = %response.id, form_id = %id, "Response submitted");
-    (StatusCode::CREATED, Json(serde_json::to_value(response).unwrap()))
+    (StatusCode::CREATED, Json(serde_json::to_value(response).unwrap_or_default()))
 }
 
 async fn list_responses(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let exists = state.forms.lock().unwrap().iter().any(|f| f.id == id);
+    let exists = state.forms.lock().unwrap_or_else(|e| e.into_inner()).iter().any(|f| f.id == id);
     if !exists {
         return (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" })));
     }
-    let responses = state.responses.lock().unwrap();
+    let responses = state.responses.lock().unwrap_or_else(|e| e.into_inner());
     let form_responses: Vec<&FormResponse> = responses.iter().filter(|r| r.form_id == id).collect();
-    (StatusCode::OK, Json(serde_json::to_value(form_responses).unwrap()))
+    (StatusCode::OK, Json(serde_json::to_value(form_responses).unwrap_or_default()))
 }
 
 async fn health_check() -> StatusCode {
