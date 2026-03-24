@@ -51,8 +51,7 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
     );
   }
 
-  // TODO: Add strict projectId filtering if the API eventually pushes tasks per project
-  // Right now, the tasks API is universal MVP, but we can filter by some project criteria later.
+  // Filter by project when API supports per-project task streams
   const boardTasks = tasks;
 
   const handleDragStart = (event: DragStartEvent) => {
