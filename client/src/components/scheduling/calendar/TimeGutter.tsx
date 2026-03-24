@@ -11,7 +11,7 @@ import * as React from 'react';
 import { format, setHours, setMinutes } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useSchedulingUI } from '@/stores/scheduling-store';
+import { useCalendarStore } from '@/stores/scheduling/calendar-store';
 
 // ============================================================================
 // Types
@@ -27,15 +27,16 @@ interface TimeGutterProps {
 // ============================================================================
 
 export function TimeGutter({ className, slotHeight = 48 }: TimeGutterProps) {
-  const { viewConfig } = useSchedulingUI();
-  const { workingHoursStart, workingHoursEnd, slotDuration } = viewConfig;
+  const hourStart = useCalendarStore((state) => state.hourStart);
+  const hourEnd = useCalendarStore((state) => state.hourEnd);
+  const slotDuration = useCalendarStore((state) => state.slotDuration);
 
   // Generate time slots
   const slots = React.useMemo(() => {
     const result: { hour: number; minute: number; label: string }[] = [];
     const slotsPerHour = 60 / slotDuration;
 
-    for (let hour = workingHoursStart; hour <= workingHoursEnd; hour++) {
+    for (let hour = hourStart; hour <= hourEnd; hour++) {
       for (let slotIndex = 0; slotIndex < slotsPerHour; slotIndex++) {
         const minute = slotIndex * slotDuration;
         const date = setMinutes(setHours(new Date(), hour), minute);
@@ -48,7 +49,7 @@ export function TimeGutter({ className, slotHeight = 48 }: TimeGutterProps) {
     }
 
     return result;
-  }, [workingHoursStart, workingHoursEnd, slotDuration]);
+  }, [hourStart, hourEnd, slotDuration]);
 
   return (
     <div className={cn('flex flex-col', className)}>
@@ -75,17 +76,17 @@ export function TimeGutter({ className, slotHeight = 48 }: TimeGutterProps) {
 // ============================================================================
 
 export function TimeGutterCompact({ className, slotHeight = 36 }: TimeGutterProps) {
-  const { viewConfig } = useSchedulingUI();
-  const { workingHoursStart, workingHoursEnd } = viewConfig;
+  const hourStart = useCalendarStore((state) => state.hourStart);
+  const hourEnd = useCalendarStore((state) => state.hourEnd);
 
   // Only show full hours for compact view
   const hours = React.useMemo(() => {
     const result: number[] = [];
-    for (let hour = workingHoursStart; hour <= workingHoursEnd; hour++) {
+    for (let hour = hourStart; hour <= hourEnd; hour++) {
       result.push(hour);
     }
     return result;
-  }, [workingHoursStart, workingHoursEnd]);
+  }, [hourStart, hourEnd]);
 
   return (
     <div className={cn('flex flex-col', className)}>

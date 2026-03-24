@@ -32,13 +32,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -303,26 +302,38 @@ export function EventSheet({
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>
-            {isEditing ? 'Modifier l\'événement' : 'Nouvel événement'}
-          </SheetTitle>
-          <SheetDescription>
-            {isEditing
-              ? 'Modifiez les détails de cet événement.'
-              : 'Créez un nouvel événement dans votre calendrier.'}
-          </SheetDescription>
-        </SheetHeader>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="w-full sm:max-w-xl p-0 flex flex-col max-h-[90vh] overflow-hidden border-border/40 shadow-2xl glass-panel">
+        
+        {/* Header matching workspace style */}
+        <div className="p-6 pb-4 border-b border-border/50 bg-muted/10 shrink-0">
+          <DialogHeader>
+            <div className="flex items-start gap-4 mb-1">
+               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shrink-0 shadow-sm ring-1 ring-primary/20">
+                  <CalendarIcon className="h-6 w-6" />
+               </div>
+               <div className="space-y-1 text-left">
+                 <DialogTitle className="text-2xl font-extrabold tracking-tight text-foreground">
+                   {isEditing ? "Modifier l'événement" : "Nouvel événement"}
+                 </DialogTitle>
+                 <DialogDescription className="text-[14.5px] font-medium text-muted-foreground leading-snug">
+                   {isEditing
+                     ? "Modifiez les détails de cet événement."
+                     : "Créez un nouvel événement dans votre calendrier."}
+                 </DialogDescription>
+               </div>
+            </div>
+          </DialogHeader>
+        </div>
 
-        <div className="space-y-6 py-6">
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto p-6 pt-4 space-y-6">
           {/* Template Selector (only for new events) */}
           {!isEditing && templates.length > 0 && (
             <div className="space-y-2">
-              <Label>Utiliser un modèle</Label>
+              <Label className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Utiliser un modèle</Label>
               <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
-                <SelectTrigger>
+                <SelectTrigger className="h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] px-4 transition-all">
                   <SelectValue placeholder="Sélectionner un modèle (optionnel)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -347,14 +358,14 @@ export function EventSheet({
 
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title">Titre *</Label>
+            <Label htmlFor="title" className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Titre *</Label>
             <Input
               id="title"
               placeholder="Ajouter un titre"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
-              className="text-lg font-medium"
+              className="h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] px-4 transition-all font-medium"
             />
           </div>
 
@@ -375,13 +386,13 @@ export function EventSheet({
 
             {/* Date */}
             <div className="space-y-2">
-              <Label>Date</Label>
+              <Label className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      'w-full justify-start text-left font-normal',
+                      'w-full justify-start text-left font-normal h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] px-4 transition-all',
                       !date && 'text-muted-foreground'
                     )}
                   >
@@ -406,9 +417,9 @@ export function EventSheet({
             {!isAllDay && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Heure de début</Label>
+                  <Label className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Heure de début</Label>
                   <Select value={startTime} onValueChange={setStartTime}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] px-4 transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="h-[300px]">
@@ -422,12 +433,12 @@ export function EventSheet({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Durée</Label>
+                  <Label className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Durée</Label>
                   <Select
                     value={duration.toString()}
                     onValueChange={(v) => setDuration(parseInt(v))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] px-4 transition-all">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -445,22 +456,16 @@ export function EventSheet({
 
           {/* Location */}
           <div className="space-y-2">
-            <Label htmlFor="location">Lieu</Label>
+            <Label htmlFor="location" className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Lieu</Label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="location"
-                placeholder="Ajouter un lieu ou un lien de visio"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="pl-9"
-              />
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input id="location" placeholder="Ajouter un lieu ou un lien de visio" value={location} onChange={(e) => setLocation(e.target.value)} className="pl-12 pr-4 h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] transition-all" />
             </div>
           </div>
 
           {/* Attendees */}
           <div className="space-y-2">
-            <Label>Participants</Label>
+            <Label className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Participants</Label>
             {attendeeEmails.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
                 {attendeeEmails.map((email) => (
@@ -479,16 +484,8 @@ export function EventSheet({
             )}
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Ajouter un participant (email)"
-                  value={newAttendee}
-                  onChange={(e) => setNewAttendee(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === 'Enter' && (e.preventDefault(), handleAddAttendee())
-                  }
-                  className="pl-9"
-                />
+                <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Ajouter un participant (email)" value={newAttendee} onChange={(e) => setNewAttendee(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAttendee())} className="pl-12 pr-4 h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] transition-all" />
               </div>
               <Button type="button" variant="outline" size="icon" onClick={handleAddAttendee}>
                 <Plus className="h-4 w-4" />
@@ -498,15 +495,15 @@ export function EventSheet({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description" className="text-[13px] font-extrabold text-foreground/85 uppercase tracking-wide">Description</Label>
             <div className="relative">
-              <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <FileText className="absolute left-4 top-3 h-4 w-4 text-muted-foreground" />
               <Textarea
                 id="description"
                 placeholder="Ajouter une description..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="pl-9 min-h-[100px]"
+                className="pl-12 pr-4 min-h-[120px] resize-none bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] py-4 transition-all"
               />
             </div>
           </div>
@@ -554,7 +551,7 @@ export function EventSheet({
                   value={reminder.toString()}
                   onValueChange={(v) => setReminder(parseInt(v))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] px-4 transition-all">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -579,7 +576,7 @@ export function EventSheet({
                     setRecurrence(v as RecurrenceRule['frequency'] | 'none')
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] px-4 transition-all">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -598,38 +595,44 @@ export function EventSheet({
                   <Link2 className="h-4 w-4 text-muted-foreground" />
                   Lien de visioconférence
                 </Label>
-                <Input
-                  id="meeting-url"
-                  placeholder="https://meet.example.com/..."
-                  value={meetingUrl}
-                  onChange={(e) => setMeetingUrl(e.target.value)}
-                />
+                <Input id="meeting-url" placeholder="https://meet.example.com/..." value={meetingUrl} onChange={(e) => setMeetingUrl(e.target.value)} className="h-[52px] bg-sidebar-accent/50 focus-visible:bg-transparent shadow-sm rounded-xl border-border focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary text-[15px] px-4 transition-all" />
               </div>
             </CollapsibleContent>
           </Collapsible>
         </div>
 
-        <SheetFooter className="gap-2">
+        {/* Footer fully matching workspace style */}
+        <div className="flex justify-end gap-3 p-6 pt-4 border-t border-border/50 bg-muted/10 shrink-0">
           {isEditing && onDelete && (
             <Button
               type="button"
               variant="destructive"
               onClick={onDelete}
-              className="mr-auto"
+              className="h-[52px] px-6 rounded-xl text-[15px] font-bold mr-auto"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Supprimer
             </Button>
           )}
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            className="h-[52px] px-6 rounded-xl text-[15px] font-bold"
+          >
             Annuler
           </Button>
-          <Button type="button" onClick={handleSave} disabled={!title.trim()}>
+          <Button 
+            type="button" 
+            onClick={handleSave} 
+            disabled={!title.trim()}
+            className="h-[52px] px-8 rounded-xl text-[15px] bg-[#4d51f2] hover:bg-[#4d51f2]/90 text-white shadow-sm font-bold transition-all hover:-translate-y-0.5"
+          >
             {isEditing ? 'Enregistrer' : 'Créer'}
           </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

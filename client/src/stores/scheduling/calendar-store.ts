@@ -77,8 +77,8 @@ export interface CalendarState {
 const initialState = {
   currentDate: new Date(),
   view: 'week' as ViewType,
-  hourStart: 6,
-  hourEnd: 22,
+  hourStart: 0,
+  hourEnd: 24,
   slotDuration: 30,
   weekStartsOn: 1 as 0 | 1, // Monday
   morningEnd: 12,
@@ -327,7 +327,7 @@ export const useCalendarStore = create<CalendarState>()(
         },
       })),
       {
-        name: 'calendar-store',
+        name: 'calendar-store-v2',
         partialize: (state) => ({
           view: state.view,
           hourStart: state.hourStart,
@@ -343,7 +343,7 @@ export const useCalendarStore = create<CalendarState>()(
         }),
       }
     ),
-    { name: 'calendar-store' }
+    { name: 'calendar-store-v2' }
   )
 );
 

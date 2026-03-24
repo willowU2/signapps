@@ -15,6 +15,7 @@ import {
   endOfWeek,
   eachDayOfInterval,
   isSameDay,
+  isToday,
   setHours,
   setMinutes,
   parseISO,
@@ -141,6 +142,7 @@ export function TimeGrid({
   const hourStart = useCalendarStore((state) => state.hourStart);
   const hourEnd = useCalendarStore((state) => state.hourEnd);
   const slotDuration = useCalendarStore((state) => state.slotDuration);
+  const currentIndicatorPosition = useCurrentTimeIndicator(hourStart, hourEnd, slotHeight, slotDuration);
   const weekStartsOn = useCalendarStore((state) => state.weekStartsOn);
   const showWeekends = useCalendarStore((state) => state.showWeekends);
   const compactMode = useCalendarStore((state) => state.compactMode);
@@ -221,7 +223,18 @@ export function TimeGrid({
         </div>
 
         {/* Day Columns */}
-        <div className="flex flex-1">
+        <div className="relative flex flex-1">
+          {days.some((d) => isToday(d)) && currentIndicatorPosition !== null && currentIndicatorPosition >= 0 && (
+            <div
+              className="absolute left-0 right-0 z-20 pointer-events-none"
+              style={{ top: currentIndicatorPosition }}
+            >
+              <div className="relative flex items-center">
+                <div className="h-3 w-3 rounded-full bg-red-500 -ml-1.5" />
+                <div className="flex-1 h-0.5 bg-red-500" />
+              </div>
+            </div>
+          )}
           {days.map((day) => (
             <DayColumn
               key={day.toISOString()}

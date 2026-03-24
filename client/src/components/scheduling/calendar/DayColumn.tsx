@@ -274,14 +274,7 @@ export function DayColumn({
           />
         ))}
 
-        {/* Current Time Indicator */}
-        {isToday(date) && (
-          <CurrentTimeIndicator
-            slotHeight={slotHeight}
-            slotDuration={slotDuration}
-            workingHoursStart={hourStart}
-          />
-        )}
+        {/* Current Time Indicator moved to TimeGrid */}
 
         {/* TimeItems */}
         {itemPositions.map((position) => {
