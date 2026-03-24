@@ -215,7 +215,7 @@ mod tests {
         let requester = Uuid::new_v4();
         let approvers = vec![Uuid::new_v4()];
 
-        let req_id = store.submit_for_approval(doc_id, requester, approvers);
+        let _req_id = store.submit_for_approval(doc_id, requester, approvers);
         let pending = store.list_pending(Uuid::new_v4());
         assert_eq!(pending.len(), 0);
     }

@@ -130,6 +130,7 @@ impl Clone for VaultStore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
 
     #[test]
     fn test_add_and_get_entry() {
