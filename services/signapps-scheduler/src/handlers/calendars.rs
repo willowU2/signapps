@@ -24,7 +24,7 @@ pub async fn list_calendars(
         Err(e) => {
             tracing::error!("Failed to list calendars: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -41,7 +41,7 @@ pub async fn get_calendar(
         Err(e) => {
             tracing::error!("Failed to get calendar: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -58,7 +58,7 @@ pub async fn create_calendar(
         Err(e) => {
             tracing::error!("Failed to create calendar: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -75,7 +75,7 @@ pub async fn update_calendar(
         Err(e) => {
             tracing::error!("Failed to update calendar: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -91,6 +91,6 @@ pub async fn delete_calendar(
         Err(e) => {
             tracing::error!("Failed to delete calendar: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }

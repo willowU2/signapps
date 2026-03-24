@@ -166,9 +166,7 @@ async fn main() -> std::io::Result<()> {
     // Initialize JWT config from environment
     let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
         if cfg!(debug_assertions) {
-            tracing::warn!(
-                "JWT_SECRET not set, using insecure dev default"
-            );
+            tracing::warn!("JWT_SECRET not set, using insecure dev default");
             "dev_secret_change_in_production_32chars".to_string()
         } else {
             panic!("JWT_SECRET must be set in production");
@@ -214,8 +212,20 @@ fn create_router(state: AppState) -> Router {
             "http://127.0.0.1:3000".parse().unwrap(),
         ]))
         .allow_credentials(true)
-        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
-        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN]);
+        .allow_methods([
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::PUT,
+            axum::http::Method::PATCH,
+            axum::http::Method::DELETE,
+            axum::http::Method::OPTIONS,
+        ])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::header::AUTHORIZATION,
+            axum::http::header::ACCEPT,
+            axum::http::header::ORIGIN,
+        ]);
 
     // Tunnel routes (web VPN - main feature)
     let tunnel_routes = Router::new()

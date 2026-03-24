@@ -18,11 +18,7 @@ fn is_private_url(url: &str) -> bool {
     if let Ok(parsed) = url::Url::parse(url) {
         if let Some(host) = parsed.host_str() {
             // Block localhost
-            if host == "localhost"
-                || host == "127.0.0.1"
-                || host == "::1"
-                || host == "[::1]"
-            {
+            if host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "[::1]" {
                 return true;
             }
             // Block common metadata endpoints
@@ -32,9 +28,7 @@ fn is_private_url(url: &str) -> bool {
             // Block private IP ranges
             if let Ok(ip) = host.parse::<IpAddr>() {
                 return match ip {
-                    IpAddr::V4(v4) => {
-                        v4.is_private() || v4.is_loopback() || v4.is_link_local()
-                    },
+                    IpAddr::V4(v4) => v4.is_private() || v4.is_loopback() || v4.is_link_local(),
                     IpAddr::V6(v6) => v6.is_loopback(),
                 };
             }

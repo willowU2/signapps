@@ -243,18 +243,20 @@ impl StorageBackend {
                     ),
                     None => (0, None, None, None),
                 };
-                indexed_objects.push((idx, ObjectInfo {
-                    key,
-                    size,
-                    last_modified,
-                    etag,
-                    content_type,
-                }));
+                indexed_objects.push((
+                    idx,
+                    ObjectInfo {
+                        key,
+                        size,
+                        last_modified,
+                        etag,
+                        content_type,
+                    },
+                ));
             }
         }
         indexed_objects.sort_by_key(|(idx, _)| *idx);
-        let objects: Vec<ObjectInfo> =
-            indexed_objects.into_iter().map(|(_, obj)| obj).collect();
+        let objects: Vec<ObjectInfo> = indexed_objects.into_iter().map(|(_, obj)| obj).collect();
 
         let _ = delimiter; // Used for prefix grouping (simplified)
 

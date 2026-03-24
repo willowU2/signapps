@@ -175,7 +175,10 @@ pub async fn audit_middleware<S: AuditState>(
     let method = request.method().clone();
 
     // Only audit mutations
-    if method == axum::http::Method::GET || method == axum::http::Method::HEAD || method == axum::http::Method::OPTIONS {
+    if method == axum::http::Method::GET
+        || method == axum::http::Method::HEAD
+        || method == axum::http::Method::OPTIONS
+    {
         return next.run(request).await;
     }
 
@@ -321,14 +324,29 @@ mod tests {
     #[test]
     fn test_action_display() {
         assert_eq!(AuditAction::Create.to_string(), "create");
-        assert_eq!(AuditAction::Custom("import".into()).to_string(), "custom:import");
+        assert_eq!(
+            AuditAction::Custom("import".into()).to_string(),
+            "custom:import"
+        );
     }
 
     #[test]
     fn test_action_from_method() {
-        assert_eq!(action_from_method(&axum::http::Method::POST), AuditAction::Create);
-        assert_eq!(action_from_method(&axum::http::Method::PUT), AuditAction::Update);
-        assert_eq!(action_from_method(&axum::http::Method::DELETE), AuditAction::Delete);
-        assert_eq!(action_from_method(&axum::http::Method::GET), AuditAction::Read);
+        assert_eq!(
+            action_from_method(&axum::http::Method::POST),
+            AuditAction::Create
+        );
+        assert_eq!(
+            action_from_method(&axum::http::Method::PUT),
+            AuditAction::Update
+        );
+        assert_eq!(
+            action_from_method(&axum::http::Method::DELETE),
+            AuditAction::Delete
+        );
+        assert_eq!(
+            action_from_method(&axum::http::Method::GET),
+            AuditAction::Read
+        );
     }
 }

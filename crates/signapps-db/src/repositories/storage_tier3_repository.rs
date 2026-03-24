@@ -148,11 +148,7 @@ impl StorageTier3Repository {
     }
 
     /// Revoke/Delete a share entirely (only the owner can delete)
-    pub async fn delete_share(
-        pool: &PgPool,
-        id: Uuid,
-        user_id: Uuid,
-    ) -> Result<u64, sqlx::Error> {
+    pub async fn delete_share(pool: &PgPool, id: Uuid, user_id: Uuid) -> Result<u64, sqlx::Error> {
         let result = sqlx::query(
             r#"
             DELETE FROM storage.shares

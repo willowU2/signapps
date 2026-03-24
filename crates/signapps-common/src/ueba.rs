@@ -136,7 +136,9 @@ impl AnomalyDetector {
         let now = Utc::now();
         let recent_behaviors: Vec<_> = behaviors
             .iter()
-            .filter(|b| b.user_id == user_id && (now.signed_duration_since(b.timestamp)).num_hours() < 24)
+            .filter(|b| {
+                b.user_id == user_id && (now.signed_duration_since(b.timestamp)).num_hours() < 24
+            })
             .collect();
 
         if recent_behaviors.is_empty() {
@@ -159,7 +161,9 @@ impl AnomalyDetector {
         // Check for off-hours access
         for behavior in &recent_behaviors {
             let hour = behavior.timestamp.hour();
-            if !baseline.typical_hours.contains(&hour) && behavior.action.to_lowercase().contains("access") {
+            if !baseline.typical_hours.contains(&hour)
+                && behavior.action.to_lowercase().contains("access")
+            {
                 return Some(Anomaly {
                     user_id,
                     anomaly_type: "off_hours_access".to_string(),
@@ -191,16 +195,13 @@ impl AnomalyDetector {
 
     /// Get all recorded behaviors for a user.
     pub fn get_user_behaviors(&self, user_id: Uuid) -> Option<Vec<UserBehavior>> {
-        self.behaviors
-            .lock()
-            .ok()
-            .map(|behaviors| {
-                behaviors
-                    .iter()
-                    .filter(|b| b.user_id == user_id)
-                    .cloned()
-                    .collect()
-            })
+        self.behaviors.lock().ok().map(|behaviors| {
+            behaviors
+                .iter()
+                .filter(|b| b.user_id == user_id)
+                .cloned()
+                .collect()
+        })
     }
 
     /// Clear all recorded behaviors (for testing).

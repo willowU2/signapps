@@ -67,12 +67,9 @@ pub fn init_tracing(service_name: &str) {
                     .http()
                     .with_endpoint(endpoint),
             )
-            .with_trace_config(
-                sdktrace::config().with_resource(Resource::new(vec![KeyValue::new(
-                    "service.name",
-                    service_name.to_string(),
-                )])),
-            )
+            .with_trace_config(sdktrace::config().with_resource(Resource::new(vec![
+                KeyValue::new("service.name", service_name.to_string()),
+            ])))
             .install_batch(opentelemetry_sdk::runtime::Tokio)
             .expect("Failed to initialize OTLP tracer");
 
@@ -133,18 +130,24 @@ pub fn validate_env(service_name: &str) {
     // JWT_SECRET check
     match std::env::var("JWT_SECRET") {
         Ok(s) if s.contains("dev-secret") || s.contains("change-me") => {
-            tracing::warn!("[{}] JWT_SECRET contains default value - change for production!", service_name);
-        }
-        Ok(_) => {}
+            tracing::warn!(
+                "[{}] JWT_SECRET contains default value - change for production!",
+                service_name
+            );
+        },
+        Ok(_) => {},
         Err(_) => {
             tracing::warn!("[{}] JWT_SECRET not set", service_name);
-        }
+        },
     }
 
     // SERVER_PORT check
     if let Ok(port_str) = std::env::var("SERVER_PORT") {
         if port_str.parse::<u16>().is_err() {
-            panic!("[{}] SERVER_PORT '{}' is not a valid port number", service_name, port_str);
+            panic!(
+                "[{}] SERVER_PORT '{}' is not a valid port number",
+                service_name, port_str
+            );
         }
     }
 
@@ -274,8 +277,21 @@ pub fn middleware_stack(router: Router) -> Router {
             "http://localhost:3000".parse().unwrap(),
             "http://127.0.0.1:3000".parse().unwrap(),
         ]))
-        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
-        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN, "x-workspace-id".parse().unwrap()])
+        .allow_methods([
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::PUT,
+            axum::http::Method::PATCH,
+            axum::http::Method::DELETE,
+            axum::http::Method::OPTIONS,
+        ])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::header::AUTHORIZATION,
+            axum::http::header::ACCEPT,
+            axum::http::header::ORIGIN,
+            "x-workspace-id".parse().unwrap(),
+        ])
         .allow_credentials(true);
 
     router

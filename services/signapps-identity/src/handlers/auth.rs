@@ -189,8 +189,7 @@ pub async fn login(
 
     // Register this session in the active sessions store
     let session_id = tokens.access_token.chars().take(16).collect::<String>();
-    let session_expires_at = chrono::Utc::now()
-        + chrono::Duration::seconds(tokens.expires_in);
+    let session_expires_at = chrono::Utc::now() + chrono::Duration::seconds(tokens.expires_in);
     state
         .active_sessions
         .add(ActiveSession {
@@ -216,21 +215,31 @@ pub async fn login(
     );
 
     let mut response_headers = HeaderMap::new();
-    if let Ok(c) = access_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
-    if let Ok(c) = refresh_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
+    if let Ok(c) = access_cookie.parse() {
+        response_headers.append(header::SET_COOKIE, c);
+    }
+    if let Ok(c) = refresh_cookie.parse() {
+        response_headers.append(header::SET_COOKIE, c);
+    }
 
-    Ok((response_headers, Json(LoginResponse {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        token_type: "Bearer".to_string(),
-        expires_in: tokens.expires_in,
-    })))
+    Ok((
+        response_headers,
+        Json(LoginResponse {
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            token_type: "Bearer".to_string(),
+            expires_in: tokens.expires_in,
+        }),
+    ))
 }
 
 pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result<HeaderMap> {
     let mut token = None;
 
-    if let Some(auth_header) = headers.get(header::AUTHORIZATION).and_then(|h| h.to_str().ok()) {
+    if let Some(auth_header) = headers
+        .get(header::AUTHORIZATION)
+        .and_then(|h| h.to_str().ok())
+    {
         if let Some(t) = auth_header.strip_prefix("Bearer ") {
             token = Some(t.to_string());
         }
@@ -266,10 +275,14 @@ pub async fn logout(State(state): State<AppState>, headers: HeaderMap) -> Result
 
     let access_cookie = "access_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
     let refresh_cookie = "refresh_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
-    
+
     let mut response_headers = HeaderMap::new();
-    if let Ok(c) = access_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
-    if let Ok(c) = refresh_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
+    if let Ok(c) = access_cookie.parse() {
+        response_headers.append(header::SET_COOKIE, c);
+    }
+    if let Ok(c) = refresh_cookie.parse() {
+        response_headers.append(header::SET_COOKIE, c);
+    }
 
     Ok(response_headers)
 }
@@ -415,15 +428,22 @@ pub async fn refresh(
     );
 
     let mut response_headers = HeaderMap::new();
-    if let Ok(c) = access_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
-    if let Ok(c) = refresh_cookie.parse() { response_headers.append(header::SET_COOKIE, c); }
+    if let Ok(c) = access_cookie.parse() {
+        response_headers.append(header::SET_COOKIE, c);
+    }
+    if let Ok(c) = refresh_cookie.parse() {
+        response_headers.append(header::SET_COOKIE, c);
+    }
 
-    Ok((response_headers, Json(LoginResponse {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        token_type: "Bearer".to_string(),
-        expires_in: tokens.expires_in,
-    })))
+    Ok((
+        response_headers,
+        Json(LoginResponse {
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            token_type: "Bearer".to_string(),
+            expires_in: tokens.expires_in,
+        }),
+    ))
 }
 
 /// Get current user info.

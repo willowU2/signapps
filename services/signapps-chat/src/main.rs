@@ -163,7 +163,10 @@ async fn list_messages(
     Path(channel_id): Path<Uuid>,
 ) -> impl IntoResponse {
     match state.messages.get(&channel_id) {
-        Some(msgs) => (StatusCode::OK, Json(serde_json::to_value(&*msgs).unwrap_or_default())),
+        Some(msgs) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(&*msgs).unwrap_or_default()),
+        ),
         None => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Channel not found" })),
@@ -180,7 +183,9 @@ async fn send_message(
     if !state.channels.contains_key(&channel_id) {
         return (
             StatusCode::NOT_FOUND,
-            Json(serde_json::to_value(serde_json::json!({ "error": "Channel not found" })).unwrap()),
+            Json(
+                serde_json::to_value(serde_json::json!({ "error": "Channel not found" })).unwrap(),
+            ),
         );
     }
 
@@ -216,7 +221,10 @@ async fn send_message(
     let _ = state.broadcast_tx.send(event_json);
 
     tracing::info!(id = %msg.id, channel = %channel_id, "Message sent");
-    (StatusCode::CREATED, Json(serde_json::to_value(&msg).unwrap_or_default()))
+    (
+        StatusCode::CREATED,
+        Json(serde_json::to_value(&msg).unwrap_or_default()),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -270,10 +278,7 @@ async fn add_reaction(
 // WebSocket handler
 // ---------------------------------------------------------------------------
 
-async fn ws_upgrade(
-    ws: WebSocketUpgrade,
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+async fn ws_upgrade(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl IntoResponse {
     ws.on_upgrade(move |socket| handle_ws(socket, state))
 }
 
@@ -302,9 +307,9 @@ async fn handle_ws(socket: WebSocket, state: AppState) {
                     // Client can send chat messages directly via WS
                     // Re-broadcast to all connected clients
                     let _ = tx.send(text.to_string());
-                }
+                },
                 Message::Close(_) => break,
-                _ => {}
+                _ => {},
             }
         }
     });
@@ -324,8 +329,7 @@ async fn handle_ws(socket: WebSocket, state: AppState) {
 
 fn create_router(state: AppState) -> Router {
     // Public routes (no auth required)
-    let public_routes = Router::new()
-        .route("/health", get(health_check));
+    let public_routes = Router::new().route("/health", get(health_check));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()

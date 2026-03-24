@@ -36,7 +36,7 @@ impl<'a> MetricsRepository<'a> {
         _start_date: Option<DateTime<Utc>>,
         _end_date: Option<DateTime<Utc>>,
     ) -> Result<WorkloadMetrics> {
-        // We aggregate by status from the time_items table 
+        // We aggregate by status from the time_items table
         // considering the user's assignments or ownership
         let query = r#"
             SELECT

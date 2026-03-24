@@ -8,8 +8,8 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use serde_json::json;
 use signapps_common::{Claims, TenantContext};
-use signapps_db::models::calendar::{CreateEvent, UpdateEvent, AddEventAttendee};
-use signapps_db::repositories::calendar_repository::{EventRepository, EventAttendeeRepository};
+use signapps_db::models::calendar::{AddEventAttendee, CreateEvent, UpdateEvent};
+use signapps_db::repositories::calendar_repository::{EventAttendeeRepository, EventRepository};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -28,7 +28,7 @@ pub async fn list_events(
     Query(params): Query<DateRangeParams>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = EventRepository::new(&state.pool);
-    
+
     // If start and end are provided, use list_by_date_range, else list_by_calendar
     let result = if let (Some(start), Some(end)) = (params.start, params.end) {
         repo.list_by_date_range(calendar_id, start, end).await
@@ -41,7 +41,7 @@ pub async fn list_events(
         Err(e) => {
             tracing::error!("Failed to list events: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -58,7 +58,7 @@ pub async fn get_event(
         Err(e) => {
             tracing::error!("Failed to get event: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -76,7 +76,7 @@ pub async fn create_event(
         Err(e) => {
             tracing::error!("Failed to create event: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -93,7 +93,7 @@ pub async fn update_event(
         Err(e) => {
             tracing::error!("Failed to update event: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -109,7 +109,7 @@ pub async fn delete_event(
         Err(e) => {
             tracing::error!("Failed to delete event: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -125,7 +125,7 @@ pub async fn list_attendees(
         Err(e) => {
             tracing::error!("Failed to list attendees: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -142,7 +142,7 @@ pub async fn add_attendee(
         Err(e) => {
             tracing::error!("Failed to add attendee: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -164,7 +164,7 @@ pub async fn update_rsvp(
         Err(e) => {
             tracing::error!("Failed to update rsvp: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }
 
@@ -180,6 +180,6 @@ pub async fn remove_attendee(
         Err(e) => {
             tracing::error!("Failed to remove attendee: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
+        },
     }
 }

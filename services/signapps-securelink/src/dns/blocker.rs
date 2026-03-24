@@ -98,7 +98,10 @@ impl AdBlocker {
         }
 
         // Check blocked domains (including parent domains)
-        let domains = self.blocked_domains.read().unwrap_or_else(|e| e.into_inner());
+        let domains = self
+            .blocked_domains
+            .read()
+            .unwrap_or_else(|e| e.into_inner());
 
         // Check exact match
         if domains.contains(&normalized) {
@@ -177,7 +180,10 @@ impl AdBlocker {
     /// Parse hosts file format and add domains.
     fn parse_hosts_content(&self, content: &str) -> usize {
         let mut count = 0;
-        let mut domains = self.blocked_domains.write().unwrap_or_else(|e| e.into_inner());
+        let mut domains = self
+            .blocked_domains
+            .write()
+            .unwrap_or_else(|e| e.into_inner());
 
         for line in content.lines() {
             // Skip comments and empty lines
@@ -214,14 +220,20 @@ impl AdBlocker {
     /// Add a domain to the blocklist.
     pub fn add_blocked_domain(&self, domain: &str) {
         let normalized = Self::normalize_domain(domain);
-        let mut domains = self.blocked_domains.write().unwrap_or_else(|e| e.into_inner());
+        let mut domains = self
+            .blocked_domains
+            .write()
+            .unwrap_or_else(|e| e.into_inner());
         domains.insert(normalized);
     }
 
     /// Remove a domain from the blocklist.
     pub fn remove_blocked_domain(&self, domain: &str) {
         let normalized = Self::normalize_domain(domain);
-        let mut domains = self.blocked_domains.write().unwrap_or_else(|e| e.into_inner());
+        let mut domains = self
+            .blocked_domains
+            .write()
+            .unwrap_or_else(|e| e.into_inner());
         domains.remove(&normalized);
     }
 
@@ -241,7 +253,10 @@ impl AdBlocker {
 
     /// Get the number of blocked domains.
     pub fn domain_count(&self) -> usize {
-        self.blocked_domains.read().unwrap_or_else(|e| e.into_inner()).len()
+        self.blocked_domains
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .len()
     }
 
     /// Get the total number of blocked queries.
@@ -263,20 +278,35 @@ impl AdBlocker {
 
     /// Get loaded blocklists.
     pub fn loaded_blocklists(&self) -> Vec<LoadedBlocklist> {
-        self.loaded_lists.read().unwrap_or_else(|e| e.into_inner()).clone()
+        self.loaded_lists
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 
     /// Clear all blocked domains.
     pub fn clear(&self) {
-        self.blocked_domains.write().unwrap_or_else(|e| e.into_inner()).clear();
-        self.domain_stats.write().unwrap_or_else(|e| e.into_inner()).clear();
-        self.loaded_lists.write().unwrap_or_else(|e| e.into_inner()).clear();
+        self.blocked_domains
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
+        self.domain_stats
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
+        self.loaded_lists
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
         self.total_blocked.store(0, Ordering::Relaxed);
     }
 
     /// Reset statistics only (keep domains).
     pub fn reset_stats(&self) {
-        self.domain_stats.write().unwrap_or_else(|e| e.into_inner()).clear();
+        self.domain_stats
+            .write()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
         self.total_blocked.store(0, Ordering::Relaxed);
     }
 

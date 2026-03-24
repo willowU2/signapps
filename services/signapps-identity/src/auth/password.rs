@@ -9,7 +9,9 @@ use signapps_common::{Error, Result};
 pub async fn hash_password(password: &str) -> Result<String> {
     let password = password.to_string();
     tokio::task::spawn_blocking(move || {
-        use argon2::{password_hash::rand_core::OsRng, password_hash::SaltString, Argon2, PasswordHasher};
+        use argon2::{
+            password_hash::rand_core::OsRng, password_hash::SaltString, Argon2, PasswordHasher,
+        };
 
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();

@@ -68,8 +68,9 @@ impl E2eChannelManager {
             .decode(encrypted)
             .map_err(|_| crate::error::Error::BadRequest("Invalid base64 encoding".into()))?;
         let decrypted_bytes = self.xor_cipher(&encrypted_bytes, key.as_bytes());
-        String::from_utf8(decrypted_bytes)
-            .map_err(|_| crate::error::Error::BadRequest("Invalid UTF-8 in decrypted message".into()))
+        String::from_utf8(decrypted_bytes).map_err(|_| {
+            crate::error::Error::BadRequest("Invalid UTF-8 in decrypted message".into())
+        })
     }
 
     /// Get a channel by ID

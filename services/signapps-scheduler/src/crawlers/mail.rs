@@ -14,8 +14,6 @@ impl DatabaseCrawler for MailCrawler {
         "mail.emails"
     }
 
-
-
     async fn crawl_record(
         &self,
         pool: &PgPool,
@@ -65,6 +63,4 @@ impl DatabaseCrawler for MailCrawler {
             Ok(None)
         }
     }
-
-
 }

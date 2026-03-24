@@ -9,11 +9,11 @@ use axum::{
     routing::{get, post},
     Extension, Json, Router,
 };
-use signapps_common::Claims;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::Claims;
 use signapps_common::JwtConfig;
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{AllowOrigin, CorsLayer};
@@ -158,18 +158,22 @@ async fn create_form(
         updated_at: now,
         is_published: false,
     };
-    state.forms.lock().unwrap_or_else(|e| e.into_inner()).push(form.clone());
+    state
+        .forms
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .push(form.clone());
     tracing::info!(id = %form.id, "Form created");
     (StatusCode::CREATED, Json(form))
 }
 
-async fn get_form(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
+async fn get_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     let forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
     match forms.iter().find(|f| f.id == id) {
-        Some(f) => (StatusCode::OK, Json(serde_json::to_value(f).unwrap_or_default())),
+        Some(f) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(f).unwrap_or_default()),
+        ),
         None => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Form not found" })),
@@ -204,8 +208,11 @@ async fn update_form(
                     .collect();
             }
             f.updated_at = Utc::now().to_rfc3339();
-            (StatusCode::OK, Json(serde_json::to_value(&*f).unwrap_or_default()))
-        }
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(&*f).unwrap_or_default()),
+            )
+        },
         None => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Form not found" })),
@@ -213,22 +220,23 @@ async fn update_form(
     }
 }
 
-async fn publish_form(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
+async fn publish_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     let mut forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
     match forms.iter_mut().find(|f| f.id == id) {
         Some(f) => {
             f.is_published = !f.is_published;
             f.updated_at = Utc::now().to_rfc3339();
-            let status = if f.is_published { "published" } else { "unpublished" };
+            let status = if f.is_published {
+                "published"
+            } else {
+                "unpublished"
+            };
             tracing::info!(id = %id, status, "Form publish toggled");
             (
                 StatusCode::OK,
                 Json(serde_json::json!({ "id": id, "is_published": f.is_published })),
             )
-        }
+        },
         None => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Form not found" })),
@@ -247,9 +255,19 @@ async fn submit_response(
         forms.iter().find(|f| f.id == id).map(|f| f.is_published)
     };
     match is_published {
-        None => return (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" }))),
-        Some(false) => return (StatusCode::FORBIDDEN, Json(serde_json::json!({ "error": "Form is not published" }))),
-        _ => {}
+        None => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Form not found" })),
+            )
+        },
+        Some(false) => {
+            return (
+                StatusCode::FORBIDDEN,
+                Json(serde_json::json!({ "error": "Form is not published" })),
+            )
+        },
+        _ => {},
     }
     let response = FormResponse {
         id: Uuid::new_v4(),
@@ -258,22 +276,37 @@ async fn submit_response(
         answers: payload.answers,
         submitted_at: Utc::now().to_rfc3339(),
     };
-    state.responses.lock().unwrap_or_else(|e| e.into_inner()).push(response.clone());
+    state
+        .responses
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .push(response.clone());
     tracing::info!(id = %response.id, form_id = %id, "Response submitted");
-    (StatusCode::CREATED, Json(serde_json::to_value(response).unwrap_or_default()))
+    (
+        StatusCode::CREATED,
+        Json(serde_json::to_value(response).unwrap_or_default()),
+    )
 }
 
-async fn list_responses(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
-    let exists = state.forms.lock().unwrap_or_else(|e| e.into_inner()).iter().any(|f| f.id == id);
+async fn list_responses(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
+    let exists = state
+        .forms
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .iter()
+        .any(|f| f.id == id);
     if !exists {
-        return (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" })));
+        return (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Form not found" })),
+        );
     }
     let responses = state.responses.lock().unwrap_or_else(|e| e.into_inner());
     let form_responses: Vec<&FormResponse> = responses.iter().filter(|r| r.form_id == id).collect();
-    (StatusCode::OK, Json(serde_json::to_value(form_responses).unwrap_or_default()))
+    (
+        StatusCode::OK,
+        Json(serde_json::to_value(form_responses).unwrap_or_default()),
+    )
 }
 
 async fn health_check() -> StatusCode {
@@ -313,10 +346,7 @@ fn create_router(state: AppState) -> Router {
     // Protected routes: CRUD + publish + view responses
     let protected_routes = Router::new()
         .route("/api/v1/forms", get(list_forms).post(create_form))
-        .route(
-            "/api/v1/forms/:id",
-            get(get_form).put(update_form),
-        )
+        .route("/api/v1/forms/:id", get(get_form).put(update_form))
         .route("/api/v1/forms/:id/publish", post(publish_form))
         .route("/api/v1/forms/:id/responses", get(list_responses))
         .route_layer(middleware::from_fn_with_state(

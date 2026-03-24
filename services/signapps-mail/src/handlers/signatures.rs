@@ -1,10 +1,10 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json, extract::State};
+use crate::AppState;
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::{Deserialize, Serialize};
 use signapps_common::Claims;
-use uuid::Uuid;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use crate::AppState;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EmailSignature {
@@ -28,10 +28,17 @@ impl Default for SignatureStore {
 
 impl SignatureStore {
     pub fn new() -> Self {
-        Self { signatures: Arc::new(RwLock::new(Vec::new())) }
+        Self {
+            signatures: Arc::new(RwLock::new(Vec::new())),
+        }
     }
     async fn get_user_signature(&self, user_id: Uuid) -> Option<EmailSignature> {
-        self.signatures.read().await.iter().find(|s| s.user_id == user_id).cloned()
+        self.signatures
+            .read()
+            .await
+            .iter()
+            .find(|s| s.user_id == user_id)
+            .cloned()
     }
     async fn upsert_signature(&self, sig: EmailSignature) {
         let mut sigs = self.signatures.write().await;

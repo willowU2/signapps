@@ -153,10 +153,8 @@ pub mod helpers {
     where
         T: serde::Serialize + serde::de::DeserializeOwned,
     {
-        let json = serde_json::to_string(value)
-            .expect("value must serialise to JSON");
-        serde_json::from_str(&json)
-            .expect("value must deserialise from its own JSON")
+        let json = serde_json::to_string(value).expect("value must serialise to JSON");
+        serde_json::from_str(&json).expect("value must deserialise from its own JSON")
     }
 }
 
@@ -192,7 +190,10 @@ mod tests {
 
     #[test]
     fn test_assert_sql_table_passes() {
-        assert_sql_table("SELECT * FROM storage.quotas WHERE id = $1", "storage.quotas");
+        assert_sql_table(
+            "SELECT * FROM storage.quotas WHERE id = $1",
+            "storage.quotas",
+        );
     }
 
     #[test]
@@ -268,8 +269,8 @@ mod tests {
             "allowed_buckets": ["uploads", "media"]
         }"#;
 
-        let dto: SetQuotaLimits = serde_json::from_str(json)
-            .expect("SetQuotaLimits must deserialise from JSON");
+        let dto: SetQuotaLimits =
+            serde_json::from_str(json).expect("SetQuotaLimits must deserialise from JSON");
 
         assert_eq!(dto.max_storage_bytes, Some(5_000_000_000));
         assert!(dto.max_files.is_none());
@@ -283,8 +284,8 @@ mod tests {
     fn test_json_roundtrip_update_quota_usage() {
         let json = r#"{"used_storage_bytes": 123456, "file_count": 99}"#;
 
-        let dto: UpdateQuotaUsage = serde_json::from_str(json)
-            .expect("UpdateQuotaUsage must deserialise from JSON");
+        let dto: UpdateQuotaUsage =
+            serde_json::from_str(json).expect("UpdateQuotaUsage must deserialise from JSON");
 
         assert_eq!(dto.used_storage_bytes, 123_456);
         assert_eq!(dto.file_count, 99);

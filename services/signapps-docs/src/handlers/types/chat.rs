@@ -621,13 +621,15 @@ pub async fn create_direct_message(
 
     // Add participants
     for user_id in &payload.participant_ids {
-        let username = sqlx::query_scalar::<_, String>("SELECT COALESCE(display_name, username) FROM identity.users WHERE id = $1")
-            .bind(user_id)
-            .fetch_optional(state.pool.inner())
-            .await
-            .ok()
-            .flatten()
-            .unwrap_or_else(|| format!("User {}", user_id));
+        let username = sqlx::query_scalar::<_, String>(
+            "SELECT COALESCE(display_name, username) FROM identity.users WHERE id = $1",
+        )
+        .bind(user_id)
+        .fetch_optional(state.pool.inner())
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| format!("User {}", user_id));
 
         sqlx::query(
             "INSERT INTO channel_members (channel_id, user_id, role, joined_at) VALUES ($1, $2, 'member', $3)",
@@ -668,7 +670,6 @@ pub async fn delete_direct_message(
     // The frontend will hide the DM from the user's sidebar locally using Zustand.
     Ok(StatusCode::NO_CONTENT)
 }
-
 
 // ============================================================================
 // Channel Read Status (Unread Count)

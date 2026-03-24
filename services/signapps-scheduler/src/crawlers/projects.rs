@@ -28,11 +28,7 @@ impl DatabaseCrawler for ProjectCrawler {
         .map_err(|e| Error::Database(e.to_string()))?;
 
         if let Some((name, description, owner_id)) = row {
-            let content = format!(
-                "Project: {}\n\n{}",
-                name,
-                description.unwrap_or_default()
-            );
+            let content = format!("Project: {}\n\n{}", name, description.unwrap_or_default());
 
             let security_tags = json!({
                 "resource_type": "project",

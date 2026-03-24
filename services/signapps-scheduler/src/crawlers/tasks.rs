@@ -28,11 +28,7 @@ impl DatabaseCrawler for TaskCrawler {
         .map_err(|e| Error::Database(e.to_string()))?;
 
         if let Some((title, description, owner_id, project_id)) = row {
-            let content = format!(
-                "Task: {}\n\n{}",
-                title,
-                description.unwrap_or_default()
-            );
+            let content = format!("Task: {}\n\n{}", title, description.unwrap_or_default());
 
             let security_tags = json!({
                 "resource_type": "task",

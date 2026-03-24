@@ -50,11 +50,7 @@ mod tests {
 
     #[test]
     fn test_graphql_config_creation() {
-        let config = GraphQlConfig::new(
-            "http://localhost:4000/graphql".to_string(),
-            true,
-            10,
-        );
+        let config = GraphQlConfig::new("http://localhost:4000/graphql".to_string(), true, 10);
         assert_eq!(config.endpoint, "http://localhost:4000/graphql");
         assert!(config.playground_enabled);
         assert_eq!(config.max_depth, 10);

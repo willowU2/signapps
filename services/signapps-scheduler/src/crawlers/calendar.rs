@@ -14,8 +14,6 @@ impl DatabaseCrawler for CalendarCrawler {
         "calendar_events"
     }
 
-
-
     async fn crawl_record(
         &self,
         pool: &PgPool,
@@ -54,6 +52,4 @@ impl DatabaseCrawler for CalendarCrawler {
             Ok(None)
         }
     }
-
-
 }

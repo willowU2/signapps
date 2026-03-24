@@ -142,10 +142,7 @@ impl SsoProviderRegistry {
 
     /// List only enabled providers.
     pub fn list_enabled(&self) -> Vec<&SsoProvider> {
-        self.providers
-            .values()
-            .filter(|p| p.enabled)
-            .collect()
+        self.providers.values().filter(|p| p.enabled).collect()
     }
 
     /// Validate SSO configuration for a provider.

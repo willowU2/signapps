@@ -210,7 +210,9 @@ mod tests {
         let has_lower = pwd.chars().any(|c| c.is_lowercase());
         let has_upper = pwd.chars().any(|c| c.is_uppercase());
         let has_digit = pwd.chars().any(|c| c.is_numeric());
-        let has_special = pwd.chars().any(|c| "!@#$%^&*()-_=+[]{}|;:,.<>?".contains(c));
+        let has_special = pwd
+            .chars()
+            .any(|c| "!@#$%^&*()-_=+[]{}|;:,.<>?".contains(c));
 
         assert!(has_lower && has_upper && has_digit && has_special);
     }

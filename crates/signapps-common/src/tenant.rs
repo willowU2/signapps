@@ -41,12 +41,7 @@ impl TenantManager {
     }
 
     /// Create a new tenant
-    pub fn create(
-        &mut self,
-        name: &str,
-        max_users: u32,
-        max_storage: u64,
-    ) -> Result<Tenant> {
+    pub fn create(&mut self, name: &str, max_users: u32, max_storage: u64) -> Result<Tenant> {
         let id = Uuid::new_v4().to_string();
         let schema = format!("tenant_{}", id.replace('-', "_"));
 

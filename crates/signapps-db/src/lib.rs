@@ -56,12 +56,12 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
         Err(e) => {
             tracing::error!("Failed to acquire connection for migrations: {}", e);
             return Err(sqlx::migrate::MigrateError::Execute(e));
-        }
+        },
     };
 
     // First attempt
     let result = migrator.run(&mut *conn).await;
-    
+
     match result {
         Ok(()) => {
             tracing::info!("Database migrations executed successfully");
@@ -85,7 +85,9 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
 
                 // Retry after fixing checksums (COMMENTED OUT TO AVOID DISTRIBUTED DEADLOCKS)
                 // let _ = migrator.run(&mut *conn).await?;
-                tracing::info!("Database migrations executed successfully (bypassed checksum fix retry)");
+                tracing::info!(
+                    "Database migrations executed successfully (bypassed checksum fix retry)"
+                );
                 let _ = conn.detach();
                 Ok(())
             } else {

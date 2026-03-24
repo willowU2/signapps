@@ -228,7 +228,11 @@ pub async fn search(
         "#,
     )
     .bind(user_id)
-    .bind(if query.q.is_empty() { None } else { Some(&query.q) })
+    .bind(if query.q.is_empty() {
+        None
+    } else {
+        Some(&query.q)
+    })
     .bind(query.bucket.as_deref())
     .bind(query.prefix.as_deref())
     .bind(query.content_type.as_deref())
@@ -281,7 +285,11 @@ pub async fn search(
         "#,
     )
     .bind(user_id)
-    .bind(if query.q.is_empty() { None } else { Some(&query.q) })
+    .bind(if query.q.is_empty() {
+        None
+    } else {
+        Some(&query.q)
+    })
     .bind(query.bucket.as_deref())
     .bind(query.prefix.as_deref())
     .bind(query.content_type.as_deref())
@@ -308,7 +316,11 @@ pub async fn search(
         "#,
     )
     .bind(user_id)
-    .bind(if query.q.is_empty() { None } else { Some(&query.q) })
+    .bind(if query.q.is_empty() {
+        None
+    } else {
+        Some(&query.q)
+    })
     .fetch_all(state.pool.inner())
     .await
     .map_err(|e| signapps_common::Error::Database(e.to_string()))?;
@@ -335,7 +347,11 @@ pub async fn search(
         "#,
     )
     .bind(user_id)
-    .bind(if query.q.is_empty() { None } else { Some(&query.q) })
+    .bind(if query.q.is_empty() {
+        None
+    } else {
+        Some(&query.q)
+    })
     .fetch_all(state.pool.inner())
     .await
     .map_err(|e| signapps_common::Error::Database(e.to_string()))?;

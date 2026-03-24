@@ -15,9 +15,9 @@ use serde::{Deserialize, Serialize};
 use signapps_common::Claims;
 use uuid::Uuid;
 
-use crate::models::{Attachment, Email, MailAccount, MailFolder, MailLabel};
+use crate::handlers::rules::{create_rule, delete_rule, get_rule, list_rules, update_rule};
 use crate::handlers::signatures::{get_signature, upsert_signature};
-use crate::handlers::rules::{list_rules, get_rule, create_rule, update_rule, delete_rule};
+use crate::models::{Attachment, Email, MailAccount, MailFolder, MailLabel};
 use crate::AppState;
 
 pub fn router() -> Router<AppState> {

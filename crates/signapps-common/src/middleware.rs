@@ -58,7 +58,11 @@ pub async fn auth_middleware<S: AuthState>(
     let mut token = None;
 
     // First try Authorization header
-    if let Some(auth_header) = request.headers().get(header::AUTHORIZATION).and_then(|h| h.to_str().ok()) {
+    if let Some(auth_header) = request
+        .headers()
+        .get(header::AUTHORIZATION)
+        .and_then(|h| h.to_str().ok())
+    {
         if let Some(t) = auth_header.strip_prefix("Bearer ") {
             token = Some(t);
         }
@@ -66,7 +70,11 @@ pub async fn auth_middleware<S: AuthState>(
 
     // Fallback to Cookies
     if token.is_none() {
-        if let Some(cookie_header) = request.headers().get(header::COOKIE).and_then(|h| h.to_str().ok()) {
+        if let Some(cookie_header) = request
+            .headers()
+            .get(header::COOKIE)
+            .and_then(|h| h.to_str().ok())
+        {
             for cookie in cookie_header.split(';') {
                 let cookie = cookie.trim();
                 if let Some(t) = cookie.strip_prefix("access_token=") {
@@ -119,14 +127,22 @@ pub async fn optional_auth_middleware<S: AuthState>(
 ) -> Response {
     let mut token = None;
 
-    if let Some(auth_header) = request.headers().get(header::AUTHORIZATION).and_then(|h| h.to_str().ok()) {
+    if let Some(auth_header) = request
+        .headers()
+        .get(header::AUTHORIZATION)
+        .and_then(|h| h.to_str().ok())
+    {
         if let Some(t) = auth_header.strip_prefix("Bearer ") {
             token = Some(t);
         }
     }
 
     if token.is_none() {
-        if let Some(cookie_header) = request.headers().get(header::COOKIE).and_then(|h| h.to_str().ok()) {
+        if let Some(cookie_header) = request
+            .headers()
+            .get(header::COOKIE)
+            .and_then(|h| h.to_str().ok())
+        {
             for cookie in cookie_header.split(';') {
                 let cookie = cookie.trim();
                 if let Some(t) = cookie.strip_prefix("access_token=") {
@@ -422,9 +438,9 @@ impl RequestClaimsExt for Request<Body> {
 /// The `/metrics` endpoint will expose metrics in Prometheus text format.
 pub mod metrics {
     use axum::response::IntoResponse;
-    use prometheus::{HistogramVec, TextEncoder, Encoder, Registry, IntCounterVec};
-    use std::time::Instant;
     use once_cell::sync::Lazy;
+    use prometheus::{Encoder, HistogramVec, IntCounterVec, Registry, TextEncoder};
+    use std::time::Instant;
 
     /// Global registry for metrics.
     pub static REGISTRY: Lazy<Registry> = Lazy::new(Registry::new);
@@ -434,18 +450,27 @@ pub mod metrics {
         let counter = IntCounterVec::new(
             prometheus::Opts::new("http_requests_total", "Total HTTP requests"),
             &["method", "path", "status"],
-        ).expect("Failed to create http_requests_total counter");
-        REGISTRY.register(Box::new(counter.clone())).expect("Failed to register counter");
+        )
+        .expect("Failed to create http_requests_total counter");
+        REGISTRY
+            .register(Box::new(counter.clone()))
+            .expect("Failed to register counter");
         counter
     });
 
     /// HTTP request duration histogram.
     pub static HTTP_REQUEST_DURATION_SECONDS: Lazy<HistogramVec> = Lazy::new(|| {
         let histogram = HistogramVec::new(
-            prometheus::HistogramOpts::new("http_request_duration_seconds", "HTTP request duration in seconds"),
+            prometheus::HistogramOpts::new(
+                "http_request_duration_seconds",
+                "HTTP request duration in seconds",
+            ),
             &["method", "path"],
-        ).expect("Failed to create http_request_duration_seconds histogram");
-        REGISTRY.register(Box::new(histogram.clone())).expect("Failed to register histogram");
+        )
+        .expect("Failed to create http_request_duration_seconds histogram");
+        REGISTRY
+            .register(Box::new(histogram.clone()))
+            .expect("Failed to register histogram");
         histogram
     });
 
@@ -510,7 +535,10 @@ pub mod metrics {
         encoder.encode(&metric_families, &mut buffer).unwrap_or(());
 
         (
-            [(axum::http::header::CONTENT_TYPE, "text/plain; charset=utf-8")],
+            [(
+                axum::http::header::CONTENT_TYPE,
+                "text/plain; charset=utf-8",
+            )],
             String::from_utf8(buffer).unwrap_or_default(),
         )
     }

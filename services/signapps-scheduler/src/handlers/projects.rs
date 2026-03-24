@@ -4,8 +4,8 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use serde_json::json;
 use serde::Deserialize;
+use serde_json::json;
 use signapps_common::{Claims, TenantContext};
 use signapps_db::models::{CreateProject, UpdateProject};
 use signapps_db::repositories::ProjectRepository;
@@ -29,7 +29,14 @@ pub async fn list(
     let limit = query.limit.unwrap_or(100);
     let offset = query.offset.unwrap_or(0);
 
-    match ProjectRepository::list_with_stats(state.pool.inner(), ctx.tenant_id, query.workspace_id, limit, offset).await
+    match ProjectRepository::list_with_stats(
+        state.pool.inner(),
+        ctx.tenant_id,
+        query.workspace_id,
+        limit,
+        offset,
+    )
+    .await
     {
         Ok(projects) => Ok(Json(json!({ "data": projects }))),
         Err(e) => {

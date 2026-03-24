@@ -490,8 +490,7 @@ mod tests {
     fn serialization_roundtrip() {
         let wf = sample_workflow("FileUploaded");
         let json = serde_json::to_string(&wf).expect("serialize");
-        let deserialized: WorkflowDefinition =
-            serde_json::from_str(&json).expect("deserialize");
+        let deserialized: WorkflowDefinition = serde_json::from_str(&json).expect("deserialize");
         assert_eq!(deserialized.name, wf.name);
         assert_eq!(deserialized.enabled, wf.enabled);
     }

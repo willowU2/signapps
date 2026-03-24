@@ -131,11 +131,7 @@ impl PluginRegistry {
                 "Initializing plugin"
             );
             plugin.init().await.map_err(|e| {
-                anyhow::anyhow!(
-                    "failed to initialize plugin '{}': {}",
-                    manifest.id,
-                    e
-                )
+                anyhow::anyhow!("failed to initialize plugin '{}': {}", manifest.id, e)
             })?;
         }
         Ok(())
@@ -281,7 +277,9 @@ mod tests {
         let mut registry = PluginRegistry::new();
         let plugin = TestPlugin::new("test.hello", "Hello Plugin");
 
-        registry.register(Box::new(plugin)).expect("should register");
+        registry
+            .register(Box::new(plugin))
+            .expect("should register");
         assert_eq!(registry.count(), 1);
 
         let manifests = registry.list();
@@ -320,12 +318,10 @@ mod tests {
 
         let result = registry.register(Box::new(TestPlugin::new("dup.id", "Second")));
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("already registered")
-        );
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("already registered"));
 
         // Only the first plugin should remain
         assert_eq!(registry.count(), 1);
@@ -414,8 +410,7 @@ mod tests {
         };
 
         let json = serde_json::to_string(&manifest).expect("serialize");
-        let deserialized: PluginManifest =
-            serde_json::from_str(&json).expect("deserialize");
+        let deserialized: PluginManifest = serde_json::from_str(&json).expect("deserialize");
 
         assert_eq!(deserialized.id, "test.serialize");
         assert_eq!(deserialized.version, "1.2.3");

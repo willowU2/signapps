@@ -123,7 +123,12 @@ impl ApprovalStore {
     }
 
     /// Submit a document for approval.
-    pub fn submit_for_approval(&self, document_id: Uuid, requester_id: Uuid, approvers: Vec<Uuid>) -> Uuid {
+    pub fn submit_for_approval(
+        &self,
+        document_id: Uuid,
+        requester_id: Uuid,
+        approvers: Vec<Uuid>,
+    ) -> Uuid {
         let mut req = ApprovalRequest::new(document_id, requester_id, approvers);
         req.status = ApprovalStatus::PendingReview;
         req.updated_at = Utc::now();
@@ -133,7 +138,12 @@ impl ApprovalStore {
     }
 
     /// Approve a pending request (by one approver).
-    pub fn approve(&self, request_id: Uuid, approver_id: Uuid, comment: Option<String>) -> anyhow::Result<()> {
+    pub fn approve(
+        &self,
+        request_id: Uuid,
+        approver_id: Uuid,
+        comment: Option<String>,
+    ) -> anyhow::Result<()> {
         if let Some(mut req) = self.requests.get_mut(&request_id) {
             if req.status != ApprovalStatus::PendingReview {
                 return Err(anyhow::anyhow!("Cannot approve non-pending request"));
@@ -156,7 +166,12 @@ impl ApprovalStore {
     }
 
     /// Reject a pending request.
-    pub fn reject(&self, request_id: Uuid, approver_id: Uuid, comment: String) -> anyhow::Result<()> {
+    pub fn reject(
+        &self,
+        request_id: Uuid,
+        approver_id: Uuid,
+        comment: String,
+    ) -> anyhow::Result<()> {
         if let Some(mut req) = self.requests.get_mut(&request_id) {
             if req.status != ApprovalStatus::PendingReview {
                 return Err(anyhow::anyhow!("Cannot reject non-pending request"));
@@ -165,7 +180,8 @@ impl ApprovalStore {
                 return Err(anyhow::anyhow!("User is not an approver for this request"));
             }
 
-            req.comments.push(ApprovalComment::new(approver_id, comment));
+            req.comments
+                .push(ApprovalComment::new(approver_id, comment));
             req.status = ApprovalStatus::Rejected;
             req.updated_at = Utc::now();
             Ok(())

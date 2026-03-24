@@ -70,9 +70,12 @@ pub use scheduling_repository::{
     TimeItemRepository, TimeItemUserRepository,
 };
 pub mod metrics_repository;
-pub use metrics_repository::{MetricsRepository, WorkloadMetrics, ResourceMetrics};
+pub use metrics_repository::{MetricsRepository, ResourceMetrics, WorkloadMetrics};
 
 pub mod quota_repository;
 pub use quota_repository::QuotaRepository;
+
+pub mod audit_log_repository;
+pub use audit_log_repository::AuditLogRepository;
 
 pub mod test_helpers;

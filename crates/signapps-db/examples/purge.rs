@@ -13,14 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Connected to DB. Purging all schemas...");
 
     // Drop all schemas except pg_* and information_schema
-    let schemas = vec![
-        "identity",
-        "drive",
-        "chat",
-        "scheduling",
-        "ai",
-        "workforce",
-    ];
+    let schemas = vec!["identity", "drive", "chat", "scheduling", "ai", "workforce"];
 
     for schema in &schemas {
         let query = format!("DROP SCHEMA IF EXISTS {} CASCADE", schema);
@@ -31,13 +24,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Reset public schema
-    sqlx::query("DROP SCHEMA IF EXISTS public CASCADE").execute(&pool).await?;
+    sqlx::query("DROP SCHEMA IF EXISTS public CASCADE")
+        .execute(&pool)
+        .await?;
     sqlx::query("CREATE SCHEMA public").execute(&pool).await?;
-    sqlx::query("GRANT ALL ON SCHEMA public TO signapps").execute(&pool).await?;
+    sqlx::query("GRANT ALL ON SCHEMA public TO signapps")
+        .execute(&pool)
+        .await?;
     println!("Reset public schema");
 
     // Clear sqlx migrations table
-    sqlx::query("DROP TABLE IF EXISTS _sqlx_migrations").execute(&pool).await?;
+    sqlx::query("DROP TABLE IF EXISTS _sqlx_migrations")
+        .execute(&pool)
+        .await?;
     println!("Cleared migrations table");
 
     println!("\n✅ Database purged successfully! Restart services to run migrations.");

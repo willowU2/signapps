@@ -96,8 +96,8 @@ async fn main() -> anyhow::Result<()> {
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, post, put};
     use handlers::{
-        calendars, events, external_sync, floor_plans, icalendar, notifications, push, recurrence, resources,
-        shares, tasks, timezones, websocket,
+        calendars, events, external_sync, floor_plans, icalendar, notifications, push, recurrence,
+        resources, shares, tasks, timezones, websocket,
     };
 
     // Public routes (no auth required)
@@ -225,9 +225,20 @@ fn build_router(state: AppState) -> Router {
             "http://127.0.0.1:3000".parse().unwrap(),
         ]))
         .allow_credentials(true)
-        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
-        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN])
-        ;
+        .allow_methods([
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::PUT,
+            axum::http::Method::PATCH,
+            axum::http::Method::DELETE,
+            axum::http::Method::OPTIONS,
+        ])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::header::AUTHORIZATION,
+            axum::http::header::ACCEPT,
+            axum::http::header::ORIGIN,
+        ]);
 
     public_routes
         .merge(protected_routes)

@@ -289,9 +289,7 @@ pub async fn recalculate_usage(
 
 /// GET /quotas/over-limit — admin: list users who have exceeded their quota.
 #[tracing::instrument(skip(state))]
-pub async fn get_users_over_quota(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<QuotaUsage>>> {
+pub async fn get_users_over_quota(State(state): State<AppState>) -> Result<Json<Vec<QuotaUsage>>> {
     let repo = QuotaRepository::new(&state.pool);
     let rows = repo.list_over_quota().await?;
     let usages = rows.into_iter().map(quota_to_usage).collect();
@@ -407,15 +405,13 @@ pub async fn record_delete(
         .await
         .map_err(|e| Error::Database(e.to_string()))?;
 
-    sqlx::query(
-        "DELETE FROM storage.files WHERE user_id = $1 AND bucket = $2 AND key = $3",
-    )
-    .bind(user_id)
-    .bind(bucket)
-    .bind(key)
-    .execute(&mut *tx)
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    sqlx::query("DELETE FROM storage.files WHERE user_id = $1 AND bucket = $2 AND key = $3")
+        .bind(user_id)
+        .bind(bucket)
+        .bind(key)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
 
     sqlx::query(
         r#"

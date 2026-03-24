@@ -364,11 +364,7 @@ pub async fn access_share(
     let cache_key = format!("share_access:{}", share_token);
     state
         .cache
-        .set(
-            &cache_key,
-            &token,
-            std::time::Duration::from_secs(300),
-        )
+        .set(&cache_key, &token, std::time::Duration::from_secs(300))
         .await;
 
     let download_url = format!(
@@ -418,12 +414,12 @@ pub async fn download_shared(
             Some(ref cached_token) if cached_token == &token => {
                 // Valid access token — consume it (single-use)
                 state.cache.del(&cache_key).await;
-            }
+            },
             _ => {
                 return Err(Error::Forbidden(
                     "Invalid or expired access token".to_string(),
                 ));
-            }
+            },
         }
     } else {
         // Fallback: direct password validation

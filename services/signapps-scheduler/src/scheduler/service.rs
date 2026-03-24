@@ -262,13 +262,11 @@ fn parse_simple_interval(cron: &str) -> Option<i64> {
     // Handle common patterns
     match (parts[0], parts[1], parts[2], parts[3], parts[4]) {
         // Every N minutes: */N * * * *
-        (min, "*", "*", "*", "*") if min.starts_with("*/") => {
-            min[2..].parse::<i64>().ok()
-        }
+        (min, "*", "*", "*", "*") if min.starts_with("*/") => min[2..].parse::<i64>().ok(),
         // Every N hours: 0 */N * * *
         ("0", hour, "*", "*", "*") if hour.starts_with("*/") => {
             hour[2..].parse::<i64>().ok().map(|h| h * 60)
-        }
+        },
         // Every minute: * * * * *
         ("*", "*", "*", "*", "*") => Some(1),
         // Every hour: 0 * * * *

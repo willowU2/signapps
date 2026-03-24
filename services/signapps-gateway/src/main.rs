@@ -101,12 +101,12 @@ async fn spawn_service(
             Ok(l) => {
                 tracing::info!("[{}] listening on port {}", name, port);
                 l
-            }
+            },
             Err(e) => {
                 tracing::error!("[{}] failed to bind port {}: {}", name, port, e);
                 health.mark_unhealthy(&name).await;
                 return;
-            }
+            },
         };
 
         let name_for_shutdown = name.clone();

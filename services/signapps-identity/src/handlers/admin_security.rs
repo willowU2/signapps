@@ -300,9 +300,8 @@ pub async fn revoke_session(
     // We use a long TTL (max session duration from policies) since we cannot
     // know the exact remaining TTL without decoding the token here.
     let policies = state.security_policies.get().await;
-    let blacklist_ttl = std::time::Duration::from_secs(
-        policies.max_session_duration_hours as u64 * 3600,
-    );
+    let blacklist_ttl =
+        std::time::Duration::from_secs(policies.max_session_duration_hours as u64 * 3600);
     let blacklist_key = format!("blacklist:{}", id);
     state
         .cache

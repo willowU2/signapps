@@ -8,8 +8,8 @@ use crate::crawlers::calendar::CalendarCrawler;
 use crate::crawlers::chat::ChatCrawler;
 use crate::crawlers::docs::DocsCrawler;
 use crate::crawlers::mail::MailCrawler;
-use crate::crawlers::storage::StorageCrawler;
 use crate::crawlers::projects::ProjectCrawler;
+use crate::crawlers::storage::StorageCrawler;
 use crate::crawlers::tasks::TaskCrawler;
 
 pub async fn start_ingestion_loop(pool: DatabasePool) {
@@ -93,7 +93,10 @@ pub async fn start_ingestion_loop(pool: DatabasePool) {
                                     },
                                     Err(_) => {
                                         consecutive_errors = consecutive_errors.saturating_add(1);
-                                        tracing::error!("Indexing timeout for record {}", record_id);
+                                        tracing::error!(
+                                            "Indexing timeout for record {}",
+                                            record_id
+                                        );
                                     },
                                 }
                             },

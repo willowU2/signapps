@@ -4,12 +4,7 @@
 //! All routes require admin role (enforced by the router middleware).
 //! Import validation is performed in-memory; no DB writes.
 
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::IntoResponse,
-    Json,
-};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 use uuid::Uuid;
@@ -83,7 +78,7 @@ fn parse_csv(body: &str) -> (Vec<CsvUserRow>, Vec<String>) {
         None => {
             errors.push("CSV body is empty".to_string());
             return (rows, errors);
-        }
+        },
         Some(header) => {
             let h = header.trim().to_lowercase();
             // Accept the expected header or be lenient and skip any header row
@@ -91,7 +86,7 @@ fn parse_csv(body: &str) -> (Vec<CsvUserRow>, Vec<String>) {
                 errors.push(format!("Unexpected header: '{}'", header.trim()));
                 return (rows, errors);
             }
-        }
+        },
     }
 
     for (line_idx, line) in lines.enumerate() {
@@ -114,8 +109,16 @@ fn parse_csv(body: &str) -> (Vec<CsvUserRow>, Vec<String>) {
         let email = fields[0].trim().to_string();
         let first_name = fields[1].trim().to_string();
         let last_name = fields[2].trim().to_string();
-        let role = fields.get(3).map(|s| s.trim()).filter(|s| !s.is_empty()).map(|s| s.to_string());
-        let department = fields.get(4).map(|s| s.trim()).filter(|s| !s.is_empty()).map(|s| s.to_string());
+        let role = fields
+            .get(3)
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string());
+        let department = fields
+            .get(4)
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .map(|s| s.to_string());
 
         // Basic email validation
         if !email.contains('@') || email.len() < 3 {
@@ -131,7 +134,13 @@ fn parse_csv(body: &str) -> (Vec<CsvUserRow>, Vec<String>) {
             continue;
         }
 
-        rows.push(CsvUserRow { email, first_name, last_name, role, department });
+        rows.push(CsvUserRow {
+            email,
+            first_name,
+            last_name,
+            role,
+            department,
+        });
     }
 
     (rows, errors)
@@ -188,11 +197,22 @@ pub async fn import_users(
         }
     }
 
-    tracing::info!(total, created, skipped, error_count = errors.len(), "CSV import validated");
+    tracing::info!(
+        total,
+        created,
+        skipped,
+        error_count = errors.len(),
+        "CSV import validated"
+    );
 
     Ok((
         StatusCode::OK,
-        Json(ImportResult { total, created, skipped, errors }),
+        Json(ImportResult {
+            total,
+            created,
+            skipped,
+            errors,
+        }),
     ))
 }
 
@@ -201,9 +221,7 @@ pub async fn import_users(
 /// Returns all users as a CSV file attachment.
 /// Currently returns a synthetic header-only CSV (no DB reads in this in-memory impl).
 #[tracing::instrument(skip(_state))]
-pub async fn export_users(
-    State(_state): State<AppState>,
-) -> impl IntoResponse {
+pub async fn export_users(State(_state): State<AppState>) -> impl IntoResponse {
     // In-memory stub: return the CSV header + zero rows.
     // A real implementation would query the DB.
     let sample_rows: Vec<CsvUserRow> = vec![];

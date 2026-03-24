@@ -14,8 +14,6 @@ impl DatabaseCrawler for StorageCrawler {
         "drive.nodes"
     }
 
-
-
     async fn crawl_record(
         &self,
         pool: &PgPool,
@@ -61,6 +59,4 @@ impl DatabaseCrawler for StorageCrawler {
             Ok(None)
         }
     }
-
-
 }

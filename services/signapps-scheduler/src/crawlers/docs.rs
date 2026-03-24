@@ -14,8 +14,6 @@ impl DatabaseCrawler for DocsCrawler {
         "documents"
     }
 
-
-
     async fn crawl_record(
         &self,
         pool: &PgPool,
@@ -60,6 +58,4 @@ impl DatabaseCrawler for DocsCrawler {
             Ok(None)
         }
     }
-
-
 }

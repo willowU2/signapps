@@ -69,8 +69,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Build router with document type endpoints
     // Public routes (no auth required)
-    let public_routes = Router::new()
-        .route("/health", get(health_handler));
+    let public_routes = Router::new().route("/health", get(health_handler));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()

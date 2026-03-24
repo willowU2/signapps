@@ -171,7 +171,7 @@ impl RetentionEngine {
             Some(policy) if policy.enabled => {
                 let age = Utc::now() - created_at;
                 age > Duration::days(i64::from(policy.max_age_days))
-            }
+            },
             _ => false,
         }
     }

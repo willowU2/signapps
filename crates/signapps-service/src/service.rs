@@ -71,7 +71,14 @@ static SERVICE_STATE: once_cell::sync::Lazy<Arc<Mutex<Option<ShutdownSignal>>>> 
     once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(None)));
 
 // Type for the service main function - use Arc<dyn Fn> for clonability
-type ServiceMainFn = Arc<dyn Fn(ShutdownSignal) -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<()>> + Send>> + Send + Sync>;
+type ServiceMainFn = Arc<
+    dyn Fn(
+            ShutdownSignal,
+        )
+            -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<()>> + Send>>
+        + Send
+        + Sync,
+>;
 
 static SERVICE_MAIN_FN: once_cell::sync::Lazy<Arc<Mutex<Option<ServiceMainFn>>>> =
     once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(None)));
@@ -163,7 +170,7 @@ fn run_service() -> anyhow::Result<()> {
                 tracing::info!("Received stop/shutdown control event");
                 shutdown_clone.trigger();
                 ServiceControlHandlerResult::NoError
-            }
+            },
             ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
             _ => ServiceControlHandlerResult::NotImplemented,
         }
@@ -236,10 +243,7 @@ pub fn is_running_as_service() -> bool {
 ///
 /// This is a helper function that generates the sc.exe command.
 /// It should be run with administrator privileges.
-pub fn generate_install_command(
-    definition: &ServiceDefinition,
-    exe_path: &str,
-) -> String {
+pub fn generate_install_command(definition: &ServiceDefinition, exe_path: &str) -> String {
     let deps = if definition.dependencies.is_empty() {
         String::new()
     } else {
@@ -248,10 +252,7 @@ pub fn generate_install_command(
 
     format!(
         r#"sc.exe create "{}" binPath= "{}" start= auto DisplayName= "{}"{}"#,
-        definition.name,
-        exe_path,
-        definition.display_name,
-        deps
+        definition.name, exe_path, definition.display_name, deps
     )
 }
 

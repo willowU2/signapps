@@ -94,11 +94,10 @@ impl SttBackend for NativeSttBackend {
         // Acquire a semaphore permit to limit queued transcription requests.
         // This provides back-pressure instead of letting tasks pile up
         // unboundedly behind the Mutex-serialized WhisperContext.
-        let _permit = self
-            .transcription_semaphore
-            .acquire()
-            .await
-            .map_err(|_| SttError::ServiceError("Transcription semaphore closed".to_string()))?;
+        let _permit =
+            self.transcription_semaphore.acquire().await.map_err(|_| {
+                SttError::ServiceError("Transcription semaphore closed".to_string())
+            })?;
 
         let start = std::time::Instant::now();
         let opts = opts.unwrap_or_default();

@@ -33,23 +33,23 @@ impl DlpPattern {
             DlpPattern::CreditCard => {
                 // Matches 13-19 digit sequences with optional hyphens/spaces (common CC format)
                 Regex::new(r"\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{3,4}\b")
-            }
+            },
             DlpPattern::IBAN => {
                 // Matches IBAN format (2 letter country + 2 check digits + up to 30 alphanumeric)
                 Regex::new(r"\b[A-Z]{2}\d{2}[A-Z0-9]{1,30}\b")
-            }
+            },
             DlpPattern::SSN => {
                 // Matches US SSN format (XXX-XX-XXXX or XXXXXXXXX)
                 Regex::new(r"\b\d{3}-\d{2}-\d{4}\b|\b\d{9}\b")
-            }
+            },
             DlpPattern::Email => {
                 // Standard email pattern
                 Regex::new(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
-            }
+            },
             DlpPattern::Phone => {
                 // Matches various phone formats: +1-234-567-8900, (234) 567-8900, 234-567-8900, etc.
                 Regex::new(r"(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}")
-            }
+            },
             DlpPattern::Custom(pattern) => Regex::new(pattern),
         }
     }

@@ -18,13 +18,12 @@ impl<'a> QuotaRepository<'a> {
 
     /// Fetch the quota record for a user, returning None if no row exists.
     pub async fn get_quota(&self, user_id: Uuid) -> Result<Option<StorageQuota>> {
-        let quota = sqlx::query_as::<_, StorageQuota>(
-            "SELECT * FROM storage.quotas WHERE user_id = $1",
-        )
-        .bind(user_id)
-        .fetch_optional(self.pool.inner())
-        .await
-        .map_err(|e| Error::Database(e.to_string()))?;
+        let quota =
+            sqlx::query_as::<_, StorageQuota>("SELECT * FROM storage.quotas WHERE user_id = $1")
+                .bind(user_id)
+                .fetch_optional(self.pool.inner())
+                .await
+                .map_err(|e| Error::Database(e.to_string()))?;
 
         Ok(quota)
     }
@@ -340,8 +339,8 @@ mod tests {
         let original = make_quota(uid);
 
         let json = serde_json::to_string(&original).unwrap();
-        let decoded: StorageQuota = serde_json::from_str(&json)
-            .expect("StorageQuota must deserialise from its own JSON");
+        let decoded: StorageQuota =
+            serde_json::from_str(&json).expect("StorageQuota must deserialise from its own JSON");
 
         assert_eq!(decoded.user_id, original.user_id);
         assert_eq!(decoded.max_storage_bytes, original.max_storage_bytes);
@@ -430,7 +429,10 @@ mod tests {
             RETURNING *
         "#;
 
-        assert!(sql.contains("ON CONFLICT (user_id)"), "must upsert on user_id");
+        assert!(
+            sql.contains("ON CONFLICT (user_id)"),
+            "must upsert on user_id"
+        );
         assert!(sql.contains("RETURNING *"), "must return the upserted row");
         assert!(sql.contains("$5"), "must have 5 bind parameters");
         assert!(
@@ -451,7 +453,10 @@ mod tests {
             RETURNING *
         "#;
 
-        assert!(sql.contains("used_storage_bytes"), "must update used_storage_bytes");
+        assert!(
+            sql.contains("used_storage_bytes"),
+            "must update used_storage_bytes"
+        );
         assert!(sql.contains("file_count"), "must update file_count");
         assert!(sql.contains("$3"), "must have 3 bind parameters");
         assert!(sql.contains("RETURNING *"), "must return the updated row");

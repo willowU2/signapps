@@ -200,10 +200,7 @@ impl CommentStore {
 
         drop(entry);
 
-        self.data
-            .entry(key)
-            .or_default()
-            .push(comment.clone());
+        self.data.entry(key).or_default().push(comment.clone());
 
         Some(comment)
     }
@@ -211,7 +208,13 @@ impl CommentStore {
     /// Mark a comment as resolved (or unresolved).
     ///
     /// Returns `true` if the comment was found and updated.
-    pub fn resolve(&self, entity_type: &str, entity_id: &str, comment_id: Uuid, resolved: bool) -> bool {
+    pub fn resolve(
+        &self,
+        entity_type: &str,
+        entity_id: &str,
+        comment_id: Uuid,
+        resolved: bool,
+    ) -> bool {
         let key = store_key(entity_type, entity_id);
         if let Some(mut entry) = self.data.get_mut(&key) {
             if let Some(comment) = entry.value_mut().iter_mut().find(|c| c.id == comment_id) {
@@ -257,12 +260,7 @@ impl CommentStore {
     /// Delete a comment by ID.
     ///
     /// Returns the removed comment, or `None` if not found.
-    pub fn delete(
-        &self,
-        entity_type: &str,
-        entity_id: &str,
-        comment_id: Uuid,
-    ) -> Option<Comment> {
+    pub fn delete(&self, entity_type: &str, entity_id: &str, comment_id: Uuid) -> Option<Comment> {
         let key = store_key(entity_type, entity_id);
         if let Some(mut entry) = self.data.get_mut(&key) {
             let comments = entry.value_mut();

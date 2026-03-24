@@ -239,7 +239,13 @@ pub async fn create(
                 user_id: user.id,
                 role: Some("member".to_string()),
             };
-            if let Err(e) = signapps_db::repositories::WorkspaceRepository::add_member(&state.pool, workspace_id, member).await {
+            if let Err(e) = signapps_db::repositories::WorkspaceRepository::add_member(
+                &state.pool,
+                workspace_id,
+                member,
+            )
+            .await
+            {
                 tracing::error!(workspace_id = %workspace_id, "Failed to add new user to workspace: {}", e);
             }
         }

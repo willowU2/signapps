@@ -118,18 +118,22 @@ async fn create_contact(
         created_at: now.clone(),
         updated_at: now,
     };
-    state.contacts.lock().unwrap_or_else(|e| e.into_inner()).push(contact.clone());
+    state
+        .contacts
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .push(contact.clone());
     tracing::info!(id = %contact.id, "Contact created");
     (StatusCode::CREATED, Json(contact))
 }
 
-async fn get_contact(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> impl IntoResponse {
+async fn get_contact(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     let contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     match contacts.iter().find(|c| c.id == id) {
-        Some(c) => (StatusCode::OK, Json(serde_json::to_value(c).unwrap_or_default())),
+        Some(c) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(c).unwrap_or_default()),
+        ),
         None => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Contact not found" })),
@@ -145,16 +149,33 @@ async fn update_contact(
     let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     match contacts.iter_mut().find(|c| c.id == id) {
         Some(c) => {
-            if let Some(v) = payload.first_name { c.first_name = v; }
-            if let Some(v) = payload.last_name  { c.last_name = v; }
-            if payload.email.is_some()        { c.email = payload.email; }
-            if payload.phone.is_some()        { c.phone = payload.phone; }
-            if payload.organization.is_some() { c.organization = payload.organization; }
-            if payload.job_title.is_some()    { c.job_title = payload.job_title; }
-            if let Some(v) = payload.group_ids { c.group_ids = v; }
+            if let Some(v) = payload.first_name {
+                c.first_name = v;
+            }
+            if let Some(v) = payload.last_name {
+                c.last_name = v;
+            }
+            if payload.email.is_some() {
+                c.email = payload.email;
+            }
+            if payload.phone.is_some() {
+                c.phone = payload.phone;
+            }
+            if payload.organization.is_some() {
+                c.organization = payload.organization;
+            }
+            if payload.job_title.is_some() {
+                c.job_title = payload.job_title;
+            }
+            if let Some(v) = payload.group_ids {
+                c.group_ids = v;
+            }
             c.updated_at = Utc::now().to_rfc3339();
-            (StatusCode::OK, Json(serde_json::to_value(&*c).unwrap_or_default()))
-        }
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(&*c).unwrap_or_default()),
+            )
+        },
         None => (
             StatusCode::NOT_FOUND,
             Json(serde_json::json!({ "error": "Contact not found" })),
@@ -162,10 +183,7 @@ async fn update_contact(
     }
 }
 
-async fn delete_contact(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> StatusCode {
+async fn delete_contact(State(state): State<AppState>, Path(id): Path<Uuid>) -> StatusCode {
     let mut contacts = state.contacts.lock().unwrap_or_else(|e| e.into_inner());
     let before = contacts.len();
     contacts.retain(|c| c.id != id);

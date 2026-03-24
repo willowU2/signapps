@@ -142,7 +142,10 @@ impl DnsResolver {
     /// Add a custom DNS record for local resolution.
     pub fn add_custom_record(&self, name: &str, record_type: &str, value: &str, ttl: u32) {
         let normalized_name = Self::normalize_domain(name);
-        let mut records = self.custom_records.write().unwrap_or_else(|e| e.into_inner());
+        let mut records = self
+            .custom_records
+            .write()
+            .unwrap_or_else(|e| e.into_inner());
         records.insert(
             format!("{}:{}", normalized_name, record_type.to_uppercase()),
             CustomRecord {
@@ -162,7 +165,10 @@ impl DnsResolver {
     /// Remove a custom DNS record.
     pub fn remove_custom_record(&self, name: &str, record_type: &str) {
         let normalized_name = Self::normalize_domain(name);
-        let mut records = self.custom_records.write().unwrap_or_else(|e| e.into_inner());
+        let mut records = self
+            .custom_records
+            .write()
+            .unwrap_or_else(|e| e.into_inner());
         records.remove(&format!(
             "{}:{}",
             normalized_name,
@@ -178,7 +184,10 @@ impl DnsResolver {
 
         // Check custom records first
         {
-            let custom = self.custom_records.read().unwrap_or_else(|e| e.into_inner());
+            let custom = self
+                .custom_records
+                .read()
+                .unwrap_or_else(|e| e.into_inner());
             if let Some(record) = custom.get(&cache_key) {
                 return Ok(ResolveResult {
                     name: normalized_name,

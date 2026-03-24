@@ -4,8 +4,8 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
-use signapps_common::{Claims, TenantContext};
 use signapps_common::Result;
+use signapps_common::{Claims, TenantContext};
 use signapps_db::repositories::{MetricsRepository, ResourceMetrics, WorkloadMetrics};
 
 use crate::AppState;
@@ -26,12 +26,7 @@ pub async fn get_workload(
     let repo = MetricsRepository::new(&state.pool);
 
     let metrics = repo
-        .get_workload_metrics(
-            ctx.tenant_id,
-            claims.sub,
-            query.start_date,
-            query.end_date,
-        )
+        .get_workload_metrics(ctx.tenant_id, claims.sub, query.start_date, query.end_date)
         .await?;
 
     Ok(Json(metrics))
@@ -45,9 +40,7 @@ pub async fn get_resources(
 ) -> Result<Json<ResourceMetrics>> {
     let repo = MetricsRepository::new(&state.pool);
 
-    let metrics = repo
-        .get_resource_metrics(ctx.tenant_id, claims.sub)
-        .await?;
+    let metrics = repo.get_resource_metrics(ctx.tenant_id, claims.sub).await?;
 
     Ok(Json(metrics))
 }

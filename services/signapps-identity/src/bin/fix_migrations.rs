@@ -16,16 +16,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Add missing ENUM values
     println!("Adding 'spreadsheet' to drive.node_type...");
     sqlx::query("ALTER TYPE drive.node_type ADD VALUE IF NOT EXISTS 'spreadsheet'")
-        .execute(&pool).await?;
+        .execute(&pool)
+        .await?;
 
     println!("Adding 'presentation' to drive.node_type...");
     sqlx::query("ALTER TYPE drive.node_type ADD VALUE IF NOT EXISTS 'presentation'")
-        .execute(&pool).await?;
+        .execute(&pool)
+        .await?;
 
     // Update check constraint
     println!("Updating check constraint...");
     let _ = sqlx::query("ALTER TABLE drive.nodes DROP CONSTRAINT IF EXISTS chk_target_id_presence")
-        .execute(&pool).await;
+        .execute(&pool)
+        .await;
     sqlx::query(
         "ALTER TABLE drive.nodes ADD CONSTRAINT chk_target_id_presence CHECK (\
             (node_type = 'folder' AND target_id IS NULL) OR \
@@ -36,7 +39,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Add workspace_id column if missing
     println!("Ensuring workspace_id column exists...");
     sqlx::query("ALTER TABLE drive.nodes ADD COLUMN IF NOT EXISTS workspace_id UUID")
-        .execute(&pool).await?;
+        .execute(&pool)
+        .await?;
 
     println!("✅ All drive migrations applied successfully!");
     Ok(())

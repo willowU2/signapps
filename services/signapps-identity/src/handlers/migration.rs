@@ -6,11 +6,7 @@
 //! All routes require admin role (enforced by the router middleware).
 //! State is in-memory; no persistence across restarts.
 
-use axum::{
-    extract::State,
-    http::StatusCode,
-    Json,
-};
+use axum::{extract::State, http::StatusCode, Json};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
@@ -178,9 +174,7 @@ pub async fn start_migration(
 ///
 /// Returns the current migration job, or `404` if none exists.
 #[tracing::instrument(skip(state))]
-pub async fn get_migration_status(
-    State(state): State<AppState>,
-) -> Result<Json<MigrationJob>> {
+pub async fn get_migration_status(State(state): State<AppState>) -> Result<Json<MigrationJob>> {
     match state.migration.get().await {
         Some(job) => Ok(Json(job)),
         None => Err(Error::NotFound("No migration job found".to_string())),
@@ -192,9 +186,7 @@ pub async fn get_migration_status(
 /// Cancels the current migration job if it is Pending or Running.
 /// Returns `409 Conflict` if the job cannot be cancelled in its current state.
 #[tracing::instrument(skip(state))]
-pub async fn cancel_migration(
-    State(state): State<AppState>,
-) -> Result<Json<MigrationJob>> {
+pub async fn cancel_migration(State(state): State<AppState>) -> Result<Json<MigrationJob>> {
     let mut job = state
         .migration
         .get()
@@ -208,7 +200,7 @@ pub async fn cancel_migration(
             state.migration.set(job.clone()).await;
             tracing::info!(job_id = %job.id, "Migration job cancelled by admin");
             Ok(Json(job))
-        }
+        },
         _ => Err(Error::Conflict(format!(
             "Cannot cancel a migration in '{}' state",
             serde_json::to_string(&job.status).unwrap_or_default()

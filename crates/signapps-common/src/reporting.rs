@@ -183,10 +183,7 @@ impl ReportEngine {
             ));
         }
 
-        self.schedules
-            .write()
-            .await
-            .insert(config.id, config);
+        self.schedules.write().await.insert(config.id, config);
 
         Ok(())
     }
@@ -198,12 +195,7 @@ impl ReportEngine {
 
     /// List all scheduled report configurations.
     pub async fn list_schedules(&self) -> Vec<ReportConfig> {
-        self.schedules
-            .read()
-            .await
-            .values()
-            .cloned()
-            .collect()
+        self.schedules.read().await.values().cloned().collect()
     }
 
     /// Remove a scheduled report.
@@ -352,7 +344,10 @@ mod tests {
     #[tokio::test]
     async fn test_get_report() {
         let engine = ReportEngine::new();
-        let report = engine.generate(&ReportTemplate::MonthlyMetrics).await.unwrap();
+        let report = engine
+            .generate(&ReportTemplate::MonthlyMetrics)
+            .await
+            .unwrap();
         let report_id = report.id;
 
         let retrieved = engine.get_report(report_id).await;

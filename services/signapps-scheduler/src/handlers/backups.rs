@@ -102,9 +102,7 @@ pub struct TriggerBackupRequest {
 // ---------------------------------------------------------------------------
 
 /// GET /api/v1/admin/backups — list backup history (most recent first).
-pub async fn list_backups(
-    State(store): State<SharedBackupStore>,
-) -> Result<Json<Vec<BackupJob>>> {
+pub async fn list_backups(State(store): State<SharedBackupStore>) -> Result<Json<Vec<BackupJob>>> {
     let store = store.lock().expect("backup store lock poisoned");
     let mut jobs: Vec<BackupJob> = store.jobs.values().cloned().collect();
     jobs.sort_by(|a, b| b.started_at.cmp(&a.started_at));
@@ -136,10 +134,17 @@ pub async fn trigger_backup(
     // Spawn pg_dump in background
     let job_id = job.id;
     tokio::spawn(async move {
-        let db_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgresql://localhost/signapps".to_string());
-        let backup_dir = std::env::var("BACKUP_DIR").unwrap_or_else(|_| "/tmp/signapps-backups".to_string());
+        let db_url = std::env::var("DATABASE_URL")
+            .unwrap_or_else(|_| "postgresql://localhost/signapps".to_string());
+        let backup_dir =
+            std::env::var("BACKUP_DIR").unwrap_or_else(|_| "/tmp/signapps-backups".to_string());
         let _ = tokio::fs::create_dir_all(&backup_dir).await;
-        let file_path = format!("{}/backup_{}_{}.sql", backup_dir, job_id, chrono::Utc::now().format("%Y%m%d_%H%M%S"));
+        let file_path = format!(
+            "{}/backup_{}_{}.sql",
+            backup_dir,
+            job_id,
+            chrono::Utc::now().format("%Y%m%d_%H%M%S")
+        );
 
         let result = tokio::process::Command::new("pg_dump")
             .arg(&db_url)
@@ -153,13 +158,13 @@ pub async fn trigger_backup(
         match result {
             Ok(output) if output.status.success() => {
                 tracing::info!(job_id = %job_id, path = %file_path, "Backup completed successfully");
-            }
+            },
             Ok(output) => {
                 tracing::error!(job_id = %job_id, stderr = ?String::from_utf8_lossy(&output.stderr), "pg_dump failed");
-            }
+            },
             Err(e) => {
                 tracing::error!(job_id = %job_id, error = %e, "Failed to spawn pg_dump");
-            }
+            },
         }
     });
 
@@ -188,7 +193,9 @@ pub async fn delete_backup(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode> {
     let mut store = store.lock().expect("backup store lock poisoned");
-    let job = store.jobs.remove(&id)
+    let job = store
+        .jobs
+        .remove(&id)
         .ok_or_else(|| signapps_common::Error::NotFound(format!("Backup {}", id)))?;
 
     // Delete backup file from disk if path exists

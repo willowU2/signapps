@@ -83,12 +83,11 @@ pub async fn get_overview(State(state): State<AppState>) -> Result<Json<Analytic
     .map_err(|e| Error::Database(e.to_string()))?;
 
     // Aggregate used storage across all quota records
-    let total_storage_bytes: i64 = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(used_storage_bytes), 0) FROM storage.quotas",
-    )
-    .fetch_one(pool)
-    .await
-    .map_err(|e| Error::Database(e.to_string()))?;
+    let total_storage_bytes: i64 =
+        sqlx::query_scalar("SELECT COALESCE(SUM(used_storage_bytes), 0) FROM storage.quotas")
+            .fetch_one(pool)
+            .await
+            .map_err(|e| Error::Database(e.to_string()))?;
 
     // Fixed service count: 9 backend microservices in the platform topology
     let services_count: i32 = 9;
@@ -204,8 +203,11 @@ pub async fn get_activity(State(state): State<AppState>) -> Result<Json<Vec<Acti
                 let weekday_weight: u32 = if (1..=5).contains(&d) { 1 } else { 0 };
                 let hour_weight: u32 = if (8..=18).contains(&h) { 3 } else { 1 };
                 // Slight bump at the current hour/day to anchor "live" feel
-                let live_bump: u32 =
-                    if d == seed_dow && h == seed_hour as usize { 5 } else { 0 };
+                let live_bump: u32 = if d == seed_dow && h == seed_hour as usize {
+                    5
+                } else {
+                    0
+                };
                 *cell = weekday_weight * hour_weight + live_bump;
             }
         }

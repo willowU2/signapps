@@ -256,7 +256,11 @@ pub async fn add_time_item_user(
             // Attempt to broadcast to the assigned user
             let item_repo = TimeItemRepository::new(&state.pool);
             if let Ok(Some(item)) = item_repo.find_by_id(id).await {
-                let type_label = if item.item_type == "task" { "la tâche" } else { "l'événement" };
+                let type_label = if item.item_type == "task" {
+                    "la tâche"
+                } else {
+                    "l'événement"
+                };
                 let notification = crate::NotificationMessage {
                     user_id: user.user_id,
                     title: "Nouvelle Assignation".to_string(),

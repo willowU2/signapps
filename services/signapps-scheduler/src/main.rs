@@ -96,13 +96,14 @@ async fn main() -> Result<()> {
     let (tx_notifications, _) = broadcast::channel(100);
 
     // Try to connect to Redis for Pub/Sub notifications
-    let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+    let redis_url =
+        std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
     let redis_client = match redis::Client::open(redis_url) {
         Ok(client) => Some(client),
         Err(e) => {
             tracing::warn!("Failed to create Redis client for notifications: {}. Falling back to local-only broadcasts.", e);
             None
-        }
+        },
     };
 
     // Spawn Redis Pub/Sub listener if client is available
@@ -128,25 +129,37 @@ async fn main() -> Result<()> {
                         let mut stream = pubsub.on_message();
                         while let Some(msg) = stream.next().await {
                             if let Ok(payload) = msg.get_payload::<String>() {
-                                if let Ok(notification) = serde_json::from_str::<NotificationMessage>(&payload) {
+                                if let Ok(notification) =
+                                    serde_json::from_str::<NotificationMessage>(&payload)
+                                {
                                     // Broadcast to local SSE clients
                                     let _ = tx.send(notification);
                                 }
                             }
                         }
-                    }
+                    },
                     Err(e) => {
                         retry_count += 1;
                         if retry_count > MAX_REDIS_RETRIES {
-                            tracing::error!("Max Redis retries exceeded ({}), giving up: {}", MAX_REDIS_RETRIES, e);
+                            tracing::error!(
+                                "Max Redis retries exceeded ({}), giving up: {}",
+                                MAX_REDIS_RETRIES,
+                                e
+                            );
                             break; // Exit loop instead of infinite retry
                         }
-                        let backoff = INITIAL_BACKOFF_SECS * 2_u64.pow(retry_count.saturating_sub(1));
+                        let backoff =
+                            INITIAL_BACKOFF_SECS * 2_u64.pow(retry_count.saturating_sub(1));
                         let backoff = backoff.min(MAX_BACKOFF_SECS);
-                        tracing::warn!("Redis connection failed (attempt {}/{}), retrying in {}s: {}",
-                                       retry_count, MAX_REDIS_RETRIES, backoff, e);
+                        tracing::warn!(
+                            "Redis connection failed (attempt {}/{}), retrying in {}s: {}",
+                            retry_count,
+                            MAX_REDIS_RETRIES,
+                            backoff,
+                            e
+                        );
                         tokio::time::sleep(tokio::time::Duration::from_secs(backoff)).await;
-                    }
+                    },
                 }
             }
         });
@@ -178,8 +191,20 @@ fn create_router(state: AppState) -> Router {
             "http://127.0.0.1:3000".parse().unwrap(),
         ]))
         .allow_credentials(true)
-        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
-        .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN]);
+        .allow_methods([
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::PUT,
+            axum::http::Method::PATCH,
+            axum::http::Method::DELETE,
+            axum::http::Method::OPTIONS,
+        ])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::header::AUTHORIZATION,
+            axum::http::header::ACCEPT,
+            axum::http::header::ORIGIN,
+        ]);
 
     // Job routes (admin only)
     let job_routes = Router::new()
@@ -427,7 +452,10 @@ fn create_router(state: AppState) -> Router {
             "/",
             get(handlers::backups::list_backups).post(handlers::backups::trigger_backup),
         )
-        .route("/config", get(handlers::backups::get_backup_config).put(handlers::backups::update_backup_config))
+        .route(
+            "/config",
+            get(handlers::backups::get_backup_config).put(handlers::backups::update_backup_config),
+        )
         .route(
             "/{id}",
             get(handlers::backups::get_backup).delete(handlers::backups::delete_backup),

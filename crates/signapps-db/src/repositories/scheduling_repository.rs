@@ -79,9 +79,13 @@ impl<'a> TimeItemRepository<'a> {
         let offset = query.offset.unwrap_or(0);
 
         // Parse optional date filters
-        let start_date: Option<DateTime<Utc>> = query.start.as_ref()
+        let start_date: Option<DateTime<Utc>> = query
+            .start
+            .as_ref()
             .and_then(|s| s.parse::<DateTime<Utc>>().ok());
-        let end_date: Option<DateTime<Utc>> = query.end.as_ref()
+        let end_date: Option<DateTime<Utc>> = query
+            .end
+            .as_ref()
             .and_then(|s| s.parse::<DateTime<Utc>>().ok());
 
         // Build optional WHERE fragments (safe: values are whitelisted or parameterised)
@@ -89,12 +93,12 @@ impl<'a> TimeItemRepository<'a> {
 
         if start_date.is_some() {
             extra_where.push_str(
-                " AND (t.start_time >= $5 OR (t.start_time IS NULL AND t.deadline >= $5))"
+                " AND (t.start_time >= $5 OR (t.start_time IS NULL AND t.deadline >= $5))",
             );
         }
         if end_date.is_some() {
             extra_where.push_str(
-                " AND (t.start_time <= $6 OR (t.start_time IS NULL AND t.deadline <= $6))"
+                " AND (t.start_time <= $6 OR (t.start_time IS NULL AND t.deadline <= $6))",
             );
         }
 
@@ -148,10 +152,16 @@ impl<'a> TimeItemRepository<'a> {
             .bind(tenant_id)
             .bind(owner_id)
             .bind(limit)    // $3 (unused in count but keeps indices aligned)
-            .bind(offset);  // $4
-        if let Some(sd) = start_date { count_q = count_q.bind(sd); }           // $5
-        if let Some(ed) = end_date { count_q = count_q.bind(ed); }             // $6
-        if let Some(ref sp) = search_pattern { count_q = count_q.bind(sp); }   // $7
+            .bind(offset); // $4
+        if let Some(sd) = start_date {
+            count_q = count_q.bind(sd);
+        } // $5
+        if let Some(ed) = end_date {
+            count_q = count_q.bind(ed);
+        } // $6
+        if let Some(ref sp) = search_pattern {
+            count_q = count_q.bind(sp);
+        } // $7
 
         let total = count_q.fetch_one(self.pool.inner()).await?;
 
@@ -167,9 +177,15 @@ impl<'a> TimeItemRepository<'a> {
             .bind(owner_id)
             .bind(limit)
             .bind(offset);
-        if let Some(sd) = start_date { items_q = items_q.bind(sd); }
-        if let Some(ed) = end_date { items_q = items_q.bind(ed); }
-        if let Some(ref sp) = search_pattern { items_q = items_q.bind(sp); }
+        if let Some(sd) = start_date {
+            items_q = items_q.bind(sd);
+        }
+        if let Some(ed) = end_date {
+            items_q = items_q.bind(ed);
+        }
+        if let Some(ref sp) = search_pattern {
+            items_q = items_q.bind(sp);
+        }
 
         let items = items_q.fetch_all(self.pool.inner()).await?;
 

@@ -1,8 +1,4 @@
-use axum::{
-    extract::Path,
-    http::StatusCode,
-    Json,
-};
+use axum::{extract::Path, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 
 struct Template {

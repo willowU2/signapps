@@ -86,7 +86,7 @@ pub fn vcard_to_contact(vcard_str: &str) -> Option<Contact> {
                 let parts: Vec<&str> = value.splitn(5, ';').collect();
                 last_name = parts.first().unwrap_or(&"").to_string();
                 first_name = parts.get(1).unwrap_or(&"").to_string();
-            }
+            },
             "FN" => {
                 // Only use FN as fallback when N is absent
                 if first_name.is_empty() && last_name.is_empty() {
@@ -94,13 +94,13 @@ pub fn vcard_to_contact(vcard_str: &str) -> Option<Contact> {
                     first_name = words.next().unwrap_or("").to_string();
                     last_name = words.next().unwrap_or("").to_string();
                 }
-            }
+            },
             "EMAIL" => email = Some(value.to_string()),
             "TEL" => phone = Some(value.to_string()),
             "ORG" => organization = Some(value.split(';').next().unwrap_or(value).to_string()),
             "TITLE" => job_title = Some(value.to_string()),
             "UID" => uid = Uuid::parse_str(value).ok(),
-            _ => {}
+            _ => {},
         }
     }
 
@@ -138,7 +138,9 @@ fn split_vcards(input: &str) -> Vec<&str> {
             }
         } else if trimmed.eq_ignore_ascii_case("END:VCARD") {
             if let Some(s) = start.take() {
-                let end = input[s..].find("END:VCARD").map(|e| s + e + "END:VCARD".len());
+                let end = input[s..]
+                    .find("END:VCARD")
+                    .map(|e| s + e + "END:VCARD".len());
                 if let Some(e) = end {
                     blocks.push(&input[s..e]);
                 }

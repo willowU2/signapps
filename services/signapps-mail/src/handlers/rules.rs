@@ -1,14 +1,14 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json, extract::State};
+use crate::AppState;
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Extension, Json};
 use serde::{Deserialize, Serialize};
 use signapps_common::Claims;
-use uuid::Uuid;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use crate::AppState;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RuleCondition {
-    pub field: String, // "from" | "subject" | "body"
+    pub field: String,    // "from" | "subject" | "body"
     pub operator: String, // "contains" | "equals" | "starts_with"
     pub value: String,
 }
@@ -51,7 +51,9 @@ impl Default for RuleStore {
 
 impl RuleStore {
     pub fn new() -> Self {
-        Self { rules: Arc::new(RwLock::new(Vec::new())) }
+        Self {
+            rules: Arc::new(RwLock::new(Vec::new())),
+        }
     }
 
     pub async fn get_all_rules(&self, account_id: Uuid) -> Vec<MailRule> {
@@ -65,7 +67,12 @@ impl RuleStore {
     }
 
     pub async fn get_rule(&self, rule_id: Uuid) -> Option<MailRule> {
-        self.rules.read().await.iter().find(|r| r.id == rule_id).cloned()
+        self.rules
+            .read()
+            .await
+            .iter()
+            .find(|r| r.id == rule_id)
+            .cloned()
     }
 
     pub async fn create_rule(&self, rule: MailRule) -> MailRule {
@@ -124,9 +131,7 @@ pub async fn get_rule(
     axum::extract::Path(rule_id): axum::extract::Path<Uuid>,
 ) -> impl IntoResponse {
     match state.rules.get_rule(rule_id).await {
-        Some(rule) if rule.account_id == claims.sub => {
-            Json(rule).into_response()
-        }
+        Some(rule) if rule.account_id == claims.sub => Json(rule).into_response(),
         _ => (StatusCode::NOT_FOUND, "Rule not found").into_response(),
     }
 }

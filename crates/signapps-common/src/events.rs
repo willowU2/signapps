@@ -36,19 +36,39 @@ use uuid::Uuid;
 #[serde(tag = "type", content = "data")]
 pub enum DomainEvent {
     // Document events
-    DocumentCreated { id: Uuid, user_id: Uuid },
-    DocumentUpdated { id: Uuid, user_id: Uuid },
+    DocumentCreated {
+        id: Uuid,
+        user_id: Uuid,
+    },
+    DocumentUpdated {
+        id: Uuid,
+        user_id: Uuid,
+    },
 
     // File/storage events
-    FileUploaded { id: Uuid, user_id: Uuid, size: i64 },
-    FileDeleted { id: Uuid, user_id: Uuid },
+    FileUploaded {
+        id: Uuid,
+        user_id: Uuid,
+        size: i64,
+    },
+    FileDeleted {
+        id: Uuid,
+        user_id: Uuid,
+    },
 
     // User events
-    UserCreated { id: Uuid },
-    UserUpdated { id: Uuid },
+    UserCreated {
+        id: Uuid,
+    },
+    UserUpdated {
+        id: Uuid,
+    },
 
     // Calendar events
-    CalendarEventCreated { id: Uuid, user_id: Uuid },
+    CalendarEventCreated {
+        id: Uuid,
+        user_id: Uuid,
+    },
 
     // Extensible catch-all for service-specific events
     Custom {
@@ -206,7 +226,7 @@ mod tests {
             } => {
                 assert_eq!(event_type, "test.happened");
                 assert_eq!(payload["key"], "value");
-            }
+            },
             _ => panic!("unexpected variant"),
         }
     }

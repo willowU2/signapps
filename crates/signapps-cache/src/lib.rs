@@ -203,9 +203,7 @@ impl CacheService {
     pub fn incr(&self, key: &str) -> i64 {
         // Prevent unbounded growth of the counter map
         if self.counters.len() > 100_000 {
-            tracing::warn!(
-                "Counter map exceeded 100 000 entries — clearing all counters"
-            );
+            tracing::warn!("Counter map exceeded 100 000 entries — clearing all counters");
             self.counters.clear();
         }
 
@@ -246,8 +244,7 @@ impl CacheService {
     /// to reclaim memory from expired rate-limit windows.
     pub fn cleanup_stale_counters(&self) {
         let before = self.counters.len();
-        self.counters
-            .retain(|_, v| v.load(Ordering::Relaxed) > 0);
+        self.counters.retain(|_, v| v.load(Ordering::Relaxed) > 0);
         let removed = before - self.counters.len();
         if removed > 0 {
             tracing::debug!(

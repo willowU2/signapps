@@ -789,10 +789,11 @@ impl<'a> FloorPlanRepository<'a> {
 
     /// List all floor plans.
     pub async fn list(&self) -> Result<Vec<FloorPlan>> {
-        let floor_plans =
-            sqlx::query_as::<_, FloorPlan>("SELECT * FROM calendar.floor_plans ORDER BY created_at DESC")
-                .fetch_all(self.pool.inner())
-                .await?;
+        let floor_plans = sqlx::query_as::<_, FloorPlan>(
+            "SELECT * FROM calendar.floor_plans ORDER BY created_at DESC",
+        )
+        .fetch_all(self.pool.inner())
+        .await?;
 
         Ok(floor_plans)
     }

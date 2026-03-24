@@ -1,8 +1,4 @@
-use axum::{
-    extract::State,
-    http::HeaderMap,
-    Json,
-};
+use axum::{extract::State, http::HeaderMap, Json};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use signapps_common::{Error, Result};
@@ -125,9 +121,7 @@ pub async fn execute_action(
     match intent {
         "restart_container" => {
             if !is_valid_target(target) {
-                return Err(Error::Validation(
-                    "Invalid target identifier".to_string(),
-                ));
+                return Err(Error::Validation("Invalid target identifier".to_string()));
             }
 
             tracing::info!("Executing real container restart for: {}", target);

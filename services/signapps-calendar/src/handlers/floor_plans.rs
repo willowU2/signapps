@@ -14,13 +14,10 @@ pub async fn create_floor_plan(
     Json(payload): Json<CreateFloorPlan>,
 ) -> Result<(StatusCode, Json<FloorPlan>), CalendarError> {
     let repo = FloorPlanRepository::new(&state.pool);
-    let floor_plan = repo
-        .create(payload)
-        .await
-        .map_err(|e| {
-            tracing::error!("Error creating floor plan: {:?}", e);
-            CalendarError::InternalError
-        })?;
+    let floor_plan = repo.create(payload).await.map_err(|e| {
+        tracing::error!("Error creating floor plan: {:?}", e);
+        CalendarError::InternalError
+    })?;
 
     Ok((StatusCode::CREATED, Json(floor_plan)))
 }
@@ -30,13 +27,10 @@ pub async fn list_floor_plans(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<FloorPlan>>, CalendarError> {
     let repo = FloorPlanRepository::new(&state.pool);
-    let floor_plans = repo
-        .list()
-        .await
-        .map_err(|e| {
-            tracing::error!("Error listing floor plans: {:?}", e);
-            CalendarError::InternalError
-        })?;
+    let floor_plans = repo.list().await.map_err(|e| {
+        tracing::error!("Error listing floor plans: {:?}", e);
+        CalendarError::InternalError
+    })?;
 
     Ok(Json(floor_plans))
 }
@@ -66,13 +60,10 @@ pub async fn update_floor_plan(
     Json(payload): Json<UpdateFloorPlan>,
 ) -> Result<Json<FloorPlan>, CalendarError> {
     let repo = FloorPlanRepository::new(&state.pool);
-    let floor_plan = repo
-        .update(id, payload)
-        .await
-        .map_err(|e| {
-            tracing::error!("Error updating floor plan: {:?}", e);
-            CalendarError::InternalError
-        })?;
+    let floor_plan = repo.update(id, payload).await.map_err(|e| {
+        tracing::error!("Error updating floor plan: {:?}", e);
+        CalendarError::InternalError
+    })?;
 
     Ok(Json(floor_plan))
 }
@@ -83,12 +74,10 @@ pub async fn delete_floor_plan(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, CalendarError> {
     let repo = FloorPlanRepository::new(&state.pool);
-    repo.delete(id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Error deleting floor plan: {:?}", e);
-            CalendarError::InternalError
-        })?;
+    repo.delete(id).await.map_err(|e| {
+        tracing::error!("Error deleting floor plan: {:?}", e);
+        CalendarError::InternalError
+    })?;
 
     Ok(StatusCode::NO_CONTENT)
 }

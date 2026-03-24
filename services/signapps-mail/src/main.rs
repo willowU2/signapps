@@ -4,13 +4,16 @@ pub mod handlers;
 pub mod models;
 pub mod sync_service;
 
+use handlers::rules::RuleStore;
+use handlers::signatures::SignatureStore;
 use signapps_common::bootstrap::{env_or, env_required, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::{AiIndexerClient, JwtConfig};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use tower_http::{cors::{AllowOrigin, CorsLayer}, trace::TraceLayer};
-use handlers::signatures::SignatureStore;
-use handlers::rules::RuleStore;
+use tower_http::{
+    cors::{AllowOrigin, CorsLayer},
+    trace::TraceLayer,
+};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -76,14 +79,28 @@ async fn main() {
             state.clone(),
             auth_middleware::<AppState>,
         ))
-        .layer(CorsLayer::new()
-            .allow_origin(AllowOrigin::list([
-                "http://localhost:3000".parse().unwrap(),
-                "http://127.0.0.1:3000".parse().unwrap(),
-            ]))
-            .allow_credentials(true)
-            .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
-            .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN]))
+        .layer(
+            CorsLayer::new()
+                .allow_origin(AllowOrigin::list([
+                    "http://localhost:3000".parse().unwrap(),
+                    "http://127.0.0.1:3000".parse().unwrap(),
+                ]))
+                .allow_credentials(true)
+                .allow_methods([
+                    axum::http::Method::GET,
+                    axum::http::Method::POST,
+                    axum::http::Method::PUT,
+                    axum::http::Method::PATCH,
+                    axum::http::Method::DELETE,
+                    axum::http::Method::OPTIONS,
+                ])
+                .allow_headers([
+                    axum::http::header::CONTENT_TYPE,
+                    axum::http::header::AUTHORIZATION,
+                    axum::http::header::ACCEPT,
+                    axum::http::header::ORIGIN,
+                ]),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 

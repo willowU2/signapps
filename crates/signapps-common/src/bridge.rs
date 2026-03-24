@@ -170,7 +170,7 @@ impl BridgeManager {
                     "No enabled bridge found for source"
                 );
                 return false;
-            }
+            },
         };
 
         // Look up the external channel ID
@@ -184,7 +184,7 @@ impl BridgeManager {
                     "Channel not mapped in bridge"
                 );
                 return false;
-            }
+            },
         };
 
         // Send the message via HTTP POST
@@ -228,7 +228,7 @@ impl BridgeManager {
                     );
                     false
                 }
-            }
+            },
             Err(err) => {
                 error!(
                     bridge_id = %bridge.id,
@@ -238,7 +238,7 @@ impl BridgeManager {
                     "Failed to send message to external platform"
                 );
                 false
-            }
+            },
         }
     }
 }

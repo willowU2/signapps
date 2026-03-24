@@ -210,7 +210,8 @@ impl AlertManager {
 
             // Trigger alert
             let alert = Alert::from_rule(rule, value);
-            self.last_alert_time.insert(rule.id, alert.triggered_at.clone());
+            self.last_alert_time
+                .insert(rule.id, alert.triggered_at.clone());
             alerts.push(alert);
         }
 

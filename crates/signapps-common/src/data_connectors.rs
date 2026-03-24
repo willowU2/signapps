@@ -120,10 +120,7 @@ mod tests {
     #[test]
     fn test_data_connectors_add_source() {
         let connectors = DataConnectors::new();
-        let source = DataSource::new(
-            "CSV Import".to_string(),
-            SourceType::CsvUpload,
-        );
+        let source = DataSource::new("CSV Import".to_string(), SourceType::CsvUpload);
         let result = connectors.add_source(source);
         assert!(result.is_ok());
     }
@@ -131,14 +128,12 @@ mod tests {
     #[test]
     fn test_data_connectors_list_by_type() {
         let connectors = DataConnectors::new();
-        connectors.add_source(DataSource::new(
-            "DB 1".to_string(),
-            SourceType::PostgreSQL,
-        )).ok();
-        connectors.add_source(DataSource::new(
-            "CSV 1".to_string(),
-            SourceType::CsvUpload,
-        )).ok();
+        connectors
+            .add_source(DataSource::new("DB 1".to_string(), SourceType::PostgreSQL))
+            .ok();
+        connectors
+            .add_source(DataSource::new("CSV 1".to_string(), SourceType::CsvUpload))
+            .ok();
 
         let pg_sources = connectors.list_by_type(SourceType::PostgreSQL);
         assert_eq!(pg_sources.len(), 1);

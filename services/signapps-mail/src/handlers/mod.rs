@@ -1,2 +1,2 @@
-pub mod signatures;
 pub mod rules;
+pub mod signatures;

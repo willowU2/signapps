@@ -220,8 +220,12 @@ impl SearchIndex {
             id: schema.get_field("id").expect("field 'id' missing"),
             title: schema.get_field("title").expect("field 'title' missing"),
             body: schema.get_field("body").expect("field 'body' missing"),
-            service: schema.get_field("service").expect("field 'service' missing"),
-            created_at: schema.get_field("created_at").expect("field 'created_at' missing"),
+            service: schema
+                .get_field("service")
+                .expect("field 'service' missing"),
+            created_at: schema
+                .get_field("created_at")
+                .expect("field 'created_at' missing"),
         }
     }
 

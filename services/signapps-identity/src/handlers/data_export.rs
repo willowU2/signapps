@@ -12,11 +12,7 @@
 //! State is held in-memory (one active job per user); no file system or object
 //! storage is involved in this foundation version.
 
-use axum::{
-    extract::State,
-    http::StatusCode,
-    Extension, Json,
-};
+use axum::{extract::State, http::StatusCode, Extension, Json};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use signapps_common::{Claims, Error, Result};
@@ -217,24 +213,23 @@ pub async fn download_export(
     let user_id = claims.sub;
 
     // Validate that a completed job exists.
-    let job = state
-        .data_export
-        .get(user_id)
-        .await
-        .ok_or_else(|| Error::NotFound("No data export job found for this user.".to_string()))?;
+    let job =
+        state.data_export.get(user_id).await.ok_or_else(|| {
+            Error::NotFound("No data export job found for this user.".to_string())
+        })?;
 
     match job.status {
-        ExportStatus::Completed => {}
+        ExportStatus::Completed => {},
         ExportStatus::Pending | ExportStatus::Processing => {
             return Err(Error::Conflict(
                 "Export is not yet ready. Please check status and retry.".to_string(),
             ));
-        }
+        },
         ExportStatus::Failed => {
             return Err(Error::Internal(
                 "The export job failed. Please request a new export.".to_string(),
             ));
-        }
+        },
     }
 
     // Fetch the live user record for the export payload.

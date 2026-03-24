@@ -148,11 +148,7 @@ impl WebhookManager {
     /// Sends an HTTP POST with the JSON payload and an HMAC-SHA256 signature
     /// in the `X-Signature-256` header. Returns one [`WebhookDelivery`] per
     /// webhook that matched the event.
-    pub async fn deliver(
-        &self,
-        event: &str,
-        payload: &[u8],
-    ) -> Vec<WebhookDelivery> {
+    pub async fn deliver(&self, event: &str, payload: &[u8]) -> Vec<WebhookDelivery> {
         let configs = self.configs.read().await.clone();
         let matching: Vec<_> = configs
             .into_iter()
@@ -209,7 +205,7 @@ impl WebhookManager {
                     );
                     (DeliveryStatus::Failed, Some(code))
                 }
-            }
+            },
             Err(err) => {
                 error!(
                     webhook_id = %config.id,
@@ -218,7 +214,7 @@ impl WebhookManager {
                     "Webhook delivery network error"
                 );
                 (DeliveryStatus::Failed, None)
-            }
+            },
         };
 
         WebhookDelivery {
@@ -234,8 +230,8 @@ impl WebhookManager {
 
 /// Compute `hmac-sha256(secret, payload)` and return it as a lowercase hex string.
 fn compute_signature(secret: &str, payload: &[u8]) -> String {
-    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
-        .expect("HMAC accepts keys of any length");
+    let mut mac =
+        HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC accepts keys of any length");
     mac.update(payload);
     hex::encode(mac.finalize().into_bytes())
 }

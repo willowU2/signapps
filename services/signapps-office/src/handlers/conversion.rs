@@ -327,7 +327,10 @@ pub async fn convert_upload(
             OutputFormat::Html => "html",
             OutputFormat::Text => "txt",
         };
-        let filename = query.filename.clone().unwrap_or_else(|| format!("document.{}", ext));
+        let filename = query
+            .filename
+            .clone()
+            .unwrap_or_else(|| format!("document.{}", ext));
         return match Response::builder()
             .status(StatusCode::OK)
             .header(header::CONTENT_TYPE, content_type)
@@ -601,9 +604,10 @@ impl IntoResponse for ConversionErrorResponse {
             ConversionError::ConversionFailed(msg) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, msg.clone())
             },
-            ConversionError::InternalError => {
-                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error".to_string())
-            },
+            ConversionError::InternalError => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string(),
+            ),
         };
 
         let body = serde_json::json!({

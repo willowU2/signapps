@@ -2,8 +2,8 @@
 //!
 //! Generates SVG-based QR codes for quick sharing of data.
 
-use qrcode::QrCode;
 use qrcode::render::svg;
+use qrcode::QrCode;
 
 /// Generate a QR code as SVG string
 ///
@@ -19,10 +19,7 @@ use qrcode::render::svg;
 /// ```
 pub fn generate_qr_svg(data: &str) -> Result<String, qrcode::types::QrError> {
     let code = QrCode::new(data)?;
-    let image = code
-        .render::<svg::Color>()
-        .min_dimensions(200, 200)
-        .build();
+    let image = code.render::<svg::Color>().min_dimensions(200, 200).build();
     Ok(image)
 }
 
