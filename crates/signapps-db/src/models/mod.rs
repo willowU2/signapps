@@ -1,5 +1,6 @@
 //! Database models for SignApps Platform.
 
+pub mod activity;
 pub mod audit_log;
 pub mod backup;
 pub mod calendar;

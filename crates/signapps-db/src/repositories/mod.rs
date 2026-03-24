@@ -81,4 +81,7 @@ pub use audit_log_repository::AuditLogRepository;
 pub mod entity_reference_repository;
 pub use entity_reference_repository::EntityReferenceRepository;
 
+pub mod activity_repository;
+pub use activity_repository::ActivityRepository;
+
 pub mod test_helpers;
