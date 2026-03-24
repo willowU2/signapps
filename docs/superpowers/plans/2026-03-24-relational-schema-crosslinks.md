@@ -49,7 +49,7 @@
 ### Rust — signapps-db (modify)
 - `crates/signapps-db/src/models/mod.rs` — add new module exports
 - `crates/signapps-db/src/repositories/mod.rs` — add new repository exports
-- `crates/signapps-db/src/models/drive.rs` — add sha256_hash, mime_type, size_bytes, storage_path, encryption_key_id, deleted_at fields
+- `crates/signapps-db/src/models/drive.rs` — add sha256_hash, storage_path, encryption_key_id, doc_id fields (mime_type, size, deleted_at already exist)
 
 ### Rust — signapps-common (create)
 - `crates/signapps-common/src/pii.rs` — PiiCipher (aes-gcm)
@@ -287,7 +287,6 @@ Create `crates/signapps-common/src/traits/linkable.rs`:
 ```rust
 use serde_json::Value;
 use sqlx::PgPool;
-use std::net::IpAddr;
 use uuid::Uuid;
 
 /// Trait for entities that can be linked cross-service and tracked in activity/audit.
@@ -297,7 +296,7 @@ pub trait Linkable {
     fn entity_title(&self) -> String;
 }
 
-/// Log an activity entry to the activities table.
+/// Log an activity entry to the platform.activities table.
 pub async fn log_activity(
     pool: &PgPool,
     actor_id: Uuid,
@@ -307,7 +306,7 @@ pub async fn log_activity(
     metadata: Value,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
-        r#"INSERT INTO activities (id, actor_id, action, entity_type, entity_id, entity_title, metadata, workspace_id)
+        r#"INSERT INTO platform.activities (id, actor_id, action, entity_type, entity_id, entity_title, metadata, workspace_id)
            VALUES (gen_uuid_v7(), $1, $2, $3, $4, $5, $6, $7)"#,
     )
     .bind(actor_id)
@@ -322,11 +321,11 @@ pub async fn log_activity(
     Ok(())
 }
 
-/// Append an immutable audit log entry.
+/// Append an immutable audit log entry to platform.audit_log.
 pub async fn audit(
     pool: &PgPool,
     actor_id: Option<Uuid>,
-    actor_ip: Option<IpAddr>,
+    actor_ip: Option<&str>,
     action: &str,
     entity: &dyn Linkable,
     old_data: Option<Value>,
@@ -334,11 +333,11 @@ pub async fn audit(
     workspace_id: Option<Uuid>,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
-        r#"INSERT INTO audit_log (id, actor_id, actor_ip, action, entity_type, entity_id, old_data, new_data, workspace_id)
+        r#"INSERT INTO platform.audit_log (id, actor_id, actor_ip, action, entity_type, entity_id, old_data, new_data, workspace_id)
            VALUES (gen_uuid_v7(), $1, $2, $3, $4, $5, $6, $7, $8)"#,
     )
     .bind(actor_id)
-    .bind(actor_ip.map(|ip| ip.to_string()))
+    .bind(actor_ip)
     .bind(action)
     .bind(entity.entity_type())
     .bind(entity.entity_id())
@@ -389,7 +388,9 @@ git commit -m "feat(common): add Linkable trait + log_activity + audit helpers"
 
 ```sql
 -- 20260324000002_audit_log.up.sql
-CREATE TABLE audit_log (
+CREATE SCHEMA IF NOT EXISTS platform;
+
+CREATE TABLE platform.audit_log (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
     actor_id UUID,
     actor_ip TEXT,
@@ -403,28 +404,28 @@ CREATE TABLE audit_log (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE OR REPLACE FUNCTION prevent_audit_mutation() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION platform.prevent_audit_mutation() RETURNS TRIGGER AS $$
 BEGIN
     RAISE EXCEPTION 'audit_log is append-only: % not allowed', TG_OP;
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER audit_immutable
-    BEFORE UPDATE OR DELETE ON audit_log
-    FOR EACH ROW EXECUTE FUNCTION prevent_audit_mutation();
+    BEFORE UPDATE OR DELETE ON platform.audit_log
+    FOR EACH ROW EXECUTE FUNCTION platform.prevent_audit_mutation();
 
-CREATE INDEX idx_audit_entity ON audit_log(entity_type, entity_id, created_at DESC);
-CREATE INDEX idx_audit_actor ON audit_log(actor_id, created_at DESC);
-CREATE INDEX idx_audit_action ON audit_log(action, created_at DESC);
+CREATE INDEX idx_audit_entity ON platform.audit_log(entity_type, entity_id, created_at DESC);
+CREATE INDEX idx_audit_actor ON platform.audit_log(actor_id, created_at DESC);
+CREATE INDEX idx_audit_action ON platform.audit_log(action, created_at DESC);
 ```
 
 - [ ] **Step 2: Create down migration**
 
 ```sql
 -- 20260324000002_audit_log.down.sql
-DROP TRIGGER IF EXISTS audit_immutable ON audit_log;
-DROP FUNCTION IF EXISTS prevent_audit_mutation();
-DROP TABLE IF EXISTS audit_log;
+DROP TRIGGER IF EXISTS audit_immutable ON platform.audit_log;
+DROP FUNCTION IF EXISTS platform.prevent_audit_mutation();
+DROP TABLE IF EXISTS platform.audit_log;
 ```
 
 - [ ] **Step 3: Create model**
@@ -481,7 +482,7 @@ impl AuditLogRepository {
         workspace_id: Option<Uuid>,
     ) -> Result<AuditLogEntry, sqlx::Error> {
         sqlx::query_as::<_, AuditLogEntry>(
-            r#"INSERT INTO audit_log (id, actor_id, actor_ip, action, entity_type, entity_id, old_data, new_data, workspace_id)
+            r#"INSERT INTO platform.audit_log (id, actor_id, actor_ip, action, entity_type, entity_id, old_data, new_data, workspace_id)
                VALUES (gen_uuid_v7(), $1, $2, $3, $4, $5, $6, $7, $8)
                RETURNING *"#,
         )
@@ -505,7 +506,7 @@ impl AuditLogRepository {
         offset: i64,
     ) -> Result<Vec<AuditLogEntry>, sqlx::Error> {
         sqlx::query_as::<_, AuditLogEntry>(
-            r#"SELECT * FROM audit_log WHERE entity_type = $1 AND entity_id = $2
+            r#"SELECT * FROM platform.audit_log WHERE entity_type = $1 AND entity_id = $2
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
         )
         .bind(entity_type)
@@ -523,7 +524,7 @@ impl AuditLogRepository {
         offset: i64,
     ) -> Result<Vec<AuditLogEntry>, sqlx::Error> {
         sqlx::query_as::<_, AuditLogEntry>(
-            r#"SELECT * FROM audit_log WHERE actor_id = $1
+            r#"SELECT * FROM platform.audit_log WHERE actor_id = $1
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#,
         )
         .bind(actor_id)
@@ -576,7 +577,7 @@ git commit -m "feat(db): add audit_log — append-only immutable table with trig
 
 ```sql
 -- 20260324000003_entity_references.up.sql
-CREATE TABLE entity_references (
+CREATE TABLE platform.entity_references (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
     source_type VARCHAR(32) NOT NULL,
     source_id UUID NOT NULL,
@@ -585,18 +586,21 @@ CREATE TABLE entity_references (
     relation VARCHAR(32) NOT NULL DEFAULT 'related',
     created_by UUID,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    deleted_at TIMESTAMPTZ,
-    UNIQUE(source_type, source_id, target_type, target_id, relation)
+    deleted_at TIMESTAMPTZ
 );
-CREATE INDEX idx_entity_ref_source ON entity_references(source_type, source_id);
-CREATE INDEX idx_entity_ref_target ON entity_references(target_type, target_id);
+-- Partial unique index: only active (non-deleted) links are unique
+CREATE UNIQUE INDEX idx_entity_ref_unique_active
+    ON platform.entity_references(source_type, source_id, target_type, target_id, relation)
+    WHERE deleted_at IS NULL;
+CREATE INDEX idx_entity_ref_source ON platform.entity_references(source_type, source_id);
+CREATE INDEX idx_entity_ref_target ON platform.entity_references(target_type, target_id);
 ```
 
 - [ ] **Step 2: Create down migration**
 
 ```sql
 -- 20260324000003_entity_references.down.sql
-DROP TABLE IF EXISTS entity_references;
+DROP TABLE IF EXISTS platform.entity_references;
 ```
 
 - [ ] **Step 3: Create model**
@@ -658,7 +662,7 @@ impl EntityReferenceRepository {
         created_by: Option<Uuid>,
     ) -> Result<EntityReference, sqlx::Error> {
         sqlx::query_as::<_, EntityReference>(
-            r#"INSERT INTO entity_references (id, source_type, source_id, target_type, target_id, relation, created_by)
+            r#"INSERT INTO platform.entity_references (id, source_type, source_id, target_type, target_id, relation, created_by)
                VALUES (gen_uuid_v7(), $1, $2, $3, $4, $5, $6)
                ON CONFLICT (source_type, source_id, target_type, target_id, relation) DO UPDATE SET deleted_at = NULL
                RETURNING *"#,
@@ -674,7 +678,7 @@ impl EntityReferenceRepository {
     }
 
     pub async fn unlink(&self, id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE entity_references SET deleted_at = now() WHERE id = $1")
+        sqlx::query("UPDATE platform.entity_references SET deleted_at = now() WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await?;
@@ -687,7 +691,7 @@ impl EntityReferenceRepository {
         entity_id: Uuid,
     ) -> Result<Vec<EntityReference>, sqlx::Error> {
         sqlx::query_as::<_, EntityReference>(
-            r#"SELECT * FROM entity_references
+            r#"SELECT * FROM platform.entity_references
                WHERE deleted_at IS NULL
                  AND ((source_type = $1 AND source_id = $2) OR (target_type = $1 AND target_id = $2))
                ORDER BY created_at DESC"#,
@@ -705,7 +709,7 @@ impl EntityReferenceRepository {
         target_type: &str,
     ) -> Result<Vec<EntityReference>, sqlx::Error> {
         sqlx::query_as::<_, EntityReference>(
-            r#"SELECT * FROM entity_references
+            r#"SELECT * FROM platform.entity_references
                WHERE deleted_at IS NULL AND source_type = $1 AND source_id = $2 AND target_type = $3
                ORDER BY created_at DESC"#,
         )
@@ -751,7 +755,7 @@ git commit -m "feat(db): add entity_references — cross-service polymorphic lin
 
 ```sql
 -- 20260324000004_activities.up.sql
-CREATE TABLE activities (
+CREATE TABLE platform.activities (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
     actor_id UUID NOT NULL,
     action VARCHAR(32) NOT NULL,
@@ -762,17 +766,17 @@ CREATE TABLE activities (
     workspace_id UUID,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_activities_actor ON activities(actor_id, created_at DESC);
-CREATE INDEX idx_activities_workspace ON activities(workspace_id, created_at DESC);
-CREATE INDEX idx_activities_entity ON activities(entity_type, entity_id);
-CREATE INDEX idx_activities_metadata ON activities USING GIN(metadata);
+CREATE INDEX idx_activities_actor ON platform.activities(actor_id, created_at DESC);
+CREATE INDEX idx_activities_workspace ON platform.activities(workspace_id, created_at DESC);
+CREATE INDEX idx_activities_entity ON platform.activities(entity_type, entity_id, created_at DESC);
+CREATE INDEX idx_activities_metadata ON platform.activities USING GIN(metadata);
 ```
 
 - [ ] **Step 2: Create down migration**
 
 ```sql
 -- 20260324000004_activities.down.sql
-DROP TABLE IF EXISTS activities;
+DROP TABLE IF EXISTS platform.activities;
 ```
 
 - [ ] **Step 3: Create model**
@@ -826,7 +830,7 @@ impl ActivityRepository {
         workspace_id: Option<Uuid>,
     ) -> Result<Activity, sqlx::Error> {
         sqlx::query_as::<_, Activity>(
-            r#"INSERT INTO activities (id, actor_id, action, entity_type, entity_id, entity_title, metadata, workspace_id)
+            r#"INSERT INTO platform.activities (id, actor_id, action, entity_type, entity_id, entity_title, metadata, workspace_id)
                VALUES (gen_uuid_v7(), $1, $2, $3, $4, $5, $6, $7)
                RETURNING *"#,
         )
@@ -849,7 +853,7 @@ impl ActivityRepository {
     ) -> Result<Vec<Activity>, sqlx::Error> {
         if let Some(ws) = workspace_id {
             sqlx::query_as::<_, Activity>(
-                "SELECT * FROM activities WHERE workspace_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+                "SELECT * FROM platform.activities WHERE workspace_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
             )
             .bind(ws)
             .bind(limit)
@@ -858,7 +862,7 @@ impl ActivityRepository {
             .await
         } else {
             sqlx::query_as::<_, Activity>(
-                "SELECT * FROM activities ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+                "SELECT * FROM platform.activities ORDER BY created_at DESC LIMIT $1 OFFSET $2",
             )
             .bind(limit)
             .bind(offset)
@@ -873,7 +877,7 @@ impl ActivityRepository {
         entity_id: Uuid,
     ) -> Result<Vec<Activity>, sqlx::Error> {
         sqlx::query_as::<_, Activity>(
-            "SELECT * FROM activities WHERE entity_type = $1 AND entity_id = $2 ORDER BY created_at DESC",
+            "SELECT * FROM platform.activities WHERE entity_type = $1 AND entity_id = $2 ORDER BY created_at DESC",
         )
         .bind(entity_type)
         .bind(entity_id)
@@ -887,7 +891,7 @@ impl ActivityRepository {
         limit: i64,
     ) -> Result<Vec<Activity>, sqlx::Error> {
         sqlx::query_as::<_, Activity>(
-            "SELECT * FROM activities WHERE actor_id = $1 ORDER BY created_at DESC LIMIT $2",
+            "SELECT * FROM platform.activities WHERE actor_id = $1 ORDER BY created_at DESC LIMIT $2",
         )
         .bind(actor_id)
         .bind(limit)
@@ -923,11 +927,13 @@ git commit -m "feat(db): add activities table — unified cross-service activity
 
 ```sql
 -- 20260324000005_signature_envelopes.up.sql
-CREATE TABLE signature_envelopes (
+CREATE SCHEMA IF NOT EXISTS signature;
+
+CREATE TABLE signature.envelopes (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
     title TEXT NOT NULL,
-    document_id UUID NOT NULL,
-    created_by UUID NOT NULL,
+    document_id UUID NOT NULL REFERENCES drive.nodes(id),
+    created_by UUID NOT NULL REFERENCES identity.users(id),
     status VARCHAR(20) NOT NULL DEFAULT 'draft'
         CHECK (status IN ('draft', 'sent', 'in_progress', 'completed', 'declined', 'expired', 'voided')),
     expires_at TIMESTAMPTZ,
@@ -936,17 +942,17 @@ CREATE TABLE signature_envelopes (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ
 );
-CREATE INDEX idx_envelopes_status ON signature_envelopes(status);
-CREATE INDEX idx_envelopes_creator ON signature_envelopes(created_by, created_at DESC);
-CREATE INDEX idx_envelopes_document ON signature_envelopes(document_id);
-CREATE INDEX idx_envelopes_metadata ON signature_envelopes USING GIN(metadata);
+CREATE INDEX idx_envelopes_status ON signature.envelopes(status);
+CREATE INDEX idx_envelopes_creator ON signature.envelopes(created_by, created_at DESC);
+CREATE INDEX idx_envelopes_document ON signature.envelopes(document_id);
+CREATE INDEX idx_envelopes_metadata ON signature.envelopes USING GIN(metadata);
 
-CREATE TABLE envelope_steps (
+CREATE TABLE signature.steps (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
-    envelope_id UUID NOT NULL REFERENCES signature_envelopes(id) ON DELETE CASCADE,
+    envelope_id UUID NOT NULL REFERENCES signature.envelopes(id) ON DELETE CASCADE,
     step_order SMALLINT NOT NULL,
     signer_email BYTEA NOT NULL,
-    signer_user_id UUID,
+    signer_user_id UUID REFERENCES identity.users(id),
     signer_name BYTEA,
     action VARCHAR(20) NOT NULL DEFAULT 'sign'
         CHECK (action IN ('sign', 'approve', 'witness', 'acknowledge', 'delegate')),
@@ -954,38 +960,39 @@ CREATE TABLE envelope_steps (
         CHECK (status IN ('pending', 'notified', 'viewed', 'signed', 'declined', 'delegated', 'expired')),
     signed_at TIMESTAMPTZ,
     signature_hash CHAR(64),
-    ip_address INET,
+    ip_address TEXT,
     user_agent TEXT,
     decline_reason TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE(envelope_id, step_order)
 );
-CREATE INDEX idx_steps_envelope ON envelope_steps(envelope_id, step_order);
-CREATE INDEX idx_steps_signer ON envelope_steps(signer_user_id);
-CREATE INDEX idx_steps_status ON envelope_steps(status);
+CREATE INDEX idx_steps_envelope ON signature.steps(envelope_id, step_order);
+CREATE INDEX idx_steps_signer ON signature.steps(signer_user_id);
+CREATE INDEX idx_steps_status ON signature.steps(status);
 
-CREATE TABLE envelope_transitions (
+CREATE TABLE signature.transitions (
     id UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
-    envelope_id UUID NOT NULL REFERENCES signature_envelopes(id),
-    step_id UUID REFERENCES envelope_steps(id),
+    envelope_id UUID NOT NULL REFERENCES signature.envelopes(id),
+    step_id UUID REFERENCES signature.steps(id),
     from_status VARCHAR(20) NOT NULL,
     to_status VARCHAR(20) NOT NULL,
-    triggered_by UUID,
+    triggered_by UUID REFERENCES identity.users(id),
     reason TEXT,
     metadata JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_transitions_envelope ON envelope_transitions(envelope_id, created_at);
+CREATE INDEX idx_transitions_envelope ON signature.transitions(envelope_id, created_at);
 ```
 
 - [ ] **Step 2: Create down migration**
 
 ```sql
 -- 20260324000005_signature_envelopes.down.sql
-DROP TABLE IF EXISTS envelope_transitions;
-DROP TABLE IF EXISTS envelope_steps;
-DROP TABLE IF EXISTS signature_envelopes;
+DROP TABLE IF EXISTS signature.transitions;
+DROP TABLE IF EXISTS signature.steps;
+DROP TABLE IF EXISTS signature.envelopes;
+DROP SCHEMA IF EXISTS signature;
 ```
 
 - [ ] **Step 3: Create models with enums + state machine validation**
@@ -1025,11 +1032,13 @@ impl EnvelopeStatus {
     }
 
     /// Returns valid next states from current state.
+    /// Valid next states. Terminal states have no transitions.
     pub fn valid_transitions(&self) -> &[EnvelopeStatus] {
         match self {
             Self::Draft => &[Self::Sent, Self::Voided],
-            Self::Sent => &[Self::InProgress, Self::Voided, Self::Expired],
+            Self::Sent => &[Self::InProgress, Self::Declined, Self::Voided, Self::Expired],
             Self::InProgress => &[Self::Completed, Self::Declined, Self::Voided, Self::Expired],
+            // Terminal states
             Self::Completed | Self::Declined | Self::Expired | Self::Voided => &[],
         }
     }
@@ -1064,11 +1073,13 @@ impl StepStatus {
         }
     }
 
+    /// Valid next states. Delegation from pending/notified/viewed, never after decline.
     pub fn valid_transitions(&self) -> &[StepStatus] {
         match self {
-            Self::Pending => &[Self::Notified, Self::Expired],
-            Self::Notified => &[Self::Viewed, Self::Expired],
+            Self::Pending => &[Self::Notified, Self::Delegated, Self::Expired],
+            Self::Notified => &[Self::Viewed, Self::Delegated, Self::Expired],
             Self::Viewed => &[Self::Signed, Self::Declined, Self::Delegated, Self::Expired],
+            // Terminal states
             Self::Signed | Self::Declined | Self::Delegated | Self::Expired => &[],
         }
     }
@@ -1116,7 +1127,7 @@ pub struct EnvelopeStep {
     pub status: String,
     pub signed_at: Option<DateTime<Utc>>,
     pub signature_hash: Option<String>,
-    pub ip_address: Option<String>,
+    pub ip_address: Option<String>,  // stored as TEXT, not INET — matches existing codebase pattern
     pub user_agent: Option<String>,
     pub decline_reason: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -1180,7 +1191,7 @@ impl SignatureRepository {
         input: &CreateEnvelope,
     ) -> Result<SignatureEnvelope, sqlx::Error> {
         sqlx::query_as::<_, SignatureEnvelope>(
-            r#"INSERT INTO signature_envelopes (id, title, document_id, created_by, expires_at, metadata)
+            r#"INSERT INTO signature.envelopes (id, title, document_id, created_by, expires_at, metadata)
                VALUES (gen_uuid_v7(), $1, $2, $3, $4, COALESCE($5, '{}'))
                RETURNING *"#,
         )
@@ -1195,7 +1206,7 @@ impl SignatureRepository {
 
     pub async fn get_envelope(&self, id: Uuid) -> Result<Option<SignatureEnvelope>, sqlx::Error> {
         sqlx::query_as::<_, SignatureEnvelope>(
-            "SELECT * FROM signature_envelopes WHERE id = $1 AND deleted_at IS NULL",
+            "SELECT * FROM signature.envelopes WHERE id = $1 AND deleted_at IS NULL",
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -1209,7 +1220,7 @@ impl SignatureRepository {
         offset: i64,
     ) -> Result<Vec<SignatureEnvelope>, sqlx::Error> {
         sqlx::query_as::<_, SignatureEnvelope>(
-            r#"SELECT * FROM signature_envelopes
+            r#"SELECT * FROM signature.envelopes
                WHERE created_by = $1 AND deleted_at IS NULL
                ORDER BY created_at DESC LIMIT $2 OFFSET $3"#,
         )
@@ -1245,7 +1256,7 @@ impl SignatureRepository {
         let mut tx = self.pool.begin().await.map_err(|e| format!("tx error: {e}"))?;
 
         sqlx::query(
-            "UPDATE signature_envelopes SET status = $1, updated_at = now() WHERE id = $2",
+            "UPDATE signature.envelopes SET status = $1, updated_at = now() WHERE id = $2",
         )
         .bind(to_status.as_str())
         .bind(id)
@@ -1254,7 +1265,7 @@ impl SignatureRepository {
         .map_err(|e| format!("update error: {e}"))?;
 
         sqlx::query(
-            r#"INSERT INTO envelope_transitions (id, envelope_id, from_status, to_status, triggered_by, reason)
+            r#"INSERT INTO signature.transitions (id, envelope_id, from_status, to_status, triggered_by, reason)
                VALUES (gen_uuid_v7(), $1, $2, $3, $4, $5)"#,
         )
         .bind(id)
@@ -1282,7 +1293,7 @@ impl SignatureRepository {
         input: &CreateStep,
     ) -> Result<EnvelopeStep, sqlx::Error> {
         sqlx::query_as::<_, EnvelopeStep>(
-            r#"INSERT INTO envelope_steps (id, envelope_id, step_order, signer_email, signer_user_id, signer_name, action)
+            r#"INSERT INTO signature.steps (id, envelope_id, step_order, signer_email, signer_user_id, signer_name, action)
                VALUES (gen_uuid_v7(), $1, $2, $3, $4, $5, COALESCE($6, 'sign'))
                RETURNING *"#,
         )
@@ -1298,7 +1309,7 @@ impl SignatureRepository {
 
     pub async fn get_steps(&self, envelope_id: Uuid) -> Result<Vec<EnvelopeStep>, sqlx::Error> {
         sqlx::query_as::<_, EnvelopeStep>(
-            "SELECT * FROM envelope_steps WHERE envelope_id = $1 ORDER BY step_order",
+            "SELECT * FROM signature.steps WHERE envelope_id = $1 ORDER BY step_order",
         )
         .bind(envelope_id)
         .fetch_all(&self.pool)
@@ -1317,7 +1328,7 @@ impl SignatureRepository {
         decline_reason: Option<&str>,
     ) -> Result<EnvelopeStep, String> {
         let step = sqlx::query_as::<_, EnvelopeStep>(
-            "SELECT * FROM envelope_steps WHERE id = $1",
+            "SELECT * FROM signature.steps WHERE id = $1",
         )
         .bind(step_id)
         .fetch_optional(&self.pool)
@@ -1343,10 +1354,10 @@ impl SignatureRepository {
         };
 
         sqlx::query(
-            r#"UPDATE envelope_steps
+            r#"UPDATE signature.steps
                SET status = $1, updated_at = now(), signed_at = COALESCE($2, signed_at),
                    signature_hash = COALESCE($3, signature_hash),
-                   ip_address = COALESCE($4::INET, ip_address),
+                   ip_address = COALESCE($4, ip_address),
                    user_agent = COALESCE($5, user_agent),
                    decline_reason = COALESCE($6, decline_reason)
                WHERE id = $7"#,
@@ -1363,7 +1374,7 @@ impl SignatureRepository {
         .map_err(|e| format!("update error: {e}"))?;
 
         sqlx::query(
-            r#"INSERT INTO envelope_transitions (id, envelope_id, step_id, from_status, to_status, triggered_by)
+            r#"INSERT INTO signature.transitions (id, envelope_id, step_id, from_status, to_status, triggered_by)
                VALUES (gen_uuid_v7(), $1, $2, $3, $4, $5)"#,
         )
         .bind(step.envelope_id)
@@ -1377,7 +1388,7 @@ impl SignatureRepository {
 
         tx.commit().await.map_err(|e| format!("commit error: {e}"))?;
 
-        sqlx::query_as::<_, EnvelopeStep>("SELECT * FROM envelope_steps WHERE id = $1")
+        sqlx::query_as::<_, EnvelopeStep>("SELECT * FROM signature.steps WHERE id = $1")
             .bind(step_id)
             .fetch_one(&self.pool)
             .await
@@ -1391,7 +1402,7 @@ impl SignatureRepository {
         envelope_id: Uuid,
     ) -> Result<Vec<EnvelopeTransition>, sqlx::Error> {
         sqlx::query_as::<_, EnvelopeTransition>(
-            "SELECT * FROM envelope_transitions WHERE envelope_id = $1 ORDER BY created_at",
+            "SELECT * FROM signature.transitions WHERE envelope_id = $1 ORDER BY created_at",
         )
         .bind(envelope_id)
         .fetch_all(&self.pool)
@@ -1449,14 +1460,28 @@ git commit -m "feat(db): add signature envelopes — workflow state machine with
 ```sql
 -- 20260324000006_notify_triggers.up.sql
 
--- Signature events channel
-CREATE OR REPLACE FUNCTION notify_signature_event() RETURNS TRIGGER AS $$
+-- Envelope-level events (no envelope_id column here, use id directly)
+CREATE OR REPLACE FUNCTION signature.notify_envelope() RETURNS TRIGGER AS $$
 BEGIN
     PERFORM pg_notify('signature_events', json_build_object(
         'action', TG_OP,
-        'table', TG_TABLE_NAME,
+        'table', 'envelopes',
         'id', NEW.id,
-        'envelope_id', CASE WHEN TG_TABLE_NAME = 'envelope_steps' THEN NEW.envelope_id ELSE NEW.id END,
+        'envelope_id', NEW.id,
+        'status', NEW.status
+    )::text);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Step-level events (has envelope_id column)
+CREATE OR REPLACE FUNCTION signature.notify_step() RETURNS TRIGGER AS $$
+BEGIN
+    PERFORM pg_notify('signature_events', json_build_object(
+        'action', TG_OP,
+        'table', 'steps',
+        'id', NEW.id,
+        'envelope_id', NEW.envelope_id,
         'status', NEW.status
     )::text);
     RETURN NEW;
@@ -1464,15 +1489,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_envelope_notify
-    AFTER INSERT OR UPDATE ON signature_envelopes
-    FOR EACH ROW EXECUTE FUNCTION notify_signature_event();
+    AFTER INSERT OR UPDATE ON signature.envelopes
+    FOR EACH ROW EXECUTE FUNCTION signature.notify_envelope();
 
 CREATE TRIGGER trg_step_notify
-    AFTER INSERT OR UPDATE ON envelope_steps
-    FOR EACH ROW EXECUTE FUNCTION notify_signature_event();
+    AFTER INSERT OR UPDATE ON signature.steps
+    FOR EACH ROW EXECUTE FUNCTION signature.notify_step();
 
 -- Generic entity change channel
-CREATE OR REPLACE FUNCTION notify_entity_change() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION platform.notify_entity_change() RETURNS TRIGGER AS $$
 BEGIN
     PERFORM pg_notify('entity_changes', json_build_object(
         'table', TG_TABLE_NAME,
@@ -1484,24 +1509,25 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_entity_ref_notify
-    AFTER INSERT OR UPDATE ON entity_references
-    FOR EACH ROW EXECUTE FUNCTION notify_entity_change();
+    AFTER INSERT OR UPDATE ON platform.entity_references
+    FOR EACH ROW EXECUTE FUNCTION platform.notify_entity_change();
 
 CREATE TRIGGER trg_activity_notify
-    AFTER INSERT ON activities
-    FOR EACH ROW EXECUTE FUNCTION notify_entity_change();
+    AFTER INSERT ON platform.activities
+    FOR EACH ROW EXECUTE FUNCTION platform.notify_entity_change();
 ```
 
 - [ ] **Step 2: Create down migration**
 
 ```sql
 -- 20260324000006_notify_triggers.down.sql
-DROP TRIGGER IF EXISTS trg_envelope_notify ON signature_envelopes;
-DROP TRIGGER IF EXISTS trg_step_notify ON envelope_steps;
-DROP TRIGGER IF EXISTS trg_entity_ref_notify ON entity_references;
-DROP TRIGGER IF EXISTS trg_activity_notify ON activities;
-DROP FUNCTION IF EXISTS notify_signature_event();
-DROP FUNCTION IF EXISTS notify_entity_change();
+DROP TRIGGER IF EXISTS trg_envelope_notify ON signature.envelopes;
+DROP TRIGGER IF EXISTS trg_step_notify ON signature.steps;
+DROP TRIGGER IF EXISTS trg_entity_ref_notify ON platform.entity_references;
+DROP TRIGGER IF EXISTS trg_activity_notify ON platform.activities;
+DROP FUNCTION IF EXISTS signature.notify_envelope();
+DROP FUNCTION IF EXISTS signature.notify_step();
+DROP FUNCTION IF EXISTS platform.notify_entity_change();
 ```
 
 - [ ] **Step 3: Create PgListener helper**
@@ -1580,26 +1606,23 @@ git commit -m "feat: add LISTEN/NOTIFY triggers + PgListener helper for real-tim
 
 ```sql
 -- 20260324000007_soft_deletes.up.sql
-ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
-ALTER TABLE drive_nodes ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
-ALTER TABLE calendars ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
-ALTER TABLE events ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
-ALTER TABLE forms ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
-ALTER TABLE form_responses ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+-- Note: drive.nodes already has deleted_at. calendar.events uses is_deleted BOOLEAN.
+ALTER TABLE identity.users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+ALTER TABLE calendar.calendars ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+ALTER TABLE calendar.tasks ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+ALTER TABLE mail.emails ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+ALTER TABLE scheduling.time_items ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 ```
 
 - [ ] **Step 2: Create down migration**
 
 ```sql
 -- 20260324000007_soft_deletes.down.sql
-ALTER TABLE users DROP COLUMN IF EXISTS deleted_at;
-ALTER TABLE drive_nodes DROP COLUMN IF EXISTS deleted_at;
-ALTER TABLE calendars DROP COLUMN IF EXISTS deleted_at;
-ALTER TABLE events DROP COLUMN IF EXISTS deleted_at;
-ALTER TABLE tasks DROP COLUMN IF EXISTS deleted_at;
-ALTER TABLE forms DROP COLUMN IF EXISTS deleted_at;
-ALTER TABLE form_responses DROP COLUMN IF EXISTS deleted_at;
+ALTER TABLE identity.users DROP COLUMN IF EXISTS deleted_at;
+ALTER TABLE calendar.calendars DROP COLUMN IF EXISTS deleted_at;
+ALTER TABLE calendar.tasks DROP COLUMN IF EXISTS deleted_at;
+ALTER TABLE mail.emails DROP COLUMN IF EXISTS deleted_at;
+ALTER TABLE scheduling.time_items DROP COLUMN IF EXISTS deleted_at;
 ```
 
 - [ ] **Step 3: Commit**
@@ -1622,24 +1645,15 @@ git commit -m "feat(db): add soft deletes (deleted_at) on core business tables"
 ```sql
 -- 20260324000008_cross_service_fks.up.sql
 
--- Drive nodes: document metadata enrichment
-ALTER TABLE drive_nodes ADD COLUMN IF NOT EXISTS sha256_hash CHAR(64);
-ALTER TABLE drive_nodes ADD COLUMN IF NOT EXISTS mime_type VARCHAR(128);
-ALTER TABLE drive_nodes ADD COLUMN IF NOT EXISTS size_bytes BIGINT;
-ALTER TABLE drive_nodes ADD COLUMN IF NOT EXISTS storage_path TEXT;
-ALTER TABLE drive_nodes ADD COLUMN IF NOT EXISTS encryption_key_id UUID;
-ALTER TABLE drive_nodes ADD COLUMN IF NOT EXISTS doc_id UUID;
+-- Drive nodes: new columns only (mime_type, size, deleted_at already exist)
+ALTER TABLE drive.nodes ADD COLUMN IF NOT EXISTS sha256_hash CHAR(64);
+ALTER TABLE drive.nodes ADD COLUMN IF NOT EXISTS storage_path TEXT;
+ALTER TABLE drive.nodes ADD COLUMN IF NOT EXISTS encryption_key_id UUID;
+ALTER TABLE drive.nodes ADD COLUMN IF NOT EXISTS doc_id UUID;
 
--- Calendar ↔ Contacts
-ALTER TABLE events ADD COLUMN IF NOT EXISTS organizer_contact_id UUID;
-
--- Forms ↔ Tasks
-ALTER TABLE form_responses ADD COLUMN IF NOT EXISTS generated_task_id UUID;
-
--- Indexes on new FK columns
-CREATE INDEX IF NOT EXISTS idx_drive_sha256 ON drive_nodes(sha256_hash) WHERE sha256_hash IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_events_organizer_contact ON events(organizer_contact_id) WHERE organizer_contact_id IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_form_responses_task ON form_responses(generated_task_id) WHERE generated_task_id IS NOT NULL;
+-- Indexes on new columns
+CREATE INDEX IF NOT EXISTS idx_drive_sha256 ON drive.nodes(sha256_hash) WHERE sha256_hash IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_drive_doc ON drive.nodes(doc_id) WHERE doc_id IS NOT NULL;
 ```
 
 - [ ] **Step 2: Create down migration**
@@ -1647,17 +1661,12 @@ CREATE INDEX IF NOT EXISTS idx_form_responses_task ON form_responses(generated_t
 ```sql
 -- 20260324000008_cross_service_fks.down.sql
 DROP INDEX IF EXISTS idx_drive_sha256;
-DROP INDEX IF EXISTS idx_events_organizer_contact;
-DROP INDEX IF EXISTS idx_form_responses_task;
+DROP INDEX IF EXISTS idx_drive_doc;
 
-ALTER TABLE drive_nodes DROP COLUMN IF EXISTS sha256_hash;
-ALTER TABLE drive_nodes DROP COLUMN IF EXISTS mime_type;
-ALTER TABLE drive_nodes DROP COLUMN IF EXISTS size_bytes;
-ALTER TABLE drive_nodes DROP COLUMN IF EXISTS storage_path;
-ALTER TABLE drive_nodes DROP COLUMN IF EXISTS encryption_key_id;
-ALTER TABLE drive_nodes DROP COLUMN IF EXISTS doc_id;
-ALTER TABLE events DROP COLUMN IF EXISTS organizer_contact_id;
-ALTER TABLE form_responses DROP COLUMN IF EXISTS generated_task_id;
+ALTER TABLE drive.nodes DROP COLUMN IF EXISTS sha256_hash;
+ALTER TABLE drive.nodes DROP COLUMN IF EXISTS storage_path;
+ALTER TABLE drive.nodes DROP COLUMN IF EXISTS encryption_key_id;
+ALTER TABLE drive.nodes DROP COLUMN IF EXISTS doc_id;
 ```
 
 - [ ] **Step 3: Commit**
@@ -1679,24 +1688,20 @@ git commit -m "feat(db): add cross-service FKs — drive metadata, calendar↔co
 
 ```sql
 -- 20260324000009_active_views.up.sql
-CREATE OR REPLACE VIEW active_users AS SELECT * FROM users WHERE deleted_at IS NULL;
-CREATE OR REPLACE VIEW active_drive_nodes AS SELECT * FROM drive_nodes WHERE deleted_at IS NULL;
-CREATE OR REPLACE VIEW active_calendars AS SELECT * FROM calendars WHERE deleted_at IS NULL;
-CREATE OR REPLACE VIEW active_events AS SELECT * FROM events WHERE deleted_at IS NULL;
-CREATE OR REPLACE VIEW active_envelopes AS SELECT * FROM signature_envelopes WHERE deleted_at IS NULL;
-CREATE OR REPLACE VIEW active_entity_refs AS SELECT * FROM entity_references WHERE deleted_at IS NULL;
+CREATE OR REPLACE VIEW platform.active_users AS SELECT * FROM identity.users WHERE deleted_at IS NULL;
+CREATE OR REPLACE VIEW platform.active_drive_nodes AS SELECT * FROM drive.nodes WHERE deleted_at IS NULL;
+CREATE OR REPLACE VIEW platform.active_envelopes AS SELECT * FROM signature.envelopes WHERE deleted_at IS NULL;
+CREATE OR REPLACE VIEW platform.active_entity_refs AS SELECT * FROM platform.entity_references WHERE deleted_at IS NULL;
 ```
 
 - [ ] **Step 2: Create down migration**
 
 ```sql
 -- 20260324000009_active_views.down.sql
-DROP VIEW IF EXISTS active_users;
-DROP VIEW IF EXISTS active_drive_nodes;
-DROP VIEW IF EXISTS active_calendars;
-DROP VIEW IF EXISTS active_events;
-DROP VIEW IF EXISTS active_envelopes;
-DROP VIEW IF EXISTS active_entity_refs;
+DROP VIEW IF EXISTS platform.active_users;
+DROP VIEW IF EXISTS platform.active_drive_nodes;
+DROP VIEW IF EXISTS platform.active_envelopes;
+DROP VIEW IF EXISTS platform.active_entity_refs;
 ```
 
 - [ ] **Step 3: Commit**
