@@ -10,6 +10,7 @@ import { useEntityStore } from '@/stores/entity-hub-store';
 import { FEATURES } from '@/lib/features';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { StreakCounter } from '@/components/streak-counter';
+import { PomodoroTimer } from '@/components/pomodoro-timer';
 import { usePermissions } from '@/lib/permissions';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -439,6 +440,7 @@ export function Sidebar() {
           {!isCollapsed && (
             <>
               <StreakCounter />
+              <PomodoroTimer />
               <p className="text-xs text-muted-foreground">
                 SignApps v0.1.0
               </p>

@@ -25,6 +25,7 @@ import {
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
+import { RecentHistory } from '@/components/recent-history';
 import { NotificationBadge } from '@/components/notifications/notification-badge';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
@@ -282,6 +283,7 @@ export function GlobalHeader() {
 
                 {!showDocActions && (
                     <div className="mr-2 flex items-center gap-2">
+                        <RecentHistory />
                         <NotificationPopover />
                     </div>
                 )}

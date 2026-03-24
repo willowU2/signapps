@@ -20,6 +20,7 @@ import { RightSidebar } from '@/components/layout/right-sidebar';
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GlobalModals } from '@/components/global-modals';
+import { GlobalHooks } from '@/components/global-hooks';
 
 function LoadingFallback() {
   return (
@@ -92,6 +93,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       </>
                     )}
                     <GlobalModals />
+                    <GlobalHooks />
                   </PermissionsProvider>
                 </PreferencesProvider>
               </TenantProvider>
