@@ -117,7 +117,13 @@
       "Bash(TOKEN=\"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2NjRmNjg0MC1jN2QxLTRiYmYtYTg0NS04ZDAzODI3N2RhYjMiLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MiwiZXhwIjoxNzc0MTEwNTYzLCJpYXQiOjE3NzQxMDk2NjMsInRva2VuX3R5cGUiOiJhY2Nlc3MifQ.HLC-NWiYwVyKBD5hfVM6ljBdp2QlA4SWQxiz_HMGHIw\")",
       "Bash(PGPASSWORD=signapps_dev \"C:/Program Files/PostgreSQL/17/bin/psql.exe\" -h 127.0.0.1 -U signapps -d signapps -c \"ALTER TYPE drive.node_type ADD VALUE IF NOT EXISTS ''spreadsheet''; ALTER TYPE drive.node_type ADD VALUE IF NOT EXISTS ''presentation'';\")",
       "Bash(PGPASSWORD=signapps_dev \"C:/Program Files/PostgreSQL/16/bin/psql.exe\" -h 127.0.0.1 -U signapps -d signapps -c \"ALTER TYPE drive.node_type ADD VALUE IF NOT EXISTS ''spreadsheet'';\")",
-      "Bash(cargo run:*)"
+      "Bash(cargo run:*)",
+      "Bash(SKIP_PRE_PUSH_TEST=1 git push origin autonome-dev 2>&1)",
+      "Bash(SKIP_PRE_PUSH_TEST=1 git push origin main 2>&1)",
+      "Bash(SKIP_PRE_PUSH_TEST=1 git push origin autonome-dev main)",
+      "Bash(SKIP_PRE_PUSH_TEST=1 git push origin autonome-dev)",
+      "Bash(SKIP_PRE_PUSH_TEST=1 git push origin main)",
+      "Read(//c/Users/Etienne/.claude/plugins/**)"
     ]
   }
 }
