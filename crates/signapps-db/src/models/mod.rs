@@ -8,6 +8,7 @@ pub mod container;
 pub mod device;
 pub mod document_vector;
 pub mod drive;
+pub mod entity_reference;
 pub mod external_sync;
 pub mod group;
 pub mod job;

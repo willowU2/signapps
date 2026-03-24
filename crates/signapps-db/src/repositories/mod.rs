@@ -78,4 +78,7 @@ pub use quota_repository::QuotaRepository;
 pub mod audit_log_repository;
 pub use audit_log_repository::AuditLogRepository;
 
+pub mod entity_reference_repository;
+pub use entity_reference_repository::EntityReferenceRepository;
+
 pub mod test_helpers;
