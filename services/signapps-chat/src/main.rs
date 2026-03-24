@@ -135,6 +135,7 @@ async fn list_channels(State(state): State<AppState>) -> impl IntoResponse {
 
 async fn create_channel(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateChannelRequest>,
 ) -> impl IntoResponse {
     let now = Utc::now().to_rfc3339();
@@ -143,7 +144,7 @@ async fn create_channel(
         name: payload.name,
         topic: payload.topic,
         is_private: payload.is_private.unwrap_or(false),
-        created_by: Uuid::nil(), // TODO: extract from JWT
+        created_by: claims.sub,
         created_at: now.clone(),
         updated_at: now,
     };

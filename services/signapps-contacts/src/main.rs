@@ -9,13 +9,13 @@ use axum::{
     middleware,
     response::IntoResponse,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
-use signapps_common::JwtConfig;
+use signapps_common::{Claims, JwtConfig};
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
@@ -101,12 +101,13 @@ async fn list_contacts(State(state): State<AppState>) -> impl IntoResponse {
 
 async fn create_contact(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateContactRequest>,
 ) -> impl IntoResponse {
     let now = Utc::now().to_rfc3339();
     let contact = Contact {
         id: Uuid::new_v4(),
-        owner_id: Uuid::nil(), // TODO: extract from JWT claims
+        owner_id: claims.sub,
         first_name: payload.first_name,
         last_name: payload.last_name,
         email: payload.email,

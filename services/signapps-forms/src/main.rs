@@ -7,8 +7,9 @@ use axum::{
     middleware,
     response::IntoResponse,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
+use signapps_common::Claims;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
@@ -131,6 +132,7 @@ async fn list_forms(State(state): State<AppState>) -> impl IntoResponse {
 
 async fn create_form(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateFormRequest>,
 ) -> impl IntoResponse {
     let now = Utc::now().to_rfc3339();
@@ -150,7 +152,7 @@ async fn create_form(
         id: Uuid::new_v4(),
         title: payload.title,
         description: payload.description.unwrap_or_default(),
-        owner_id: Uuid::nil(), // TODO: extract from JWT claims
+        owner_id: claims.sub,
         fields,
         created_at: now.clone(),
         updated_at: now,
