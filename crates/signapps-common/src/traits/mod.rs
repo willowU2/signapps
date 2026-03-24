@@ -3,3 +3,6 @@ pub use crawler::*;
 
 pub mod linkable;
 pub use linkable::{audit, log_activity, Linkable};
+
+pub mod linkable;
+pub use linkable::{audit, log_activity, Linkable};
