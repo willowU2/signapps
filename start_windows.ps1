@@ -1,5 +1,8 @@
-# Write-Host "Compiling all services first to prevent Cargo lock conflicts..."
-# Start-Process "cargo" -ArgumentList "build", "--workspace" -Wait -NoNewWindow
+Write-Host "Arrêt de tous les microservices avant recompilation..."
+taskkill /F /IM "signapps-*.exe" /T 2>$null
+
+Write-Host "Compiling all services first to prevent Cargo lock conflicts..."
+Start-Process "cargo" -ArgumentList "build", "--workspace" -Wait -NoNewWindow
 
 Write-Host "Starting microservices..."
 
@@ -25,14 +28,21 @@ $services = @{
 Write-Host "Starting signapps-identity on port 3001 (Priority for DB Migrations)..."
 $env:SERVER_PORT = 3001
 Start-Process "cmd.exe" -ArgumentList "/c .\target\debug\signapps-identity.exe > signapps-identity.log 2>&1" -WindowStyle Hidden
-Write-Host "Waiting 5 seconds for identity migrations to complete..."
-Start-Sleep -Seconds 5
+Write-Host "Waiting 20 seconds for identity migrations to complete..."
+Start-Sleep -Seconds 20
 
 foreach ($service in $services.GetEnumerator()) {
     Write-Host "Starting $($service.Name) on port $($service.Value)..."
     $env:SERVER_PORT = $service.Value
     Start-Process "cmd.exe" -ArgumentList "/c .\target\debug\$($service.Name).exe > $($service.Name).log 2>&1" -WindowStyle Hidden
     Start-Sleep -Seconds 2
+}
+
+Write-Host "Vérification si le front-end Next.js est déjà lancé..."
+$portListening = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
+if ($portListening) {
+    Write-Host "Le front-end (port 3000) tourne. Arrêt immédiat de Node.js avant de le relancer..."
+    taskkill /F /IM "node.exe" /T 2>$null
 }
 
 Write-Host "Cleaning Next.js Cache to prevent HMR/Turbopack dev bugs..."
