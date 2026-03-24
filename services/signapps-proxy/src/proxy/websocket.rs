@@ -80,7 +80,7 @@ pub async fn handle_websocket_upgrade(
     match client.request(req).await {
         Ok(backend_resp) => {
             if backend_resp.status() == StatusCode::SWITCHING_PROTOCOLS {
-                // TODO: Implement full bidirectional WebSocket tunneling.
+                // FIXME(websocket): Full duplex WS tunnel requires tokio::select! on both streams
                 // This requires calling `hyper::upgrade::on()` on both the
                 // client request and the backend response, then using
                 // `tokio::io::copy_bidirectional()` to shuttle bytes between

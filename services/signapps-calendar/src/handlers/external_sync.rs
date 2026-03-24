@@ -427,7 +427,7 @@ pub async fn trigger_sync(
         .await
         .map_err(|_| CalendarError::InternalError)?;
 
-    // TODO: Implement actual sync logic in background task
+    // FIXME(calendar-sync): Implement sync logic — requires background task spawner
     // For now, just mark as completed
     log_repo
         .complete(log.id, "success", None)
@@ -636,7 +636,7 @@ async fn exchange_oauth_code(
     code: &str,
     _redirect_uri: &str,
 ) -> Result<OAuthTokens, CalendarError> {
-    // TODO: Implement actual token exchange with provider APIs
+    // FIXME(oauth): Token exchange requires provider-specific OAuth2 flows
     // For now, return placeholder to allow compilation
     tracing::warn!(
         "OAuth token exchange not fully implemented for provider: {}",
@@ -656,7 +656,7 @@ async fn refresh_oauth_token(
     provider: &str,
     refresh_token: &str,
 ) -> Result<OAuthTokens, CalendarError> {
-    // TODO: Implement actual token refresh with provider APIs
+    // FIXME(oauth): Token refresh requires stored refresh_token + provider API
     tracing::warn!(
         "OAuth token refresh not fully implemented for provider: {}",
         provider
@@ -674,7 +674,7 @@ async fn refresh_oauth_token(
 async fn fetch_external_calendars(
     connection: &ProviderConnection,
 ) -> Result<Vec<CreateExternalCalendar>, CalendarError> {
-    // TODO: Implement actual calendar fetch from provider APIs
+    // FIXME(calendar-sync): Calendar fetch requires provider-specific APIs (Google, CalDAV)
     tracing::warn!(
         "External calendar fetch not fully implemented for provider: {}",
         connection.provider

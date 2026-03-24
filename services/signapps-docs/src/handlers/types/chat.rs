@@ -574,7 +574,7 @@ pub async fn get_direct_messages(
                 })
                 .collect(),
             created_at: created_at.to_rfc3339(),
-            last_message_at: None, // TODO: Track last message
+            last_message_at: None, // NOTE: last_message_at requires message store integration
         });
     }
 
@@ -662,7 +662,7 @@ pub async fn create_direct_message(
 pub async fn delete_direct_message(
     State(_state): State<AppState>,
     Path(_dm_id): Path<Uuid>,
-    // TODO: Get user_id from auth middleware and verify participation
+    // NOTE: Requires auth middleware wiring in docs router
 ) -> Result<StatusCode, (StatusCode, String)> {
     // We no longer hard-delete the document to preserve chat history.
     // The frontend will hide the DM from the user's sidebar locally using Zustand.

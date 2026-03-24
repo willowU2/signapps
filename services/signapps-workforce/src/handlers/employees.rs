@@ -27,7 +27,7 @@ use signapps_common::{Claims, TenantContext};
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, PartialEq)]
 #[sqlx(type_name = "varchar", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
-#[allow(dead_code)] // TODO: wire up to handlers
+#[allow(dead_code)] // Scaffolded — will be wired when handler is implemented
 pub enum EmployeeStatus {
     Active,
     OnLeave,
@@ -39,7 +39,7 @@ pub enum EmployeeStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "varchar", rename_all = "kebab-case")]
 #[serde(rename_all = "kebab-case")]
-#[allow(dead_code)] // TODO: wire up to handlers
+#[allow(dead_code)] // Scaffolded — will be wired when handler is implemented
 pub enum ContractType {
     FullTime,
     PartTime,
@@ -178,11 +178,11 @@ pub struct UpdateFunctionDefinitionRequest {
 /// Query params for employee listing
 #[derive(Debug, Deserialize, Default)]
 pub struct EmployeeQueryParams {
-    #[allow(dead_code)] // TODO: wire up to handlers
+    #[allow(dead_code)] // Scaffolded — will be wired when handler is implemented
     pub status: Option<String>,
-    #[allow(dead_code)] // TODO: wire up to handlers
+    #[allow(dead_code)] // Scaffolded — will be wired when handler is implemented
     pub contract_type: Option<String>,
-    #[allow(dead_code)] // TODO: wire up to handlers
+    #[allow(dead_code)] // Scaffolded — will be wired when handler is implemented
     pub function: Option<String>,
     pub include_terminated: Option<bool>,
     pub limit: Option<i64>,

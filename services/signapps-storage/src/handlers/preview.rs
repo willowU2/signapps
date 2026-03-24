@@ -796,7 +796,7 @@ pub async fn get_preview(
         },
         PreviewType::Document => {
             // Return document as HTML or images
-            // TODO: Implement document conversion
+            // FIXME(preview): Implement doc conversion (requires libreoffice or pandoc)
             Err(Error::Internal(
                 "Document preview not implemented".to_string(),
             ))

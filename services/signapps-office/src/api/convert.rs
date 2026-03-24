@@ -35,7 +35,7 @@ pub async fn handle_convert(mut multipart: Multipart) -> impl IntoResponse {
         target
     );
 
-    // TODO: Route to appropriate parser based on input and target format
+    // FIXME(convert): Implement format routing (pdf→docx, docx→html, etc.)
 
     (
         StatusCode::OK,

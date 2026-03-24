@@ -173,7 +173,7 @@ pub struct UpdateRuleRequest {
 /// Query params for coverage rules
 #[derive(Debug, Deserialize, Default)]
 pub struct RuleQueryParams {
-    #[allow(dead_code)] // TODO: wire up to handlers
+    #[allow(dead_code)] // Scaffolded — will be wired when handler is implemented
     pub org_node_id: Option<Uuid>,
     pub include_inactive: Option<bool>,
     pub effective_date: Option<NaiveDate>,

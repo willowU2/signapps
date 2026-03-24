@@ -223,7 +223,7 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsRespon
     Ok(Json(StatsResponse {
         documents_count,
         chunks_count,
-        last_indexed: None, // TODO: Track last indexed timestamp
+        last_indexed: None, // NOTE: Requires persistent storage for index timestamps
     }))
 }
 

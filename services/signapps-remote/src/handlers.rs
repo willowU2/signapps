@@ -185,7 +185,7 @@ async fn handle_guacamole_socket(mut socket: WebSocket, connection_id: Uuid, sta
         }
     };
 
-    // TODO: Connect to guacd using tokio::net::TcpStream::connect("guacd:4822").
+    // FIXME(guacamole): Connect to guacd:4822 via TcpStream for RDP/VNC tunneling
     // Perform the Guacamole Handshake `select, protocol`, send `size` and `audio` formats,
     // and pipe the TCP frame stream bi-directionally to the WebSocket.
 

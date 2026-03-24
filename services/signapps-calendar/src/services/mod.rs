@@ -9,7 +9,7 @@ pub mod recurrence;
 pub mod task_tree;
 #[allow(dead_code)]
 pub mod timezone;
-// pub mod email_service;  // TODO: Fix OpenSSL dependency on Windows
+// pub mod email_service;  // NOTE: email_service disabled — OpenSSL not available on Windows build
 pub mod ai_service;
 pub mod notification_scheduler;
 

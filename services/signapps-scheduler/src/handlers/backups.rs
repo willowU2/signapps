@@ -1,6 +1,6 @@
 //! Backup management handlers (V3-05 - Automatic Backup System).
 //!
-//! API skeleton for backup management. Actual pg_dump execution is a TODO.
+//! API skeleton for backup management. Actual pg_dump execution requires FIXME(backups) items below.
 //! All state is held in-memory via `Arc<Mutex<BackupStore>>`.
 
 use axum::{
@@ -113,7 +113,7 @@ pub async fn list_backups(
 
 /// POST /api/v1/admin/backups — trigger a manual backup.
 ///
-/// TODO: spawn actual pg_dump / storage backup process.
+/// FIXME(backups): Implement pg_dump spawn + S3/local storage upload
 pub async fn trigger_backup(
     State(store): State<SharedBackupStore>,
     Json(req): Json<TriggerBackupRequest>,
@@ -130,7 +130,7 @@ pub async fn trigger_backup(
     };
     let mut store = store.lock().expect("backup store lock poisoned");
     store.jobs.insert(job.id, job.clone());
-    // TODO: spawn actual backup task (pg_dump, rsync, etc.)
+    // FIXME(backups): spawn pg_dump/rsync child process here
     Ok((StatusCode::CREATED, Json(job)))
 }
 
@@ -150,7 +150,7 @@ pub async fn get_backup(
 
 /// DELETE /api/v1/admin/backups/:id — delete a backup record.
 ///
-/// TODO: also remove the backup file from disk.
+/// FIXME(backups): Delete backup file at job.path after DB removal
 pub async fn delete_backup(
     State(store): State<SharedBackupStore>,
     Path(id): Path<Uuid>,
@@ -159,7 +159,7 @@ pub async fn delete_backup(
     if store.jobs.remove(&id).is_none() {
         return Err(signapps_common::Error::NotFound(format!("Backup {}", id)));
     }
-    // TODO: delete backup file at job.path
+    // FIXME(backups): fs::remove_file(job.path) after successful DB delete
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -170,7 +170,7 @@ pub async fn update_backup_config(
 ) -> Result<Json<BackupConfig>> {
     let mut store = store.lock().expect("backup store lock poisoned");
     store.config = config.clone();
-    // TODO: reschedule cron job using the new schedule_cron value
+    // FIXME(backups): Re-register cron job with scheduler after config update
     Ok(Json(config))
 }
 

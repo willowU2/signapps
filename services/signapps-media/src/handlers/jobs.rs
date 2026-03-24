@@ -34,7 +34,7 @@ pub async fn get_job_status(
     let _id = Uuid::parse_str(&job_id)
         .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid job ID".to_string()))?;
 
-    // TODO: Fetch job status from database
+    // NOTE: Job status requires persistent job queue (Redis or DB)
     // For now, return a mock response
 
     Ok(Json(JobStatus {

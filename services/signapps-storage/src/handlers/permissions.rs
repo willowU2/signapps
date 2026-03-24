@@ -109,7 +109,7 @@ pub async fn get_permissions(
     State(_state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<Json<PermissionsResponse>> {
-    // TODO: Fetch permissions from database
+    // FIXME(storage): Query file_permissions table for this file_id
     // For now, return default permissions (644 for files)
     let default_mode = 0o644;
 
@@ -137,7 +137,7 @@ pub async fn set_permissions(
     // Validate mode
     validate_mode(request.mode)?;
 
-    // TODO: Store in database
+    // FIXME(storage): INSERT INTO file_permissions
     // For now, just return the set mode
 
     tracing::info!(
@@ -160,7 +160,7 @@ pub async fn reset_permissions(
     State(_state): State<AppState>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<StatusCode> {
-    // TODO: Delete from database
+    // FIXME(storage): DELETE FROM file_permissions WHERE id = $1
     tracing::info!(
         bucket = %bucket,
         key = %key,
