@@ -216,7 +216,7 @@ pub async fn audit_middleware<S: AuditState>(
 fn extract_resource_type(path: &str) -> String {
     path.split('/')
         .filter(|s| !s.is_empty() && *s != "api" && !s.starts_with('v'))
-        .find(|s| !Uuid::try_parse(s).is_ok() && s.parse::<u64>().is_err())
+        .find(|s| Uuid::try_parse(s).is_err() && s.parse::<u64>().is_err())
         .unwrap_or("unknown")
         .to_string()
 }

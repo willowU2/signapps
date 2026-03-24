@@ -5,7 +5,6 @@
 use crate::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use uuid::Uuid;
 
 /// Represents an installable application in the marketplace
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -57,7 +56,7 @@ impl AppStore {
 
         self.installations
             .entry(user_id.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(app_id.to_string());
 
         if let Some(listing) = self.listings.get_mut(app_id) {

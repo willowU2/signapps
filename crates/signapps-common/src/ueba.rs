@@ -158,7 +158,7 @@ impl AnomalyDetector {
 
         // Check for off-hours access
         for behavior in &recent_behaviors {
-            let hour = behavior.timestamp.hour() as u32;
+            let hour = behavior.timestamp.hour();
             if !baseline.typical_hours.contains(&hour) && behavior.action.to_lowercase().contains("access") {
                 return Some(Anomaly {
                     user_id,

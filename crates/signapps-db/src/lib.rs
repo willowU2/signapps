@@ -55,7 +55,7 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to acquire connection for migrations: {}", e);
-            return Err(sqlx::migrate::MigrateError::Execute(e.into()));
+            return Err(sqlx::migrate::MigrateError::Execute(e));
         }
     };
 

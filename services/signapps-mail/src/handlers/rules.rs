@@ -43,6 +43,12 @@ pub struct RuleStore {
     rules: Arc<RwLock<Vec<MailRule>>>,
 }
 
+impl Default for RuleStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RuleStore {
     pub fn new() -> Self {
         Self { rules: Arc::new(RwLock::new(Vec::new())) }

@@ -427,7 +427,7 @@ pub mod metrics {
     use once_cell::sync::Lazy;
 
     /// Global registry for metrics.
-    pub static REGISTRY: Lazy<Registry> = Lazy::new(|| Registry::new());
+    pub static REGISTRY: Lazy<Registry> = Lazy::new(Registry::new);
 
     /// Total HTTP requests counter.
     pub static HTTP_REQUESTS_TOTAL: Lazy<IntCounterVec> = Lazy::new(|| {

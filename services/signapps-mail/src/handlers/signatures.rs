@@ -20,6 +20,12 @@ pub struct SignatureStore {
     signatures: Arc<RwLock<Vec<EmailSignature>>>,
 }
 
+impl Default for SignatureStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SignatureStore {
     pub fn new() -> Self {
         Self { signatures: Arc::new(RwLock::new(Vec::new())) }

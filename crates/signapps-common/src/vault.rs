@@ -5,7 +5,6 @@ use dashmap::DashMap;
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use uuid::Uuid;
 
 /// A password vault entry storing credentials with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]

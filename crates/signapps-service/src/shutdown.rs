@@ -60,10 +60,8 @@ impl ShutdownSignal {
     /// Create a future that completes when shutdown is triggered.
     ///
     /// This is useful for `tokio::select!` patterns.
-    pub fn notified(&mut self) -> impl std::future::Future<Output = ()> + '_ {
-        async move {
-            self.wait().await;
-        }
+    pub async fn notified(&mut self) {
+        self.wait().await;
     }
 
     /// Get a receiver for the shutdown signal.

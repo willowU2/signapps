@@ -287,7 +287,7 @@ async fn handle_ws(socket: WebSocket, state: AppState) {
     // Task 1: forward broadcast events to this client
     let send_task = tokio::spawn(async move {
         while let Ok(event_json) = broadcast_rx.recv().await {
-            if ws_tx.send(Message::Text(event_json.into())).await.is_err() {
+            if ws_tx.send(Message::Text(event_json)).await.is_err() {
                 break;
             }
         }
