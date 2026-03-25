@@ -1,0 +1,62 @@
+#!/bin/sh
+# Pre-commit Hook - AgentIQ / SignApps Platform
+# 1. Security scanner (secrets detection)
+# 2. Cargo fmt --check (Rust formatting)
+# 3. Cargo clippy (Rust lints)
+
+echo "Running pre-commit checks..."
+
+# Get a list of files that have been added or modified
+FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$FILES" ]; then
+    exit 0
+fi
+
+# --- 1. Security scanner ---
+SECRET_REGEX="(?i)(password|secret|api_?key|token|bearer|aws_access_key|private_key)\s*[:=]\s*['\"][^'\"]{8,}['\"]"
+
+for FILE in $FILES; do
+    if echo "$FILE" | grep -qE "(.lock|.png|.jpg|security_logs.txt|core_prompt.md)$"; then
+        continue
+    fi
+    if git diff --cached "$FILE" | grep -E "^+" | grep -Eq "$SECRET_REGEX"; then
+        echo "SECURITY ALERT: Potential secret found in $FILE"
+        echo "Hardcoding passwords, tokens, or API keys is strictly forbidden."
+        echo "Please use the .env file instead."
+        exit 1
+    fi
+done
+echo "Security scan passed."
+
+# --- 2. Cargo fmt + clippy (only if .rs files changed) ---
+RUST_FILES=$(echo "$FILES" | grep -E '\.rs$')
+if [ -n "$RUST_FILES" ]; then
+    echo "Running cargo fmt --check..."
+    if ! cargo fmt --all -- --check 2>/dev/null; then
+        echo "cargo fmt FAILED: Code not formatted. Run 'cargo fmt --all' and re-commit."
+        exit 1
+    fi
+    echo "cargo fmt passed."
+
+    echo "Running cargo clippy..."
+    if ! cargo clippy --workspace -- -D warnings 2>/dev/null; then
+        echo "cargo clippy FAILED: Lint warnings found. Fix them and re-commit."
+        exit 1
+    fi
+    echo "cargo clippy passed."
+fi
+
+# --- 3. TypeScript type check (only if .ts/.tsx files changed) ---
+TS_FILES=$(echo "$FILES" | grep -E '\.(ts|tsx)$')
+if [ -n "$TS_FILES" ]; then
+    echo "Running tsc --noEmit..."
+    if ! npx tsc --noEmit --project client/tsconfig.json 2>/dev/null; then
+        echo "tsc FAILED: TypeScript errors found. Fix them and re-commit."
+        exit 1
+    fi
+    echo "tsc passed."
+fi
+
+echo "All pre-commit checks passed."
+exit 0
