@@ -46,7 +46,13 @@ import {
   FolderOpen,
   DoorOpen,
   Building2,
-  TrendingUp
+  TrendingUp,
+  Layers,
+  Globe,
+  Lock,
+  CreditCard,
+  Bell,
+  ClipboardList
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -70,6 +76,8 @@ const navGroupsConfig = [
       { href: '/docs', icon: FileText, label: 'Docs', enabled: FEATURES.DOCS },
       { href: '/sheets', icon: Table, label: 'Sheets', enabled: FEATURES.DOCS },
       { href: '/slides', icon: Presentation, label: 'Slides', enabled: FEATURES.DOCS },
+      { href: '/office', icon: Layers, label: 'Office', enabled: FEATURES.OFFICE },
+      { href: '/forms', icon: ClipboardList, label: 'Forms', enabled: FEATURES.IDENTITY },
       { href: '/mail', icon: Mail, label: 'Mail', enabled: FEATURES.MAIL },
       { href: '/cal', icon: Calendar, label: 'Calendar', enabled: FEATURES.CALENDAR },
       { href: '/tasks', icon: CheckSquare, label: 'Tasks', enabled: FEATURES.SCHEDULER },
@@ -93,6 +101,8 @@ const navGroupsConfig = [
       { href: '/containers', icon: Container, label: 'Containers', enabled: FEATURES.CONTAINERS },
       { href: '/drive', icon: HardDrive, label: 'Global Drive', enabled: FEATURES.STORAGE },
       { href: '/routes', icon: Network, label: 'Routes', enabled: FEATURES.PROXY },
+      { href: '/proxy', icon: Globe, label: 'Proxy', enabled: FEATURES.PROXY },
+      { href: '/securelink', icon: Lock, label: 'SecureLink', enabled: FEATURES.IDENTITY },
       { href: '/vpn', icon: Shield, label: 'VPN', enabled: FEATURES.VPN },
       { href: '/backups', icon: Archive, label: 'Backups', enabled: FEATURES.CONTAINERS },
     ]
@@ -131,6 +141,8 @@ const navGroupsConfig = [
       { href: '/admin/workspaces', icon: Building2, label: 'Workspaces', enabled: FEATURES.IDENTITY },
       { href: '/admin/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
       { href: '/admin/storage', icon: HardDrive, label: 'Storage Config', enabled: FEATURES.STORAGE },
+      { href: '/billing', icon: CreditCard, label: 'Billing', enabled: true },
+      { href: '/notifications', icon: Bell, label: 'Notifications', enabled: true },
       { href: '/settings', icon: Settings, label: 'Settings', enabled: true },
     ]
   }
