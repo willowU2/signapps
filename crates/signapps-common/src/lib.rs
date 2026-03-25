@@ -15,6 +15,7 @@
 //! - [`data_connectors`] - Multi-source data connector system (PostgreSQL, CSV, JSON API)
 //! - [`dlp`] - Data Loss Prevention (DLP) with sensitive data pattern detection
 //! - [`e2e_crypto`] - End-to-End encrypted channels with XOR cipher stub
+//! - [`email_templates`] - Email template engine with {{variable}} substitution (signature, notification, welcome)
 //! - [`error`] - RFC 7807 Problem Details error handling
 //! - [`events`] - Inter-service event bus (publish/subscribe domain events)
 //! - [`middleware`] - HTTP middleware (auth, logging, request ID, Prometheus metrics)
@@ -59,6 +60,7 @@ pub mod config;
 pub mod data_connectors;
 pub mod dlp;
 pub mod e2e_crypto;
+pub mod email_templates;
 pub mod error;
 pub mod events;
 pub mod graphql_layer;
