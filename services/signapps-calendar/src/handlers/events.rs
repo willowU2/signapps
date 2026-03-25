@@ -13,6 +13,27 @@ use uuid::Uuid;
 
 use crate::{AppState, CalendarError};
 
+/// Append a row to `platform.activities` — fire-and-forget, never fails the request.
+async fn log_event_activity(
+    pool: &sqlx::PgPool,
+    actor_id: Uuid,
+    action: &str,
+    entity_id: Uuid,
+    entity_title: &str,
+) {
+    let _ = sqlx::query(
+        r#"INSERT INTO platform.activities
+           (id, actor_id, action, entity_type, entity_id, entity_title, metadata, workspace_id)
+           VALUES (gen_uuid_v7(), $1, $2, 'calendar_event', $3, $4, '{}', NULL)"#,
+    )
+    .bind(actor_id)
+    .bind(action)
+    .bind(entity_id)
+    .bind(entity_title)
+    .execute(pool)
+    .await;
+}
+
 #[derive(Debug, Deserialize)]
 pub struct DateRangeQuery {
     pub start: Option<DateTime<Utc>>,
@@ -52,6 +73,15 @@ pub async fn create_event(
             tracing::error!("Failed to index new event in AI: {}", e);
         }
     });
+
+    log_event_activity(
+        state.pool.inner(),
+        claims.sub,
+        "created",
+        event.id,
+        &event.title,
+    )
+    .await;
 
     Ok((StatusCode::CREATED, Json(event)))
 }
@@ -112,6 +142,7 @@ pub async fn get_event(
 pub async fn update_event(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<UpdateEvent>,
 ) -> Result<Json<Event>, CalendarError> {
     // Validate dates if both provided
@@ -144,6 +175,15 @@ pub async fn update_event(
         }
     });
 
+    log_event_activity(
+        state.pool.inner(),
+        claims.sub,
+        "updated",
+        event.id,
+        &event.title,
+    )
+    .await;
+
     Ok(Json(event))
 }
 
@@ -151,6 +191,7 @@ pub async fn update_event(
 pub async fn delete_event(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
 ) -> Result<StatusCode, CalendarError> {
     let repo = EventRepository::new(&state.pool);
     repo.delete(id)
@@ -164,6 +205,8 @@ pub async fn delete_event(
             tracing::error!("Failed to delete event from AI index: {}", e);
         }
     });
+
+    log_event_activity(state.pool.inner(), claims.sub, "deleted", id, "").await;
 
     Ok(StatusCode::NO_CONTENT)
 }
