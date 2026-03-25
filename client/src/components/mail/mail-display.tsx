@@ -2,6 +2,7 @@ import { SpinnerInfinity } from 'spinners-react';
 import { format } from "date-fns"
 import { Archive, ArchiveX, Clock, Forward, MoreVertical, Reply, ReplyAll, Trash2, Sparkles, Bot, X, Send, FileText, Link2 } from 'lucide-react';
 import { EntityLinks } from '@/components/crosslinks/EntityLinks';
+import { PgpStatusBadges, DecryptButton } from './pgp-indicator';
 
 import {
     DropdownMenu,
@@ -45,6 +46,14 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
     const [showSummary, setShowSummary] = useState(false)
     const [summaryLoading, setSummaryLoading] = useState(false)
     const [interimReplyText, setInterimReplyText] = useState("")
+
+    // PGP decryption
+    const [decryptedBody, setDecryptedBody] = useState<string | null>(null)
+
+    // Reset decrypted body when mail changes
+    useEffect(() => {
+        setDecryptedBody(null)
+    }, [mail?.id])
 
     // Undo Send State
     const [sending, setSending] = useState(false)
@@ -273,6 +282,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                     <div className="flex flex-col px-8 pt-6 pb-2 bg-background dark:bg-[#1f1f1f]">
                         <div className="flex items-center gap-3 mb-6 w-full flex-wrap">
                             <h2 className="font-normal text-[22px] leading-tight text-[#1f1f1f] dark:text-[#e3e3e3]">{mail.subject}</h2>
+                            <PgpStatusBadges body={mail.text} accountId={mail.id} />
                             <span className="bg-[#fef7e0] text-[#b06000] text-xs px-2 py-0.5 rounded border border-[#fbdc8e] font-medium leading-none flex items-center h-5">Externe</span>
                             <span className="bg-[#f1f3f4] text-[#444746] dark:bg-[#3c4043] dark:text-[#e3e3e3] text-xs px-2 rounded flex items-center gap-1 cursor-pointer hover:bg-[#e8eaed] transition-colors leading-none h-5">Boîte de réception <X className="h-3 w-3" /></span>
                         </div>
@@ -340,8 +350,17 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                         </div>
                     )}
 
+                    {/* Decrypt button for encrypted emails */}
+                    <div className="px-8 py-1">
+                        <DecryptButton
+                            body={mail.text}
+                            accountId={mail.id}
+                            onDecrypted={setDecryptedBody}
+                        />
+                    </div>
+
                     <div className="whitespace-pre-wrap px-8 py-2 text-[14px] leading-relaxed text-[#202124] dark:text-[#e3e3e3]">
-                        {mail.text}
+                        {decryptedBody ?? mail.text}
                     </div>
 
                     {/* Bottom Action Buttons */}

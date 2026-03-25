@@ -2,8 +2,9 @@ import { ComponentProps, useRef, useState, useEffect, useCallback } from "react"
 import { formatDistanceToNow } from "date-fns"
 
 import { cn } from "@/lib/utils"
-import { Archive, Clock, Trash2, Square, Star, Loader2 } from "lucide-react"
+import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert } from "lucide-react"
 import { Mail } from "@/lib/data/mail"
+import { SpamBadge } from "./spam-filter-settings"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,9 +23,11 @@ interface MailListProps extends ComponentProps<"div"> {
     onSnooze?: (id: string, time: string) => void
     onArchive?: (id: string) => void
     onDelete?: (id: string) => void
+    onReportSpam?: (id: string) => void
+    spamIds?: Set<string>
 }
 
-export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onDelete }: MailListProps) {
+export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onDelete, onReportSpam, spamIds }: MailListProps) {
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
     const sentinelRef = useRef<HTMLDivElement | null>(null)
     const scrollContainerRef = useRef<HTMLDivElement | null>(null)
@@ -113,6 +116,9 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
                                 </span>
 
                                 <div className="flex items-center truncate flex-1 text-[14px]">
+                                    {spamIds?.has(item.id) && (
+                                        <span className="shrink-0 mr-1.5"><SpamBadge /></span>
+                                    )}
                                     <span className={cn("truncate", !item.read ? "font-bold text-[#202124] dark:text-[#e3e3e3]" : "font-medium text-[#202124] dark:text-[#e3e3e3]")}>
                                         {item.subject}
                                     </span>
@@ -137,6 +143,11 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
                                 <div className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" title="Delete" onClick={(e) => { e.stopPropagation(); onDelete?.(item.id) }}>
                                     <Trash2 className="w-5 h-5" />
                                 </div>
+                                {onReportSpam && (
+                                    <div className="p-2 rounded-full text-muted-foreground hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors shadow-none bg-transparent border-none" title="Report spam" onClick={(e) => { e.stopPropagation(); onReportSpam(item.id) }}>
+                                        <ShieldAlert className="w-5 h-5" />
+                                    </div>
+                                )}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <div className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer shadow-none bg-transparent border-none" title="Snooze" onClick={(e) => e.stopPropagation()}>

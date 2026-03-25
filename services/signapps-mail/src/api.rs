@@ -17,6 +17,7 @@ use uuid::Uuid;
 
 use crate::handlers::rules::{create_rule, delete_rule, get_rule, list_rules, update_rule};
 use crate::handlers::signatures::{get_signature, upsert_signature};
+use crate::handlers::spam::{classify_email, get_spam_settings, train_spam, update_spam_settings};
 use crate::models::{Attachment, Email, MailAccount, MailFolder, MailLabel};
 use crate::AppState;
 
@@ -77,6 +78,13 @@ pub fn router() -> Router<AppState> {
         .route(
             "/api/v1/mail/rules/:id",
             get(get_rule).put(update_rule).delete(delete_rule),
+        )
+        // Spam Filter
+        .route("/api/v1/mail/spam/classify", post(classify_email))
+        .route("/api/v1/mail/spam/train", post(train_spam))
+        .route(
+            "/api/v1/mail/spam/settings/:account_id",
+            get(get_spam_settings).patch(update_spam_settings),
         )
         // Search
         .route("/api/v1/mail/search", get(search_emails))

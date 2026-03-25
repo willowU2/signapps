@@ -10,11 +10,18 @@ export type SlideLayout =
     | 'blank'
     | 'title_only'
 
+export interface SlideTransitionData {
+    type: 'none' | 'fade' | 'slideLeft' | 'slideRight' | 'slideUp' | 'zoomIn'
+    duration: number
+}
+
 export interface SlideData {
     id: string
     title: string
     notes?: string // Speaker notes for presentations
     layout?: SlideLayout // Slide layout template
+    transition?: SlideTransitionData // Slide transition config
+    masterId?: string // Master slide template ID
 }
 
 // Presentation-level theme (applied to all slides)
@@ -305,6 +312,44 @@ export function useSlides(docId: string = 'slides-demo') {
         return slide?.layout || 'title_and_content'
     }, [slides])
 
+    const updateSlideTransition = (id: string, transition: SlideTransitionData) => {
+        const ySlideList = doc.getArray<SlideData>('slide-list')
+        const slidesArr = ySlideList.toArray()
+        const index = slidesArr.findIndex(s => s.id === id)
+
+        if (index > -1) {
+            const slide = slidesArr[index]
+            doc.transact(() => {
+                ySlideList.delete(index, 1)
+                ySlideList.insert(index, [{ ...slide, transition }])
+            }, 'update-transition')
+        }
+    }
+
+    const getSlideTransition = useCallback((slideId: string): SlideTransitionData => {
+        const slide = slides.find(s => s.id === slideId)
+        return slide?.transition || { type: 'none', duration: 500 }
+    }, [slides])
+
+    const updateSlideMaster = (id: string, masterId: string) => {
+        const ySlideList = doc.getArray<SlideData>('slide-list')
+        const slidesArr = ySlideList.toArray()
+        const index = slidesArr.findIndex(s => s.id === id)
+
+        if (index > -1) {
+            const slide = slidesArr[index]
+            doc.transact(() => {
+                ySlideList.delete(index, 1)
+                ySlideList.insert(index, [{ ...slide, masterId }])
+            }, 'update-master')
+        }
+    }
+
+    const getSlideMaster = useCallback((slideId: string): string | undefined => {
+        const slide = slides.find(s => s.id === slideId)
+        return slide?.masterId
+    }, [slides])
+
     const updateObject = (id: string, obj: any) => {
         if (!activeSlideId) return
         const slideObjectsMap = doc.getMap<string>(`objects-${activeSlideId}`)
@@ -394,6 +439,14 @@ export function useSlides(docId: string = 'slides-demo') {
         // Layouts
         updateSlideLayout,
         getSlideLayout,
+
+        // Transitions
+        updateSlideTransition,
+        getSlideTransition,
+
+        // Master Slides
+        updateSlideMaster,
+        getSlideMaster,
 
         // History
         canUndo,

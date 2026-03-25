@@ -19,6 +19,8 @@ import {
   User,
   Users,
   HandshakeIcon,
+  CalendarDays,
+  Palmtree,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -42,6 +44,8 @@ interface SchedulingHubProps {
   className?: string;
   onCreateItem?: (type: string) => void;
   onQuickCreate?: () => void;
+  onCreatePoll?: () => void;
+  onOpenOoo?: () => void;
 }
 
 interface ScopeConfig {
@@ -238,7 +242,7 @@ function Sidebar({
 // Header Component
 // ============================================================================
 
-function Header({ onCreateItem }: { onCreateItem?: (type: string) => void }) {
+function Header({ onCreateItem, onCreatePoll, onOpenOoo }: { onCreateItem?: (type: string) => void; onCreatePoll?: () => void; onOpenOoo?: () => void }) {
   const scope = useSchedulingStore((state) => state.scope);
   const currentScope = scopes.find((s) => s.id === scope);
 
@@ -263,6 +267,40 @@ function Header({ onCreateItem }: { onCreateItem?: (type: string) => void }) {
         <ViewSwitcher className="hidden md:inline-flex" />
         <ViewSwitcherDropdown className="inline-flex md:hidden" />
 
+        {onCreatePoll && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="gap-1.5 hidden sm:flex"
+                onClick={onCreatePoll}
+              >
+                <CalendarDays className="h-4 w-4" />
+                <span className="hidden lg:inline">Poll</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Create Availability Poll</TooltipContent>
+          </Tooltip>
+        )}
+
+        {onOpenOoo && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="gap-1.5 hidden sm:flex"
+                onClick={onOpenOoo}
+              >
+                <Palmtree className="h-4 w-4" />
+                <span className="hidden lg:inline">OOO</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Out of Office</TooltipContent>
+          </Tooltip>
+        )}
+
         <Button
           size="sm"
           className="gap-1.5 hidden sm:flex"
@@ -285,6 +323,8 @@ export function SchedulingHub({
   className,
   onCreateItem,
   onQuickCreate,
+  onCreatePoll,
+  onOpenOoo,
 }: SchedulingHubProps) {
   const isSidebarOpen = usePreferencesStore((state) => state.isSidebarOpen);
   const toggleSidebar = usePreferencesStore((state) => state.toggleSidebar);
@@ -349,7 +389,7 @@ export function SchedulingHub({
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header onCreateItem={onCreateItem} />
+        <Header onCreateItem={onCreateItem} onCreatePoll={onCreatePoll} onOpenOoo={onOpenOoo} />
 
         {/* Mobile Scope Switcher */}
         <div className="p-2 md:hidden border-b">

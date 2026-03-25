@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { GlobalDndProvider } from './dnd-provider';
 import { WorkspaceShell } from './workspace-shell';
 import { OmniSearch } from '@/components/ui/omni-search';
+import { QuickSwitcher } from '@/components/ui/quick-switcher';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { KeyboardShortcutsOverlay } from '@/components/keyboard-shortcuts-overlay';
 import { GlobalDropOverlay } from '@/components/global-drop-overlay';
@@ -41,6 +42,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         </main>
       </WorkspaceShell>
       <OmniSearch />
+      <QuickSwitcher />
       <KeyboardShortcutsOverlay />
       <GlobalDropOverlay />
     </GlobalDndProvider>

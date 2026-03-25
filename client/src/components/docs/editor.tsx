@@ -43,6 +43,9 @@ import { BackgroundColor } from './extensions/background-color';
 // Sprint 4: Advanced Content
 import { TableOfContents } from './extensions/table-of-contents';
 import { Footnote } from './extensions/footnote';
+// Sprint 5: Cross-App Embeds
+import { EmbedSheet } from './extensions/embed-sheet';
+import { SheetEmbedView } from './sheet-embed';
 // Sprint 6: Media
 import Youtube from '@tiptap/extension-youtube';
 import { useCommentsStore } from '@/stores/comments-store';
@@ -79,11 +82,15 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Sparkles, Wand2, CheckCheck, FileText, Pencil, ArrowRight, Languages, X, Square, Bold, Italic, Underline as UnderlineIcon, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered, CheckSquare, Quote, Heading1, Heading2, Heading3, Subscript as SubscriptIcon, Superscript as SuperscriptIcon, Palette, Highlighter, Table as TableIcon, Image as ImageIcon, Link as LinkIcon, Undo, Redo, Menu, Bot, Code, FileImage, Smile, MessageSquare, MessageSquarePlus, Trash2, ChevronRight, ChevronDown, Check, Video, Mic, Download, Upload } from 'lucide-react';
+import { Sparkles, Wand2, CheckCheck, FileText, Pencil, ArrowRight, Languages, X, Square, Bold, Italic, Underline as UnderlineIcon, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered, CheckSquare, Quote, Heading1, Heading2, Heading3, Subscript as SubscriptIcon, Superscript as SuperscriptIcon, Palette, Highlighter, Table as TableIcon, Image as ImageIcon, Link as LinkIcon, Undo, Redo, Menu, Bot, Code, FileImage, Smile, MessageSquare, MessageSquarePlus, Trash2, ChevronRight, ChevronDown, Check, Video, Mic, Download, Upload, FileSpreadsheet, Table2 } from 'lucide-react';
 import { useAiStream } from '@/hooks/use-ai-stream';
 import { toast } from 'sonner';
 import { VoiceInput } from '@/components/ui/voice-input';
 import { storageApi } from '@/lib/api';
+import { MailMerge } from './mail-merge';
+import { VoiceDictation } from './voice-dictation';
+import { SpellCheck } from './spell-check';
+import { OfflineIndicator } from './offline-indicator';
 
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -425,6 +432,7 @@ const Editor = ({
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     const [isReadOnly, setIsReadOnly] = useState(false);
+    const [mailMergeOpen, setMailMergeOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [interimVoiceText, setInterimVoiceText] = useState('');
     const pendingVoiceMarksRef = useRef<string[]>([]);
@@ -647,6 +655,10 @@ const Editor = ({
             // Sprint 4: Advanced Content
             TableOfContents,
             Footnote,
+            // Sprint 5: Cross-App Embeds
+            EmbedSheet.configure({
+                component: SheetEmbedView,
+            }),
             // Sprint 6: Media
             Youtube.configure({
                 controls: true,
@@ -805,6 +817,28 @@ const Editor = ({
                             setTimeout(() => {
                                 setFloatingMode('prompt');
                             }, 50);
+                        },
+                    },
+                    {
+                        title: 'Embed Sheet',
+                        description: 'Embed a spreadsheet in the document.',
+                        icon: <Table2 className="w-4 h-4 text-green-600" />,
+                        command: ({
+                            editor,
+                            range
+                        }: any) => {
+                            const sheetId = window.prompt('Sheet ID (from URL)');
+                            if (sheetId) {
+                                const sheetName = window.prompt('Sheet name', 'Sheet') || 'Sheet';
+                                const rangeStr = window.prompt('Range (e.g. A1:D10, leave empty for all)', '') || '';
+                                editor.chain().focus().deleteRange(range).insertSheetEmbed({
+                                    sheetId,
+                                    sheetName,
+                                    range: rangeStr,
+                                }).run();
+                            } else {
+                                editor.chain().focus().deleteRange(range).run();
+                            }
                         },
                     },
                 ]),
@@ -1675,6 +1709,10 @@ const Editor = ({
             label: 'Traduire en anglais',
             icon: <Languages className="w-4 h-4" />,
             action: 'translateEn'
+        }, {
+            label: 'Publipostage (Mail Merge)',
+            icon: <FileSpreadsheet className="w-4 h-4" />,
+            action: 'mailMerge'
         }]
     }, {
         id: 'extensions',
@@ -1701,7 +1739,7 @@ const Editor = ({
         }]
     }];
 
-    const NATIVE_ACTIONS = ['rename', 'trash', 'open', 'print', 'fullScreen', 'wordCount', 'undo', 'redo', 'selectAll', 'delete', 'newDoc', 'downloadPdf', 'cut', 'copy', 'paste', 'pasteText', 'toggleBold', 'toggleItalic', 'toggleUnderline', 'toggleStrike', 'toggleSuperscript', 'toggleSubscript', 'clearFormat', 'toggleH1', 'toggleH2', 'toggleH3', 'setParagraph', 'toggleOrderedList', 'toggleBulletList', 'toggleTaskList', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'insertHorizontalRule', 'insertHardBreak', 'insertImage', 'insertLink', 'insertTable', 'insertCode', 'tableAddRowBefore', 'tableAddRowAfter', 'tableAddColBefore', 'tableAddColAfter', 'tableDeleteRow', 'tableDeleteCol', 'tableDeleteTable', 'tableMergeCells', 'aiGenerate', 'aiSummarize', 'translateEn', 'findReplace', 'comment', 'fontSize_smaller', 'fontSize_larger', 'lineHeight_1', 'lineHeight_1.15', 'lineHeight_1.5', 'lineHeight_2', 'page_setup', 'saveToDrive', 'download_docx'];
+    const NATIVE_ACTIONS = ['rename', 'trash', 'open', 'print', 'fullScreen', 'wordCount', 'undo', 'redo', 'selectAll', 'delete', 'newDoc', 'downloadPdf', 'cut', 'copy', 'paste', 'pasteText', 'toggleBold', 'toggleItalic', 'toggleUnderline', 'toggleStrike', 'toggleSuperscript', 'toggleSubscript', 'clearFormat', 'toggleH1', 'toggleH2', 'toggleH3', 'setParagraph', 'toggleOrderedList', 'toggleBulletList', 'toggleTaskList', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'insertHorizontalRule', 'insertHardBreak', 'insertImage', 'insertLink', 'insertTable', 'insertCode', 'tableAddRowBefore', 'tableAddRowAfter', 'tableAddColBefore', 'tableAddColAfter', 'tableDeleteRow', 'tableDeleteCol', 'tableDeleteTable', 'tableMergeCells', 'aiGenerate', 'aiSummarize', 'translateEn', 'findReplace', 'comment', 'fontSize_smaller', 'fontSize_larger', 'lineHeight_1', 'lineHeight_1.15', 'lineHeight_1.5', 'lineHeight_2', 'page_setup', 'saveToDrive', 'download_docx', 'mailMerge'];
 
     // Handle Menu Actions
     const handleMenuAction = useCallback(async (action: string, label?: string) => {
@@ -1730,6 +1768,10 @@ const Editor = ({
             }]);
             setActiveCommentId(commentId);
             setShowComments(true);
+        }
+        if (action === 'mailMerge') {
+            setMailMergeOpen(true);
+            return;
         }
         if (action === 'fontSize_smaller') setDocFontSize(s => Math.max(1, s - 1));
         if (action === 'fontSize_larger') setDocFontSize(s => s + 1);
@@ -2424,6 +2466,24 @@ const Editor = ({
 
                 <ToolbarDivider />
 
+                {/* Voice Dictation (whisper-rs STT) */}
+                <VoiceDictation editor={editor} />
+
+                <ToolbarDivider />
+
+                {/* Spell Check / Language Picker */}
+                <SpellCheck editor={editor} />
+
+                {/* Mail Merge */}
+                <ToolbarButton
+                    onClick={() => setMailMergeOpen(true)}
+                    title="Publipostage (Mail Merge)"
+                >
+                    <FileSpreadsheet className="w-4 h-4" />
+                </ToolbarButton>
+
+                <ToolbarDivider />
+
                 {/* AI Integrations Toggle */}
                 <button
                     onClick={() => setShowAiToolbar(!showAiToolbar)}
@@ -2740,14 +2800,24 @@ const Editor = ({
             </div>
 
             {/* Global Character/Word Count Status Bar */}
-            <div className="flex-none flex items-center justify-end px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-[#202124] border-t border-gray-200 dark:border-gray-800 shadow-[0_-1px_3px_rgba(0,0,0,0.02)] z-10 w-full relative">
-                <span className="mr-4">
-                    {editor.storage.characterCount?.words() || 0} mots
-                </span>
-                <span>
-                    {editor.storage.characterCount?.characters() || 0} caractères
-                </span>
+            <div className="flex-none flex items-center justify-between px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-[#202124] border-t border-gray-200 dark:border-gray-800 shadow-[0_-1px_3px_rgba(0,0,0,0.02)] z-10 w-full relative">
+                <OfflineIndicator />
+                <div className="flex items-center">
+                    <span className="mr-4">
+                        {editor.storage.characterCount?.words() || 0} mots
+                    </span>
+                    <span>
+                        {editor.storage.characterCount?.characters() || 0} caractères
+                    </span>
+                </div>
             </div>
+
+            {/* Mail Merge Dialog */}
+            <MailMerge
+                editor={editor}
+                open={mailMergeOpen}
+                onOpenChange={setMailMergeOpen}
+            />
 
             <GenericFeatureModal
                 isOpen={!!activeModal}

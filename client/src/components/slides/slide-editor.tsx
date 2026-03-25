@@ -18,8 +18,27 @@ import { EditorMenu } from "../editor/editor-menu"
 import { GenericFeatureModal } from "@/components/editor/generic-feature-modal"
 import pptxgen from "pptxgenjs"
 
-import type { SlideLayout, PresentationTheme } from "./use-slides"
+import type { SlideLayout, PresentationTheme, SlideTransitionData } from "./use-slides"
 import type { SlideTheme } from "./slide-themes"
+import {
+    AnimationPanel,
+    type ObjectAnimationConfig,
+    type SlideTransition,
+} from "./slide-animations"
+import { TransitionPicker } from "./transition-picker"
+import {
+    MasterSlideEditor,
+    DEFAULT_MASTERS,
+    type MasterSlide,
+} from "./master-slide-editor"
+import {
+    LivePresenterView,
+    generatePresentationId,
+} from "./live-presentation"
+import {
+    performAutoLayout,
+    extractCanvasObjectInfo,
+} from "./ai-layout"
 
 // Let's create an interface matching the `useSlides` return type conceptually
 interface SlideEditorProps {
@@ -43,6 +62,16 @@ interface SlideEditorProps {
         presentationTheme?: PresentationTheme;
         updatePresentationTheme?: (theme: Partial<PresentationTheme>) => void;
         addSlide?: (layout?: SlideLayout) => void;
+        // Transitions
+        updateSlideTransition?: (id: string, transition: SlideTransitionData) => void;
+        getSlideTransition?: (id: string) => SlideTransitionData;
+        // Master slides
+        updateSlideMaster?: (id: string, masterId: string) => void;
+        getSlideMaster?: (id: string) => string | undefined;
+        // Export helpers for live presentation
+        slides?: Array<{ id: string; title: string; notes?: string; transition?: SlideTransitionData }>;
+        getSlideObjects?: (slideId: string) => Record<string, any>;
+        getAllSlidesWithObjects?: () => Array<any>;
     }
     isReadOnly?: boolean;
 }
@@ -51,7 +80,10 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
     const {
         objects, updateObject, removeObject, updateCursor, collaborators, isConnected, activeSlideId,
         canUndo, canRedo, undo, redo, clearSlide, updateSlideNotes, getSlideNotes,
-        updateSlideLayout, getSlideLayout, presentationTheme, updatePresentationTheme, addSlide
+        updateSlideLayout, getSlideLayout, presentationTheme, updatePresentationTheme, addSlide,
+        updateSlideTransition, getSlideTransition,
+        updateSlideMaster, getSlideMaster,
+        slides: allSlides, getSlideObjects, getAllSlidesWithObjects
     } = slideState;
 
     const fabricCanvasRef = useRef<fabric.Canvas | null>(null)
@@ -75,6 +107,18 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
     // --- Page Setup State ---
     const [pageConfig, setPageConfig] = useState<{ orientation: 'portrait' | 'landscape', backgroundColor: string }>({ orientation: 'portrait', backgroundColor: '#ffffff' })
+
+    // --- Feature States: Animations, Master Slides, Live Presentation ---
+    const [showAnimationPanel, setShowAnimationPanel] = useState(false)
+    const [showMasterEditor, setShowMasterEditor] = useState(false)
+    const [masterSlides, setMasterSlides] = useState<MasterSlide[]>(DEFAULT_MASTERS)
+    const [livePresentation, setLivePresentation] = useState<{ active: boolean; id: string } | null>(null)
+    const [animationConfig, setAnimationConfig] = useState<ObjectAnimationConfig>({
+        entranceType: 'none',
+        exitType: 'none',
+        duration: 500,
+        delay: 0,
+    })
 
     // Global keyboard shortcuts
     useEffect(() => {
@@ -1346,6 +1390,139 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
 
 
+    // --- Feature Handlers ---
+
+    const handleAnimationChange = useCallback((config: ObjectAnimationConfig) => {
+        setAnimationConfig(config)
+        // Store animation data on the selected fabric object
+        const canvas = fabricCanvasRef.current
+        const active = canvas?.getActiveObject()
+        if (active && (active as any).id) {
+            (active as any).animationType = config.entranceType;
+            (active as any).animationDuration = config.duration;
+            (active as any).animationDelay = config.delay;
+            (active as any).animationExit = config.exitType;
+            isUpdatingRef.current = true
+            updateObject((active as any).id, active.toObject())
+            isUpdatingRef.current = false
+        }
+    }, [updateObject])
+
+    const handleAnimationPreview = useCallback(() => {
+        const canvas = fabricCanvasRef.current
+        const active = canvas?.getActiveObject()
+        if (!active) {
+            toast.info("Selectionnez un objet pour previsualiser l'animation.")
+            return
+        }
+        // Simple preview: hide then animate in
+        const originalOpacity = active.opacity
+        const originalLeft = active.left
+        const originalTop = active.top
+        const originalScaleX = active.scaleX
+        const originalScaleY = active.scaleY
+
+        active.set({ opacity: 0 })
+        canvas?.requestRenderAll()
+
+        setTimeout(() => {
+            active.animate({ opacity: originalOpacity || 1 }, {
+                duration: animationConfig.duration,
+                onChange: () => canvas?.requestRenderAll(),
+                onComplete: () => {
+                    active.set({ left: originalLeft, top: originalTop, scaleX: originalScaleX, scaleY: originalScaleY })
+                    canvas?.requestRenderAll()
+                }
+            })
+        }, 100)
+    }, [animationConfig])
+
+    // Load animation config when selection changes
+    useEffect(() => {
+        if (activeObject) {
+            const obj = activeObject as any
+            setAnimationConfig({
+                entranceType: obj.animationType || 'none',
+                exitType: obj.animationExit || 'none',
+                duration: obj.animationDuration || 500,
+                delay: obj.animationDelay || 0,
+            })
+        }
+    }, [activeObject])
+
+    const handleMasterSelect = useCallback((masterId: string) => {
+        if (activeSlideId && updateSlideMaster) {
+            updateSlideMaster(activeSlideId, masterId)
+            toast.success("Modele applique a la diapositive.")
+        }
+    }, [activeSlideId, updateSlideMaster])
+
+    const handleMasterUpdate = useCallback((master: MasterSlide) => {
+        setMasterSlides(prev => prev.map(m => m.id === master.id ? master : m))
+        toast.success("Modele mis a jour.")
+    }, [])
+
+    const handleMasterAdd = useCallback((master: MasterSlide) => {
+        setMasterSlides(prev => [...prev, master])
+    }, [])
+
+    const handleMasterDelete = useCallback((masterId: string) => {
+        setMasterSlides(prev => prev.filter(m => m.id !== masterId))
+    }, [])
+
+    const handleStartLivePresentation = useCallback(() => {
+        const id = generatePresentationId()
+        setLivePresentation({ active: true, id })
+    }, [])
+
+    const handleAutoLayout = useCallback(async () => {
+        const canvas = fabricCanvasRef.current
+        if (!canvas) return
+        const config = getRouteConfig('slides')
+        await performAutoLayout(canvas, {
+            useAi: true,
+            routeConfig: {
+                providerId: config.providerId || undefined,
+                modelId: config.modelId || undefined,
+            },
+            animated: true,
+        })
+        // Sync all objects to Yjs after layout
+        const objs = canvas.getObjects()
+        isUpdatingRef.current = true
+        objs.forEach((obj: any) => {
+            if (obj.id) updateObject(obj.id, obj.toObject())
+        })
+        isUpdatingRef.current = false
+    }, [updateObject, getRouteConfig])
+
+    // --- Live Presentation View ---
+    if (livePresentation?.active && allSlides && getSlideObjects) {
+        const slideNodes = allSlides.map((slide: any) => {
+            const slideObjects = getSlideObjects(slide.id)
+            return (
+                <div key={slide.id} className="w-full h-full bg-white rounded-lg shadow-lg flex items-center justify-center p-8">
+                    <div className="text-center space-y-4">
+                        <h2 className="text-4xl font-bold text-gray-800">{slide.title}</h2>
+                        <p className="text-gray-500">{Object.keys(slideObjects).length} objets</p>
+                    </div>
+                </div>
+            )
+        })
+        const slideNotes = allSlides.map((s: any) => s.notes || '')
+        const slideTransitions = allSlides.map((s: any) => s.transition || { type: 'none', duration: 500 })
+
+        return (
+            <LivePresenterView
+                slides={slideNodes}
+                slideNotes={slideNotes}
+                transitions={slideTransitions}
+                onExit={() => setLivePresentation(null)}
+                presentationId={livePresentation.id}
+            />
+        )
+    }
+
     return (
         <div className="flex flex-col w-full h-full gap-0.5 relative animate-fade-in flex-1 min-h-0">
             {!isReadOnly && (
@@ -1843,6 +2020,18 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                         }
                         : undefined}
                     onAddSlide={addSlide}
+                    currentTransition={activeSlideId && getSlideTransition
+                        ? getSlideTransition(activeSlideId)
+                        : undefined}
+                    onTransitionChange={activeSlideId && updateSlideTransition
+                        ? (transition) => updateSlideTransition(activeSlideId, transition)
+                        : undefined}
+                    onToggleAnimations={() => { setShowAnimationPanel(a => !a); setShowMasterEditor(false) }}
+                    showAnimations={showAnimationPanel}
+                    onToggleMasterEditor={() => { setShowMasterEditor(m => !m); setShowAnimationPanel(false) }}
+                    showMasterEditor={showMasterEditor}
+                    onStartLivePresentation={handleStartLivePresentation}
+                    onAutoLayout={handleAutoLayout}
                 />
             )}
 
@@ -1892,6 +2081,30 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                             />
                         </div>
                     </div>
+
+                    {/* Animation Panel (Right sidebar) */}
+                    {showAnimationPanel && !isReadOnly && (
+                        <AnimationPanel
+                            selectedObjectId={activeObject ? (activeObject as any).id || null : null}
+                            animationConfig={animationConfig}
+                            onAnimationChange={handleAnimationChange}
+                            onPreview={handleAnimationPreview}
+                            onClose={() => setShowAnimationPanel(false)}
+                        />
+                    )}
+
+                    {/* Master Slide Editor (Right sidebar) */}
+                    {showMasterEditor && !isReadOnly && (
+                        <MasterSlideEditor
+                            masters={masterSlides}
+                            activeMasterId={activeSlideId && getSlideMaster ? getSlideMaster(activeSlideId) || null : null}
+                            onSelectMaster={handleMasterSelect}
+                            onUpdateMaster={handleMasterUpdate}
+                            onAddMaster={handleMasterAdd}
+                            onDeleteMaster={handleMasterDelete}
+                            onClose={() => setShowMasterEditor(false)}
+                        />
+                    )}
                 </div>
             </div>
 
