@@ -21,6 +21,8 @@ import { WidgetRecentFiles } from './widgets/widget-recent-files';
 import { WidgetRecentEmails } from './widgets/widget-recent-emails';
 import { WidgetTodayCalendar } from './widgets/widget-today-calendar';
 import { WidgetTasksSummary } from './widgets/widget-tasks-summary';
+import { WidgetUnreadEmails } from './widgets/widget-unread-emails';
+import { WidgetActiveTasks } from './widgets/widget-active-tasks';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -61,6 +63,10 @@ function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
       return <WidgetTodayCalendar {...renderProps} />;
     case 'tasks-summary':
       return <WidgetTasksSummary {...renderProps} />;
+    case 'unread-emails':
+      return <WidgetUnreadEmails {...renderProps} />;
+    case 'active-tasks':
+      return <WidgetActiveTasks {...renderProps} />;
     default:
       return <div className="p-4 text-muted-foreground text-center">Widget inconnu: {widget.type}</div>;
   }

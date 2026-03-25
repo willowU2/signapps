@@ -30,7 +30,9 @@ export type WidgetType =
   | 'recent-activity'
   | 'notifications'
   | 'storage-usage'
-  | 'performance-chart';
+  | 'performance-chart'
+  | 'unread-emails'
+  | 'active-tasks';
 
 export interface WidgetConfig {
   id: string;
@@ -71,6 +73,8 @@ export const WIDGET_CATALOG: { type: WidgetType; label: string; description: str
   { type: 'today-calendar', label: 'Agenda d\'Aujourd\'hui', description: 'Événements du jour', defaultW: 6, defaultH: 4, category: 'productivity' },
   { type: 'tasks-summary', label: 'Résumé des Tâches', description: 'Statistiques et compteurs de tâches', defaultW: 4, defaultH: 3, category: 'productivity' },
   { type: 'recent-emails', label: 'Emails Récents', description: 'Derniers emails reçus', defaultW: 6, defaultH: 4, category: 'productivity' },
+  { type: 'unread-emails', label: 'Emails Non Lus', description: 'Compteur d\'emails non lus avec lien direct', defaultW: 4, defaultH: 2, category: 'productivity' },
+  { type: 'active-tasks', label: 'Tâches Actives', description: 'Nombre de tâches en cours', defaultW: 4, defaultH: 2, category: 'productivity' },
   // Content
   { type: 'recent-files', label: 'Fichiers Récents', description: 'Derniers fichiers consultés', defaultW: 6, defaultH: 4, category: 'content' },
   { type: 'recent-activity', label: 'Activité Récente', description: 'Votre activité récente', defaultW: 4, defaultH: 4, category: 'content' },

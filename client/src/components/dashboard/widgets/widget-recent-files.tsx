@@ -80,7 +80,7 @@ export function WidgetRecentFiles({ widget }: WidgetRenderProps) {
     limit?: number;
     showThumbnails?: boolean;
   };
-  const limit = config.limit || 8;
+  const limit = config.limit || 5;
   const showThumbnails = config.showThumbnails !== false;
 
   const { data: files, isLoading } = useQuery({

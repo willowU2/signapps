@@ -8,7 +8,7 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Mail, Star, AlertCircle } from "lucide-react";
+import { Mail, Star } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { mailApi } from "@/lib/api-mail";
 import type { WidgetRenderProps } from "@/lib/dashboard/types";
 
 interface EmailItem {
@@ -39,45 +40,20 @@ export function WidgetRecentEmails({ widget }: WidgetRenderProps) {
   const { data: emails, isLoading } = useQuery({
     queryKey: ["widget-emails", limit, unreadOnly],
     queryFn: async () => {
-      // Mock data - in production this would call mailApi.listEmails()
-      const mockEmails: EmailItem[] = [
-        {
-          id: "1",
-          subject: "Réunion équipe demain à 10h",
-          from: "manager@company.com",
-          received_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          is_read: false,
-          is_starred: true,
-        },
-        {
-          id: "2",
-          subject: "Document partagé: Propositions Q1",
-          from: "colleague@company.com",
-          received_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-          is_read: false,
-        },
-        {
-          id: "3",
-          subject: "Notification: Accès accordé au projet",
-          from: "admin@company.com",
-          received_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          is_read: true,
-        },
-        {
-          id: "4",
-          subject: "Fwd: Présentation client",
-          from: "sales@company.com",
-          received_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          is_read: true,
-          has_attachment: true,
-        },
-      ];
-
-      let items = mockEmails;
-      if (unreadOnly) {
-        items = items.filter((e) => !e.is_read);
-      }
-      return items.slice(0, limit);
+      const query = unreadOnly
+        ? { folder_type: "inbox", limit, is_read: false }
+        : { folder_type: "inbox", limit };
+      const raw = await mailApi.list(query as Parameters<typeof mailApi.list>[0]);
+      const items: EmailItem[] = raw.map((e) => ({
+        id: e.id,
+        subject: e.subject || "(Sans objet)",
+        from: e.sender,
+        received_at: e.received_at || e.created_at || new Date().toISOString(),
+        is_read: e.is_read ?? true,
+        has_attachment: e.has_attachments ?? false,
+        is_starred: false,
+      }));
+      return items;
     },
     staleTime: 5 * 60 * 1000,
   });

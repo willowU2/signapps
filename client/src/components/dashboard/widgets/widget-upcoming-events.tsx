@@ -40,7 +40,7 @@ export function WidgetUpcomingEvents({ widget }: WidgetRenderProps) {
     limit?: number;
     daysAhead?: number;
   };
-  const limit = config.limit || 5;
+  const limit = config.limit || 3;
   const daysAhead = config.daysAhead || 7;
 
   const { data: events, isLoading } = useQuery({

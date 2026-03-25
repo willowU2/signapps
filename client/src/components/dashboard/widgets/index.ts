@@ -20,3 +20,5 @@ export { WidgetRecentFiles } from "./widget-recent-files";
 export { WidgetRecentEmails } from "./widget-recent-emails";
 export { WidgetTodayCalendar } from "./widget-today-calendar";
 export { WidgetTasksSummary } from "./widget-tasks-summary";
+export { WidgetUnreadEmails } from "./widget-unread-emails";
+export { WidgetActiveTasks } from "./widget-active-tasks";
