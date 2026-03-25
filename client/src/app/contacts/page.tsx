@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound } from "lucide-react"
+import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download } from "lucide-react"
+import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
+import { contactsApi } from "@/lib/api/contacts"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -150,6 +152,24 @@ export default function ContactsPage() {
     setForm(f => ({ ...f, tags: value.split(",").map(t => t.trim()).filter(Boolean) }))
   }
 
+  const handleExportVcf = async () => {
+    try {
+      const res = await contactsApi.exportVcf()
+      const blob = new Blob([res.data as BlobPart], { type: 'text/vcard' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', 'contacts.vcf')
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      toast.success('Contacts exportés en vCard.')
+    } catch {
+      toast.error('Erreur lors de l\'export vCard.')
+    }
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -167,10 +187,16 @@ export default function ContactsPage() {
               <p className="text-muted-foreground mt-1 text-sm">Gérez vos contacts, favoris et groupes.</p>
             </div>
           </div>
-          <Button onClick={() => { resetForm(); setIsCreating(v => !v) }} className="shadow-lg shadow-primary/20">
-            <Plus className="h-4 w-4 mr-2" />
-            {isCreating && !editingId ? "Annuler" : "Nouveau Contact"}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportVcf}>
+              <Download className="h-4 w-4 mr-2" />
+              Export vCard
+            </Button>
+            <Button onClick={() => { resetForm(); setIsCreating(v => !v) }} className="shadow-lg shadow-primary/20">
+              <Plus className="h-4 w-4 mr-2" />
+              {isCreating && !editingId ? "Annuler" : "Nouveau Contact"}
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
