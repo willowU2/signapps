@@ -50,19 +50,19 @@ const workforceClient = getClient(ServiceName.WORKFORCE);
 
 export const orgNodeTypesApi = {
   list: () =>
-    workforceClient.get<OrgNodeType[]>('/org/node-types'),
+    workforceClient.get<OrgNodeType[]>('/workforce/org/node-types'),
 
   get: (id: string) =>
-    workforceClient.get<OrgNodeType>(`/org/node-types/${id}`),
+    workforceClient.get<OrgNodeType>(`/workforce/org/node-types/${id}`),
 
   create: (data: CreateOrgNodeType) =>
-    workforceClient.post<OrgNodeType>('/org/node-types', data),
+    workforceClient.post<OrgNodeType>('/workforce/org/node-types', data),
 
   update: (id: string, data: UpdateOrgNodeType) =>
-    workforceClient.put<OrgNodeType>(`/org/node-types/${id}`, data),
+    workforceClient.put<OrgNodeType>(`/workforce/org/node-types/${id}`, data),
 
   delete: (id: string) =>
-    workforceClient.delete(`/org/node-types/${id}`),
+    workforceClient.delete(`/workforce/org/node-types/${id}`),
 };
 
 // ============================================================================
@@ -72,43 +72,43 @@ export const orgNodeTypesApi = {
 export const orgNodesApi = {
   // Tree operations
   getTree: (params?: OrgTreeQueryParams) =>
-    workforceClient.get<OrgNodeWithStats[]>('/org/nodes/tree', { params }),
+    workforceClient.get<OrgNodeWithStats[]>('/workforce/org/nodes/tree', { params }),
 
   getNode: (id: string) =>
-    workforceClient.get<OrgNodeWithStats>(`/org/nodes/${id}`),
+    workforceClient.get<OrgNodeWithStats>(`/workforce/org/nodes/${id}`),
 
   getChildren: (id: string) =>
-    workforceClient.get<OrgNodeWithStats[]>(`/org/nodes/${id}/children`),
+    workforceClient.get<OrgNodeWithStats[]>(`/workforce/org/nodes/${id}/children`),
 
   getAncestors: (id: string) =>
-    workforceClient.get<OrgNode[]>(`/org/nodes/${id}/ancestors`),
+    workforceClient.get<OrgNode[]>(`/workforce/org/nodes/${id}/ancestors`),
 
   getDescendants: (id: string) =>
-    workforceClient.get<OrgNode[]>(`/org/nodes/${id}/descendants`),
+    workforceClient.get<OrgNode[]>(`/workforce/org/nodes/${id}/descendants`),
 
   // CRUD operations
   create: (data: CreateOrgNode) =>
-    workforceClient.post<OrgNode>('/org/nodes', data),
+    workforceClient.post<OrgNode>('/workforce/org/nodes', data),
 
   update: (id: string, data: UpdateOrgNode) =>
-    workforceClient.put<OrgNode>(`/org/nodes/${id}`, data),
+    workforceClient.put<OrgNode>(`/workforce/org/nodes/${id}`, data),
 
   delete: (id: string) =>
-    workforceClient.delete(`/org/nodes/${id}`),
+    workforceClient.delete(`/workforce/org/nodes/${id}`),
 
   // Move operations
   move: (id: string, data: MoveOrgNode) =>
-    workforceClient.post<OrgNode>(`/org/nodes/${id}/move`, data),
+    workforceClient.post<OrgNode>(`/workforce/org/nodes/${id}/move`, data),
 
   bulkMove: (data: BulkMoveNodesRequest) =>
-    workforceClient.post<BulkMoveNodesResponse>('/org/nodes/bulk-move', data),
+    workforceClient.post<BulkMoveNodesResponse>('/workforce/org/nodes/bulk-move', data),
 
   // Activation
   activate: (id: string) =>
-    workforceClient.post(`/org/nodes/${id}/activate`),
+    workforceClient.post(`/workforce/org/nodes/${id}/activate`),
 
   deactivate: (id: string) =>
-    workforceClient.post(`/org/nodes/${id}/deactivate`),
+    workforceClient.post(`/workforce/org/nodes/${id}/deactivate`),
 };
 
 // ============================================================================
@@ -117,19 +117,19 @@ export const orgNodesApi = {
 
 export const functionDefsApi = {
   list: () =>
-    workforceClient.get<FunctionDefinition[]>('/functions'),
+    workforceClient.get<FunctionDefinition[]>('/workforce/functions'),
 
   get: (id: string) =>
-    workforceClient.get<FunctionDefinition>(`/functions/${id}`),
+    workforceClient.get<FunctionDefinition>(`/workforce/functions/${id}`),
 
   create: (data: CreateFunctionDefinition) =>
-    workforceClient.post<FunctionDefinition>('/functions', data),
+    workforceClient.post<FunctionDefinition>('/workforce/functions', data),
 
   update: (id: string, data: UpdateFunctionDefinition) =>
-    workforceClient.put<FunctionDefinition>(`/functions/${id}`, data),
+    workforceClient.put<FunctionDefinition>(`/workforce/functions/${id}`, data),
 
   delete: (id: string) =>
-    workforceClient.delete(`/functions/${id}`),
+    workforceClient.delete(`/workforce/functions/${id}`),
 };
 
 // ============================================================================
@@ -138,34 +138,34 @@ export const functionDefsApi = {
 
 export const employeesApi = {
   list: (params?: EmployeeQueryParams) =>
-    workforceClient.get<{ employees: EmployeeWithDetails[]; total: number }>('/employees', { params }),
+    workforceClient.get<{ employees: EmployeeWithDetails[]; total: number }>('/workforce/employees', { params }),
 
   get: (id: string) =>
-    workforceClient.get<EmployeeWithDetails>(`/employees/${id}`),
+    workforceClient.get<EmployeeWithDetails>(`/workforce/employees/${id}`),
 
   create: (data: CreateEmployee) =>
-    workforceClient.post<Employee>('/employees', data),
+    workforceClient.post<Employee>('/workforce/employees', data),
 
   update: (id: string, data: UpdateEmployee) =>
-    workforceClient.put<Employee>(`/employees/${id}`, data),
+    workforceClient.put<Employee>(`/workforce/employees/${id}`, data),
 
   delete: (id: string) =>
-    workforceClient.delete(`/employees/${id}`),
+    workforceClient.delete(`/workforce/employees/${id}`),
 
   // Bulk operations
   bulkAssignFunction: (employeeIds: string[], functionCode: string) =>
-    workforceClient.post('/employees/bulk/assign-function', { employee_ids: employeeIds, function_code: functionCode }),
+    workforceClient.post('/workforce/employees/bulk/assign-function', { employee_ids: employeeIds, function_code: functionCode }),
 
   bulkMove: (employeeIds: string[], orgNodeId: string) =>
-    workforceClient.post('/employees/bulk/move', { employee_ids: employeeIds, org_node_id: orgNodeId }),
+    workforceClient.post('/workforce/employees/bulk/move', { employee_ids: employeeIds, org_node_id: orgNodeId }),
 
   // Search
   search: (query: string) =>
-    workforceClient.get<EmployeeWithDetails[]>('/employees/search', { params: { q: query } }),
+    workforceClient.get<EmployeeWithDetails[]>('/workforce/employees/search', { params: { q: query } }),
 
   // By org node
   listByOrgNode: (orgNodeId: string, includeDescendants?: boolean) =>
-    workforceClient.get<EmployeeWithDetails[]>(`/org/nodes/${orgNodeId}/employees`, {
+    workforceClient.get<EmployeeWithDetails[]>(`/workforce/org/nodes/${orgNodeId}/employees`, {
       params: { include_descendants: includeDescendants },
     }),
 };
@@ -176,25 +176,25 @@ export const employeesApi = {
 
 export const coverageTemplatesApi = {
   list: () =>
-    workforceClient.get<CoverageTemplate[]>('/coverage/templates'),
+    workforceClient.get<CoverageTemplate[]>('/workforce/coverage/templates'),
 
   get: (id: string) =>
-    workforceClient.get<CoverageTemplate>(`/coverage/templates/${id}`),
+    workforceClient.get<CoverageTemplate>(`/workforce/coverage/templates/${id}`),
 
   create: (data: CreateCoverageTemplate) =>
-    workforceClient.post<CoverageTemplate>('/coverage/templates', data),
+    workforceClient.post<CoverageTemplate>('/workforce/coverage/templates', data),
 
   update: (id: string, data: UpdateCoverageTemplate) =>
-    workforceClient.put<CoverageTemplate>(`/coverage/templates/${id}`, data),
+    workforceClient.put<CoverageTemplate>(`/workforce/coverage/templates/${id}`, data),
 
   delete: (id: string) =>
-    workforceClient.delete(`/coverage/templates/${id}`),
+    workforceClient.delete(`/workforce/coverage/templates/${id}`),
 
   setDefault: (id: string) =>
-    workforceClient.post(`/coverage/templates/${id}/set-default`),
+    workforceClient.post(`/workforce/coverage/templates/${id}/set-default`),
 
   duplicate: (id: string, name: string) =>
-    workforceClient.post<CoverageTemplate>(`/coverage/templates/${id}/duplicate`, { name }),
+    workforceClient.post<CoverageTemplate>(`/workforce/coverage/templates/${id}/duplicate`, { name }),
 };
 
 // ============================================================================
@@ -203,23 +203,23 @@ export const coverageTemplatesApi = {
 
 export const coverageRulesApi = {
   list: (orgNodeId?: string) =>
-    workforceClient.get<CoverageRule[]>('/coverage/rules', { params: { org_node_id: orgNodeId } }),
+    workforceClient.get<CoverageRule[]>('/workforce/coverage/rules', { params: { org_node_id: orgNodeId } }),
 
   get: (id: string) =>
-    workforceClient.get<CoverageRule>(`/coverage/rules/${id}`),
+    workforceClient.get<CoverageRule>(`/workforce/coverage/rules/${id}`),
 
   create: (data: CreateCoverageRule) =>
-    workforceClient.post<CoverageRule>('/coverage/rules', data),
+    workforceClient.post<CoverageRule>('/workforce/coverage/rules', data),
 
   update: (id: string, data: UpdateCoverageRule) =>
-    workforceClient.put<CoverageRule>(`/coverage/rules/${id}`, data),
+    workforceClient.put<CoverageRule>(`/workforce/coverage/rules/${id}`, data),
 
   delete: (id: string) =>
-    workforceClient.delete(`/coverage/rules/${id}`),
+    workforceClient.delete(`/workforce/coverage/rules/${id}`),
 
   // Effective coverage (considering inheritance)
   getEffective: (orgNodeId: string, date?: string) =>
-    workforceClient.get<EffectiveCoverage>(`/coverage/effective/${orgNodeId}`, { params: { date } }),
+    workforceClient.get<EffectiveCoverage>(`/workforce/coverage/effective/${orgNodeId}`, { params: { date } }),
 };
 
 // ============================================================================
@@ -228,17 +228,17 @@ export const coverageRulesApi = {
 
 export const validationApi = {
   validateCoverage: (data: ValidateCoverageRequest) =>
-    workforceClient.post<ValidateCoverageResponse>('/validation/coverage', data),
+    workforceClient.post<ValidateCoverageResponse>('/workforce/validation/coverage', data),
 
   simulateLeave: (data: LeaveSimulationRequest) =>
-    workforceClient.post<LeaveSimulationResponse>('/validation/simulate-leave', data),
+    workforceClient.post<LeaveSimulationResponse>('/workforce/validation/simulate-leave', data),
 
   simulateShiftChange: (data: ShiftChangeSimulationRequest) =>
-    workforceClient.post<ShiftChangeSimulationResponse>('/validation/simulate-shift-change', data),
+    workforceClient.post<ShiftChangeSimulationResponse>('/workforce/validation/simulate-shift-change', data),
 
   // Quick validation (single org node, current date)
   quickValidate: (orgNodeId: string) =>
-    workforceClient.get<ValidateCoverageResponse>(`/validation/quick/${orgNodeId}`),
+    workforceClient.get<ValidateCoverageResponse>(`/workforce/validation/quick/${orgNodeId}`),
 };
 
 // ============================================================================

@@ -37,6 +37,7 @@ pub struct CreateFieldRequest {
     pub label: String,
     pub required: bool,
     pub options: Option<Vec<String>>,
+    pub layout: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -102,6 +103,7 @@ async fn create_form(
             label: f.label,
             required: f.required,
             options: f.options,
+            layout: f.layout,
         })
         .collect();
 
@@ -161,6 +163,7 @@ async fn update_form(
                 label: f.label,
                 required: f.required,
                 options: f.options,
+                layout: f.layout,
             })
             .collect()
     });
@@ -399,7 +402,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     tracing::info!("Running fallback SQL creation for forms schema to bypass sqlx caching...");
-    let fallback_sql = include_str!("../../../migrations/041_create_forms.sql");
+    let fallback_sql = include_str!("../../../migrations/047_create_forms.sql");
     use sqlx::Executor;
     match db_pool.inner().execute(fallback_sql).await {
         Ok(_) => tracing::info!("Forms tables successfully created via fallback SQL"),

@@ -6,29 +6,77 @@ Start-Process "cargo" -ArgumentList "build", "--workspace" -Wait -NoNewWindow
 
 Write-Host "Starting microservices..."
 
-$services = @{
-    "signapps-containers" = 3002
-    "signapps-proxy"      = 3003
-    "signapps-storage"    = 3004
-    "signapps-ai"         = 3005
-    "signapps-securelink" = 3006
-    "signapps-scheduler"  = 3007
-    "signapps-metrics"    = 3008
-    "signapps-media"      = 3009
-    "signapps-docs"       = 3010
-    "signapps-calendar"   = 3011
-    "signapps-mail"       = 3012
-    "signapps-meet"       = 3013
-    "signapps-collab"     = 3014
-    "signapps-forms"      = 3015
-    "signapps-pxe"        = 3016
-    "signapps-remote"     = 3017
-    "signapps-office"     = 3018
-    "signapps-workforce"  = 3019
-    "signapps-chat"       = 3020
-    "signapps-contacts"   = 3021
-    "signapps-it-assets"  = 3022
+Write-Host "Auto-discovery of microservices..."
+$portsFile = "$PSScriptRoot\.service_ports.json"
+$portMap = @{}
+if (Test-Path $portsFile) {
+    try {
+        $json = Get-Content $portsFile -Raw | ConvertFrom-Json
+        $json.psobject.properties | ForEach-Object { $portMap[$_.name] = $_.value }
+    } catch {
+        Write-Host "Warning: Could not parse $portsFile, creating a new mapping."
+    }
+} else {
+    # Initialize with default legacy ports to ensure smooth transition
+    $portMap["signapps-containers"] = 3002
+    $portMap["signapps-proxy"]      = 3003
+    $portMap["signapps-storage"]    = 3004
+    $portMap["signapps-ai"]         = 3005
+    $portMap["signapps-securelink"] = 3006
+    $portMap["signapps-scheduler"]  = 3007
+    $portMap["signapps-metrics"]    = 3008
+    $portMap["signapps-media"]      = 3009
+    $portMap["signapps-docs"]       = 3010
+    $portMap["signapps-calendar"]   = 3011
+    $portMap["signapps-mail"]       = 3012
+    $portMap["signapps-meet"]       = 3013
+    $portMap["signapps-collab"]     = 3014
+    $portMap["signapps-forms"]      = 3015
+    $portMap["signapps-pxe"]        = 3016
+    $portMap["signapps-remote"]     = 3017
+    $portMap["signapps-office"]     = 3018
+    $portMap["signapps-workforce"]  = 3019
+    $portMap["signapps-chat"]       = 3020
+    $portMap["signapps-contacts"]   = 3021
+    $portMap["signapps-it-assets"]  = 3022
 }
+
+$nextPort = 3023
+if ($portMap.Count -gt 0) {
+    $portsCount = ($portMap.Values | Measure-Object -Maximum).Maximum
+    if ($portsCount -ge $nextPort) {
+        $nextPort = $portsCount + 1
+    }
+}
+
+$servicesDirs = Get-ChildItem -Path "$PSScriptRoot\services" -Directory | Where-Object { $_.Name -like "signapps-*" }
+$envLocalData = ""
+
+$services = @{}
+
+foreach ($dir in $servicesDirs) {
+    $name = $dir.Name
+    if (-not $portMap.ContainsKey($name)) {
+        $portMap[$name] = $nextPort
+        Write-Host "New service discovered: $name -> Assigned to port $nextPort"
+        $nextPort++
+    }
+    
+    $port = $portMap[$name]
+    $services[$name] = $port
+
+    # Compute NEXT_PUBLIC_XXX_URL
+    $envNamePart = $name.Replace("signapps-", "").Replace("-", "_").ToUpper()
+    $envVarName = "NEXT_PUBLIC_" + $envNamePart + "_URL"
+    $envLocalData += "$envVarName=http://localhost:$port/api/v1`r`n"
+}
+
+# Save port map safely
+$portMap | ConvertTo-Json | Set-Content $portsFile
+
+# Write out the env.local for the Next.js app
+Write-Host "Updating Next.js environment variables (client/.env.local)..."
+Set-Content "$PSScriptRoot\client\.env.local" $envLocalData
 
 Write-Host "Starting signapps-identity on port 3001 (Priority for DB Migrations)..."
 $env:SERVER_PORT = 3001

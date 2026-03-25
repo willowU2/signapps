@@ -28,7 +28,12 @@ export function EntityLinks({ entityType, entityId }: Props) {
   useEffect(() => {
     linksApi.find(entityType, entityId)
       .then(({ data }) => setLinks(data))
-      .catch(console.error)
+      .catch((err) => {
+        // Ignorer l'erreur 404 silencieusement car l'API backend n'est pas encore prête
+        if (err.response?.status !== 404) {
+          console.error("Erreur crosslinks:", err);
+        }
+      })
       .finally(() => setLoading(false));
   }, [entityType, entityId]);
 

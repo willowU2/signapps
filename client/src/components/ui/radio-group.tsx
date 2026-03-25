@@ -1,56 +1,45 @@
 "use client"
 
 import * as React from "react"
+import { CircleIcon } from "lucide-react"
+import { RadioGroup as RadioGroupPrimitive } from "radix-ui"
+
 import { cn } from "@/lib/utils"
 
-const RadioGroup = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & {
-    value?: string
-    onValueChange?: (value: string) => void
-    disabled?: boolean
-  }
->(({ className, value, onValueChange, disabled, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("grid gap-2", className)}
-    role="radiogroup"
-    aria-disabled={disabled}
-    {...props}
-  >
-    {React.Children.map(props.children, (child) => {
-      if (!React.isValidElement(child)) return child;
-      return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, {
-        value,
-        onValueChange,
-        disabled: disabled || (child.props as Record<string, unknown>).disabled,
-      });
-    })}
-  </div>
-))
-RadioGroup.displayName = "RadioGroup"
+function RadioGroup({
+  className,
+  ...props
+}: React.ComponentProps<typeof RadioGroupPrimitive.Root>) {
+  return (
+    <RadioGroupPrimitive.Root
+      data-slot="radio-group"
+      className={cn("grid gap-3", className)}
+      {...props}
+    />
+  )
+}
 
-const RadioGroupItem = React.forwardRef<
-  HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement> & {
-    value?: string
-    onValueChange?: (value: string) => void
-  }
->(({ className, value, onValueChange, ...props }, ref) => (
-  <label className="flex items-center space-x-2 cursor-pointer">
-    <input
-      ref={ref}
-      type="radio"
-      value={value}
-      onChange={(e) => onValueChange?.(e.target.value)}
+function RadioGroupItem({
+  className,
+  ...props
+}: React.ComponentProps<typeof RadioGroupPrimitive.Item>) {
+  return (
+    <RadioGroupPrimitive.Item
+      data-slot="radio-group-item"
       className={cn(
-        "h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        "aspect-square size-4 shrink-0 rounded-full border border-input text-primary shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:bg-input/30 dark:aria-invalid:ring-destructive/40",
         className
       )}
       {...props}
-    />
-  </label>
-))
-RadioGroupItem.displayName = "RadioGroupItem"
+    >
+      <RadioGroupPrimitive.Indicator
+        data-slot="radio-group-indicator"
+        className="relative flex items-center justify-center"
+      >
+        <CircleIcon className="absolute top-1/2 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 fill-primary" />
+      </RadioGroupPrimitive.Indicator>
+    </RadioGroupPrimitive.Item>
+  )
+}
 
 export { RadioGroup, RadioGroupItem }
