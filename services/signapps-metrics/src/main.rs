@@ -149,7 +149,7 @@ fn create_router(state: AppState) -> Router {
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        .nest("/api/v1/metrics", metrics_routes)
+        .nest("/api/v1/system", metrics_routes)
         .nest("/api/v1/alerts", alert_routes)
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

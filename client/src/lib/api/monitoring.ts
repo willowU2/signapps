@@ -11,18 +11,18 @@ const metricsClient = getClient(ServiceName.METRICS);
 
 // Metrics API
 export const metricsApi = {
-    all: () => metricsClient.get<SystemMetrics>('/metrics'),
-    summary: () => metricsClient.get<SystemMetrics>('/metrics/summary'),
+    all: () => metricsClient.get<SystemMetrics>('/system'),
+    summary: () => metricsClient.get<SystemMetrics>('/system/summary'),
     health: () => metricsClient.get('/health'),
-    cpu: () => metricsClient.get<CpuMetrics>('/metrics/cpu'),
-    memory: () => metricsClient.get<MemoryMetrics>('/metrics/memory'),
-    disk: () => metricsClient.get<DiskMetrics[]>('/metrics/disk'),
-    network: () => metricsClient.get<NetworkMetrics>('/metrics/network'),
+    cpu: () => metricsClient.get<CpuMetrics>('/system/cpu'),
+    memory: () => metricsClient.get<MemoryMetrics>('/system/memory'),
+    disk: () => metricsClient.get<DiskMetrics[]>('/system/disk'),
+    network: () => metricsClient.get<NetworkMetrics>('/system/network'),
     // Alias for backward compatibility
-    system: () => metricsClient.get<SystemMetrics>('/metrics/summary'),
+    system: () => metricsClient.get<SystemMetrics>('/system/summary'),
     // History for charts
     history: (period: '5m' | '15m' | '1h' | '24h') =>
-        metricsClient.get<MetricHistoryPoint[]>('/metrics/history', { params: { period } }),
+        metricsClient.get<MetricHistoryPoint[]>('/system/history', { params: { period } }),
 };
 
 export interface SystemMetrics {

@@ -69,7 +69,7 @@ export class ErrorBoundaryReporter extends React.Component<
     };
 
     try {
-      const response = await fetch('/api/v1/metrics/errors', {
+      const response = await fetch('/api/v1/system/errors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
