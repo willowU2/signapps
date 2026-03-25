@@ -1,5 +1,5 @@
 Write-Host "Arrêt de tous les microservices avant recompilation..."
-taskkill /F /IM "signapps-*.exe" /T 2>$null
+Get-Process "signapps-*" -ErrorAction SilentlyContinue | Stop-Process -Force
 
 Write-Host "Compiling all services first to prevent Cargo lock conflicts..."
 Start-Process "cargo" -ArgumentList "build", "--workspace" -Wait -NoNewWindow
@@ -20,9 +20,14 @@ $services = @{
     "signapps-mail"       = 3012
     "signapps-meet"       = 3013
     "signapps-collab"     = 3014
-    "signapps-it-assets"  = 3015
+    "signapps-forms"      = 3015
     "signapps-pxe"        = 3016
     "signapps-remote"     = 3017
+    "signapps-office"     = 3018
+    "signapps-workforce"  = 3019
+    "signapps-chat"       = 3020
+    "signapps-contacts"   = 3021
+    "signapps-it-assets"  = 3022
 }
 
 Write-Host "Starting signapps-identity on port 3001 (Priority for DB Migrations)..."

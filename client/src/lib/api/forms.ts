@@ -78,6 +78,10 @@ export const formsApi = {
   update: (id: string, data: UpdateFormRequest) =>
     formsClient().put<Form>(`/forms/${id}`, data),
 
+  /** Delete a form */
+  delete: (id: string) =>
+    formsClient().delete(`/forms/${id}`),
+
   /** Toggle the publish status of a form */
   publish: (id: string) =>
     formsClient().post<Form>(`/forms/${id}/publish`),

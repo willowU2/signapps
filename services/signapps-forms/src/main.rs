@@ -9,68 +9,16 @@ use axum::{
     routing::{get, post},
     Extension, Json, Router,
 };
-use chrono::Utc;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::Claims;
 use signapps_common::JwtConfig;
-use std::sync::{Arc, Mutex};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
-
-// ---------------------------------------------------------------------------
-// Domain types
-// ---------------------------------------------------------------------------
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum FieldType {
-    Text,
-    TextArea,
-    SingleChoice,
-    MultipleChoice,
-    Rating,
-    Date,
-    Email,
-    Number,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FormField {
-    pub id: Uuid,
-    pub field_type: FieldType,
-    pub label: String,
-    pub required: bool,
-    pub options: Option<Vec<String>>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Form {
-    pub id: Uuid,
-    pub title: String,
-    pub description: String,
-    pub owner_id: Uuid,
-    pub fields: Vec<FormField>,
-    pub created_at: String,
-    pub updated_at: String,
-    pub is_published: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Answer {
-    pub field_id: Uuid,
-    pub value: serde_json::Value,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct FormResponse {
-    pub id: Uuid,
-    pub form_id: Uuid,
-    pub respondent: Option<String>,
-    pub answers: Vec<Answer>,
-    pub submitted_at: String,
-}
+use signapps_db::repositories::FormRepository;
+use signapps_db::models::{FieldType, FormField, CreateForm, UpdateForm, Answer, SubmitResponse};
 
 // ---------------------------------------------------------------------------
 // Request DTOs
@@ -105,14 +53,13 @@ pub struct SubmitResponseRequest {
 }
 
 // ---------------------------------------------------------------------------
-// Application state (in-memory for skeleton)
+// Application state
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
 pub struct AppState {
     pub jwt_config: JwtConfig,
-    pub forms: Arc<Mutex<Vec<Form>>>,
-    pub responses: Arc<Mutex<Vec<FormResponse>>>,
+    pub pool: sqlx::PgPool,
 }
 
 impl AuthState for AppState {
@@ -125,9 +72,17 @@ impl AuthState for AppState {
 // Handlers
 // ---------------------------------------------------------------------------
 
-async fn list_forms(State(state): State<AppState>) -> impl IntoResponse {
-    let forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
-    Json(forms.clone())
+async fn list_forms(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> impl IntoResponse {
+    match FormRepository::list_by_owner(&state.pool, claims.sub).await {
+        Ok(forms) => (StatusCode::OK, Json(serde_json::to_value(forms).unwrap())),
+        Err(e) => {
+            tracing::error!("Failed to list forms: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
+        }
+    }
 }
 
 async fn create_form(
@@ -135,7 +90,6 @@ async fn create_form(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateFormRequest>,
 ) -> impl IntoResponse {
-    let now = Utc::now().to_rfc3339();
     let fields: Vec<FormField> = payload
         .fields
         .into_iter()
@@ -148,36 +102,33 @@ async fn create_form(
         })
         .collect();
 
-    let form = Form {
-        id: Uuid::new_v4(),
+    let create_data = CreateForm {
         title: payload.title,
         description: payload.description.unwrap_or_default(),
         owner_id: claims.sub,
         fields,
-        created_at: now.clone(),
-        updated_at: now,
-        is_published: false,
     };
-    state
-        .forms
-        .lock()
-        .unwrap_or_else(|e| e.into_inner())
-        .push(form.clone());
-    tracing::info!(id = %form.id, "Form created");
-    (StatusCode::CREATED, Json(form))
+
+    match FormRepository::create(&state.pool, claims.sub, create_data).await {
+        Ok(form) => {
+            tracing::info!(id = %form.id, "Form created");
+            (StatusCode::CREATED, Json(serde_json::to_value(form).unwrap()))
+        }
+        Err(e) => {
+            tracing::error!("Failed to create form: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
+        }
+    }
 }
 
 async fn get_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
-    let forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
-    match forms.iter().find(|f| f.id == id) {
-        Some(f) => (
-            StatusCode::OK,
-            Json(serde_json::to_value(f).unwrap_or_default()),
-        ),
-        None => (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Form not found" })),
-        ),
+    match FormRepository::get_by_id(&state.pool, id).await {
+        Ok(Some(form)) => (StatusCode::OK, Json(serde_json::to_value(form).unwrap())),
+        Ok(None) => (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" }))),
+        Err(e) => {
+            tracing::error!("Failed to get form: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
+        }
     }
 }
 
@@ -186,61 +137,85 @@ async fn update_form(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateFormRequest>,
 ) -> impl IntoResponse {
-    let mut forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
-    match forms.iter_mut().find(|f| f.id == id) {
-        Some(f) => {
-            if let Some(v) = payload.title {
-                f.title = v;
+    let fields = payload.fields.map(|fields| {
+        fields
+            .into_iter()
+            .map(|f| FormField {
+                id: Uuid::new_v4(),
+                field_type: f.field_type,
+                label: f.label,
+                required: f.required,
+                options: f.options,
+            })
+            .collect()
+    });
+
+    let update_data = UpdateForm {
+        title: payload.title,
+        description: payload.description,
+        fields,
+        is_published: None,
+    };
+
+    match FormRepository::update(&state.pool, id, update_data).await {
+        Ok(form) => (StatusCode::OK, Json(serde_json::to_value(form).unwrap())),
+        Err(signapps_common::Error::NotFound(_)) => {
+            (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" })))
+        }
+        Err(e) => {
+            tracing::error!("Failed to update form: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
+        }
+    }
+}
+
+async fn delete_form(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    // Basic authorization check: verify the form exists and user owns it
+    match FormRepository::get_by_id(&state.pool, id).await {
+        Ok(Some(form)) => {
+            if form.owner_id != claims.sub {
+                return (StatusCode::FORBIDDEN, Json(serde_json::json!({ "error": "Forbidden" })));
             }
-            if let Some(v) = payload.description {
-                f.description = v;
-            }
-            if let Some(new_fields) = payload.fields {
-                f.fields = new_fields
-                    .into_iter()
-                    .map(|cf| FormField {
-                        id: Uuid::new_v4(),
-                        field_type: cf.field_type,
-                        label: cf.label,
-                        required: cf.required,
-                        options: cf.options,
-                    })
-                    .collect();
-            }
-            f.updated_at = Utc::now().to_rfc3339();
-            (
-                StatusCode::OK,
-                Json(serde_json::to_value(&*f).unwrap_or_default()),
-            )
-        },
-        None => (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Form not found" })),
-        ),
+        }
+        Ok(None) => return (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" }))),
+        Err(e) => {
+            tracing::error!("Failed to fetch form for deletion: {}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })));
+        }
+    }
+
+    match FormRepository::delete(&state.pool, id).await {
+        Ok(_) => {
+            tracing::info!(id = %id, user = %claims.sub, "Form deleted");
+            (StatusCode::NO_CONTENT, Json(serde_json::json!({})))
+        }
+        Err(e) => {
+            tracing::error!("Failed to delete form: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
+        }
     }
 }
 
 async fn publish_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
-    let mut forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
-    match forms.iter_mut().find(|f| f.id == id) {
-        Some(f) => {
-            f.is_published = !f.is_published;
-            f.updated_at = Utc::now().to_rfc3339();
-            let status = if f.is_published {
-                "published"
-            } else {
-                "unpublished"
-            };
-            tracing::info!(id = %id, status, "Form publish toggled");
+    match FormRepository::publish(&state.pool, id).await {
+        Ok(form) => {
+            tracing::info!(id = %id, "Form published");
             (
                 StatusCode::OK,
-                Json(serde_json::json!({ "id": id, "is_published": f.is_published })),
+                Json(serde_json::json!({ "id": id, "is_published": form.is_published })),
             )
-        },
-        None => (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Form not found" })),
-        ),
+        }
+        Err(signapps_common::Error::NotFound(_)) => {
+            (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" })))
+        }
+        Err(e) => {
+            tracing::error!("Failed to publish form: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
+        }
     }
 }
 
@@ -249,64 +224,45 @@ async fn submit_response(
     Path(id): Path<Uuid>,
     Json(payload): Json<SubmitResponseRequest>,
 ) -> impl IntoResponse {
-    // Verify form exists and is published (no auth needed for public forms)
-    let is_published = {
-        let forms = state.forms.lock().unwrap_or_else(|e| e.into_inner());
-        forms.iter().find(|f| f.id == id).map(|f| f.is_published)
-    };
-    match is_published {
-        None => {
-            return (
-                StatusCode::NOT_FOUND,
-                Json(serde_json::json!({ "error": "Form not found" })),
-            )
-        },
-        Some(false) => {
-            return (
-                StatusCode::FORBIDDEN,
-                Json(serde_json::json!({ "error": "Form is not published" })),
-            )
-        },
-        _ => {},
+    match FormRepository::get_by_id(&state.pool, id).await {
+        Ok(Some(form)) => {
+            if !form.is_published {
+                return (StatusCode::FORBIDDEN, Json(serde_json::json!({ "error": "Form is not published" })));
+            }
+        }
+        Ok(None) => return (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" }))),
+        Err(e) => {
+            tracing::error!("Failed to get form: {}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })));
+        }
     }
-    let response = FormResponse {
-        id: Uuid::new_v4(),
+
+    let submit_data = SubmitResponse {
         form_id: id,
         respondent: payload.respondent,
         answers: payload.answers,
-        submitted_at: Utc::now().to_rfc3339(),
     };
-    state
-        .responses
-        .lock()
-        .unwrap_or_else(|e| e.into_inner())
-        .push(response.clone());
-    tracing::info!(id = %response.id, form_id = %id, "Response submitted");
-    (
-        StatusCode::CREATED,
-        Json(serde_json::to_value(response).unwrap_or_default()),
-    )
+
+    match FormRepository::submit_response(&state.pool, submit_data).await {
+        Ok(response) => {
+            tracing::info!(id = %response.id, form_id = %id, "Response submitted");
+            (StatusCode::CREATED, Json(serde_json::to_value(response).unwrap()))
+        }
+        Err(e) => {
+            tracing::error!("Failed to submit response: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
+        }
+    }
 }
 
 async fn list_responses(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
-    let exists = state
-        .forms
-        .lock()
-        .unwrap_or_else(|e| e.into_inner())
-        .iter()
-        .any(|f| f.id == id);
-    if !exists {
-        return (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Form not found" })),
-        );
+    match FormRepository::list_responses(&state.pool, id).await {
+        Ok(responses) => (StatusCode::OK, Json(serde_json::to_value(responses).unwrap())),
+        Err(e) => {
+            tracing::error!("Failed to list responses: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
+        }
     }
-    let responses = state.responses.lock().unwrap_or_else(|e| e.into_inner());
-    let form_responses: Vec<&FormResponse> = responses.iter().filter(|r| r.form_id == id).collect();
-    (
-        StatusCode::OK,
-        Json(serde_json::to_value(form_responses).unwrap_or_default()),
-    )
 }
 
 async fn health_check() -> StatusCode {
@@ -340,15 +296,13 @@ fn create_router(state: AppState) -> Router {
             axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
-    // Public routes: health + submit response (no auth for published forms)
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/v1/forms/:id/respond", post(submit_response));
 
-    // Protected routes: CRUD + publish + view responses
     let protected_routes = Router::new()
         .route("/api/v1/forms", get(list_forms).post(create_form))
-        .route("/api/v1/forms/:id", get(get_form).put(update_form))
+        .route("/api/v1/forms/:id", get(get_form).put(update_form).delete(delete_form))
         .route("/api/v1/forms/:id/publish", post(publish_form))
         .route("/api/v1/forms/:id/responses", get(list_responses))
         .route_layer(middleware::from_fn_with_state(
@@ -375,6 +329,22 @@ async fn main() -> anyhow::Result<()> {
     let config = ServiceConfig::from_env("signapps-forms", 3015);
     config.log_startup();
 
+    let db_pool = signapps_db::create_pool(&config.database_url).await?;
+
+    if let Err(e) = signapps_db::run_migrations(&db_pool).await {
+        tracing::warn!("Failed to apply database migrations for Forms: {}", e);
+    }
+
+    tracing::info!("Running fallback SQL creation for forms schema to bypass sqlx caching...");
+    let fallback_sql = include_str!("../../../migrations/041_create_forms.sql");
+    use sqlx::Executor;
+    match db_pool.inner().execute(fallback_sql).await {
+        Ok(_) => tracing::info!("Forms tables successfully created via fallback SQL"),
+        Err(e) => tracing::error!("Fallback SQL execution failed: {}", e),
+    }
+
+    let pool = db_pool.inner().clone();
+
     let jwt_config = JwtConfig {
         secret: config.jwt_secret.clone(),
         issuer: "signapps".to_string(),
@@ -383,13 +353,9 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 86400 * 7,
     };
 
-    let state = AppState {
-        jwt_config,
-        forms: Arc::new(Mutex::new(Vec::new())),
-        responses: Arc::new(Mutex::new(Vec::new())),
-    };
+    let state = AppState { jwt_config, pool };
 
-    tracing::info!("In-memory store initialized (skeleton — no DB yet)");
+    tracing::info!("Database connected & service ready");
 
     let app = create_router(state);
 

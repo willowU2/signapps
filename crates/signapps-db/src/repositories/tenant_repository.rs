@@ -389,7 +389,7 @@ impl ProjectRepository {
                        COALESCE(COUNT(t.id), 0) as total_tasks,
                        COALESCE(COUNT(t.id) FILTER (WHERE t.status = 'completed'), 0) as completed_tasks
                 FROM calendar.projects p
-                LEFT JOIN calendar.tasks t ON p.id = t.project_id AND t.deleted_at IS NULL
+                LEFT JOIN calendar.tasks t ON p.id = t.project_id
                 WHERE p.tenant_id = $1 AND p.workspace_id = $2 AND p.deleted_at IS NULL
                 GROUP BY p.id
                 ORDER BY p.created_at DESC
@@ -410,7 +410,7 @@ impl ProjectRepository {
                        COALESCE(COUNT(t.id), 0) as total_tasks,
                        COALESCE(COUNT(t.id) FILTER (WHERE t.status = 'completed'), 0) as completed_tasks
                 FROM calendar.projects p
-                LEFT JOIN calendar.tasks t ON p.id = t.project_id AND t.deleted_at IS NULL
+                LEFT JOIN calendar.tasks t ON p.id = t.project_id
                 WHERE p.tenant_id = $1 AND p.deleted_at IS NULL
                 GROUP BY p.id
                 ORDER BY p.created_at DESC
