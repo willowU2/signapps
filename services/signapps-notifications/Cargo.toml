@@ -1,10 +1,29 @@
 [package]
 name = "signapps-notifications"
-version = "0.1.0"
+version.workspace = true
 edition = "2021"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Notifications service for SignApps Platform — per-user notification feed"
+
+[[bin]]
+name = "signapps-notifications"
+path = "src/main.rs"
 
 [dependencies]
-axum = "0.8"
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+signapps-common = { path = "../../crates/signapps-common" }
+signapps-db = { path = "../../crates/signapps-db" }
+axum = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+dotenvy = { workspace = true }
+tower-http = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }

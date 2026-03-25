@@ -1,41 +1,347 @@
-use axum::{routing::get, Json, Router};
-use serde::Serialize;
+//! SignApps Notifications Service
+//! Per-user notification feed with read/unread state management
 
-#[derive(Serialize)]
-struct Notification {
-    id: String,
-    title: String,
-    body: String,
-    priority: String,
-    read: bool,
-    created_at: String,
-    source: String,
+use axum::{
+    extract::{Path, Query, State},
+    http::StatusCode,
+    middleware,
+    response::IntoResponse,
+    routing::{get, patch, post},
+    Extension, Json, Router,
+};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use signapps_common::bootstrap::{env_or, init_tracing, load_env};
+use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::{Claims, JwtConfig};
+use sqlx::{postgres::PgPoolOptions, FromRow, Pool, Postgres};
+use tower_http::cors::{AllowOrigin, CorsLayer};
+use tower_http::trace::TraceLayer;
+use uuid::Uuid;
+
+// ---------------------------------------------------------------------------
+// Domain types
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Notification {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    #[sqlx(rename = "type")]
+    pub notification_type: String,
+    pub title: String,
+    pub body: Option<String>,
+    pub source: Option<String>,
+    pub priority: String,
+    pub is_read: bool,
+    pub read_at: Option<DateTime<Utc>>,
+    pub metadata: serde_json::Value,
+    pub created_at: DateTime<Utc>,
 }
 
-#[derive(Serialize)]
-struct NotificationResponse {
-    notifications: Vec<Notification>,
-    unread_count: u32,
+// ---------------------------------------------------------------------------
+// Request / Query DTOs
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Deserialize)]
+pub struct ListNotificationsQuery {
+    pub user_id: Option<Uuid>,
+    pub unread_only: Option<bool>,
+    pub limit: Option<i64>,
 }
 
-async fn list_notifications() -> Json<NotificationResponse> {
-    Json(NotificationResponse {
-        notifications: vec![],
-        unread_count: 0,
+#[derive(Debug, Deserialize)]
+pub struct CreateNotificationRequest {
+    pub user_id: Uuid,
+    #[serde(rename = "type")]
+    pub notification_type: Option<String>,
+    pub title: String,
+    pub body: Option<String>,
+    pub source: Option<String>,
+    pub priority: Option<String>,
+    pub metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReadAllQuery {
+    pub user_id: Option<Uuid>,
+}
+
+// ---------------------------------------------------------------------------
+// Application state
+// ---------------------------------------------------------------------------
+
+#[derive(Clone)]
+pub struct AppState {
+    pub pool: Pool<Postgres>,
+    pub jwt_config: JwtConfig,
+}
+
+impl AuthState for AppState {
+    fn jwt_config(&self) -> &JwtConfig {
+        &self.jwt_config
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/// Resolve the target user_id: prefer JWT claims, fall back to query param.
+fn resolve_user_id(
+    claims: Option<&Claims>,
+    query_user_id: Option<Uuid>,
+) -> Result<Uuid, (StatusCode, String)> {
+    if let Some(c) = claims {
+        return Ok(c.sub);
+    }
+    query_user_id.ok_or_else(|| {
+        (
+            StatusCode::BAD_REQUEST,
+            "user_id query parameter is required".to_string(),
+        )
     })
 }
 
-async fn health() -> &'static str {
-    "OK"
+// ---------------------------------------------------------------------------
+// Handlers
+// ---------------------------------------------------------------------------
+
+/// GET /api/notifications
+/// Lists notifications for the authenticated user (or user_id param).
+async fn list_notifications(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<ListNotificationsQuery>,
+) -> Result<Json<Vec<Notification>>, (StatusCode, String)> {
+    let user_id = resolve_user_id(Some(&claims), query.user_id)?;
+    let limit = query.limit.unwrap_or(100).min(500);
+    let unread_only = query.unread_only.unwrap_or(false);
+
+    let notifications = if unread_only {
+        sqlx::query_as::<_, Notification>(
+            r#"
+            SELECT * FROM notifications.notifications
+            WHERE user_id = $1 AND is_read = false
+            ORDER BY created_at DESC
+            LIMIT $2
+            "#,
+        )
+        .bind(user_id)
+        .bind(limit)
+        .fetch_all(&state.pool)
+        .await
+    } else {
+        sqlx::query_as::<_, Notification>(
+            r#"
+            SELECT * FROM notifications.notifications
+            WHERE user_id = $1
+            ORDER BY created_at DESC
+            LIMIT $2
+            "#,
+        )
+        .bind(user_id)
+        .bind(limit)
+        .fetch_all(&state.pool)
+        .await
+    }
+    .map_err(|e| {
+        tracing::error!("Failed to list notifications: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
+
+    Ok(Json(notifications))
 }
 
-#[tokio::main]
-async fn main() {
-    let app = Router::new()
-        .route("/api/notifications", get(list_notifications))
-        .route("/health", get(health));
+/// POST /api/notifications
+/// Create a new notification for a user.
+async fn create_notification(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateNotificationRequest>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let notif = sqlx::query_as::<_, Notification>(
+        r#"
+        INSERT INTO notifications.notifications
+            (user_id, type, title, body, source, priority, metadata)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *
+        "#,
+    )
+    .bind(payload.user_id)
+    .bind(payload.notification_type.as_deref().unwrap_or("info"))
+    .bind(&payload.title)
+    .bind(&payload.body)
+    .bind(&payload.source)
+    .bind(payload.priority.as_deref().unwrap_or("normal"))
+    .bind(payload.metadata.unwrap_or(serde_json::json!({})))
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to create notification: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8095").await.unwrap();
-    println!("signapps-notifications listening on :8095");
-    axum::serve(listener, app).await.unwrap();
+    tracing::info!(
+        id = %notif.id,
+        user_id = %notif.user_id,
+        "Notification created"
+    );
+    Ok((StatusCode::CREATED, Json(notif)))
+}
+
+/// PATCH /api/notifications/:id/read
+/// Mark a specific notification as read.
+async fn mark_read(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Notification>, (StatusCode, String)> {
+    let notif = sqlx::query_as::<_, Notification>(
+        r#"
+        UPDATE notifications.notifications
+        SET is_read = true, read_at = now()
+        WHERE id = $1 AND user_id = $2
+        RETURNING *
+        "#,
+    )
+    .bind(id)
+    .bind(claims.sub)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to mark notification {} as read: {}", id, e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?
+    .ok_or_else(|| (StatusCode::NOT_FOUND, "Notification not found".to_string()))?;
+
+    Ok(Json(notif))
+}
+
+/// POST /api/notifications/read-all
+/// Mark all unread notifications as read for the authenticated user.
+async fn mark_all_read(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<ReadAllQuery>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let user_id = resolve_user_id(Some(&claims), query.user_id)?;
+
+    let result = sqlx::query(
+        r#"
+        UPDATE notifications.notifications
+        SET is_read = true, read_at = now()
+        WHERE user_id = $1 AND is_read = false
+        "#,
+    )
+    .bind(user_id)
+    .execute(&state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to mark all notifications as read: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
+
+    tracing::info!(
+        user_id = %user_id,
+        updated = result.rows_affected(),
+        "Marked all notifications as read"
+    );
+    Ok(Json(
+        serde_json::json!({ "updated": result.rows_affected() }),
+    ))
+}
+
+async fn health() -> impl IntoResponse {
+    Json(serde_json::json!({ "status": "ok" }))
+}
+
+// ---------------------------------------------------------------------------
+// Router
+// ---------------------------------------------------------------------------
+
+fn create_router(state: AppState) -> Router {
+    let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::list([
+            "http://localhost:3000".parse().unwrap(),
+            "http://127.0.0.1:3000".parse().unwrap(),
+        ]))
+        .allow_credentials(true)
+        .allow_methods([
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::PUT,
+            axum::http::Method::PATCH,
+            axum::http::Method::DELETE,
+            axum::http::Method::OPTIONS,
+        ])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::header::AUTHORIZATION,
+            axum::http::header::ACCEPT,
+            axum::http::header::ORIGIN,
+        ]);
+
+    let public_routes = Router::new().route("/health", get(health));
+
+    let protected_routes = Router::new()
+        .route(
+            "/api/notifications",
+            get(list_notifications).post(create_notification),
+        )
+        .route("/api/notifications/read-all", post(mark_all_read))
+        .route("/api/notifications/:id/read", patch(mark_read))
+        .route_layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware::<AppState>,
+        ));
+
+    public_routes
+        .merge(protected_routes)
+        .layer(TraceLayer::new_for_http())
+        .layer(cors)
+        .with_state(state)
+}
+
+// ---------------------------------------------------------------------------
+// Entry point
+// ---------------------------------------------------------------------------
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    init_tracing("signapps_notifications");
+    load_env();
+
+    let port: u16 = env_or("SERVER_PORT", "8095").parse().unwrap_or(8095);
+    let database_url = env_or(
+        "DATABASE_URL",
+        "postgres://signapps:password@localhost:5432/signapps",
+    );
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+        tracing::warn!("JWT_SECRET not set, using insecure dev default");
+        "dev_secret_change_in_production_32chars".to_string()
+    });
+
+    let pool = PgPoolOptions::new()
+        .max_connections(10)
+        .connect(&database_url)
+        .await?;
+    tracing::info!("Database connected");
+
+    let jwt_config = JwtConfig {
+        secret: jwt_secret,
+        issuer: "signapps".to_string(),
+        audience: "signapps".to_string(),
+        access_expiration: 900,
+        refresh_expiration: 604800,
+    };
+
+    let state = AppState { pool, jwt_config };
+    let app = create_router(state);
+
+    let addr = format!("0.0.0.0:{}", port);
+    tracing::info!("signapps-notifications listening on {}", addr);
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
 }
