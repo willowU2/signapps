@@ -37,15 +37,20 @@ export function SpellCheck({ editor }: SpellCheckProps) {
     // Apply spellcheck and lang attribute to the editor's DOM element
     const applyLanguage = useCallback(
         (langCode: string) => {
-            if (!editor) return;
-            const editorEl = editor.view.dom as HTMLElement;
-            if (!editorEl) return;
+            if (!editor || editor.isDestroyed) return;
+            try {
+                const editorEl = editor.view.dom as HTMLElement;
+                if (!editorEl) return;
 
-            const langConfig = SPELL_LANGUAGES.find((l) => l.code === langCode);
-            const htmlLang = langConfig?.htmlLang || 'fr-FR';
+                const langConfig = SPELL_LANGUAGES.find((l) => l.code === langCode);
+                const htmlLang = langConfig?.htmlLang || 'fr-FR';
 
-            editorEl.setAttribute('lang', htmlLang);
-            editorEl.setAttribute('spellcheck', spellcheckEnabled ? 'true' : 'false');
+                editorEl.setAttribute('lang', htmlLang);
+                editorEl.setAttribute('spellcheck', spellcheckEnabled ? 'true' : 'false');
+            } catch (e) {
+                // Return safely if the Tiptap view cannot be accessed
+                return;
+            }
         },
         [editor, spellcheckEnabled]
     );
@@ -57,10 +62,15 @@ export function SpellCheck({ editor }: SpellCheckProps) {
 
     // Apply when spellcheck toggle changes
     useEffect(() => {
-        if (!editor) return;
-        const editorEl = editor.view.dom as HTMLElement;
-        if (editorEl) {
-            editorEl.setAttribute('spellcheck', spellcheckEnabled ? 'true' : 'false');
+        if (!editor || editor.isDestroyed) return;
+        try {
+            const editorEl = editor.view.dom as HTMLElement;
+            if (editorEl) {
+                editorEl.setAttribute('spellcheck', spellcheckEnabled ? 'true' : 'false');
+            }
+        } catch (e) {
+            // Return safely if the Tiptap view cannot be accessed
+            return;
         }
     }, [editor, spellcheckEnabled]);
 
