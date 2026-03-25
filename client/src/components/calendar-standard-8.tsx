@@ -1,6 +1,5 @@
 "use client";
 
-import { faker } from "@faker-js/faker";
 import { type ComponentProps, useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
@@ -8,22 +7,12 @@ import { Calendar } from "@/components/ui/calendar";
 export const title = "Calendar with Custom Select Day Style";
 
 const now = new Date();
-const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
+// Fixed demo dates spread across the current month (no faker dependency)
 const bookedDays = [
-  faker.date.between({
-    from: startOfMonth,
-    to: new Date(now.getFullYear(), now.getMonth(), 10),
-  }),
-  faker.date.between({
-    from: new Date(now.getFullYear(), now.getMonth(), 11),
-    to: new Date(now.getFullYear(), now.getMonth(), 20),
-  }),
-  faker.date.between({
-    from: new Date(now.getFullYear(), now.getMonth(), 21),
-    to: endOfMonth,
-  }),
+  new Date(now.getFullYear(), now.getMonth(), 5),
+  new Date(now.getFullYear(), now.getMonth(), 14),
+  new Date(now.getFullYear(), now.getMonth(), 22),
 ];
 
 const Example = () => {

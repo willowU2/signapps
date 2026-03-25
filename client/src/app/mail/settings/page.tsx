@@ -41,7 +41,7 @@ function buildSignatureHtml(data: SignatureData): string {
           : ""
       }
     </table>
-  `).trim();
+  `.trim());
 
   return parts.join("\n");
 }

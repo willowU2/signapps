@@ -388,15 +388,15 @@ export default function ProxyPage() {
                         <TableCell>
                           <div className="flex items-center gap-1.5">
                             {route.tls_enabled ? (
-                              <Lock className="h-4 w-4 text-green-500" title="TLS activé" />
+                              <Lock className="h-4 w-4 text-green-500" aria-label="TLS activé" />
                             ) : (
-                              <Unlock className="h-4 w-4 text-muted-foreground" title="Pas de TLS" />
+                              <Unlock className="h-4 w-4 text-muted-foreground" aria-label="Pas de TLS" />
                             )}
                             {route.auth_required && (
                               <Badge variant="outline" className="text-xs">Auth</Badge>
                             )}
                             {route.shield_config?.enabled && (
-                              <Shield className="h-4 w-4 text-orange-500" title="SmartShield actif" />
+                              <Shield className="h-4 w-4 text-orange-500" aria-label="SmartShield actif" />
                             )}
                           </div>
                         </TableCell>

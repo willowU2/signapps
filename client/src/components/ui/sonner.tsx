@@ -18,7 +18,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         info: <InfoIcon className="size-4" />,
         warning: <TriangleAlertIcon className="size-4" />,
         error: <OctagonXIcon className="size-4" />,
-        loading: <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120}Icon className="size-4 " />,
+        loading: <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="size-4" />,
       }}
       style={
         {
