@@ -30,12 +30,17 @@ export default function GlobalDrivePage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [shareNode, setShareNode] = useState<DriveNode | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
 
   const [renameNode, setRenameNode] = useState<DriveNode | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
+
+  const filteredNodes = searchQuery.trim()
+    ? nodes.filter(n => n.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : nodes;
 
   const fetchNodes = useCallback(async () => {
     setLoading(true);
@@ -62,8 +67,8 @@ export default function GlobalDrivePage() {
   const handleDownload = async (node: DriveNode, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     try {
-      const response = await storageApi.download('drive', node.target_id || node.id);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const data = await storageApi.download('drive', node.name);
+      const url = window.URL.createObjectURL(new Blob([data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', node.name);
@@ -341,8 +346,18 @@ export default function GlobalDrivePage() {
                 </div>
               ))}
             </div>
-            
+
             <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Rechercher…"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-8 pr-3 h-9 text-sm rounded-full border border-[#dadce0] dark:border-[#3c4043] bg-[#f1f3f4] dark:bg-[#303134] focus:outline-none focus:ring-1 focus:ring-blue-500 w-48 transition-all focus:w-64"
+                />
+              </div>
               <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewMode('list')}>
                 <ListIcon className="h-5 w-5" />
               </Button>
@@ -356,10 +371,10 @@ export default function GlobalDrivePage() {
           <div className="flex-1 overflow-y-auto p-6">
             {loading ? (
               <DataTableSkeleton count={4} />
-            ) : nodes.length === 0 ? (
+            ) : filteredNodes.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
                 <Folder className="h-16 w-16 mb-4" />
-                <p>Ce dossier est vide ou glissez-y vos fichiers.</p>
+                <p>{searchQuery.trim() ? 'Aucun résultat pour cette recherche.' : 'Ce dossier est vide ou glissez-y vos fichiers.'}</p>
               </div>
             ) : viewMode === 'list' ? (
               <div className="rounded-xl border shadow-sm bg-card overflow-hidden">
@@ -374,7 +389,7 @@ export default function GlobalDrivePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {nodes.map(node => (
+                    {filteredNodes.map(node => (
                       <tr 
                         key={node.id} 
                         className="hover:bg-accent hover:text-accent-foreground transition-colors group cursor-pointer"
@@ -414,7 +429,7 @@ export default function GlobalDrivePage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {nodes.map(node => (
+                {filteredNodes.map(node => (
                   <div 
                     key={node.id} 
                     className="group border rounded-xl p-4 flex flex-col items-center gap-3 hover:bg-accent hover:shadow-md transition-all cursor-pointer bg-card relative"

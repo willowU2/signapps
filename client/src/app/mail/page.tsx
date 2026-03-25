@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useEffect } from "react"
+import { useEffect, useState, useCallback } from "react"
 import {
     Inbox,
     File,
@@ -14,10 +14,13 @@ import {
     Pencil,
     Tag,
     Sparkles,
+    Search,
+    X,
 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { MailDisplay } from "@/components/mail/mail-display"
 import { MailList } from "@/components/mail/mail-list"
@@ -37,19 +40,54 @@ import {
     useMailSelectionActions,
     useMailDataActions,
 } from "@/lib/store/mail-store"
-import { mailApi, accountApi } from "@/lib/api-mail"
+import { mailApi, accountApi, searchApi } from "@/lib/api-mail"
 import { cn } from "@/lib/utils"
 import { WorkspaceShell } from "@/components/layout/workspace-shell"
 
 export default function MailPage() {
     // Zustand store hooks
-    const mailList = useMailList()
+    const storeMailList = useMailList()
     const selectedId = useSelectedMailId()
     const selectedMail = useSelectedMail()
     const { composeAiOpen, composeRichOpen, labelsExpanded } = useMailUIState()
     const { setComposeAiOpen, setComposeRichOpen, toggleLabelsExpanded } = useMailUIActions()
     const { setSelectedId, clearSelection } = useMailSelectionActions()
     const { setMailList, removeMail } = useMailDataActions()
+
+    const [searchQuery, setSearchQuery] = useState("")
+    const [searchResults, setSearchResults] = useState<Mail[] | null>(null)
+    const [isSearching, setIsSearching] = useState(false)
+
+    const mailList = searchResults !== null ? searchResults : storeMailList
+
+    const handleSearch = useCallback(async (q: string) => {
+        setSearchQuery(q)
+        if (!q.trim()) {
+            setSearchResults(null)
+            return
+        }
+        setIsSearching(true)
+        try {
+            const emails = await searchApi.search({ q: q.trim(), limit: 50 })
+            const uiMails: Mail[] = emails.map(email => ({
+                id: email.id,
+                name: email.sender_name || email.sender.split('@')[0],
+                email: email.sender,
+                subject: email.subject || '(Sans objet)',
+                text: email.body_text || email.snippet || '',
+                date: email.received_at || email.created_at || new Date().toISOString(),
+                read: email.is_read ?? false,
+                labels: email.labels || [],
+                folder: 'inbox' as const
+            }))
+            setSearchResults(uiMails)
+        } catch (err) {
+            console.debug('Search failed:', err)
+            setSearchResults([])
+        } finally {
+            setIsSearching(false)
+        }
+    }, [])
 
     useEffect(() => {
         // Fetch accounts and emails from the real backend
@@ -254,6 +292,27 @@ export default function MailPage() {
             >
                 {/* Content Area (List + Display) */}
                 <div className="flex-1 flex flex-col bg-background dark:bg-[#1f1f1f] rounded-3xl shadow-[0_1px_3px_0_rgba(60,64,67,0.3),_0_4px_8px_3px_rgba(60,64,67,0.15)] overflow-hidden mr-1 mb-3 ml-0 relative">
+                    {/* Search bar */}
+                    <div className="px-4 py-2 border-b border-[#e0e0e0] dark:border-[#333] flex items-center gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                            <Input
+                                className="pl-9 pr-8 h-9 rounded-full bg-[#eaf1fb] dark:bg-[#303134] border-0 focus-visible:ring-1"
+                                placeholder="Rechercher dans les emails…"
+                                value={searchQuery}
+                                onChange={e => handleSearch(e.target.value)}
+                                disabled={isSearching}
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => { setSearchQuery(""); setSearchResults(null); }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
                     {!selectedId ? (
                         <MailList
                             items={mailList}
