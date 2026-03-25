@@ -12,6 +12,7 @@ pub mod migration;
 pub mod preferences;
 pub mod resources;
 pub mod roles;
+pub mod signatures;
 pub mod tenants;
 pub mod users;
 pub mod webhooks;

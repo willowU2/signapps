@@ -206,6 +206,17 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/reservations/pending", get(handlers::resources::list_pending_reservations))
         .route("/api/v1/reservations/:id", get(handlers::resources::get_reservation))
         .route("/api/v1/reservations/:id/status", put(handlers::resources::update_reservation_status))
+        // Signature workflow
+        .route("/api/v1/signatures", post(handlers::signatures::create_envelope))
+        .route("/api/v1/signatures", get(handlers::signatures::list_envelopes))
+        .route("/api/v1/signatures/:id", get(handlers::signatures::get_envelope))
+        .route("/api/v1/signatures/:id/send", post(handlers::signatures::send_envelope))
+        .route("/api/v1/signatures/:id/void", post(handlers::signatures::void_envelope))
+        .route("/api/v1/signatures/:id/steps", post(handlers::signatures::add_step))
+        .route("/api/v1/signatures/:id/steps", get(handlers::signatures::list_steps))
+        .route("/api/v1/signatures/:id/steps/:step_id/sign", post(handlers::signatures::sign_step))
+        .route("/api/v1/signatures/:id/steps/:step_id/decline", post(handlers::signatures::decline_step))
+        .route("/api/v1/signatures/:id/transitions", get(handlers::signatures::list_transitions))
         .layer(middleware::from_fn(tenant_context_middleware))
         .layer(middleware::from_fn_with_state(
             state.clone(),
