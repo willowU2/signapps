@@ -20,6 +20,29 @@ use uuid::Uuid;
 
 use crate::AppState;
 
+/// Append a row to `platform.activities` — fire-and-forget, never fails the request.
+async fn log_time_item_activity(
+    pool: &sqlx::PgPool,
+    actor_id: Uuid,
+    action: &str,
+    entity_id: Uuid,
+    entity_title: &str,
+    workspace_id: Uuid,
+) {
+    let _ = sqlx::query(
+        r#"INSERT INTO platform.activities
+           (id, actor_id, action, entity_type, entity_id, entity_title, metadata, workspace_id)
+           VALUES (gen_uuid_v7(), $1, $2, 'time_item', $3, $4, '{}', $5)"#,
+    )
+    .bind(actor_id)
+    .bind(action)
+    .bind(entity_id)
+    .bind(entity_title)
+    .bind(workspace_id)
+    .execute(pool)
+    .await;
+}
+
 // ============================================================================
 // TimeItem CRUD
 // ============================================================================
@@ -74,7 +97,18 @@ pub async fn create_time_item(
         .create(ctx.tenant_id, claims.sub, claims.sub, input)
         .await
     {
-        Ok(item) => Ok((StatusCode::CREATED, Json(json!(item)))),
+        Ok(item) => {
+            log_time_item_activity(
+                state.pool.inner(),
+                claims.sub,
+                "created",
+                item.id,
+                &item.title,
+                ctx.tenant_id,
+            )
+            .await;
+            Ok((StatusCode::CREATED, Json(json!(item))))
+        },
         Err(e) => {
             tracing::error!("Failed to create time item: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
@@ -85,15 +119,26 @@ pub async fn create_time_item(
 /// Update a time item.
 pub async fn update_time_item(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
+    Extension(ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateTimeItem>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = TimeItemRepository::new(&state.pool);
 
     match repo.update(id, input).await {
-        Ok(item) => Ok(Json(json!(item))),
+        Ok(item) => {
+            log_time_item_activity(
+                state.pool.inner(),
+                claims.sub,
+                "updated",
+                item.id,
+                &item.title,
+                ctx.tenant_id,
+            )
+            .await;
+            Ok(Json(json!(item)))
+        },
         Err(e) => {
             tracing::error!("Failed to update time item: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
@@ -126,14 +171,25 @@ pub async fn move_time_item(
 /// Delete a time item (soft delete).
 pub async fn delete_time_item(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    Extension(_ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
+    Extension(ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
     let repo = TimeItemRepository::new(&state.pool);
 
     match repo.delete(id).await {
-        Ok(()) => Ok(StatusCode::NO_CONTENT),
+        Ok(()) => {
+            log_time_item_activity(
+                state.pool.inner(),
+                claims.sub,
+                "deleted",
+                id,
+                "",
+                ctx.tenant_id,
+            )
+            .await;
+            Ok(StatusCode::NO_CONTENT)
+        },
         Err(e) => {
             tracing::error!("Failed to delete time item: {}", e);
             Err(StatusCode::INTERNAL_SERVER_ERROR)
