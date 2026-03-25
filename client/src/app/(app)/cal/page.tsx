@@ -26,6 +26,8 @@ import { QuickCreate } from '@/components/scheduling/command-palette/QuickCreate
 import { EventSheet } from '@/components/scheduling/calendar/EventSheet';
 import { BottomTabs } from '@/components/scheduling/mobile/BottomTabs';
 import { FAB } from '@/components/scheduling/quick-actions/FAB';
+import { CreatePollDialog } from '@/components/calendar/schedule-poll';
+import { OooBanner, OutOfOfficeSheet } from '@/components/calendar/out-of-office';
 import { useSchedulingNavigation } from '@/stores/scheduling-store';
 import { useCalendarStore } from '@/stores/scheduling/calendar-store';
 import { useCreateEvent, useUpdateEvent, useDeleteEvent, useCalendars } from '@/lib/scheduling/api/calendar';
@@ -41,6 +43,8 @@ export default function SchedulingPage() {
 
   const [isQuickCreateOpen, setIsQuickCreateOpen] = React.useState(false);
   const [isEventSheetOpen, setIsEventSheetOpen] = React.useState(false);
+  const [isPollOpen, setIsPollOpen] = React.useState(false);
+  const [isOooOpen, setIsOooOpen] = React.useState(false);
   const [selectedEvent, setSelectedEvent] = React.useState<ScheduleBlock | null>(null);
   const [defaultEventDate, setDefaultEventDate] = React.useState<Date | undefined>();
   const [defaultEventTime, setDefaultEventTime] = React.useState<string | undefined>();
@@ -185,7 +189,10 @@ export default function SchedulingPage() {
       <SchedulingHub
         onCreateItem={() => handleCreateEvent()}
         onQuickCreate={() => setIsQuickCreateOpen(true)}
+        onCreatePoll={() => setIsPollOpen(true)}
+        onOpenOoo={() => setIsOooOpen(true)}
       >
+        <OooBanner />
         <SchedulingContent className="p-4 pb-16 md:pb-4 overflow-auto">
           <div className="h-full min-h-0 rounded-lg border bg-card shadow-sm overflow-hidden flex flex-col">
             {renderContent()}
@@ -220,6 +227,18 @@ export default function SchedulingPage() {
       <FAB
         onQuickCreate={() => setIsQuickCreateOpen(true)}
         onCreateItem={(_type) => handleCreateEvent()}
+      />
+
+      {/* Schedule Poll */}
+      <CreatePollDialog
+        open={isPollOpen}
+        onOpenChange={setIsPollOpen}
+      />
+
+      {/* Out of Office */}
+      <OutOfOfficeSheet
+        open={isOooOpen}
+        onOpenChange={setIsOooOpen}
       />
     </>
   );

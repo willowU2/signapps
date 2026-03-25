@@ -32,3 +32,7 @@ export type { BackgroundColorOptions } from './background-color';
 export { TableOfContents } from './table-of-contents';
 export type { TocItem } from './table-of-contents';
 export { Footnote } from './footnote';
+
+// Sprint 5: Cross-App Embeds
+export { EmbedSheet } from './embed-sheet';
+export type { EmbedSheetOptions } from './embed-sheet';

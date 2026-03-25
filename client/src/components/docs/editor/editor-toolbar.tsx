@@ -61,6 +61,8 @@ import { ExportMenu } from './export-menu';
 import { ImportMenu } from './import-menu';
 import { AddCommentButton } from './add-comment-button';
 import { TrackChangesToolbar } from '../track-changes/track-changes-toolbar';
+import { VoiceDictation } from '../voice-dictation';
+import { SpellCheck } from '../spell-check';
 import { ExportComment } from '@/lib/api/office';
 import type { TrackChange } from '../extensions/track-changes';
 
@@ -280,9 +282,12 @@ export function EditorToolbar({
                 </ToolbarBtn>
                 <ExportMenu editor={editor} documentTitle={documentTitle} comments={exportComments} />
                 <ImportMenu editor={editor} />
-                <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 text-[#444746] dark:text-muted-foreground ml-0.5">
-                    <SpellCheck2 className="h-4 w-4" />
-                </ToolbarBtn>
+                <div className="ml-0.5">
+                    <SpellCheck editor={editor} />
+                </div>
+                <div className="ml-0.5">
+                    <VoiceDictation editor={editor} />
+                </div>
                 <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 text-[#444746] dark:text-muted-foreground">
                     <PaintRoller className="h-4 w-4" />
                 </ToolbarBtn>

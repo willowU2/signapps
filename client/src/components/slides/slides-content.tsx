@@ -283,7 +283,12 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
                 {/* Main Canvas Area */}
                 <div className="flex-1 flex flex-col items-center justify-center p-4 lg:p-8 min-w-0">
                     {slideState.activeSlideId ? (
-                        <SlideEditor slideState={slideState} />
+                        <SlideEditor slideState={{
+                            ...slideState,
+                            slides: slideState.slides,
+                            getSlideObjects: slideState.getSlideObjects,
+                            getAllSlidesWithObjects: slideState.getAllSlidesWithObjects,
+                        }} />
                     ) : (
                         <div className="text-gray-400 text-sm">Créez une diapositive pour commencer</div>
                     )}

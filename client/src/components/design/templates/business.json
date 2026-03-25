@@ -1,0 +1,187 @@
+[
+  {
+    "id": "tpl-biz-card",
+    "name": "Minimal Business Card",
+    "category": "Business",
+    "subcategory": "Business Card",
+    "format": {
+      "id": "business-card",
+      "name": "Business Card",
+      "category": "Print",
+      "width": 1050,
+      "height": 600
+    },
+    "pages": [
+      {
+        "id": "p1",
+        "background": "#ffffff",
+        "objects": [
+          {
+            "id": "s1",
+            "type": "shape",
+            "name": "Accent Bar",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "rect",
+              "left": 0,
+              "top": 0,
+              "width": 6,
+              "height": 600,
+              "fill": "#4f46e5"
+            }
+          },
+          {
+            "id": "t1",
+            "type": "text",
+            "name": "Name",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 40,
+              "top": 180,
+              "width": 500,
+              "text": "John Doe",
+              "fontSize": 36,
+              "fontWeight": "bold",
+              "fontFamily": "Inter",
+              "fill": "#1a1a1a"
+            }
+          },
+          {
+            "id": "t2",
+            "type": "text",
+            "name": "Title",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 40,
+              "top": 230,
+              "width": 500,
+              "text": "Software Engineer",
+              "fontSize": 18,
+              "fontWeight": "normal",
+              "fontFamily": "Inter",
+              "fill": "#666666"
+            }
+          },
+          {
+            "id": "t3",
+            "type": "text",
+            "name": "Contact Info",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 40,
+              "top": 340,
+              "width": 500,
+              "text": "john@example.com\n+33 6 00 00 00 00",
+              "fontSize": 14,
+              "fontWeight": "normal",
+              "fontFamily": "Inter",
+              "fill": "#888888",
+              "lineHeight": 1.8
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tpl-flyer-event",
+    "name": "Event Flyer",
+    "category": "Marketing",
+    "subcategory": "Flyer",
+    "format": {
+      "id": "flyer",
+      "name": "Flyer",
+      "category": "Print",
+      "width": 1240,
+      "height": 1748
+    },
+    "pages": [
+      {
+        "id": "p1",
+        "background": "#0f3460",
+        "objects": [
+          {
+            "id": "t1",
+            "type": "text",
+            "name": "Event Name",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 80,
+              "top": 200,
+              "width": 1080,
+              "text": "EVENT NAME",
+              "fontSize": 72,
+              "fontWeight": "bold",
+              "fontFamily": "Inter",
+              "fill": "#ffffff",
+              "textAlign": "center"
+            }
+          },
+          {
+            "id": "t2",
+            "type": "text",
+            "name": "Date",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 80,
+              "top": 350,
+              "width": 1080,
+              "text": "March 25, 2026",
+              "fontSize": 32,
+              "fontWeight": "normal",
+              "fontFamily": "Inter",
+              "fill": "#e94560",
+              "textAlign": "center"
+            }
+          },
+          {
+            "id": "s1",
+            "type": "shape",
+            "name": "Divider",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "rect",
+              "left": 420,
+              "top": 420,
+              "width": 400,
+              "height": 3,
+              "fill": "#e94560"
+            }
+          },
+          {
+            "id": "t3",
+            "type": "text",
+            "name": "Description",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 120,
+              "top": 480,
+              "width": 1000,
+              "text": "Join us for an unforgettable experience.\nDetails and registration at example.com",
+              "fontSize": 22,
+              "fontWeight": "normal",
+              "fontFamily": "Inter",
+              "fill": "#cccccc",
+              "textAlign": "center",
+              "lineHeight": 1.6
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

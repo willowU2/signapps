@@ -493,6 +493,7 @@ export const editorMenuConfig: DynamicMenuCategory[] = [
       { type: 'separator', id: 'sep-o1' },
       { type: 'item', id: 'tool-translate', label: 'Traduire le document', icon: Languages, iconOpacity: '50' },
       { type: 'item', id: 'tool-voice', label: 'Saisie vocale', icon: Mic, iconOpacity: '50', shortcut: 'Ctrl+Maj+S' },
+      { type: 'item', id: 'tool-mailmerge', label: 'Publipostage (Mail Merge)', icon: Mail },
       { type: 'item', id: 'tool-gemini', label: 'Gemini', icon: Wand2 },
       { type: 'separator', id: 'sep-o2' },
       { type: 'item', id: 'tool-notif', label: 'Paramètres de notification', icon: Bell, iconOpacity: '50' },

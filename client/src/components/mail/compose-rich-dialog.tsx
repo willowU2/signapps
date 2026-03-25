@@ -15,6 +15,8 @@ import { EmailComposer } from "./email-editor";
 import { mailApi } from "@/lib/api-mail";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ComposeEncryptToggle } from "./pgp-indicator";
+import { encryptMessage } from "./pgp-settings";
 
 interface ComposeRichDialogProps {
     open: boolean;
@@ -39,6 +41,8 @@ export function ComposeRichDialog({
     const [showCcBcc, setShowCcBcc] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isSending, setIsSending] = useState(false);
+    const [encryptEnabled, setEncryptEnabled] = useState(false);
+    const [recipientPublicKey, setRecipientPublicKey] = useState("");
 
     const handleSave = useCallback(
         async (html: string, design: object) => {
@@ -68,15 +72,32 @@ export function ComposeRichDialog({
 
             setIsSending(true);
             try {
+                let bodyHtml = html;
+
+                // Encrypt if enabled and recipient key is provided
+                if (encryptEnabled && recipientPublicKey.trim()) {
+                    try {
+                        bodyHtml = await encryptMessage(recipientPublicKey, html);
+                    } catch {
+                        toast.error("Encryption failed. Check recipient's public key.");
+                        setIsSending(false);
+                        return;
+                    }
+                } else if (encryptEnabled && !recipientPublicKey.trim()) {
+                    toast.error("Please provide the recipient's public key to encrypt.");
+                    setIsSending(false);
+                    return;
+                }
+
                 await mailApi.send({
                     account_id: "00000000-0000-0000-0000-000000000000",
                     recipient: recipient.trim(),
                     cc: cc.trim() || undefined,
                     bcc: bcc.trim() || undefined,
                     subject: subject.trim() || "(Sans objet)",
-                    body_html: html,
+                    body_html: bodyHtml,
                 });
-                toast.success("Email envoyé !");
+                toast.success(encryptEnabled ? "Encrypted email sent!" : "Email envoyé !");
                 handleReset();
                 onOpenChange(false);
             } catch {
@@ -85,7 +106,7 @@ export function ComposeRichDialog({
                 setIsSending(false);
             }
         },
-        [recipient, cc, bcc, subject, onOpenChange]
+        [recipient, cc, bcc, subject, onOpenChange, encryptEnabled, recipientPublicKey]
     );
 
     const handleReset = () => {
@@ -94,6 +115,8 @@ export function ComposeRichDialog({
         setBcc("");
         setSubject("");
         setShowCcBcc(false);
+        setEncryptEnabled(false);
+        setRecipientPublicKey("");
     };
 
     return (
@@ -203,6 +226,15 @@ export function ComposeRichDialog({
                                 className="flex-1 border-0 bg-transparent focus-visible:ring-0 px-0"
                             />
                         </div>
+
+                        {/* PGP Encryption Toggle */}
+                        <ComposeEncryptToggle
+                            accountId="00000000-0000-0000-0000-000000000000"
+                            enabled={encryptEnabled}
+                            onToggle={setEncryptEnabled}
+                            recipientPublicKey={recipientPublicKey}
+                            onRecipientKeyChange={setRecipientPublicKey}
+                        />
                     </div>
 
                     {/* Email Editor */}

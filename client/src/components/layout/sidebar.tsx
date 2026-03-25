@@ -57,7 +57,8 @@ import {
   StickyNote,
   Users2,
   Briefcase,
-  Database
+  Database,
+  Palette
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -81,6 +82,7 @@ const navGroupsConfig = [
       { href: '/docs', icon: FileText, label: 'Docs', enabled: FEATURES.DOCS },
       { href: '/sheets', icon: Table, label: 'Sheets', enabled: FEATURES.DOCS },
       { href: '/slides', icon: Presentation, label: 'Slides', enabled: FEATURES.DOCS },
+      { href: '/design', icon: Palette, label: 'Design', enabled: FEATURES.DOCS },
       { href: '/forms', icon: ClipboardList, label: 'Forms', enabled: FEATURES.IDENTITY },
       { href: '/mail', icon: Mail, label: 'Mail', enabled: FEATURES.MAIL },
       { href: '/cal', icon: Calendar, label: 'Calendar', enabled: FEATURES.CALENDAR },

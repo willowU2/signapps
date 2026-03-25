@@ -328,6 +328,81 @@ export const statsApi = {
 }
 
 // ============================================================================
+// Spam Filter API
+// ============================================================================
+
+export interface ClassifyRequest {
+    account_id: string
+    subject?: string
+    body?: string
+}
+
+export interface ClassifyResponse {
+    is_spam: boolean
+    confidence: number
+    spam_probability: number
+    ham_probability: number
+}
+
+export interface TrainRequest {
+    account_id: string
+    email_id: string
+    is_spam: boolean
+}
+
+export interface TrainResponse {
+    status: string
+    words_updated: number
+}
+
+export interface SpamSettings {
+    id: string
+    account_id: string
+    enabled: boolean
+    threshold: number
+    total_spam: number
+    total_ham: number
+    created_at: string
+    updated_at: string
+}
+
+export interface SpamStatsResponse {
+    enabled: boolean
+    threshold: number
+    total_spam: number
+    total_ham: number
+    total_classified: number
+    vocabulary_size: number
+}
+
+export interface UpdateSpamSettingsRequest {
+    enabled?: boolean
+    threshold?: number
+}
+
+export const spamApi = {
+    classify: async (data: ClassifyRequest): Promise<ClassifyResponse> => {
+        const res = await mailClient.post('/spam/classify', data)
+        return res.data
+    },
+
+    train: async (data: TrainRequest): Promise<TrainResponse> => {
+        const res = await mailClient.post('/spam/train', data)
+        return res.data
+    },
+
+    getSettings: async (accountId: string): Promise<SpamStatsResponse> => {
+        const res = await mailClient.get(`/spam/settings/${accountId}`)
+        return res.data
+    },
+
+    updateSettings: async (accountId: string, data: UpdateSpamSettingsRequest): Promise<SpamSettings> => {
+        const res = await mailClient.patch(`/spam/settings/${accountId}`, data)
+        return res.data
+    },
+}
+
+// ============================================================================
 // Helper types for UI
 // ============================================================================
 

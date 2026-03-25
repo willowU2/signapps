@@ -1,0 +1,214 @@
+[
+  {
+    "id": "tpl-ig-gradient",
+    "name": "Gradient Social Post",
+    "category": "Social Media",
+    "subcategory": "Instagram Post",
+    "format": {
+      "id": "instagram-post",
+      "name": "Instagram Post",
+      "category": "Social Media",
+      "width": 1080,
+      "height": 1080
+    },
+    "pages": [
+      {
+        "id": "p1",
+        "background": "#667eea",
+        "objects": [
+          {
+            "id": "t1",
+            "type": "text",
+            "name": "Heading",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 140,
+              "top": 380,
+              "width": 800,
+              "text": "Your Message Here",
+              "fontSize": 72,
+              "fontWeight": "bold",
+              "fontFamily": "Inter",
+              "fill": "#ffffff",
+              "textAlign": "center"
+            }
+          },
+          {
+            "id": "t2",
+            "type": "text",
+            "name": "Subtitle",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 240,
+              "top": 500,
+              "width": 600,
+              "text": "Add a subtitle or description",
+              "fontSize": 28,
+              "fontWeight": "normal",
+              "fontFamily": "Inter",
+              "fill": "#ffffff",
+              "opacity": 0.8,
+              "textAlign": "center"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tpl-ig-dark",
+    "name": "Dark Bold Post",
+    "category": "Social Media",
+    "subcategory": "Instagram Post",
+    "format": {
+      "id": "instagram-post",
+      "name": "Instagram Post",
+      "category": "Social Media",
+      "width": 1080,
+      "height": 1080
+    },
+    "pages": [
+      {
+        "id": "p1",
+        "background": "#1a1a2e",
+        "objects": [
+          {
+            "id": "s1",
+            "type": "shape",
+            "name": "Accent Line",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "rect",
+              "left": 80,
+              "top": 80,
+              "width": 920,
+              "height": 4,
+              "fill": "#e94560"
+            }
+          },
+          {
+            "id": "t1",
+            "type": "text",
+            "name": "Title",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 80,
+              "top": 300,
+              "width": 920,
+              "text": "BOLD STATEMENT",
+              "fontSize": 80,
+              "fontWeight": "bold",
+              "fontFamily": "Inter",
+              "fill": "#ffffff",
+              "textAlign": "left"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tpl-story-gradient",
+    "name": "Gradient Story",
+    "category": "Social Media",
+    "subcategory": "Instagram Story",
+    "format": {
+      "id": "instagram-story",
+      "name": "Instagram Story",
+      "category": "Social Media",
+      "width": 1080,
+      "height": 1920
+    },
+    "pages": [
+      {
+        "id": "p1",
+        "background": "#764ba2",
+        "objects": [
+          {
+            "id": "t1",
+            "type": "text",
+            "name": "CTA",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 80,
+              "top": 700,
+              "width": 920,
+              "text": "Swipe Up",
+              "fontSize": 64,
+              "fontWeight": "bold",
+              "fontFamily": "Inter",
+              "fill": "#ffffff",
+              "textAlign": "center"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tpl-yt-thumb",
+    "name": "YouTube Thumbnail",
+    "category": "Social Media",
+    "subcategory": "YouTube Thumbnail",
+    "format": {
+      "id": "youtube-thumbnail",
+      "name": "YouTube Thumbnail",
+      "category": "Social Media",
+      "width": 1280,
+      "height": 720
+    },
+    "pages": [
+      {
+        "id": "p1",
+        "background": "#1a1a1a",
+        "objects": [
+          {
+            "id": "t1",
+            "type": "text",
+            "name": "Title",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 60,
+              "top": 240,
+              "width": 800,
+              "text": "VIDEO TITLE",
+              "fontSize": 80,
+              "fontWeight": "bold",
+              "fontFamily": "Inter",
+              "fill": "#ffffff"
+            }
+          },
+          {
+            "id": "t2",
+            "type": "text",
+            "name": "Subtitle",
+            "locked": false,
+            "visible": true,
+            "fabricData": {
+              "type": "textbox",
+              "left": 60,
+              "top": 380,
+              "width": 600,
+              "text": "CLICK TO WATCH",
+              "fontSize": 28,
+              "fontWeight": "bold",
+              "fontFamily": "Inter",
+              "fill": "#e94560"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

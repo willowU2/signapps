@@ -4,6 +4,10 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { useSpreadsheet } from "./use-spreadsheet"
 import { AiSheetsDialog } from "./ai-sheets-dialog"
+import { PivotTableDialog } from "./pivot-table"
+import { ChartDialog } from "./chart-dialog"
+import { FloatingChart } from "./chart-panel"
+import { MacroEditor } from "./macro-editor"
 import { CellStyle, CellData, CellValidation, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
 import { fetchAndParseDocument } from '@/lib/file-parsers'
@@ -21,7 +25,8 @@ import {
     Trash2, ChevronRight, Grid3X3, Download, Upload,
     BoxSelect, Square, Columns, Rows, Search, Replace, Snowflake,
     ChevronLeft, ChevronsRight, ChevronsLeft, Palette,
-    ListChecks, ExternalLink, StretchHorizontal, Lock, Unlock, Hash
+    ListChecks, ExternalLink, StretchHorizontal, Lock, Unlock, Hash,
+    Table2, FileCode
 } from "lucide-react"
 import { toast } from "sonner"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -587,6 +592,20 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     // AI Sheets Dialog
     const [showAiDialog, setShowAiDialog] = useState(false)
 
+    // Pivot Table
+    const [showPivotDialog, setShowPivotDialog] = useState(false)
+
+    // Advanced Chart Dialog
+    const [showChartDialog, setShowChartDialog] = useState(false)
+    const [floatingCharts, setFloatingCharts] = useState<{
+        id: string, type: 'bar' | 'line' | 'pie' | 'scatter' | 'area',
+        title: string, chartData: Record<string, string | number>[],
+        seriesNames: string[], colors: string[], showLegend: boolean
+    }[]>([])
+
+    // Macro Editor
+    const [showMacroEditor, setShowMacroEditor] = useState(false)
+
     // CSV import ref
     const csvInputRef = useRef<HTMLInputElement>(null)
 
@@ -993,6 +1012,45 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         if (values.length === 0) { toast.info('Aucune donn\u00E9e num\u00E9rique'); return }
         setChart({ type, values }); setShowChartPicker(false)
     }, [selectionBounds, evaluatedData, data])
+
+    // ---- Pivot Table: insert as new sheet ----
+    const handlePivotInsert = useCallback((name: string, gridData: Record<string, CellData>) => {
+        const sheetName = `${name} ${sheets.length + 1}`
+        addSheet(sheetName)
+        // Write data to the new sheet after a short delay to allow Yjs to create it
+        setTimeout(() => {
+            setActiveSheetIndex(sheets.length)
+            // The new sheet data will be written via the transact callback
+            transact(() => {
+                for (const [key, cellData] of Object.entries(gridData)) {
+                    setCell(Number(key.split(',')[0]), Number(key.split(',')[1]), cellData.value)
+                }
+            })
+        }, 100)
+    }, [sheets, addSheet, setActiveSheetIndex, transact, setCell])
+
+    // ---- Advanced Chart: insert floating chart ----
+    const handleInsertChart = useCallback((config: any, parsed: any) => {
+        const chartData = parsed.labels.map((label: string, i: number) => {
+            const entry: Record<string, string | number> = { label }
+            parsed.series.forEach((s: any) => { entry[s.name] = s.values[i] ?? 0 })
+            return entry
+        })
+        const newChart = {
+            id: `chart-${Date.now()}`,
+            type: config.type,
+            title: config.title || 'Graphique',
+            chartData,
+            seriesNames: parsed.series.map((s: any) => s.name),
+            colors: config.colors,
+            showLegend: config.showLegend,
+        }
+        setFloatingCharts(prev => [...prev, newChart])
+    }, [])
+
+    const handleRemoveFloatingChart = useCallback((id: string) => {
+        setFloatingCharts(prev => prev.filter(c => c.id !== id))
+    }, [])
 
     // ---- Find & Replace ----
     const navigateToFind = useCallback((idx: number) => {
@@ -1580,8 +1638,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 { label: 'Tableaux prédéfinis', action: 'preset_tables' },
                 { sep: true },
                 { label: 'Chronologie', action: 'insert_timeline' },
-                { label: 'Graphique', action: 'chart' },
-                { label: 'Tableau croisé dynamique', action: 'pivot_table' },
+                { label: 'Graphique (simple)', action: 'chart' },
+                { label: 'Graphique avance', action: 'chartDialog' },
+                { label: 'Tableau croise dynamique', action: 'pivot_table' },
                 { label: 'Image', subItems: [
                     { label: 'Insérer une image dans la cellule', action: 'image_in_cell' },
                     { label: 'Insérer une image sur les cellules', action: 'image_over_cells' }
@@ -1722,7 +1781,10 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         {
             id: 'extensions', label: 'Extensions', items: [
                 { label: 'Modules complémentaires', subItems: [{label: 'Télécharger des modules complémentaires', action: 'add_ons'} ] },
-                { label: 'Macros', subItems: [{label: 'Enregistrer une macro', action: 'record_macro'} ] },
+                { label: 'Macros', subItems: [
+                    {label: 'Editeur de macros', action: 'macroEditor'},
+                    {label: 'Enregistrer une macro', action: 'record_macro'}
+                ] },
                 { label: 'Apps Script', action: 'apps_script' },
                 { label: 'AppSheet', subItems: [{label: 'Créer une application', action: 'create_app'} ] }
             ]
@@ -1740,7 +1802,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             ]
         }
     ]} onAction={(action, label) => {
-                const NATIVE_ACTIONS = ['new', 'open', 'import', 'export_xlsx', 'export_csv', 'print', 'rename', 'trash', 'fullScreen', 'copyFile', 'undo', 'redo', 'cut', 'copy', 'paste', 'find', 'toggleGridlines', 'freezeRow', 'freezeCol', 'insertRowAbove', 'insertRowBelow', 'insertColLeft', 'insertColRight', 'chart', 'link', 'comment', 'bold', 'italic', 'underline', 'strikethrough', 'alignLeft', 'alignCenter', 'alignRight', 'clearFormat', 'unfreezeRow', 'unfreezeCol', 'zoom50', 'zoom75', 'zoom100', 'zoom125', 'zoom150', 'zoom200', 'toggleFormulaBar', 'insertSum', 'insertAvg', 'insertCount', 'insertMax', 'insertMin', 'condFormat', 'bandedRows', 'sortAsc', 'sortDesc', 'filter', 'validation', 'gemini', 'toggle_read_only', 'insertCheckbox', 'wrapText', 'overflowText', 'truncateText', 'mergeCellsAll', 'mergeCellsHoriz', 'mergeCellsVert', 'unmergeCellsAction', 'insertSheet', 'formatAuto', 'formatText', 'formatNumber', 'formatPercent', 'formatScientific', 'formatAccounting', 'formatFinance', 'formatCurrency', 'formatCurrencyRounded', 'formatDate', 'formatTime', 'formatDateTime', 'formatDuration', 'rotateNone', 'rotateTiltUp', 'rotateTiltDown', 'rotateUp', 'rotateDown', 'rotateVertical'];
+                const NATIVE_ACTIONS = ['new', 'open', 'import', 'export_xlsx', 'export_csv', 'print', 'rename', 'trash', 'fullScreen', 'copyFile', 'undo', 'redo', 'cut', 'copy', 'paste', 'find', 'toggleGridlines', 'freezeRow', 'freezeCol', 'insertRowAbove', 'insertRowBelow', 'insertColLeft', 'insertColRight', 'chart', 'link', 'comment', 'bold', 'italic', 'underline', 'strikethrough', 'alignLeft', 'alignCenter', 'alignRight', 'clearFormat', 'unfreezeRow', 'unfreezeCol', 'zoom50', 'zoom75', 'zoom100', 'zoom125', 'zoom150', 'zoom200', 'toggleFormulaBar', 'insertSum', 'insertAvg', 'insertCount', 'insertMax', 'insertMin', 'condFormat', 'bandedRows', 'sortAsc', 'sortDesc', 'filter', 'validation', 'gemini', 'toggle_read_only', 'insertCheckbox', 'wrapText', 'overflowText', 'truncateText', 'mergeCellsAll', 'mergeCellsHoriz', 'mergeCellsVert', 'unmergeCellsAction', 'insertSheet', 'formatAuto', 'formatText', 'formatNumber', 'formatPercent', 'formatScientific', 'formatAccounting', 'formatFinance', 'formatCurrency', 'formatCurrencyRounded', 'formatDate', 'formatTime', 'formatDateTime', 'formatDuration', 'rotateNone', 'rotateTiltUp', 'rotateTiltDown', 'rotateUp', 'rotateDown', 'rotateVertical', 'pivot_table', 'chartDialog', 'macroEditor'];
                 
                 if (action === 'todo' || !NATIVE_ACTIONS.includes(action)) {
                     setActiveModal({ id: action, label });
@@ -1890,6 +1952,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 if (action === 'filter') toggleFilter()
                 if (action === 'validation') { if (!activeCell) return; const vals = prompt("Valeurs de la liste (séparées par des virgules):"); if (vals) { setCellValidation(activeCell.r, activeCell.c, { type: 'list', values: vals.split(',').map(v => v.trim()) }); toast.success('Validation ajoutée') } }
                 if (action === 'insertSheet') { addSheet(`Sheet${sheets.length + 1}`); toast.success('Nouvelle feuille ajoutée'); return }
+                if (action === 'pivot_table') { setShowPivotDialog(true); return }
+                if (action === 'chartDialog') { setShowChartDialog(true); return }
+                if (action === 'macroEditor') { setShowMacroEditor(true); return }
             }} />
             </div>
 
@@ -2028,6 +2093,10 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                             <button className="w-full text-left px-2 py-1 text-[12px] hover:bg-[#f1f3f4] rounded" onClick={() => { openChart('pie'); setShowChartPicker(false); }}>Circulaire</button>
                         </PopoverContent>
                     </Popover>
+                    <TBtn onClick={() => setShowChartDialog(true)} title="Graphique avance"><BarChart2 className="w-[18px] h-[18px] text-[#1a73e8]" /></TBtn>
+                    <TBtn onClick={() => setShowPivotDialog(true)} title="Tableau croise dynamique"><Table2 className="w-[18px] h-[18px]" /></TBtn>
+                    <TBtn onClick={() => setShowMacroEditor(true)} title="Macros"><FileCode className="w-[18px] h-[18px]" /></TBtn>
+                    <Sep />
                     <TBtn onClick={toggleFilter} active={filterCol !== null} title="Filtre"><Filter className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={toggleFreeze} active={freezeRows > 0 || freezeCols > 0} title="Figer lignes/colonnes"><Snowflake className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => setShowCondFormat(true)} active={condRules.length > 0} title="Mise en forme conditionnelle"><Palette className="w-[18px] h-[18px]" /></TBtn>
@@ -2285,6 +2354,14 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                         )
                     })}
                 </div>
+
+                {/* Floating Charts */}
+                {floatingCharts.map(fc => (
+                    <FloatingChart key={fc.id} id={fc.id} type={fc.type} title={fc.title}
+                        chartData={fc.chartData} seriesNames={fc.seriesNames}
+                        colors={fc.colors} showLegend={fc.showLegend}
+                        onRemove={handleRemoveFloatingChart} />
+                ))}
             </div>
 
             {/* ===== SHEET TABS + STATUS BAR ===== */}
@@ -2348,6 +2425,39 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     data={data}
                     onApplyResult={(val, r, c) => { setEditValue(val); setCell(r, c, val) }}
                     activeCell={activeCell}
+                />
+            )}
+
+            {/* Pivot Table Dialog */}
+            {showPivotDialog && (
+                <PivotTableDialog
+                    data={data}
+                    onClose={() => setShowPivotDialog(false)}
+                    onInsertSheet={handlePivotInsert}
+                />
+            )}
+
+            {/* Advanced Chart Dialog */}
+            {showChartDialog && (
+                <ChartDialog
+                    data={data}
+                    evaluatedData={evaluatedData}
+                    selectionBounds={selectionBounds}
+                    onClose={() => setShowChartDialog(false)}
+                    onInsertChart={handleInsertChart}
+                />
+            )}
+
+            {/* Macro Editor */}
+            {showMacroEditor && (
+                <MacroEditor
+                    data={data}
+                    evaluatedData={evaluatedData}
+                    sheetId={sheets[activeSheetIndex]?.id || 'default'}
+                    sheetName={sheets[activeSheetIndex]?.name || 'Sheet1'}
+                    setCell={setCell}
+                    transact={transact}
+                    onClose={() => setShowMacroEditor(false)}
                 />
             )}
 

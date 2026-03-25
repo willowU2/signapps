@@ -2,7 +2,8 @@ import { cn } from "@/lib/utils"
 import {
     MousePointer2, Hand, ZoomIn, ZoomOut,
     Undo2, Redo2, Download, Trash2,
-    Grid, Magnet, Type, Square, Wand2, Mic, Paintbrush, Settings2
+    Grid, Magnet, Type, Square, Wand2, Mic, Paintbrush, Settings2,
+    Sparkles, LayoutTemplate, MonitorPlay, LayoutGrid
 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -11,7 +12,9 @@ import { Input } from "@/components/ui/input"
 import { Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup } from '@/components/editor/toolbar'
 import { LayoutSelector } from "./slide-layout-picker"
 import { ThemePicker, type SlideTheme } from "./slide-themes"
+import { TransitionPicker } from "./transition-picker"
 import type { SlideLayout } from "./use-slides"
+import type { SlideTransition } from "./slide-animations"
 
 interface SlideToolbarProps {
     isConnected: boolean
@@ -43,6 +46,19 @@ interface SlideToolbarProps {
     onThemeChange?: (theme: SlideTheme) => void
     // Add Slide support
     onAddSlide?: (layout?: SlideLayout) => void
+    // Transition support
+    currentTransition?: SlideTransition
+    onTransitionChange?: (transition: SlideTransition) => void
+    // Animation panel
+    onToggleAnimations?: () => void
+    showAnimations?: boolean
+    // Master slide editor
+    onToggleMasterEditor?: () => void
+    showMasterEditor?: boolean
+    // Live presentation
+    onStartLivePresentation?: () => void
+    // Auto layout
+    onAutoLayout?: () => void
 }
 
 export function SlideToolbar({
@@ -69,7 +85,15 @@ export function SlideToolbar({
     onLayoutChange,
     currentThemeId,
     onThemeChange,
-    onAddSlide
+    onAddSlide,
+    currentTransition,
+    onTransitionChange,
+    onToggleAnimations,
+    showAnimations,
+    onToggleMasterEditor,
+    showMasterEditor,
+    onStartLivePresentation,
+    onAutoLayout
 }: SlideToolbarProps) {
     return (
         <Toolbar className="overflow-x-auto custom-scrollbar flex-nowrap min-h-[44px]">
@@ -152,9 +176,47 @@ export function SlideToolbar({
             </ToolbarGroup>
 
 
+            {/* Transition Picker */}
+            {currentTransition && onTransitionChange && (
+                <>
+                    <ToolbarDivider className="hidden sm:block" />
+                    <ToolbarGroup className="hidden sm:flex">
+                        <TransitionPicker
+                            currentTransition={currentTransition}
+                            onTransitionChange={onTransitionChange}
+                        />
+                    </ToolbarGroup>
+                </>
+            )}
+
+            <ToolbarDivider className="hidden sm:block" />
+
+            {/* Animation & Master & AI Layout */}
+            <ToolbarGroup className="hidden sm:flex">
+                {onToggleAnimations && (
+                    <ToolbarButton onClick={onToggleAnimations} isActive={showAnimations} title="Animations">
+                        <Sparkles className="w-4 h-4" />
+                    </ToolbarButton>
+                )}
+                {onToggleMasterEditor && (
+                    <ToolbarButton onClick={onToggleMasterEditor} isActive={showMasterEditor} title="Modeles de diapositives">
+                        <LayoutTemplate className="w-4 h-4" />
+                    </ToolbarButton>
+                )}
+                {onAutoLayout && (
+                    <ToolbarButton onClick={onAutoLayout} title="Disposition automatique">
+                        <LayoutGrid className="w-4 h-4" />
+                    </ToolbarButton>
+                )}
+            </ToolbarGroup>
+
             {/* Actions Toolbar */}
             <ToolbarGroup className="ml-auto">
-
+                {onStartLivePresentation && (
+                    <ToolbarButton onClick={onStartLivePresentation} title="Presentation en direct">
+                        <MonitorPlay className="w-4 h-4" />
+                    </ToolbarButton>
+                )}
             </ToolbarGroup>
         </Toolbar>
     )
