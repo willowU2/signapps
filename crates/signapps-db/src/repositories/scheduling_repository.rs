@@ -137,14 +137,13 @@ impl<'a> TimeItemRepository<'a> {
         };
 
         let base_where = format!(
-            "t.tenant_id = $1 AND (t.owner_id = $2 OR tu.user_id = $2) AND t.deleted_at IS NULL{}",
+            "t.tenant_id = $1 AND (t.owner_id = $2 OR EXISTS (SELECT 1 FROM scheduling.time_item_users tu WHERE tu.time_item_id = t.id AND tu.user_id = $2)) AND t.deleted_at IS NULL{}",
             extra_where
         );
 
         // Count query
         let count_sql = format!(
-            "SELECT COUNT(DISTINCT t.id) FROM scheduling.time_items t \
-             LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id \
+            "SELECT COUNT(t.id) FROM scheduling.time_items t \
              WHERE {}",
             base_where
         );
@@ -167,8 +166,7 @@ impl<'a> TimeItemRepository<'a> {
 
         // Items query
         let items_sql = format!(
-            "SELECT DISTINCT t.* FROM scheduling.time_items t \
-             LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id \
+            "SELECT t.* FROM scheduling.time_items t \
              WHERE {} ORDER BY {} {} NULLS LAST LIMIT $3 OFFSET $4",
             base_where, sort_col, sort_dir
         );
@@ -240,11 +238,10 @@ impl<'a> TimeItemRepository<'a> {
         // We use ANY to check if owner is in the array, OR if user is in time_item_users array
         let items = sqlx::query_as::<_, TimeItem>(
             r#"
-            SELECT DISTINCT t.* FROM scheduling.time_items t
-            LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id
+            SELECT t.* FROM scheduling.time_items t
             WHERE t.tenant_id = $1
               AND t.deleted_at IS NULL
-              AND (t.owner_id = ANY($2) OR tu.user_id = ANY($2))
+              AND (t.owner_id = ANY($2) OR EXISTS (SELECT 1 FROM scheduling.time_item_users tu WHERE tu.time_item_id = t.id AND tu.user_id = ANY($2)))
               AND (
                   (t.start_time IS NOT NULL AND t.start_time < $4 AND (t.end_time IS NULL OR t.end_time > $3))
                   OR (t.start_time IS NULL AND t.deadline BETWEEN $3 AND $4)
@@ -266,10 +263,9 @@ impl<'a> TimeItemRepository<'a> {
     pub async fn list_unscheduled(&self, owner_id: Uuid) -> Result<Vec<TimeItem>> {
         let items = sqlx::query_as::<_, TimeItem>(
             r#"
-            SELECT DISTINCT t.* FROM scheduling.time_items t
-            LEFT JOIN scheduling.time_item_users tu ON t.id = tu.time_item_id
+            SELECT t.* FROM scheduling.time_items t
             WHERE t.deleted_at IS NULL
-              AND (t.owner_id = $1 OR tu.user_id = $1)
+              AND (t.owner_id = $1 OR EXISTS (SELECT 1 FROM scheduling.time_item_users tu WHERE tu.time_item_id = t.id AND tu.user_id = $1))
               AND t.start_time IS NULL
               AND t.item_type = 'task'
               AND t.status NOT IN ('done', 'cancelled')
