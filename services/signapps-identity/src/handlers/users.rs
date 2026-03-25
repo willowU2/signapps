@@ -14,6 +14,27 @@ use validator::Validate;
 
 use crate::AppState;
 
+/// Append a row to `platform.activities` — fire-and-forget, never fails the request.
+async fn log_user_activity(
+    pool: &sqlx::PgPool,
+    actor_id: Uuid,
+    action: &str,
+    user_id: Uuid,
+    username: &str,
+) {
+    let _ = sqlx::query(
+        r#"INSERT INTO platform.activities
+           (id, actor_id, action, entity_type, entity_id, entity_title, metadata, workspace_id)
+           VALUES (gen_uuid_v7(), $1, $2, 'user', $3, $4, '{}', NULL)"#,
+    )
+    .bind(actor_id)
+    .bind(action)
+    .bind(user_id)
+    .bind(username)
+    .execute(pool)
+    .await;
+}
+
 /// Query parameters for listing users.
 #[derive(Debug, Deserialize)]
 pub struct ListQuery {
@@ -253,6 +274,15 @@ pub async fn create(
 
     tracing::info!(user_id = %user.id, calendar_id = %calendar.id, "Admin created user and default calendar & tasks");
 
+    log_user_activity(
+        state.pool.inner(),
+        claims.sub,
+        "created",
+        user.id,
+        &user.username,
+    )
+    .await;
+
     Ok(Json(UserResponse::from(user)))
 }
 
@@ -261,6 +291,7 @@ pub async fn create(
 pub async fn update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<AdminUpdateUserRequest>,
 ) -> Result<Json<UserResponse>> {
     payload
@@ -299,12 +330,25 @@ pub async fn update(
 
     tracing::info!(user_id = %id, "Admin updated user");
 
+    log_user_activity(
+        state.pool.inner(),
+        claims.sub,
+        "updated",
+        user.id,
+        &user.username,
+    )
+    .await;
+
     Ok(Json(UserResponse::from(user)))
 }
 
 /// Delete user (admin only).
 #[tracing::instrument(skip(state))]
-pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Result<StatusCode> {
+pub async fn delete(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+) -> Result<StatusCode> {
     // Verify user exists
     let _existing = UserRepository::find_by_id(&state.pool, id)
         .await?
@@ -327,6 +371,8 @@ pub async fn delete(State(state): State<AppState>, Path(id): Path<Uuid>) -> Resu
     UserRepository::delete(&state.pool, id).await?;
 
     tracing::info!(user_id = %id, "Admin deleted user");
+
+    log_user_activity(state.pool.inner(), claims.sub, "deleted", id, "").await;
 
     Ok(StatusCode::NO_CONTENT)
 }

@@ -16,6 +16,27 @@ use crate::handlers::admin_security::ActiveSession;
 use crate::ldap::LdapService;
 use crate::AppState;
 
+/// Append a row to `platform.audit_log` — fire-and-forget, never fails the request.
+async fn audit_auth_event(
+    pool: &sqlx::PgPool,
+    actor_id: Option<Uuid>,
+    actor_ip: Option<&str>,
+    action: &str,
+    user_id: Uuid,
+) {
+    let _ = sqlx::query(
+        r#"INSERT INTO platform.audit_log
+           (id, actor_id, actor_ip, action, entity_type, entity_id, old_data, new_data, workspace_id)
+           VALUES (gen_uuid_v7(), $1, $2, $3, 'user', $4, NULL, NULL, NULL)"#,
+    )
+    .bind(actor_id)
+    .bind(actor_ip)
+    .bind(action)
+    .bind(user_id)
+    .execute(pool)
+    .await;
+}
+
 /// Login request payload.
 #[derive(Debug, Deserialize, Validate)]
 pub struct LoginRequest {
@@ -96,6 +117,14 @@ pub async fn login(
 
             if !verify_password(&payload.password, password_hash).await? {
                 tracing::warn!(username = %payload.username, "Invalid password attempt");
+                audit_auth_event(
+                    state.pool.inner(),
+                    Some(user.id),
+                    None,
+                    "login_failed",
+                    user.id,
+                )
+                .await;
                 return Err(Error::InvalidCredentials);
             }
         },
@@ -204,6 +233,15 @@ pub async fn login(
         .await;
 
     tracing::info!(user_id = %user.id, tenant_id = ?user.tenant_id, "User logged in successfully");
+
+    audit_auth_event(
+        state.pool.inner(),
+        Some(user.id),
+        None,
+        "login_success",
+        user.id,
+    )
+    .await;
 
     let access_cookie = format!(
         "access_token={}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age={}",
