@@ -20,6 +20,27 @@ use crate::handlers::signatures::{get_signature, upsert_signature};
 use crate::models::{Attachment, Email, MailAccount, MailFolder, MailLabel};
 use crate::AppState;
 
+/// Append a row to `platform.activities` — fire-and-forget, never fails the request.
+async fn log_mail_activity(
+    pool: &sqlx::PgPool,
+    actor_id: Uuid,
+    action: &str,
+    entity_id: Uuid,
+    entity_title: &str,
+) {
+    let _ = sqlx::query(
+        r#"INSERT INTO platform.activities
+           (id, actor_id, action, entity_type, entity_id, entity_title, metadata, workspace_id)
+           VALUES (gen_uuid_v7(), $1, $2, 'mail_message', $3, $4, '{}', NULL)"#,
+    )
+    .bind(actor_id)
+    .bind(action)
+    .bind(entity_id)
+    .bind(entity_title)
+    .execute(pool)
+    .await;
+}
+
 pub fn router() -> Router<AppState> {
     Router::new()
         // Accounts
@@ -703,6 +724,15 @@ async fn send_email(
         }
     }
 
+    log_mail_activity(
+        &state.pool,
+        claims.sub,
+        "sent",
+        email.id,
+        email.subject.as_deref().unwrap_or(""),
+    )
+    .await;
+
     (StatusCode::CREATED, Json(email)).into_response()
 }
 
@@ -848,7 +878,10 @@ async fn delete_email(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => StatusCode::NO_CONTENT.into_response(),
+        Ok(r) if r.rows_affected() > 0 => {
+            log_mail_activity(&state.pool, claims.sub, "deleted", id, "").await;
+            StatusCode::NO_CONTENT.into_response()
+        },
         Ok(_) => (StatusCode::NOT_FOUND, "Email not found").into_response(),
         Err(e) => {
             tracing::error!("Failed to delete email: {:?}", e);
