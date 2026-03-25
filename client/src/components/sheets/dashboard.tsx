@@ -23,7 +23,7 @@ export default function SheetsDashboard() {
 
     // Modal State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [newDocName, setNewDocName] = useState('Feuille sans titre');
+    const [newDocName, setNewDocName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
 
     const { selectedWorkspaceId } = useEntityStore();
@@ -83,7 +83,7 @@ export default function SheetsDashboard() {
     };
 
     const openCreateModal = () => {
-        setNewDocName('Feuille sans titre');
+        setNewDocName('');
         setIsCreateOpen(true);
     };
 

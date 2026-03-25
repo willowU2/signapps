@@ -24,7 +24,7 @@ export default function DocsDashboard() {
     
     // Modal State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [newDocName, setNewDocName] = useState('Document sans titre');
+    const [newDocName, setNewDocName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
 
     const { selectedWorkspaceId } = useEntityStore();
@@ -107,7 +107,7 @@ export default function DocsDashboard() {
     };
 
     const openCreateModal = () => {
-        setNewDocName('Document sans titre');
+        setNewDocName('');
         setIsCreateOpen(true);
     };
 

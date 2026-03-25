@@ -22,7 +22,7 @@ export default function SlidesDashboard() {
 
     // Modal State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [newDocName, setNewDocName] = useState('Présentation sans titre');
+    const [newDocName, setNewDocName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
 
     const { selectedWorkspaceId } = useEntityStore();
@@ -83,7 +83,7 @@ export default function SlidesDashboard() {
     };
 
     const openCreateModal = () => {
-        setNewDocName('Présentation sans titre');
+        setNewDocName('');
         setIsCreateOpen(true);
     };
 
