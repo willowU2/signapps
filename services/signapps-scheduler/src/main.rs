@@ -203,7 +203,7 @@ fn create_router(state: AppState) -> Router {
             axum::http::header::CONTENT_TYPE,
             axum::http::header::AUTHORIZATION,
             axum::http::header::ACCEPT,
-            axum::http::header::ORIGIN,
+            axum::http::header::ORIGIN, axum::http::HeaderName::from_static("x-workspace-id"), axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
     // Job routes (admin only)

@@ -98,7 +98,7 @@ async fn main() {
                     axum::http::header::CONTENT_TYPE,
                     axum::http::header::AUTHORIZATION,
                     axum::http::header::ACCEPT,
-                    axum::http::header::ORIGIN,
+                    axum::http::header::ORIGIN, axum::http::HeaderName::from_static("x-workspace-id"), axum::http::HeaderName::from_static("x-request-id"),
                 ]),
         )
         .layer(TraceLayer::new_for_http())
