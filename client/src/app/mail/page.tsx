@@ -104,8 +104,9 @@ export default function MailPage() {
                 }))
                 void uiAccounts // Available for future use
 
-                // Fetch emails from inbox
-                const emails = await mailApi.list({ folder_type: 'inbox', limit: 50 })
+                // Fetch emails from inbox — initial batch; MailList handles
+                // virtual pagination via IntersectionObserver infinite scroll.
+                const emails = await mailApi.list({ folder_type: 'inbox', limit: 200 })
                 const uiMails: Mail[] = emails.map(email => ({
                     id: email.id,
                     name: email.sender_name || email.sender.split('@')[0],

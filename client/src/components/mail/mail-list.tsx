@@ -1,9 +1,8 @@
-import { ComponentProps } from "react"
+import { ComponentProps, useRef, useState, useEffect, useCallback } from "react"
 import { formatDistanceToNow } from "date-fns"
 
 import { cn } from "@/lib/utils"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Archive, Clock, Trash2, Square, Star } from "lucide-react"
+import { Archive, Clock, Trash2, Square, Star, Loader2 } from "lucide-react"
 import { Mail } from "@/lib/data/mail"
 import {
     DropdownMenu,
@@ -13,9 +12,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 // Avatars removed for Gmail layout
-// import { useMail } from "@/app/mail/use-mail"
 
-interface MailListProps {
+const PAGE_SIZE = 20
+
+interface MailListProps extends ComponentProps<"div"> {
     items: Mail[]
     selectedId: string | null
     onSelect: (id: string) => void
@@ -25,6 +25,42 @@ interface MailListProps {
 }
 
 export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onDelete }: MailListProps) {
+    const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+    const sentinelRef = useRef<HTMLDivElement | null>(null)
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+
+    const visibleItems = items.slice(0, visibleCount)
+    const hasMore = visibleCount < items.length
+
+    // Reset visible count when items list changes (e.g. folder switch, search)
+    useEffect(() => {
+        setVisibleCount(PAGE_SIZE)
+    }, [items])
+
+    // IntersectionObserver: load next page when sentinel enters viewport
+    const handleIntersect = useCallback(
+        (entries: IntersectionObserverEntry[]) => {
+            const entry = entries[0]
+            if (entry?.isIntersecting && hasMore) {
+                setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, items.length))
+            }
+        },
+        [hasMore, items.length]
+    )
+
+    useEffect(() => {
+        const sentinel = sentinelRef.current
+        if (!sentinel) return
+
+        const observer = new IntersectionObserver(handleIntersect, {
+            root: scrollContainerRef.current,
+            rootMargin: "0px 0px 200px 0px",
+            threshold: 0,
+        })
+        observer.observe(sentinel)
+        return () => observer.disconnect()
+    }, [handleIntersect])
+
     return (
         <div className="flex flex-col h-full bg-background/50">
             <div className="px-4 py-3 border-b flex-shrink-0">
@@ -43,9 +79,13 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
                 </Tabs>
             </div>
 
-            <ScrollArea className="flex-1">
+            {/* Scrollable email list */}
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto"
+            >
                 <div className="flex flex-col">
-                    {items.map((item) => (
+                    {visibleItems.map((item) => (
                         <button
                             key={item.id}
                             className={cn(
@@ -121,8 +161,19 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
                             </div>
                         </button>
                     ))}
+
+                    {/* Infinite scroll sentinel */}
+                    <div ref={sentinelRef} aria-hidden="true" />
+
+                    {/* Loading indicator shown while next page is being revealed */}
+                    {hasMore && (
+                        <div className="flex items-center justify-center py-4 text-muted-foreground">
+                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                            <span className="text-sm">Chargement…</span>
+                        </div>
+                    )}
                 </div>
-            </ScrollArea>
+            </div>
         </div>
     )
 }
