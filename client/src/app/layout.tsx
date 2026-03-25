@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@/styles/print.css";
 import { Providers } from "@/components/providers";
 import { ContextAssistant } from "@/components/ai/context-assistant";
 import ClickSpark from "@/components/ui/click-spark";

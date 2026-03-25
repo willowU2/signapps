@@ -1,0 +1,17 @@
+@media print {
+  /* Hide non-content elements */
+  nav, .sidebar, header, footer,
+  button, .toast, .dialog-overlay,
+  [data-no-print] { display: none !important; }
+
+  /* Reset layout */
+  main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+
+  /* Typography */
+  body { font-size: 12pt; color: black; background: white; }
+  a { text-decoration: underline; color: black; }
+
+  /* Page breaks */
+  h1, h2, h3 { page-break-after: avoid; }
+  table, figure { page-break-inside: avoid; }
+}
