@@ -37,6 +37,7 @@ import {
     BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import Link from 'next/link';
+import { WorkspaceSwitcher } from '@/components/layout/workspace-switcher';
 
 export function GlobalHeader() {
     const { user, logout } = useAuthStore();
@@ -176,27 +177,44 @@ export function GlobalHeader() {
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
             <div className="flex items-center gap-4">
-                {/* Left Sidebar Toggle */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleSidebar}
-                    className={`transition-colors lg:hidden ${mounted && !sidebarCollapsed ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
-                    title="Toggle Left Menu"
-                >
-                    <PanelLeft className="h-5 w-5" />
-                </Button>
+                {/* Left Sidebar Toggle — mobile */}
+                <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={toggleSidebar}
+                            className={`transition-colors lg:hidden ${mounted && !sidebarCollapsed ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
+                        >
+                            <PanelLeft className="h-5 w-5" />
+                            <span className="sr-only">Basculer le menu latéral</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Basculer le menu latéral</TooltipContent>
+                </Tooltip>
+                </TooltipProvider>
 
-                {/* Desktop Toggle (Always visible if we want the Editor behavior, but standard layout has it hidden on lg) */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleSidebar}
-                    className={`transition-colors hidden lg:flex ${mounted && !sidebarCollapsed ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
-                    title="Toggle Left Menu"
-                >
-                    <PanelLeft className="h-5 w-5" />
-                </Button>
+                {/* Desktop Toggle */}
+                <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={toggleSidebar}
+                            className={`transition-colors hidden lg:flex ${mounted && !sidebarCollapsed ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
+                        >
+                            <PanelLeft className="h-5 w-5" />
+                            <span className="sr-only">Basculer le menu latéral</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Basculer le menu latéral</TooltipContent>
+                </Tooltip>
+                </TooltipProvider>
+
+                        {/* AQ-SHWK: Workspace switcher */}
+                <WorkspaceSwitcher />
 
                 {/* Contextual App Metadata Area */}
                 <div className="flex items-center gap-3 ml-2">
@@ -251,9 +269,17 @@ export function GlobalHeader() {
                                 </span>
                                 <span>•</span>
                                 <span className="cursor-pointer hover:text-foreground transition-colors">My Drive</span>
-                                <Button variant="ghost" size="icon" className="h-4 w-4 ml-1">
-                                    <History className="h-3 w-3" />
-                                </Button>
+                                <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-4 w-4 ml-1">
+                                            <History className="h-3 w-3" />
+                                            <span className="sr-only">Historique</span>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">Historique des versions</TooltipContent>
+                                </Tooltip>
+                                </TooltipProvider>
                             </div>
                         )}
                     </div>
@@ -288,15 +314,22 @@ export function GlobalHeader() {
 
                 {/* Right Sidebar Toggle */}
                 {showDocActions && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={toggleRightSidebar}
-                        className={`transition-colors mr-2 ${mounted && rightSidebarOpen ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
-                        title="Toggle Right Menu"
-                    >
-                        <PanelRight className="h-5 w-5" />
-                    </Button>
+                    <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={toggleRightSidebar}
+                                className={`transition-colors mr-2 ${mounted && rightSidebarOpen ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`}
+                            >
+                                <PanelRight className="h-5 w-5" />
+                                <span className="sr-only">Basculer le panneau droit</span>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">Basculer le panneau droit</TooltipContent>
+                    </Tooltip>
+                    </TooltipProvider>
                 )}
 
                 {/* Connected Workspace Users */}

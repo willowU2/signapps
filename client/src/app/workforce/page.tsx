@@ -8,6 +8,7 @@
  */
 
 import * as React from 'react';
+import { AppLayout } from '@/components/layout/app-layout';
 import { useQuery } from '@tanstack/react-query';
 import {
   Building2,
@@ -128,6 +129,7 @@ export default function WorkforcePage() {
   };
 
   return (
+    <AppLayout>
     <div className="flex h-full flex-col">
       {/* Header */}
       <header className="border-b bg-background px-6 py-4">
@@ -432,5 +434,6 @@ export default function WorkforcePage() {
         defaultOrgNodeId={selectedNode?.id}
       />
     </div>
+    </AppLayout>
   );
 }

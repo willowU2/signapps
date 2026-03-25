@@ -109,6 +109,48 @@ const quickActions = [
     keywords: ["tâche", "todo", "créer"],
   },
   {
+    id: "new-doc",
+    name: "Créer un document",
+    description: "Nouveau document texte collaboratif",
+    icon: FileText,
+    keywords: ["document", "doc", "créer", "nouveau", "texte"],
+  },
+  {
+    id: "new-sheet",
+    name: "Créer un tableur",
+    description: "Nouveau tableur collaboratif",
+    icon: Table2,
+    keywords: ["tableur", "sheet", "excel", "créer", "nouveau"],
+  },
+  {
+    id: "new-slide",
+    name: "Créer une présentation",
+    description: "Nouveau diaporama collaboratif",
+    icon: Presentation,
+    keywords: ["présentation", "slide", "powerpoint", "créer", "nouveau"],
+  },
+  {
+    id: "compose-email",
+    name: "Composer un email",
+    description: "Rédiger et envoyer un email",
+    icon: Mail,
+    keywords: ["email", "mail", "envoyer", "message", "compose"],
+  },
+  {
+    id: "new-contact",
+    name: "Nouveau contact",
+    description: "Ajouter un contact",
+    icon: Contact,
+    keywords: ["contact", "personne", "carnet", "créer", "nouveau"],
+  },
+  {
+    id: "new-event",
+    name: "Nouvel événement",
+    description: "Créer un événement dans le calendrier",
+    icon: Calendar,
+    keywords: ["événement", "event", "calendrier", "réunion", "créer"],
+  },
+  {
     id: "ai-chat",
     name: "Discuter avec l'IA",
     description: "Démarrer une conversation",
@@ -414,6 +456,24 @@ export function OmniSearch() {
         break;
       case "new-task":
         router.push("/tasks?action=new");
+        break;
+      case "new-doc":
+        router.push("/docs?action=new&type=doc");
+        break;
+      case "new-sheet":
+        router.push("/docs?action=new&type=sheet");
+        break;
+      case "new-slide":
+        router.push("/docs?action=new&type=slide");
+        break;
+      case "compose-email":
+        router.push("/mail?action=compose");
+        break;
+      case "new-contact":
+        router.push("/contacts?action=new");
+        break;
+      case "new-event":
+        router.push("/cal?action=new");
         break;
       case "ai-chat":
         router.push("/chat");

@@ -48,6 +48,7 @@ import {
   Legend,
 } from 'recharts';
 import { useQueryClient } from '@tanstack/react-query';
+import { AnomalyAlertPanel } from '@/components/monitoring/anomaly-alert-panel';
 import { AlertConfig, AlertSeverity } from '@/lib/api';
 import { AlertConfigDialog } from '@/components/monitoring/alert-config-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -243,6 +244,9 @@ export default function MonitoringPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        {/* AQ-AIAD: AI Anomaly Detection Panel */}
+        <AnomalyAlertPanel />
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

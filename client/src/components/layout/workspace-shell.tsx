@@ -25,10 +25,11 @@ export function WorkspaceShell({
     const { sidebarCollapsed, rightSidebarOpen } = useUIStore()
 
     return (
+        // AQ-MOBI: no left padding on mobile (sidebar is hidden), lg+ uses sidebar width
         <div className={cn(
             "h-screen w-screen flex flex-col overflow-hidden transition-all duration-300",
             sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-60',
-            rightSidebarOpen ? 'pr-[24rem]' : 'pr-16',
+            rightSidebarOpen ? 'lg:pr-[24rem]' : 'lg:pr-16',
             className
         )}>
             {/* Global Workspace Header Area */}

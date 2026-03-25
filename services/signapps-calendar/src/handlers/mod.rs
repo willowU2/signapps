@@ -1,5 +1,6 @@
 //! Calendar service request handlers.
 
+pub mod caldav;
 pub mod calendars;
 pub mod events;
 pub mod external_sync;

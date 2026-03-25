@@ -94,10 +94,10 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use axum::routing::{delete, post, put};
+    use axum::routing::{any, delete, post, put};
     use handlers::{
-        calendars, events, external_sync, floor_plans, icalendar, notifications, push, recurrence,
-        resources, shares, tasks, timezones, websocket,
+        caldav, calendars, events, external_sync, floor_plans, icalendar, notifications, push,
+        recurrence, resources, shares, tasks, timezones, websocket,
     };
 
     // Public routes (no auth required)
@@ -107,7 +107,12 @@ fn build_router(state: AppState) -> Router {
             "/api/v1/notifications/push/vapid-key",
             get(push::get_vapid_key),
         )
-        .route("/api/v1/timezones", get(timezones::list_timezones));
+        .route("/api/v1/timezones", get(timezones::list_timezones))
+        // AQ-CALSYNC: CalDAV well-known discovery (public — client redirects to auth)
+        .route(
+            "/.well-known/caldav",
+            any(caldav::options_handler),
+        );
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
@@ -213,6 +218,11 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/external-sync/configs/:config_id/conflicts", get(external_sync::list_conflicts))
         .route("/api/v1/external-sync/configs/:config_id/conflicts/:conflict_id", put(external_sync::resolve_conflict))
         .route("/api/v1/external-sync/configs/:config_id/conflicts/resolve-all", post(external_sync::resolve_all_conflicts))
+        // AQ-CALSYNC: CalDAV RFC 4791 endpoints
+        .route("/caldav/principals/:user_id", any(caldav::propfind_principal))
+        .route("/caldav/calendars/:calendar_id", any(caldav::propfind_calendar))
+        .route("/caldav/calendars/:calendar_id/report", post(caldav::report_calendar))
+        .route("/caldav/calendars/:calendar_id/events/:event_id.ics", get(caldav::get_event_ics))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

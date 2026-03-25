@@ -1,7 +1,9 @@
 /// <reference lib="webworker" />
+// AQ-OFFLN: Offline-first service worker with background sync
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import {
+  BackgroundSyncPlugin,
   CacheFirst,
   NetworkFirst,
   Serwist,
@@ -17,13 +19,33 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+// Background sync queue for offline mutations (POST/PUT/PATCH/DELETE)
+const bgSyncPlugin = new BackgroundSyncPlugin("offline-mutations", {
+  maxRetentionTime: 24 * 60, // Retry for up to 24 hours (in minutes)
+});
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
-    // API calls: network-first with cache fallback
+    // AQ-OFFLN: Mutation requests use NetworkOnly + BackgroundSync so they
+    // are replayed automatically when connectivity is restored.
+    {
+      matcher: ({ request, url }) =>
+        url.pathname.startsWith("/api/") &&
+        ["POST", "PUT", "PATCH", "DELETE"].includes(request.method),
+      handler: new NetworkFirst({
+        cacheName: "api-mutations",
+        plugins: [
+          bgSyncPlugin,
+          new ExpirationPlugin({ maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 }),
+        ],
+        networkTimeoutSeconds: 10,
+      }),
+    },
+    // API reads: network-first with cache fallback
     {
       matcher: ({ url }) => url.pathname.startsWith("/api/"),
       handler: new NetworkFirst({

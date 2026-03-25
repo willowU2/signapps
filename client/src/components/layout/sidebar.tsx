@@ -223,11 +223,13 @@ export function Sidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
+      {/* AQ-MOBI: hidden on mobile — shown as lg:flex on large screens */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-white/10 dark:border-white/5 bg-sidebar/80 backdrop-blur-2xl shadow-glass transition-all duration-300',
+          'fixed left-0 top-0 z-40 hidden lg:flex h-screen flex-col border-r border-white/10 dark:border-white/5 bg-sidebar/80 backdrop-blur-2xl shadow-glass transition-all duration-300',
           isCollapsed ? 'w-16' : 'w-60'
         )}
+        aria-label="Navigation principale"
       >
         {/* Logo and Workspace Switcher */}
         <div className="flex flex-col border-b p-3 shrink-0">

@@ -1,5 +1,5 @@
 //! SignApps Billing Service
-//! Plans and invoices management
+//! Plans, invoices, line items and payments management — AQ-BILLDB
 
 use axum::{
     extract::{Path, State},
@@ -51,6 +51,30 @@ pub struct Invoice {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct LineItem {
+    pub id: Uuid,
+    pub invoice_id: Uuid,
+    pub description: String,
+    pub quantity: i32,
+    pub unit_price_cents: i32,
+    pub total_cents: i32,
+    pub sort_order: i32,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct Payment {
+    pub id: Uuid,
+    pub invoice_id: Uuid,
+    pub amount_cents: i32,
+    pub currency: String,
+    pub method: String,
+    pub reference: Option<String>,
+    pub paid_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
+}
+
 // ---------------------------------------------------------------------------
 // Request DTOs
 // ---------------------------------------------------------------------------
@@ -64,6 +88,23 @@ pub struct CreateInvoiceRequest {
     pub currency: Option<String>,
     pub due_at: Option<DateTime<Utc>>,
     pub metadata: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateLineItemRequest {
+    pub description: String,
+    pub quantity: Option<i32>,
+    pub unit_price_cents: i32,
+    pub sort_order: Option<i32>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreatePaymentRequest {
+    pub amount_cents: i32,
+    pub currency: Option<String>,
+    pub method: Option<String>,
+    pub reference: Option<String>,
+    pub paid_at: Option<DateTime<Utc>>,
 }
 
 // ---------------------------------------------------------------------------
@@ -83,7 +124,7 @@ impl AuthState for AppState {
 }
 
 // ---------------------------------------------------------------------------
-// Handlers
+// Invoice handlers
 // ---------------------------------------------------------------------------
 
 async fn list_invoices(
@@ -164,6 +205,114 @@ async fn list_plans(
     Ok(Json(plans))
 }
 
+// ---------------------------------------------------------------------------
+// Line item handlers — AQ-BILLDB
+// ---------------------------------------------------------------------------
+
+async fn list_line_items(
+    State(state): State<AppState>,
+    Path(invoice_id): Path<Uuid>,
+) -> Result<Json<Vec<LineItem>>, (StatusCode, String)> {
+    let items = sqlx::query_as::<_, LineItem>(
+        "SELECT * FROM billing.line_items WHERE invoice_id = $1 ORDER BY sort_order, created_at",
+    )
+    .bind(invoice_id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(Json(items))
+}
+
+async fn create_line_item(
+    State(state): State<AppState>,
+    Path(invoice_id): Path<Uuid>,
+    Json(payload): Json<CreateLineItemRequest>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let qty = payload.quantity.unwrap_or(1);
+    let total = qty * payload.unit_price_cents;
+    let item = sqlx::query_as::<_, LineItem>(
+        r#"INSERT INTO billing.line_items (invoice_id, description, quantity, unit_price_cents, total_cents, sort_order)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING *"#,
+    )
+    .bind(invoice_id)
+    .bind(&payload.description)
+    .bind(qty)
+    .bind(payload.unit_price_cents)
+    .bind(total)
+    .bind(payload.sort_order.unwrap_or(0))
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok((StatusCode::CREATED, Json(item)))
+}
+
+async fn delete_line_item(
+    State(state): State<AppState>,
+    Path((_invoice_id, item_id)): Path<(Uuid, Uuid)>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let r = sqlx::query("DELETE FROM billing.line_items WHERE id = $1")
+        .bind(item_id)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    if r.rows_affected() == 0 {
+        return Err((StatusCode::NOT_FOUND, "Line item not found".to_string()));
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+// ---------------------------------------------------------------------------
+// Payment handlers — AQ-BILLDB
+// ---------------------------------------------------------------------------
+
+async fn list_payments(
+    State(state): State<AppState>,
+    Path(invoice_id): Path<Uuid>,
+) -> Result<Json<Vec<Payment>>, (StatusCode, String)> {
+    let payments = sqlx::query_as::<_, Payment>(
+        "SELECT * FROM billing.payments WHERE invoice_id = $1 ORDER BY paid_at DESC",
+    )
+    .bind(invoice_id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(Json(payments))
+}
+
+async fn create_payment(
+    State(state): State<AppState>,
+    Path(invoice_id): Path<Uuid>,
+    Json(payload): Json<CreatePaymentRequest>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let payment = sqlx::query_as::<_, Payment>(
+        r#"INSERT INTO billing.payments (invoice_id, amount_cents, currency, method, reference, paid_at)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING *"#,
+    )
+    .bind(invoice_id)
+    .bind(payload.amount_cents)
+    .bind(payload.currency.as_deref().unwrap_or("EUR"))
+    .bind(payload.method.as_deref().unwrap_or("bank_transfer"))
+    .bind(&payload.reference)
+    .bind(payload.paid_at.unwrap_or_else(Utc::now))
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    // Auto-mark invoice as paid when fully covered
+    let _ = sqlx::query(
+        r#"UPDATE billing.invoices
+           SET status = 'paid', paid_at = NOW()
+           WHERE id = $1 AND amount_cents <= (
+               SELECT COALESCE(SUM(amount_cents), 0) FROM billing.payments WHERE invoice_id = $1
+           ) AND status != 'paid'"#,
+    )
+    .bind(invoice_id)
+    .execute(&state.pool)
+    .await;
+
+    Ok((StatusCode::CREATED, Json(payment)))
+}
+
 async fn health() -> impl IntoResponse {
     Json(serde_json::json!({ "status": "ok" }))
 }
@@ -203,6 +352,20 @@ fn create_router(state: AppState) -> Router {
     let protected_routes = Router::new()
         .route("/api/invoices", get(list_invoices).post(create_invoice))
         .route("/api/invoices/:id", get(get_invoice))
+        // Line items — AQ-BILLDB
+        .route(
+            "/api/invoices/:id/line-items",
+            get(list_line_items).post(create_line_item),
+        )
+        .route(
+            "/api/invoices/:id/line-items/:item_id",
+            axum::routing::delete(delete_line_item),
+        )
+        // Payments — AQ-BILLDB
+        .route(
+            "/api/invoices/:id/payments",
+            get(list_payments).post(create_payment),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

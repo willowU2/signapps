@@ -9,15 +9,18 @@ import { Play, Copy, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SERVICES = [
-  { name: 'identity', port: 3010, prefix: '/api/v1' },
-  { name: 'storage', port: 3011, prefix: '/api/v1' },
+  { name: 'identity', port: 3001, prefix: '/api/v1' },
+  { name: 'containers', port: 3002, prefix: '/api/v1' },
+  { name: 'proxy', port: 3003, prefix: '/api/v1' },
+  { name: 'storage', port: 3004, prefix: '/api/v1' },
+  { name: 'ai', port: 3005, prefix: '/api/v1' },
+  { name: 'scheduler', port: 3007, prefix: '/api/v1' },
+  { name: 'metrics', port: 3008, prefix: '/api/v1' },
   { name: 'mail', port: 3012, prefix: '/api/v1' },
+  { name: 'calendar', port: 3011, prefix: '/api/v1' },
   { name: 'collab', port: 3013, prefix: '/api/v1' },
-  { name: 'calendar', port: 3014, prefix: '/api/v1' },
-  { name: 'contacts', port: 3015, prefix: '/api/v1' },
-  { name: 'scheduler', port: 3016, prefix: '/api/v1' },
-  { name: 'ai', port: 3017, prefix: '/api/v1' },
-  { name: 'metrics', port: 3018, prefix: '/api/v1' },
+  { name: 'contacts', port: 3021, prefix: '/api/v1' },
+  { name: 'office', port: 3018, prefix: '/api/v1' },
 ];
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;

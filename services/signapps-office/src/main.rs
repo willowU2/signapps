@@ -35,7 +35,7 @@ async fn main() {
     load_env();
 
     let port: u16 = env_or("SERVER_PORT", "3018").parse().unwrap_or(3018);
-    tracing::info!("🚀 Starting signapps-office on port {}", port);
+    tracing::info!("Starting signapps-office on port {}", port);
 
     // Create shared state
     let state = AppState {
@@ -99,6 +99,24 @@ async fn main() {
         .route("/api/v1/presentation/export/all/svg", post(handlers::presentation::export_all_slides_svg))
 
         // ═══════════════════════════════════════════════════════════════════════
+        // DATA IMPORT — AQ-DATAIMP: CSV/JSON/vCard/iCal universal import
+        // ═══════════════════════════════════════════════════════════════════════
+        .route("/api/v1/data/import/info", get(handlers::data_import::import_info))
+        .route("/api/v1/data/import", post(handlers::data_import::import_data))
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // DATA EXPORT — AQ-DATAEXP: CSV/JSON/XLSX/PDF universal export
+        // ═══════════════════════════════════════════════════════════════════════
+        .route("/api/v1/data/export/info", get(handlers::data_export::export_info))
+        .route("/api/v1/data/export", post(handlers::data_export::export_data))
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // REPORTS — AQ-RPGEN: PDF activity/users/storage reports
+        // ═══════════════════════════════════════════════════════════════════════
+        .route("/api/v1/reports/info", get(handlers::report::report_info))
+        .route("/api/v1/reports/generate", post(handlers::report::generate_report))
+
+        // ═══════════════════════════════════════════════════════════════════════
         // ASYNC JOB QUEUE ROUTES - MT-02: heavy document exports
         // ═══════════════════════════════════════════════════════════════════════
         .route("/api/v1/office/jobs/convert", post(handlers::jobs::submit_convert_job))
@@ -112,35 +130,9 @@ async fn main() {
     // Start server
     let addr: std::net::SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    tracing::info!("✅ signapps-office ready at http://localhost:{}", port);
-    tracing::info!("📚 API endpoints:");
-    tracing::info!("   - GET  /api/v1/convert/info");
-    tracing::info!("   - POST /api/v1/convert");
-    tracing::info!("   - POST /api/v1/convert/upload");
-    tracing::info!("   - POST /api/v1/convert/batch");
-    tracing::info!("   - GET  /api/v1/import/info");
-    tracing::info!("   - POST /api/v1/import");
-    tracing::info!("   - POST /api/v1/import/upload");
-    tracing::info!("   - GET  /api/v1/spreadsheet/info");
-    tracing::info!("   - POST /api/v1/spreadsheet/export");
-    tracing::info!("   - POST /api/v1/spreadsheet/export/csv");
-    tracing::info!("   - POST /api/v1/spreadsheet/export/ods");
-    tracing::info!("   - POST /api/v1/spreadsheet/import");
-    tracing::info!("   - POST /api/v1/spreadsheet/import/csv");
-    tracing::info!("   - GET  /api/v1/pdf/info");
-    tracing::info!("   - POST /api/v1/pdf/extract-text");
-    tracing::info!("   - POST /api/v1/pdf/document-info");
-    tracing::info!("   - POST /api/v1/pdf/pages");
-    tracing::info!("   - POST /api/v1/pdf/merge");
-    tracing::info!("   - POST /api/v1/pdf/split");
-    tracing::info!("   - GET  /api/v1/presentation/info");
-    tracing::info!("   - POST /api/v1/presentation/export/pptx");
-    tracing::info!("   - POST /api/v1/presentation/export/pdf");
-    tracing::info!("   - POST /api/v1/presentation/export/png");
-    tracing::info!("   - POST /api/v1/presentation/export/svg");
-    tracing::info!("   - POST /api/v1/presentation/export/all/png");
-    tracing::info!("   - POST /api/v1/presentation/export/all/svg");
-    tracing::info!("   - POST /api/v1/office/jobs/convert  [async queue]");
-    tracing::info!("   - GET  /api/v1/office/jobs/:id      [job status]");
-    axum::serve(listener, app).await.unwrap();
+    tracing::info!("signapps-office ready at http://localhost:{}", port);
+    axum::serve(listener, app)
+        .with_graceful_shutdown(signapps_common::graceful_shutdown())
+        .await
+        .unwrap();
 }

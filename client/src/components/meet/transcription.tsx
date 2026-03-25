@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { aiApi } from '@/lib/api';
+import { getClient, ServiceName } from '@/lib/api/factory';
 
 interface TranscriptSegment {
   id: string;
@@ -29,38 +30,17 @@ interface TranscriptionProps {
   autoStart?: boolean;
   /** Callback when transcript updates */
   onTranscriptUpdate?: (fullText: string) => void;
+  /**
+   * AQ-AITR: Use whisper-rs backend for server-side transcription.
+   * When true, records audio in chunks and sends to /api/v1/transcribe.
+   * Falls back to Web Speech API when false (default).
+   */
+  useWhisperBackend?: boolean;
 }
 
-// Type definitions for Web Speech API
-interface SpeechRecognitionEvent extends Event {
-  resultIndex: number;
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionResult {
-  isFinal: boolean;
-  length: number;
-  item(index: number): SpeechRecognitionAlternative;
-  [index: number]: SpeechRecognitionAlternative;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-  message: string;
-}
-
-interface SpeechRecognition extends EventTarget {
+// Web Speech API — local interface definitions (webkit prefix not in TS DOM lib)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SpeechRecognitionInstance = {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
@@ -68,22 +48,20 @@ interface SpeechRecognition extends EventTarget {
   start(): void;
   stop(): void;
   abort(): void;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onresult: ((event: SpeechRecognitionEventLocal) => void) | null;
+  onerror: ((event: { error: string; message: string }) => void) | null;
   onend: (() => void) | null;
   onstart: (() => void) | null;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
+};
+type SpeechRecognitionEventLocal = {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+};
 
 export function Transcription({
   autoStart = false,
   onTranscriptUpdate,
+  useWhisperBackend = false,
 }: TranscriptionProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -95,7 +73,9 @@ export function Transcription({
   const [copied, setCopied] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -140,7 +120,85 @@ export function Transcription({
     }
   }, [segments, onTranscriptUpdate, getFullTranscript]);
 
+  // AQ-AITR: Whisper backend recording — sends audio chunks to signapps-ai /transcribe
+  const startWhisperRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error('Microphone access not supported');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      audioChunksRef.current = [];
+      let segmentStart = Date.now();
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        audioChunksRef.current = [];
+        if (blob.size < 1000) return; // skip silent/empty chunks
+
+        const formData = new FormData();
+        formData.append('audio', blob, 'audio.webm');
+        formData.append('language', navigator.language?.split('-')[0] ?? 'fr');
+
+        try {
+          const aiClient = getClient(ServiceName.AI);
+          const res = await aiClient.post<{ text: string }>('/transcribe', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          const text = res.data?.text?.trim();
+          if (text) {
+            const seg: TranscriptSegment = {
+              id: `seg_whisper_${Date.now()}`,
+              text,
+              timestamp: segmentStart - (startTime || segmentStart),
+              isFinal: true,
+            };
+            setSegments((prev) => [...prev, seg]);
+            segmentStart = Date.now();
+          }
+        } catch {
+          // Silently skip failed chunk
+        }
+      };
+
+      recorder.start();
+      // Flush a chunk every 8 seconds
+      const interval = setInterval(() => {
+        if (recorder.state === 'recording') {
+          recorder.stop();
+          recorder.start();
+        } else {
+          clearInterval(interval);
+        }
+      }, 8000);
+
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      if (!startTime) setStartTime(Date.now());
+    } catch {
+      toast.error('Failed to access microphone');
+    }
+  };
+
+  const stopWhisperRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
+      mediaRecorderRef.current = null;
+    }
+    setIsRecording(false);
+  };
+
   const startRecording = () => {
+    if (useWhisperBackend) {
+      startWhisperRecording();
+      return;
+    }
     const SpeechRecognitionAPI =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognitionAPI) {
@@ -148,7 +206,7 @@ export function Transcription({
       return;
     }
 
-    const recognition = new SpeechRecognitionAPI();
+    const recognition = new SpeechRecognitionAPI() as unknown as SpeechRecognitionInstance;
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = navigator.language || 'en-US';
@@ -162,7 +220,7 @@ export function Transcription({
       }
     };
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: SpeechRecognitionEventLocal) => {
       let interim = '';
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -188,7 +246,7 @@ export function Transcription({
       }
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: { error: string; message: string }) => {
       if (event.error === 'no-speech') {
         // Silence is fine, just continue
         return;
@@ -221,6 +279,10 @@ export function Transcription({
   };
 
   const stopRecording = () => {
+    if (useWhisperBackend) {
+      stopWhisperRecording();
+      return;
+    }
     if (recognitionRef.current) {
       setIsRecording(false);
       setIsPaused(false);

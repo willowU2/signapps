@@ -1,6 +1,4 @@
-use crate::models::{
-    CreateForm, Form, FormResponse, SubmitResponse, UpdateForm,
-};
+use crate::models::{CreateForm, Form, FormResponse, SubmitResponse, UpdateForm};
 use signapps_common::{Error, Result};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -50,7 +48,7 @@ impl FormRepository {
         .map_err(|e| Error::Database(e.to_string()))?;
         Ok(forms)
     }
-    
+
     pub async fn list_all(pool: &PgPool) -> Result<Vec<Form>> {
         let forms = sqlx::query_as::<_, Form>("SELECT * FROM forms.forms ORDER BY created_at DESC")
             .fetch_all(pool)

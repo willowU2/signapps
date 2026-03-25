@@ -18,6 +18,9 @@ use uuid::Uuid;
 use crate::handlers::rules::{create_rule, delete_rule, get_rule, list_rules, update_rule};
 use crate::handlers::signatures::{get_signature, upsert_signature};
 use crate::handlers::spam::{classify_email, get_spam_settings, train_spam, update_spam_settings};
+use crate::handlers::templates::{
+    create_template, delete_template, get_template, list_templates, update_template,
+};
 use crate::models::{Attachment, Email, MailAccount, MailFolder, MailLabel};
 use crate::AppState;
 
@@ -85,6 +88,15 @@ pub fn router() -> Router<AppState> {
         .route(
             "/api/v1/mail/spam/settings/:account_id",
             get(get_spam_settings).patch(update_spam_settings),
+        )
+        // Email templates — AQ-EMTPL
+        .route(
+            "/api/v1/mail/templates",
+            get(list_templates).post(create_template),
+        )
+        .route(
+            "/api/v1/mail/templates/:id",
+            get(get_template).put(update_template).delete(delete_template),
         )
         // Search
         .route("/api/v1/mail/search", get(search_emails))

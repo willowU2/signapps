@@ -253,21 +253,19 @@ pub async fn create(
     let task_repo = TaskRepository::new(&state.pool);
     let _root_task = task_repo.create(calendar.id, task_params, user.id).await?;
 
-    // Add user to specified workspaces
+    // AQ-NP1Q: Add user to specified workspaces in a single batch query
     if let Some(workspace_ids) = payload.workspace_ids {
-        for workspace_id in workspace_ids {
-            let member = signapps_db::models::AddWorkspaceMember {
-                user_id: user.id,
-                role: Some("member".to_string()),
-            };
-            if let Err(e) = signapps_db::repositories::WorkspaceRepository::add_member(
-                &state.pool,
-                workspace_id,
-                member,
-            )
-            .await
+        if !workspace_ids.is_empty() {
+            if let Err(e) =
+                signapps_db::repositories::WorkspaceRepository::add_member_to_workspaces(
+                    state.pool.inner(),
+                    user.id,
+                    &workspace_ids,
+                    "member",
+                )
+                .await
             {
-                tracing::error!(workspace_id = %workspace_id, "Failed to add new user to workspace: {}", e);
+                tracing::error!(user_id = %user.id, "Failed to batch-add user to workspaces: {}", e);
             }
         }
     }

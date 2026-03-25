@@ -659,9 +659,31 @@
     page-break-inside: avoid;
   }
 
-  body:has(.ProseMirror) table, 
-  body:has(.ProseMirror) tr, 
+  body:has(.ProseMirror) table,
+  body:has(.ProseMirror) tr,
   body:has(.ProseMirror) td {
     page-break-inside: avoid;
+  }
+}
+
+/* Global Print Styles — hide sidebar, header, toolbars */
+@media print {
+  aside,
+  header:not(.print-show),
+  nav:not(.print-show),
+  .print-hidden {
+    display: none !important;
+  }
+
+  body:not(:has(.ProseMirror)) main {
+    margin: 0 !important;
+    padding: 1cm !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  body:not(:has(.ProseMirror)) {
+    background: white !important;
+    color: black !important;
   }
 }

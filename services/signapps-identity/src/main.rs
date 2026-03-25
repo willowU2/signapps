@@ -145,7 +145,9 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/auth/login", post(handlers::auth::login))
         .route("/api/v1/auth/register", post(handlers::auth::register))
         .route("/api/v1/auth/refresh", post(handlers::auth::refresh))
-        .route("/api/v1/bootstrap", post(handlers::auth::bootstrap));
+        .route("/api/v1/bootstrap", post(handlers::auth::bootstrap))
+        // AQ-GUES: Public token validation (no auth required — used by guest viewers)
+        .route("/api/v1/guest-tokens/validate", post(handlers::guest_tokens::validate_guest_token));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
@@ -173,6 +175,18 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
         // Activities
         .route("/api/v1/activities", get(handlers::activities::list_activities))
+        // Session management (AQ-SESSMGT)
+        .route("/api/v1/auth/sessions", get(handlers::sessions::list))
+        .route("/api/v1/auth/sessions", delete(handlers::sessions::revoke_all))
+        .route("/api/v1/auth/sessions/:id", delete(handlers::sessions::revoke))
+        // API key management (AQ-APIKEY)
+        .route("/api/v1/api-keys", get(handlers::api_keys::list))
+        .route("/api/v1/api-keys", post(handlers::api_keys::create))
+        .route("/api/v1/api-keys/:id", delete(handlers::api_keys::revoke))
+        // AQ-GUES: Guest access token routes (auth required to create/list/revoke)
+        .route("/api/v1/guest-tokens", post(handlers::guest_tokens::create_guest_token))
+        .route("/api/v1/guest-tokens", get(handlers::guest_tokens::list_guest_tokens))
+        .route("/api/v1/guest-tokens/:id", delete(handlers::guest_tokens::revoke_guest_token))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
@@ -221,6 +235,9 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/signatures/:id/steps/:step_id/sign", post(handlers::signatures::sign_step))
         .route("/api/v1/signatures/:id/steps/:step_id/decline", post(handlers::signatures::decline_step))
         .route("/api/v1/signatures/:id/transitions", get(handlers::signatures::list_transitions))
+        // User signature/stamp management (AQ-SIGRT)
+        .route("/api/v1/user-signatures", get(handlers::user_signatures::list_user_signatures).post(handlers::user_signatures::create_user_signature))
+        .route("/api/v1/user-signatures/:id", get(handlers::user_signatures::get_user_signature).put(handlers::user_signatures::update_user_signature).delete(handlers::user_signatures::delete_user_signature))
         .layer(middleware::from_fn(tenant_context_middleware))
         .layer(middleware::from_fn_with_state(
             state.clone(),
@@ -334,6 +351,24 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/admin/migration/cancel",
             post(handlers::migration::cancel_migration),
+        )
+        // IP Allowlist (AQ-IPWL)
+        .route(
+            "/api/v1/admin/security/ip-allowlist",
+            get(handlers::ip_allowlist::get),
+        )
+        .route(
+            "/api/v1/admin/security/ip-allowlist",
+            put(handlers::ip_allowlist::update),
+        )
+        // Security events (AQ-SECEVT)
+        .route(
+            "/api/v1/admin/security/events",
+            get(handlers::security_events::list),
+        )
+        .route(
+            "/api/v1/admin/security/events/summary",
+            get(handlers::security_events::summary),
         )
         .layer(middleware::from_fn(require_admin))
         .layer(middleware::from_fn_with_state(
