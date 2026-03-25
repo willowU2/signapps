@@ -34,6 +34,7 @@ members = [
     "services/signapps-chat",
     "services/signapps-billing",
     "services/signapps-notifications",
+    "services/signapps-social",
     # Single-binary gateway (LT-05 POC)
     "services/signapps-gateway",
 ]

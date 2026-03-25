@@ -9974,6 +9974,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "signapps-social"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.7.9",
+ "base64 0.22.1",
+ "chrono",
+ "dotenvy",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "signapps-common",
+ "sqlx",
+ "thiserror 1.0.69",
+ "tokio",
+ "tower-http 0.5.2",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "signapps-storage"
 version = "0.1.0"
 dependencies = [

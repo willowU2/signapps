@@ -58,7 +58,8 @@ import {
   Users2,
   Briefcase,
   Database,
-  Palette
+  Palette,
+  Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -91,6 +92,7 @@ const navGroupsConfig = [
       { href: '/tools', icon: Layers, label: 'Tools', enabled: FEATURES.OFFICE },
       { href: '/contacts', icon: Contact, label: 'Contacts', enabled: FEATURES.IDENTITY },
       { href: '/keep', icon: StickyNote, label: 'Keep', enabled: FEATURES.DOCS },
+      { href: '/social', icon: Share2, label: 'Social', enabled: FEATURES.SOCIAL },
     ]
   },
   {

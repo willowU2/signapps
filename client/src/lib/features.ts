@@ -26,6 +26,7 @@ export const FEATURES = {
   // ═══════════════════════════════════════════════════════════════════════════
   // SERVICES PARTIELS (fonctionnent mais features spécifiques manquantes)
   // ═══════════════════════════════════════════════════════════════════════════
+  SOCIAL: true,
   MAIL: true,
   MEET: true,
   VPN: true,
