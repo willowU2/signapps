@@ -32,6 +32,16 @@ export interface Notification {
   source: string;
 }
 
+// ─── Preferences types ────────────────────────────────────────────────────────
+
+export interface NotificationPreferences {
+  email_enabled: boolean;
+  push_enabled: boolean;
+  quiet_hours_start: string; // "HH:MM" in local time
+  quiet_hours_end: string;   // "HH:MM" in local time
+  per_service: Record<string, boolean>; // service slug → enabled
+}
+
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 export const notificationsApi = {
@@ -42,4 +52,12 @@ export const notificationsApi = {
   /** Health check */
   health: () =>
     notifClient.get('/health'),
+
+  /** Fetch current user notification preferences */
+  getPreferences: () =>
+    notifClient.get<NotificationPreferences>('/api/notifications/preferences'),
+
+  /** Update current user notification preferences */
+  patchPreferences: (patch: Partial<NotificationPreferences>) =>
+    notifClient.patch<NotificationPreferences>('/api/notifications/preferences', patch),
 };
