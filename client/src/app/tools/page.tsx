@@ -29,11 +29,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
-  importFromFile,
-  exportDocument,
   getPresentationInfo,
   type ExportFormat,
-  type ImportResult,
 } from '@/lib/api/office';
 import { getServiceBaseUrl, ServiceName } from '@/lib/api/factory';
 
@@ -136,114 +133,6 @@ function StatusBadge({ status }: { status: 'idle' | 'loading' | 'success' | 'err
   if (status === 'success') return <CheckCircle2 className="h-4 w-4 text-green-500" />;
   if (status === 'error') return <XCircle className="h-4 w-4 text-destructive" />;
   return null;
-}
-
-// ─── Tab: Converter ──────────────────────────────────────────────────────────
-
-function ConverterTab() {
-  const [file, setFile] = useState<File | null>(null);
-  const [outputFormat, setOutputFormat] = useState<ExportFormat>('pdf');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [importResult, setImportResult] = useState<ImportResult | null>(null);
-
-  const handleConvert = async () => {
-    if (!file) return;
-    setStatus('loading');
-    setImportResult(null);
-    try {
-      // Step 1: import file → Tiptap JSON
-      const imported = await importFromFile(file);
-      setImportResult(imported);
-
-      // Step 2: export Tiptap JSON → desired format
-      const blob = await exportDocument(imported.tiptap_json, outputFormat, {
-        filename: file.name.replace(/\.[^.]+$/, ''),
-      });
-
-      const ext = outputFormat === 'markdown' ? 'md' : outputFormat;
-      triggerDownload(blob, `${file.name.replace(/\.[^.]+$/, '')}.${ext}`);
-      setStatus('success');
-      toast.success(`Converted to ${outputFormat.toUpperCase()} successfully`);
-    } catch (err: any) {
-      setStatus('error');
-      toast.error(`Conversion failed: ${err.message}`);
-    }
-  };
-
-  return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Upload className="h-4 w-4" /> Source File
-          </CardTitle>
-          <CardDescription>Upload a DOCX, Markdown, HTML, or TXT file</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <FileDropZone
-            onFile={setFile}
-            accept=".docx,.md,.markdown,.html,.txt"
-            label="Drop DOCX, MD, HTML, or TXT here"
-            file={file}
-            onClear={() => { setFile(null); setStatus('idle'); setImportResult(null); }}
-          />
-          {importResult && (
-            <div className="text-xs text-muted-foreground space-y-1 rounded-lg bg-muted/50 p-3">
-              <p><span className="font-medium">Detected:</span> {importResult.detected_format}</p>
-              <p><span className="font-medium">Words:</span> {importResult.metadata.word_count.toLocaleString()}</p>
-              <p><span className="font-medium">Characters:</span> {importResult.metadata.character_count.toLocaleString()}</p>
-              {importResult.metadata.has_tables && <Badge variant="outline" className="text-xs">Tables</Badge>}
-              {importResult.metadata.has_images && <Badge variant="outline" className="text-xs ml-1">Images</Badge>}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Download className="h-4 w-4" /> Output Format
-          </CardTitle>
-          <CardDescription>Select the target format and convert</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Convert to</Label>
-            <Select value={outputFormat} onValueChange={(v) => setOutputFormat(v as ExportFormat)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pdf">PDF</SelectItem>
-                <SelectItem value="docx">DOCX</SelectItem>
-                <SelectItem value="markdown">Markdown</SelectItem>
-                <SelectItem value="html">HTML</SelectItem>
-                <SelectItem value="text">Plain Text</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button
-            className="w-full"
-            disabled={!file || status === 'loading'}
-            onClick={handleConvert}
-          >
-            {status === 'loading' ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Converting…</>
-            ) : (
-              <><FileType className="mr-2 h-4 w-4" /> Convert &amp; Download</>
-            )}
-          </Button>
-
-          <div className="flex items-center justify-center gap-2 h-6">
-            <StatusBadge status={status} />
-            {status === 'success' && <span className="text-xs text-green-600">Download started</span>}
-            {status === 'error' && <span className="text-xs text-destructive">Conversion failed</span>}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
 }
 
 // ─── Tab: Spreadsheets ────────────────────────────────────────────────────────
@@ -761,30 +650,26 @@ function PresentationsTab() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function OfficePage() {
+export default function ToolsPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-border/50">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Office Tools</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Tools</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Document conversion, spreadsheet import/export, PDF utilities, and presentation export
+              Spreadsheet import/export, PDF utilities, and presentation export
             </p>
           </div>
           <Badge variant="outline" className="hidden sm:flex items-center gap-1.5">
-            <FileText className="h-3 w-3" /> signapps-office
+            <FileText className="h-3 w-3" /> signapps-tools
           </Badge>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="converter" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="converter" className="flex items-center gap-1.5">
-              <FileType className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Converter</span>
-            </TabsTrigger>
+        <Tabs defaultValue="spreadsheets" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="spreadsheets" className="flex items-center gap-1.5">
               <Table2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Spreadsheets</span>
@@ -798,10 +683,6 @@ export default function OfficePage() {
               <span className="hidden sm:inline">Presentations</span>
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="converter">
-            <ConverterTab />
-          </TabsContent>
 
           <TabsContent value="spreadsheets">
             <SpreadsheetsTab />

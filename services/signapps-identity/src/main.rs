@@ -169,6 +169,8 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/users/me/export", post(handlers::data_export::request_export))
         .route("/api/v1/users/me/export/status", get(handlers::data_export::export_status))
         .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
+        // Activities
+        .route("/api/v1/activities", get(handlers::activities::list_activities))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
