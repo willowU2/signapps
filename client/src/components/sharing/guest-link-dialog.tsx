@@ -10,7 +10,9 @@ import {
   ExternalLink,
   Loader2,
   Trash2,
+  QrCode,
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -226,12 +228,12 @@ export function GuestLinkDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Created link display */}
+        {/* Created link display — AQ-SHRL: with QR code */}
         {createdLink && (
-          <div className="bg-muted/50 border rounded-lg p-3 space-y-2">
+          <div className="bg-muted/50 border rounded-lg p-3 space-y-3">
             <div className="flex items-center gap-2">
               <Check className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium">Lien cree</span>
+              <span className="text-sm font-medium">Lien créé</span>
             </div>
             <div className="flex items-center gap-2">
               <Input
@@ -246,6 +248,28 @@ export function GuestLinkDialog({
                   <Copy className="h-4 w-4" />
                 )}
               </Button>
+            </div>
+            {/* QR code for easy mobile scanning */}
+            <div className="flex items-center gap-3">
+              <div className="bg-white p-2 rounded border">
+                <QRCodeSVG
+                  value={`${typeof window !== 'undefined' ? window.location.origin : ''}/guest/${createdLink.token}`}
+                  size={80}
+                  level="M"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 mb-1">
+                  <QrCode className="h-3 w-3" />
+                  Scanner avec un mobile
+                </div>
+                {createdLink.expires_at && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Expire : {new Date(createdLink.expires_at).toLocaleDateString('fr-FR')}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

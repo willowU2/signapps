@@ -46,14 +46,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        {/* AQ-WCAG: skip-to-content link for keyboard/screen-reader users */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded focus:text-sm focus:font-medium"
+        >
+          Aller au contenu principal
+        </a>
         <ClickSpark sparkColor="var(--primary)" sparkSize={6} sparkRadius={20} sparkCount={8} duration={400}>
           <Providers>
-            <ErrorBoundary>{children}</ErrorBoundary>
+            <ErrorBoundary>
+              <main id="main-content" tabIndex={-1}>
+                {children}
+              </main>
+            </ErrorBoundary>
           </Providers>
           <ContextAssistant />
           <PwaRegister />

@@ -298,6 +298,34 @@ impl WorkspaceRepository {
         Ok(created)
     }
 
+    /// AQ-NP1Q: Batch-add a user to multiple workspaces in a single query.
+    /// Uses unnest() to avoid N individual INSERT calls.
+    pub async fn add_member_to_workspaces(
+        pool: &PgPool,
+        user_id: Uuid,
+        workspace_ids: &[Uuid],
+        role: &str,
+    ) -> Result<()> {
+        if workspace_ids.is_empty() {
+            return Ok(());
+        }
+        // Build a single INSERT … SELECT unnest(…) statement
+        sqlx::query(
+            r#"
+            INSERT INTO identity.workspace_members (workspace_id, user_id, role)
+            SELECT unnest($1::uuid[]), $2, $3
+            ON CONFLICT (workspace_id, user_id) DO NOTHING
+            "#,
+        )
+        .bind(workspace_ids)
+        .bind(user_id)
+        .bind(role)
+        .execute(pool)
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+        Ok(())
+    }
+
     /// Remove member from workspace.
     pub async fn remove_member(pool: &PgPool, workspace_id: Uuid, user_id: Uuid) -> Result<()> {
         sqlx::query(

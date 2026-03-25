@@ -30,7 +30,8 @@ mod vectors;
 
 use embeddings::EmbeddingsClient;
 use handlers::{
-    action, chat, collections, health, index, model_management, models, providers, search, webhook,
+    action, chat, collections, health, index, model_management, models, providers, search,
+    transcription, webhook,
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
@@ -394,6 +395,8 @@ fn create_router(state: AppState) -> Router {
         // Chat
         .route("/chat", post(chat::chat))
         .route("/chat/stream", post(chat::chat_stream))
+        // AQ-AITR: whisper-rs meeting transcription
+        .route("/transcribe", post(transcription::transcribe_audio))
         // Action Execution
         .route("/action", post(action::execute_action))
         // Index

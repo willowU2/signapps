@@ -14,11 +14,11 @@ use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
 use signapps_common::Claims;
 use signapps_common::JwtConfig;
+use signapps_db::models::{Answer, CreateForm, FieldType, FormField, SubmitResponse, UpdateForm};
+use signapps_db::repositories::FormRepository;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
-use signapps_db::repositories::FormRepository;
-use signapps_db::models::{FieldType, FormField, CreateForm, UpdateForm, Answer, SubmitResponse};
 
 // ---------------------------------------------------------------------------
 // Request DTOs
@@ -81,8 +81,11 @@ async fn list_forms(
         Ok(forms) => (StatusCode::OK, Json(serde_json::to_value(forms).unwrap())),
         Err(e) => {
             tracing::error!("Failed to list forms: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
-        }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            )
+        },
     }
 }
 
@@ -114,23 +117,35 @@ async fn create_form(
     match FormRepository::create(&state.pool, claims.sub, create_data).await {
         Ok(form) => {
             tracing::info!(id = %form.id, "Form created");
-            (StatusCode::CREATED, Json(serde_json::to_value(form).unwrap()))
-        }
+            (
+                StatusCode::CREATED,
+                Json(serde_json::to_value(form).unwrap()),
+            )
+        },
         Err(e) => {
             tracing::error!("Failed to create form: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
-        }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            )
+        },
     }
 }
 
 async fn get_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     match FormRepository::get_by_id(&state.pool, id).await {
         Ok(Some(form)) => (StatusCode::OK, Json(serde_json::to_value(form).unwrap())),
-        Ok(None) => (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" }))),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Form not found" })),
+        ),
         Err(e) => {
             tracing::error!("Failed to get form: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
-        }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            )
+        },
     }
 }
 
@@ -162,13 +177,17 @@ async fn update_form(
 
     match FormRepository::update(&state.pool, id, update_data).await {
         Ok(form) => (StatusCode::OK, Json(serde_json::to_value(form).unwrap())),
-        Err(signapps_common::Error::NotFound(_)) => {
-            (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" })))
-        }
+        Err(signapps_common::Error::NotFound(_)) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Form not found" })),
+        ),
         Err(e) => {
             tracing::error!("Failed to update form: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
-        }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            )
+        },
     }
 }
 
@@ -181,25 +200,39 @@ async fn delete_form(
     match FormRepository::get_by_id(&state.pool, id).await {
         Ok(Some(form)) => {
             if form.owner_id != claims.sub {
-                return (StatusCode::FORBIDDEN, Json(serde_json::json!({ "error": "Forbidden" })));
+                return (
+                    StatusCode::FORBIDDEN,
+                    Json(serde_json::json!({ "error": "Forbidden" })),
+                );
             }
-        }
-        Ok(None) => return (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" }))),
+        },
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Form not found" })),
+            )
+        },
         Err(e) => {
             tracing::error!("Failed to fetch form for deletion: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })));
-        }
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            );
+        },
     }
 
     match FormRepository::delete(&state.pool, id).await {
         Ok(_) => {
             tracing::info!(id = %id, user = %claims.sub, "Form deleted");
             (StatusCode::NO_CONTENT, Json(serde_json::json!({})))
-        }
+        },
         Err(e) => {
             tracing::error!("Failed to delete form: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
-        }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            )
+        },
     }
 }
 
@@ -211,14 +244,18 @@ async fn publish_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> im
                 StatusCode::OK,
                 Json(serde_json::json!({ "id": id, "is_published": form.is_published })),
             )
-        }
-        Err(signapps_common::Error::NotFound(_)) => {
-            (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" })))
-        }
+        },
+        Err(signapps_common::Error::NotFound(_)) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Form not found" })),
+        ),
         Err(e) => {
             tracing::error!("Failed to publish form: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
-        }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            )
+        },
     }
 }
 
@@ -230,14 +267,25 @@ async fn submit_response(
     match FormRepository::get_by_id(&state.pool, id).await {
         Ok(Some(form)) => {
             if !form.is_published {
-                return (StatusCode::FORBIDDEN, Json(serde_json::json!({ "error": "Form is not published" })));
+                return (
+                    StatusCode::FORBIDDEN,
+                    Json(serde_json::json!({ "error": "Form is not published" })),
+                );
             }
-        }
-        Ok(None) => return (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Form not found" }))),
+        },
+        Ok(None) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({ "error": "Form not found" })),
+            )
+        },
         Err(e) => {
             tracing::error!("Failed to get form: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })));
-        }
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            );
+        },
     }
 
     let submit_data = SubmitResponse {
@@ -249,22 +297,34 @@ async fn submit_response(
     match FormRepository::submit_response(&state.pool, submit_data).await {
         Ok(response) => {
             tracing::info!(id = %response.id, form_id = %id, "Response submitted");
-            (StatusCode::CREATED, Json(serde_json::to_value(response).unwrap()))
-        }
+            (
+                StatusCode::CREATED,
+                Json(serde_json::to_value(response).unwrap()),
+            )
+        },
         Err(e) => {
             tracing::error!("Failed to submit response: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
-        }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            )
+        },
     }
 }
 
 async fn list_responses(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
     match FormRepository::list_responses(&state.pool, id).await {
-        Ok(responses) => (StatusCode::OK, Json(serde_json::to_value(responses).unwrap())),
+        Ok(responses) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(responses).unwrap()),
+        ),
         Err(e) => {
             tracing::error!("Failed to list responses: {}", e);
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Internal Error" })))
-        }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            )
+        },
     }
 }
 
@@ -305,7 +365,10 @@ fn create_router(state: AppState) -> Router {
 
     let protected_routes = Router::new()
         .route("/api/v1/forms", get(list_forms).post(create_form))
-        .route("/api/v1/forms/:id", get(get_form).put(update_form).delete(delete_form))
+        .route(
+            "/api/v1/forms/:id",
+            get(get_form).put(update_form).delete(delete_form),
+        )
         .route("/api/v1/forms/:id/publish", post(publish_form))
         .route("/api/v1/forms/:id/responses", get(list_responses))
         .route_layer(middleware::from_fn_with_state(

@@ -40,6 +40,7 @@ import { toast } from 'sonner';
 import { BackupDialog } from '@/components/backups/backup-dialog';
 import { RestoreDialog } from '@/components/backups/restore-dialog';
 import { RunsDialog } from '@/components/backups/runs-dialog';
+import { BackupVerificationStatus } from '@/components/backups/backup-verification-status';
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return '-';
@@ -124,6 +125,9 @@ export default function BackupsPage() {
             New Profile
           </Button>
         </div>
+
+        {/* AQ-BKPVER: Backup verification status */}
+        <BackupVerificationStatus />
 
         {profiles.length === 0 ? (
           <Card>

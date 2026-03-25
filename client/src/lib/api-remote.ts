@@ -1,90 +1,35 @@
-import { getClient, getServiceUrl, ServiceName } from '@/lib/api/factory'
+/**
+ * @deprecated Use @/lib/api/remote instead.
+ * This file is a backward-compatibility shim. Consumers should migrate to
+ * import { remoteApi, ... } from '@/lib/api/remote'.
+ */
 
-// Get remote client using factory with HttpOnly cookies
-const remoteClient = getClient(ServiceName.REMOTE)
+// Re-export all types from the canonical module
+export type {
+  RemoteConnection,
+  CreateConnectionRequest,
+  UpdateConnectionRequest,
+} from '@/lib/api/remote';
 
-// ============================================================================
-// Types
-// ============================================================================
+import { getClient, getServiceBaseUrl, ServiceName } from '@/lib/api/factory';
 
-export interface RemoteConnection {
-    id: string
-    hardware_id?: string
-    name: string
-    protocol: string // 'rdp' | 'vnc' | 'ssh' | 'telnet'
-    hostname: string
-    port: number
-    username?: string
-    parameters?: Record<string, unknown>
-    created_at?: string
-    updated_at?: string
-}
+const remoteClient = getClient(ServiceName.REMOTE);
 
-export interface CreateConnectionRequest {
-    hardware_id?: string
-    name: string
-    protocol: string // 'rdp' | 'vnc' | 'ssh' | 'telnet'
-    hostname: string
-    port: number
-    username?: string
-    password?: string
-    private_key?: string
-    parameters?: Record<string, unknown>
-}
-
-export interface UpdateConnectionRequest {
-    name?: string
-    protocol?: string // 'rdp' | 'vnc' | 'ssh' | 'telnet'
-    hostname?: string
-    port?: number
-    username?: string
-    password?: string
-    private_key?: string
-    parameters?: Record<string, unknown>
-}
-
-// ============================================================================
-// Connection API
-// ============================================================================
+// Legacy nested API shape kept for backward compatibility with remote/page.tsx
+// TODO: migrate remote/page.tsx to use flat API from @/lib/api/remote
 
 export const connectionApi = {
-    list: async (): Promise<RemoteConnection[]> => {
-        const res = await remoteClient.get('/connections')
-        return res.data
-    },
+  list: async () => (await remoteClient.get('/remote/connections')).data,
+  get: async (id: string) => (await remoteClient.get(`/remote/connections/${id}`)).data,
+  create: async (data: any) => (await remoteClient.post('/remote/connections', data)).data,
+  update: async (id: string, data: any) => (await remoteClient.put(`/remote/connections/${id}`, data)).data,
+  delete: async (id: string) => { await remoteClient.delete(`/remote/connections/${id}`) },
+  getWebSocketUrl: (connectionId: string): string => {
+    const apiUrl = getServiceBaseUrl(ServiceName.REMOTE);
+    const wsBase = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+    return `${wsBase}/remote/ws/${connectionId}`;
+  },
+};
 
-    get: async (id: string): Promise<RemoteConnection> => {
-        const res = await remoteClient.get(`/connections/${id}`)
-        return res.data
-    },
-
-    create: async (data: CreateConnectionRequest): Promise<RemoteConnection> => {
-        const res = await remoteClient.post('/connections', data)
-        return res.data
-    },
-
-    update: async (id: string, data: UpdateConnectionRequest): Promise<RemoteConnection> => {
-        const res = await remoteClient.put(`/connections/${id}`, data)
-        return res.data
-    },
-
-    delete: async (id: string): Promise<void> => {
-        await remoteClient.delete(`/connections/${id}`)
-    },
-
-    getWebSocketUrl: (connectionId: string): string => {
-        const apiUrl = getServiceUrl(ServiceName.REMOTE)
-        const wsBase = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://')
-        return `${wsBase}/ws/${connectionId}`
-    },
-}
-
-// ============================================================================
-// Combined API export
-// ============================================================================
-
-export const remoteApi = {
-    connections: connectionApi,
-}
-
-export default remoteApi
+export const remoteApi = { connections: connectionApi };
+export default remoteApi;
