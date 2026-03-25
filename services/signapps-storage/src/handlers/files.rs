@@ -5,7 +5,7 @@ use axum::{
     extract::{Multipart, Path, Query, State},
     http::{header, StatusCode},
     response::Response,
-    Json,
+    Extension, Json,
 };
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
@@ -15,6 +15,29 @@ use crate::handlers::quotas;
 use crate::storage::{CopyRequest, ListObjectsQuery, ListObjectsResponse, ObjectInfo};
 use crate::AppState;
 use uuid::Uuid;
+
+/// Append a row to `platform.activities` — fire-and-forget, never fails the request.
+async fn log_drive_activity(
+    pool: &sqlx::PgPool,
+    actor_id: Uuid,
+    action: &str,
+    entity_id: Uuid,
+    entity_title: &str,
+    metadata: serde_json::Value,
+) {
+    let _ = sqlx::query(
+        r#"INSERT INTO platform.activities
+           (id, actor_id, action, entity_type, entity_id, entity_title, metadata, workspace_id)
+           VALUES (gen_uuid_v7(), $1, $2, 'drive_node', $3, $4, $5, NULL)"#,
+    )
+    .bind(actor_id)
+    .bind(action)
+    .bind(entity_id)
+    .bind(entity_title)
+    .bind(&metadata)
+    .execute(pool)
+    .await;
+}
 
 /// Resolves the destination bucket based on the file content type and admin storage rules.
 async fn resolve_target_bucket(
@@ -247,7 +270,7 @@ const MAX_UPLOAD_SIZE: usize = 500 * 1024 * 1024;
 #[tracing::instrument(skip(state, multipart))]
 pub async fn upload(
     State(state): State<AppState>,
-    axum::Extension(user_id): axum::Extension<Uuid>,
+    Extension(user_id): Extension<Uuid>,
     Path(bucket): Path<String>,
     mut multipart: Multipart,
 ) -> Result<Json<Vec<UploadResponse>>> {
@@ -326,6 +349,16 @@ pub async fn upload(
             },
         };
 
+        log_drive_activity(
+            state.pool.inner(),
+            user_id,
+            "uploaded",
+            file_id,
+            &filename,
+            serde_json::json!({ "bucket": target_bucket, "size": size }),
+        )
+        .await;
+
         uploads.push(UploadResponse {
             id: file_id,
             bucket: target_bucket,
@@ -348,7 +381,7 @@ pub async fn upload(
 #[tracing::instrument(skip(state, body))]
 pub async fn upload_with_key(
     State(state): State<AppState>,
-    axum::Extension(user_id): axum::Extension<Uuid>,
+    Extension(user_id): Extension<Uuid>,
     Path((bucket, key)): Path<(String, String)>,
     headers: axum::http::HeaderMap,
     body: Bytes,
@@ -411,6 +444,16 @@ pub async fn upload_with_key(
         },
     };
 
+    log_drive_activity(
+        state.pool.inner(),
+        user_id,
+        "uploaded",
+        file_id,
+        &key,
+        serde_json::json!({ "bucket": target_bucket, "size": size }),
+    )
+    .await;
+
     tracing::info!(bucket = %target_bucket, key = %key, size = size, "File uploaded");
 
     Ok(Json(UploadResponse {
@@ -426,7 +469,7 @@ pub async fn upload_with_key(
 #[tracing::instrument(skip(state))]
 pub async fn delete(
     State(state): State<AppState>,
-    axum::Extension(user_id): axum::Extension<Uuid>,
+    Extension(user_id): Extension<Uuid>,
     Path((bucket, key)): Path<(String, String)>,
 ) -> Result<StatusCode> {
     // Get info first to know size for quota update
@@ -439,6 +482,17 @@ pub async fn delete(
             tracing::error!(error = %e, "Failed to record delete quota");
         }
     }
+
+    log_drive_activity(
+        state.pool.inner(),
+        user_id,
+        "deleted",
+        Uuid::new_v4(),
+        &key,
+        serde_json::json!({ "bucket": bucket }),
+    )
+    .await;
+
     tracing::info!(bucket = %bucket, key = %key, "File deleted");
     Ok(StatusCode::NO_CONTENT)
 }
@@ -447,7 +501,7 @@ pub async fn delete(
 #[tracing::instrument(skip(state, payload))]
 pub async fn delete_many(
     State(state): State<AppState>,
-    axum::Extension(user_id): axum::Extension<Uuid>,
+    Extension(user_id): Extension<Uuid>,
     Path(bucket): Path<String>,
     Json(payload): Json<DeleteFilesRequest>,
 ) -> Result<StatusCode> {
@@ -475,7 +529,7 @@ pub async fn delete_many(
 #[tracing::instrument(skip(state))]
 pub async fn copy(
     State(state): State<AppState>,
-    axum::Extension(user_id): axum::Extension<Uuid>,
+    Extension(user_id): Extension<Uuid>,
     Json(payload): Json<CopyRequest>,
 ) -> Result<Json<ObjectInfo>> {
     // 1. Get source info to check quota
@@ -541,7 +595,7 @@ pub async fn copy(
 #[tracing::instrument(skip(state))]
 pub async fn move_file(
     State(state): State<AppState>,
-    axum::Extension(user_id): axum::Extension<Uuid>,
+    Extension(user_id): Extension<Uuid>,
     Json(payload): Json<CopyRequest>,
 ) -> Result<Json<ObjectInfo>> {
     state
