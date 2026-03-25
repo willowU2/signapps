@@ -11,6 +11,7 @@ import { useDashboardEditMode, useDashboardEditActions } from '@/stores/dashboar
 import { WidgetGrid } from '@/components/dashboard/widget-grid';
 import { AddWidgetSheet } from '@/components/dashboard/add-widget-sheet';
 import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
+import { ActivityFeed } from '@/components/crosslinks/ActivityFeed';
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
@@ -86,6 +87,11 @@ export default function DashboardPage() {
         </div>
 
         <WidgetGrid />
+
+        <div className="mt-6 border rounded-xl p-4 bg-card">
+          <h2 className="text-base font-semibold mb-3">Activité récente</h2>
+          <ActivityFeed limit={20} />
+        </div>
 
         <AddWidgetSheet open={addWidgetOpen} onOpenChange={setAddWidgetOpen} />
       </div>
