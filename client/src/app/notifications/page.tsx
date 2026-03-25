@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { AppLayout } from "@/components/layout/app-layout";
 import {
   notificationsApi,
   type Notification,
@@ -177,6 +178,7 @@ export default function NotificationsPage() {
   }
 
   return (
+    <AppLayout>
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -252,6 +254,7 @@ export default function NotificationsPage() {
         </div>
       )}
     </div>
+    </AppLayout>
   );
 }
 
