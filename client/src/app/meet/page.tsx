@@ -27,7 +27,11 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { MeetRoom } from "@/components/meet/meet-room"
+import dynamic from "next/dynamic"
+const MeetRoom = dynamic(
+    () => import("@/components/meet/meet-room").then((m) => ({ default: m.MeetRoom })),
+    { ssr: false, loading: () => <div className="flex items-center justify-center h-full text-muted-foreground">Loading meeting room…</div> }
+)
 import {
     Copy,
     Plus,
