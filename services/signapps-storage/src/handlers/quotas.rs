@@ -390,6 +390,89 @@ pub async fn record_upload(
     Ok(file_id)
 }
 
+/// Record a successful upload with SHA-256 hash: insert file row, update
+/// `drive.nodes.sha256_hash`, and atomically increment quota.
+pub async fn record_upload_with_hash(
+    state: &AppState,
+    user_id: Uuid,
+    bucket: &str,
+    key: &str,
+    file_size: i64,
+    content_type: Option<&str>,
+    sha256_hash: Option<&str>,
+) -> Result<Uuid> {
+    let mut tx = state
+        .pool
+        .inner()
+        .begin()
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
+    // 1. Persist file record (upsert on duplicate path).
+    let row = sqlx::query(
+        r#"
+        INSERT INTO storage.files (user_id, bucket, key, size, content_type)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (user_id, bucket, key) DO UPDATE SET
+            size         = EXCLUDED.size,
+            content_type = EXCLUDED.content_type,
+            updated_at   = NOW()
+        RETURNING id
+        "#,
+    )
+    .bind(user_id)
+    .bind(bucket)
+    .bind(key)
+    .bind(file_size)
+    .bind(content_type)
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
+
+    use sqlx::Row as _;
+    let file_id: Uuid = row.get("id");
+
+    // 2. Stamp sha256_hash on the matching drive.nodes row (if exists).
+    if let Some(hash) = sha256_hash {
+        let _ = sqlx::query(
+            r#"
+            UPDATE drive.nodes
+            SET sha256_hash = $1
+            WHERE node_type = 'file'
+              AND target_id = $2
+              AND sha256_hash IS NULL
+            "#,
+        )
+        .bind(hash)
+        .bind(file_id)
+        .execute(&mut *tx)
+        .await;
+    }
+
+    // 3. Atomically increment quota counters.
+    sqlx::query(
+        r#"
+        INSERT INTO storage.quotas (user_id, used_storage_bytes, file_count)
+        VALUES ($1, $2, 1)
+        ON CONFLICT (user_id) DO UPDATE SET
+            used_storage_bytes = storage.quotas.used_storage_bytes + $2,
+            file_count         = storage.quotas.file_count + 1,
+            updated_at         = NOW()
+        "#,
+    )
+    .bind(user_id)
+    .bind(file_size)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| Error::Database(e.to_string()))?;
+
+    tx.commit()
+        .await
+        .map_err(|e| Error::Database(e.to_string()))?;
+
+    Ok(file_id)
+}
+
 /// Record a deletion: remove file row and atomically decrement quota.
 pub async fn record_delete(
     state: &AppState,

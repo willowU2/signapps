@@ -9,12 +9,46 @@ use axum::{
 };
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use signapps_common::{Error, Result};
 
 use crate::handlers::quotas;
 use crate::storage::{CopyRequest, ListObjectsQuery, ListObjectsResponse, ObjectInfo};
 use crate::AppState;
 use uuid::Uuid;
+
+// ─── SHA-256 helpers ─────────────────────────────────────────────────────────
+
+/// Compute SHA-256 of bytes and return lowercase hex string.
+fn sha256_hex(data: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    hex::encode(hasher.finalize())
+}
+
+/// Check `drive.nodes` for an existing file with the same SHA-256 hash.
+/// Returns `(storage_path, node_id)` if a duplicate exists.
+async fn find_duplicate_by_hash(pool: &sqlx::PgPool, hash: &str) -> Option<(String, Uuid)> {
+    use sqlx::Row;
+    let row = sqlx::query(
+        r#"
+        SELECT n.id, n.target_id::text AS storage_key
+        FROM drive.nodes n
+        WHERE n.node_type = 'file'
+          AND n.sha256_hash = $1
+          AND n.deleted_at IS NULL
+        LIMIT 1
+        "#,
+    )
+    .bind(hash)
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None)?;
+
+    let storage_key: String = row.try_get("storage_key").ok()?;
+    let node_id: Uuid = row.try_get("id").ok()?;
+    Some((storage_key, node_id))
+}
 
 /// Append a row to `platform.activities` — fire-and-forget, never fails the request.
 async fn log_drive_activity(
@@ -312,6 +346,42 @@ pub async fn upload(
             )));
         }
 
+        // ── SHA-256 deduplication ─────────────────────────────────────────────
+        let hash = sha256_hex(&data);
+        let dedup = find_duplicate_by_hash(state.pool.inner(), &hash).await;
+
+        if let Some((existing_key, existing_node_id)) = dedup {
+            // Duplicate found — skip storage write, reuse existing content
+            tracing::info!(
+                hash = %hash,
+                existing_key = %existing_key,
+                "Deduplication: reusing existing file content"
+            );
+            log_drive_activity(
+                state.pool.inner(),
+                user_id,
+                "uploaded_dedup",
+                existing_node_id,
+                &filename,
+                serde_json::json!({
+                    "bucket": target_bucket,
+                    "size": size,
+                    "sha256": hash,
+                    "reused_key": existing_key
+                }),
+            )
+            .await;
+            uploads.push(UploadResponse {
+                id: existing_node_id,
+                bucket: target_bucket,
+                key: existing_key,
+                size,
+                content_type,
+            });
+            continue;
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         // Check quota BEFORE writing to storage to avoid orphaned files
         quotas::check_quota(&state, user_id, size as i64).await?;
 
@@ -320,14 +390,15 @@ pub async fn upload(
             .put_object(&target_bucket, &filename, data, Some(&content_type))
             .await?;
 
-        // Update quota after successful upload
-        let file_id = match quotas::record_upload(
+        // Update quota after successful upload; store hash in drive.nodes via record_upload
+        let file_id = match quotas::record_upload_with_hash(
             &state,
             user_id,
             &target_bucket,
             &filename,
             size as i64,
             Some(&content_type),
+            Some(&hash),
         )
         .await
         {
@@ -355,7 +426,7 @@ pub async fn upload(
             "uploaded",
             file_id,
             &filename,
-            serde_json::json!({ "bucket": target_bucket, "size": size }),
+            serde_json::json!({ "bucket": target_bucket, "size": size, "sha256": hash }),
         )
         .await;
 
@@ -408,6 +479,40 @@ pub async fn upload_with_key(
         )));
     }
 
+    // ── SHA-256 deduplication ─────────────────────────────────────────────────
+    let hash = sha256_hex(&body);
+    if let Some((existing_key, existing_node_id)) =
+        find_duplicate_by_hash(state.pool.inner(), &hash).await
+    {
+        tracing::info!(
+            hash = %hash,
+            existing_key = %existing_key,
+            "Deduplication: reusing existing file content for keyed upload"
+        );
+        log_drive_activity(
+            state.pool.inner(),
+            user_id,
+            "uploaded_dedup",
+            existing_node_id,
+            &key,
+            serde_json::json!({
+                "bucket": target_bucket,
+                "size": size,
+                "sha256": hash,
+                "reused_key": existing_key
+            }),
+        )
+        .await;
+        return Ok(Json(UploadResponse {
+            id: existing_node_id,
+            bucket: target_bucket,
+            key: existing_key,
+            size,
+            content_type,
+        }));
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Check quota BEFORE writing to storage to avoid orphaned files
     quotas::check_quota(&state, user_id, size as i64).await?;
 
@@ -416,14 +521,15 @@ pub async fn upload_with_key(
         .put_object(&target_bucket, &key, body, Some(&content_type))
         .await?;
 
-    // Update quota after successful upload
-    let file_id = match quotas::record_upload(
+    // Update quota after successful upload; store hash in drive.nodes via record_upload
+    let file_id = match quotas::record_upload_with_hash(
         &state,
         user_id,
         &target_bucket,
         &key,
         size as i64,
         Some(&content_type),
+        Some(&hash),
     )
     .await
     {
@@ -450,7 +556,7 @@ pub async fn upload_with_key(
         "uploaded",
         file_id,
         &key,
-        serde_json::json!({ "bucket": target_bucket, "size": size }),
+        serde_json::json!({ "bucket": target_bucket, "size": size, "sha256": hash }),
     )
     .await;
 

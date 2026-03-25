@@ -49,3 +49,7 @@ lopdf = "0.33"
 # Archive listing (ZIP)
 zip = { version = "2.1", default-features = false, features = ["deflate"] }
 pdfium-render = { version = "0.8.37", features = ["thread_safe"] }
+
+# Cryptographic hashing for file deduplication
+sha2 = { workspace = true }
+hex = { workspace = true }
