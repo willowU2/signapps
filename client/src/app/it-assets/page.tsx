@@ -1,264 +1,514 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Server, MonitorSmartphone, Target, Cpu, HardDrive, Network, Plus, ShieldCheck, Download, Trash, Webhook } from "lucide-react"
-import { itAssetsApi, HardwareAsset, CreateHardwareRequest } from "@/lib/api/it-assets"
-import { FEATURES } from "@/lib/features"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Server, MonitorSmartphone, Cpu, Network, Printer,
+  Plus, Trash, Edit, Target, ShieldCheck, Wrench, Archive,
+  Search, Filter, HardDrive,
+} from "lucide-react"
+import { itAssetsApi, HardwareAsset, CreateHardwareRequest, UpdateHardwareRequest } from "@/lib/api/it-assets"
 
-// Extended type for UI compatibility
-interface HardwareDisplay extends HardwareAsset {
-    hardware_type?: string;
-    mac_address?: string;
-    ip_address?: string;
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const ASSET_TYPES = [
+  { value: "laptop",      label: "Laptop / Notebook" },
+  { value: "workstation", label: "Desktop Workstation" },
+  { value: "server",      label: "Server Rack" },
+  { value: "switch",      label: "Network Switch" },
+  { value: "printer",     label: "Printer" },
+  { value: "other",       label: "Other" },
+]
+
+const ASSET_STATUSES = [
+  { value: "active",      label: "Active",      color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
+  { value: "maintenance", label: "Maintenance", color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
+  { value: "retired",     label: "Retired",     color: "bg-muted text-muted-foreground border-border" },
+  { value: "stock",       label: "In Stock",    color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+]
+
+const EMPTY_FORM: Partial<CreateHardwareRequest & { status: string }> = {
+  name: "",
+  type: "laptop",
+  manufacturer: "",
+  model: "",
+  serial_number: "",
+  location: "",
+  notes: "",
+  status: "active",
 }
 
-export default function ITAssetsDashboard() {
-    const [hardwareList, setHardwareList] = useState<HardwareDisplay[]>([])
-    const [isCreating, setIsCreating] = useState(false)
-    const [newDevice, setNewDevice] = useState<Partial<HardwareDisplay>>({
-        hardware_type: "laptop",
-        status: "active"
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getTypeIcon(type: string) {
+  switch (type) {
+    case "server":      return <Server className="h-4 w-4 text-blue-500 shrink-0" />
+    case "switch":      return <Network className="h-4 w-4 text-purple-500 shrink-0" />
+    case "workstation": return <Cpu className="h-4 w-4 text-indigo-500 shrink-0" />
+    case "printer":     return <Printer className="h-4 w-4 text-amber-500 shrink-0" />
+    default:            return <MonitorSmartphone className="h-4 w-4 text-emerald-500 shrink-0" />
+  }
+}
+
+function getTypeLabel(type: string) {
+  return ASSET_TYPES.find(t => t.value === type)?.label ?? type
+}
+
+function getStatusMeta(status?: string) {
+  return ASSET_STATUSES.find(s => s.value === status) ?? {
+    value: status ?? "unknown",
+    label: status ?? "Unknown",
+    color: "bg-muted text-muted-foreground border-border",
+  }
+}
+
+// ─── Page Component ───────────────────────────────────────────────────────────
+
+export default function ITAssetsPage() {
+  const [assets, setAssets] = useState<HardwareAsset[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingAsset, setEditingAsset] = useState<HardwareAsset | null>(null)
+  const [formData, setFormData] = useState(EMPTY_FORM)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterType, setFilterType] = useState<string>("all")
+  const [filterStatus, setFilterStatus] = useState<string>("all")
+
+  // ── Data loading ──────────────────────────────────────────────────────────
+
+  const loadAssets = async () => {
+    setIsLoading(true)
+    try {
+      const response = await itAssetsApi.listHardware()
+      setAssets(response.data || [])
+    } catch {
+      console.debug("IT assets backend unavailable")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => { loadAssets() }, [])
+
+  // ── Filtered view ─────────────────────────────────────────────────────────
+
+  const filteredAssets = useMemo(() => {
+    return assets.filter(asset => {
+      const q = searchQuery.toLowerCase()
+      const matchesSearch =
+        !q ||
+        asset.name.toLowerCase().includes(q) ||
+        (asset.serial_number ?? "").toLowerCase().includes(q) ||
+        (asset.location ?? "").toLowerCase().includes(q) ||
+        (asset.assigned_user_id ?? "").toLowerCase().includes(q)
+
+      const matchesType   = filterType   === "all" || asset.type   === filterType
+      const matchesStatus = filterStatus === "all" || asset.status === filterStatus
+
+      return matchesSearch && matchesType && matchesStatus
     })
+  }, [assets, searchQuery, filterType, filterStatus])
 
-    useEffect(() => {
-        loadHardware()
-    }, [])
+  // ── Stats ─────────────────────────────────────────────────────────────────
 
-    const loadHardware = async () => {
-        try {
-            const response = await itAssetsApi.listHardware()
-            // Map backend type field to hardware_type for UI
-            const mapped = (response.data || []).map(h => ({
-                ...h,
-                hardware_type: h.type,
-            }))
-            setHardwareList(mapped)
-        } catch (error) {
-            console.debug("Failed to load hardware:", error)
+  const stats = useMemo(() => ({
+    total:       assets.length,
+    active:      assets.filter(a => a.status === "active").length,
+    maintenance: assets.filter(a => a.status === "maintenance").length,
+    retired:     assets.filter(a => a.status === "retired").length,
+  }), [assets])
+
+  // ── Dialog helpers ────────────────────────────────────────────────────────
+
+  const openCreate = () => {
+    setEditingAsset(null)
+    setFormData(EMPTY_FORM)
+    setDialogOpen(true)
+  }
+
+  const openEdit = (asset: HardwareAsset) => {
+    setEditingAsset(asset)
+    setFormData({
+      name:          asset.name,
+      type:          asset.type,
+      manufacturer:  asset.manufacturer ?? "",
+      model:         asset.model ?? "",
+      serial_number: asset.serial_number ?? "",
+      location:      asset.location ?? "",
+      notes:         asset.notes ?? "",
+      status:        asset.status ?? "active",
+    })
+    setDialogOpen(true)
+  }
+
+  const handleSave = async () => {
+    if (!formData.name?.trim()) return
+    setIsSaving(true)
+    try {
+      if (editingAsset) {
+        const updatePayload: UpdateHardwareRequest = {
+          name:     formData.name,
+          status:   formData.status,
+          location: formData.location,
+          notes:    formData.notes,
         }
-    }
-
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!newDevice.name) return
-
-        try {
-            const createData: CreateHardwareRequest = {
-                name: newDevice.name,
-                type: newDevice.hardware_type || 'laptop',
-                location: newDevice.location,
-                notes: newDevice.notes,
-            }
-            await itAssetsApi.createHardware(createData)
-            setIsCreating(false)
-            setNewDevice({ hardware_type: "laptop", status: "active" })
-            loadHardware()
-        } catch (error) {
-            console.debug("Failed to create", error)
-            alert("Failed to create device. Check if backend is running.")
+        await itAssetsApi.updateHardware(editingAsset.id, updatePayload)
+      } else {
+        const createPayload: CreateHardwareRequest = {
+          name:          formData.name!,
+          type:          formData.type ?? "laptop",
+          manufacturer:  formData.manufacturer || undefined,
+          model:         formData.model || undefined,
+          serial_number: formData.serial_number || undefined,
+          location:      formData.location || undefined,
+          notes:         formData.notes || undefined,
         }
+        await itAssetsApi.createHardware(createPayload)
+      }
+      setDialogOpen(false)
+      loadAssets()
+    } catch {
+      console.debug("Failed to save asset")
+    } finally {
+      setIsSaving(false)
     }
+  }
 
-    const getIcon = (type: string) => {
-        switch (type) {
-            case 'server': return <Server className="h-5 w-5 text-blue-500" />
-            case 'switch': return <Network className="h-5 w-5 text-purple-500" />
-            case 'workstation': return <Cpu className="h-5 w-5 text-indigo-500" />
-            default: return <MonitorSmartphone className="h-5 w-5 text-emerald-500" />
-        }
+  const handleDelete = async (asset: HardwareAsset) => {
+    if (!confirm(`Delete "${asset.name}"?`)) return
+    try {
+      await itAssetsApi.deleteHardware(asset.id)
+      loadAssets()
+    } catch {
+      setAssets(prev => prev.filter(a => a.id !== asset.id))
     }
+  }
 
-    const activeCount = hardwareList.filter(h => h.status === 'active').length
-    const serverCount = hardwareList.filter(h => h.hardware_type === 'server').length
+  // ─────────────────────────────────────────────────────────────────────────
 
-    return (
-        <AppLayout>
-            <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">IT Assets</h1>
-                        <p className="text-muted-foreground mt-1 text-sm">Manage your hardware inventory and deployments.</p>
-                    </div>
-                    <Button onClick={() => setIsCreating(!isCreating)} className="shadow-lg shadow-primary/20">
-                        <Plus className="h-4 w-4 mr-2" />
-                        {isCreating ? "Cancel" : "Add Device"}
-                    </Button>
-                </div>
+  return (
+    <AppLayout>
+      <div className="space-y-6">
 
-                {/* Dashboard Cards */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="border-border/50 bg-card overflow-hidden relative group">
-                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 transform translate-y-1 group-hover:translate-y-0 transition-transform"></div>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Total Assets</CardTitle>
-                            <Target className="h-4 w-4 text-muted-foreground group-hover:text-blue-500 transition-colors" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-3xl font-bold">{hardwareList.length}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Recorded physical devices</p>
-                        </CardContent>
-                    </Card>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent flex items-center gap-2">
+              <HardDrive className="h-8 w-8 text-primary" />
+              IT Assets
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">Hardware inventory — track, manage and assign physical devices.</p>
+          </div>
+          <Button onClick={openCreate} className="shadow-lg shadow-primary/20">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Asset
+          </Button>
+        </div>
 
-                    <Card className="border-border/50 bg-card overflow-hidden relative group">
-                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 transform translate-y-1 group-hover:translate-y-0 transition-transform"></div>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Active Status</CardTitle>
-                            <ShieldCheck className="h-4 w-4 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-3xl font-bold">{activeCount}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Devices currently deployed</p>
-                        </CardContent>
-                    </Card>
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: "Total Assets",   value: stats.total,       icon: Target,      gradient: "from-blue-500 to-indigo-500" },
+            { label: "Active",         value: stats.active,      icon: ShieldCheck, gradient: "from-emerald-500 to-teal-500" },
+            { label: "Maintenance",    value: stats.maintenance,  icon: Wrench,      gradient: "from-orange-500 to-amber-500" },
+            { label: "Retired",        value: stats.retired,     icon: Archive,     gradient: "from-slate-400 to-slate-500" },
+          ].map(({ label, value, icon: Icon, gradient }) => (
+            <Card key={label} className="border-border/50 bg-card overflow-hidden relative group">
+              <div className={`absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r ${gradient} transform translate-y-1 group-hover:translate-y-0 transition-transform`} />
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">{label}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{value}</div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-                    <Card className="border-border/50 bg-card overflow-hidden relative group">
-                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-purple-500 to-fuchsia-500 transform translate-y-1 group-hover:translate-y-0 transition-transform"></div>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium">Datacenter</CardTitle>
-                            <Server className="h-4 w-4 text-muted-foreground group-hover:text-purple-500 transition-colors" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-3xl font-bold">{serverCount}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Rack servers and appliances</p>
-                        </CardContent>
-                    </Card>
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search name, serial, location..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                {ASSET_TYPES.map(t => (
+                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {ASSET_STATUSES.map(s => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-                    {FEATURES.PXE && (
-                        <Card className="border-border/50 bg-card overflow-hidden relative group">
-                            <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-orange-500 to-amber-500 transform translate-y-1 group-hover:translate-y-0 transition-transform"></div>
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm font-medium">PXE Deployments</CardTitle>
-                                <Download className="h-4 w-4 text-muted-foreground group-hover:text-amber-500 transition-colors" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-3xl font-bold">0</div>
-                                <p className="text-xs text-muted-foreground mt-1">Pending automated installs</p>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
-
-                {isCreating && (
-                    <Card className="border-primary/20 bg-primary/5">
-                        <CardHeader>
-                            <CardTitle className="text-lg">Register New Hardware</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Name / Hostname</Label>
-                                    <Input required placeholder="E.g. WKST-JDOE-01" value={newDevice.name || ''} onChange={e => setNewDevice({ ...newDevice, name: e.target.value })} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Type</Label>
-                                    <select
-                                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                        value={newDevice.hardware_type} onChange={e => setNewDevice({ ...newDevice, hardware_type: e.target.value })}
-                                    >
-                                        <option value="laptop">Laptop / Notebook</option>
-                                        <option value="workstation">Desktop Workstation</option>
-                                        <option value="server">Server Rack</option>
-                                        <option value="switch">Network Switch</option>
-                                        <option value="printer">Printer</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>MAC Address</Label>
-                                    <Input placeholder="00:11:22:33:44:55" value={newDevice.mac_address || ''} onChange={e => setNewDevice({ ...newDevice, mac_address: e.target.value })} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>IP Address</Label>
-                                    <Input placeholder="192.168.1.50" value={newDevice.ip_address || ''} onChange={e => setNewDevice({ ...newDevice, ip_address: e.target.value })} />
-                                </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <Label>Status</Label>
-                                    <select
-                                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                        value={newDevice.status} onChange={e => setNewDevice({ ...newDevice, status: e.target.value })}
-                                    >
-                                        <option value="active">Active (Deployed)</option>
-                                        <option value="stock">In Stock (Available)</option>
-                                        <option value="maintenance">Maintenance required</option>
-                                        <option value="decommissioned">Decommissioned</option>
-                                    </select>
-                                </div>
-                                <div className="md:col-span-2 flex justify-end">
-                                    <Button type="submit">Save Asset</Button>
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
-                )}
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Hardware Inventory</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Asset Name</TableHead>
-                                        <TableHead>Type</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Network</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {hardwareList.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                                                No hardware found in inventory.
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : hardwareList.map((device) => (
-                                        <TableRow key={device.id} className="group">
-                                            <TableCell className="font-medium flex items-center gap-2">
-                                                {getIcon(device.hardware_type || '')}
-                                                {device.name}
-                                            </TableCell>
-                                            <TableCell className="capitalize">{device.hardware_type}</TableCell>
-                                            <TableCell>
-                                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${device.status === 'active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
-                                                        device.status === 'stock' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
-                                                            device.status === 'maintenance' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
-                                                                'bg-muted text-muted-foreground border-border'
-                                                    }`}>
-                                                    {device.status}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="text-xs font-mono">{device.ip_address || "DHCP"}</div>
-                                                <div className="text-xs text-muted-foreground font-mono">{device.mac_address || "No MAC"}</div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {FEATURES.REMOTE && (
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Remote Connect">
-                                                        <Webhook className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                                {FEATURES.PXE && (
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" title="PXE Deploy">
-                                                        <Download className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </CardContent>
-                </Card>
+        {/* Asset Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Hardware Inventory
+              {filteredAssets.length !== assets.length && (
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  {filteredAssets.length} of {assets.length}
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="rounded-b-md border-t">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Serial Number</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Assigned To</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                        Loading assets…
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredAssets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                        {assets.length === 0
+                          ? "No hardware found. Add your first asset."
+                          : "No assets match the current filters."}
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredAssets.map(asset => {
+                    const status = getStatusMeta(asset.status)
+                    return (
+                      <TableRow key={asset.id} className="group">
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {getTypeIcon(asset.type)}
+                            <span>{asset.name}</span>
+                          </div>
+                          {asset.manufacturer && asset.model && (
+                            <p className="text-xs text-muted-foreground mt-0.5 ml-6">
+                              {asset.manufacturer} {asset.model}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="capitalize text-sm">
+                          {getTypeLabel(asset.type)}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {asset.serial_number ?? <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${status.color}`}>
+                            {status.label}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {asset.location ?? <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {asset.assigned_user_id ?? <span className="text-muted-foreground">Unassigned</span>}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-primary"
+                              title="Edit"
+                              onClick={() => openEdit(asset)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              title="Delete"
+                              onClick={() => handleDelete(asset)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
             </div>
-        </AppLayout>
-    )
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Create / Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editingAsset ? "Edit Asset" : "Add Hardware Asset"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 py-2">
+            {/* Name — full width */}
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="asset-name">Name / Hostname *</Label>
+              <Input
+                id="asset-name"
+                placeholder="e.g. WKST-JDOE-01"
+                value={formData.name ?? ""}
+                onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+
+            {/* Type */}
+            <div className="space-y-1.5">
+              <Label>Type</Label>
+              <Select
+                value={formData.type ?? "laptop"}
+                onValueChange={v => setFormData(f => ({ ...f, type: v }))}
+                disabled={!!editingAsset}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSET_TYPES.map(t => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status */}
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select
+                value={formData.status ?? "active"}
+                onValueChange={v => setFormData(f => ({ ...f, status: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSET_STATUSES.map(s => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Manufacturer */}
+            <div className="space-y-1.5">
+              <Label htmlFor="asset-manufacturer">Manufacturer</Label>
+              <Input
+                id="asset-manufacturer"
+                placeholder="e.g. Dell"
+                value={formData.manufacturer ?? ""}
+                onChange={e => setFormData(f => ({ ...f, manufacturer: e.target.value }))}
+                disabled={!!editingAsset}
+              />
+            </div>
+
+            {/* Model */}
+            <div className="space-y-1.5">
+              <Label htmlFor="asset-model">Model</Label>
+              <Input
+                id="asset-model"
+                placeholder="e.g. Latitude 5540"
+                value={formData.model ?? ""}
+                onChange={e => setFormData(f => ({ ...f, model: e.target.value }))}
+                disabled={!!editingAsset}
+              />
+            </div>
+
+            {/* Serial Number */}
+            <div className="space-y-1.5">
+              <Label htmlFor="asset-serial">Serial Number</Label>
+              <Input
+                id="asset-serial"
+                placeholder="e.g. SN-123456"
+                value={formData.serial_number ?? ""}
+                onChange={e => setFormData(f => ({ ...f, serial_number: e.target.value }))}
+                disabled={!!editingAsset}
+              />
+            </div>
+
+            {/* Location */}
+            <div className="space-y-1.5">
+              <Label htmlFor="asset-location">Location</Label>
+              <Input
+                id="asset-location"
+                placeholder="e.g. Office 2B"
+                value={formData.location ?? ""}
+                onChange={e => setFormData(f => ({ ...f, location: e.target.value }))}
+              />
+            </div>
+
+            {/* Notes — full width */}
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="asset-notes">Notes</Label>
+              <Textarea
+                id="asset-notes"
+                placeholder="Optional notes…"
+                rows={2}
+                value={formData.notes ?? ""}
+                onChange={e => setFormData(f => ({ ...f, notes: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={!formData.name?.trim() || isSaving}>
+              {isSaving ? "Saving…" : editingAsset ? "Save Changes" : "Create Asset"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppLayout>
+  )
 }
