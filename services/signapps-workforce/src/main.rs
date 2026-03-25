@@ -88,6 +88,8 @@ fn create_router(state: AppState) -> Router {
             axum::http::header::AUTHORIZATION,
             axum::http::header::ACCEPT,
             axum::http::header::ORIGIN,
+            axum::http::HeaderName::from_static("x-workspace-id"),
+            axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
     // Health check

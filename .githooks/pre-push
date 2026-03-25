@@ -1,0 +1,60 @@
+#!/bin/bash
+# SignApps Pre-Push Hook
+# Automatically tests services before pushing
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+echo ""
+echo -e "${CYAN}========================================${NC}"
+echo -e "${CYAN}  SignApps Pre-Push Test${NC}"
+echo -e "${CYAN}========================================${NC}"
+echo ""
+
+if [ -n "$SKIP_PRE_PUSH_TEST" ]; then
+    echo -e "${YELLOW}[!!] Skipping pre-push test (SKIP_PRE_PUSH_TEST is set)${NC}"
+    exit 0
+fi
+
+if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
+    echo -e "${YELLOW}[!!] Skipping pre-push test (CI environment detected)${NC}"
+    exit 0
+fi
+
+echo -e "${YELLOW}Run pre-push service tests? [Y/n] (auto-run in 3s)${NC}"
+read -t 3 -n 1 response
+echo ""
+
+if [ "$response" = "n" ] || [ "$response" = "N" ]; then
+    echo -e "${YELLOW}[!!] Skipping tests${NC}"
+    exit 0
+fi
+
+echo -e "${CYAN}[..] Running service tests...${NC}"
+echo ""
+
+if command -v pwsh &> /dev/null; then
+    pwsh -NoProfile -ExecutionPolicy Bypass -File "$REPO_ROOT/scripts/test-services.ps1" -SkipBuild -SkipFrontend -Timeout 30
+elif command -v powershell &> /dev/null; then
+    powershell -NoProfile -ExecutionPolicy Bypass -File "$REPO_ROOT/scripts/test-services.ps1" -SkipBuild -SkipFrontend -Timeout 30
+else
+    echo -e "${YELLOW}[!!] PowerShell not found, skipping tests${NC}"
+    exit 0
+fi
+
+TEST_EXIT_CODE=$?
+echo ""
+
+if [ $TEST_EXIT_CODE -eq 0 ]; then
+    echo -e "${GREEN}[OK] All tests passed - push allowed${NC}"
+    exit 0
+else
+    echo -e "${RED}[FAIL] Some tests failed (exit code: $TEST_EXIT_CODE)${NC}"
+    echo -e "${YELLOW}Push blocked. Fix the issues or use SKIP_PRE_PUSH_TEST=1 git push${NC}"
+    exit 1
+fi

@@ -76,12 +76,12 @@ const navGroupsConfig = [
       { href: '/docs', icon: FileText, label: 'Docs', enabled: FEATURES.DOCS },
       { href: '/sheets', icon: Table, label: 'Sheets', enabled: FEATURES.DOCS },
       { href: '/slides', icon: Presentation, label: 'Slides', enabled: FEATURES.DOCS },
-      { href: '/office', icon: Layers, label: 'Office', enabled: FEATURES.OFFICE },
       { href: '/forms', icon: ClipboardList, label: 'Forms', enabled: FEATURES.IDENTITY },
       { href: '/mail', icon: Mail, label: 'Mail', enabled: FEATURES.MAIL },
       { href: '/cal', icon: Calendar, label: 'Calendar', enabled: FEATURES.CALENDAR },
       { href: '/tasks', icon: CheckSquare, label: 'Tasks', enabled: FEATURES.SCHEDULER },
       { href: '/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
+      { href: '/tools', icon: Layers, label: 'Tools', enabled: FEATURES.OFFICE },
     ]
   },
   {

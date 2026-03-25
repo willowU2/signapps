@@ -104,6 +104,8 @@ fn create_router(state: AppState) -> Router {
             axum::http::header::AUTHORIZATION,
             axum::http::header::ACCEPT,
             axum::http::header::ORIGIN,
+            axum::http::HeaderName::from_static("x-workspace-id"),
+            axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
     // Metrics routes
@@ -149,7 +151,7 @@ fn create_router(state: AppState) -> Router {
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        .nest("/api/v1/metrics", metrics_routes)
+        .nest("/api/v1/system", metrics_routes)
         .nest("/api/v1/alerts", alert_routes)
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

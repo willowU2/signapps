@@ -1,5 +1,6 @@
 //! HTTP handlers for the Identity service.
 
+pub mod activities;
 pub mod admin_security;
 pub mod auth;
 pub mod bulk_users;

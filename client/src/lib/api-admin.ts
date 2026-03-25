@@ -53,7 +53,7 @@ export async function getUsers(): Promise<User[]> {
 export async function getSystemMetrics(): Promise<SystemMetrics> {
     try {
         const client = getClient(ServiceName.METRICS);
-        const res = await client.get('/metrics/summary');
+        const res = await client.get('/system/summary');
         return res.data;
     } catch (err) {
         console.error("Failed to fetch metrics:", err);
