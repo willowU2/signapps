@@ -43,6 +43,7 @@ export enum ServiceName {
   WORKFORCE = 'workforce',
   CONTACTS = 'contacts',
   FORMS = 'forms',
+  CHAT = 'chat',
 }
 
 interface ServiceConfig {
@@ -73,6 +74,7 @@ const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
   [ServiceName.WORKFORCE]: { port: 3019, envVar: 'NEXT_PUBLIC_WORKFORCE_URL', healthPath: '/health' },
   [ServiceName.CONTACTS]: { port: 3014, envVar: 'NEXT_PUBLIC_CONTACTS_URL', healthPath: '/health' },
   [ServiceName.FORMS]: { port: 3015, envVar: 'NEXT_PUBLIC_FORMS_URL', healthPath: '/health' },
+  [ServiceName.CHAT]: { port: 3020, envVar: 'NEXT_PUBLIC_CHAT_URL', healthPath: '/health' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -284,3 +286,4 @@ export const collabClient = () => getClient(ServiceName.COLLAB);
 export const meetClient = () => getClient(ServiceName.MEET);
 export const officeClient = () => getClient(ServiceName.OFFICE);
 export const workforceClient = () => getClient(ServiceName.WORKFORCE);
+export const chatClient = () => getClient(ServiceName.CHAT);

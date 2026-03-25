@@ -1,13 +1,14 @@
 /**
  * Chat API Module
  *
- * Migrated to use API Factory pattern.
- * @see factory.ts for client creation details
+ * Uses the signapps-chat service (port 3020).
+ * REST endpoints for channels, messages and reactions.
+ * WebSocket endpoint for real-time updates.
  */
 import { getClient, getServiceBaseUrl, ServiceName } from './factory';
 
-// Get the docs service client (chat is served by docs service)
-const docsClient = getClient(ServiceName.DOCS);
+// Get the chat service client
+const chatClient = getClient(ServiceName.CHAT);
 
 // ============================================================================
 // Types
@@ -69,30 +70,55 @@ export interface ChannelReadStatus {
     last_read_at: string;
 }
 
+export interface ChatMessage {
+    id: string;
+    channel_id: string;
+    user_id: string;
+    username: string;
+    content: string;
+    created_at: string;
+    updated_at?: string;
+    parent_id?: string;
+    reactions?: Record<string, number>; // emoji -> count
+}
+
+export interface SendMessageRequest {
+    content: string;
+    parent_id?: string;
+}
+
+export interface AddReactionRequest {
+    emoji: string;
+}
+
 // ============================================================================
 // Chat API - Channels
 // ============================================================================
 
 export const chatApi = {
+    // ========================================================================
+    // Channels
+    // ========================================================================
+
     // List all channels
     getChannels: () =>
-        docsClient.get<Channel[]>('/channels'),
+        chatClient.get<Channel[]>('/channels'),
 
     // Get a single channel
     getChannel: (id: string) =>
-        docsClient.get<Channel>(`/channels/${id}`),
+        chatClient.get<Channel>(`/channels/${id}`),
 
     // Create a new channel
     createChannel: (data: CreateChannelRequest) =>
-        docsClient.post<Channel>('/docs/chat', data),
+        chatClient.post<Channel>('/channels', data),
 
     // Update a channel
     updateChannel: (id: string, data: UpdateChannelRequest) =>
-        docsClient.put<Channel>(`/channels/${id}`, data),
+        chatClient.put<Channel>(`/channels/${id}`, data),
 
     // Delete a channel
     deleteChannel: (id: string) =>
-        docsClient.delete(`/channels/${id}`),
+        chatClient.delete(`/channels/${id}`),
 
     // ========================================================================
     // Channel Members
@@ -100,15 +126,35 @@ export const chatApi = {
 
     // Get channel members
     getMembers: (channelId: string) =>
-        docsClient.get<ChannelMember[]>(`/channels/${channelId}/members`),
+        chatClient.get<ChannelMember[]>(`/channels/${channelId}/members`),
 
     // Add a member to a channel
     addMember: (channelId: string, data: AddMemberRequest) =>
-        docsClient.post<ChannelMember>(`/channels/${channelId}/members`, data),
+        chatClient.post<ChannelMember>(`/channels/${channelId}/members`, data),
 
     // Remove a member from a channel
     removeMember: (channelId: string, userId: string) =>
-        docsClient.delete(`/channels/${channelId}/members/${userId}`),
+        chatClient.delete(`/channels/${channelId}/members/${userId}`),
+
+    // ========================================================================
+    // Messages
+    // ========================================================================
+
+    // List messages in a channel
+    getMessages: (channelId: string) =>
+        chatClient.get<ChatMessage[]>(`/channels/${channelId}/messages`),
+
+    // Send a message to a channel
+    sendMessage: (channelId: string, data: SendMessageRequest) =>
+        chatClient.post<ChatMessage>(`/channels/${channelId}/messages`, data),
+
+    // ========================================================================
+    // Reactions
+    // ========================================================================
+
+    // Add a reaction to a message
+    addReaction: (messageId: string, data: AddReactionRequest) =>
+        chatClient.post(`/messages/${messageId}/reactions`, data),
 
     // ========================================================================
     // Direct Messages
@@ -116,15 +162,15 @@ export const chatApi = {
 
     // Get direct messages for current user
     getDirectMessages: () =>
-        docsClient.get<DirectMessage[]>('/dms'),
+        chatClient.get<DirectMessage[]>('/dms'),
 
     // Create a direct message conversation
     createDirectMessage: (data: CreateDmRequest) =>
-        docsClient.post<DirectMessage>('/dms', data),
+        chatClient.post<DirectMessage>('/dms', data),
 
     // Delete a direct message
     deleteDirectMessage: (id: string) =>
-        docsClient.delete(`/dms/${id}`),
+        chatClient.delete(`/dms/${id}`),
 
     // ========================================================================
     // Read Status (Unread Counts)
@@ -132,24 +178,24 @@ export const chatApi = {
 
     // Get read status for a channel (unread count)
     getChannelReadStatus: (channelId: string) =>
-        docsClient.get<ChannelReadStatus>(`/channels/${channelId}/read-status`),
+        chatClient.get<ChannelReadStatus>(`/channels/${channelId}/read-status`),
 
     // Mark channel as read (reset unread count)
     markChannelRead: (channelId: string) =>
-        docsClient.post<ChannelReadStatus>(`/channels/${channelId}/read-status`),
+        chatClient.post<ChannelReadStatus>(`/channels/${channelId}/read-status`),
 
     // Get all unread counts for current user
     getAllUnreadCounts: () =>
-        docsClient.get<ChannelReadStatus[]>('/unread-counts'),
+        chatClient.get<ChannelReadStatus[]>('/unread-counts'),
 
     // ========================================================================
     // WebSocket URL helper
     // ========================================================================
 
-    // Get WebSocket URL for a channel
-    getWebSocketUrl: (channelId: string) => {
-        const baseUrl = process.env.NEXT_PUBLIC_DOCS_URL || 'http://localhost:3010/api/v1';
+    // Get WebSocket URL for real-time updates
+    getWebSocketUrl: () => {
+        const baseUrl = process.env.NEXT_PUBLIC_CHAT_URL || 'http://localhost:3020/api/v1';
         const wsBaseUrl = baseUrl.replace(/^http/, 'ws');
-        return `${wsBaseUrl}/docs/chat/${channelId}/ws`;
+        return `${wsBaseUrl}/ws`;
     },
 };
