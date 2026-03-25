@@ -26,6 +26,8 @@ pub use backup_repository::BackupRepository;
 pub mod certificate_repository;
 pub use certificate_repository::CertificateRepository;
 
+pub mod form_repository;
+pub use form_repository::*;
 pub mod vector_repository;
 pub use vector_repository::VectorRepository;
 

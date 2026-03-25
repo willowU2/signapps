@@ -32,7 +32,7 @@ interface FormResponse {
     data: Record<string, string>
 }
 
-const FORMS_API = "http://localhost:3016"
+import { formsApi } from "@/lib/api/forms"
 
 export default function FormsPage() {
     const [forms, setForms] = useState<Form[]>([])
@@ -49,14 +49,19 @@ export default function FormsPage() {
 
     const loadForms = async () => {
         try {
-            const res = await fetch(`${FORMS_API}/api/forms`)
-            if (res.ok) {
-                const data = await res.json()
-                setForms(data.forms ?? data)
-                return
-            }
-        } catch {
-            // backend unavailable — use local state
+            const res = await formsApi.list()
+            const mapped = res.data.map((f: any) => ({
+                id: f.id,
+                title: f.title,
+                description: f.description || "",
+                status: (f.is_published ? "published" : "draft") as "published" | "draft",
+                response_count: 0,
+                created_at: f.created_at,
+                public_url: f.is_published ? `${window.location.origin}/f/${f.id}` : undefined
+            }))
+            setForms(mapped)
+        } catch (e) {
+            console.error("Failed to load forms", e)
         }
     }
 
@@ -78,66 +83,47 @@ export default function FormsPage() {
         if (!newTitle.trim()) return
         if (editingForm) {
             try {
-                const res = await fetch(`${FORMS_API}/api/forms/${editingForm.id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ title: newTitle, description: newDescription }),
-                })
-                if (res.ok) { loadForms(); setIsDialogOpen(false); return }
-            } catch { /* fall through to local */ }
-            setForms(prev => prev.map(f =>
-                f.id === editingForm.id ? { ...f, title: newTitle, description: newDescription } : f
-            ))
-        } else {
-            const newForm: Form = {
-                id: crypto.randomUUID(),
-                title: newTitle,
-                description: newDescription,
-                status: "draft",
-                response_count: 0,
-                created_at: new Date().toISOString(),
+                await formsApi.update(editingForm.id, { title: newTitle, description: newDescription })
+                loadForms(); setIsDialogOpen(false); return 
+            } catch (e) {
+                console.error("Failed to update form", e)
             }
+        } else {
             try {
-                const res = await fetch(`${FORMS_API}/api/forms`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ title: newTitle, description: newDescription }),
-                })
-                if (res.ok) { loadForms(); setIsDialogOpen(false); return }
-            } catch { /* fall through to local */ }
-            setForms(prev => [...prev, newForm])
+                await formsApi.create({ title: newTitle, description: newDescription, fields: [] })
+                loadForms(); setIsDialogOpen(false); return 
+            } catch (e) {
+                console.error("Failed to create form", e)
+            }
         }
-        setIsDialogOpen(false)
     }
 
     const togglePublish = async (form: Form) => {
-        const newStatus = form.status === "published" ? "draft" : "published"
-        try {
-            const res = await fetch(`${FORMS_API}/api/forms/${form.id}/status`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: newStatus }),
-            })
-            if (res.ok) { loadForms(); return }
-        } catch { /* fall through to local */ }
-        setForms(prev => prev.map(f =>
-            f.id === form.id
-                ? { ...f, status: newStatus, public_url: newStatus === "published" ? `${FORMS_API}/f/${form.id}` : undefined }
-                : f
-        ))
+        if (form.status === "draft") {
+            try {
+                await formsApi.publish(form.id)
+                loadForms(); return 
+            } catch (e) {
+                console.error("Failed to publish form", e)
+            }
+        } else {
+            // Actuellement l'API backend ne supporte pas unpublish, on peut l'ignorer ou simuler localement
+            console.warn("Unpublish is not supported by API yet")
+        }
     }
 
     const handleDelete = async (id: string) => {
         if (!confirm("Supprimer ce formulaire ?")) return
         try {
-            const res = await fetch(`${FORMS_API}/api/forms/${id}`, { method: "DELETE" })
-            if (res.ok) { loadForms(); return }
-        } catch { /* fall through to local */ }
-        setForms(prev => prev.filter(f => f.id !== id))
+            await formsApi.delete(id)
+            loadForms(); return 
+        } catch (e) {
+            console.error("Failed to delete form", e)
+        }
     }
 
     const copyLink = (form: Form) => {
-        const url = form.public_url ?? `${FORMS_API}/f/${form.id}`
+        const url = form.public_url ?? `${window.location.origin}/f/${form.id}`
         navigator.clipboard.writeText(url).catch(() => {})
         setCopiedId(form.id)
         setTimeout(() => setCopiedId(null), 2000)
