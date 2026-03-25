@@ -1,85 +1,441 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { billingApi, type Invoice, type InvoiceStatus } from "@/lib/api/billing";
 
-interface Invoice {
-  id: string;
-  number: string;
-  client_name: string;
-  total_ttc: number;
-  status: "draft" | "sent" | "paid" | "overdue";
-  created_at: string;
-  due_date: string;
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  draft: { label: "Brouillon", color: "bg-muted text-muted-foreground" },
-  sent: { label: "Envoyee", color: "bg-blue-500/10 text-blue-500" },
-  paid: { label: "Payee", color: "bg-green-500/10 text-green-500" },
-  overdue: { label: "En retard", color: "bg-red-500/10 text-red-500" },
+const STATUS_META: Record<InvoiceStatus, { label: string; color: string }> = {
+  draft:   { label: "Brouillon", color: "bg-muted text-muted-foreground" },
+  sent:    { label: "Envoyée",   color: "bg-blue-500/15 text-blue-500" },
+  paid:    { label: "Payée",     color: "bg-green-500/15 text-green-500" },
+  overdue: { label: "En retard", color: "bg-red-500/15 text-red-500" },
 };
 
+function formatCurrency(amount: number, currency = "EUR"): string {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+  }).format(amount);
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function StatCard({
+  label,
+  value,
+  sub,
+  colorClass = "text-foreground",
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  colorClass?: string;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-5 flex flex-col gap-1 shadow-sm">
+      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+        {label}
+      </span>
+      <span className={`text-2xl font-bold ${colorClass}`}>{value}</span>
+      {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
+    </div>
+  );
+}
+
+function PlanCard() {
+  return (
+    <div className="rounded-xl border bg-gradient-to-br from-primary/5 to-primary/10 p-6 shadow-sm">
+      <div className="flex items-start justify-between">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Plan actuel
+          </span>
+          <h2 className="mt-1 text-2xl font-bold">Free Tier</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Hébergement local · Pas de frais mensuels
+          </p>
+        </div>
+        <span className="rounded-full bg-green-500/15 text-green-600 text-xs font-semibold px-3 py-1">
+          Actif
+        </span>
+      </div>
+
+      <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
+        {[
+          "Stockage jusqu'à 5 Go",
+          "Utilisateurs illimités en local",
+          "Tous les modules SignApps inclus",
+          "Support communautaire",
+        ].map((f) => (
+          <li key={f} className="flex items-center gap-2">
+            <CheckIcon />
+            {f}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg
+      className="w-4 h-4 text-green-500 flex-shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2.5}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+type Tab = "invoices" | "quotes";
+
 export default function BillingPage() {
-  const [invoices] = useState<Invoice[]>([]);
-  const [tab, setTab] = useState<"invoices" | "quotes">("invoices");
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("invoices");
+  const [statusFilter, setStatusFilter] = useState<InvoiceStatus | "all">("all");
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    billingApi
+      .listInvoices()
+      .then((res) => {
+        if (!cancelled) setInvoices(res.data ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          // Backend stub — treat as empty list, not a hard error
+          setInvoices([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Derived stats
+  const totalPaid = invoices
+    .filter((i) => i.status === "paid")
+    .reduce((s, i) => s + i.total_ttc, 0);
+
+  const countOverdue = invoices.filter((i) => i.status === "overdue").length;
+
+  const filtered = invoices.filter((i) => {
+    if (statusFilter !== "all" && i.status !== statusFilter) return false;
+    return true;
+  });
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Facturation</h1>
-        <button className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+    <div className="p-6 max-w-6xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Facturation</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Gérez vos factures et suivez votre utilisation
+          </p>
+        </div>
+        <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
           + Nouvelle facture
         </button>
       </div>
 
-      <div className="flex gap-2 mb-4">
-        {(["invoices", "quotes"] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-              tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
-            }`}
-          >
-            {t === "invoices" ? "Factures" : "Devis"}
-          </button>
-        ))}
+      {/* Plan + Stats row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="md:col-span-2">
+          <PlanCard />
+        </div>
+
+        <StatCard
+          label="Total encaissé"
+          value={formatCurrency(totalPaid)}
+          sub="Toutes factures payées"
+          colorClass="text-green-600"
+        />
+
+        <StatCard
+          label="Factures en retard"
+          value={String(countOverdue)}
+          sub={countOverdue > 0 ? "Action requise" : "Rien à signaler"}
+          colorClass={countOverdue > 0 ? "text-red-500" : "text-foreground"}
+        />
       </div>
 
-      {invoices.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground border rounded-lg">
-          <p className="text-lg">Aucune {tab === "invoices" ? "facture" : "devis"}</p>
-          <p className="text-sm mt-1">Creez votre {tab === "invoices" ? "premiere facture" : "premier devis"} pour commencer</p>
+      {/* Usage placeholder cards */}
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+          Utilisation
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <UsageCard
+            label="Stockage"
+            used="—"
+            limit="5 Go"
+            pct={0}
+          />
+          <UsageCard
+            label="Appels API ce mois"
+            used="—"
+            limit="Illimité"
+            pct={0}
+          />
+          <UsageCard
+            label="Utilisateurs actifs"
+            used="—"
+            limit="Illimité"
+            pct={0}
+          />
         </div>
-      ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-left p-3 text-sm font-medium">Numero</th>
-                <th className="text-left p-3 text-sm font-medium">Client</th>
-                <th className="text-right p-3 text-sm font-medium">Montant TTC</th>
-                <th className="text-left p-3 text-sm font-medium">Statut</th>
-                <th className="text-left p-3 text-sm font-medium">Date</th>
+      </section>
+
+      {/* Invoices table */}
+      <section>
+        {/* Tabs */}
+        <div className="flex items-center gap-2 mb-4">
+          {(["invoices", "quotes"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                tab === t
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {t === "invoices" ? "Factures" : "Devis"}
+            </button>
+          ))}
+
+          {/* Status filter — only shown for invoices */}
+          {tab === "invoices" && (
+            <div className="ml-auto flex gap-2">
+              {(["all", "sent", "paid", "overdue", "draft"] as const).map(
+                (s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                      statusFilter === s
+                        ? "bg-primary/15 text-primary"
+                        : "text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {s === "all"
+                      ? "Toutes"
+                      : STATUS_META[s as InvoiceStatus]?.label ?? s}
+                  </button>
+                )
+              )}
+            </div>
+          )}
+        </div>
+
+        {loading ? (
+          <LoadingSkeleton />
+        ) : error ? (
+          <ErrorBanner message={error} />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            label={
+              tab === "invoices"
+                ? statusFilter !== "all"
+                  ? `Aucune facture avec le statut « ${STATUS_META[statusFilter as InvoiceStatus]?.label} »`
+                  : "Aucune facture pour le moment"
+                : "Aucun devis pour le moment"
+            }
+            hint={
+              tab === "invoices"
+                ? "Créez votre première facture pour commencer"
+                : "Créez votre premier devis pour commencer"
+            }
+          />
+        ) : (
+          <InvoiceTable invoices={filtered} />
+        )}
+      </section>
+    </div>
+  );
+}
+
+// ─── Invoice Table ────────────────────────────────────────────────────────────
+
+function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
+  return (
+    <div className="border rounded-xl overflow-hidden shadow-sm">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+              Numéro
+            </th>
+            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+              Client
+            </th>
+            <th className="text-right px-4 py-3 font-semibold text-muted-foreground">
+              Montant TTC
+            </th>
+            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+              Statut
+            </th>
+            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+              Date
+            </th>
+            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+              Échéance
+            </th>
+            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+              Télécharger
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {invoices.map((inv) => {
+            const st =
+              STATUS_META[inv.status] ?? STATUS_META.draft;
+            return (
+              <tr
+                key={inv.id}
+                className="border-t hover:bg-accent/40 transition-colors"
+              >
+                <td className="px-4 py-3 font-mono text-xs">{inv.number}</td>
+                <td className="px-4 py-3">{inv.client_name}</td>
+                <td className="px-4 py-3 text-right font-mono">
+                  {formatCurrency(inv.total_ttc, inv.currency || "EUR")}
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.color}`}
+                  >
+                    {st.label}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {formatDate(inv.created_at)}
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {inv.due_date ? formatDate(inv.due_date) : "—"}
+                </td>
+                <td className="px-4 py-3">
+                  {inv.download_url ? (
+                    <a
+                      href={inv.download_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary text-xs hover:underline"
+                    >
+                      PDF
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {invoices.map(inv => {
-                const st = STATUS_LABELS[inv.status] || STATUS_LABELS.draft;
-                return (
-                  <tr key={inv.id} className="border-t hover:bg-accent/50 transition-colors">
-                    <td className="p-3 text-sm font-mono">{inv.number}</td>
-                    <td className="p-3 text-sm">{inv.client_name}</td>
-                    <td className="p-3 text-sm text-right font-mono">{inv.total_ttc.toFixed(2)} EUR</td>
-                    <td className="p-3"><span className={`text-xs px-2 py-0.5 rounded-full ${st.color}`}>{st.label}</span></td>
-                    <td className="p-3 text-sm text-muted-foreground">{new Date(inv.created_at).toLocaleDateString("fr-FR")}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── Usage Card ───────────────────────────────────────────────────────────────
+
+function UsageCard({
+  label,
+  used,
+  limit,
+  pct,
+}: {
+  label: string;
+  used: string;
+  limit: string;
+  pct: number;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+      <div className="flex justify-between items-baseline">
+        <span className="text-sm font-medium">{label}</span>
+        <span className="text-xs text-muted-foreground">
+          {used} / {limit}
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div
+          className="h-full rounded-full bg-primary/60 transition-all"
+          style={{ width: `${Math.min(100, pct)}%` }}
+        />
+      </div>
+      {pct === 0 && (
+        <p className="text-xs text-muted-foreground">
+          Données disponibles dès que le service est en ligne
+        </p>
       )}
+    </div>
+  );
+}
+
+// ─── Micro-components ─────────────────────────────────────────────────────────
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-2 animate-pulse">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="h-12 rounded-lg bg-muted" />
+      ))}
+    </div>
+  );
+}
+
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <div className="rounded-lg border border-red-300 bg-red-50 text-red-700 p-4 text-sm">
+      {message}
+    </div>
+  );
+}
+
+function EmptyState({ label, hint }: { label: string; hint: string }) {
+  return (
+    <div className="text-center py-16 rounded-xl border border-dashed text-muted-foreground">
+      <svg
+        className="mx-auto mb-3 w-10 h-10 opacity-30"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.5}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 14l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+        />
+      </svg>
+      <p className="text-base font-medium">{label}</p>
+      <p className="text-sm mt-1">{hint}</p>
     </div>
   );
 }
