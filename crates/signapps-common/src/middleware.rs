@@ -347,6 +347,61 @@ pub async fn request_id_middleware(mut request: Request, next: Next) -> Response
     response
 }
 
+/// Correlation ID middleware for distributed tracing.
+///
+/// Generates a UUID v4 correlation ID for each incoming request (or propagates
+/// an existing `X-Request-ID` header from upstream). The ID is:
+/// - Attached to the incoming request headers so downstream services can read it.
+/// - Echoed in the `X-Request-ID` response header so clients can correlate logs.
+/// - Injected into a root tracing span so every log line in the request carries
+///   the `correlation_id` field automatically.
+///
+/// # Usage
+///
+/// ```ignore
+/// use axum::middleware;
+/// use signapps_common::correlation_id_middleware;
+///
+/// let app = Router::new()
+///     .route("/api/users", get(list_users))
+///     .layer(middleware::from_fn(correlation_id_middleware));
+/// ```
+pub async fn correlation_id_middleware(mut request: Request, next: Next) -> Response {
+    use tracing::Instrument;
+
+    // Reuse an incoming X-Request-ID (e.g. from a load balancer or upstream
+    // service) or generate a fresh UUID v4.
+    let correlation_id = request
+        .headers()
+        .get("x-request-id")
+        .and_then(|h| h.to_str().ok())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
+    // Propagate the ID downstream via the request header.
+    if let Ok(value) = correlation_id.parse() {
+        request.headers_mut().insert("x-request-id", value);
+    }
+
+    // Create a root span that carries the correlation ID so every child span
+    // (database queries, external calls, …) inherits the field automatically.
+    let span = tracing::info_span!(
+        "http_request",
+        correlation_id = %correlation_id,
+        method = %request.method(),
+        uri = %request.uri(),
+    );
+
+    let mut response = next.run(request).instrument(span).await;
+
+    // Echo the ID in the response so callers can correlate client-side errors.
+    if let Ok(value) = correlation_id.parse() {
+        response.headers_mut().insert("x-request-id", value);
+    }
+
+    response
+}
+
 /// Verify a JWT token and extract claims.
 fn verify_token(token: &str, config: &JwtConfig) -> Result<Claims, Error> {
     use jsonwebtoken::{decode, DecodingKey, Validation};

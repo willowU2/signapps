@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import {
-    Moon, Sun, LogOut, User as UserIcon, Settings, PanelLeft, PanelRight,
+    LogOut, User as UserIcon, Settings, PanelLeft, PanelRight,
     Share2, MessageSquare, History, HardDrive, Mail, CheckSquare,
     Video, Activity, Route, Calendar, Shield, Users, MessageCircle, Search, SlidersHorizontal, FileText
 } from 'lucide-react';
@@ -27,8 +27,7 @@ import { useEffect, useState } from 'react';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
 import { RecentHistory } from '@/components/recent-history';
 import { NotificationBadge } from '@/components/notifications/notification-badge';
-import { useTheme } from 'next-themes';
-import { Switch } from '@/components/ui/switch';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -42,7 +41,6 @@ import Link from 'next/link';
 export function GlobalHeader() {
     const { user, logout } = useAuthStore();
     const { toggleSidebar, sidebarCollapsed, toggleRightSidebar, rightSidebarOpen } = useUIStore();
-    const { theme, setTheme } = useTheme();
     const router = useRouter();
     const pathname = usePathname();
     const [mounted, setMounted] = useState(false);
@@ -359,16 +357,8 @@ export function GlobalHeader() {
                     </TooltipProvider>
                 </div>
 
-                {/* Theme Toggle */}
-                <div className="flex items-center gap-2 mr-2">
-                    <Sun className={`h-4 w-4 transition-all duration-500 ${theme === 'light' ? 'text-amber-500 scale-125 rotate-0' : 'text-muted-foreground scale-75 -rotate-90'}`} />
-                    <Switch
-                        checked={mounted && theme === 'dark'}
-                        onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-                        aria-label="Toggle dark mode"
-                    />
-                    <Moon className={`h-4 w-4 transition-all duration-500 ${theme === 'dark' ? 'text-indigo-400 scale-125 rotate-0' : 'text-muted-foreground scale-75 rotate-90'}`} />
-                </div>
+                {/* Theme Toggle — Light / Dark / System */}
+                <ThemeToggle />
 
                 {/* User Menu */}
                 <DropdownMenu>

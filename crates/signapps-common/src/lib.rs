@@ -108,6 +108,7 @@ pub use graphql_layer::GraphQlConfig;
 pub use indexer::AiIndexerClient;
 pub use marketplace::{AppListing, AppStore};
 pub use middleware::{
+    correlation_id_middleware,
     metrics::{metrics_handler, metrics_middleware, MetricsCollector},
     AuthState, RequestClaimsExt, TenantContext,
 };
