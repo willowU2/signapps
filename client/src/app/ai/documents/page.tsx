@@ -1,6 +1,10 @@
 "use client"
 
-import { CollaborativeEditor } from '@/components/ai/collaborative-editor';
+import dynamic from 'next/dynamic';
+const CollaborativeEditor = dynamic(
+    () => import('@/components/ai/collaborative-editor').then(mod => mod.CollaborativeEditor),
+    { ssr: false, loading: () => <div className="animate-pulse h-64 bg-muted rounded-lg" /> }
+);
 
 export default function DocumentsPage() {
     // In a real app, this would come from URL params or state

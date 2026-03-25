@@ -20,8 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useEntityStore } from "@/stores/entity-hub-store";
 import { toast } from "sonner";
+import { TaskAssigneeSelector } from "./task-assignee-selector";
 
 interface TaskFormProps {
   open: boolean;
@@ -52,6 +54,8 @@ export function TaskForm({
     description: "",
     priority: "1",
     due_date: "",
+    assignee_id: null as string | null,
+    reminder_enabled: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,12 +79,14 @@ export function TaskForm({
         description: formData.description || undefined,
         priority: parseInt(formData.priority),
         due_date: formData.due_date ? new Date(formData.due_date).toISOString() : undefined,
+        assignee_id: formData.assignee_id || undefined,
+        reminder_enabled: formData.reminder_enabled,
       };
 
       await createTask(createData);
       toast.success("Task created successfully");
       onOpenChange(false);
-      setFormData({ title: "", description: "", priority: "1", due_date: "" });
+      setFormData({ title: "", description: "", priority: "1", due_date: "", assignee_id: null, reminder_enabled: false });
       onTaskCreated?.();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
@@ -158,6 +164,33 @@ export function TaskForm({
               onChange={handleInputChange}
             />
           </div>
+
+          {/* Assignee */}
+          <div className="space-y-2">
+            <Label>Assignee</Label>
+            <TaskAssigneeSelector
+              assigneeId={formData.assignee_id}
+              onAssigneeChange={(userId) =>
+                setFormData((prev) => ({ ...prev, assignee_id: userId }))
+              }
+            />
+          </div>
+
+          {/* Due date reminder */}
+          {formData.due_date && (
+            <div className="flex items-center justify-between">
+              <Label htmlFor="reminder" className="text-sm">
+                Reminder before due date
+              </Label>
+              <Switch
+                id="reminder"
+                checked={formData.reminder_enabled}
+                onCheckedChange={(checked) =>
+                  setFormData((prev) => ({ ...prev, reminder_enabled: checked }))
+                }
+              />
+            </div>
+          )}
 
           <DialogFooter className="gap-2">
             <Button

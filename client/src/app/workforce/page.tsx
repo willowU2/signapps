@@ -141,9 +141,22 @@ export default function WorkforcePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => {
+              const employees = employeesData?.data?.employees || [];
+              if (employees.length === 0) return;
+              const headers = ['Nom', 'Email', 'Poste', 'Unité', 'Statut'];
+              const rows = employees.map((e: any) => [e.name || '', e.email || '', e.position || '', e.unit_name || '', e.status || ''].join(','));
+              const csv = [headers.join(','), ...rows].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = 'workforce.csv';
+              link.click();
+              URL.revokeObjectURL(url);
+            }}>
               <Download className="mr-2 h-4 w-4" />
-              Exporter
+              Exporter CSV
             </Button>
             <Button variant="outline" size="sm">
               <Upload className="mr-2 h-4 w-4" />

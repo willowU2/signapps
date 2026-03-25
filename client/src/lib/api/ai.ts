@@ -38,6 +38,12 @@ export const aiApi = {
         }),
     search: (query: string, limit?: number, collections?: string[]) =>
         aiClient.get<SearchResult[]>('/ai/search', { params: { q: query, limit, collections } }),
+    semanticSearch: (query: string, options?: { limit?: number; threshold?: number; collections?: string[] }) =>
+        aiClient.get<SemanticSearchResponse>('/ai/semantic-search', {
+            params: { q: query, limit: options?.limit, threshold: options?.threshold, collections: options?.collections },
+        }),
+    generateEmbeddings: (input: string | string[]) =>
+        aiClient.post<EmbedResponse>('/ai/embeddings', { input }),
     index: (documentId: string, content: string, filename: string, path: string, mimeType?: string, collection?: string) =>
         aiClient.post('/ai/index', { document_id: documentId, content, filename, path, mime_type: mimeType, collection }),
     removeDocument: (documentId: string) =>
@@ -181,4 +187,33 @@ export interface ModelEntry {
     local_path?: string;
     recommended_vram_mb: number;
     description: string;
+}
+
+// Semantic search types (pgvector)
+export interface SemanticSearchResultItem {
+    id: string;
+    document_id: string;
+    content: string;
+    filename: string;
+    score: number;
+    relevance: string;
+}
+
+export interface SemanticSearchResponse {
+    query: string;
+    results: SemanticSearchResultItem[];
+    count: number;
+    embedding_dimensions: number;
+}
+
+// Embedding generation types
+export interface EmbeddingData {
+    index: number;
+    embedding: number[];
+}
+
+export interface EmbedResponse {
+    embeddings: EmbeddingData[];
+    model: string;
+    dimensions: number;
 }

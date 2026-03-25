@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { ResourceSelector } from "./ResourceSelector";
 import { AttendeeList } from "./AttendeeList";
 import { Users, Package } from "lucide-react";
+import { EntityLinks } from "@/components/crosslinks/EntityLinks";
 
 interface EventFormProps {
   open: boolean;
@@ -289,6 +290,12 @@ export function EventForm({
               </Button>
             </div>
           </div>
+
+          {initialEvent && (
+            <div className="border-t pt-3">
+              <EntityLinks entityType="calendar_event" entityId={initialEvent.id} />
+            </div>
+          )}
 
           <DialogFooter className="gap-2">
             {initialEvent && (

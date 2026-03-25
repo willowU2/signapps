@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ShareDialog } from '@/components/drive/ShareDialog';
 import { RenameSheet } from '@/components/storage/rename-sheet';
+import { EntityContextMenu } from '@/components/context-menu';
 
 export default function GlobalDrivePage() {
   const router = useRouter();
@@ -430,8 +431,17 @@ export default function GlobalDrivePage() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {filteredNodes.map(node => (
-                  <div 
-                    key={node.id} 
+                  <EntityContextMenu
+                    key={node.id}
+                    actions={[
+                      { label: 'Ouvrir', onClick: () => handleNavigate(node) },
+                      { label: 'Renommer', onClick: () => { setRenameNode(node); setRenameOpen(true); } },
+                      { label: 'Partager', onClick: () => { setShareNode(node); setShareOpen(true); } },
+                      { label: 'Télécharger', onClick: () => handleDownload(node) },
+                      { label: 'Supprimer', onClick: () => handleDelete(node.id), destructive: true },
+                    ]}
+                  >
+                  <div
                     className="group border rounded-xl p-4 flex flex-col items-center gap-3 hover:bg-accent hover:shadow-md transition-all cursor-pointer bg-card relative"
                     onDoubleClick={() => handleNodeDoubleClick(node)}
                   >
@@ -464,6 +474,7 @@ export default function GlobalDrivePage() {
                     )}
                     <span className="font-medium text-sm text-center truncate w-full">{node.name}</span>
                   </div>
+                  </EntityContextMenu>
                 ))}
               </div>
             )}

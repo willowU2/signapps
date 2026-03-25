@@ -52,7 +52,12 @@ import {
   Lock,
   CreditCard,
   Bell,
-  ClipboardList
+  ClipboardList,
+  Contact,
+  StickyNote,
+  Users2,
+  Briefcase,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -82,6 +87,8 @@ const navGroupsConfig = [
       { href: '/tasks', icon: CheckSquare, label: 'Tasks', enabled: FEATURES.SCHEDULER },
       { href: '/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
       { href: '/tools', icon: Layers, label: 'Tools', enabled: FEATURES.OFFICE },
+      { href: '/contacts', icon: Contact, label: 'Contacts', enabled: FEATURES.IDENTITY },
+      { href: '/keep', icon: StickyNote, label: 'Keep', enabled: FEATURES.DOCS },
     ]
   },
   {
@@ -105,6 +112,7 @@ const navGroupsConfig = [
       { href: '/securelink', icon: Lock, label: 'SecureLink', enabled: FEATURES.IDENTITY },
       { href: '/vpn', icon: Shield, label: 'VPN', enabled: FEATURES.VPN },
       { href: '/backups', icon: Archive, label: 'Backups', enabled: FEATURES.CONTAINERS },
+      { href: '/storage', icon: Database, label: 'Storage', enabled: FEATURES.STORAGE },
     ]
   },
   {
@@ -141,6 +149,8 @@ const navGroupsConfig = [
       { href: '/admin/workspaces', icon: Building2, label: 'Workspaces', enabled: FEATURES.IDENTITY },
       { href: '/admin/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
       { href: '/admin/storage', icon: HardDrive, label: 'Storage Config', enabled: FEATURES.STORAGE },
+      { href: '/team', icon: Users2, label: 'Team', enabled: FEATURES.IDENTITY },
+      { href: '/workforce', icon: Briefcase, label: 'Workforce', enabled: FEATURES.IDENTITY },
       { href: '/billing', icon: CreditCard, label: 'Billing', enabled: true },
       { href: '/notifications', icon: Bell, label: 'Notifications', enabled: true },
       { href: '/settings', icon: Settings, label: 'Settings', enabled: true },

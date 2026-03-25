@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { driveApi, DriveNode } from '@/lib/api';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
 import { useEntityStore } from '@/stores/entity-hub-store';
-import { Table, Plus, MoreVertical } from 'lucide-react';
+import { Table, Plus, MoreVertical, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -19,7 +19,8 @@ export default function SheetsDashboard() {
     const router = useRouter();
     const [docs, setDocs] = useState<DriveNode[]>([]);
     const [loading, setLoading] = useState(true);
-    
+    const [searchQuery, setSearchQuery] = useState('');
+
     // Modal State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [newDocName, setNewDocName] = useState('Feuille sans titre');
@@ -73,6 +74,8 @@ export default function SheetsDashboard() {
             setIsCreating(false);
         }
     };
+
+    const filteredDocs = docs.filter(d => !searchQuery.trim() || d.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const handleOpenDoc = (node: DriveNode) => {
         const targetId = node.target_id || node.id;
@@ -150,19 +153,23 @@ export default function SheetsDashboard() {
 
             {/* Recent Documents Section */}
             <section className="flex-1 py-8 px-6 md:px-12 w-full max-w-6xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-8 gap-4">
                     <h2 className="text-lg font-medium text-foreground tracking-tight">Feuilles de calcul récentes</h2>
+                    <div className="relative w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <input type="text" placeholder="Rechercher..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 rounded-lg border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none" />
+                    </div>
                 </div>
-                
-                {docs.length === 0 ? (
+
+                {filteredDocs.length === 0 ? (
                      <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl bg-transparent">
                         <Table className="h-12 w-12 text-muted-foreground/30 mb-4" />
                         <h3 className="text-lg font-medium text-muted-foreground">Aucune feuille récente</h3>
                      </div>
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 w-full">
-                        {docs.map((doc) => (
-                            <Card 
+                        {filteredDocs.map((doc) => (
+                            <Card
                                 key={doc.id}
                                 onClick={() => handleOpenDoc(doc)}
                                 className="group cursor-pointer flex flex-col bg-background overflow-hidden border border-border/60 hover:border-muted-foreground/30 hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-[220px]"

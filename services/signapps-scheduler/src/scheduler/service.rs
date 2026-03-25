@@ -344,24 +344,22 @@ fn is_valid_cron(cron: &str) -> bool {
 /// Maximum number of retry attempts before a job is marked `failed_permanent`.
 const MAX_JOB_RETRIES: usize = 5;
 
-/// Base delay in seconds for exponential backoff (30 seconds).
-const RETRY_BASE_DELAY_SECS: u64 = 30;
+/// Fixed retry delay schedule: 1s, 5s, 30s, 5min, 30min.
+const RETRY_DELAYS_SECS: [u64; 5] = [1, 5, 30, 300, 1800];
 
-/// Maximum backoff delay: 1 hour.
-const RETRY_MAX_DELAY_SECS: u64 = 3_600;
-
-/// Compute the next retry delay using `base_delay * 2^retry_count`, capped at 1 hour.
+/// Compute the next retry delay using a fixed schedule.
 ///
 /// | retry_count | delay        |
 /// |-------------|--------------|
-/// | 0           | 30 s         |
-/// | 1           | 60 s         |
-/// | 2           | 2 min        |
-/// | 3           | 4 min        |
-/// | 4           | 8 min        |
+/// | 0           | 1 s          |
+/// | 1           | 5 s          |
+/// | 2           | 30 s         |
+/// | 3           | 5 min        |
+/// | 4           | 30 min       |
 fn compute_backoff_secs(retry_count: i32) -> u64 {
-    let exponent = retry_count.max(0) as u32;
-    // Use saturating_pow to avoid overflow on absurd retry counts.
-    let delay = RETRY_BASE_DELAY_SECS.saturating_mul(2_u64.saturating_pow(exponent));
-    delay.min(RETRY_MAX_DELAY_SECS)
+    let idx = retry_count.max(0) as usize;
+    RETRY_DELAYS_SECS
+        .get(idx)
+        .copied()
+        .unwrap_or(*RETRY_DELAYS_SECS.last().unwrap())
 }

@@ -3,6 +3,7 @@
 import { SpinnerInfinity } from 'spinners-react';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmailSignatureEditor } from '@/components/email-signature-editor';
 import { DataTableSkeleton } from '@/components/ui/skeleton-loader';
 import {
   Table,
@@ -89,6 +91,10 @@ import { ProfileSettings } from '@/components/settings/profile-settings';
 import { AppearanceSettings } from '@/components/settings/appearance-settings';
 
 export default function SettingsPage() {
+  // Support ?tab= query param for deep-linking (e.g. from /settings/webhooks redirect)
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'users';
+
   // General tab state
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [siteName, setSiteName] = useState('SignApps');
@@ -523,7 +529,7 @@ export default function SettingsPage() {
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Settings</h1>
 
-        <Tabs defaultValue="users">
+        <Tabs defaultValue={defaultTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
@@ -533,6 +539,7 @@ export default function SettingsPage() {
             <TabsTrigger value="ldap">LDAP</TabsTrigger>
             <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
             <TabsTrigger value="ai-routing">AI Routing</TabsTrigger>
+            <TabsTrigger value="email-signature">Signature</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
@@ -768,6 +775,17 @@ export default function SettingsPage() {
 
           <TabsContent value="ai-routing" className="space-y-6">
             <AiRoutingSettings />
+          </TabsContent>
+
+          <TabsContent value="email-signature" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Signature email</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EmailSignatureEditor />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

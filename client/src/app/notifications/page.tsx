@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
+import { Settings2 } from "lucide-react";
 import {
   notificationsApi,
   type Notification,
@@ -122,6 +123,15 @@ export default function NotificationsPage() {
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<FilterMode>("all");
   const [loading, setLoading] = useState(true);
+  const [showPrefs, setShowPrefs] = useState(false);
+  const [prefs, setPrefs] = useState({
+    email: true,
+    push: true,
+    info: true,
+    warning: true,
+    alert: true,
+    success: true,
+  });
 
   // Merge server read flag with local optimistic state
   const notifications = useMemo<Notification[]>(
@@ -191,15 +201,51 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        {unreadCount > 0 && (
+        <div className="flex items-center gap-3">
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllRead}
+              className="text-sm text-primary hover:underline transition"
+            >
+              Tout marquer comme lu
+            </button>
+          )}
           <button
-            onClick={markAllRead}
-            className="text-sm text-primary hover:underline transition"
+            onClick={() => setShowPrefs(!showPrefs)}
+            className="p-2 rounded-lg hover:bg-accent transition-colors"
+            title="Préférences de notification"
           >
-            Tout marquer comme lu
+            <Settings2 className="h-4 w-4 text-muted-foreground" />
           </button>
-        )}
+        </div>
       </div>
+
+      {/* Notification Preferences Panel */}
+      {showPrefs && (
+        <div className="rounded-xl border bg-card p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Préférences</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { key: 'email' as const, label: 'Notifications email' },
+              { key: 'push' as const, label: 'Notifications push' },
+              { key: 'info' as const, label: 'Infos' },
+              { key: 'warning' as const, label: 'Avertissements' },
+              { key: 'alert' as const, label: 'Alertes' },
+              { key: 'success' as const, label: 'Succès' },
+            ].map(({ key, label }) => (
+              <label key={key} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  checked={prefs[key]}
+                  onChange={(e) => setPrefs(p => ({ ...p, [key]: e.target.checked }))}
+                  className="rounded border-input h-4 w-4 accent-primary"
+                />
+                <span className="text-sm">{label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filter bar */}
       <div className="flex flex-wrap gap-2">

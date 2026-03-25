@@ -13,6 +13,7 @@ import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Downloa
 import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
 import { contactsApi } from "@/lib/api/contacts"
+import { EntityLinks } from "@/components/crosslinks/EntityLinks"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -256,6 +257,11 @@ export default function ContactsPage() {
                   <Button type="submit">{editingId ? "Enregistrer" : "Créer"}</Button>
                 </div>
               </form>
+              {editingId && (
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <EntityLinks entityType="contact" entityId={editingId} />
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

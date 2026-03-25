@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Task } from '@/lib/scheduling/types/scheduling';
 import { cn } from '@/lib/utils';
 import { Clock, CheckSquare } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -89,23 +90,37 @@ export function TaskCard({ task, isOverlay = false, onClick }: TaskCardProps) {
       )}
 
       <div className="flex items-center justify-between text-xs text-[#5f6368] mt-3">
-        {task.dueDate ? (
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-blue-600" />
-            <span className={cn("font-medium", task.dueDate < new Date() && "text-red-600")}>
-              {format(task.dueDate, "d MMM", { locale: fr })}
-            </span>
-          </div>
-        ) : <div />}
+        <div className="flex items-center gap-2">
+          {task.dueDate ? (
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-blue-600" />
+              <span className={cn("font-medium", task.dueDate < new Date() && "text-red-600")}>
+                {format(task.dueDate, "d MMM", { locale: fr })}
+              </span>
+            </div>
+          ) : <div />}
+        </div>
 
-        {task.subtasks && task.subtasks.length > 0 && (
-          <div className="flex items-center gap-1.5">
-            <CheckSquare className="w-3.5 h-3.5" />
-            <span className="font-medium">
-              {task.subtasks.filter(st => st.completed).length}/{task.subtasks.length}
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {task.subtasks && task.subtasks.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              <CheckSquare className="w-3.5 h-3.5" />
+              <span className="font-medium">
+                {task.subtasks.filter(st => st.completed).length}/{task.subtasks.length}
+              </span>
+            </div>
+          )}
+
+          {/* Assignee avatar */}
+          {(task as any).assignee_name && (
+            <Avatar className="h-5 w-5" title={(task as any).assignee_name}>
+              <AvatarImage src={(task as any).assignee_avatar} />
+              <AvatarFallback className="text-[8px] bg-blue-100 text-blue-700">
+                {((task as any).assignee_name || '').slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          )}
+        </div>
       </div>
     </div>
   );

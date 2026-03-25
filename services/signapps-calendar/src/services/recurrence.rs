@@ -1,49 +1,247 @@
-//! Recurrence rule expansion and validation service
-use chrono::{DateTime, Utc};
+//! Recurrence rule (RRULE) expansion and validation service.
+//!
+//! Supports: FREQ=DAILY|WEEKLY|MONTHLY|YEARLY with INTERVAL, COUNT, UNTIL, BYDAY.
 
-/// Expand an iCalendar RRULE into a list of occurrence datetimes
+use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc, Weekday};
+use std::collections::HashMap;
+
+// ---------------------------------------------------------------------------
+// RRULE parsing
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone)]
+struct ParsedRrule {
+    freq: Frequency,
+    interval: u32,
+    count: Option<usize>,
+    until: Option<DateTime<Utc>>,
+    by_day: Vec<Weekday>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Frequency {
+    Daily,
+    Weekly,
+    Monthly,
+    Yearly,
+}
+
+fn parse_rrule(rrule: &str) -> Result<ParsedRrule, String> {
+    let upper = rrule.to_uppercase();
+    let parts: HashMap<&str, &str> = upper
+        .split(';')
+        .filter_map(|p| {
+            let mut kv = p.splitn(2, '=');
+            Some((kv.next()?, kv.next()?))
+        })
+        .collect();
+
+    let freq = match parts.get("FREQ") {
+        Some(&"DAILY") => Frequency::Daily,
+        Some(&"WEEKLY") => Frequency::Weekly,
+        Some(&"MONTHLY") => Frequency::Monthly,
+        Some(&"YEARLY") => Frequency::Yearly,
+        Some(other) => return Err(format!("Unsupported FREQ: {other}")),
+        None => return Err("Missing FREQ in RRULE".into()),
+    };
+
+    let interval = parts
+        .get("INTERVAL")
+        .and_then(|v| v.parse::<u32>().ok())
+        .unwrap_or(1)
+        .max(1);
+
+    let count = parts.get("COUNT").and_then(|v| v.parse::<usize>().ok());
+
+    let until = parts.get("UNTIL").and_then(|v| {
+        // Accept YYYYMMDD or YYYYMMDDTHHMMSSZ
+        if v.len() == 8 {
+            NaiveDate::parse_from_str(v, "%Y%m%d")
+                .ok()
+                .map(|d| d.and_hms_opt(23, 59, 59).unwrap().and_utc())
+        } else {
+            DateTime::parse_from_str(v, "%Y%m%dT%H%M%SZ")
+                .ok()
+                .map(|d| d.with_timezone(&Utc))
+        }
+    });
+
+    let by_day = parts
+        .get("BYDAY")
+        .map(|v| {
+            v.split(',')
+                .filter_map(|d| match d.trim() {
+                    "MO" => Some(Weekday::Mon),
+                    "TU" => Some(Weekday::Tue),
+                    "WE" => Some(Weekday::Wed),
+                    "TH" => Some(Weekday::Thu),
+                    "FR" => Some(Weekday::Fri),
+                    "SA" => Some(Weekday::Sat),
+                    "SU" => Some(Weekday::Sun),
+                    _ => None,
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+
+    Ok(ParsedRrule {
+        freq,
+        interval,
+        count,
+        until,
+        by_day,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Expansion
+// ---------------------------------------------------------------------------
+
+/// Expand an iCalendar RRULE into a list of occurrence datetimes within a range.
+///
+/// - `rrule`: RFC 5545 RRULE string (e.g. `FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE`)
+/// - `start`: original event start time (DTSTART)
+/// - `range_start` / `range_end`: query window
+/// - `max_count`: hard limit on returned occurrences (safety cap)
 pub fn expand_rrule(
-    _rrule: &str,
+    rrule: &str,
     start: DateTime<Utc>,
     range_start: DateTime<Utc>,
     range_end: DateTime<Utc>,
-    _max_count: usize,
+    max_count: usize,
 ) -> Result<Vec<DateTime<Utc>>, String> {
-    // Simplified expansion logic for illustration
+    let rule = parse_rrule(rrule)?;
     let mut occurrences = Vec::new();
-    if start >= range_start && start <= range_end {
-        occurrences.push(start);
+    let effective_max = rule.count.unwrap_or(max_count).min(max_count);
+    let mut generated = 0usize;
+    let mut current = start;
+
+    // Safety: don't generate beyond 10 years or 5000 occurrences
+    let hard_limit = start + Duration::days(3650);
+
+    loop {
+        if current > range_end || current > hard_limit || generated >= effective_max {
+            break;
+        }
+
+        if let Some(until) = rule.until {
+            if current > until {
+                break;
+            }
+        }
+
+        let matches_byday = rule.by_day.is_empty() || rule.by_day.contains(&current.weekday());
+
+        if matches_byday && current >= range_start {
+            occurrences.push(current);
+        }
+
+        if matches_byday {
+            generated += 1;
+        }
+
+        current = advance(current, &rule);
     }
 
-    // Return mock list
     Ok(occurrences)
 }
 
-/// Validate if an iCalendar RRULE string is valid
+fn advance(dt: DateTime<Utc>, rule: &ParsedRrule) -> DateTime<Utc> {
+    match rule.freq {
+        Frequency::Daily => dt + Duration::days(rule.interval as i64),
+        Frequency::Weekly => {
+            if rule.by_day.is_empty() {
+                dt + Duration::weeks(rule.interval as i64)
+            } else {
+                // Advance day by day within the week, then jump interval weeks
+                let next = dt + Duration::days(1);
+                // If we've wrapped past all BYDAY entries for this week, skip ahead
+                if next.weekday().num_days_from_monday() < dt.weekday().num_days_from_monday() {
+                    dt + Duration::days(1) + Duration::weeks((rule.interval - 1) as i64)
+                } else {
+                    next
+                }
+            }
+        },
+        Frequency::Monthly => {
+            let month = dt.month() + rule.interval;
+            let year = dt.year() + (month as i32 - 1) / 12;
+            let month = ((month - 1) % 12) + 1;
+            let day = dt.day().min(days_in_month(year, month));
+            dt.with_day(day)
+                .and_then(|d| d.with_month(month))
+                .and_then(|d| d.with_year(year))
+                .unwrap_or(dt + Duration::days(30 * rule.interval as i64))
+        },
+        Frequency::Yearly => dt
+            .with_year(dt.year() + rule.interval as i32)
+            .unwrap_or(dt + Duration::days(365 * rule.interval as i64)),
+    }
+}
+
+fn days_in_month(year: i32, month: u32) -> u32 {
+    NaiveDate::from_ymd_opt(
+        if month == 12 { year + 1 } else { year },
+        if month == 12 { 1 } else { month + 1 },
+        1,
+    )
+    .unwrap_or(NaiveDate::from_ymd_opt(year, month, 28).unwrap())
+    .pred_opt()
+    .unwrap()
+    .day()
+}
+
+// ---------------------------------------------------------------------------
+// Validation helpers
+// ---------------------------------------------------------------------------
+
+/// Validate if an iCalendar RRULE string is valid.
 pub fn validate_rrule(rrule: &str) -> Result<(), String> {
-    if rrule.to_uppercase().contains("FREQ=") {
-        Ok(())
-    } else {
-        Err("Missing FREQ in RRULE".to_string())
-    }
+    parse_rrule(rrule).map(|_| ())
 }
 
-/// Get frequency from RRULE
+/// Get frequency from RRULE.
 pub fn get_rrule_frequency(rrule: &str) -> String {
-    if rrule.to_uppercase().contains("FREQ=DAILY") {
-        "DAILY".to_string()
-    } else if rrule.to_uppercase().contains("FREQ=WEEKLY") {
-        "WEEKLY".to_string()
-    } else {
-        "OTHER".to_string()
-    }
+    parse_rrule(rrule)
+        .map(|r| format!("{:?}", r.freq).to_uppercase())
+        .unwrap_or_else(|_| "UNKNOWN".into())
 }
 
-/// Count total occurrences for a rule
+/// Count total occurrences for a rule (from COUNT param, or None if unbounded).
 pub fn count_occurrences(rrule: &str) -> Option<usize> {
-    if rrule.contains("COUNT=") {
-        Some(10) // Mock
-    } else {
-        None
+    parse_rrule(rrule).ok().and_then(|r| r.count)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+
+    #[test]
+    fn test_daily_expansion() {
+        let start = Utc.with_ymd_and_hms(2025, 1, 1, 10, 0, 0).unwrap();
+        let range_start = start;
+        let range_end = Utc.with_ymd_and_hms(2025, 1, 5, 23, 59, 59).unwrap();
+
+        let result =
+            expand_rrule("FREQ=DAILY;COUNT=5", start, range_start, range_end, 100).unwrap();
+        assert_eq!(result.len(), 5);
+    }
+
+    #[test]
+    fn test_weekly_with_byday() {
+        let start = Utc.with_ymd_and_hms(2025, 1, 6, 9, 0, 0).unwrap(); // Monday
+        let range_end = Utc.with_ymd_and_hms(2025, 1, 20, 23, 59, 59).unwrap();
+
+        let result =
+            expand_rrule("FREQ=WEEKLY;BYDAY=MO,WE,FR", start, start, range_end, 100).unwrap();
+        assert!(result.len() >= 3);
+    }
+
+    #[test]
+    fn test_validate() {
+        assert!(validate_rrule("FREQ=DAILY;INTERVAL=2").is_ok());
+        assert!(validate_rrule("INTERVAL=2").is_err());
+        assert!(validate_rrule("FREQ=HOURLY").is_err());
     }
 }

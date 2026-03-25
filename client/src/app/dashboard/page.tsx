@@ -12,6 +12,7 @@ import { WidgetGrid } from '@/components/dashboard/widget-grid';
 import { AddWidgetSheet } from '@/components/dashboard/add-widget-sheet';
 import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
 import { ActivityFeed } from '@/components/crosslinks/ActivityFeed';
+import { ActivityHeatmap } from '@/components/activity-heatmap';
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
@@ -88,9 +89,15 @@ export default function DashboardPage() {
 
         <WidgetGrid />
 
-        <div className="mt-6 border rounded-xl p-4 bg-card">
-          <h2 className="text-base font-semibold mb-3">Activité récente</h2>
-          <ActivityFeed limit={20} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
+          <div className="lg:col-span-2 border rounded-xl p-4 bg-card">
+            <h2 className="text-base font-semibold mb-3">Activité récente</h2>
+            <ActivityFeed limit={20} />
+          </div>
+          <div className="border rounded-xl p-4 bg-card">
+            <h2 className="text-base font-semibold mb-3">Heatmap d'activité</h2>
+            <ActivityHeatmap data={[]} label="Cette semaine" />
+          </div>
         </div>
 
         <AddWidgetSheet open={addWidgetOpen} onOpenChange={setAddWidgetOpen} />

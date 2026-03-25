@@ -1,20 +1,12 @@
 /**
  * Billing API Module
  *
- * Connects to the billing service on port 8096.
- * Endpoints: GET /api/invoices, GET /health
+ * Migrated to use API Factory pattern.
+ * @see factory.ts for client creation details
  */
-import axios from 'axios';
+import { getClient, ServiceName } from './factory';
 
-const BILLING_BASE_URL =
-  process.env.NEXT_PUBLIC_BILLING_URL || 'http://localhost:8096';
-
-const billingClient = axios.create({
-  baseURL: BILLING_BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
-  withCredentials: true,
-  timeout: 10000,
-});
+const billingClient = getClient(ServiceName.BILLING);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -29,7 +21,6 @@ export interface Invoice {
   status: InvoiceStatus;
   created_at: string;
   due_date: string;
-  /** Optional download URL returned by the backend */
   download_url?: string;
 }
 
@@ -53,11 +44,9 @@ export interface BillingUsage {
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 export const billingApi = {
-  /** Fetch all invoices */
   listInvoices: () =>
-    billingClient.get<Invoice[]>('/api/invoices'),
+    billingClient.get<Invoice[]>('/invoices'),
 
-  /** Health check */
   health: () =>
     billingClient.get('/health'),
 };

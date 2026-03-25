@@ -44,6 +44,8 @@ export enum ServiceName {
   CONTACTS = 'contacts',
   FORMS = 'forms',
   CHAT = 'chat',
+  NOTIFICATIONS = 'notifications',
+  BILLING = 'billing',
 }
 
 interface ServiceConfig {
@@ -75,6 +77,8 @@ const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
   [ServiceName.CONTACTS]: { port: 3021, envVar: 'NEXT_PUBLIC_CONTACTS_URL', healthPath: '/health' },
   [ServiceName.FORMS]: { port: 3015, envVar: 'NEXT_PUBLIC_FORMS_URL', healthPath: '/health' },
   [ServiceName.CHAT]: { port: 3020, envVar: 'NEXT_PUBLIC_CHAT_URL', healthPath: '/health' },
+  [ServiceName.NOTIFICATIONS]: { port: 8095, envVar: 'NEXT_PUBLIC_NOTIFICATIONS_URL', healthPath: '/health' },
+  [ServiceName.BILLING]: { port: 8096, envVar: 'NEXT_PUBLIC_BILLING_URL', healthPath: '/health' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

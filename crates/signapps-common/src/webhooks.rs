@@ -167,6 +167,9 @@ impl WebhookManager {
 
     // ── Private ──────────────────────────────────────────────────────────────
 
+    /// Retry delays in seconds: 1s, 5s, 30s, 5min.
+    const RETRY_DELAYS: [u64; 4] = [1, 5, 30, 300];
+
     async fn send_one(
         &self,
         config: &WebhookConfig,
@@ -174,55 +177,87 @@ impl WebhookManager {
         payload: &[u8],
     ) -> WebhookDelivery {
         let signature = compute_signature(&config.secret, payload);
+        let max_attempts = Self::RETRY_DELAYS.len() + 1;
 
-        let result = self
-            .client
-            .post(&config.url)
-            .header("Content-Type", "application/json")
-            .header("X-Signature-256", &signature)
-            .header("X-Event-Type", event)
-            .body(payload.to_vec())
-            .send()
+        for attempt in 0..max_attempts {
+            if attempt > 0 {
+                let delay = Self::RETRY_DELAYS[attempt - 1];
+                info!(
+                    webhook_id = %config.id,
+                    attempt,
+                    delay_secs = delay,
+                    "Retrying webhook delivery"
+                );
+                tokio::time::sleep(std::time::Duration::from_secs(delay)).await;
+            }
+
+            let result = tokio::time::timeout(
+                std::time::Duration::from_secs(10),
+                self.client
+                    .post(&config.url)
+                    .header("Content-Type", "application/json")
+                    .header("X-Signature-256", &signature)
+                    .header("X-Event-Type", event)
+                    .body(payload.to_vec())
+                    .send(),
+            )
             .await;
 
-        let (status, response_code) = match result {
-            Ok(resp) => {
-                let code = resp.status().as_u16();
-                if resp.status().is_success() {
-                    info!(
-                        webhook_id = %config.id,
-                        event,
-                        status_code = code,
-                        "Webhook delivery succeeded"
-                    );
-                    (DeliveryStatus::Success, Some(code))
-                } else {
+            match result {
+                Ok(Ok(resp)) => {
+                    let code = resp.status().as_u16();
+                    if resp.status().is_success() {
+                        info!(
+                            webhook_id = %config.id,
+                            event,
+                            status_code = code,
+                            attempt,
+                            "Webhook delivery succeeded"
+                        );
+                        return WebhookDelivery {
+                            id: Uuid::new_v4(),
+                            webhook_id: config.id,
+                            event: event.to_string(),
+                            status: DeliveryStatus::Success,
+                            response_code: Some(code),
+                            attempted_at: Utc::now(),
+                        };
+                    }
                     warn!(
                         webhook_id = %config.id,
                         event,
                         status_code = code,
+                        attempt,
                         "Webhook delivery returned non-2xx"
                     );
-                    (DeliveryStatus::Failed, Some(code))
-                }
-            },
-            Err(err) => {
-                error!(
-                    webhook_id = %config.id,
-                    event,
-                    error = %err,
-                    "Webhook delivery network error"
-                );
-                (DeliveryStatus::Failed, None)
-            },
-        };
+                },
+                Ok(Err(err)) => {
+                    error!(
+                        webhook_id = %config.id,
+                        event,
+                        error = %err,
+                        attempt,
+                        "Webhook delivery network error"
+                    );
+                },
+                Err(_) => {
+                    error!(
+                        webhook_id = %config.id,
+                        event,
+                        attempt,
+                        "Webhook delivery timed out (10s)"
+                    );
+                },
+            }
+        }
 
+        // All attempts exhausted
         WebhookDelivery {
             id: Uuid::new_v4(),
             webhook_id: config.id,
             event: event.to_string(),
-            status,
-            response_code,
+            status: DeliveryStatus::Failed,
+            response_code: None,
             attempted_at: Utc::now(),
         }
     }

@@ -1,6 +1,7 @@
 import { SpinnerInfinity } from 'spinners-react';
 import { format } from "date-fns"
-import { Archive, ArchiveX, Clock, Forward, MoreVertical, Reply, ReplyAll, Trash2, Sparkles, Bot, X, Send, FileText } from 'lucide-react';
+import { Archive, ArchiveX, Clock, Forward, MoreVertical, Reply, ReplyAll, Trash2, Sparkles, Bot, X, Send, FileText, Link2 } from 'lucide-react';
+import { EntityLinks } from '@/components/crosslinks/EntityLinks';
 
 import {
     DropdownMenu,
@@ -354,6 +355,13 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                             Transférer
                         </Button>
                     </div>
+
+                    {/* Entity Crosslinks */}
+                    {mail && (
+                      <div className="px-8 py-4 border-t border-border/50">
+                        <EntityLinks entityType="mail_message" entityId={mail.id} />
+                      </div>
+                    )}
 
                     {/* Reply Composer Area */}
                     <div className="mt-auto px-6 py-4 bg-gray-50/50 dark:bg-gray-900/30 border-t border-white/20 dark:border-white/5 rounded-b-2xl backdrop-blur-sm">

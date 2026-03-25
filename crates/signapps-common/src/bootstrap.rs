@@ -328,7 +328,9 @@ pub async fn run_server(router: Router, config: &ServiceConfig) -> anyhow::Resul
         .with_graceful_shutdown(shutdown_signal)
         .await?;
 
-    tracing::info!("Server stopped gracefully");
+    // Flush any pending OpenTelemetry spans before exit
+    opentelemetry::global::shutdown_tracer_provider();
+    tracing::info!("Server stopped gracefully, traces flushed");
     Ok(())
 }
 

@@ -2,16 +2,34 @@
   /* Hide non-content elements */
   nav, .sidebar, header, footer,
   button, .toast, .dialog-overlay,
+  .mobile-bottom-nav, .feedback-widget,
+  .command-palette, .omni-search,
   [data-no-print] { display: none !important; }
 
   /* Reset layout */
-  main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+  body { font-size: 12pt; color: black !important; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  main { margin: 0 !important; padding: 1cm !important; width: 100% !important; max-width: none !important; }
 
-  /* Typography */
-  body { font-size: 12pt; color: black; background: white; }
+  /* Remove shadows and borders for cleaner print */
+  .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl,
+  .shadow-premium, .shadow-glass, .shadow-card { box-shadow: none !important; }
+
+  /* Links */
   a { text-decoration: underline; color: black; }
+  a[href]::after { content: " (" attr(href) ")"; font-size: 0.8em; color: #666; }
+  a[href^="#"]::after, a[href^="javascript"]::after { content: ""; }
+
+  /* Tables */
+  table { border-collapse: collapse; }
+  th, td { border: 1px solid #ddd !important; padding: 6px 8px; }
+  thead { display: table-header-group; }
 
   /* Page breaks */
   h1, h2, h3 { page-break-after: avoid; }
-  table, figure { page-break-inside: avoid; }
+  table, figure, img { page-break-inside: avoid; }
+  .page-break { page-break-before: always; }
+
+  /* Cards in print */
+  .rounded-xl, .rounded-lg { border-radius: 0 !important; }
+  .bg-card { background: white !important; border: 1px solid #eee !important; }
 }

@@ -2,6 +2,8 @@ import React from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Task } from '@/lib/scheduling/types/scheduling';
 import { CollaborativeEditor } from '@/components/ai/collaborative-editor';
+import { EntityLinks } from '@/components/crosslinks/EntityLinks';
+import { ActivityFeed } from '@/components/crosslinks/ActivityFeed';
 
 interface TaskSheetProps {
   task: Task | null;
@@ -33,11 +35,17 @@ export function TaskSheet({ task, open, onOpenChange }: TaskSheetProps) {
             {/* The tiptap Collaborative Editor bound to this task's document ID */}
             {/* We prefix the document id with 'task-' so the Yjs room is distinct */}
             <div className="min-h-[400px]">
-                <CollaborativeEditor 
-                  docId={`task-${task.id}`} 
+                <CollaborativeEditor
+                  docId={`task-${task.id}`}
                   placeholder="Ajouter une description détaillée avec TipTap..."
                   onSynced={() => { /* synced */ }}
                 />
+            </div>
+
+            {/* Crosslinks & Activity */}
+            <div className="border-t p-4 space-y-4">
+              <EntityLinks entityType="task" entityId={task.id} />
+              <ActivityFeed entityType="task" entityId={task.id} limit={5} />
             </div>
         </div>
       </SheetContent>

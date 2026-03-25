@@ -8,6 +8,8 @@ import { GlobalDndProvider } from './dnd-provider';
 import { WorkspaceShell } from './workspace-shell';
 import { OmniSearch } from '@/components/ui/omni-search';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { KeyboardShortcutsOverlay } from '@/components/keyboard-shortcuts-overlay';
+import { GlobalDropOverlay } from '@/components/global-drop-overlay';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -39,6 +41,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         </main>
       </WorkspaceShell>
       <OmniSearch />
+      <KeyboardShortcutsOverlay />
+      <GlobalDropOverlay />
     </GlobalDndProvider>
   );
 }
