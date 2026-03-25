@@ -8,6 +8,7 @@ import { PwaRegister } from "@/components/pwa-register";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { FeedbackWidget } from "@/components/feedback-widget";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,7 +51,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ClickSpark sparkColor="var(--primary)" sparkSize={6} sparkRadius={20} sparkCount={8} duration={400}>
-          <Providers>{children}</Providers>
+          <Providers>
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </Providers>
           <ContextAssistant />
           <PwaRegister />
           <MobileBottomNav />
