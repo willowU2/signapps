@@ -2,7 +2,7 @@
 
 use crate::scheduler::executor::{ExecutionResult, JobExecutor};
 use signapps_common::{Error, Result};
-use signapps_db::models::{CreateJob, Job, JobRun, JobStats, UpdateJob};
+use signapps_db::models::{CreateJob, Job, JobRun, JobRunStatus, JobStats, UpdateJob};
 use signapps_db::repositories::JobRepository;
 use signapps_db::DatabasePool;
 use std::collections::HashMap;
@@ -62,10 +62,11 @@ impl SchedulerService {
         }
     }
 
-    /// Check all enabled jobs and run those that are due.
+    /// Check all enabled jobs and run those that are due (including retry-eligible jobs).
     async fn check_and_run_jobs(&self) -> Result<()> {
         let repo = JobRepository::new(&self.pool);
-        let jobs = repo.list_enabled().await?;
+        // list_due() returns enabled jobs with next_retry_at IS NULL OR next_retry_at <= NOW()
+        let jobs = repo.list_due().await?;
 
         for job in jobs {
             if self.should_run(&job) {
@@ -101,7 +102,7 @@ impl SchedulerService {
         }
     }
 
-    /// Run a job immediately.
+    /// Run a job immediately, applying exponential-backoff retry on failure.
     pub async fn run_job(&self, job: &Job) -> Result<ExecutionResult> {
         let repo = JobRepository::new(&self.pool);
 
@@ -121,23 +122,73 @@ impl SchedulerService {
             );
         }
 
-        tracing::info!("Starting job '{}' (run {})", job.name, run.id);
+        let retry_attempt = job.retry_count;
+        if retry_attempt > 0 {
+            tracing::info!(
+                "Starting job '{}' (run {}) — retry attempt {}/{}",
+                job.name,
+                run.id,
+                retry_attempt,
+                MAX_JOB_RETRIES
+            );
+        } else {
+            tracing::info!("Starting job '{}' (run {})", job.name, run.id);
+        }
 
         // Execute the job
         let result = self.executor.execute(job).await;
 
-        // Update run record
+        let is_failure = matches!(result.status, JobRunStatus::Failed | JobRunStatus::Timeout);
+
+        // Update run record with actual status (or failed_permanent on last attempt)
+        let run_status = if is_failure && retry_attempt >= MAX_JOB_RETRIES as i32 {
+            JobRunStatus::FailedPermanent
+        } else {
+            result.status
+        };
+
         repo.complete_run(
             run.id,
-            result.status,
+            run_status,
             result.output.as_deref(),
             result.error.as_deref(),
         )
         .await?;
 
-        // Update job last run
-        repo.update_last_run(job.id, &result.status.to_string())
-            .await?;
+        // Handle retry state
+        if is_failure {
+            if retry_attempt >= MAX_JOB_RETRIES as i32 {
+                // Exceeded max retries — disable the job permanently
+                tracing::error!(
+                    "Job '{}' has failed {} times (max retries exceeded). Marking as failed_permanent.",
+                    job.name,
+                    retry_attempt + 1
+                );
+                repo.mark_failed_permanent(job.id).await?;
+            } else {
+                // Schedule next retry with exponential backoff (base 30s, max 1h)
+                let backoff_secs = compute_backoff_secs(retry_attempt);
+                let next_retry_at =
+                    chrono::Utc::now() + chrono::Duration::seconds(backoff_secs as i64);
+
+                tracing::warn!(
+                    "Job '{}' failed (attempt {}/{}). Scheduling retry in {}s at {}",
+                    job.name,
+                    retry_attempt + 1,
+                    MAX_JOB_RETRIES,
+                    backoff_secs,
+                    next_retry_at.format("%H:%M:%S UTC")
+                );
+
+                repo.schedule_retry(job.id, next_retry_at, &result.status.to_string())
+                    .await?;
+            }
+        } else {
+            // Success — reset retry state and update last_run normally
+            repo.reset_retry(job.id).await?;
+            repo.update_last_run(job.id, &result.status.to_string())
+                .await?;
+        }
 
         // Remove from running jobs
         {
@@ -284,4 +335,33 @@ fn parse_simple_interval(cron: &str) -> Option<i64> {
 fn is_valid_cron(cron: &str) -> bool {
     let parts: Vec<&str> = cron.split_whitespace().collect();
     parts.len() == 5 || parts.len() == 6
+}
+
+// ---------------------------------------------------------------------------
+// Retry / backoff constants and helpers
+// ---------------------------------------------------------------------------
+
+/// Maximum number of retry attempts before a job is marked `failed_permanent`.
+const MAX_JOB_RETRIES: usize = 5;
+
+/// Base delay in seconds for exponential backoff (30 seconds).
+const RETRY_BASE_DELAY_SECS: u64 = 30;
+
+/// Maximum backoff delay: 1 hour.
+const RETRY_MAX_DELAY_SECS: u64 = 3_600;
+
+/// Compute the next retry delay using `base_delay * 2^retry_count`, capped at 1 hour.
+///
+/// | retry_count | delay        |
+/// |-------------|--------------|
+/// | 0           | 30 s         |
+/// | 1           | 60 s         |
+/// | 2           | 2 min        |
+/// | 3           | 4 min        |
+/// | 4           | 8 min        |
+fn compute_backoff_secs(retry_count: i32) -> u64 {
+    let exponent = retry_count.max(0) as u32;
+    // Use saturating_pow to avoid overflow on absurd retry counts.
+    let delay = RETRY_BASE_DELAY_SECS.saturating_mul(2_u64.saturating_pow(exponent));
+    delay.min(RETRY_MAX_DELAY_SECS)
 }

@@ -18,6 +18,10 @@ pub struct Job {
     pub enabled: bool,
     pub last_run: Option<DateTime<Utc>>,
     pub last_status: Option<String>,
+    /// Number of consecutive failures since last success (reset on success).
+    pub retry_count: i32,
+    /// When the job is next eligible for a retry attempt (None = not pending retry).
+    pub next_retry_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -103,6 +107,8 @@ pub enum JobRunStatus {
     Failed,
     Timeout,
     Cancelled,
+    /// Job exceeded the maximum retry limit and will not be retried.
+    FailedPermanent,
 }
 
 impl std::fmt::Display for JobRunStatus {
@@ -113,6 +119,7 @@ impl std::fmt::Display for JobRunStatus {
             JobRunStatus::Failed => write!(f, "failed"),
             JobRunStatus::Timeout => write!(f, "timeout"),
             JobRunStatus::Cancelled => write!(f, "cancelled"),
+            JobRunStatus::FailedPermanent => write!(f, "failed_permanent"),
         }
     }
 }

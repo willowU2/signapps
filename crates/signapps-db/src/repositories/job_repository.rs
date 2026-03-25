@@ -313,4 +313,86 @@ impl<'a> JobRepository<'a> {
 
         Ok(result.rows_affected() as i64)
     }
+
+    /// Increment retry_count and schedule next retry at `next_retry_at`.
+    pub async fn schedule_retry(
+        &self,
+        id: Uuid,
+        next_retry_at: chrono::DateTime<chrono::Utc>,
+        status: &str,
+    ) -> Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE scheduler.jobs
+            SET retry_count  = retry_count + 1,
+                next_retry_at = $2,
+                last_status   = $3,
+                last_run      = NOW(),
+                updated_at    = NOW()
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .bind(next_retry_at)
+        .bind(status)
+        .execute(self.pool.inner())
+        .await?;
+
+        Ok(())
+    }
+
+    /// Mark a job as permanently failed (exceeded max retries).
+    /// Disables the job so it won't be picked up again.
+    pub async fn mark_failed_permanent(&self, id: Uuid) -> Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE scheduler.jobs
+            SET last_status   = 'failed_permanent',
+                next_retry_at = NULL,
+                enabled       = false,
+                last_run      = NOW(),
+                updated_at    = NOW()
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .execute(self.pool.inner())
+        .await?;
+
+        Ok(())
+    }
+
+    /// Reset retry state after a successful run.
+    pub async fn reset_retry(&self, id: Uuid) -> Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE scheduler.jobs
+            SET retry_count   = 0,
+                next_retry_at = NULL,
+                updated_at    = NOW()
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .execute(self.pool.inner())
+        .await?;
+
+        Ok(())
+    }
+
+    /// List enabled jobs that are ready to run, including those due for retry.
+    pub async fn list_due(&self) -> Result<Vec<Job>> {
+        let jobs = sqlx::query_as::<_, Job>(
+            r#"
+            SELECT * FROM scheduler.jobs
+            WHERE enabled = true
+              AND (next_retry_at IS NULL OR next_retry_at <= NOW())
+            ORDER BY name
+            "#,
+        )
+        .fetch_all(self.pool.inner())
+        .await?;
+
+        Ok(jobs)
+    }
 }
