@@ -37,6 +37,7 @@ pub struct CreateFieldRequest {
     pub label: String,
     pub required: bool,
     pub options: Option<Vec<String>>,
+    pub layout: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -99,6 +100,7 @@ async fn create_form(
             label: f.label,
             required: f.required,
             options: f.options,
+            layout: f.layout,
         })
         .collect();
 
@@ -146,6 +148,7 @@ async fn update_form(
                 label: f.label,
                 required: f.required,
                 options: f.options,
+                layout: f.layout,
             })
             .collect()
     });

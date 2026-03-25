@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import {
-    FileText, Plus, Edit, Trash, Eye, Globe, Link, Send, FileX, BarChart3
+    FileText, Plus, Edit, Trash, Eye, Globe, Link as LinkIcon, Send, FileX, BarChart3
 } from "lucide-react"
 
 interface Form {
@@ -35,6 +37,7 @@ interface FormResponse {
 import { formsApi } from "@/lib/api/forms"
 
 export default function FormsPage() {
+    const router = useRouter()
     const [forms, setForms] = useState<Form[]>([])
     const [responses, setResponses] = useState<FormResponse[]>([])
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -90,8 +93,13 @@ export default function FormsPage() {
             }
         } else {
             try {
-                await formsApi.create({ title: newTitle, description: newDescription, fields: [] })
-                loadForms(); setIsDialogOpen(false); return 
+                const res = await formsApi.create({ title: newTitle, description: newDescription, fields: [] })
+                setIsDialogOpen(false)
+                if (res.data && res.data.id) {
+                    router.push(`/forms/${res.data.id}`)
+                } else {
+                    loadForms()
+                }
             } catch (e) {
                 console.error("Failed to create form", e)
             }
@@ -207,8 +215,13 @@ export default function FormsPage() {
                                                 <span>{new Date(form.created_at).toLocaleDateString("fr-FR")}</span>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
+                                                <Button size="sm" variant="default" asChild>
+                                                    <Link href={`/forms/${form.id}`}>
+                                                        <Edit className="h-3 w-3 mr-1" /> Éditeur
+                                                    </Link>
+                                                </Button>
                                                 <Button size="sm" variant="outline" onClick={() => openEdit(form)}>
-                                                    <Edit className="h-3 w-3 mr-1" /> Éditer
+                                                    Paramètres
                                                 </Button>
                                                 <Button size="sm" variant="outline" onClick={() => togglePublish(form)}>
                                                     <Globe className="h-3 w-3 mr-1" />
@@ -219,7 +232,7 @@ export default function FormsPage() {
                                                 </Button>
                                                 {form.status === "published" && (
                                                     <Button size="sm" variant="outline" onClick={() => copyLink(form)}>
-                                                        <Link className="h-3 w-3 mr-1" />
+                                                        <LinkIcon className="h-3 w-3 mr-1" />
                                                         {copiedId === form.id ? "Copié !" : "Copier le lien"}
                                                     </Button>
                                                 )}

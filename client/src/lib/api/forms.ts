@@ -13,9 +13,10 @@ import { getClient, ServiceName } from './factory';
 export interface FormField {
   id: string;
   label: string;
-  field_type: 'text' | 'number' | 'email' | 'select' | 'checkbox' | 'textarea' | 'date' | 'file';
+  field_type: 'Text' | 'Number' | 'Email' | 'SingleChoice' | 'MultipleChoice' | 'TextArea' | 'Date' | 'File' | 'Rating';
   required: boolean;
   options?: string[];
+  layout?: string;
   placeholder?: string;
   order: number;
 }
@@ -61,6 +62,11 @@ const formsClient = () => getClient(ServiceName.FORMS);
 // Forms API
 // ============================================================================
 
+export interface FormAnswer {
+  field_id: string;
+  value: any;
+}
+
 export const formsApi = {
   /** List all forms */
   list: () =>
@@ -94,6 +100,6 @@ export const formsApi = {
    * Submit a response to a published form.
    * This endpoint is public and does not require authentication.
    */
-  respond: (id: string, answers: Record<string, unknown>) =>
-    formsClient().post(`/forms/${id}/respond`, { answers }),
+  respond: (id: string, payload: { respondent?: string, answers: FormAnswer[] }) =>
+    formsClient().post(`/forms/${id}/respond`, payload),
 };

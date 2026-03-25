@@ -22,6 +22,7 @@ pub struct FormField {
     pub label: String,
     pub required: bool,
     pub options: Option<Vec<String>>,
+    pub layout: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
