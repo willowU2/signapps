@@ -115,6 +115,7 @@ const navGroupsConfig = [
     adminOnly: true, // Admin only - scheduler et monitoring
     items: [
       { href: '/ai', icon: MessageSquare, label: 'AI', enabled: FEATURES.AI },
+      { href: '/media', icon: Mic, label: 'Media', enabled: FEATURES.MEDIA },
       { href: '/scheduler', icon: Clock, label: 'Scheduler', enabled: FEATURES.SCHEDULER },
       { href: '/analytics', icon: TrendingUp, label: 'Analytics', enabled: FEATURES.METRICS },
       { href: '/monitoring', icon: Activity, label: 'Monitoring', enabled: FEATURES.METRICS },
