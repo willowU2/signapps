@@ -1,40 +1,11 @@
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Image, Video, AudioLines, Eye, Loader2 } from 'lucide-react';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PLACEHOLDER PANEL — will be replaced by real panels from Task 12.2
-// ═══════════════════════════════════════════════════════════════════════════
-
-function PlaceholderPanel({
-  title,
-  icon: Icon,
-}: {
-  title: string;
-  icon: typeof Image;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Icon className="h-5 w-5" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <Loader2 className="h-8 w-8 mb-3 animate-spin opacity-40" />
-          <p className="text-sm">Panel component loading...</p>
-          <p className="text-xs mt-1 opacity-60">
-            Ce panneau sera disponible dans une prochaine mise a jour.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+import { Image, Video, AudioLines, Eye } from 'lucide-react';
+import { ImageGenPanel } from '@/components/ai/image-gen-panel';
+import { VideoGenPanel } from '@/components/ai/video-gen-panel';
+import { AudioGenPanel } from '@/components/ai/audio-gen-panel';
+import { VisionAnalyzer } from '@/components/ai/vision-analyzer';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // STUDIO PAGE
@@ -73,19 +44,19 @@ export default function StudioPage() {
         </TabsList>
 
         <TabsContent value="image">
-          <PlaceholderPanel title="Generation d'images" icon={Image} />
+          <ImageGenPanel />
         </TabsContent>
 
         <TabsContent value="video">
-          <PlaceholderPanel title="Generation de videos" icon={Video} />
+          <VideoGenPanel />
         </TabsContent>
 
         <TabsContent value="audio">
-          <PlaceholderPanel title="Generation audio" icon={AudioLines} />
+          <AudioGenPanel />
         </TabsContent>
 
         <TabsContent value="vision">
-          <PlaceholderPanel title="Analyse visuelle" icon={Eye} />
+          <VisionAnalyzer />
         </TabsContent>
       </Tabs>
     </div>
