@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
-import { getServiceUrl, ServiceName } from '@/lib/api/factory';
+import { getServiceUrl, ServiceName, getClient } from '@/lib/api/factory';
 import { useAuthStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,7 +20,6 @@ export function useNotificationsSSE() {
 
     const baseUrl = getServiceUrl(ServiceName.SCHEDULER);
     const url = `${baseUrl}/notifications/stream`;
-
     const controller = new AbortController();
 
     const connect = async () => {
@@ -33,9 +32,21 @@ export function useNotificationsSSE() {
           },
           signal: controller.signal,
           onopen: async (response) => {
+            if (response.status === 401) {
+              console.error('SSE 401 Unauthorized. Access token might be expired. Forcing token refresh...');
+              try {
+                // Hit a protected endpoint with axios so its interceptor refreshes the cookie
+                const schedulerClient = getClient(ServiceName.SCHEDULER);
+                await schedulerClient.get('/health');
+              } catch (e) {
+                // Ignore errors
+              }
+              // Throw a specific error to allow retry
+              throw new Error('SSE_AUTH_ERROR');
+            }
             if (response.status >= 400 && response.status < 500 && response.status !== 429) {
               console.error('Failed to connect to SSE stream: client error', response.status);
-              throw new Error('SSE client error'); // Prevents retries for auth errors
+              throw new Error('SSE_CLIENT_ERROR'); // Prevents retries for other client errors
             }
           },
           onmessage(ev) {
@@ -58,17 +69,23 @@ export function useNotificationsSSE() {
           },
           onclose() {
             // Reconnects automatically according to fetch-event-source logic
-            // unless we throw an error here.
           },
           onerror(err) {
-            console.error('SSE stream error:', err);
-            // Throwing prevents auto reconnect on fatal errors.
+            console.error('SSE connection error:', err);
+            
+            if (err.message === 'SSE_AUTH_ERROR') {
+              // Return nothing to allow it to retry (with a fresh cookie!)
+              return; 
+            }
+            if (err.message === 'SSE_CLIENT_ERROR') {
+              // Throwing prevents auto reconnect on fatal errors.
+              throw err;
+            }
             // Returning undefined tells it to reconnect with backoff.
             return undefined;
           }
         });
       } catch (e) {
-        // Will be caught here if an error is thrown in onopen or onerror
         console.error('SSE connection aborted or failed:', e);
       }
     };

@@ -32,7 +32,7 @@ export function ActivityFeed({ workspaceId, entityType, entityId, limit = 50 }: 
       try {
         const { data } = entityType && entityId
           ? await activitiesApi.entityHistory(entityType, entityId)
-          : await activitiesApi.feed({ workspace_id: workspaceId, limit });
+          : await activitiesApi.feed({ workspace_id: workspaceId === 'all' ? undefined : workspaceId, limit });
         setActivities(data);
       } catch (e) {
         console.error('Failed to load activities', e);
