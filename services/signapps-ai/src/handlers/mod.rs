@@ -8,6 +8,7 @@ pub mod conversations;
 pub mod doc_parse;
 pub mod gpu_status;
 pub mod health;
+pub mod image_gen;
 pub mod index;
 pub mod model_management;
 pub mod models;

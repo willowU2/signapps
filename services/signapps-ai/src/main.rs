@@ -40,9 +40,9 @@ mod workers;
 
 use embeddings::EmbeddingsClient;
 use handlers::{
-    action, capabilities, chat, collections, conversations, doc_parse, gpu_status, health, index,
-    model_management, models as model_handlers, providers, search, search_image, transcription,
-    vision, webhook,
+    action, capabilities, chat, collections, conversations, doc_parse, gpu_status, health,
+    image_gen, index, model_management, models as model_handlers, providers, search, search_image,
+    transcription, vision, webhook,
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
@@ -436,6 +436,12 @@ fn create_router(state: AppState) -> Router {
         // Document parsing
         .route("/document/parse", post(doc_parse::parse_document))
         .route("/document/tables", post(doc_parse::extract_tables))
+        // Image generation
+        .route("/image/generate", post(image_gen::generate_image))
+        .route("/image/inpaint", post(image_gen::inpaint_image))
+        .route("/image/img2img", post(image_gen::img2img))
+        .route("/image/upscale", post(image_gen::upscale_image))
+        .route("/image/models", get(image_gen::list_image_models))
         // Action Execution
         .route("/action", post(action::execute_action))
         // Index
