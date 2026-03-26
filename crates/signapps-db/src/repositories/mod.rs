@@ -89,4 +89,13 @@ pub use activity_repository::ActivityRepository;
 pub mod signature_repository;
 pub use signature_repository::SignatureRepository;
 
+pub mod multimodal_vector_repository;
+pub use multimodal_vector_repository::MultimodalVectorRepository;
+
+pub mod conversation_repository;
+pub use conversation_repository::ConversationRepository;
+
+pub mod generated_media_repository;
+pub use generated_media_repository::GeneratedMediaRepository;
+
 pub mod test_helpers;
