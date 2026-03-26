@@ -2,6 +2,8 @@
 
 pub mod chunker;
 #[allow(unused)]
+pub mod circular_pipeline;
+#[allow(unused)]
 pub mod multimodal_indexer;
 #[allow(unused)]
 pub mod multimodal_search;
@@ -10,6 +12,8 @@ pub mod pipeline;
 #[cfg(test)]
 mod pipeline_tests;
 
+#[allow(unused_imports)]
+pub use circular_pipeline::CircularPipeline;
 #[allow(unused_imports)]
 pub use multimodal_indexer::MultimodalIndexer;
 #[allow(unused_imports)]
