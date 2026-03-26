@@ -22,6 +22,8 @@ use tower::ServiceBuilder;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 mod embeddings;
+#[allow(unused)]
+mod gateway;
 mod handlers;
 mod indexer;
 mod llm;
