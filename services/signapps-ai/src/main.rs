@@ -27,6 +27,8 @@ mod gateway;
 mod handlers;
 mod indexer;
 mod llm;
+#[allow(unused)]
+mod models;
 mod rag;
 mod vectors;
 #[allow(unused)]
@@ -34,8 +36,8 @@ mod workers;
 
 use embeddings::EmbeddingsClient;
 use handlers::{
-    action, chat, collections, health, index, model_management, models, providers, search,
-    transcription, webhook,
+    action, chat, collections, health, index, model_management, models as model_handlers,
+    providers, search, transcription, webhook,
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
@@ -425,7 +427,7 @@ fn create_router(state: AppState) -> Router {
             get(collections::get_collection_stats),
         )
         // Models & Providers
-        .route("/models", get(models::list_models))
+        .route("/models", get(model_handlers::list_models))
         .route("/providers", get(providers::list_providers))
         // Model management
         .route("/models/local", get(model_management::list_local_models))
