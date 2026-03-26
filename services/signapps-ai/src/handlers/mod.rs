@@ -11,5 +11,6 @@ pub mod model_management;
 pub mod models;
 pub mod providers;
 pub mod search;
+pub mod search_image;
 pub mod transcription;
 pub mod webhook;

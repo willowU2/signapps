@@ -39,7 +39,7 @@ mod workers;
 use embeddings::EmbeddingsClient;
 use handlers::{
     action, capabilities, chat, collections, gpu_status, health, index, model_management,
-    models as model_handlers, providers, search, transcription, webhook,
+    models as model_handlers, providers, search, search_image, transcription, webhook,
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
@@ -410,6 +410,7 @@ fn create_router(state: AppState) -> Router {
     let ai_routes = Router::new()
         // Search
         .route("/search", get(search::search))
+        .route("/search/image", post(search_image::search_by_image))
         // Chat
         .route("/chat", post(chat::chat))
         .route("/chat/stream", post(chat::chat_stream))
