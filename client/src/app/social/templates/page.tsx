@@ -4,8 +4,6 @@ export const metadata = { title: 'SignSocial — Templates' };
 
 export default function SocialTemplatesPage() {
   return (
-    <div className="p-6">
-      <TemplateLibrary />
-    </div>
+    <TemplateLibrary />
   );
 }

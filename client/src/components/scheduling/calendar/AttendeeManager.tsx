@@ -197,9 +197,8 @@ export function AttendeeManager({
   };
 
   // Set as organizer
-  const handleSetOrganizer = (attendeeId: string) => {
-    // This would typically call a parent callback
-    console.log('Set organizer:', attendeeId);
+  const handleSetOrganizer = (_attendeeId: string) => {
+    // This would typically call a parent callback — no-op until wired up
   };
 
   return (

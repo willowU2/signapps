@@ -9,6 +9,7 @@ import { WorkspaceShell } from "@/components/layout/workspace-shell"
 import { useSelectedChannel, useSelectedChannelName, useChatActions, useIsDm } from "@/lib/store/chat-store"
 import { useEffect } from "react"
 import { usersApi } from "@/lib/api/identity"
+import { toast } from "sonner"
 
 export default function ChatPage() {
     const selectedChannel = useSelectedChannel()
@@ -26,8 +27,8 @@ export default function ChatPage() {
                     map[u.id] = u
                 })
                 setUsersMap(map)
-            } catch (error) {
-                console.error("Failed to fetch users for chat", error)
+            } catch {
+                toast.error("Erreur lors du chargement des utilisateurs.")
             }
         }
         fetchUsers()

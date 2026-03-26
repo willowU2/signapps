@@ -16,8 +16,9 @@ use handlers::admin_security;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{
     auth_middleware, logging_middleware, request_id_middleware, require_admin,
-    tenant_context_middleware, AuthState,
+    security_headers_middleware, tenant_context_middleware, AuthState,
 };
+use signapps_common::rate_limit::{RateLimiter, RateLimiterConfig};
 use signapps_common::JwtConfig;
 use signapps_db::{create_pool, run_migrations, DatabasePool};
 use tower_http::{
@@ -116,6 +117,15 @@ impl AuthState for AppState {
 
 /// Create the main router with all routes.
 fn create_router(state: AppState) -> Router {
+    // Rate limiters for sensitive auth endpoints
+    let login_limiter = RateLimiter::new(RateLimiterConfig {
+        max_tokens: 5.0,
+        refill_rate: 5.0 / 60.0, // 5 requests per minute
+    });
+    let password_reset_limiter = RateLimiter::new(RateLimiterConfig {
+        max_tokens: 3.0,
+        refill_rate: 3.0 / 60.0, // 3 requests per minute
+    });
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::list([
             "http://localhost:3000".parse().unwrap(),
@@ -139,15 +149,43 @@ fn create_router(state: AppState) -> Router {
         ])
         .allow_credentials(true);
 
+    // Rate-limited login route (5 req/min per IP)
+    let login_limiter_clone = login_limiter.clone();
+    let login_routes =
+        Router::new()
+            .route("/api/v1/auth/login", post(handlers::auth::login))
+            .layer(middleware::from_fn(move |req, next| {
+                let limiter = login_limiter_clone.clone();
+                async move {
+                    signapps_common::rate_limit::rate_limit_middleware(limiter, req, next).await
+                }
+            }));
+
+    // Rate-limited password-reset route (3 req/min per IP)
+    let password_reset_limiter_clone = password_reset_limiter.clone();
+    let password_reset_routes =
+        Router::new()
+            .route(
+                "/api/v1/auth/password-reset",
+                post(handlers::auth::password_reset),
+            )
+            .layer(middleware::from_fn(move |req, next| {
+                let limiter = password_reset_limiter_clone.clone();
+                async move {
+                    signapps_common::rate_limit::rate_limit_middleware(limiter, req, next).await
+                }
+            }));
+
     // Public routes (no auth required)
     let public_routes = Router::new()
         .route("/health", get(handlers::health::health_check))
-        .route("/api/v1/auth/login", post(handlers::auth::login))
         .route("/api/v1/auth/register", post(handlers::auth::register))
         .route("/api/v1/auth/refresh", post(handlers::auth::refresh))
         .route("/api/v1/bootstrap", post(handlers::auth::bootstrap))
         // AQ-GUES: Public token validation (no auth required — used by guest viewers)
-        .route("/api/v1/guest-tokens/validate", post(handlers::guest_tokens::validate_guest_token));
+        .route("/api/v1/guest-tokens/validate", post(handlers::guest_tokens::validate_guest_token))
+        .merge(login_routes)
+        .merge(password_reset_routes);
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
@@ -384,7 +422,9 @@ fn create_router(state: AppState) -> Router {
         .merge(admin_routes)
         .layer(middleware::from_fn(logging_middleware))
         .layer(middleware::from_fn(request_id_middleware))
+        .layer(middleware::from_fn(security_headers_middleware))
         .layer(TraceLayer::new_for_http())
+        .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024))
         .layer(cors)
         .with_state(state)
 }

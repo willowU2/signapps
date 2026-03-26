@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useDesignStore } from "@/stores/design-store";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,7 +43,7 @@ import type { DesignObject } from "./types";
 import { TEXT_STYLES } from "./types";
 
 interface DesignToolbarProps {
-  fabricCanvasRef: React.MutableRefObject<any | null>;
+  fabricCanvasRef: React.MutableRefObject<import("fabric").Canvas | null>;
   onOpenExport: () => void;
   onOpenResize: () => void;
 }
@@ -78,18 +78,18 @@ export default function DesignToolbar({ fabricCanvasRef, onOpenExport, onOpenRes
       top: 100,
       width: 400,
       fontSize: style.fontSize,
-      fontWeight: style.fontWeight,
+      fontWeight: style.fontWeight as string,
       fontFamily: style.fontFamily,
       fill: "#000000",
       editable: true,
-    } as any);
-    (textbox as any).id = crypto.randomUUID();
+    });
+    (textbox as import("fabric").Textbox & { id?: string }).id = crypto.randomUUID();
     canvas.add(textbox);
     canvas.setActiveObject(textbox);
     canvas.requestRenderAll();
 
     const newObj: DesignObject = {
-      id: (textbox as any).id,
+      id: (textbox as import("fabric").Textbox & { id?: string }).id ?? '',
       type: "text",
       name: style.name,
       fabricData: textbox.toObject(["id"]),
@@ -105,7 +105,7 @@ export default function DesignToolbar({ fabricCanvasRef, onOpenExport, onOpenRes
     if (!canvas) return;
 
     pushUndo();
-    let shape: any;
+    let shape: (import("fabric").Object & { id?: string }) | undefined;
 
     switch (shapeType) {
       case "rect":
@@ -167,13 +167,14 @@ export default function DesignToolbar({ fabricCanvasRef, onOpenExport, onOpenRes
         });
     }
 
+    if (!shape) return;
     shape.id = crypto.randomUUID();
     canvas.add(shape);
     canvas.setActiveObject(shape);
     canvas.requestRenderAll();
 
     const newObj: DesignObject = {
-      id: shape.id,
+      id: shape.id ?? '',
       type: "shape",
       name: shapeType.charAt(0).toUpperCase() + shapeType.slice(1),
       fabricData: shape.toObject(["id"]),
@@ -199,19 +200,20 @@ export default function DesignToolbar({ fabricCanvasRef, onOpenExport, onOpenRes
         if (!canvas) return;
 
         pushUndo();
-        fabricModule.FabricImage.fromURL(dataUrl).then((img: any) => {
+        fabricModule.FabricImage.fromURL(dataUrl).then((img) => {
+          const imgWithId = img as import("fabric").FabricImage & { id?: string };
           // Scale image to fit within canvas
           const maxW = (currentDesign?.format.width || 1080) * 0.8;
           const maxH = (currentDesign?.format.height || 1080) * 0.8;
           const scale = Math.min(maxW / (img.width || 1), maxH / (img.height || 1), 1);
           img.set({ scaleX: scale, scaleY: scale, left: 50, top: 50 });
-          img.id = crypto.randomUUID();
+          imgWithId.id = crypto.randomUUID();
           canvas.add(img);
           canvas.setActiveObject(img);
           canvas.requestRenderAll();
 
           const newObj: DesignObject = {
-            id: img.id,
+            id: imgWithId.id ?? '',
             type: "image",
             name: file.name.slice(0, 20),
             fabricData: img.toObject(["id"]),
@@ -243,7 +245,7 @@ export default function DesignToolbar({ fabricCanvasRef, onOpenExport, onOpenRes
         <div className="flex items-center gap-0.5 border-r pr-2 mr-1">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={undoStack.length === 0} onClick={undo}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Annuler (Ctrl+Z)" disabled={undoStack.length === 0} onClick={undo}>
                 <Undo2 className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -251,7 +253,7 @@ export default function DesignToolbar({ fabricCanvasRef, onOpenExport, onOpenRes
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" disabled={redoStack.length === 0} onClick={redo}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Rétablir (Ctrl+Y)" disabled={redoStack.length === 0} onClick={redo}>
                 <Redo2 className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -282,7 +284,7 @@ export default function DesignToolbar({ fabricCanvasRef, onOpenExport, onOpenRes
                 ) : (
                   <AlignLeft className="h-4 w-4" />
                 )}
-                <span style={{ fontSize: Math.min(style.fontSize / 4, 16), fontWeight: style.fontWeight as any }}>
+                <span style={{ fontSize: Math.min(style.fontSize / 4, 16), fontWeight: style.fontWeight as React.CSSProperties['fontWeight'] }}>
                   {style.name}
                 </span>
               </DropdownMenuItem>
@@ -388,6 +390,8 @@ export default function DesignToolbar({ fabricCanvasRef, onOpenExport, onOpenRes
                 variant={showGrid ? "secondary" : "ghost"}
                 size="icon"
                 className="h-8 w-8"
+                aria-label="Afficher/masquer la grille"
+                aria-pressed={showGrid}
                 onClick={() => setShowGrid(!showGrid)}
               >
                 <Grid3X3 className="h-4 w-4" />
@@ -401,6 +405,8 @@ export default function DesignToolbar({ fabricCanvasRef, onOpenExport, onOpenRes
                 variant={snapToGrid ? "secondary" : "ghost"}
                 size="icon"
                 className="h-8 w-8"
+                aria-label="Aligner sur la grille"
+                aria-pressed={snapToGrid}
                 onClick={() => setSnapToGrid(!snapToGrid)}
               >
                 <Magnet className="h-4 w-4" />
@@ -425,7 +431,7 @@ export default function DesignToolbar({ fabricCanvasRef, onOpenExport, onOpenRes
         {/* Share */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Partager">
               <Share2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>

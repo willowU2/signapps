@@ -300,6 +300,7 @@ fn create_router(state: AppState) -> Router {
     public_routes
         .merge(protected_routes)
         .layer(TraceLayer::new_for_http())
+        .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024))
         .layer(cors)
         .with_state(state)
 }

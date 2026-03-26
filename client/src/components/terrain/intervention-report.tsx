@@ -82,15 +82,8 @@ export function InterventionReport({
   const handleExportPDF = async () => {
     setIsExporting(true);
     try {
-      // Placeholder for PDF generation logic
-      // In real implementation, use libraries like jsPDF or pdfkit
-      const pdfContent = {
-        ...formData,
-        exportedAt: new Date().toISOString(),
-      };
-      console.log("Exporting PDF:", pdfContent);
-      // Simulate export
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Trigger browser print dialog as the PDF export mechanism
+      window.print();
     } finally {
       setIsExporting(false);
     }

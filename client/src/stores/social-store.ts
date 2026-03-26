@@ -10,7 +10,15 @@ import {
   PlatformEngagement,
   RssFeed,
   PostTemplate,
+  Signature,
 } from '@/lib/api/social';
+
+/** @deprecated Use `Signature` from `@/lib/api/social` instead. */
+export type PostSignature = Signature;
+
+export interface CreatePostRequest extends Partial<SocialPost> {
+  repeatInterval?: number; // number of days between recurring posts (0 = no repeat)
+}
 
 interface SocialState {
   // Data
@@ -23,6 +31,7 @@ interface SocialState {
   topPosts: SocialPost[];
   rssFeeds: RssFeed[];
   templates: PostTemplate[];
+  signatures: Signature[];
 
   // UI state
   selectedAccountFilter: string | null;
@@ -43,26 +52,35 @@ interface SocialState {
   fetchAnalytics: () => Promise<void>;
   fetchRssFeeds: () => Promise<void>;
   fetchTemplates: () => Promise<void>;
+  fetchSignatures: () => Promise<void>;
 
-  createPost: (data: Partial<SocialPost>) => Promise<SocialPost>;
+  createPost: (data: CreatePostRequest) => Promise<SocialPost>;
   updatePost: (id: string, data: Partial<SocialPost>) => Promise<void>;
   deletePost: (id: string) => Promise<void>;
   publishPost: (id: string) => Promise<void>;
-  schedulePost: (id: string, scheduledAt: string) => Promise<void>;
+  schedulePost: (id: string, scheduledAt: string, repeatInterval?: number) => Promise<void>;
 
   markInboxRead: (id: string) => Promise<void>;
   replyToInbox: (id: string, content: string) => Promise<void>;
 
   addAccount: (data: { platform: string; instanceUrl?: string; handle?: string; appPassword?: string }) => Promise<void>;
+  updateAccount: (id: string, data: Partial<SocialAccount>) => Promise<void>;
   removeAccount: (id: string) => Promise<void>;
 
   createRssFeed: (data: Omit<RssFeed, 'id' | 'createdAt' | 'lastCheckedAt'>) => Promise<void>;
+  updateRssFeed: (id: string, data: Partial<RssFeed>) => Promise<void>;
   deleteRssFeed: (id: string) => Promise<void>;
   toggleRssFeed: (id: string, active: boolean) => Promise<void>;
   checkRssFeed: (id: string) => Promise<void>;
 
   createTemplate: (data: Omit<PostTemplate, 'id' | 'createdAt'>) => Promise<void>;
+  updateTemplate: (id: string, data: Partial<PostTemplate>) => Promise<void>;
   deleteTemplate: (id: string) => Promise<void>;
+
+  // Signature actions (API-backed)
+  addSignature: (data: Omit<Signature, 'id' | 'createdAt'>) => Promise<void>;
+  updateSignature: (id: string, data: Partial<Omit<Signature, 'id' | 'createdAt'>>) => Promise<void>;
+  deleteSignature: (id: string) => Promise<void>;
 
   clearError: () => void;
 }
@@ -79,6 +97,7 @@ export const useSocialStore = create<SocialState>()(
       topPosts: [],
       rssFeeds: [],
       templates: [],
+      signatures: [],
 
       selectedAccountFilter: null,
       selectedPlatformFilter: null,
@@ -166,6 +185,16 @@ export const useSocialStore = create<SocialState>()(
         }
       },
 
+      fetchSignatures: async () => {
+        try {
+          const res = await socialApi.signatures.list();
+          set({ signatures: res.data });
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : 'Failed to fetch signatures';
+          set({ error: msg });
+        }
+      },
+
       createPost: async (data) => {
         const res = await socialApi.posts.create(data);
         set((state) => ({ posts: [res.data, ...state.posts] }));
@@ -191,8 +220,8 @@ export const useSocialStore = create<SocialState>()(
         }));
       },
 
-      schedulePost: async (id, scheduledAt) => {
-        const res = await socialApi.posts.schedule(id, scheduledAt);
+      schedulePost: async (id, scheduledAt, repeatInterval) => {
+        const res = await socialApi.posts.schedule(id, scheduledAt, repeatInterval);
         set((state) => ({
           posts: state.posts.map((p) => (p.id === id ? res.data : p)),
         }));
@@ -215,6 +244,13 @@ export const useSocialStore = create<SocialState>()(
         set((state) => ({ accounts: [...state.accounts, res.data] }));
       },
 
+      updateAccount: async (id, data) => {
+        const res = await socialApi.accounts.update(id, data);
+        set((state) => ({
+          accounts: state.accounts.map((a) => (a.id === id ? res.data : a)),
+        }));
+      },
+
       removeAccount: async (id) => {
         await socialApi.accounts.delete(id);
         set((state) => ({ accounts: state.accounts.filter((a) => a.id !== id) }));
@@ -223,6 +259,13 @@ export const useSocialStore = create<SocialState>()(
       createRssFeed: async (data) => {
         const res = await socialApi.rssFeeds.create(data);
         set((state) => ({ rssFeeds: [...state.rssFeeds, res.data] }));
+      },
+
+      updateRssFeed: async (id, data) => {
+        const res = await socialApi.rssFeeds.toggle(id, data.active ?? true);
+        set((state) => ({
+          rssFeeds: state.rssFeeds.map((f) => (f.id === id ? { ...f, ...data } : f)),
+        }));
       },
 
       deleteRssFeed: async (id) => {
@@ -246,9 +289,35 @@ export const useSocialStore = create<SocialState>()(
         set((state) => ({ templates: [...state.templates, res.data] }));
       },
 
+      updateTemplate: async (id, data) => {
+        const res = await socialApi.templates.update(id, data);
+        set((state) => ({
+          templates: state.templates.map((t) => (t.id === id ? res.data : t)),
+        }));
+      },
+
       deleteTemplate: async (id) => {
         await socialApi.templates.delete(id);
         set((state) => ({ templates: state.templates.filter((t) => t.id !== id) }));
+      },
+
+      addSignature: async (data) => {
+        const res = await socialApi.signatures.create(data);
+        set((state) => ({ signatures: [...state.signatures, res.data] }));
+      },
+
+      updateSignature: async (id, data) => {
+        const res = await socialApi.signatures.update(id, data);
+        set((state) => ({
+          signatures: state.signatures.map((s) => (s.id === id ? res.data : s)),
+        }));
+      },
+
+      deleteSignature: async (id) => {
+        await socialApi.signatures.delete(id);
+        set((state) => ({
+          signatures: state.signatures.filter((s) => s.id !== id),
+        }));
       },
 
       clearError: () => set({ error: null }),

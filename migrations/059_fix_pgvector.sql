@@ -1,0 +1,11 @@
+-- AQ-FIX-PGVEC: Enable pgvector and migrate embedding column from TEXT to vector(1536)
+-- Creates HNSW index for efficient cosine similarity search.
+CREATE EXTENSION IF NOT EXISTS vector;
+
+ALTER TABLE ai.document_vectors
+    ALTER COLUMN embedding TYPE vector(1536)
+    USING embedding::vector(1536);
+
+CREATE INDEX IF NOT EXISTS idx_document_vectors_embedding
+    ON ai.document_vectors
+    USING hnsw (embedding vector_cosine_ops);

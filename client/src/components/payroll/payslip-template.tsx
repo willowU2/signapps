@@ -49,7 +49,7 @@ export function PayslipTemplate() {
   };
 
   const handleDownloadPDF = () => {
-    console.log("Downloading PDF for", payslip.employeeName);
+    window.print();
   };
 
   return (

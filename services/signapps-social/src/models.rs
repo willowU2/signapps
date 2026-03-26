@@ -245,6 +245,274 @@ pub struct AiBestTimeRequest {
 }
 
 // ---------------------------------------------------------------------------
+// Signatures
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Signature {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub name: String,
+    pub content: String,
+    pub is_auto_add: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateSignatureRequest {
+    pub name: String,
+    pub content: String,
+    pub is_auto_add: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateSignatureRequest {
+    pub name: Option<String>,
+    pub content: Option<String>,
+    pub is_auto_add: Option<bool>,
+}
+
+// ---------------------------------------------------------------------------
+// Media
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct MediaItem {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub filename: String,
+    pub original_name: Option<String>,
+    pub mime_type: String,
+    pub size_bytes: i64,
+    pub url: String,
+    pub thumbnail_url: Option<String>,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
+    pub duration_seconds: Option<f32>,
+    pub tags: JsonValue,
+    pub usage_count: i32,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateMediaRequest {
+    pub filename: String,
+    pub original_name: Option<String>,
+    pub mime_type: String,
+    pub size_bytes: Option<i64>,
+    pub url: String,
+    pub thumbnail_url: Option<String>,
+    pub width: Option<i32>,
+    pub height: Option<i32>,
+    pub tags: Option<JsonValue>,
+}
+
+// ---------------------------------------------------------------------------
+// Short URLs
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ShortUrl {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub short_code: String,
+    pub original_url: String,
+    pub post_id: Option<Uuid>,
+    pub clicks: i32,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateShortUrlRequest {
+    pub original_url: String,
+    pub post_id: Option<Uuid>,
+}
+
+// ---------------------------------------------------------------------------
+// Webhooks
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Webhook {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub name: String,
+    pub url: String,
+    pub events: JsonValue,
+    pub account_filter: Option<Uuid>,
+    pub secret: Option<String>,
+    pub is_active: bool,
+    pub last_triggered_at: Option<DateTime<Utc>>,
+    pub last_status_code: Option<i32>,
+    pub failure_count: i32,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateWebhookRequest {
+    pub name: String,
+    pub url: String,
+    pub events: Option<JsonValue>,
+    pub account_filter: Option<Uuid>,
+    pub secret: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateWebhookRequest {
+    pub name: Option<String>,
+    pub url: Option<String>,
+    pub events: Option<JsonValue>,
+    pub account_filter: Option<Uuid>,
+    pub is_active: Option<bool>,
+}
+
+// ---------------------------------------------------------------------------
+// Workspaces
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Workspace {
+    pub id: Uuid,
+    pub owner_id: Uuid,
+    pub name: String,
+    pub slug: String,
+    pub avatar_url: Option<String>,
+    pub description: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateWorkspaceRequest {
+    pub name: String,
+    pub slug: String,
+    pub avatar_url: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct WorkspaceMember {
+    pub id: Uuid,
+    pub workspace_id: Uuid,
+    pub user_id: Uuid,
+    pub role: String,
+    pub invited_at: DateTime<Utc>,
+    pub accepted_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct InviteMemberRequest {
+    pub user_id: Uuid,
+    pub role: Option<String>,
+}
+
+// ---------------------------------------------------------------------------
+// Post comments (team review)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PostComment {
+    pub id: Uuid,
+    pub post_id: Uuid,
+    pub user_id: Uuid,
+    pub content: String,
+    pub parent_comment_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreatePostCommentRequest {
+    pub content: String,
+    pub parent_comment_id: Option<Uuid>,
+}
+
+// ---------------------------------------------------------------------------
+// Time slots
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct TimeSlot {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub account_id: Option<Uuid>,
+    pub day_of_week: i32,
+    pub hour: i32,
+    pub minute: i32,
+    pub is_active: bool,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateTimeSlotRequest {
+    pub account_id: Option<Uuid>,
+    pub day_of_week: i32,
+    pub hour: i32,
+    pub minute: Option<i32>,
+}
+
+// ---------------------------------------------------------------------------
+// Content sets
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ContentSet {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub content: String,
+    pub media_urls: JsonValue,
+    pub hashtags: JsonValue,
+    pub target_accounts: JsonValue,
+    pub platform_overrides: JsonValue,
+    pub signature_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateContentSetRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub content: String,
+    pub media_urls: Option<JsonValue>,
+    pub hashtags: Option<JsonValue>,
+    pub target_accounts: Option<JsonValue>,
+    pub platform_overrides: Option<JsonValue>,
+    pub signature_id: Option<Uuid>,
+}
+
+// ---------------------------------------------------------------------------
+// API keys
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ApiKey {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub name: String,
+    #[serde(skip_serializing)]
+    pub key_hash: String,
+    pub key_prefix: String,
+    pub scopes: JsonValue,
+    pub rate_limit_per_hour: i32,
+    pub last_used_at: Option<DateTime<Utc>>,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub is_active: bool,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateApiKeyRequest {
+    pub name: String,
+    pub scopes: Option<JsonValue>,
+    pub rate_limit_per_hour: Option<i32>,
+    pub expires_at: Option<DateTime<Utc>>,
+}
+
+// ---------------------------------------------------------------------------
 // Platform types (used by platform clients)
 // ---------------------------------------------------------------------------
 

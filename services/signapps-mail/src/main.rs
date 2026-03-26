@@ -104,6 +104,7 @@ async fn main() {
                 ]),
         )
         .layer(TraceLayer::new_for_http())
+        .layer(axum::extract::DefaultBodyLimit::max(10 * 1024 * 1024))
         .with_state(state);
 
     // Start server

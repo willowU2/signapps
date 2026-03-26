@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { useSocialStore } from '@/stores/social-store';
 import { InboxItem } from '@/lib/api/social';
 import { socialApi } from '@/lib/api/social';
 import { PLATFORM_COLORS } from './platform-utils';
+import { ChannelSidebar } from './channel-sidebar';
 import { formatDistanceToNow } from 'date-fns';
 
 function InboxBadge({ type }: { type: InboxItem['type'] }) {
@@ -29,7 +30,12 @@ function InboxBadge({ type }: { type: InboxItem['type'] }) {
 }
 
 export function SocialInbox() {
-  const { inboxItems, fetchInbox, markInboxRead, replyToInbox, isLoadingInbox } = useSocialStore();
+  const { inboxItems, accounts, fetchInbox, markInboxRead, replyToInbox, isLoadingInbox } = useSocialStore();
+
+  const [selectedChannelIds, setSelectedChannelIds] = useState<string[]>([]);
+  const handleChannelSelection = useCallback((ids: string[]) => {
+    setSelectedChannelIds(ids);
+  }, []);
 
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -101,8 +107,19 @@ export function SocialInbox() {
 
   const platforms = [...new Set(inboxItems.map((i) => i.platform))];
 
+  // Filter inbox items by selected channels
+  const filteredInboxItems = selectedChannelIds.length > 0
+    ? inboxItems.filter((item) => selectedChannelIds.includes(item.accountId))
+    : inboxItems;
+
   return (
-    <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-8rem)]">
+    <div className="flex h-full">
+      <ChannelSidebar
+        selectedAccountIds={selectedChannelIds}
+        onSelectionChange={handleChannelSelection}
+      />
+
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-6 h-full overflow-hidden">
       {/* List */}
       <div className="flex flex-col gap-3 w-full lg:w-80 xl:w-96 shrink-0">
         {/* Filters */}
@@ -151,10 +168,10 @@ export function SocialInbox() {
             <div className="flex items-center justify-center h-32">
               <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          ) : inboxItems.length === 0 ? (
+          ) : filteredInboxItems.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">Inbox is empty</p>
           ) : (
-            inboxItems.map((item) => (
+            filteredInboxItems.map((item) => (
               <div
                 key={item.id}
                 onClick={() => handleSelect(item)}
@@ -298,6 +315,7 @@ export function SocialInbox() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

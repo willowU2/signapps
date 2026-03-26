@@ -78,8 +78,7 @@ export default function GlobalDrivePage() {
       link.remove();
       window.URL.revokeObjectURL(url);
       toast.success(`Téléchargement de "${node.name}" initié.`);
-    } catch (error) {
-      console.error('Error downloading file:', error);
+    } catch {
       toast.error('Erreur lors du téléchargement du fichier.');
     }
   };
@@ -253,8 +252,7 @@ export default function GlobalDrivePage() {
           
           successCount++;
         }
-      } catch (err) {
-        console.error('Erreur upload:', err);
+      } catch {
         toast.error(`Erreur pour ${file.name}`);
       }
     }

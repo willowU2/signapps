@@ -427,6 +427,7 @@ fn create_router(state: AppState) -> Router {
                 .layer(middleware::from_fn(logging_middleware))
                 .layer(cors),
         )
+        .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100MB for file uploads
         .with_state(state)
 }
 

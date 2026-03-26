@@ -4,8 +4,6 @@ export const metadata = { title: 'SignSocial — Accounts' };
 
 export default function SocialAccountsPage() {
   return (
-    <div className="p-6">
-      <AccountConnector />
-    </div>
+    <AccountConnector />
   );
 }

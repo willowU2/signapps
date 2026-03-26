@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function FeedbackWidget() {
   const [open, setOpen] = useState(false);
@@ -8,11 +9,19 @@ export function FeedbackWidget() {
   const [text, setText] = useState("");
   const [sent, setSent] = useState(false);
 
-  function submit() {
+  async function submit() {
     if (!text.trim()) return;
-    console.log("[Feedback]", type, text);
-    setSent(true);
-    setTimeout(() => { setSent(false); setOpen(false); setText(""); }, 2000);
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, message: text }),
+      });
+      setSent(true);
+      setTimeout(() => { setSent(false); setOpen(false); setText(""); }, 2000);
+    } catch {
+      toast.error("Erreur lors de l'envoi du feedback.");
+    }
   }
 
   if (!open) {

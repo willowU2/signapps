@@ -180,11 +180,15 @@ async fn get_account(
     .bind(claims.sub)
     .fetch_optional(&state.pool)
     .await
-    .unwrap();
+    .map_err(|e| {
+        tracing::error!("Failed to fetch mail account: {:?}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response()
+    });
 
     match account {
-        Some(acc) => Json(acc).into_response(),
-        None => (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Ok(Some(acc)) => Json(acc).into_response(),
+        Ok(None) => (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Err(e) => e,
     }
 }
 
@@ -325,17 +329,20 @@ async fn sync_account_now(
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     // Get account
-    let account = sqlx::query_as::<_, MailAccount>(
+    let account = match sqlx::query_as::<_, MailAccount>(
         "SELECT * FROM mail.accounts WHERE id = $1 AND user_id = $2",
     )
     .bind(id)
     .bind(claims.sub)
     .fetch_optional(&state.pool)
     .await
-    .unwrap();
-
-    let Some(account) = account else {
-        return (StatusCode::NOT_FOUND, "Account not found").into_response();
+    {
+        Ok(Some(acc)) => acc,
+        Ok(None) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Err(e) => {
+            tracing::error!("Failed to fetch account for sync: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        },
     };
 
     // Trigger sync in background
@@ -365,17 +372,20 @@ async fn test_account(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let account = sqlx::query_as::<_, MailAccount>(
+    let account = match sqlx::query_as::<_, MailAccount>(
         "SELECT * FROM mail.accounts WHERE id = $1 AND user_id = $2",
     )
     .bind(id)
     .bind(claims.sub)
     .fetch_optional(&state.pool)
     .await
-    .unwrap();
-
-    let Some(account) = account else {
-        return (StatusCode::NOT_FOUND, "Account not found").into_response();
+    {
+        Ok(Some(acc)) => acc,
+        Ok(None) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Err(e) => {
+            tracing::error!("Failed to fetch account for test: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        },
     };
 
     // Test SMTP
@@ -533,7 +543,7 @@ async fn get_folder(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let folder = sqlx::query_as::<_, MailFolder>(
+    let folder = match sqlx::query_as::<_, MailFolder>(
         r#"
         SELECT f.* FROM mail.folders f
         JOIN mail.accounts a ON a.id = f.account_id
@@ -544,7 +554,13 @@ async fn get_folder(
     .bind(claims.sub)
     .fetch_optional(&state.pool)
     .await
-    .unwrap();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("Failed to fetch folder: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        },
+    };
 
     match folder {
         Some(f) => Json(f).into_response(),
@@ -605,7 +621,7 @@ async fn get_email(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
-    let email = sqlx::query_as::<_, Email>(
+    let email = match sqlx::query_as::<_, Email>(
         r#"
         SELECT e.* FROM mail.emails e
         JOIN mail.accounts a ON a.id = e.account_id
@@ -616,7 +632,13 @@ async fn get_email(
     .bind(claims.sub)
     .fetch_optional(&state.pool)
     .await
-    .unwrap();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("Failed to fetch email: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        },
+    };
 
     match email {
         Some(e) => {
@@ -651,31 +673,40 @@ async fn send_email(
     Json(payload): Json<SendEmailRequest>,
 ) -> impl IntoResponse {
     // Get account
-    let account = sqlx::query_as::<_, MailAccount>(
+    let account = match sqlx::query_as::<_, MailAccount>(
         "SELECT * FROM mail.accounts WHERE id = $1 AND user_id = $2",
     )
     .bind(payload.account_id)
     .bind(claims.sub)
     .fetch_optional(&state.pool)
     .await
-    .unwrap();
-
-    let Some(account) = account else {
-        return (StatusCode::NOT_FOUND, "Account not found").into_response();
+    {
+        Ok(Some(acc)) => acc,
+        Ok(None) => return (StatusCode::NOT_FOUND, "Account not found").into_response(),
+        Err(e) => {
+            tracing::error!("Failed to fetch account for send: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        },
     };
 
     // If draft, just save to database
     let is_draft = payload.is_draft.unwrap_or(false);
 
     // Get the sent folder
-    let sent_folder = sqlx::query_as::<_, MailFolder>(
+    let sent_folder = match sqlx::query_as::<_, MailFolder>(
         "SELECT * FROM mail.folders WHERE account_id = $1 AND folder_type = $2",
     )
     .bind(account.id)
     .bind(if is_draft { "drafts" } else { "sent" })
     .fetch_optional(&state.pool)
     .await
-    .unwrap();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("Failed to fetch folder for send: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        },
+    };
 
     let folder_id = sent_folder.map(|f| f.id);
 
@@ -984,14 +1015,20 @@ async fn create_label(
     Json(payload): Json<CreateLabelRequest>,
 ) -> impl IntoResponse {
     // Verify account ownership
-    let account = sqlx::query_as::<_, MailAccount>(
+    let account = match sqlx::query_as::<_, MailAccount>(
         "SELECT * FROM mail.accounts WHERE id = $1 AND user_id = $2",
     )
     .bind(payload.account_id)
     .bind(claims.sub)
     .fetch_optional(&state.pool)
     .await
-    .unwrap();
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("Failed to verify account ownership: {:?}", e);
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Database error").into_response();
+        },
+    };
 
     if account.is_none() {
         return (StatusCode::NOT_FOUND, "Account not found").into_response();

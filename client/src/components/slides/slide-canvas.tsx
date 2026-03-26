@@ -2,9 +2,15 @@ import { useEffect, useRef, MutableRefObject } from "react"
 import * as fabric from "fabric"
 import { useTheme } from "next-themes"
 
+interface FabricObjectWithId extends fabric.Object {
+    id?: string;
+    text?: string;
+    isEditing?: boolean;
+}
+
 interface SlideCanvasProps {
-    objects: Record<string, any>;
-    updateObject: (id: string, data: any) => void;
+    objects: Record<string, fabric.Object>;
+    updateObject: (id: string, data: fabric.Object | Record<string, unknown>) => void;
     fabricCanvasRef: MutableRefObject<fabric.Canvas | null>;
     isUpdatingRef: MutableRefObject<boolean>;
     onSelectionChange: (obj: fabric.Object | null) => void;
@@ -43,7 +49,7 @@ export function SlideCanvas({
 
     // Init Canvas
     useEffect(() => {
-        let canvas: any = null
+        let canvas: fabric.Canvas | null = null
 
         import("fabric").then((fabricModule) => {
             if (!canvasRef.current) return
@@ -59,7 +65,7 @@ export function SlideCanvas({
             })
             fabricCanvasRef.current = canvas
 
-            canvas.on("object:modified", (e: any) => {
+            canvas.on("object:modified", (e: { target?: FabricObjectWithId }) => {
                 const target = e.target
                 if (target && target.id) {
                     isUpdatingRef.current = true
@@ -68,7 +74,7 @@ export function SlideCanvas({
                 }
             })
 
-            canvas.on("object:added", (e: any) => {
+            canvas.on("object:added", (e: { target?: FabricObjectWithId }) => {
                 const target = e.target
                 if (target && !target.id) {
                     target.id = Math.random().toString(36).substr(2, 9)
@@ -79,12 +85,12 @@ export function SlideCanvas({
             })
 
             // Selection events
-            canvas.on("selection:created", (e: any) => {
+            canvas.on("selection:created", (e: { selected?: FabricObjectWithId[]; target?: FabricObjectWithId }) => {
                 const target = e.selected?.[0] || e.target
                 onSelectionChange(target || null)
             })
 
-            canvas.on("selection:updated", (e: any) => {
+            canvas.on("selection:updated", (e: { selected?: FabricObjectWithId[]; target?: FabricObjectWithId }) => {
                 const target = e.selected?.[0] || e.target
                 onSelectionChange(target || null)
             })
@@ -96,7 +102,7 @@ export function SlideCanvas({
             })
 
             // --- 1. Grid Rendering via Native Canvas Context ---
-            canvas.on('after:render', (opt: any) => {
+            canvas.on('after:render', (opt: { ctx?: CanvasRenderingContext2D }) => {
                 if (!showGrid) return // Wait for prop boolean flag
 
                 const ctx = opt.ctx;
@@ -126,7 +132,7 @@ export function SlideCanvas({
             });
 
             // --- 2. Mathematical Snap-to-Grid during drag ---
-            canvas.on('object:moving', (options: any) => {
+            canvas.on('object:moving', (options: { target?: fabric.Object }) => {
                 if (!snapToGrid) return;
                 const target = options.target;
                 if (!target) return;
@@ -142,9 +148,9 @@ export function SlideCanvas({
             // --- 3. Smart Compose / Autocomplete Logic ---
             let debounceTimer: NodeJS.Timeout | null = null;
             let currentGhostText = "";
-            let ghostedObject: any = null;
+            let ghostedObject: FabricObjectWithId | null = null;
 
-            canvas.on('text:changed', (e: any) => {
+            canvas.on('text:changed', (e: { target?: FabricObjectWithId }) => {
                 const target = e.target;
                 if (!target || target.isEditing === false) return;
 
@@ -268,24 +274,24 @@ export function SlideCanvas({
 
         import("fabric").then((fabricModule) => {
             Object.entries(objects).forEach(([id, objData]) => {
-                const existing = canvas.getObjects().find((o: any) => o.id === id)
+                const existing = (canvas.getObjects() as FabricObjectWithId[]).find((o) => o.id === id)
                 if (existing) {
-                    existing.set(objData as any)
+                    existing.set(objData as Partial<fabric.Object>)
                     existing.setCoords()
                 } else {
                     fabricModule.util.enlivenObjects([objData]).then((enlivenedObjects) => {
-                        enlivenedObjects.forEach((obj: any) => {
-                            obj.id = id
+                        enlivenedObjects.forEach((obj) => {
+                            (obj as FabricObjectWithId).id = id
                             canvas.add(obj)
                         })
                     })
                 }
             })
-            
+
             // Appliquer l'ordre Z-Index
-            const allObjs = [...canvas.getObjects()];
-            allObjs.sort((a: any, b: any) => (a.zIndex || 0) - (b.zIndex || 0));
-            allObjs.forEach((obj: any, idx: number) => {
+            const allObjs = [...canvas.getObjects()] as (FabricObjectWithId & { zIndex?: number })[];
+            allObjs.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+            allObjs.forEach((obj, idx) => {
                 obj.moveTo(idx);
             });
             

@@ -364,10 +364,11 @@ export function useCalendars() {
 }
 
 // ============================================================================
-// Event Templates (MVP: localStorage)
+// Event Templates — API with localStorage cache/fallback
 // ============================================================================
 
 const TEMPLATES_STORAGE_KEY = 'scheduling_templates';
+const TEMPLATES_API_PATH = '/scheduling/templates';
 
 function getStoredTemplates(): EventTemplate[] {
   if (typeof window === 'undefined') return [];
@@ -375,7 +376,7 @@ function getStoredTemplates(): EventTemplate[] {
     const data = localStorage.getItem(TEMPLATES_STORAGE_KEY);
     if (!data) return [];
     const templates = JSON.parse(data);
-    return templates.map((t: any) => ({
+    return templates.map((t: EventTemplate & { createdAt: string; updatedAt: string }) => ({
       ...t,
       createdAt: new Date(t.createdAt),
       updatedAt: new Date(t.updatedAt),
@@ -391,60 +392,117 @@ function saveTemplates(templates: EventTemplate[]): void {
 }
 
 /**
- * Fetch all templates
+ * Fetch all templates — tries API first, falls back to localStorage cache.
  */
 export async function fetchTemplates(): Promise<EventTemplate[]> {
-  // MVP: localStorage, future: API call
-  return getStoredTemplates();
+  try {
+    const response = await calendarApi.get<EventTemplate[]>(TEMPLATES_API_PATH);
+    const templates = (response.data || []).map(
+      (t: EventTemplate & { createdAt: string; updatedAt: string }) => ({
+        ...t,
+        createdAt: new Date(t.createdAt),
+        updatedAt: new Date(t.updatedAt),
+      })
+    );
+    // Update local cache with fresh data from API
+    saveTemplates(templates);
+    return templates;
+  } catch {
+    // API unavailable — return local cache
+    return getStoredTemplates();
+  }
 }
 
 /**
- * Create a new template
+ * Create a new template — tries API first, falls back to localStorage.
  */
 export async function createTemplate(input: CreateTemplateInput): Promise<EventTemplate> {
-  const templates = getStoredTemplates();
-  const newTemplate: EventTemplate = {
-    id: crypto.randomUUID(),
-    ...input,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-  templates.push(newTemplate);
-  saveTemplates(templates);
-  return newTemplate;
+  try {
+    const response = await calendarApi.post<EventTemplate>(TEMPLATES_API_PATH, input);
+    const newTemplate: EventTemplate = {
+      ...response.data,
+      createdAt: new Date(response.data.createdAt),
+      updatedAt: new Date(response.data.updatedAt),
+    };
+    // Sync local cache
+    const templates = getStoredTemplates();
+    templates.push(newTemplate);
+    saveTemplates(templates);
+    return newTemplate;
+  } catch {
+    // API unavailable — persist locally
+    const templates = getStoredTemplates();
+    const newTemplate: EventTemplate = {
+      id: crypto.randomUUID(),
+      ...input,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    templates.push(newTemplate);
+    saveTemplates(templates);
+    return newTemplate;
+  }
 }
 
 /**
- * Update a template
+ * Update a template — tries API first, falls back to localStorage.
  */
 export async function updateTemplate(
   templateId: string,
   input: UpdateTemplateInput
 ): Promise<EventTemplate> {
-  const templates = getStoredTemplates();
-  const index = templates.findIndex((t) => t.id === templateId);
-  if (index === -1) throw new Error('Template not found');
+  try {
+    const response = await calendarApi.put<EventTemplate>(
+      `${TEMPLATES_API_PATH}/${templateId}`,
+      input
+    );
+    const updated: EventTemplate = {
+      ...response.data,
+      createdAt: new Date(response.data.createdAt),
+      updatedAt: new Date(response.data.updatedAt),
+    };
+    // Sync local cache
+    const templates = getStoredTemplates();
+    const index = templates.findIndex((t) => t.id === templateId);
+    if (index !== -1) {
+      templates[index] = updated;
+      saveTemplates(templates);
+    }
+    return updated;
+  } catch {
+    // API unavailable — update locally
+    const templates = getStoredTemplates();
+    const index = templates.findIndex((t) => t.id === templateId);
+    if (index === -1) throw new Error('Template not found');
 
-  templates[index] = {
-    ...templates[index],
-    ...input,
-    eventDefaults: {
-      ...templates[index].eventDefaults,
-      ...(input.eventDefaults || {}),
-    },
-    updatedAt: new Date(),
-  };
-  saveTemplates(templates);
-  return templates[index];
+    templates[index] = {
+      ...templates[index],
+      ...input,
+      eventDefaults: {
+        ...templates[index].eventDefaults,
+        ...(input.eventDefaults || {}),
+      },
+      updatedAt: new Date(),
+    };
+    saveTemplates(templates);
+    return templates[index];
+  }
 }
 
 /**
- * Delete a template
+ * Delete a template — tries API first, falls back to localStorage.
  */
 export async function deleteTemplate(templateId: string): Promise<void> {
-  const templates = getStoredTemplates();
-  const filtered = templates.filter((t) => t.id !== templateId);
-  saveTemplates(filtered);
+  try {
+    await calendarApi.delete(`${TEMPLATES_API_PATH}/${templateId}`);
+    // Sync local cache
+    const templates = getStoredTemplates();
+    saveTemplates(templates.filter((t) => t.id !== templateId));
+  } catch {
+    // API unavailable — delete locally
+    const templates = getStoredTemplates();
+    saveTemplates(templates.filter((t) => t.id !== templateId));
+  }
 }
 
 // ============================================================================

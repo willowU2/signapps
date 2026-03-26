@@ -3,6 +3,23 @@
 import dynamic from "next/dynamic"
 import { EditorLayout } from "@/components/layout/editor-layout"
 import { Presentation } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+
+function EditorSkeleton() {
+    return (
+        <div className="flex flex-col h-full">
+            <div className="flex items-center gap-2 px-4 py-2 border-b">
+                {Array.from({ length: 8 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-8 rounded" />
+                ))}
+                <Skeleton className="h-8 w-24 rounded ml-2" />
+            </div>
+            <div className="flex-1 flex items-center justify-center p-8">
+                <Skeleton className="w-full max-w-3xl aspect-video rounded-lg" />
+            </div>
+        </div>
+    );
+}
 
 const SlidesContent = dynamic(
     () => import("@/components/slides/slides-content").then(m => ({ default: m.SlidesContent })),
@@ -63,7 +80,7 @@ function SlidesEditorContent() {
 
 export default function SlidesEditorPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<EditorSkeleton />}>
             <SlidesEditorContent />
         </Suspense>
     )

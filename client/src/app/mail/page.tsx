@@ -40,7 +40,7 @@ import {
     useMailSelectionActions,
     useMailDataActions,
 } from "@/lib/store/mail-store"
-import { mailApi, accountApi, searchApi } from "@/lib/api-mail"
+import { mailApi, accountApi, searchApi, labelApi, type MailLabel } from "@/lib/api-mail"
 import { cn } from "@/lib/utils"
 import { WorkspaceShell } from "@/components/layout/workspace-shell"
 
@@ -57,6 +57,9 @@ export default function MailPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [searchResults, setSearchResults] = useState<Mail[] | null>(null)
     const [isSearching, setIsSearching] = useState(false)
+
+    const [labels, setLabels] = useState<MailLabel[]>([])
+    const [labelsLoading, setLabelsLoading] = useState(false)
 
     const mailList = searchResults !== null ? searchResults : storeMailList
 
@@ -90,6 +93,21 @@ export default function MailPage() {
     }, [])
 
     useEffect(() => {
+        const loadLabels = async () => {
+            setLabelsLoading(true)
+            try {
+                const fetchedLabels = await labelApi.list()
+                setLabels(fetchedLabels)
+            } catch {
+                // Keep empty on error
+            } finally {
+                setLabelsLoading(false)
+            }
+        }
+        loadLabels()
+    }, [])
+
+    useEffect(() => {
         // Fetch accounts and emails from the real backend
         const loadData = async () => {
             try {
@@ -106,7 +124,7 @@ export default function MailPage() {
 
                 // Fetch emails from inbox — initial batch; MailList handles
                 // virtual pagination via IntersectionObserver infinite scroll.
-                const emails = await mailApi.list({ folder_type: 'inbox', limit: 200 })
+                const emails = await mailApi.list({ folder_type: 'inbox', limit: 50 })
                 const uiMails: Mail[] = emails.map(email => ({
                     id: email.id,
                     name: email.sender_name || email.sender.split('@')[0],
@@ -268,23 +286,28 @@ export default function MailPage() {
 
                             {labelsExpanded && (
                                 <nav className="mt-2 flex flex-col gap-0.5">
-                                    {[
-                                        { name: "[Imap]/Archived", color: "bg-gray-400" },
-                                        { name: "[Imap]/Brouillons", color: "bg-gray-400" },
-                                        { name: "[Imap]/Drafts", color: "bg-gray-400" },
-                                        { name: "[Imap]/Sent", color: "bg-gray-400" },
-                                        { name: "[Imap]/Trash", color: "bg-gray-400" },
-                                        { name: "Reply_Later", color: "bg-yellow-500" },
-                                        { name: "Junk", color: "bg-orange-500" },
-                                    ].map((label) => (
-                                        <button
-                                            key={label.name}
-                                            className="flex items-center gap-3 px-6 py-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-[#e8eaed] dark:hover:bg-gray-800 rounded-r-full transition-colors text-left"
-                                        >
-                                            <Tag className={cn("h-4 w-4", label.color.replace("bg-", "text-"))} />
-                                            <span className="truncate">{label.name}</span>
-                                        </button>
-                                    ))}
+                                    {labelsLoading ? (
+                                        <>
+                                            {Array.from({ length: 3 }).map((_, i) => (
+                                                <div key={i} className="flex items-center gap-3 px-6 py-2">
+                                                    <div className="h-4 w-4 rounded bg-[#e8eaed] dark:bg-gray-700 animate-pulse" />
+                                                    <div className="h-3 w-28 rounded bg-[#e8eaed] dark:bg-gray-700 animate-pulse" />
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : labels.length === 0 ? (
+                                        <p className="px-6 py-2 text-[13px] text-[#5f6368] dark:text-[#9aa0a6]">Aucun libellé</p>
+                                    ) : (
+                                        labels.map((label) => (
+                                            <button
+                                                key={label.id}
+                                                className="flex items-center gap-3 px-6 py-2 text-[13px] text-[#444746] dark:text-[#e3e3e3] hover:bg-[#e8eaed] dark:hover:bg-gray-800 rounded-r-full transition-colors text-left"
+                                            >
+                                                <Tag className="h-4 w-4" style={label.color ? { color: label.color } : undefined} />
+                                                <span className="truncate">{label.name}</span>
+                                            </button>
+                                        ))
+                                    )}
                                 </nav>
                             )}
                         </div>
@@ -322,6 +345,7 @@ export default function MailPage() {
                             onSnooze={handleSnooze}
                             onArchive={handleArchive}
                             onDelete={handleDelete}
+                            isSearchActive={searchResults !== null}
                         />
                     ) : (
                         <div className="flex flex-col h-full">
