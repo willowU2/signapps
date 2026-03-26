@@ -6,6 +6,7 @@ pub mod embeddings_mm;
 pub mod imagegen;
 pub mod reranker;
 pub mod traits;
+pub mod video_understand;
 pub mod videogen;
 pub mod vision;
 
