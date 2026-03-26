@@ -1,4 +1,5 @@
 //! HTTP-based multimodal embeddings worker that calls a CLIP/SigLIP service.
+#![allow(dead_code)]
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;

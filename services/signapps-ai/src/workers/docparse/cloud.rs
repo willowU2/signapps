@@ -2,6 +2,7 @@
 //!
 //! Calls the Azure AI Document Intelligence (formerly Form Recognizer) API
 //! with the `prebuilt-layout` model to extract text, tables, and structure.
+#![allow(dead_code)]
 
 use std::time::Duration;
 

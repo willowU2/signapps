@@ -2,6 +2,7 @@
 //!
 //! Each worker represents a single AI capability (vision, image generation,
 //! etc.) and can be backed by native inference, HTTP APIs, or cloud providers.
+#![allow(dead_code)]
 
 use anyhow::Result;
 use async_trait::async_trait;

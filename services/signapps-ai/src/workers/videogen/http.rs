@@ -3,7 +3,6 @@
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use bytes::Bytes;
 use reqwest::multipart;
 use serde::{Deserialize, Serialize};
 use tracing::debug;

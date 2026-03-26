@@ -24,18 +24,14 @@ use tower::ServiceBuilder;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 mod embeddings;
-#[allow(unused)]
 mod gateway;
 mod handlers;
 mod indexer;
 mod llm;
-#[allow(unused)]
 mod memory;
-#[allow(unused)]
 mod models;
 mod rag;
 mod vectors;
-#[allow(unused)]
 mod workers;
 
 use embeddings::EmbeddingsClient;
@@ -46,6 +42,9 @@ use handlers::{
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
+use rag::chunker::TextChunker;
+use rag::circular_pipeline::CircularPipeline;
+use rag::multimodal_indexer::MultimodalIndexer;
 use rag::RagPipeline;
 use vectors::VectorService;
 
@@ -382,13 +381,16 @@ async fn main() -> anyhow::Result<()> {
     let gateway = Arc::new(GatewayRouter::new(orchestrator));
     tracing::info!("Gateway router initialized");
 
+    // Register all workers based on environment variables
+    register_workers(&gateway).await;
+
     // Create application state
     let state = AppState {
-        pool,
-        vectors,
-        embeddings,
+        pool: pool.clone(),
+        vectors: vectors.clone(),
+        embeddings: embeddings.clone(),
         providers,
-        storage,
+        storage: storage.clone(),
         rag,
         indexer,
         jwt_config,
@@ -397,11 +399,153 @@ async fn main() -> anyhow::Result<()> {
         gateway: Some(gateway),
     };
 
+    // Initialize multimodal indexer
+    let mm_indexer = Arc::new(MultimodalIndexer::new(
+        embeddings,
+        vectors,
+        pool.clone(),
+        TextChunker::new(),
+    ));
+
+    // Start background circular pipeline (auto-indexes generated media)
+    let circular = Arc::new(CircularPipeline::new(mm_indexer, pool, storage));
+    circular.start();
+    tracing::info!("Circular pipeline started");
+
     // Build router
     let app = create_router(state);
 
     // Start server using bootstrap helper
     signapps_common::bootstrap::run_server(app, &config).await
+}
+
+/// Register AI workers into the gateway based on environment variables.
+///
+/// Each worker type supports both HTTP (self-hosted) and cloud variants.
+/// Workers are only registered when the corresponding env var is set.
+async fn register_workers(gateway: &GatewayRouter) {
+    // === Reranker ===
+    if let Ok(url) = std::env::var("RERANKER_URL") {
+        let model = std::env::var("RERANKER_MODEL").unwrap_or_else(|_| "default".into());
+        let worker = Arc::new(workers::reranker::HttpReranker::new(&url, &model));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("COHERE_API_KEY") {
+        let worker = Arc::new(workers::reranker::CloudReranker::new(&api_key, None));
+        gateway.register(worker).await;
+    }
+
+    // === Multimodal Embeddings ===
+    if let Ok(url) = std::env::var("MULTIMODAL_EMBED_URL") {
+        let model = std::env::var("MULTIMODAL_EMBED_MODEL").unwrap_or_else(|_| "siglip".into());
+        let dim = std::env::var("MULTIMODAL_EMBED_DIM")
+            .ok()
+            .and_then(|d| d.parse().ok())
+            .unwrap_or(1024);
+        let worker = Arc::new(workers::embeddings_mm::HttpMultimodalEmbed::new(
+            &url, &model, dim,
+        ));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
+        let worker = Arc::new(workers::embeddings_mm::CloudMultimodalEmbed::new(
+            &api_key, None,
+        ));
+        gateway.register(worker).await;
+    }
+
+    // === Vision ===
+    if let Ok(url) = std::env::var("VISION_URL") {
+        let model = std::env::var("VISION_MODEL").unwrap_or_else(|_| "default".into());
+        let worker = Arc::new(workers::vision::HttpVision::new(&url, &model));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
+        let worker = Arc::new(workers::vision::CloudVision::new(&api_key, None));
+        gateway.register(worker).await;
+    }
+
+    // === Image Generation ===
+    if let Ok(url) = std::env::var("IMAGEGEN_URL") {
+        let model = std::env::var("IMAGEGEN_MODEL").unwrap_or_else(|_| "default".into());
+        let worker = Arc::new(workers::imagegen::HttpImageGen::new(&url, &model));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
+        let model = std::env::var("IMAGEGEN_CLOUD_MODEL").unwrap_or_else(|_| "dall-e-3".into());
+        let worker = Arc::new(workers::imagegen::CloudImageGen::new(
+            &api_key,
+            Some(&model),
+        ));
+        gateway.register(worker).await;
+    }
+
+    // === Video Generation ===
+    if let Ok(url) = std::env::var("VIDEOGEN_URL") {
+        let model = std::env::var("VIDEOGEN_MODEL").unwrap_or_else(|_| "default".into());
+        let worker = Arc::new(workers::videogen::HttpVideoGen::new(&url, &model));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("REPLICATE_API_KEY") {
+        let model =
+            std::env::var("VIDEOGEN_CLOUD_MODEL").unwrap_or_else(|_| "minimax/video-01".into());
+        let worker = Arc::new(workers::videogen::CloudVideoGen::new(
+            &api_key,
+            Some(&model),
+        ));
+        gateway.register(worker).await;
+    }
+
+    // === Video Understanding ===
+    if let Ok(url) = std::env::var("VIDEO_UNDERSTAND_URL") {
+        let worker = Arc::new(workers::video_understand::HttpVideoUnderstand::new(&url));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("GEMINI_API_KEY") {
+        let model = std::env::var("GEMINI_MODEL").unwrap_or_else(|_| "gemini-1.5-pro".into());
+        let worker = Arc::new(workers::video_understand::CloudVideoUnderstand::new(
+            &api_key,
+            Some(&model),
+        ));
+        gateway.register(worker).await;
+    }
+
+    // === Audio Generation ===
+    if let Ok(url) = std::env::var("AUDIOGEN_URL") {
+        let model = std::env::var("AUDIOGEN_MODEL").unwrap_or_else(|_| "default".into());
+        let worker = Arc::new(workers::audiogen::HttpAudioGen::new(&url, &model));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("REPLICATE_API_KEY") {
+        let model =
+            std::env::var("AUDIOGEN_CLOUD_MODEL").unwrap_or_else(|_| "meta/musicgen:large".into());
+        let worker = Arc::new(workers::audiogen::CloudAudioGen::new(
+            &api_key,
+            Some(&model),
+        ));
+        gateway.register(worker).await;
+    }
+
+    // === Document Parsing ===
+    let ocr_url = std::env::var("OCR_URL").ok();
+    let worker = Arc::new(workers::docparse::NativeDocParse::new(ocr_url));
+    gateway.register(worker).await;
+
+    if let (Ok(endpoint), Ok(key)) = (
+        std::env::var("AZURE_DOC_ENDPOINT"),
+        std::env::var("AZURE_DOC_KEY"),
+    ) {
+        let worker = Arc::new(workers::docparse::CloudDocParse::new(&endpoint, &key));
+        gateway.register(worker).await;
+    }
+
+    let count = gateway
+        .list_capabilities()
+        .await
+        .iter()
+        .filter(|c| c.available)
+        .count();
+    tracing::info!("Gateway: {} capabilities registered", count);
 }
 
 /// Create the application router with all routes.

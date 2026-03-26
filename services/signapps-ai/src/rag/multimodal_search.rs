@@ -3,6 +3,7 @@
 //! Searches both the text vector space (384d) and the multimodal vector space
 //! (1024d SigLIP), then fuses results using RRF for a unified ranking.
 //! Optionally reranks the fused results with a `RerankerWorker`.
+#![allow(dead_code)]
 
 use std::collections::HashMap;
 use std::sync::Arc;

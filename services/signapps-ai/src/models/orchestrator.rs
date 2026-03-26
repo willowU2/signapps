@@ -1,4 +1,5 @@
 //! Model orchestrator for multi-GPU VRAM management with LRU eviction.
+#![allow(dead_code)]
 
 use std::path::PathBuf;
 use std::sync::Arc;

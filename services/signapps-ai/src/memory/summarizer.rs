@@ -1,4 +1,5 @@
 //! Auto-summarizer — compresses long conversations into a summary.
+#![allow(dead_code)]
 
 use std::sync::Arc;
 

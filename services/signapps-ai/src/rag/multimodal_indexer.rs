@@ -1,5 +1,6 @@
 //! Multimodal indexer that auto-detects media type and indexes content
 //! into the appropriate vector space (text 384d and/or multimodal 1024d).
+#![allow(dead_code)]
 
 use std::sync::Arc;
 

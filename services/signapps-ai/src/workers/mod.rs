@@ -10,6 +10,7 @@ pub mod video_understand;
 pub mod videogen;
 pub mod vision;
 
+#[allow(unused_imports)]
 pub use traits::{
     // Base trait
     AiWorker,

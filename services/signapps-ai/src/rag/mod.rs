@@ -1,11 +1,8 @@
 //! RAG (Retrieval-Augmented Generation) pipeline.
 
 pub mod chunker;
-#[allow(unused)]
 pub mod circular_pipeline;
-#[allow(unused)]
 pub mod multimodal_indexer;
-#[allow(unused)]
 pub mod multimodal_search;
 pub mod pipeline;
 

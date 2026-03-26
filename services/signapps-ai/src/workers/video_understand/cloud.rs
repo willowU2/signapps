@@ -1,5 +1,6 @@
 //! Cloud-based video understanding worker that calls the Google Gemini API,
 //! which natively supports video input for analysis and transcription.
+#![allow(dead_code)]
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;

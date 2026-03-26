@@ -1,5 +1,6 @@
 //! HTTP-based video understanding worker that calls a generic video analysis
 //! service via REST endpoints.
+#![allow(dead_code)]
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;

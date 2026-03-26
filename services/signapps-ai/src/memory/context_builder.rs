@@ -1,4 +1,5 @@
 //! Context builder — converts conversation messages into LLM chat format.
+#![allow(dead_code)]
 
 use signapps_db::models::conversation::ConversationMessage;
 

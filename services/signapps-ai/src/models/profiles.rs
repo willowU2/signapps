@@ -1,4 +1,5 @@
 //! Hardware-tier model recommendations and load profiles.
+#![allow(dead_code)]
 
 use serde::Serialize;
 
