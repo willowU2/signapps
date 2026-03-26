@@ -1,6 +1,7 @@
 //! HTTP handlers for the AI service.
 
 pub mod action;
+pub mod audio_gen;
 pub mod capabilities;
 pub mod chat;
 pub mod collections;
@@ -16,5 +17,6 @@ pub mod providers;
 pub mod search;
 pub mod search_image;
 pub mod transcription;
+pub mod video;
 pub mod vision;
 pub mod webhook;

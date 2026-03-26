@@ -40,9 +40,9 @@ mod workers;
 
 use embeddings::EmbeddingsClient;
 use handlers::{
-    action, capabilities, chat, collections, conversations, doc_parse, gpu_status, health,
-    image_gen, index, model_management, models as model_handlers, providers, search, search_image,
-    transcription, vision, webhook,
+    action, audio_gen, capabilities, chat, collections, conversations, doc_parse, gpu_status,
+    health, image_gen, index, model_management, models as model_handlers, providers, search,
+    search_image, transcription, video, vision, webhook,
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
@@ -442,6 +442,17 @@ fn create_router(state: AppState) -> Router {
         .route("/image/img2img", post(image_gen::img2img))
         .route("/image/upscale", post(image_gen::upscale_image))
         .route("/image/models", get(image_gen::list_image_models))
+        // Video generation & understanding
+        .route("/video/generate", post(video::generate_video))
+        .route("/video/img2video", post(video::img_to_video))
+        .route("/video/analyze", post(video::analyze_video))
+        .route("/video/extract-frames", post(video::extract_frames))
+        .route("/video/transcribe", post(video::transcribe_video))
+        .route("/video/models", get(video::list_models))
+        // Audio generation
+        .route("/audio/music", post(audio_gen::generate_music))
+        .route("/audio/sfx", post(audio_gen::generate_sfx))
+        .route("/audio/models", get(audio_gen::list_models))
         // Action Execution
         .route("/action", post(action::execute_action))
         // Index
