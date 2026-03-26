@@ -30,6 +30,8 @@ mod handlers;
 mod indexer;
 mod llm;
 #[allow(unused)]
+mod memory;
+#[allow(unused)]
 mod models;
 mod rag;
 mod vectors;
