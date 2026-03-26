@@ -1,5 +1,6 @@
 //! Worker traits and types for all AI capabilities.
 
+pub mod reranker;
 pub mod traits;
 
 pub use traits::{
