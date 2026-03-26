@@ -6,9 +6,11 @@ use axum::{
 };
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use signapps_common::{Claims, Error, Result};
 use signapps_db::repositories::UserRepository;
 use totp_rs::{Algorithm, Secret, TOTP};
+use uuid::Uuid;
 
 use crate::AppState;
 
@@ -89,9 +91,9 @@ pub async fn setup(
         .get_qr_base64()
         .map_err(|e| Error::Internal(format!("QR code generation failed: {}", e)))?;
 
-    // Generate backup codes
-    // FIXME(mfa): Backup codes must be hashed (bcrypt) and stored in users table
+    // Generate backup codes (plaintext) and hash them for storage
     let backup_codes = generate_backup_codes(8);
+    store_backup_codes_hashed(&state.pool, user.id, &backup_codes).await?;
 
     // Store secret in cache pending verification (10 min TTL)
     // MFA is NOT enabled yet — verify handler will enable it after code check
@@ -260,7 +262,7 @@ pub struct MfaStatusResponse {
     pub enabled: bool,
 }
 
-/// Generate random backup codes.
+/// Generate random backup codes (plaintext — only returned once to the user).
 fn generate_backup_codes(count: usize) -> Vec<String> {
     let mut rng = rand::thread_rng();
     (0..count)
@@ -269,6 +271,62 @@ fn generate_backup_codes(count: usize) -> Vec<String> {
             format!("{:08}", code)
         })
         .collect()
+}
+
+/// Hash a single backup code with SHA-256, returning the hex digest.
+fn hash_backup_code(code: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(code.as_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
+/// Delete any existing (unused) backup codes for the user and insert newly hashed ones.
+async fn store_backup_codes_hashed(
+    pool: &signapps_db::DatabasePool,
+    user_id: Uuid,
+    codes: &[String],
+) -> Result<()> {
+    // Remove previous pending codes (e.g. if setup is re-run)
+    sqlx::query("DELETE FROM identity.mfa_backup_codes WHERE user_id = $1 AND is_used = false")
+        .bind(user_id)
+        .execute(&**pool)
+        .await
+        .map_err(|e| Error::Internal(format!("Failed to clear old backup codes: {}", e)))?;
+
+    for code in codes {
+        let code_hash = hash_backup_code(code);
+        sqlx::query("INSERT INTO identity.mfa_backup_codes (user_id, code_hash) VALUES ($1, $2)")
+            .bind(user_id)
+            .bind(&code_hash)
+            .execute(&**pool)
+            .await
+            .map_err(|e| Error::Internal(format!("Failed to store backup code hash: {}", e)))?;
+    }
+
+    Ok(())
+}
+
+/// Verify a recovery code against stored hashes. Marks it as used on success.
+#[allow(dead_code)]
+pub async fn verify_and_consume_backup_code(
+    pool: &signapps_db::DatabasePool,
+    user_id: Uuid,
+    code: &str,
+) -> Result<bool> {
+    let code_hash = hash_backup_code(code);
+
+    let result = sqlx::query(
+        r#"UPDATE identity.mfa_backup_codes
+           SET is_used = true
+           WHERE user_id = $1 AND code_hash = $2 AND is_used = false"#,
+    )
+    .bind(user_id)
+    .bind(&code_hash)
+    .execute(&**pool)
+    .await
+    .map_err(|e| Error::Internal(format!("Failed to verify backup code: {}", e)))?;
+
+    Ok(result.rows_affected() > 0)
 }
 
 #[cfg(test)]

@@ -64,31 +64,39 @@ impl VapidKeys {
         })
     }
 
-    /// Load keys or use demo keys for development
-    pub fn load_or_demo() -> Self {
+    /// Load keys, or skip push notifications if not configured (returns None).
+    ///
+    /// In production, VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must be set.
+    /// If they are absent, push notifications are disabled and a warning is logged.
+    pub fn load_or_skip() -> Option<Self> {
         match Self::load() {
-            Ok(keys) => keys,
+            Ok(keys) => Some(keys),
             Err(_) => {
-                tracing::warn!("Using demo VAPID keys - set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY for production");
-                VapidKeys {
-                    // Demo keys (should be replaced with real ones)
-                    public_key: "BLmfHCrYiB1Y79lrZsXLGw1Vq0nCVf4eVLkpDVOb0zRH6tPBLlQZ5mO6PJKOQBhQvSmJgVLhLgyCbOUpQ9D7KGg".to_string(),
-                    private_key: "KPOFZfD2z1-yPgTmfXc74iWXRKXVc5_9FgrTNFZQdI4".to_string(),
-                }
+                tracing::warn!(
+                    "VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY are not set — \
+                     push notifications are disabled. \
+                     Generate keys with: npx web-push generate-vapid-keys"
+                );
+                None
             },
         }
     }
 }
 
-/// Global VAPID keys (lazy-loaded)
-static VAPID_KEYS: OnceLock<VapidKeys> = OnceLock::new();
+/// Global VAPID keys (lazy-loaded; None when not configured)
+static VAPID_KEYS: OnceLock<Option<VapidKeys>> = OnceLock::new();
 
-/// Get or initialize VAPID keys
+/// Get or initialize VAPID keys.
+/// Returns `Err(PushError::MissingVapidKeys)` if keys are not configured.
 pub fn get_vapid_keys() -> Result<&'static VapidKeys, PushError> {
-    Ok(VAPID_KEYS.get_or_init(VapidKeys::load_or_demo))
+    VAPID_KEYS
+        .get_or_init(VapidKeys::load_or_skip)
+        .as_ref()
+        .ok_or(PushError::MissingVapidKeys)
 }
 
-/// Get VAPID public key for frontend registration
+/// Get VAPID public key for frontend registration.
+/// Returns `Err` if VAPID is not configured.
 pub fn get_vapid_public_key() -> Result<String, PushError> {
     Ok(get_vapid_keys()?.public_key.clone())
 }

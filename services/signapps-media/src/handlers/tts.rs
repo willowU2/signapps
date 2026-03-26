@@ -77,13 +77,13 @@ pub async fn synthesize(
         AudioFormat::Flac => "audio/flac",
     };
 
-    Ok(Response::builder()
+    Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, content_type)
-        .header("X-Voice-Used", result.voice_used)
+        .header("X-Voice-Used", &result.voice_used)
         .header("X-Duration-Ms", result.duration_ms.to_string())
         .body(Body::from(result.audio_data))
-        .unwrap())
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
 }
 
 /// Synthesize speech with streaming
@@ -114,12 +114,12 @@ pub async fn synthesize_stream(
             )
         })?;
 
-    Ok(Response::builder()
+    Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, "audio/wav")
         .header(header::TRANSFER_ENCODING, "chunked")
         .body(Body::from_stream(stream))
-        .unwrap())
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
 }
 
 /// List available voices

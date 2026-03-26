@@ -7,6 +7,30 @@ import { EditorLayout } from '@/components/layout/editor-layout';
 import { FileText } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import { EntityLinks } from '@/components/crosslinks/EntityLinks';
+import { Skeleton } from "@/components/ui/skeleton";
+
+function EditorSkeleton() {
+    return (
+        <div className="flex flex-col h-full">
+            {/* Toolbar skeleton */}
+            <div className="flex items-center gap-2 px-4 py-2 border-b">
+                {Array.from({ length: 8 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-8 rounded" />
+                ))}
+                <Skeleton className="h-8 w-24 rounded ml-2" />
+            </div>
+            {/* Content area skeleton */}
+            <div className="flex-1 p-8 space-y-4">
+                <Skeleton className="h-8 w-1/2 rounded" />
+                <Skeleton className="h-4 w-full rounded" />
+                <Skeleton className="h-4 w-5/6 rounded" />
+                <Skeleton className="h-4 w-4/6 rounded" />
+                <Skeleton className="h-4 w-full rounded mt-4" />
+                <Skeleton className="h-4 w-3/4 rounded" />
+            </div>
+        </div>
+    );
+}
 
 const Editor = dynamic(
     () => import('@/components/docs/editor'),
@@ -34,7 +58,7 @@ function EditorContent() {
 
 export default function EditorPage() {
     return (
-        <Suspense fallback={<div>Loading Editor...</div>}>
+        <Suspense fallback={<EditorSkeleton />}>
             <EditorContent />
         </Suspense>
     );

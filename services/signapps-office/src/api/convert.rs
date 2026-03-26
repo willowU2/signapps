@@ -35,10 +35,12 @@ pub async fn handle_convert(mut multipart: Multipart) -> impl IntoResponse {
         target
     );
 
-    // FIXME(convert): Implement format routing (pdf→docx, docx→html, etc.)
+    // TODO(convert): Implement format routing (pdf→docx, docx→html, etc.)
 
     (
-        StatusCode::OK,
-        Json(json!({ "status": "success", "message": "Conversion implementation in progress" })),
+        StatusCode::NOT_IMPLEMENTED,
+        Json(
+            json!({ "error": "Not implemented", "message": "Format conversion is not yet implemented" }),
+        ),
     )
 }

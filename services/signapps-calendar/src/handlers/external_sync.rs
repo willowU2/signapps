@@ -391,11 +391,13 @@ pub async fn delete_sync_config(
 }
 
 /// Trigger manual sync.
+///
+/// TODO(calendar-sync): Implement sync logic — requires background task spawner.
 pub async fn trigger_sync(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Result<Json<SyncLog>, CalendarError> {
+) -> Result<(StatusCode, Json<serde_json::Value>), CalendarError> {
     let config_repo = SyncConfigRepository::new(&state.pool);
     let config = config_repo
         .find_by_id(id)
@@ -407,50 +409,12 @@ pub async fn trigger_sync(
         return Err(CalendarError::Forbidden);
     }
 
-    // Create sync log
-    let log_repo = SyncLogRepository::new(&state.pool);
-    let log = log_repo
-        .create(
-            id,
-            CreateSyncLog {
-                direction: config.sync_direction.clone(),
-                status: "success".to_string(),
-                events_imported: Some(0),
-                events_exported: Some(0),
-                events_updated: Some(0),
-                events_deleted: Some(0),
-                conflicts_detected: Some(0),
-                error_message: None,
-                error_details: None,
-            },
-        )
-        .await
-        .map_err(|_| CalendarError::InternalError)?;
-
-    // FIXME(calendar-sync): Implement sync logic — requires background task spawner
-    // For now, just mark as completed
-    log_repo
-        .complete(log.id, "success", None)
-        .await
-        .map_err(|_| CalendarError::InternalError)?;
-
-    config_repo
-        .mark_synced(id)
-        .await
-        .map_err(|_| CalendarError::InternalError)?;
-
-    // Fetch updated log
-    let logs = log_repo
-        .list_for_config(id, 1)
-        .await
-        .map_err(|_| CalendarError::InternalError)?;
-
-    let log = logs
-        .into_iter()
-        .next()
-        .ok_or(CalendarError::InternalError)?;
-
-    Ok(Json(log))
+    Ok((
+        StatusCode::NOT_IMPLEMENTED,
+        Json(
+            serde_json::json!({ "error": "Not implemented", "message": "Calendar sync requires a background task scheduler — not yet implemented" }),
+        ),
+    ))
 }
 
 // ============================================================================

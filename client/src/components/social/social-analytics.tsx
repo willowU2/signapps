@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import { useSocialStore } from '@/stores/social-store';
 import { PLATFORM_COLORS } from './platform-utils';
+import { ChannelSidebar } from './channel-sidebar';
 import { format, parseISO } from 'date-fns';
 
 export function SocialAnalytics() {
@@ -31,6 +32,11 @@ export function SocialAnalytics() {
     fetchAnalytics,
     isLoadingAnalytics,
   } = useSocialStore();
+
+  const [selectedChannelIds, setSelectedChannelIds] = useState<string[]>([]);
+  const handleChannelSelection = useCallback((ids: string[]) => {
+    setSelectedChannelIds(ids);
+  }, []);
 
   useEffect(() => {
     fetchAnalytics();
@@ -89,7 +95,13 @@ export function SocialAnalytics() {
   const platformsInHistory = [...new Set(followerHistory.map((d) => d.platform))];
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full">
+      <ChannelSidebar
+        selectedAccountIds={selectedChannelIds}
+        onSelectionChange={handleChannelSelection}
+      />
+
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Analytics</h2>
@@ -253,6 +265,7 @@ export function SocialAnalytics() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

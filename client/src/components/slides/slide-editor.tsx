@@ -40,14 +40,40 @@ import {
     extractCanvasObjectInfo,
 } from "./ai-layout"
 
+// Fabric object with custom id property used throughout
+interface FabricObjectWithId extends fabric.Object {
+    id?: string;
+    isEditing?: boolean;
+    text?: string;
+    fontFamily?: string;
+    fontSize?: number;
+    fontWeight?: string | number;
+    fontStyle?: string;
+    underline?: boolean;
+    linethrough?: boolean;
+    textAlign?: string;
+    getObjects?: () => FabricObjectWithId[];
+}
+
+interface CopiedTextFormat {
+    fontFamily?: string;
+    fontSize?: number;
+    fontWeight?: string | number;
+    fontStyle?: string;
+    fill?: string | fabric.Pattern | fabric.Gradient<'linear'> | fabric.Gradient<'radial'> | null;
+    underline?: boolean;
+    linethrough?: boolean;
+    textAlign?: string;
+}
+
 // Let's create an interface matching the `useSlides` return type conceptually
 interface SlideEditorProps {
     slideState: {
-        objects: Record<string, any>;
-        updateObject: (id: string, obj: any) => void;
+        objects: Record<string, fabric.Object>;
+        updateObject: (id: string, obj: fabric.Object | Record<string, unknown>) => void;
         removeObject: (id: string) => void;
         updateCursor: (x: number, y: number) => void;
-        collaborators: Record<number, any>;
+        collaborators: Record<number, { user: { name: string; color: string }; cursor?: { x: number; y: number; slideId: string } }>;
         isConnected: boolean;
         activeSlideId: string | null;
         canUndo: boolean;
@@ -70,8 +96,8 @@ interface SlideEditorProps {
         getSlideMaster?: (id: string) => string | undefined;
         // Export helpers for live presentation
         slides?: Array<{ id: string; title: string; notes?: string; transition?: SlideTransitionData }>;
-        getSlideObjects?: (slideId: string) => Record<string, any>;
-        getAllSlidesWithObjects?: () => Array<any>;
+        getSlideObjects?: (slideId: string) => Record<string, fabric.Object>;
+        getAllSlidesWithObjects?: () => Array<{ id: string; objects: fabric.Object[] }>;
     }
     isReadOnly?: boolean;
 }
@@ -100,10 +126,10 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
     // --- Format Painter State ---
     const [isFormatPainting, setIsFormatPainting] = useState(false)
-    const [copiedFormat, setCopiedFormat] = useState<any>(null)
+    const [copiedFormat, setCopiedFormat] = useState<CopiedTextFormat | null>(null)
 
     const [isListening, setIsListening] = useState(false)
-    const recognitionRef = useRef<any>(null)
+    const recognitionRef = useRef<SpeechRecognition | null>(null)
 
     // --- Page Setup State ---
     const [pageConfig, setPageConfig] = useState<{ orientation: 'portrait' | 'landscape', backgroundColor: string }>({ orientation: 'portrait', backgroundColor: '#ffffff' })
@@ -399,16 +425,17 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
     useEffect(() => {
         // Initialize Web Speech API if supported
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-        if (SpeechRecognition) {
-            recognitionRef.current = new SpeechRecognition()
+        const SpeechRecognitionCtor = (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition
+            || (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+        if (SpeechRecognitionCtor) {
+            recognitionRef.current = new SpeechRecognitionCtor()
             recognitionRef.current.continuous = true
             recognitionRef.current.interimResults = true
             recognitionRef.current.lang = 'fr-FR' // Set default language to French
 
             let finalTranscript = ""
 
-            recognitionRef.current.onresult = (event: any) => {
+            recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
                 let interimTranscript = ""
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript
@@ -421,26 +448,22 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
                 // Update the active object immediately with the recognized text
                 const canvas = fabricCanvasRef.current;
-                const active = canvas?.getActiveObject();
+                const active = canvas?.getActiveObject() as FabricObjectWithId | null;
                 if (active && (active.type === 'i-text' || active.type === 'textbox' || active.type === 'text')) {
-                    const textObj = active as any;
-
                     // We overwrite the whole text if it was empty, or append if it wasn't.
                     // For better UX we just append to existing to avoid wiping work
-                    const existingText = textObj.text || ""
-
                     // Note: A smarter implementation would remember where we started dictating,
                     // but appending works well for this building block iteration.
                     // We only append the final parts, and temporarily show interim parts.
                     const newText = (finalTranscript + interimTranscript).trim()
 
                     // Prevent infinite appending bug by clearing our local tracker on stop
-                    textObj.set({ text: newText });
+                    active.set({ text: newText } as Partial<fabric.Object>);
                     canvas?.requestRenderAll();
                 }
             }
 
-            recognitionRef.current.onerror = (event: any) => {
+            recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
                 console.debug("Speech recognition error", event.error)
                 setIsListening(false)
                 toast.error("Microphone issue: " + event.error)
@@ -489,13 +512,13 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         const canvas = fabricCanvasRef.current;
         if (!canvas) return;
 
-        const handleSelectionCreated = (e: any) => {
+        const handleSelectionCreated = (e: { selected?: FabricObjectWithId[] }) => {
             if (!isFormatPainting || !copiedFormat || !e.selected || e.selected.length === 0) return;
 
             const target = e.selected[0];
             // Only apply text formatting to text-like objects
             if (target.type === 'i-text' || target.type === 'textbox' || target.type === 'text') {
-                target.set(copiedFormat);
+                target.set(copiedFormat as Partial<fabric.Object>);
                 canvas.requestRenderAll();
 
                 // Sync to Yjs
@@ -540,15 +563,16 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             }
 
             // Extract core text styling attrs
-            const formatToCopy = {
-                fontFamily: (active as any).fontFamily,
-                fontSize: (active as any).fontSize,
-                fontWeight: (active as any).fontWeight,
-                fontStyle: (active as any).fontStyle,
+            const activeText = active as FabricObjectWithId;
+            const formatToCopy: CopiedTextFormat = {
+                fontFamily: activeText.fontFamily,
+                fontSize: activeText.fontSize,
+                fontWeight: activeText.fontWeight,
+                fontStyle: activeText.fontStyle,
                 fill: active.fill,
-                underline: (active as any).underline,
-                linethrough: (active as any).linethrough,
-                textAlign: (active as any).textAlign,
+                underline: activeText.underline,
+                linethrough: activeText.linethrough,
+                textAlign: activeText.textAlign,
             };
 
             setCopiedFormat(formatToCopy);
@@ -563,7 +587,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
     }, [isFormatPainting]);
 
     // Clipboard for Fabric objects
-    const clipboardRef = useRef<any>(null);
+    const clipboardRef = useRef<FabricObjectWithId | null>(null);
 
     // Listen for global keyboard shortcuts
     useEffect(() => {
@@ -593,23 +617,23 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 return;
             }
 
-            const activeObject = canvas.getActiveObject();
-            if (!activeObject || (activeObject as any).isEditing) return;
+            const activeObject = canvas.getActiveObject() as FabricObjectWithId | null;
+            if (!activeObject || activeObject.isEditing) return;
 
             // 2. Delete object
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 e.preventDefault();
                 isUpdatingRef.current = true;
                 if (activeObject.type === 'activeSelection') {
-                    const groupItems = (activeObject as any).getObjects();
-                    groupItems.forEach((item: any) => {
+                    const groupItems = activeObject.getObjects?.() ?? [];
+                    groupItems.forEach((item) => {
                         canvas.remove(item);
-                        removeObject(item.id);
+                        if (item.id) removeObject(item.id);
                     });
                     canvas.discardActiveObject();
                 } else {
                     canvas.remove(activeObject);
-                    removeObject((activeObject as any).id);
+                    if (activeObject.id) removeObject(activeObject.id);
                 }
                 isUpdatingRef.current = false;
                 canvas.requestRenderAll();
@@ -619,7 +643,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             // 3. Copy (Ctrl+C / Cmd+C)
             if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
                 e.preventDefault();
-                activeObject.clone().then((cloned: any) => {
+                activeObject.clone().then((cloned: FabricObjectWithId) => {
                     clipboardRef.current = cloned;
                 });
                 return;
@@ -628,20 +652,20 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             // 4. Paste (Ctrl+V / Cmd+V)
             if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboardRef.current) {
                 e.preventDefault();
-                
+
                 // clone again so you can paste multiple times
-                clipboardRef.current.clone().then((clonedObj: any) => {
+                clipboardRef.current.clone().then((clonedObj: FabricObjectWithId) => {
                     canvas.discardActiveObject();
                     clonedObj.set({
-                        left: clonedObj.left + 20,
-                        top: clonedObj.top + 20,
+                        left: (clonedObj.left || 0) + 20,
+                        top: (clonedObj.top || 0) + 20,
                         evented: true,
                     });
-                    
+
                     if (clonedObj.type === 'activeSelection') {
                         // active selection needs a loop to add objects individually
-                        clonedObj.canvas = canvas;
-                        clonedObj.forEachObject((obj: any) => {
+                        (clonedObj as FabricObjectWithId & { canvas: fabric.Canvas }).canvas = canvas;
+                        clonedObj.getObjects?.().forEach((obj) => {
                             obj.id = Math.random().toString(36).substr(2, 9);
                             canvas.add(obj);
                         });
@@ -651,18 +675,20 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                         clonedObj.id = Math.random().toString(36).substr(2, 9);
                         canvas.add(clonedObj);
                     }
-                    clipboardRef.current.top += 20;
-                    clipboardRef.current.left += 20;
-                    
+                    if (clipboardRef.current) {
+                        clipboardRef.current.top = (clipboardRef.current.top || 0) + 20;
+                        clipboardRef.current.left = (clipboardRef.current.left || 0) + 20;
+                    }
+
                     canvas.setActiveObject(clonedObj);
                     canvas.requestRenderAll();
-                    
+
                     // Update state
                     isUpdatingRef.current = true;
                     if (clonedObj.type === 'activeSelection') {
-                        clonedObj.forEachObject((obj: any) => updateObject(obj.id, obj.toObject()));
+                        clonedObj.getObjects?.().forEach((obj) => { if (obj.id) updateObject(obj.id, obj.toObject()); });
                     } else {
-                        updateObject(clonedObj.id, clonedObj.toObject());
+                        if (clonedObj.id) updateObject(clonedObj.id, clonedObj.toObject());
                     }
                     isUpdatingRef.current = false;
                 });
@@ -672,17 +698,17 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             // 5. Duplicate (Ctrl+D / Cmd+D)
             if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
                 e.preventDefault();
-                activeObject.clone().then((clonedObj: any) => {
+                activeObject.clone().then((clonedObj: FabricObjectWithId) => {
                     canvas.discardActiveObject();
                     clonedObj.set({
-                        left: clonedObj.left + 20,
-                        top: clonedObj.top + 20,
+                        left: (clonedObj.left || 0) + 20,
+                        top: (clonedObj.top || 0) + 20,
                         evented: true,
                     });
-                    
+
                     if (clonedObj.type === 'activeSelection') {
-                        clonedObj.canvas = canvas;
-                        clonedObj.forEachObject((obj: any) => {
+                        (clonedObj as FabricObjectWithId & { canvas: fabric.Canvas }).canvas = canvas;
+                        clonedObj.getObjects?.().forEach((obj) => {
                             obj.id = Math.random().toString(36).substr(2, 9);
                             canvas.add(obj);
                         });
@@ -691,15 +717,15 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                         clonedObj.id = Math.random().toString(36).substr(2, 9);
                         canvas.add(clonedObj);
                     }
-                    
+
                     canvas.setActiveObject(clonedObj);
                     canvas.requestRenderAll();
-                    
+
                     isUpdatingRef.current = true;
                     if (clonedObj.type === 'activeSelection') {
-                        clonedObj.forEachObject((obj: any) => updateObject(obj.id, obj.toObject()));
+                        clonedObj.getObjects?.().forEach((obj) => { if (obj.id) updateObject(obj.id, obj.toObject()); });
                     } else {
-                        updateObject(clonedObj.id, clonedObj.toObject());
+                        if (clonedObj.id) updateObject(clonedObj.id, clonedObj.toObject());
                     }
                     isUpdatingRef.current = false;
                 });
@@ -716,15 +742,16 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 if (e.key === 'ArrowLeft') dx = -step;
                 if (e.key === 'ArrowRight') dx = step;
 
-                const objs = activeObject.type === 'activeSelection' ? (activeObject as any).getObjects() : [activeObject];
+                const objs = activeObject.type === 'activeSelection' ? (activeObject.getObjects?.() ?? [activeObject]) : [activeObject];
                 // Move selection box
                 activeObject.set({ left: (activeObject.left || 0) + dx, top: (activeObject.top || 0) + dy });
                 activeObject.setCoords();
 
                 isUpdatingRef.current = true;
-                objs.forEach((obj: any) => {
+                objs.forEach((obj) => {
                     // Update object inside group correctly handled by Fabric magically, or we trigger full update
-                    updateObject(obj.id || (activeObject as any).id, obj.toObject());
+                    const objId = obj.id || activeObject.id;
+                    if (objId) updateObject(objId, obj.toObject());
                 });
                 isUpdatingRef.current = false;
                 canvas.requestRenderAll();
@@ -734,19 +761,19 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             // 7. Cut (Ctrl+X / Cmd+X)
             if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
                 e.preventDefault();
-                activeObject.clone().then((cloned: any) => {
+                activeObject.clone().then((cloned: FabricObjectWithId) => {
                     clipboardRef.current = cloned;
                     isUpdatingRef.current = true;
                     if (activeObject.type === 'activeSelection') {
-                        const groupItems = (activeObject as any).getObjects();
-                        groupItems.forEach((item: any) => {
+                        const groupItems = activeObject.getObjects?.() ?? [];
+                        groupItems.forEach((item) => {
                             canvas.remove(item);
-                            removeObject(item.id);
+                            if (item.id) removeObject(item.id);
                         });
                         canvas.discardActiveObject();
                     } else {
                         canvas.remove(activeObject);
-                        removeObject((activeObject as any).id);
+                        if (activeObject.id) removeObject(activeObject.id);
                     }
                     isUpdatingRef.current = false;
                     canvas.requestRenderAll();
@@ -763,7 +790,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     textObj.set('fontWeight', currentWeight === 'bold' ? 'normal' : 'bold');
                     canvas.requestRenderAll();
                     isUpdatingRef.current = true;
-                    updateObject((activeObject as any).id, activeObject.toObject());
+                    if (activeObject.id) updateObject(activeObject.id, activeObject.toObject());
                     isUpdatingRef.current = false;
                 }
                 return;
@@ -778,7 +805,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     textObj.set('fontStyle', currentStyle === 'italic' ? 'normal' : 'italic');
                     canvas.requestRenderAll();
                     isUpdatingRef.current = true;
-                    updateObject((activeObject as any).id, activeObject.toObject());
+                    if (activeObject.id) updateObject(activeObject.id, activeObject.toObject());
                     isUpdatingRef.current = false;
                 }
                 return;
@@ -793,7 +820,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     textObj.set('underline', !currentUnderline);
                     canvas.requestRenderAll();
                     isUpdatingRef.current = true;
-                    updateObject((activeObject as any).id, activeObject.toObject());
+                    if (activeObject.id) updateObject(activeObject.id, activeObject.toObject());
                     isUpdatingRef.current = false;
                 }
                 return;
@@ -812,7 +839,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
     }, [omniboxMenu.isOpen, removeObject, updateObject])
 
     // Define a stable object modification pipeline
-    const handleUpdateActiveObject = useCallback((id: string, updates: any) => {
+    const handleUpdateActiveObject = useCallback((id: string, updates: Record<string, unknown>) => {
         isUpdatingRef.current = true
         // Merge updates with the current object data directly in Yjs via hook
         const currentData = objects[id] || {};
@@ -858,10 +885,10 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 canvas.getObjects().forEach(obj => canvas.remove(obj));
                 canvas.backgroundColor = "#F8F9FA";
 
-                const layoutObjects: any[] = [];
+                const layoutObjects: FabricObjectWithId[] = [];
 
                 for (const item of layoutData) {
-                    let obj;
+                    let obj: FabricObjectWithId | undefined;
                     if (item.type === 'text') {
                         obj = new fabricModule.IText(item.text || 'Text', {
                             left: item.left || 50,
@@ -870,7 +897,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                             fontSize: item.fontSize || 20,
                             fill: item.fill || "#000000",
                             fontWeight: item.fontWeight || "normal"
-                        });
+                        }) as FabricObjectWithId;
                     } else if (item.type === 'rect') {
                         obj = new fabricModule.Rect({
                             left: item.left || 50,
@@ -880,10 +907,10 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                             fill: item.fill || "#818cf8",
                             rx: 8,
                             ry: 8
-                        });
+                        }) as FabricObjectWithId;
                     }
                     if (obj) {
-                        (obj as any).id = Math.random().toString(36).substr(2, 9);
+                        obj.id = Math.random().toString(36).substr(2, 9);
                         layoutObjects.push(obj);
                         canvas.add(obj);
                     }
@@ -891,9 +918,9 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
                 canvas.requestRenderAll();
 
-                layoutObjects.forEach((obj: any) => {
+                layoutObjects.forEach((obj) => {
                     isUpdatingRef.current = true;
-                    updateObject(obj.id, obj.toObject());
+                    if (obj.id) updateObject(obj.id, obj.toObject());
                     isUpdatingRef.current = false;
                 });
 
@@ -906,7 +933,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         }
     };
 
-    const addText = (defaultText: string = "New Text", options: any = {}) => {
+    const addText = (defaultText: string = "New Text", options: Record<string, unknown> = {}) => {
         import("fabric").then((fabricModule) => {
             const canvas = fabricCanvasRef.current
             if (canvas) {
@@ -926,7 +953,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         import("fabric").then((fabricModule) => {
             const canvas = fabricCanvasRef.current
             if (canvas) {
-                let shape: any;
+                let shape: FabricObjectWithId | undefined;
                 const defaultOpts = { left: 200, top: 200, fill: '#818cf8' }
 
                 switch (type) {
@@ -979,7 +1006,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
                     canvas.add(img)
                     canvas.setActiveObject(img)
-                }).catch((err: any) => {
+                }).catch((err: unknown) => {
                     console.debug("Failed to load image:", err)
                     alert("Impossible de charger cette image. Vérifiez que l'URL est publique et que le serveur autorise le CORS.")
                 })
@@ -1072,7 +1099,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         import("fabric").then((fabricModule) => {
             const canvas = fabricCanvasRef.current
             if (canvas) {
-                let groupObjects: any[] = []
+                let groupObjects: fabric.Object[] = []
 
                 // Get center of current view
                 const vpt = canvas.viewportTransform;
@@ -1175,7 +1202,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         import("fabric").then((fabricModule) => {
             const canvas = fabricCanvasRef.current
             if (canvas) {
-                const groupObjects: any[] = []
+                const groupObjects: fabric.Object[] = []
 
                 // Get center of current view
                 const vpt = canvas.viewportTransform;
@@ -1277,24 +1304,26 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         
         // "Best-effort" PPTX generation
         canvas.getObjects().forEach((obj) => {
-             const o = obj as any
+             const o = obj as FabricObjectWithId & { scaleX?: number; scaleY?: number; toDataURL?: () => string }
              const scaleX = o.scaleX || 1
              const scaleY = o.scaleY || 1
              const x = (o.left || 0) / 100
              const y = (o.top || 0) / 100
              const w = (o.width || 0) * scaleX / 100
              const h = (o.height || 0) * scaleY / 100
-             
+             const fillStr = typeof o.fill === 'string' ? o.fill : undefined
+
              if (obj.type === 'i-text' || obj.type === 'textbox' || obj.type === 'text') {
-                 slide.addText(o.text || '', { x, y, w, h, fontSize: (o.fontSize || 18) * scaleY, color: o.fill?.replace('#', '') || '000000' })
+                 const textO = o as FabricObjectWithId & { fontSize?: number }
+                 slide.addText(o.text || '', { x, y, w, h, fontSize: (textO.fontSize || 18) * scaleY, color: fillStr?.replace('#', '') || '000000' })
              } else if (obj.type === 'rect') {
-                 slide.addShape(pres.ShapeType.rect, { x, y, w, h, fill: { color: o.fill?.replace('#', '') || 'CCCCCC' } })
+                 slide.addShape(pres.ShapeType.rect, { x, y, w, h, fill: { color: fillStr?.replace('#', '') || 'CCCCCC' } })
              } else if (obj.type === 'circle') {
-                 slide.addShape(pres.ShapeType.ellipse, { x, y, w, h, fill: { color: o.fill?.replace('#', '') || 'CCCCCC' } })
+                 slide.addShape(pres.ShapeType.ellipse, { x, y, w, h, fill: { color: fillStr?.replace('#', '') || 'CCCCCC' } })
              } else if (obj.type === 'image') {
                  try {
-                     const dataUrl = o.toDataURL()
-                     slide.addImage({ data: dataUrl, x, y, w, h })
+                     const dataUrl = o.toDataURL?.()
+                     if (dataUrl) slide.addImage({ data: dataUrl, x, y, w, h })
                  } catch (err) {
                      console.debug("Could not export image to PPTX", err)
                  }
@@ -1339,7 +1368,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 return;
             }
 
-            const textObj = active as any;
+            const textObj = active as FabricObjectWithId;
             const currentText = textObj.text || "";
             const toastId = toast.loading("✨ IA en cours de traitement...");
 
@@ -1396,14 +1425,14 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         setAnimationConfig(config)
         // Store animation data on the selected fabric object
         const canvas = fabricCanvasRef.current
-        const active = canvas?.getActiveObject()
-        if (active && (active as any).id) {
-            (active as any).animationType = config.entranceType;
-            (active as any).animationDuration = config.duration;
-            (active as any).animationDelay = config.delay;
-            (active as any).animationExit = config.exitType;
+        const active = canvas?.getActiveObject() as FabricObjectWithId & { animationType?: string; animationDuration?: number; animationDelay?: number; animationExit?: string } | null
+        if (active && active.id) {
+            active.animationType = config.entranceType;
+            active.animationDuration = config.duration;
+            active.animationDelay = config.delay;
+            active.animationExit = config.exitType;
             isUpdatingRef.current = true
-            updateObject((active as any).id, active.toObject())
+            updateObject(active.id, active.toObject())
             isUpdatingRef.current = false
         }
     }, [updateObject])
@@ -1440,7 +1469,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
     // Load animation config when selection changes
     useEffect(() => {
         if (activeObject) {
-            const obj = activeObject as any
+            const obj = activeObject as FabricObjectWithId & { animationType?: string; animationExit?: string; animationDuration?: number; animationDelay?: number }
             setAnimationConfig({
                 entranceType: obj.animationType || 'none',
                 exitType: obj.animationExit || 'none',
@@ -1490,7 +1519,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         // Sync all objects to Yjs after layout
         const objs = canvas.getObjects()
         isUpdatingRef.current = true
-        objs.forEach((obj: any) => {
+        ;(canvas.getObjects() as FabricObjectWithId[]).forEach((obj) => {
             if (obj.id) updateObject(obj.id, obj.toObject())
         })
         isUpdatingRef.current = false
@@ -1498,7 +1527,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
     // --- Live Presentation View ---
     if (livePresentation?.active && allSlides && getSlideObjects) {
-        const slideNodes = allSlides.map((slide: any) => {
+        const slideNodes = allSlides.map((slide) => {
             const slideObjects = getSlideObjects(slide.id)
             return (
                 <div key={slide.id} className="w-full h-full bg-white rounded-lg shadow-lg flex items-center justify-center p-8">
@@ -1509,8 +1538,8 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 </div>
             )
         })
-        const slideNotes = allSlides.map((s: any) => s.notes || '')
-        const slideTransitions = allSlides.map((s: any) => s.transition || { type: 'none', duration: 500 })
+        const slideNotes = allSlides.map((s) => s.notes || '')
+        const slideTransitions = allSlides.map((s) => s.transition || { type: 'none', duration: 500 })
 
         return (
             <LivePresenterView
@@ -1567,10 +1596,11 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                         if (action === 'clear') clearSlide();
                         if (action === 'cut') {
                             if (active && canvas) {
-                                active.clone().then((cloned: any) => {
+                                active.clone().then((cloned: FabricObjectWithId) => {
                                     clipboardRef.current = cloned;
                                     canvas.remove(active);
-                                    removeObject((active as any).id);
+                                    const activeWithId = active as FabricObjectWithId;
+                                    if (activeWithId.id) removeObject(activeWithId.id);
                                     canvas.requestRenderAll();
                                 });
                                 toast.success('Élément coupé');
@@ -1578,7 +1608,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                         }
                         if (action === 'copy') {
                             if (active) {
-                                active.clone().then((cloned: any) => {
+                                active.clone().then((cloned: FabricObjectWithId) => {
                                     clipboardRef.current = cloned;
                                 });
                                 toast.success('Élément copié');
@@ -1586,14 +1616,14 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                         }
                         if (action === 'paste') {
                             if (clipboardRef.current && canvas) {
-                                clipboardRef.current.clone().then((clonedObj: any) => {
+                                clipboardRef.current.clone().then((clonedObj: FabricObjectWithId) => {
                                     canvas.discardActiveObject();
-                                    clonedObj.set({ left: clonedObj.left + 20, top: clonedObj.top + 20, evented: true });
+                                    clonedObj.set({ left: (clonedObj.left || 0) + 20, top: (clonedObj.top || 0) + 20, evented: true });
                                     clonedObj.id = Math.random().toString(36).substr(2, 9);
                                     canvas.add(clonedObj);
                                     canvas.setActiveObject(clonedObj);
                                     canvas.requestRenderAll();
-                                    updateObject(clonedObj.id, clonedObj.toObject());
+                                    if (clonedObj.id) updateObject(clonedObj.id, clonedObj.toObject());
                                 });
                                 toast.success('Élément collé');
                             }
@@ -1601,7 +1631,8 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                         if (action === 'delete') {
                             if (active && canvas) {
                                 canvas.remove(active);
-                                removeObject((active as any).id);
+                                const activeWithId = active as FabricObjectWithId;
+                                if (activeWithId.id) removeObject(activeWithId.id);
                                 canvas.requestRenderAll();
                                 toast.success('Élément supprimé');
                             }
@@ -1662,7 +1693,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                             import("fabric").then((fabricModule) => {
                                 if (canvas) {
                                     const shape = new fabricModule.Rect({ left: 200, top: 200, width: 100, height: 100, fill: '#818cf8', rx: 16, ry: 16 });
-                                    (shape as any).id = Math.random().toString(36).substr(2, 9);
+                                    (shape as FabricObjectWithId).id = Math.random().toString(36).substr(2, 9);
                                     canvas.add(shape);
                                     canvas.setActiveObject(shape);
                                 }
@@ -1673,7 +1704,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                             import("fabric").then((fabricModule) => {
                                 if (canvas) {
                                     const shape = new fabricModule.Ellipse({ left: 200, top: 200, rx: 60, ry: 40, fill: '#818cf8' });
-                                    (shape as any).id = Math.random().toString(36).substr(2, 9);
+                                    (shape as FabricObjectWithId).id = Math.random().toString(36).substr(2, 9);
                                     canvas.add(shape);
                                     canvas.setActiveObject(shape);
                                 }
@@ -1694,7 +1725,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                                         points.push({ x: Math.cos(angle) * radius, y: Math.sin(angle) * radius });
                                     }
                                     const shape = new fabricModule.Polygon(points, { left: 200, top: 200, fill: '#f59e0b' });
-                                    (shape as any).id = Math.random().toString(36).substr(2, 9);
+                                    (shape as FabricObjectWithId).id = Math.random().toString(36).substr(2, 9);
                                     canvas.add(shape);
                                     canvas.setActiveObject(shape);
                                 }
@@ -1705,7 +1736,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                                 if (canvas) {
                                     const points = [{ x: 0, y: 20 }, { x: 60, y: 20 }, { x: 60, y: 0 }, { x: 100, y: 30 }, { x: 60, y: 60 }, { x: 60, y: 40 }, { x: 0, y: 40 }];
                                     const shape = new fabricModule.Polygon(points, { left: 200, top: 200, fill: '#10b981' });
-                                    (shape as any).id = Math.random().toString(36).substr(2, 9);
+                                    (shape as FabricObjectWithId).id = Math.random().toString(36).substr(2, 9);
                                     canvas.add(shape);
                                     canvas.setActiveObject(shape);
                                 }
@@ -1716,7 +1747,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                                 if (canvas) {
                                     // Simple speech bubble simulation
                                     const rect = new fabricModule.Rect({ left: 200, top: 200, width: 150, height: 80, fill: '#e2e8f0', rx: 12, ry: 12 });
-                                    (rect as any).id = Math.random().toString(36).substr(2, 9);
+                                    (rect as FabricObjectWithId).id = Math.random().toString(36).substr(2, 9);
                                     canvas.add(rect);
                                     canvas.setActiveObject(rect);
                                 }
@@ -1727,7 +1758,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                             import("fabric").then((fabricModule) => {
                                 if (canvas) {
                                     const line = new fabricModule.Line([50, 50, 200, 50], { left: 200, top: 200, stroke: '#818cf8', strokeWidth: 3 });
-                                    (line as any).id = Math.random().toString(36).substr(2, 9);
+                                    (line as FabricObjectWithId).id = Math.random().toString(36).substr(2, 9);
                                     canvas.add(line);
                                     canvas.setActiveObject(line);
                                     toast.info('Ligne avec flèche: ajoutez une forme triangulaire à l\'extrémité');
@@ -1770,34 +1801,34 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                         // Text formatting (for selected text objects)
                         if (action === 'textBold') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                const textObj = active as fabric.IText;
+                                const textObj = active as FabricObjectWithId;
                                 textObj.set('fontWeight', textObj.fontWeight === 'bold' ? 'normal' : 'bold');
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
                         if (action === 'textItalic') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                const textObj = active as fabric.IText;
+                                const textObj = active as FabricObjectWithId;
                                 textObj.set('fontStyle', textObj.fontStyle === 'italic' ? 'normal' : 'italic');
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
                         if (action === 'textUnderline') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                const textObj = active as fabric.IText;
+                                const textObj = active as FabricObjectWithId;
                                 textObj.set('underline', !textObj.underline);
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
                         if (action === 'textStrikethrough') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                const textObj = active as any;
+                                const textObj = active as FabricObjectWithId;
                                 textObj.set('linethrough', !textObj.linethrough);
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
                         if (action === 'textSuperscript') toast.info('Exposant: sélectionnez le texte dans la zone de texte');
@@ -1806,86 +1837,99 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                         // Alignment
                         if (action === 'alignLeft') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                (active as any).set('textAlign', 'left');
+                                const textObj = active as FabricObjectWithId;
+                                textObj.set('textAlign', 'left');
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
                         if (action === 'alignCenter') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                (active as any).set('textAlign', 'center');
+                                const textObj = active as FabricObjectWithId;
+                                textObj.set('textAlign', 'center');
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
                         if (action === 'alignRight') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                (active as any).set('textAlign', 'right');
+                                const textObj = active as FabricObjectWithId;
+                                textObj.set('textAlign', 'right');
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
                         if (action === 'alignJustify') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                (active as any).set('textAlign', 'justify');
+                                const textObj = active as FabricObjectWithId;
+                                textObj.set('textAlign', 'justify');
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
 
                         // Line spacing
                         if (action === 'lineSpacingSingle') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                (active as any).set('lineHeight', 1);
+                                const textObj = active as FabricObjectWithId;
+                                textObj.set('lineHeight', 1);
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
                         if (action === 'lineSpacing1_5') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                (active as any).set('lineHeight', 1.5);
+                                const textObj = active as FabricObjectWithId;
+                                textObj.set('lineHeight', 1.5);
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
                         if (action === 'lineSpacingDouble') {
                             if (active && (active.type === 'i-text' || active.type === 'textbox')) {
-                                (active as any).set('lineHeight', 2);
+                                const textObj = active as FabricObjectWithId;
+                                textObj.set('lineHeight', 2);
                                 canvas?.requestRenderAll();
-                                updateObject((active as any).id, active.toObject());
+                                if (textObj.id) updateObject(textObj.id, active.toObject());
                             }
                         }
 
                         // Object alignment
                         if (action === 'objectAlignLeft' && active && canvas) {
+                            const activeWithId = active as FabricObjectWithId;
                             active.set('left', 0);
                             canvas.requestRenderAll();
-                            updateObject((active as any).id, active.toObject());
+                            if (activeWithId.id) updateObject(activeWithId.id, active.toObject());
                         }
                         if (action === 'objectAlignCenterH' && active && canvas) {
+                            const activeWithId = active as FabricObjectWithId;
                             active.set('left', (canvas.width! / 2) - ((active.width! * (active.scaleX || 1)) / 2));
                             canvas.requestRenderAll();
-                            updateObject((active as any).id, active.toObject());
+                            if (activeWithId.id) updateObject(activeWithId.id, active.toObject());
                         }
                         if (action === 'objectAlignRight' && active && canvas) {
+                            const activeWithId = active as FabricObjectWithId;
                             active.set('left', canvas.width! - (active.width! * (active.scaleX || 1)));
                             canvas.requestRenderAll();
-                            updateObject((active as any).id, active.toObject());
+                            if (activeWithId.id) updateObject(activeWithId.id, active.toObject());
                         }
                         if (action === 'objectAlignTop' && active && canvas) {
+                            const activeWithId = active as FabricObjectWithId;
                             active.set('top', 0);
                             canvas.requestRenderAll();
-                            updateObject((active as any).id, active.toObject());
+                            if (activeWithId.id) updateObject(activeWithId.id, active.toObject());
                         }
                         if (action === 'objectAlignCenterV' && active && canvas) {
+                            const activeWithId = active as FabricObjectWithId;
                             active.set('top', (canvas.height! / 2) - ((active.height! * (active.scaleY || 1)) / 2));
                             canvas.requestRenderAll();
-                            updateObject((active as any).id, active.toObject());
+                            if (activeWithId.id) updateObject(activeWithId.id, active.toObject());
                         }
                         if (action === 'objectAlignBottom' && active && canvas) {
+                            const activeWithId = active as FabricObjectWithId;
                             active.set('top', canvas.height! - (active.height! * (active.scaleY || 1)));
                             canvas.requestRenderAll();
-                            updateObject((active as any).id, active.toObject());
+                            if (activeWithId.id) updateObject(activeWithId.id, active.toObject());
                         }
                         if (action === 'distributeH') toast.info('Distribution horizontale: sélectionnez plusieurs objets');
                         if (action === 'distributeV') toast.info('Distribution verticale: sélectionnez plusieurs objets');
@@ -1893,36 +1937,42 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                         // Arrange
                         if (action === 'bringToFront') {
                             if (active && canvas) {
-                                const maxZ = Math.max(0, ...canvas.getObjects().map((o: any) => o.zIndex || 0));
-                                (active as any).zIndex = maxZ + 1;
+                                type ObjWithZ = FabricObjectWithId & { zIndex?: number };
+                                const activeWithId = active as ObjWithZ;
+                                const maxZ = Math.max(0, ...canvas.getObjects().map((o) => (o as ObjWithZ).zIndex || 0));
+                                activeWithId.zIndex = maxZ + 1;
                                 canvas.bringObjectToFront(active);
                                 isUpdatingRef.current = true;
-                                updateObject((active as any).id, active.toObject(['id', 'zIndex']));
+                                if (activeWithId.id) updateObject(activeWithId.id, active.toObject(['id', 'zIndex']));
                                 isUpdatingRef.current = false;
                                 canvas.requestRenderAll();
                             }
                         }
                         if (action === 'bringForward') {
                             if (active && canvas) {
+                                const activeWithId = active as FabricObjectWithId;
                                 canvas.bringObjectForward(active);
                                 canvas.requestRenderAll();
-                                updateObject((active as any).id, active.toObject(['id', 'zIndex']));
+                                if (activeWithId.id) updateObject(activeWithId.id, active.toObject(['id', 'zIndex']));
                             }
                         }
                         if (action === 'sendBackward') {
                             if (active && canvas) {
+                                const activeWithId = active as FabricObjectWithId;
                                 canvas.sendObjectBackwards(active);
                                 canvas.requestRenderAll();
-                                updateObject((active as any).id, active.toObject(['id', 'zIndex']));
+                                if (activeWithId.id) updateObject(activeWithId.id, active.toObject(['id', 'zIndex']));
                             }
                         }
                         if (action === 'sendToBack') {
                             if (active && canvas) {
-                                const minZ = Math.min(0, ...canvas.getObjects().map((o: any) => o.zIndex || 0));
-                                (active as any).zIndex = minZ - 1;
+                                type ObjWithZ = FabricObjectWithId & { zIndex?: number };
+                                const activeWithId = active as ObjWithZ;
+                                const minZ = Math.min(0, ...canvas.getObjects().map((o) => (o as ObjWithZ).zIndex || 0));
+                                activeWithId.zIndex = minZ - 1;
                                 canvas.sendObjectToBack(active);
                                 isUpdatingRef.current = true;
-                                updateObject((active as any).id, active.toObject(['id', 'zIndex']));
+                                if (activeWithId.id) updateObject(activeWithId.id, active.toObject(['id', 'zIndex']));
                                 isUpdatingRef.current = false;
                                 canvas.requestRenderAll();
                             }
@@ -1933,12 +1983,16 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                             if (!canvas) return;
                             if (active && active.type === 'activeSelection') {
                                 isUpdatingRef.current = true;
-                                const groupItems = (active as any).getObjects();
+                                const activeWithId = active as FabricObjectWithId;
+                                const groupItems = activeWithId.getObjects ? activeWithId.getObjects() : [];
                                 const groupId = Math.random().toString(36).substr(2, 9);
-                                const group = (active as any).toGroup();
-                                group.id = groupId;
-                                updateObject(group.id, group.toObject(['id', 'zIndex']));
-                                groupItems.forEach((item: any) => removeObject(item.id));
+                                // toGroup is available on ActiveSelection in fabric v6
+                                const group = (active as FabricObjectWithId & { toGroup?: () => FabricObjectWithId }).toGroup?.();
+                                if (group) {
+                                    group.id = groupId;
+                                    updateObject(group.id, (group as fabric.Object).toObject(['id', 'zIndex']));
+                                }
+                                groupItems.forEach((item) => { if (item.id) removeObject(item.id); });
                                 isUpdatingRef.current = false;
                                 canvas.requestRenderAll();
                             } else {
@@ -1949,13 +2003,15 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                             if (!canvas) return;
                             if (active && active.type === 'group') {
                                 isUpdatingRef.current = true;
-                                const groupId = (active as any).id;
-                                const items = (active as any).getObjects();
-                                (active as any).toActiveSelection();
+                                const activeWithId = active as FabricObjectWithId;
+                                const groupId = activeWithId.id;
+                                const items = activeWithId.getObjects ? activeWithId.getObjects() : [];
+                                // toActiveSelection is available on Group in fabric v6
+                                (active as FabricObjectWithId & { toActiveSelection?: () => void }).toActiveSelection?.();
                                 if (groupId) removeObject(groupId);
-                                items.forEach((item: any) => {
+                                items.forEach((item) => {
                                     if (!item.id) item.id = Math.random().toString(36).substr(2, 9);
-                                    updateObject(item.id, item.toObject(['id', 'zIndex']));
+                                    updateObject(item.id, (item as fabric.Object).toObject(['id', 'zIndex']));
                                 });
                                 isUpdatingRef.current = false;
                                 canvas.requestRenderAll();
@@ -2085,7 +2141,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     {/* Animation Panel (Right sidebar) */}
                     {showAnimationPanel && !isReadOnly && (
                         <AnimationPanel
-                            selectedObjectId={activeObject ? (activeObject as any).id || null : null}
+                            selectedObjectId={activeObject ? (activeObject as FabricObjectWithId).id || null : null}
                             animationConfig={animationConfig}
                             onAnimationChange={handleAnimationChange}
                             onPreview={handleAnimationPreview}

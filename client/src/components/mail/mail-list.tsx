@@ -2,7 +2,7 @@ import { ComponentProps, useRef, useState, useEffect, useCallback } from "react"
 import { formatDistanceToNow } from "date-fns"
 
 import { cn } from "@/lib/utils"
-import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert } from "lucide-react"
+import { Archive, Clock, Trash2, Square, Star, Loader2, ShieldAlert, Inbox } from "lucide-react"
 import { Mail } from "@/lib/data/mail"
 import { SpamBadge } from "./spam-filter-settings"
 import {
@@ -25,9 +25,10 @@ interface MailListProps extends ComponentProps<"div"> {
     onDelete?: (id: string) => void
     onReportSpam?: (id: string) => void
     spamIds?: Set<string>
+    isSearchActive?: boolean
 }
 
-export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onDelete, onReportSpam, spamIds }: MailListProps) {
+export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onDelete, onReportSpam, spamIds, isSearchActive }: MailListProps) {
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
     const sentinelRef = useRef<HTMLDivElement | null>(null)
     const scrollContainerRef = useRef<HTMLDivElement | null>(null)
@@ -87,6 +88,14 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
                 ref={scrollContainerRef}
                 className="flex-1 overflow-y-auto"
             >
+                {items.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full py-20 text-muted-foreground gap-3">
+                        <Inbox className="h-12 w-12 opacity-30" />
+                        <p className="text-sm">
+                            {isSearchActive ? "Aucun résultat" : "Votre boîte est vide"}
+                        </p>
+                    </div>
+                ) : null}
                 <div className="flex flex-col">
                     {visibleItems.map((item) => (
                         <button
@@ -137,22 +146,22 @@ export function MailList({ items, selectedId, onSelect, onSnooze, onArchive, onD
 
                             {/* Hover Actions (Gmail style overlay on right edge) */}
                             <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 bg-background dark:bg-[#202124] pl-2 pr-1 py-1">
-                                <div className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" title="Archive" onClick={(e) => { e.stopPropagation(); onArchive?.(item.id) }}>
+                                <button type="button" aria-label="Archiver" className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onArchive?.(item.id) }}>
                                     <Archive className="w-5 h-5" />
-                                </div>
-                                <div className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" title="Delete" onClick={(e) => { e.stopPropagation(); onDelete?.(item.id) }}>
+                                </button>
+                                <button type="button" aria-label="Supprimer" className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onDelete?.(item.id) }}>
                                     <Trash2 className="w-5 h-5" />
-                                </div>
+                                </button>
                                 {onReportSpam && (
-                                    <div className="p-2 rounded-full text-muted-foreground hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors shadow-none bg-transparent border-none" title="Report spam" onClick={(e) => { e.stopPropagation(); onReportSpam(item.id) }}>
+                                    <button type="button" aria-label="Signaler comme spam" className="p-2 rounded-full text-muted-foreground hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors shadow-none bg-transparent border-none" onClick={(e) => { e.stopPropagation(); onReportSpam(item.id) }}>
                                         <ShieldAlert className="w-5 h-5" />
-                                    </div>
+                                    </button>
                                 )}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <div className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer shadow-none bg-transparent border-none" title="Snooze" onClick={(e) => e.stopPropagation()}>
+                                        <button type="button" aria-label="Reporter" className="p-2 rounded-full text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer shadow-none bg-transparent border-none" onClick={(e) => e.stopPropagation()}>
                                             <Clock className="w-5 h-5" />
-                                        </div>
+                                        </button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="w-[160px] rounded-xl shadow-xl border-border/50 p-1" onClick={(e) => e.stopPropagation()}>
                                         <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={(e) => { e.stopPropagation(); onSnooze?.(item.id, "Later today"); }}>

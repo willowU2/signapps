@@ -7,6 +7,7 @@ import {
   Plus,
   Calendar,
   Columns,
+  Repeat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +38,7 @@ export interface ScheduledPost {
   platform: string;
   scheduledAt: Date;
   status: "scheduled" | "published" | "failed";
+  repeatInterval?: number;
 }
 
 interface ContentCalendarProps {
@@ -123,11 +125,14 @@ function PostPill({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left text-xs px-1.5 py-0.5 rounded truncate transition-opacity hover:opacity-80"
+      className="w-full text-left text-xs px-1.5 py-0.5 rounded truncate transition-opacity hover:opacity-80 flex items-center gap-1"
       style={{ backgroundColor: color + "22", borderLeft: `2px solid ${color}`, color }}
-      title={post.content}
+      title={`${post.content}${post.repeatInterval && post.repeatInterval > 0 ? ` (repeats every ${post.repeatInterval}d)` : ''}`}
     >
-      {post.content.slice(0, 40)}
+      {post.repeatInterval && post.repeatInterval > 0 && (
+        <Repeat className="h-2.5 w-2.5 shrink-0" />
+      )}
+      <span className="truncate">{post.content.slice(0, 40)}</span>
     </button>
   );
 }
@@ -401,6 +406,15 @@ export function ContentCalendar({
             <p className="text-xs text-muted-foreground">
               {selectedPost.scheduledAt.toLocaleString()}
             </p>
+            {selectedPost.repeatInterval && selectedPost.repeatInterval > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Repeat className="h-3 w-3" />
+                <span>
+                  Repeats every {selectedPost.repeatInterval} day
+                  {selectedPost.repeatInterval !== 1 ? "s" : ""}
+                </span>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       )}

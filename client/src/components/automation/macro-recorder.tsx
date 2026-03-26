@@ -45,9 +45,9 @@ export function MacroRecorder() {
   };
 
   const playMacro = (macro: Macro) => {
-    macro.actions.forEach((a, i) =>
-      setTimeout(() => console.log(`${a.label}`), i * 300)
-    );
+    macro.actions.forEach((_a, _i) => {
+      // Macro playback is a UI-only simulation; no-op without a real executor
+    });
   };
 
   const deleteMacro = (id: string) => {

@@ -8,16 +8,32 @@ use uuid::Uuid;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let password = "admin";
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://signapps:signapps_dev@localhost:5432/signapps".to_string());
+
+    let is_local = database_url.contains("localhost") || database_url.contains("127.0.0.1");
+
+    let password = match std::env::var("SEED_ADMIN_PASSWORD") {
+        Ok(p) if !p.is_empty() => p,
+        _ => {
+            if !is_local {
+                eprintln!(
+                    "ERROR: SEED_ADMIN_PASSWORD must be set when connecting to a non-local database.\n\
+                     Refusing to seed a remote database with the default 'admin' password.\n\
+                     Set SEED_ADMIN_PASSWORD=<your_secure_password> and try again."
+                );
+                std::process::exit(1);
+            }
+            "admin".to_string()
+        },
+    };
+
     let salt = SaltString::generate(&mut OsRng);
 
     let hash = Argon2::default()
         .hash_password(password.as_bytes(), &salt)
         .map_err(|e| e.to_string())?
         .to_string();
-
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://signapps:signapps_dev@localhost:5432/signapps".to_string());
 
     println!("Connecting to database for seeding...");
     let pool = PgPoolOptions::new()

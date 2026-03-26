@@ -127,6 +127,7 @@ async fn main() -> anyhow::Result<()> {
             .allow_credentials(true)
             .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::PATCH, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
             .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::AUTHORIZATION, axum::http::header::ACCEPT, axum::http::header::ORIGIN, axum::http::HeaderName::from_static("x-workspace-id"), axum::http::HeaderName::from_static("x-request-id")]))
+        .layer(axum::extract::DefaultBodyLimit::max(100 * 1024 * 1024)) // 100MB for large docs
         // State
         .with_state(app_state);
 

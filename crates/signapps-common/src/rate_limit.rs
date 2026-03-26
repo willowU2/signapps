@@ -2,7 +2,7 @@
 //!
 //! Configurable per-route rate limits using a simple token bucket algorithm.
 
-use axum::{extract::Request, middleware::Next, response::Response, http::StatusCode};
+use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -58,7 +58,8 @@ impl RateLimiter {
 
         // Refill tokens
         let elapsed = now.duration_since(bucket.last_refill).as_secs_f64();
-        bucket.tokens = (bucket.tokens + elapsed * self.config.refill_rate).min(self.config.max_tokens);
+        bucket.tokens =
+            (bucket.tokens + elapsed * self.config.refill_rate).min(self.config.max_tokens);
         bucket.last_refill = now;
 
         if bucket.tokens >= 1.0 {

@@ -133,8 +133,7 @@ export default function ResourcesPage() {
                 building: "",
                 requires_approval: false,
             })
-        } catch (error) {
-            console.error("Failed to create resource:", error)
+        } catch {
             toast.error("Erreur lors de la création de la ressource")
         } finally {
             setIsSubmitting(false)
@@ -145,8 +144,7 @@ export default function ResourcesPage() {
         if (!confirm(`Supprimer la ressource "${resource.name}" ? Cette action est irréversible.`)) return
         try {
             await deleteResource(resource.id)
-        } catch (error) {
-            console.error("Failed to delete resource:", error)
+        } catch {
             toast.error("Erreur lors de la suppression de la ressource")
         }
     }
@@ -154,8 +152,7 @@ export default function ResourcesPage() {
     const handleApprove = async (reservationId: string) => {
         try {
             await approveReservation(reservationId)
-        } catch (error) {
-            console.error("Failed to approve reservation:", error)
+        } catch {
             toast.error("Erreur lors de l'approbation de la réservation")
         }
     }
@@ -164,8 +161,7 @@ export default function ResourcesPage() {
         const reason = prompt("Motif du refus (optionnel):")
         try {
             await rejectReservation(reservationId, reason || undefined)
-        } catch (error) {
-            console.error("Failed to reject reservation:", error)
+        } catch {
             toast.error("Erreur lors du refus de la réservation")
         }
     }

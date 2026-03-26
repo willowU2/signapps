@@ -40,8 +40,7 @@ export default function UsersPage() {
             const res = await usersApi.list();
             // The rust backend might return the list directly, while the swagger says { users: ... }
             setUsers(Array.isArray(res.data) ? res.data : (res.data?.users || []));
-        } catch (err) {
-            console.error("Failed to load users", err);
+        } catch {
             toast.error("Failed to load users");
         }
     }
@@ -72,9 +71,9 @@ export default function UsersPage() {
             }
             setIsSheetOpen(false)
             loadUsers()
-        } catch (error: any) {
-            console.error("Failed to save user", error)
-            toast.error(error.response?.data?.message || "Failed to save user")
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+            toast.error(msg || "Failed to save user")
         } finally {
             setIsLoading(false)
         }

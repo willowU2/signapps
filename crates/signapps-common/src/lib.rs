@@ -72,6 +72,7 @@ pub mod pg_listener;
 pub mod pii;
 pub mod plugins;
 pub mod qrcode_gen;
+pub mod rate_limit;
 pub mod reporting;
 pub mod retention;
 #[cfg(feature = "search")]
@@ -112,7 +113,7 @@ pub use marketplace::{AppListing, AppStore};
 pub use middleware::{
     correlation_id_middleware,
     metrics::{metrics_handler, metrics_middleware, MetricsCollector},
-    AuthState, RequestClaimsExt, TenantContext,
+    security_headers_middleware, AuthState, RequestClaimsExt, TenantContext,
 };
 pub use openapi::create_openapi_router;
 pub use plugins::{Plugin, PluginManifest, PluginRegistry};

@@ -5,6 +5,7 @@
 //! - Authorization (role-based access control)
 //! - Request logging with tracing
 //! - Request ID propagation
+//! - Security headers
 //! - Prometheus metrics
 
 use axum::{
@@ -245,6 +246,51 @@ pub async fn optional_tenant_context_middleware(request: Request, next: Next) ->
     }
 
     next.run(request).await
+}
+
+/// Middleware that injects security headers into every response.
+///
+/// Headers added:
+/// - `X-Content-Type-Options: nosniff`
+/// - `X-Frame-Options: DENY`
+/// - `X-XSS-Protection: 1; mode=block`
+/// - `Referrer-Policy: strict-origin-when-cross-origin`
+/// - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+///
+/// # Usage
+///
+/// ```ignore
+/// use axum::middleware;
+/// use signapps_common::middleware::security_headers_middleware;
+///
+/// let app = Router::new()
+///     .route("/api/v1/users", get(list_users))
+///     .layer(middleware::from_fn(security_headers_middleware));
+/// ```
+pub async fn security_headers_middleware(request: Request, next: Next) -> Response {
+    let mut response = next.run(request).await;
+    let headers = response.headers_mut();
+    headers.insert(
+        axum::http::HeaderName::from_static("x-content-type-options"),
+        axum::http::HeaderValue::from_static("nosniff"),
+    );
+    headers.insert(
+        axum::http::HeaderName::from_static("x-frame-options"),
+        axum::http::HeaderValue::from_static("DENY"),
+    );
+    headers.insert(
+        axum::http::HeaderName::from_static("x-xss-protection"),
+        axum::http::HeaderValue::from_static("1; mode=block"),
+    );
+    headers.insert(
+        axum::http::HeaderName::from_static("referrer-policy"),
+        axum::http::HeaderValue::from_static("strict-origin-when-cross-origin"),
+    );
+    headers.insert(
+        axum::http::HeaderName::from_static("permissions-policy"),
+        axum::http::HeaderValue::from_static("camera=(), microphone=(), geolocation=()"),
+    );
+    response
 }
 
 /// Require access to a specific workspace.

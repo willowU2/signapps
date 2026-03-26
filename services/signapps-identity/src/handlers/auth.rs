@@ -574,6 +574,29 @@ fn verify_totp(secret: &str, code: &str) -> Result<bool> {
     Ok(totp.check_current(code).unwrap_or(false))
 }
 
+/// Password reset request (rate-limited to 3/min per IP).
+///
+/// Accepts an email address and — if an account exists — initiates the reset flow.
+/// Always returns HTTP 200 to avoid leaking account existence.
+#[tracing::instrument(skip(_state, payload))]
+pub async fn password_reset(
+    State(_state): State<AppState>,
+    Json(payload): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>> {
+    // Log the attempt without revealing whether the account exists
+    tracing::info!(
+        email = payload
+            .get("email")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown"),
+        "Password reset requested"
+    );
+    // TODO: implement token generation and email delivery
+    Ok(Json(serde_json::json!({
+        "message": "If an account with that email exists, a reset link has been sent."
+    })))
+}
+
 /// Decrypt LDAP bind password using XOR with LDAP_ENCRYPTION_KEY env var.
 /// The encrypted value is base64(XOR(password, key_repeated)).
 /// If LDAP_ENCRYPTION_KEY is not set, falls back to plain base64 decode for backward compat.

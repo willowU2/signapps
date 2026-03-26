@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
+import type * as fabric from "fabric";
 import { useDesignStore } from "@/stores/design-store";
 import type { DesignObject } from "./types";
 import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
@@ -8,8 +9,12 @@ import { Button } from "@/components/ui/button";
 
 const GRID_SIZE = 20;
 
+interface FabricCanvasObject extends fabric.Object {
+  id?: string;
+}
+
 interface DesignCanvasProps {
-  fabricCanvasRef: React.MutableRefObject<any | null>;
+  fabricCanvasRef: React.MutableRefObject<fabric.Canvas | null>;
 }
 
 export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
@@ -61,7 +66,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
 
   // Initialize fabric canvas
   useEffect(() => {
-    let canvas: any = null;
+    let canvas: fabric.Canvas | null = null;
 
     import("fabric").then((fabricModule) => {
       if (!canvasElRef.current) return;
@@ -79,12 +84,12 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       fabricCanvasRef.current = canvas;
 
       // Selection handling
-      canvas.on("selection:created", (e: any) => {
-        const ids = (e.selected || []).map((o: any) => o.id).filter(Boolean);
+      canvas.on("selection:created", (e: { selected?: FabricCanvasObject[] }) => {
+        const ids = (e.selected || []).map((o) => o.id).filter((id): id is string => Boolean(id));
         setSelectedObjects(ids);
       });
-      canvas.on("selection:updated", (e: any) => {
-        const ids = (e.selected || []).map((o: any) => o.id).filter(Boolean);
+      canvas.on("selection:updated", (e: { selected?: FabricCanvasObject[] }) => {
+        const ids = (e.selected || []).map((o) => o.id).filter((id): id is string => Boolean(id));
         setSelectedObjects(ids);
       });
       canvas.on("selection:cleared", () => {
@@ -92,7 +97,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       });
 
       // Object modified
-      canvas.on("object:modified", (e: any) => {
+      canvas.on("object:modified", (e: { target?: FabricCanvasObject }) => {
         const target = e.target;
         if (target?.id) {
           const data = target.toObject(["id"]);
@@ -102,7 +107,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       });
 
       // Grid rendering
-      canvas.on("after:render", (opt: any) => {
+      canvas.on("after:render", (opt: { ctx?: CanvasRenderingContext2D }) => {
         if (!showGrid) return;
         const ctx = opt.ctx;
         if (!ctx) return;
@@ -125,7 +130,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       });
 
       // Snap to grid
-      canvas.on("object:moving", (opt: any) => {
+      canvas.on("object:moving", (opt: { target?: fabric.Object }) => {
         if (!snapToGrid) return;
         const target = opt.target;
         if (!target) return;
@@ -160,12 +165,12 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       canvas.backgroundColor = page.background || "#ffffff";
 
       // Sync objects
-      const canvasObjs = canvas.getObjects();
+      const canvasObjs = canvas.getObjects() as FabricCanvasObject[];
       const pageObjIds = new Set(page.objects.map((o) => o.id));
-      const canvasObjMap = new Map<string, any>(canvasObjs.map((o: any) => [o.id, o]));
+      const canvasObjMap = new Map<string, FabricCanvasObject>(canvasObjs.map((o) => [o.id ?? '', o]));
 
       // Remove objects no longer in page
-      canvasObjs.forEach((co: any) => {
+      canvasObjs.forEach((co) => {
         if (co.id && !pageObjIds.has(co.id)) {
           canvas.remove(co);
         }
@@ -209,7 +214,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
         const active = canvas.getActiveObjects();
         if (active.length > 0) {
           pushUndo();
-          active.forEach((obj: any) => {
+          (active as FabricCanvasObject[]).forEach((obj) => {
             if (obj.id) removeObject(obj.id);
             canvas.remove(obj);
           });
@@ -231,24 +236,24 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
 
       // Ctrl+C copy
       if ((e.ctrlKey || e.metaKey) && e.key === "c") {
-        const active = canvas.getActiveObject();
+        const active = canvas.getActiveObject() as FabricCanvasObject | null;
         if (active) {
-          active.clone((cloned: any) => {
-            (window as any).__designClipboard = cloned;
+          active.clone((cloned: FabricCanvasObject) => {
+            (window as unknown as Record<string, FabricCanvasObject>).__designClipboard = cloned;
           });
         }
       }
 
       // Ctrl+V paste
       if ((e.ctrlKey || e.metaKey) && e.key === "v") {
-        const clipped = (window as any).__designClipboard;
+        const clipped = (window as unknown as Record<string, FabricCanvasObject>).__designClipboard;
         if (clipped) {
-          clipped.clone((pasted: any) => {
+          clipped.clone((pasted: FabricCanvasObject) => {
             pasted.set({
               left: (pasted.left || 0) + 20,
               top: (pasted.top || 0) + 20,
               id: crypto.randomUUID(),
-            });
+            } as Partial<fabric.Object>);
             canvas.add(pasted);
             canvas.setActiveObject(pasted);
             canvas.requestRenderAll();
@@ -388,11 +393,15 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
   );
 }
 
-function addFabricObject(fabricModule: any, canvas: any, obj: DesignObject) {
+function addFabricObject(
+  fabricModule: { util: { enlivenObjects: (objects: unknown[]) => Promise<fabric.Object[]> } },
+  canvas: fabric.Canvas,
+  obj: DesignObject
+) {
   if (obj.fabricData && Object.keys(obj.fabricData).length > 0) {
-    fabricModule.util.enlivenObjects([obj.fabricData]).then((enlivened: any[]) => {
-      enlivened.forEach((fObj: any) => {
-        fObj.id = obj.id;
+    fabricModule.util.enlivenObjects([obj.fabricData]).then((enlivened) => {
+      enlivened.forEach((fObj) => {
+        (fObj as FabricCanvasObject).id = obj.id;
         fObj.set({
           selectable: !obj.locked,
           evented: !obj.locked,

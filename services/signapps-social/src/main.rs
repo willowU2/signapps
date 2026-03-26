@@ -17,7 +17,10 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-use handlers::{accounts, analytics, automation, inbox, posts};
+use handlers::{
+    accounts, analytics, api_keys, automation, content_sets, inbox, media, post_comments, posts,
+    short_urls, signatures, time_slots, webhooks, workspaces,
+};
 
 // ---------------------------------------------------------------------------
 // State
@@ -63,8 +66,9 @@ fn create_router(state: AppState) -> Router {
             axum::http::HeaderName::from_static("x-request-id"),
         ]);
 
-    let public_routes =
-        Router::new().route("/health", get(|| async { axum::http::StatusCode::OK }));
+    let public_routes = Router::new()
+        .route("/health", get(|| async { axum::http::StatusCode::OK }))
+        .route("/s/:code", get(short_urls::track_click));
 
     let protected_routes = Router::new()
         // Accounts
@@ -135,6 +139,96 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/social/ai/best-time",
             post(automation::ai_best_time),
+        )
+        // Signatures
+        .route(
+            "/api/v1/social/signatures",
+            get(signatures::list_signatures).post(signatures::create_signature),
+        )
+        .route(
+            "/api/v1/social/signatures/:id",
+            patch(signatures::update_signature).delete(signatures::delete_signature),
+        )
+        // Media library
+        .route(
+            "/api/v1/social/media",
+            get(media::list_media).post(media::create_media),
+        )
+        .route("/api/v1/social/media/:id", delete(media::delete_media))
+        // Short URLs
+        .route(
+            "/api/v1/social/short-urls",
+            get(short_urls::list_short_urls).post(short_urls::create_short_url),
+        )
+        .route(
+            "/api/v1/social/short-urls/:id",
+            delete(short_urls::delete_short_url),
+        )
+        // Webhooks
+        .route(
+            "/api/v1/social/webhooks",
+            get(webhooks::list_webhooks).post(webhooks::create_webhook),
+        )
+        .route(
+            "/api/v1/social/webhooks/:id",
+            patch(webhooks::update_webhook).delete(webhooks::delete_webhook),
+        )
+        .route(
+            "/api/v1/social/webhooks/:id/test",
+            post(webhooks::test_webhook),
+        )
+        // Workspaces
+        .route(
+            "/api/v1/social/workspaces",
+            get(workspaces::list_workspaces).post(workspaces::create_workspace),
+        )
+        .route(
+            "/api/v1/social/workspaces/:id",
+            get(workspaces::get_workspace).delete(workspaces::delete_workspace),
+        )
+        .route(
+            "/api/v1/social/workspaces/:id/members",
+            get(workspaces::list_members).post(workspaces::invite_member),
+        )
+        .route(
+            "/api/v1/social/workspaces/:id/members/:user_id",
+            delete(workspaces::remove_member),
+        )
+        // Post comments (team review)
+        .route(
+            "/api/v1/social/posts/:id/comments",
+            get(post_comments::list_comments).post(post_comments::create_comment),
+        )
+        .route(
+            "/api/v1/social/posts/:post_id/comments/:id",
+            delete(post_comments::delete_comment),
+        )
+        // Time slots
+        .route(
+            "/api/v1/social/time-slots",
+            get(time_slots::list_time_slots).post(time_slots::create_time_slot),
+        )
+        .route(
+            "/api/v1/social/time-slots/:id",
+            delete(time_slots::delete_time_slot),
+        )
+        // Content sets
+        .route(
+            "/api/v1/social/content-sets",
+            get(content_sets::list_content_sets).post(content_sets::create_content_set),
+        )
+        .route(
+            "/api/v1/social/content-sets/:id",
+            delete(content_sets::delete_content_set),
+        )
+        // API keys
+        .route(
+            "/api/v1/social/api-keys",
+            get(api_keys::list_api_keys).post(api_keys::create_api_key),
+        )
+        .route(
+            "/api/v1/social/api-keys/:id/revoke",
+            post(api_keys::revoke_api_key),
         )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

@@ -12,27 +12,27 @@ const nextConfig = {
     return [
       {
         // Immutable cache for hashed static assets — safe to cache forever
-        source: '/_next/static/:path*',
+        source: '/_next/static/(.*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
       {
         // AQ-CACH: long-lived cache for public images and fonts
-        source: '/images/:path*',
+        source: '/images/(.*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
         ],
       },
       {
-        source: '/fonts/:path*',
+        source: '/fonts/(.*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
       {
         // AQ-CACH: icons and manifest
-        source: '/favicon:path*',
+        source: '/favicon(.*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=86400' },
         ],
@@ -48,10 +48,14 @@ const nextConfig = {
       },
     ];
   },
-  images: { unoptimized: true },
+  images: {
+    remotePatterns: [
+      { protocol: 'http' as const, hostname: 'localhost' },
+      { protocol: 'https' as const, hostname: '**.signapps.local' },
+    ],
+  },
   typescript: {
-    // TODO: Fix pre-existing TS errors (SpinnerInfinity props) then set to false
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   turbopack: {
     root: path.resolve(__dirname, ".."),
