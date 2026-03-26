@@ -6,6 +6,8 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use gateway::GatewayRouter;
+use models::ModelOrchestrator;
 use opendal::{
     services::{Fs, S3},
     Operator,
@@ -36,8 +38,8 @@ mod workers;
 
 use embeddings::EmbeddingsClient;
 use handlers::{
-    action, chat, collections, health, index, model_management, models as model_handlers,
-    providers, search, transcription, webhook,
+    action, capabilities, chat, collections, gpu_status, health, index, model_management,
+    models as model_handlers, providers, search, transcription, webhook,
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
@@ -57,6 +59,7 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     pub model_manager: Option<Arc<ModelManager>>,
     pub hardware: Option<HardwareProfile>,
+    pub gateway: Option<Arc<GatewayRouter>>,
 }
 
 impl AuthState for AppState {
@@ -368,6 +371,14 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
+    // Initialize model orchestrator and gateway router
+    let orchestrator = Arc::new(ModelOrchestrator::new(
+        model_manager.clone(),
+        hardware.clone(),
+    ));
+    let gateway = Arc::new(GatewayRouter::new(orchestrator));
+    tracing::info!("Gateway router initialized");
+
     // Create application state
     let state = AppState {
         pool,
@@ -380,6 +391,7 @@ async fn main() -> anyhow::Result<()> {
         jwt_config,
         model_manager: Some(model_manager),
         hardware: Some(hardware),
+        gateway: Some(gateway),
     };
 
     // Build router
@@ -443,6 +455,21 @@ fn create_router(state: AppState) -> Router {
                 .delete(model_management::delete_model),
         )
         .route("/hardware", get(model_management::get_hardware))
+        // Gateway: capabilities & GPU status
+        .route(
+            "/capabilities",
+            get(capabilities::list_capabilities),
+        )
+        .route(
+            "/capabilities/:cap",
+            get(capabilities::get_capability_advice),
+        )
+        .route("/gpu/status", get(gpu_status::get_gpu_status))
+        .route("/gpu/profiles", get(gpu_status::list_profiles))
+        .route(
+            "/models/recommended",
+            get(gpu_status::get_recommended_models),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,
