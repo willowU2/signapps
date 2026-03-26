@@ -1,6 +1,5 @@
 'use client';
 
-
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -37,7 +36,6 @@ import {
   Store,
   Archive,
   Calendar,
-  CalendarRange,
   CheckSquare,
   Video,
   Server,
@@ -69,15 +67,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-/**
- * Navigation groups avec feature flags et permissions
- * Les items avec enabled: false sont cachés (règle NO DEAD ENDS)
- * Les groupes avec adminOnly: true ne sont visibles que pour les admins
- */
 const navGroupsConfig = [
   {
     label: 'Productivity',
     icon: FileText,
+    mode: 'apps',
     adminOnly: false,
     items: [
       { href: '/docs', icon: FileText, label: 'Docs', enabled: FEATURES.DOCS },
@@ -98,6 +92,7 @@ const navGroupsConfig = [
   {
     label: 'Communication',
     icon: MessagesSquare,
+    mode: 'apps',
     adminOnly: false,
     items: [
       { href: '/chat', icon: MessagesSquare, label: 'Chat', enabled: FEATURES.COLLAB },
@@ -107,7 +102,8 @@ const navGroupsConfig = [
   {
     label: 'Infrastructure',
     icon: HardDrive,
-    adminOnly: true, // Admin only - containers et routes sont des fonctions admin
+    mode: 'admin',
+    adminOnly: true,
     items: [
       { href: '/containers', icon: Container, label: 'Containers', enabled: FEATURES.CONTAINERS },
       { href: '/drive', icon: HardDrive, label: 'Global Drive', enabled: FEATURES.STORAGE },
@@ -122,10 +118,10 @@ const navGroupsConfig = [
   {
     label: 'IT Management',
     icon: Server,
-    adminOnly: true, // Admin only
+    mode: 'admin',
+    adminOnly: true,
     items: [
       { href: '/apps', icon: Store, label: 'App Store', enabled: FEATURES.CONTAINERS },
-      // Services skeleton - CACHÉS (NO DEAD ENDS)
       { href: '/it-assets', icon: Server, label: 'IT Assets', enabled: FEATURES.IT_ASSETS },
       { href: '/pxe', icon: Terminal, label: 'PXE Deploy', enabled: FEATURES.PXE },
       { href: '/remote', icon: MonitorSmartphone, label: 'Remote Access', enabled: FEATURES.REMOTE },
@@ -134,7 +130,8 @@ const navGroupsConfig = [
   {
     label: 'Operations',
     icon: Activity,
-    adminOnly: true, // Admin only - scheduler et monitoring
+    mode: 'admin',
+    adminOnly: true,
     items: [
       { href: '/ai', icon: MessageSquare, label: 'AI', enabled: FEATURES.AI },
       { href: '/media', icon: Mic, label: 'Media', enabled: FEATURES.MEDIA },
@@ -146,7 +143,8 @@ const navGroupsConfig = [
   {
     label: 'Administration',
     icon: ShieldCheck,
-    adminOnly: true, // Admin only - section administration
+    mode: 'admin',
+    adminOnly: true,
     items: [
       { href: '/admin', icon: ShieldCheck, label: 'Admin', enabled: FEATURES.IDENTITY },
       { href: '/admin/users', icon: Users, label: 'Users', enabled: FEATURES.IDENTITY },
@@ -162,12 +160,9 @@ const navGroupsConfig = [
   }
 ];
 
-/**
- * Filtre les groupes de navigation selon les features et les permissions
- */
-function filterNavGroups(isUserAdmin: boolean) {
+function filterNavGroups(isUserAdmin: boolean, mode: 'apps' | 'admin') {
   return navGroupsConfig
-    .filter(group => !group.adminOnly || isUserAdmin) // Filter by admin permission
+    .filter(group => (!group.adminOnly || isUserAdmin) && group.mode === mode)
     .map(group => ({
       ...group,
       items: group.items.filter(item => item.enabled)
@@ -186,15 +181,16 @@ export function Sidebar() {
   const { workspaces, selectedWorkspaceId, setSelectedWorkspace, fetchWorkspaces, projects, fetchProjects } = useEntityStore();
   const { isAdmin } = usePermissions();
 
-  // Filtrer les groupes de navigation selon les permissions utilisateur
-  const navGroups = useMemo(() => filterNavGroups(isAdmin()), [isAdmin]);
+  const [viewMode, setViewMode] = useState<'apps' | 'admin'>('apps');
 
-  const findActiveGroupIndex = () => {
-    const index = navGroups.findIndex(g => g.items.some(item => isItemActive(item.href, pathname)));
+  const navGroups = useMemo(() => filterNavGroups(isAdmin(), viewMode), [isAdmin, viewMode]);
+
+  const findActiveGroupIndex = (groups: typeof navGroupsConfig) => {
+    const index = groups.findIndex(g => g.items.some(item => isItemActive(item.href, pathname)));
     return index !== -1 ? index : 0;
   };
 
-  const [expandedGroup, setExpandedGroup] = useState<number>(findActiveGroupIndex());
+  const [expandedGroup, setExpandedGroup] = useState<number>(0);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -204,13 +200,19 @@ export function Sidebar() {
   }, [fetchWorkspaces, fetchProjects]);
 
   useEffect(() => {
+    if (!isAdmin() && viewMode === 'admin') {
+      setViewMode('apps');
+    }
+  }, [isAdmin, viewMode]);
+
+  useEffect(() => {
     if (mounted && !sidebarCollapsed) {
-      const activeIdx = findActiveGroupIndex();
+      const activeIdx = findActiveGroupIndex(navGroups);
       if (activeIdx !== -1) {
         setExpandedGroup(activeIdx);
       }
     }
-  }, [pathname, sidebarCollapsed, mounted]); // Update expansion when route changes
+  }, [pathname, sidebarCollapsed, mounted, navGroups]);
 
   const toggleGroup = (index: number) => {
     if (sidebarCollapsed) {
@@ -225,7 +227,6 @@ export function Sidebar() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      {/* AQ-MOBI: hidden on mobile — shown as lg:flex on large screens */}
       <aside
         className={cn(
           'fixed left-0 top-0 z-40 hidden lg:flex h-screen flex-col border-r border-white/10 dark:border-white/5 bg-sidebar/80 backdrop-blur-2xl shadow-glass transition-all duration-300',
@@ -277,17 +278,65 @@ export function Sidebar() {
                <ChevronDown className="absolute right-2 top-2.5 h-3 w-3 text-muted-foreground pointer-events-none" />
              </div>
           )}
+
+          {/* MODE TOGGLE FOR ADMINS */}
+          {!isCollapsed && isAdmin() && (
+            <div className="flex items-center gap-1 bg-black/10 dark:bg-white/5 p-1 rounded-md mt-4">
+              <button
+                onClick={() => setViewMode('apps')}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider py-1.5 rounded transition-all",
+                  viewMode === 'apps' ? "text-primary-foreground shadow-sm bg-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <LayoutDashboard className="h-3 w-3" />
+                Apps
+              </button>
+              <button
+                onClick={() => setViewMode('admin')}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider py-1.5 rounded transition-all",
+                  viewMode === 'admin' ? "text-primary-foreground shadow-sm bg-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <ShieldCheck className="h-3 w-3" />
+                Admin
+              </button>
+            </div>
+          )}
+
+          {/* COLLAPSED MODE TOGGLE FOR ADMINS */}
+          {isCollapsed && isAdmin() && (
+            <div className="mt-4 flex justify-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-primary hover:text-primary-foreground text-muted-foreground"
+                    onClick={() => setViewMode(viewMode === 'apps' ? 'admin' : 'apps')}
+                  >
+                    {viewMode === 'apps' ? <ShieldCheck className="h-4 w-4" /> : <LayoutDashboard className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="font-semibold glass">
+                  Switch to {viewMode === 'apps' ? 'Admin' : 'Apps'}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-2 p-2 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        <nav className="flex-1 space-y-1 p-2 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+          {/* Dashboard Home - Visible in both modes but contextually adjusted */}
           {isCollapsed ? (
             <Tooltip key="Dashboard">
               <TooltipTrigger asChild>
                 <Link
                   href="/dashboard"
                   className={cn(
-                    'relative flex w-full items-center justify-center rounded-lg p-2.5 transition-colors mb-2 group',
+                    'relative flex w-full items-center justify-center rounded-lg p-2 transition-colors mb-2 group',
                     pathname === '/dashboard'
                       ? 'text-primary-foreground'
                       : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
@@ -312,7 +361,7 @@ export function Sidebar() {
              <Link
               href="/dashboard"
               className={cn(
-                'group relative flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-semibold transition-colors mb-2',
+                'group relative flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-sm font-semibold transition-colors mb-2',
                 pathname === '/dashboard'
                   ? 'text-primary'
                   : 'text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
@@ -327,16 +376,16 @@ export function Sidebar() {
                   />
               )}
               <div className="relative z-10 flex items-center gap-3 w-full">
-                <LayoutDashboard className={cn("h-5 w-5 transition-transform group-hover:scale-110", pathname === '/dashboard' && "text-primary")} />
+                <LayoutDashboard className={cn("h-4 w-4 transition-transform group-hover:scale-110", pathname === '/dashboard' && "text-primary")} />
                 <span>Dashboard</span>
               </div>
             </Link>
           )}
 
-          {/* Dynamic Projects Injection */}
-          {!isCollapsed && projects.length > 0 && (
-            <div className="mb-2 space-y-1">
-              <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          {/* Dynamic Projects Injection - ONLY IN APPS MODE */}
+          {!isCollapsed && viewMode === 'apps' && projects.length > 0 && (
+            <div className="mb-2 space-y-0.5">
+              <div className="px-3 py-1 mt-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Projects
               </div>
               {projects.map(project => (
@@ -345,13 +394,14 @@ export function Sidebar() {
                   href={`/projects/${project.id}`}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
                 >
-                  <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <FolderOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   <span className="truncate">{project.name}</span>
                 </Link>
               ))}
             </div>
           )}
 
+          {/* GROUPS */}
           {navGroups.map((group, groupIndex) => {
             const isGroupActive = group.items.some(item => isItemActive(item.href, pathname));
             const isExpanded = expandedGroup === groupIndex;
@@ -368,7 +418,7 @@ export function Sidebar() {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => toggleGroup(groupIndex)}
                       className={cn(
-                        'relative flex w-full items-center justify-center rounded-lg p-2.5 transition-colors group',
+                        'relative flex w-full items-center justify-center rounded-lg p-2 transition-colors group',
                         isGroupActive
                           ? 'text-primary'
                           : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
@@ -393,13 +443,13 @@ export function Sidebar() {
             }
 
             return (
-              <div key={group.label} className="space-y-1">
+              <div key={group.label} className="space-y-0.5 mt-2">
                 <button
                   onClick={() => toggleGroup(groupIndex)}
                   className={cn(
-                    'group flex w-full items-center justify-between rounded-lg px-2 py-2 text-sm font-semibold transition-all duration-200',
+                    'group flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-sm font-semibold transition-all duration-200',
                     isExpanded
-                      ? 'text-foreground'
+                      ? 'text-foreground bg-sidebar-accent/30'
                       : 'text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50'
                   )}
                 >
@@ -409,7 +459,7 @@ export function Sidebar() {
                   </div>
                   <ChevronDown
                     className={cn(
-                      "h-4 w-4 transition-transform duration-200",
+                      "h-3.5 w-3.5 transition-transform duration-200",
                       isExpanded ? "rotate-180" : ""
                     )}
                   />
@@ -423,7 +473,7 @@ export function Sidebar() {
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="overflow-hidden space-y-1"
+                      className="overflow-hidden space-y-0.5"
                     >
                       {group.items.map((item) => {
                         const isActive = isItemActive(item.href, pathname);
@@ -434,7 +484,7 @@ export function Sidebar() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                              'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ml-4 border-l-2',
+                              'group relative flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ml-4 border-l-2',
                               isActive
                                 ? 'border-primary text-primary'
                                 : 'border-transparent text-sidebar-foreground hover:border-sidebar-foreground/30 hover:bg-sidebar-accent/40'
@@ -449,7 +499,7 @@ export function Sidebar() {
                               />
                             )}
                             <div className="relative z-10 flex items-center gap-3 w-full">
-                              <Icon className={cn("h-4 w-4 shrink-0 transition-transform group-hover:scale-110", isActive && "text-primary")} />
+                              <Icon className={cn("h-3.5 w-3.5 shrink-0 transition-transform group-hover:scale-110", isActive && "text-primary")} />
                               <span>{item.label}</span>
                             </div>
                           </Link>
@@ -470,8 +520,8 @@ export function Sidebar() {
             <>
               <StreakCounter />
               <PomodoroTimer />
-              <p className="text-xs text-muted-foreground">
-                SignApps v0.1.0
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">
+                SignApps v0.1
               </p>
             </>
           )}
@@ -480,5 +530,3 @@ export function Sidebar() {
     </TooltipProvider>
   );
 }
-
-

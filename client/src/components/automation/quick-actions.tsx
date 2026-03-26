@@ -1,16 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Share2,
   Mail,
   Calendar,
   CheckSquare,
   Link2,
-  Plus,
-  X,
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface QuickAction {
   id: string;
@@ -57,7 +58,7 @@ export function QuickActions({
     },
     {
       id: 'schedule',
-      label: 'Planifier reunion',
+      label: 'Planifier réunion',
       icon: <Calendar className="h-5 w-5" />,
       onClick: () => {
         onSchedule?.();
@@ -66,7 +67,7 @@ export function QuickActions({
     },
     {
       id: 'task',
-      label: 'Creer tache',
+      label: 'Créer tâche',
       icon: <CheckSquare className="h-5 w-5" />,
       onClick: () => {
         onCreateTask?.();
@@ -85,37 +86,73 @@ export function QuickActions({
   ];
 
   return (
-    <div className="fixed bottom-6 right-6 z-40">
+    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end">
       {/* Actions Panel */}
-      {isOpen && (
-        <div className="absolute bottom-20 right-0 mb-2 bg-white rounded-lg shadow-lg border border-gray-200 p-3 min-w-max">
-          <div className="flex flex-col gap-2">
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={{
+              open: {
+                transition: { staggerChildren: 0.05, delayChildren: 0.05 },
+              },
+              closed: {
+                transition: { staggerChildren: 0.05, staggerDirection: -1 },
+              },
+            }}
+            className="flex flex-col gap-3 mb-4 items-end"
+          >
             {actions.map((action) => (
-              <button
+              <motion.div
                 key={action.id}
-                onClick={action.onClick}
-                className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 rounded-md transition-colors text-sm font-medium text-gray-700 hover:text-gray-900"
+                variants={{
+                  open: { opacity: 1, y: 0, scale: 1 },
+                  closed: { opacity: 0, y: 10, scale: 0.8 },
+                }}
+                className="flex items-center gap-3"
               >
-                {action.icon}
-                <span>{action.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+                {/* Tooltip Label */}
+                <motion.span
+                  className="px-3 py-1.5 rounded-lg bg-background/80 backdrop-blur-md border border-border/50 shadow-sm text-sm font-medium text-foreground whitespace-nowrap cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={action.onClick}
+                >
+                  {action.label}
+                </motion.span>
 
-      {/* Floating Action Button */}
-      <Button
-        size="lg"
-        className="rounded-full h-14 w-14 shadow-lg hover:shadow-xl transition-shadow"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? (
-          <X className="h-6 w-6" />
-        ) : (
-          <Plus className="h-6 w-6" />
+                {/* Action Button */}
+                <Button
+                  size="icon"
+                  className="rounded-full h-12 w-12 bg-background/80 backdrop-blur-md border border-border/50 shadow-lg hover:bg-primary hover:text-primary-foreground hover:shadow-xl transition-all text-muted-foreground mr-1"
+                  onClick={action.onClick}
+                >
+                  {action.icon}
+                </Button>
+              </motion.div>
+            ))}
+          </motion.div>
         )}
-      </Button>
+      </AnimatePresence>
+
+      {/* Main Floating Action Button */}
+      <motion.div
+        animate={isOpen ? { rotate: 45 } : { rotate: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <Button
+          size="lg"
+          className={cn(
+            "rounded-full h-14 w-14 shadow-xl hover:shadow-2xl transition-all border border-border/50",
+            isOpen
+              ? "bg-accent hover:bg-accent/90 text-accent-foreground"
+              : "bg-primary hover:bg-primary/90 text-primary-foreground"
+          )}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      </motion.div>
     </div>
   );
 }

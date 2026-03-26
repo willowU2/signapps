@@ -27,9 +27,9 @@ export function WorkspaceShell({
     return (
         // AQ-MOBI: no left padding on mobile (sidebar is hidden), lg+ uses sidebar width
         <div className={cn(
-            "h-screen w-screen flex flex-col overflow-hidden transition-all duration-300",
-            sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-60',
-            rightSidebarOpen ? 'lg:pr-[24rem]' : 'lg:pr-16',
+            "h-screen w-full flex flex-col overflow-hidden transition-all duration-300",
+            sidebarCollapsed ? 'md:pl-16' : 'md:pl-60',
+            rightSidebarOpen ? 'md:pr-[24rem]' : 'md:pr-16',
             className
         )}>
             {/* Global Workspace Header Area */}

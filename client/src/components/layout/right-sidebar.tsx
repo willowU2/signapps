@@ -51,7 +51,7 @@ export function RightSidebar() {
       {/* Expanded Panel */}
       <div
         className={cn(
-          "fixed top-0 right-16 bottom-0 w-80 bg-background border-l border-border transition-transform duration-300 ease-in-out z-30 flex flex-col shadow-xl",
+          "hidden md:flex fixed top-0 right-16 bottom-0 w-80 bg-background border-l border-border transition-transform duration-300 ease-in-out z-30 flex-col shadow-xl",
           isRightSidebarOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
@@ -85,7 +85,7 @@ export function RightSidebar() {
       </div>
 
       {/* Icon Bar (Always visible on the far right) */}
-      <div className="fixed top-0 right-0 bottom-0 w-16 bg-background border-l border-border z-40 flex flex-col items-center py-4 gap-4">
+      <div className="hidden md:flex fixed top-0 right-0 bottom-0 w-16 bg-background border-l border-border z-40 flex-col items-center py-4 gap-4">
         <TooltipProvider delayDuration={0}>
           {navItems.map((item) => {
             const isActive = isRightSidebarOpen && activeRightWidget === item.id;
