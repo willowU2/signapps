@@ -73,11 +73,6 @@ fn decode_base64(s: &str) -> Result<Bytes> {
     Ok(Bytes::from(bytes))
 }
 
-/// Encode raw image bytes as base64.
-fn encode_base64(data: &Bytes) -> String {
-    base64::engine::general_purpose::STANDARD.encode(data)
-}
-
 // ---------------------------------------------------------------------------
 // CloudImageGen
 // ---------------------------------------------------------------------------
