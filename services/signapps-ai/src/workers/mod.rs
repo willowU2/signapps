@@ -1,8 +1,10 @@
 //! Worker traits and types for all AI capabilities.
 
+pub mod docparse;
 pub mod embeddings_mm;
 pub mod reranker;
 pub mod traits;
+pub mod vision;
 
 pub use traits::{
     // Base trait

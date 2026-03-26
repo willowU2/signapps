@@ -37,6 +37,8 @@ futures-util = { workspace = true }
 async-stream = { workspace = true }
 async-trait = { workspace = true }
 bytes = { workspace = true }
+base64 = { workspace = true }
+mime_guess = { workspace = true }
 
 # Native LLM inference
 llama-cpp-2 = { version = "0.1", optional = true }
