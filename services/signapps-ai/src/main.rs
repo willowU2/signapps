@@ -40,9 +40,9 @@ mod workers;
 
 use embeddings::EmbeddingsClient;
 use handlers::{
-    action, capabilities, chat, collections, conversations, gpu_status, health, index,
+    action, capabilities, chat, collections, conversations, doc_parse, gpu_status, health, index,
     model_management, models as model_handlers, providers, search, search_image, transcription,
-    webhook,
+    vision, webhook,
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
@@ -429,6 +429,13 @@ fn create_router(state: AppState) -> Router {
         )
         // AQ-AITR: whisper-rs meeting transcription
         .route("/transcribe", post(transcription::transcribe_audio))
+        // Vision
+        .route("/vision/describe", post(vision::describe_image))
+        .route("/vision/vqa", post(vision::visual_qa))
+        .route("/vision/batch", post(vision::batch_describe))
+        // Document parsing
+        .route("/document/parse", post(doc_parse::parse_document))
+        .route("/document/tables", post(doc_parse::extract_tables))
         // Action Execution
         .route("/action", post(action::execute_action))
         // Index
