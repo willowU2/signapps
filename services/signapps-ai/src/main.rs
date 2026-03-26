@@ -29,6 +29,8 @@ mod indexer;
 mod llm;
 mod rag;
 mod vectors;
+#[allow(unused)]
+mod workers;
 
 use embeddings::EmbeddingsClient;
 use handlers::{
