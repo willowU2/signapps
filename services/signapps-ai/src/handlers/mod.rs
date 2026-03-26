@@ -4,6 +4,7 @@ pub mod action;
 pub mod capabilities;
 pub mod chat;
 pub mod collections;
+pub mod conversations;
 pub mod gpu_status;
 pub mod health;
 pub mod index;

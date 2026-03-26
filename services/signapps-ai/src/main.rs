@@ -40,8 +40,9 @@ mod workers;
 
 use embeddings::EmbeddingsClient;
 use handlers::{
-    action, capabilities, chat, collections, gpu_status, health, index, model_management,
-    models as model_handlers, providers, search, search_image, transcription, webhook,
+    action, capabilities, chat, collections, conversations, gpu_status, health, index,
+    model_management, models as model_handlers, providers, search, search_image, transcription,
+    webhook,
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
@@ -416,6 +417,16 @@ fn create_router(state: AppState) -> Router {
         // Chat
         .route("/chat", post(chat::chat))
         .route("/chat/stream", post(chat::chat_stream))
+        // Conversations
+        .route(
+            "/conversations",
+            get(conversations::list_conversations),
+        )
+        .route(
+            "/conversations/:id",
+            get(conversations::get_conversation)
+                .delete(conversations::delete_conversation),
+        )
         // AQ-AITR: whisper-rs meeting transcription
         .route("/transcribe", post(transcription::transcribe_audio))
         // Action Execution
