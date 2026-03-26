@@ -1,7 +1,9 @@
 //! Worker traits and types for all AI capabilities.
 
+pub mod audiogen;
 pub mod docparse;
 pub mod embeddings_mm;
+pub mod imagegen;
 pub mod reranker;
 pub mod traits;
 pub mod vision;
