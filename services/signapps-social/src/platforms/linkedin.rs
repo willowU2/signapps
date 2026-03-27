@@ -11,6 +11,7 @@ pub struct LinkedinClient {
     pub author_urn: String,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct LiPostResponse {
     id: Option<String>,
@@ -21,6 +22,7 @@ struct LiSocialActionsResponse {
     elements: Option<Vec<LiComment>>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct LiComment {
     #[serde(rename = "$URN")]
@@ -35,11 +37,13 @@ struct LiText {
     text: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct LiTimestamp {
     time: Option<i64>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct LiProfile {
     #[serde(rename = "localizedFirstName")]
@@ -213,7 +217,7 @@ impl SocialPlatform for LinkedinClient {
     async fn fetch_analytics(&self) -> PlatformResult<AccountAnalytics> {
         // LinkedIn follower stats via Organization API (requires org URN)
         let client = reqwest::Client::new();
-        let encoded = urlencoding::encode(&self.author_urn).to_string();
+        let _encoded = urlencoding::encode(&self.author_urn).to_string();
 
         let resp = client
             .get("https://api.linkedin.com/v2/networkSizes/me")

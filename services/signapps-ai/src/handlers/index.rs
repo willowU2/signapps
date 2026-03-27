@@ -309,7 +309,7 @@ pub async fn reindex_all(
             }
 
             // Re-index
-            let filename = path.split('/').last().unwrap_or(&path).to_string();
+            let filename = path.split('/').next_back().unwrap_or(&path).to_string();
             match state_clone
                 .rag
                 .index_document(

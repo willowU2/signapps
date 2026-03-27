@@ -832,12 +832,12 @@ pub async fn get_preview(
                                 if let Ok(html_bytes) =
                                     base64::engine::general_purpose::STANDARD.decode(html_b64)
                                 {
-                                    return Ok(Response::builder()
+                                    return Response::builder()
                                         .status(StatusCode::OK)
                                         .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
                                         .header(header::CACHE_CONTROL, "public, max-age=300")
                                         .body(Body::from(html_bytes))
-                                        .map_err(|e| Error::Internal(e.to_string()))?);
+                                        .map_err(|e| Error::Internal(e.to_string()));
                                 }
                             }
                         }

@@ -19,6 +19,7 @@ struct CreateTweetResponse {
     data: TweetData,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct TweetComment {
     id: String,

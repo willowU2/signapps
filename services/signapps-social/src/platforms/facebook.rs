@@ -16,6 +16,7 @@ struct FbPostResponse {
     id: String,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct FbComment {
     id: String,
@@ -24,6 +25,7 @@ struct FbComment {
     created_time: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct FbUser {
     id: Option<String>,
@@ -68,7 +70,7 @@ impl SocialPlatform for FacebookClient {
         let client = reqwest::Client::new();
 
         // Build form params
-        let mut params = vec![
+        let params = vec![
             ("message".to_string(), content.to_string()),
             ("access_token".to_string(), self.access_token.clone()),
         ];
