@@ -72,7 +72,7 @@ export const orgNodeTypesApi = {
 export const orgNodesApi = {
   // Tree operations
   getTree: (params?: OrgTreeQueryParams) =>
-    workforceClient.get<OrgNodeWithStats[]>('/workforce/org/nodes/tree', { params }),
+    workforceClient.get<OrgNodeWithStats[]>('/workforce/org/tree', { params }),
 
   getNode: (id: string) =>
     workforceClient.get<OrgNodeWithStats>(`/workforce/org/nodes/${id}`),
@@ -165,7 +165,7 @@ export const employeesApi = {
 
   // By org node
   listByOrgNode: (orgNodeId: string, includeDescendants?: boolean) =>
-    workforceClient.get<EmployeeWithDetails[]>(`/workforce/org/nodes/${orgNodeId}/employees`, {
+    workforceClient.get<EmployeeWithDetails[]>(`/workforce/employees/by-node/${orgNodeId}`, {
       params: { include_descendants: includeDescendants },
     }),
 };
@@ -231,10 +231,10 @@ export const validationApi = {
     workforceClient.post<ValidateCoverageResponse>('/workforce/validation/coverage', data),
 
   simulateLeave: (data: LeaveSimulationRequest) =>
-    workforceClient.post<LeaveSimulationResponse>('/workforce/validation/simulate-leave', data),
+    workforceClient.post<LeaveSimulationResponse>('/workforce/validation/leave-simulation', data),
 
   simulateShiftChange: (data: ShiftChangeSimulationRequest) =>
-    workforceClient.post<ShiftChangeSimulationResponse>('/workforce/validation/simulate-shift-change', data),
+    workforceClient.post<ShiftChangeSimulationResponse>('/workforce/validation/shift-simulation', data),
 
   // Quick validation (single org node, current date)
   quickValidate: (orgNodeId: string) =>
