@@ -18,7 +18,7 @@ mod models;
 mod utils;
 
 use handlers::health::health_handler;
-use handlers::templates::{create_template, get_template, list_templates};
+use handlers::templates::{create_template, delete_template, get_template, list_templates};
 use handlers::types::{board, chat, sheet, slide, text};
 use handlers::websocket::websocket_handler;
 use signapps_common::AiIndexerClient;
@@ -110,6 +110,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/docs/templates", get(list_templates))
         .route("/api/v1/docs/templates", post(create_template))
         .route("/api/v1/docs/templates/:id", get(get_template))
+        .route("/api/v1/docs/templates/:id", delete(delete_template))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             auth_middleware::<AppState>,

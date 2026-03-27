@@ -78,6 +78,34 @@ async fn publish_due_posts(pool: &Pool<Postgres>) -> anyhow::Result<()> {
                 let client = crate::platforms::bluesky::BlueskyClient::new(pds, did, token);
                 client.publish(&publish_content, &media).await
             },
+            ("twitter", Some(token)) => {
+                let client = crate::platforms::twitter::TwitterClient {
+                    access_token: token,
+                };
+                client.publish(&publish_content, &media).await
+            },
+            ("facebook", Some(token)) => {
+                let page_id = platform_config["page_id"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string();
+                let client = crate::platforms::facebook::FacebookClient {
+                    access_token: token,
+                    page_id,
+                };
+                client.publish(&publish_content, &media).await
+            },
+            ("linkedin", Some(token)) => {
+                let author_urn = platform_config["author_urn"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string();
+                let client = crate::platforms::linkedin::LinkedinClient {
+                    access_token: token,
+                    author_urn,
+                };
+                client.publish(&publish_content, &media).await
+            },
             (p, _) => {
                 tracing::warn!("publisher: platform '{}' not supported or missing token", p);
                 // Mark as failed

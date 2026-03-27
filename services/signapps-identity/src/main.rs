@@ -169,6 +169,10 @@ fn create_router(state: AppState) -> Router {
                 "/api/v1/auth/password-reset",
                 post(handlers::auth::password_reset),
             )
+            .route(
+                "/api/v1/auth/password-reset/confirm",
+                post(handlers::auth::password_reset_confirm),
+            )
             .layer(middleware::from_fn(move |req, next| {
                 let limiter = password_reset_limiter_clone.clone();
                 async move {
@@ -179,6 +183,8 @@ fn create_router(state: AppState) -> Router {
     // Public routes (no auth required)
     let public_routes = Router::new()
         .route("/health", get(handlers::health::health_check))
+        // OpenAPI spec — machine-readable API documentation
+        .route("/api/v1/openapi.json", get(handlers::openapi::openapi_spec))
         .route("/api/v1/auth/register", post(handlers::auth::register))
         .route("/api/v1/auth/refresh", post(handlers::auth::refresh))
         .route("/api/v1/bootstrap", post(handlers::auth::bootstrap))

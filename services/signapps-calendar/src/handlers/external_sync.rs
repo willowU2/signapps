@@ -390,9 +390,7 @@ pub async fn delete_sync_config(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Trigger manual sync.
-///
-/// TODO(calendar-sync): Implement sync logic — requires background task spawner.
+/// Trigger manual sync — spawns a background task and returns immediately.
 pub async fn trigger_sync(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -409,12 +407,334 @@ pub async fn trigger_sync(
         return Err(CalendarError::Forbidden);
     }
 
+    // Create an initial sync log entry
+    let log_repo = SyncLogRepository::new(&state.pool);
+    let sync_log = log_repo
+        .create(
+            id,
+            signapps_db::models::CreateSyncLog {
+                direction: "import".to_string(),
+                status: "running".to_string(),
+                events_imported: None,
+                events_exported: None,
+                events_updated: None,
+                events_deleted: None,
+                conflicts_detected: None,
+                error_message: None,
+                error_details: None,
+            },
+        )
+        .await
+        .map_err(|_| CalendarError::InternalError)?;
+
+    let log_id = sync_log.id;
+    let state_clone = state.clone();
+
+    // Spawn background sync task
+    tokio::spawn(async move {
+        match run_calendar_sync(&state_clone, &config).await {
+            Ok(imported) => {
+                let log_repo = SyncLogRepository::new(&state_clone.pool);
+                let _ = log_repo.complete(log_id, "success", None).await;
+                tracing::info!("Calendar sync {}: imported {} events", config.id, imported);
+            },
+            Err(e) => {
+                let err_msg = format!("{}", e);
+                let log_repo = SyncLogRepository::new(&state_clone.pool);
+                let _ = log_repo.complete(log_id, "error", Some(&err_msg)).await;
+                tracing::error!("Calendar sync {} failed: {}", config.id, err_msg);
+            },
+        }
+    });
+
     Ok((
-        StatusCode::NOT_IMPLEMENTED,
-        Json(
-            serde_json::json!({ "error": "Not implemented", "message": "Calendar sync requires a background task scheduler — not yet implemented" }),
-        ),
+        StatusCode::ACCEPTED,
+        Json(serde_json::json!({
+            "status": "started",
+            "sync_log_id": log_id,
+            "message": "Sync started in background"
+        })),
     ))
+}
+
+/// Perform the actual calendar sync for a given config.
+async fn run_calendar_sync(
+    state: &AppState,
+    config: &signapps_db::models::SyncConfig,
+) -> Result<usize, CalendarError> {
+    use signapps_db::repositories::{
+        EventRepository, ExternalCalendarRepository, ProviderConnectionRepository,
+    };
+
+    // 1. Get external calendar to find the connection
+    let ext_cal_repo = ExternalCalendarRepository::new(&state.pool);
+    let ext_cal = ext_cal_repo
+        .find_by_id(config.external_calendar_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?
+        .ok_or(CalendarError::NotFound)?;
+
+    // 2. Get provider connection
+    let conn_repo = ProviderConnectionRepository::new(&state.pool);
+    let mut connection = conn_repo
+        .find_by_id(ext_cal.connection_id)
+        .await
+        .map_err(|_| CalendarError::InternalError)?
+        .ok_or(CalendarError::NotFound)?;
+
+    // 3. Refresh token if expired
+    if let Some(expires_at) = connection.token_expires_at {
+        if chrono::Utc::now() >= expires_at - chrono::Duration::minutes(5) {
+            if let Some(ref refresh_token) = connection.refresh_token.clone() {
+                match refresh_oauth_token(&connection.provider, refresh_token).await {
+                    Ok(new_tokens) => {
+                        // Update stored tokens
+                        let _ = conn_repo
+                            .update_tokens(
+                                connection.id,
+                                &new_tokens.access_token,
+                                new_tokens.refresh_token.as_deref(),
+                                new_tokens.expires_at,
+                            )
+                            .await;
+                        connection.access_token = new_tokens.access_token;
+                    },
+                    Err(e) => {
+                        tracing::warn!("Token refresh failed: {}", e);
+                    },
+                }
+            }
+        }
+    }
+
+    // 4. Fetch events from external provider
+    let events = fetch_events_from_provider(&connection, &ext_cal.external_id).await?;
+    let imported = events.len();
+
+    // 5. Insert each event into local calendar
+    let event_repo = EventRepository::new(&state.pool);
+    for event in events {
+        let _ = event_repo
+            .create(
+                config.local_calendar_id,
+                signapps_db::models::CreateEvent {
+                    title: event.title,
+                    description: event.description,
+                    location: event.location,
+                    start_time: event.start_time,
+                    end_time: event.end_time,
+                    rrule: None,
+                    timezone: Some(
+                        ext_cal
+                            .timezone
+                            .clone()
+                            .unwrap_or_else(|| "UTC".to_string()),
+                    ),
+                    is_all_day: Some(false),
+                },
+                config.user_id,
+            )
+            .await;
+    }
+
+    Ok(imported)
+}
+
+/// Minimal event struct returned from external providers.
+struct ExternalEvent {
+    title: String,
+    description: Option<String>,
+    location: Option<String>,
+    start_time: chrono::DateTime<chrono::Utc>,
+    end_time: chrono::DateTime<chrono::Utc>,
+}
+
+/// Fetch events from a provider using its API.
+async fn fetch_events_from_provider(
+    connection: &signapps_db::models::ProviderConnection,
+    calendar_id: &str,
+) -> Result<Vec<ExternalEvent>, CalendarError> {
+    match connection.provider.as_str() {
+        "google" => fetch_google_calendar_events(&connection.access_token, calendar_id).await,
+        "microsoft" => fetch_microsoft_calendar_events(&connection.access_token, calendar_id).await,
+        _ => Ok(vec![]),
+    }
+}
+
+async fn fetch_google_calendar_events(
+    access_token: &str,
+    calendar_id: &str,
+) -> Result<Vec<ExternalEvent>, CalendarError> {
+    #[derive(serde::Deserialize)]
+    struct GoogleEventDateTime {
+        #[serde(rename = "dateTime")]
+        date_time: Option<String>,
+        date: Option<String>,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct GoogleEvent {
+        summary: Option<String>,
+        description: Option<String>,
+        location: Option<String>,
+        start: GoogleEventDateTime,
+        end: GoogleEventDateTime,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct GoogleEventsResponse {
+        items: Option<Vec<GoogleEvent>>,
+    }
+
+    let now = chrono::Utc::now();
+    let time_min = (now - chrono::Duration::days(30)).to_rfc3339();
+    let time_max = (now + chrono::Duration::days(90)).to_rfc3339();
+
+    let url = format!(
+        "https://www.googleapis.com/calendar/v3/calendars/{}/events?timeMin={}&timeMax={}&singleEvents=true&maxResults=250",
+        urlencoding::encode(calendar_id),
+        urlencoding::encode(&time_min),
+        urlencoding::encode(&time_max)
+    );
+
+    let client = reqwest::Client::new();
+    let resp = client
+        .get(&url)
+        .bearer_auth(access_token)
+        .send()
+        .await
+        .map_err(|e| CalendarError::internal(&format!("Google Calendar API error: {}", e)))?;
+
+    if !resp.status().is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        tracing::warn!("Google Calendar API failed: {}", body);
+        return Ok(vec![]);
+    }
+
+    let data: GoogleEventsResponse = resp
+        .json()
+        .await
+        .map_err(|e| CalendarError::internal(&format!("Google Calendar parse error: {}", e)))?;
+
+    let mut events = vec![];
+    for item in data.items.unwrap_or_default() {
+        let start_str = item
+            .start
+            .date_time
+            .or(item.start.date)
+            .unwrap_or_else(|| now.to_rfc3339());
+        let end_str = item
+            .end
+            .date_time
+            .or(item.end.date)
+            .unwrap_or_else(|| now.to_rfc3339());
+
+        let start = chrono::DateTime::parse_from_rfc3339(&start_str)
+            .map(|dt| dt.with_timezone(&chrono::Utc))
+            .unwrap_or(now);
+        let end = chrono::DateTime::parse_from_rfc3339(&end_str)
+            .map(|dt| dt.with_timezone(&chrono::Utc))
+            .unwrap_or(now + chrono::Duration::hours(1));
+
+        events.push(ExternalEvent {
+            title: item.summary.unwrap_or_else(|| "(No title)".to_string()),
+            description: item.description,
+            location: item.location,
+            start_time: start,
+            end_time: end,
+        });
+    }
+
+    Ok(events)
+}
+
+async fn fetch_microsoft_calendar_events(
+    access_token: &str,
+    calendar_id: &str,
+) -> Result<Vec<ExternalEvent>, CalendarError> {
+    #[derive(serde::Deserialize)]
+    struct MsDateTime {
+        #[serde(rename = "dateTime")]
+        date_time: Option<String>,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct MsEvent {
+        subject: Option<String>,
+        body: Option<serde_json::Value>,
+        location: Option<serde_json::Value>,
+        start: MsDateTime,
+        end: MsDateTime,
+    }
+
+    #[derive(serde::Deserialize)]
+    struct MsEventsResponse {
+        value: Option<Vec<MsEvent>>,
+    }
+
+    let now = chrono::Utc::now();
+    let start_dt = (now - chrono::Duration::days(30))
+        .format("%Y-%m-%dT%H:%M:%S%.0fZ")
+        .to_string();
+    let end_dt = (now + chrono::Duration::days(90))
+        .format("%Y-%m-%dT%H:%M:%S%.0fZ")
+        .to_string();
+
+    let url = format!(
+        "https://graph.microsoft.com/v1.0/me/calendars/{}/events?$filter=start/dateTime ge '{}' and end/dateTime le '{}'&$top=250",
+        calendar_id, start_dt, end_dt
+    );
+
+    let client = reqwest::Client::new();
+    let resp = client
+        .get(&url)
+        .bearer_auth(access_token)
+        .send()
+        .await
+        .map_err(|e| CalendarError::internal(&format!("Microsoft Graph API error: {}", e)))?;
+
+    if !resp.status().is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        tracing::warn!("Microsoft Graph API failed: {}", body);
+        return Ok(vec![]);
+    }
+
+    let data: MsEventsResponse = resp
+        .json()
+        .await
+        .map_err(|e| CalendarError::internal(&format!("Microsoft Calendar parse error: {}", e)))?;
+
+    let mut events = vec![];
+    for item in data.value.unwrap_or_default() {
+        let start_str = item.start.date_time.unwrap_or_else(|| now.to_rfc3339());
+        let end_str = item
+            .end
+            .date_time
+            .unwrap_or_else(|| (now + chrono::Duration::hours(1)).to_rfc3339());
+
+        let start = chrono::DateTime::parse_from_rfc3339(&start_str)
+            .map(|dt| dt.with_timezone(&chrono::Utc))
+            .unwrap_or(now);
+        let end = chrono::DateTime::parse_from_rfc3339(&end_str)
+            .map(|dt| dt.with_timezone(&chrono::Utc))
+            .unwrap_or(now + chrono::Duration::hours(1));
+
+        let location = item.location.and_then(|l| {
+            l.get("displayName")
+                .and_then(|d| d.as_str())
+                .map(|s| s.to_string())
+        });
+
+        events.push(ExternalEvent {
+            title: item.subject.unwrap_or_else(|| "(No title)".to_string()),
+            description: None,
+            location,
+            start_time: start,
+            end_time: end,
+        });
+    }
+
+    Ok(events)
 }
 
 // ============================================================================
@@ -595,41 +915,182 @@ struct OAuthTokens {
     account_name: Option<String>,
 }
 
+/// Deserialize response from OAuth2 token endpoints.
+#[derive(Debug, serde::Deserialize)]
+struct OAuthTokenResponse {
+    access_token: String,
+    token_type: Option<String>,
+    expires_in: Option<i64>,
+    refresh_token: Option<String>,
+    scope: Option<String>,
+    id_token: Option<String>,
+    // Google userinfo (if included)
+    email: Option<String>,
+}
+
 async fn exchange_oauth_code(
     provider: &str,
     code: &str,
-    _redirect_uri: &str,
+    redirect_uri: &str,
 ) -> Result<OAuthTokens, CalendarError> {
-    // FIXME(oauth): Token exchange requires provider-specific OAuth2 flows
-    // For now, return placeholder to allow compilation
-    tracing::warn!(
-        "OAuth token exchange not fully implemented for provider: {}",
-        provider
-    );
+    let (token_url, client_id_env, client_secret_env) = match provider {
+        "google" => (
+            "https://oauth2.googleapis.com/token",
+            "GOOGLE_CLIENT_ID",
+            "GOOGLE_CLIENT_SECRET",
+        ),
+        "microsoft" => (
+            "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            "MICROSOFT_CLIENT_ID",
+            "MICROSOFT_CLIENT_SECRET",
+        ),
+        _ => return Err(CalendarError::bad_request("Unsupported OAuth provider")),
+    };
+
+    let client_id = std::env::var(client_id_env).unwrap_or_default();
+    let client_secret = std::env::var(client_secret_env).unwrap_or_default();
+
+    if client_id.is_empty() || client_secret.is_empty() {
+        return Err(CalendarError::internal(&format!(
+            "OAuth credentials not configured for {}",
+            provider
+        )));
+    }
+
+    let client = reqwest::Client::new();
+    let resp = client
+        .post(token_url)
+        .form(&[
+            ("code", code),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+            ("redirect_uri", redirect_uri),
+            ("grant_type", "authorization_code"),
+        ])
+        .send()
+        .await
+        .map_err(|e| CalendarError::internal(&format!("OAuth HTTP error: {}", e)))?;
+
+    if !resp.status().is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        tracing::error!("OAuth token exchange failed for {}: {}", provider, body);
+        return Err(CalendarError::internal("OAuth token exchange failed"));
+    }
+
+    let token_resp: OAuthTokenResponse = resp
+        .json()
+        .await
+        .map_err(|e| CalendarError::internal(&format!("OAuth response parse error: {}", e)))?;
+
+    let expires_at = token_resp
+        .expires_in
+        .map(|secs| chrono::Utc::now() + chrono::Duration::seconds(secs));
+
+    // For Google: fetch email from userinfo if not in token response
+    let account_email = if provider == "google" && token_resp.email.is_none() {
+        fetch_google_email(&token_resp.access_token).await.ok()
+    } else {
+        token_resp.email
+    };
 
     Ok(OAuthTokens {
-        access_token: format!("placeholder_token_{}", code),
-        refresh_token: Some("placeholder_refresh".to_string()),
-        expires_at: Some(chrono::Utc::now() + chrono::Duration::hours(1)),
-        account_email: Some("user@example.com".to_string()),
-        account_name: Some("User".to_string()),
+        access_token: token_resp.access_token,
+        refresh_token: token_resp.refresh_token,
+        expires_at,
+        account_email,
+        account_name: None,
     })
+}
+
+async fn fetch_google_email(access_token: &str) -> Result<String, CalendarError> {
+    #[derive(serde::Deserialize)]
+    struct UserInfo {
+        email: Option<String>,
+    }
+
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("https://www.googleapis.com/oauth2/v2/userinfo")
+        .bearer_auth(access_token)
+        .send()
+        .await
+        .map_err(|e| CalendarError::internal(&format!("Userinfo request failed: {}", e)))?;
+
+    let info: UserInfo = resp
+        .json()
+        .await
+        .map_err(|e| CalendarError::internal(&format!("Userinfo parse error: {}", e)))?;
+
+    info.email
+        .ok_or_else(|| CalendarError::internal("No email in userinfo"))
 }
 
 async fn refresh_oauth_token(
     provider: &str,
     refresh_token: &str,
 ) -> Result<OAuthTokens, CalendarError> {
-    // FIXME(oauth): Token refresh requires stored refresh_token + provider API
-    tracing::warn!(
-        "OAuth token refresh not fully implemented for provider: {}",
-        provider
-    );
+    let (token_url, client_id_env, client_secret_env) = match provider {
+        "google" => (
+            "https://oauth2.googleapis.com/token",
+            "GOOGLE_CLIENT_ID",
+            "GOOGLE_CLIENT_SECRET",
+        ),
+        "microsoft" => (
+            "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+            "MICROSOFT_CLIENT_ID",
+            "MICROSOFT_CLIENT_SECRET",
+        ),
+        _ => {
+            return Err(CalendarError::bad_request(
+                "Unsupported OAuth provider for refresh",
+            ))
+        },
+    };
+
+    let client_id = std::env::var(client_id_env).unwrap_or_default();
+    let client_secret = std::env::var(client_secret_env).unwrap_or_default();
+
+    if client_id.is_empty() || client_secret.is_empty() {
+        return Err(CalendarError::internal(&format!(
+            "OAuth refresh credentials not configured for {}",
+            provider
+        )));
+    }
+
+    let client = reqwest::Client::new();
+    let resp = client
+        .post(token_url)
+        .form(&[
+            ("refresh_token", refresh_token),
+            ("client_id", &client_id),
+            ("client_secret", &client_secret),
+            ("grant_type", "refresh_token"),
+        ])
+        .send()
+        .await
+        .map_err(|e| CalendarError::internal(&format!("OAuth refresh HTTP error: {}", e)))?;
+
+    if !resp.status().is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        tracing::error!("OAuth token refresh failed for {}: {}", provider, body);
+        return Err(CalendarError::internal("OAuth token refresh failed"));
+    }
+
+    let token_resp: OAuthTokenResponse = resp
+        .json()
+        .await
+        .map_err(|e| CalendarError::internal(&format!("OAuth refresh parse error: {}", e)))?;
+
+    let expires_at = token_resp
+        .expires_in
+        .map(|secs| chrono::Utc::now() + chrono::Duration::seconds(secs));
 
     Ok(OAuthTokens {
-        access_token: format!("refreshed_token_{}", refresh_token),
-        refresh_token: Some(refresh_token.to_string()),
-        expires_at: Some(chrono::Utc::now() + chrono::Duration::hours(1)),
+        access_token: token_resp.access_token,
+        refresh_token: token_resp
+            .refresh_token
+            .or_else(|| Some(refresh_token.to_string())),
+        expires_at,
         account_email: None,
         account_name: None,
     })

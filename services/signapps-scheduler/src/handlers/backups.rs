@@ -1,7 +1,8 @@
 //! Backup management handlers (V3-05 - Automatic Backup System).
 //!
-//! API skeleton for backup management. Actual pg_dump execution requires FIXME(backups) items below.
 //! All state is held in-memory via `Arc<Mutex<BackupStore>>`.
+//! After a config update, the backup cron job is re-registered with the
+//! scheduler so the new cron expression takes effect immediately.
 
 use axum::{
     extract::{Path, State},
@@ -15,6 +16,8 @@ use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 use signapps_common::Result;
+use signapps_db::models::{CreateJob, JobTargetType, UpdateJob};
+use signapps_db::repositories::JobRepository;
 
 // ---------------------------------------------------------------------------
 // Domain types
@@ -76,16 +79,21 @@ impl Default for BackupConfig {
 // In-memory store
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Default)]
 pub struct BackupStore {
     pub jobs: HashMap<Uuid, BackupJob>,
     pub config: BackupConfig,
+    /// Database pool — used to re-register the backup cron job after config update.
+    pub pool: signapps_db::DatabasePool,
 }
 
 pub type SharedBackupStore = Arc<Mutex<BackupStore>>;
 
-pub fn new_backup_store() -> SharedBackupStore {
-    Arc::new(Mutex::new(BackupStore::default()))
+pub fn new_backup_store(pool: signapps_db::DatabasePool) -> SharedBackupStore {
+    Arc::new(Mutex::new(BackupStore {
+        jobs: HashMap::new(),
+        config: BackupConfig::default(),
+        pool,
+    }))
 }
 
 // ---------------------------------------------------------------------------
@@ -211,13 +219,69 @@ pub async fn delete_backup(
 }
 
 /// PUT /api/v1/admin/backups/config — update backup schedule configuration.
+///
+/// After persisting the new config, re-registers (or creates) the `signapps-backup`
+/// cron job in the scheduler so the new expression takes effect immediately.
 pub async fn update_backup_config(
     State(store): State<SharedBackupStore>,
     Json(config): Json<BackupConfig>,
 ) -> Result<Json<BackupConfig>> {
-    let mut store = store.lock().expect("backup store lock poisoned");
-    store.config = config.clone();
-    // FIXME(backups): Re-register cron job with scheduler after config update
+    let pool = {
+        let mut s = store.lock().expect("backup store lock poisoned");
+        s.config = config.clone();
+        s.pool.clone()
+    };
+
+    if config.enabled {
+        let repo = JobRepository::new(&pool);
+        let cron = config.schedule_cron.clone();
+
+        match repo.find_by_name("signapps-backup").await {
+            Ok(Some(existing)) => {
+                // Update the existing backup job's cron expression.
+                let update = UpdateJob {
+                    name: None,
+                    description: None,
+                    cron_expression: Some(cron),
+                    command: None,
+                    target_type: None,
+                    target_id: None,
+                    enabled: Some(true),
+                };
+                if let Err(e) = repo.update(existing.id, &update).await {
+                    tracing::warn!("Failed to update backup cron job: {}", e);
+                } else {
+                    tracing::info!("Backup cron job updated to '{}'", config.schedule_cron);
+                }
+            },
+            Ok(None) => {
+                // Create the backup job for the first time.
+                let create = CreateJob {
+                    name: "signapps-backup".to_string(),
+                    description: Some("Automatic SignApps database backup".to_string()),
+                    cron_expression: cron,
+                    command:
+                        "pg_dump $DATABASE_URL -f $BACKUP_DIR/backup_$(date +%Y%m%d_%H%M%S).sql"
+                            .to_string(),
+                    target_type: JobTargetType::Host,
+                    target_id: None,
+                    enabled: true,
+                };
+                if let Err(e) = repo.create(&create).await {
+                    tracing::warn!("Failed to create backup cron job: {}", e);
+                } else {
+                    tracing::info!(
+                        "Backup cron job created with schedule '{}'",
+                        config.schedule_cron
+                    );
+                }
+            },
+            Err(e) => {
+                tracing::warn!("Failed to query backup cron job: {}", e);
+            },
+        }
+    }
+
     Ok(Json(config))
 }
 

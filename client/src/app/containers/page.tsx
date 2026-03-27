@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -45,7 +46,11 @@ import { Globe } from 'lucide-react';
 
 export default function ContainersPage() {
   const queryClient = useQueryClient();
-  const { data: containers = [], isLoading } = useContainers();
+  const { data: containers = [], isLoading, isError } = useContainers();
+
+  useEffect(() => {
+    if (isError) toast.error('Failed to load containers');
+  }, [isError]);
   const containerAction = useContainerAction();
   const pageContext = usePageContext();
 

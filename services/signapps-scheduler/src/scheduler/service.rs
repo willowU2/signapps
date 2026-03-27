@@ -363,3 +363,125 @@ fn compute_backoff_secs(retry_count: i32) -> u64 {
         .copied()
         .unwrap_or(*RETRY_DELAYS_SECS.last().unwrap())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ---------------------------------------------------------------------------
+    // Cron interval parsing
+    // ---------------------------------------------------------------------------
+
+    #[test]
+    fn test_parse_every_minute() {
+        assert_eq!(parse_simple_interval("* * * * *"), Some(1));
+    }
+
+    #[test]
+    fn test_parse_every_hour() {
+        assert_eq!(parse_simple_interval("0 * * * *"), Some(60));
+    }
+
+    #[test]
+    fn test_parse_every_n_minutes() {
+        assert_eq!(parse_simple_interval("*/15 * * * *"), Some(15));
+        assert_eq!(parse_simple_interval("*/5 * * * *"), Some(5));
+    }
+
+    #[test]
+    fn test_parse_every_n_hours() {
+        assert_eq!(parse_simple_interval("0 */6 * * *"), Some(360));
+        assert_eq!(parse_simple_interval("0 */2 * * *"), Some(120));
+    }
+
+    #[test]
+    fn test_parse_daily_pattern() {
+        // M H * * * → daily (24 * 60 minutes)
+        assert_eq!(parse_simple_interval("0 8 * * *"), Some(1440));
+    }
+
+    #[test]
+    fn test_parse_weekly_pattern() {
+        // M H * * D → weekly
+        assert_eq!(parse_simple_interval("0 8 * * 1"), Some(10080));
+    }
+
+    #[test]
+    fn test_parse_invalid_cron_too_few_parts() {
+        assert_eq!(parse_simple_interval("* * *"), None);
+        assert_eq!(parse_simple_interval(""), None);
+    }
+
+    #[test]
+    fn test_is_valid_cron_five_parts() {
+        assert!(is_valid_cron("* * * * *"));
+        assert!(is_valid_cron("0 8 * * 1"));
+        assert!(is_valid_cron("*/5 * * * *"));
+    }
+
+    #[test]
+    fn test_is_valid_cron_six_parts() {
+        // 6-part cron (with seconds) is also accepted
+        assert!(is_valid_cron("0 * * * * *"));
+    }
+
+    #[test]
+    fn test_is_valid_cron_rejects_invalid() {
+        assert!(!is_valid_cron("* * *"));
+        assert!(!is_valid_cron("not a cron"));
+        assert!(!is_valid_cron(""));
+    }
+
+    // ---------------------------------------------------------------------------
+    // Retry backoff schedule
+    // ---------------------------------------------------------------------------
+
+    #[test]
+    fn test_backoff_first_retry_is_1s() {
+        assert_eq!(compute_backoff_secs(0), 1);
+    }
+
+    #[test]
+    fn test_backoff_second_retry_is_5s() {
+        assert_eq!(compute_backoff_secs(1), 5);
+    }
+
+    #[test]
+    fn test_backoff_third_retry_is_30s() {
+        assert_eq!(compute_backoff_secs(2), 30);
+    }
+
+    #[test]
+    fn test_backoff_fourth_retry_is_5min() {
+        assert_eq!(compute_backoff_secs(3), 300);
+    }
+
+    #[test]
+    fn test_backoff_fifth_retry_is_30min() {
+        assert_eq!(compute_backoff_secs(4), 1800);
+    }
+
+    #[test]
+    fn test_backoff_beyond_max_clamped_to_last() {
+        // Anything past index 4 should return the last delay (1800s)
+        assert_eq!(compute_backoff_secs(10), 1800);
+        assert_eq!(compute_backoff_secs(100), 1800);
+    }
+
+    #[test]
+    fn test_backoff_negative_treated_as_zero() {
+        assert_eq!(compute_backoff_secs(-1), 1);
+    }
+
+    #[test]
+    fn test_backoff_increases_monotonically() {
+        let delays: Vec<u64> = (0..5).map(compute_backoff_secs).collect();
+        for window in delays.windows(2) {
+            assert!(
+                window[1] >= window[0],
+                "Backoff must be non-decreasing: {:?}",
+                delays
+            );
+        }
+    }
+}

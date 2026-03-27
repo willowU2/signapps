@@ -1,7 +1,11 @@
 //! LDAP/Active Directory handlers.
 
+use aes_gcm::aead::AeadCore;
+use aes_gcm::{
+    aead::{Aead, KeyInit, OsRng},
+    Aes256Gcm, Key, Nonce,
+};
 use axum::{extract::State, http::StatusCode, Json};
-use base64::Engine;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
@@ -70,10 +74,8 @@ pub async fn create_config(
     State(state): State<AppState>,
     Json(payload): Json<CreateLdapConfigRequest>,
 ) -> Result<(StatusCode, Json<LdapConfigResponse>)> {
-    // Encrypt the bind password (in production, use proper encryption)
-    // For now, we'll use base64 as a placeholder - should use AES-256-GCM
-    let encrypted_password =
-        base64::engine::general_purpose::STANDARD.encode(payload.bind_password.as_bytes());
+    // Encrypt the bind password using AES-256-GCM.
+    let encrypted_password = encrypt_password(&state.jwt_secret, &payload.bind_password)?;
 
     let create_config = signapps_db::models::CreateLdapConfig {
         server_url: payload.server_url,
@@ -110,7 +112,8 @@ pub async fn update_config(
     let encrypted_password = payload
         .bind_password
         .as_ref()
-        .map(|p| base64::engine::general_purpose::STANDARD.encode(p.as_bytes()));
+        .map(|p| encrypt_password(&state.jwt_secret, p))
+        .transpose()?;
 
     let update = signapps_db::models::UpdateLdapConfig {
         enabled: payload.enabled,
@@ -147,7 +150,7 @@ pub async fn test_connection(State(state): State<AppState>) -> Result<Json<LdapT
         .ok_or_else(|| Error::NotFound("LDAP configuration not found".to_string()))?;
 
     // Decrypt password
-    let password = decrypt_password(&config.bind_password_encrypted)?;
+    let password = decrypt_password(&config.bind_password_encrypted, &state.jwt_secret)?;
 
     let result = LdapService::test_connection(&config, &password).await?;
 
@@ -170,7 +173,7 @@ pub async fn list_groups(State(state): State<AppState>) -> Result<Json<Vec<LdapG
         return Err(Error::BadRequest("LDAP is not enabled".to_string()));
     }
 
-    let password = decrypt_password(&config.bind_password_encrypted)?;
+    let password = decrypt_password(&config.bind_password_encrypted, &state.jwt_secret)?;
     let groups = LdapService::list_groups(&config, &password).await?;
 
     Ok(Json(groups))
@@ -186,7 +189,7 @@ pub async fn sync_users(State(state): State<AppState>) -> Result<Json<SyncResult
         return Err(Error::BadRequest("LDAP is not enabled".to_string()));
     }
 
-    let password = decrypt_password(&config.bind_password_encrypted)?;
+    let password = decrypt_password(&config.bind_password_encrypted, &state.jwt_secret)?;
     let (users, mut sync_result) = LdapService::sync_users(&config, &password).await?;
 
     // Sync users to local database
@@ -258,12 +261,52 @@ pub async fn sync_users(State(state): State<AppState>) -> Result<Json<SyncResult
     }))
 }
 
-/// Decrypt password (placeholder - use proper encryption in production).
-fn decrypt_password(encrypted: &str) -> Result<String> {
-    let bytes = base64::engine::general_purpose::STANDARD
-        .decode(encrypted)
-        .map_err(|e| Error::Internal(format!("Failed to decrypt password: {}", e)))?;
+/// Derive a 32-byte AES key from the JWT secret using SHA-256.
+fn derive_key(jwt_secret: &str) -> Key<Aes256Gcm> {
+    use sha2::{Digest, Sha256};
+    let hash = Sha256::digest(jwt_secret.as_bytes());
+    *Key::<Aes256Gcm>::from_slice(&hash)
+}
 
-    String::from_utf8(bytes)
-        .map_err(|e| Error::Internal(format!("Invalid password encoding: {}", e)))
+/// Encrypt a plaintext password using AES-256-GCM.
+/// Returns hex-encoded `nonce || ciphertext`.
+fn encrypt_password(jwt_secret: &str, plaintext: &str) -> Result<String> {
+    let key = derive_key(jwt_secret);
+    let cipher = Aes256Gcm::new(&key);
+    let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+    let ciphertext = cipher
+        .encrypt(&nonce, plaintext.as_bytes())
+        .map_err(|e| Error::Internal(format!("Failed to encrypt LDAP password: {}", e)))?;
+    // Encode as hex: 12-byte nonce + ciphertext
+    let mut combined = nonce.to_vec();
+    combined.extend_from_slice(&ciphertext);
+    Ok(hex::encode(combined))
+}
+
+/// Decrypt an AES-256-GCM encrypted password (hex-encoded `nonce || ciphertext`).
+///
+/// Uses the `jwt_secret` from AppState (same key used for encryption).
+fn decrypt_password_with_secret(encrypted: &str, jwt_secret: &str) -> Result<String> {
+    let raw = hex::decode(encrypted)
+        .map_err(|e| Error::Internal(format!("Failed to decode encrypted LDAP password: {}", e)))?;
+    if raw.len() < 12 {
+        return Err(Error::Internal(
+            "Encrypted LDAP password too short".to_string(),
+        ));
+    }
+    let key = derive_key(jwt_secret);
+    let cipher = Aes256Gcm::new(&key);
+    let nonce = Nonce::from_slice(&raw[..12]);
+    let plaintext = cipher
+        .decrypt(nonce, &raw[12..])
+        .map_err(|e| Error::Internal(format!("Failed to decrypt LDAP password: {}", e)))?;
+    String::from_utf8(plaintext)
+        .map_err(|e| Error::Internal(format!("Decrypted LDAP password is invalid UTF-8: {}", e)))
+}
+
+/// Convenience wrapper: reads the encryption key from LDAP_ENCRYPTION_KEY env var,
+/// falling back to the provided `jwt_secret`.
+fn decrypt_password(encrypted: &str, jwt_secret: &str) -> Result<String> {
+    let key = std::env::var("LDAP_ENCRYPTION_KEY").unwrap_or_else(|_| jwt_secret.to_string());
+    decrypt_password_with_secret(encrypted, &key)
 }

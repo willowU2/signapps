@@ -54,7 +54,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       try {
         await set('react-query-cache', client);
       } catch (e) {
-        console.warn('IDB store failed', e);
+        // IDB persistence not available; cache will not persist
       }
     },
     restoreClient: async () => {

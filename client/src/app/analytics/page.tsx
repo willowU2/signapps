@@ -1,35 +1,43 @@
 'use client';
 
+import { useEffect } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useQuery } from '@tanstack/react-query';
 import { schedulerMetricsApi as metricsApi } from '@/lib/api/metrics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell
 } from 'recharts';
 import { Calendar, Target, Clock, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AnalyticsPage() {
-  const { data: workload, isLoading: workloadLoading } = useQuery({
+  const { data: workload, isLoading: workloadLoading, isError: workloadError } = useQuery({
     queryKey: ['metrics', 'workload'],
     queryFn: () => metricsApi.getWorkload(),
   });
 
-  const { data: resources, isLoading: resourcesLoading } = useQuery({
+  const { data: resources, isLoading: resourcesLoading, isError: resourcesError } = useQuery({
     queryKey: ['metrics', 'resources'],
     queryFn: () => metricsApi.getResources(),
   });
+
+  useEffect(() => {
+    if (workloadError || resourcesError) {
+      toast.error('Failed to load analytics data');
+    }
+  }, [workloadError, resourcesError]);
 
   if (workloadLoading || resourcesLoading) {
     return (

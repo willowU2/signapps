@@ -5,6 +5,7 @@ use axum::{
     http::{header, HeaderMap},
     Json,
 };
+use chrono;
 use serde::{Deserialize, Serialize};
 use signapps_common::{Claims, Error, Result};
 use signapps_db::repositories::{LdapRepository, UserRepository, WorkspaceRepository};
@@ -574,26 +575,173 @@ fn verify_totp(secret: &str, code: &str) -> Result<bool> {
     Ok(totp.check_current(code).unwrap_or(false))
 }
 
+/// Password reset confirm request payload.
+#[derive(Debug, Deserialize)]
+pub struct PasswordResetConfirmRequest {
+    pub token: String,
+    #[serde(rename = "new_password")]
+    pub new_password: String,
+}
+
 /// Password reset request (rate-limited to 3/min per IP).
 ///
 /// Accepts an email address and — if an account exists — initiates the reset flow.
 /// Always returns HTTP 200 to avoid leaking account existence.
-#[tracing::instrument(skip(_state, payload))]
+#[tracing::instrument(skip(state, payload))]
 pub async fn password_reset(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Result<Json<serde_json::Value>> {
-    // Log the attempt without revealing whether the account exists
-    tracing::info!(
-        email = payload
-            .get("email")
-            .and_then(|v| v.as_str())
-            .unwrap_or("unknown"),
-        "Password reset requested"
-    );
-    // TODO: implement token generation and email delivery
+    let email = payload
+        .get("email")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    tracing::info!(email = %email, "Password reset requested");
+
+    // Look up the user — do not reveal if not found
+    let user = match UserRepository::find_by_email(&state.pool, &email).await {
+        Ok(Some(u)) => u,
+        _ => {
+            return Ok(Json(serde_json::json!({
+                "message": "If an account with that email exists, a reset link has been sent."
+            })));
+        },
+    };
+
+    // Generate a secure random hex token (32 bytes = 64 hex chars)
+    let token_bytes: [u8; 32] = rand::random();
+    let token = hex::encode(token_bytes);
+    let expires_at = chrono::Utc::now() + chrono::Duration::hours(2);
+
+    // Store the token in the DB (create table if needed via the migration)
+    let store_result = sqlx::query(
+        r#"INSERT INTO identity.password_reset_tokens (token, user_id, expires_at, used)
+           VALUES ($1, $2, $3, false)
+           ON CONFLICT (token) DO NOTHING"#,
+    )
+    .bind(&token)
+    .bind(user.id)
+    .bind(expires_at)
+    .execute(state.pool.inner())
+    .await;
+
+    if let Err(e) = store_result {
+        tracing::error!("Failed to store password reset token: {}", e);
+        // Return success anyway to avoid leaking information
+        return Ok(Json(serde_json::json!({
+            "message": "If an account with that email exists, a reset link has been sent."
+        })));
+    }
+
+    // Send email via MAIL_SERVICE_URL env var (fire-and-forget)
+    let mail_url =
+        std::env::var("MAIL_SERVICE_URL").unwrap_or_else(|_| "http://localhost:3012".to_string());
+    let reset_url =
+        std::env::var("APP_BASE_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let reset_link = format!("{}/auth/password-reset?token={}", reset_url, token);
+
+    let client = reqwest::Client::new();
+    let _ = client
+        .post(format!("{}/api/v1/mail/send", mail_url))
+        .json(&serde_json::json!({
+            "to": email,
+            "subject": "Réinitialisation de mot de passe SignApps",
+            "html": format!(
+                "<p>Bonjour,</p><p>Cliquez sur ce lien pour réinitialiser votre mot de passe :</p><p><a href=\"{0}\">{0}</a></p><p>Ce lien expire dans 2 heures.</p>",
+                reset_link
+            ),
+            "text": format!("Réinitialisez votre mot de passe : {}", reset_link)
+        }))
+        .send()
+        .await;
+
+    tracing::info!(user_id = %user.id, "Password reset email dispatched");
+
     Ok(Json(serde_json::json!({
         "message": "If an account with that email exists, a reset link has been sent."
+    })))
+}
+
+/// POST /api/v1/auth/password-reset/confirm — apply a password reset token.
+#[tracing::instrument(skip(state, payload))]
+pub async fn password_reset_confirm(
+    State(state): State<AppState>,
+    Json(payload): Json<PasswordResetConfirmRequest>,
+) -> Result<Json<serde_json::Value>> {
+    // Validate new password length
+    if payload.new_password.len() < 8 {
+        return Err(Error::Validation(
+            "Password must be at least 8 characters".to_string(),
+        ));
+    }
+
+    // Fetch the token record
+    let row = sqlx::query_as::<_, (Uuid, chrono::DateTime<chrono::Utc>, bool)>(
+        r#"SELECT user_id, expires_at, used
+           FROM identity.password_reset_tokens
+           WHERE token = $1"#,
+    )
+    .bind(&payload.token)
+    .fetch_optional(state.pool.inner())
+    .await
+    .map_err(|e| Error::Internal(format!("DB error: {}", e)))?;
+
+    let (user_id, expires_at, used) = match row {
+        Some(r) => r,
+        None => return Err(Error::Unauthorized),
+    };
+
+    if used {
+        return Err(Error::Unauthorized);
+    }
+
+    if chrono::Utc::now() > expires_at {
+        return Err(Error::Unauthorized);
+    }
+
+    // Hash the new password
+    let new_hash = crate::auth::hash_password(&payload.new_password).await?;
+
+    // Update password and mark token as used in a transaction
+    let mut tx = state
+        .pool
+        .inner()
+        .begin()
+        .await
+        .map_err(|e| Error::Internal(format!("Transaction error: {}", e)))?;
+
+    sqlx::query(
+        r#"UPDATE identity.users SET password_hash = $1, updated_at = now() WHERE id = $2"#,
+    )
+    .bind(&new_hash)
+    .bind(user_id)
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| Error::Internal(format!("Failed to update password: {}", e)))?;
+
+    sqlx::query(r#"UPDATE identity.password_reset_tokens SET used = true WHERE token = $1"#)
+        .bind(&payload.token)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| Error::Internal(format!("Failed to mark token used: {}", e)))?;
+
+    tx.commit()
+        .await
+        .map_err(|e| Error::Internal(format!("Transaction commit error: {}", e)))?;
+
+    audit_auth_event(
+        state.pool.inner(),
+        Some(user_id),
+        None,
+        "password_reset_confirmed",
+        user_id,
+    )
+    .await;
+
+    Ok(Json(serde_json::json!({
+        "message": "Password reset successfully."
     })))
 }
 

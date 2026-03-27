@@ -82,6 +82,7 @@ pub mod sso;
 pub mod tenant;
 pub mod traits;
 pub mod triggers;
+pub mod trust_level;
 pub mod types;
 pub mod ueba;
 pub mod vault;

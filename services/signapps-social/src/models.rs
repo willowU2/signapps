@@ -531,3 +531,121 @@ pub struct AccountAnalytics {
     pub reach: i32,
     pub engagement: i32,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_platform_post_serialization() {
+        let post = PlatformPost {
+            platform_post_id: "post_123".to_string(),
+            platform_url: Some("https://mastodon.social/@user/123".to_string()),
+        };
+        let json = serde_json::to_string(&post).expect("Serialization failed");
+        assert!(json.contains("post_123"));
+        assert!(json.contains("mastodon.social"));
+    }
+
+    #[test]
+    fn test_platform_post_deserialization() {
+        let json = r#"{"platform_post_id":"xyz","platform_url":"https://example.com/post/xyz"}"#;
+        let post: PlatformPost = serde_json::from_str(json).expect("Deserialization failed");
+        assert_eq!(post.platform_post_id, "xyz");
+        assert_eq!(
+            post.platform_url.as_deref(),
+            Some("https://example.com/post/xyz")
+        );
+    }
+
+    #[test]
+    fn test_platform_post_roundtrip() {
+        let original = PlatformPost {
+            platform_post_id: "abc456".to_string(),
+            platform_url: None,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let decoded: PlatformPost = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.platform_post_id, original.platform_post_id);
+        assert_eq!(decoded.platform_url, original.platform_url);
+    }
+
+    #[test]
+    fn test_account_analytics_serialization() {
+        let analytics = AccountAnalytics {
+            followers: 1000,
+            following: 200,
+            posts_count: 50,
+            impressions: 5000,
+            reach: 3000,
+            engagement: 150,
+        };
+        let json = serde_json::to_string(&analytics).expect("Serialization failed");
+        assert!(json.contains("1000"));
+        assert!(json.contains("followers"));
+    }
+
+    #[test]
+    fn test_account_analytics_roundtrip() {
+        let original = AccountAnalytics {
+            followers: 42,
+            following: 10,
+            posts_count: 7,
+            impressions: 100,
+            reach: 80,
+            engagement: 5,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let decoded: AccountAnalytics = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.followers, 42);
+        assert_eq!(decoded.following, 10);
+        assert_eq!(decoded.posts_count, 7);
+    }
+
+    #[test]
+    fn test_post_serialization_roundtrip() {
+        let now = chrono::Utc::now();
+        let post = Post {
+            id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+            status: "draft".to_string(),
+            content: "Hello world #test".to_string(),
+            media_urls: serde_json::json!([]),
+            hashtags: serde_json::json!(["test"]),
+            scheduled_at: Some(now),
+            published_at: None,
+            error_message: None,
+            is_evergreen: false,
+            template_id: None,
+            created_at: now,
+            updated_at: now,
+        };
+        let json = serde_json::to_string(&post).unwrap();
+        let decoded: Post = serde_json::from_str(&json).unwrap();
+        assert_eq!(decoded.content, "Hello world #test");
+        assert_eq!(decoded.status, "draft");
+    }
+
+    #[test]
+    fn test_inbox_item_serialization() {
+        let now = chrono::Utc::now();
+        let item = InboxItem {
+            id: Uuid::new_v4(),
+            account_id: Uuid::new_v4(),
+            platform_item_id: Some("item_001".to_string()),
+            item_type: "comment".to_string(),
+            author_name: Some("Alice".to_string()),
+            author_avatar: None,
+            content: Some("Great post!".to_string()),
+            post_id: None,
+            parent_id: None,
+            is_read: false,
+            sentiment: Some("positive".to_string()),
+            received_at: now,
+            created_at: now,
+        };
+        let json = serde_json::to_string(&item).unwrap();
+        assert!(json.contains("comment"));
+        assert!(json.contains("Alice"));
+    }
+}

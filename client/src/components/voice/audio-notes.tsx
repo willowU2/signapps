@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, Play, Trash2, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tasksApi } from '@/lib/api/calendar';
 
 interface AudioNote {
   id: string;
@@ -13,7 +14,14 @@ interface AudioNote {
   recording: boolean;
 }
 
-export function AudioNotes() {
+interface AudioNotesProps {
+  /** Optional task ID — if provided, "Attach to task" button is shown. */
+  taskId?: string;
+  /** Optional calendar ID required to construct the tasks API path. */
+  calendarId?: string;
+}
+
+export function AudioNotes({ taskId, calendarId }: AudioNotesProps = {}) {
   const [notes, setNotes] = useState<AudioNote[]>([
     {
       id: '1',
@@ -39,6 +47,7 @@ export function AudioNotes() {
   ]);
   const [isRecording, setIsRecording] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [attachingId, setAttachingId] = useState<string | null>(null);
 
   const handleRecordClick = () => {
     setIsRecording(!isRecording);
@@ -63,6 +72,26 @@ export function AudioNotes() {
 
   const handlePlayClick = (id: string) => {
     setPlayingId(playingId === id ? null : id);
+  };
+
+  const handleAttachToTask = async (note: AudioNote) => {
+    if (!taskId) {
+      alert('No task selected. Open this panel from a task to attach notes.');
+      return;
+    }
+    setAttachingId(note.id);
+    try {
+      await tasksApi.updateTask(taskId, {
+        audio_note_id: note.id,
+        audio_note_title: note.title,
+        audio_note_duration: note.duration,
+      });
+    } catch (err) {
+      console.error('Failed to attach audio note to task:', err);
+      alert('Failed to attach audio note. Please try again.');
+    } finally {
+      setAttachingId(null);
+    }
   };
 
   return (
@@ -114,12 +143,17 @@ export function AudioNotes() {
               </Button>
 
               <Button
-                onClick={() => {}}
+                onClick={() => handleAttachToTask(note)}
                 size="sm"
                 variant="outline"
+                disabled={attachingId === note.id}
                 aria-label="Attach to task"
+                title={taskId ? 'Attach audio note to current task' : 'Open from a task to attach'}
               >
                 <Paperclip className="h-4 w-4" />
+                {attachingId === note.id && (
+                  <span className="ml-1 text-xs">...</span>
+                )}
               </Button>
 
               <Button

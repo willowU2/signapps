@@ -64,9 +64,11 @@ anyhow = { workspace = true }
 base64 = "0.22"
 rand = "0.8"
 
-# Cryptography (webhook signing)
+# Cryptography (webhook signing + LDAP password encryption)
 hmac = "0.12"
 sha2 = "0.10"
+aes-gcm = { workspace = true }
+hex = { workspace = true }
 
 # HTTP Client (for webhooks)
 reqwest = { workspace = true }

@@ -27,7 +27,7 @@ pub fn is_websocket_upgrade(req: &Request<Incoming>) -> bool {
     connection.to_lowercase().contains("upgrade") && upgrade.to_lowercase() == "websocket"
 }
 
-/// Forward a WebSocket upgrade request to the backend and tunnel data.
+/// Forward a WebSocket upgrade request to the backend and tunnel data bidirectionally.
 pub async fn handle_websocket_upgrade(
     mut req: Request<Incoming>,
     target: &str,
@@ -73,34 +73,62 @@ pub async fn handle_websocket_upgrade(
         req.headers_mut().insert("x-forwarded-for", val);
     }
 
+    // Save the upgrade future for the *incoming* (client→proxy) connection
+    // before we consume the request sending it to the backend.
+    let client_upgrade_fut = hyper::upgrade::on(&mut req);
+
     // Use a separate HTTP client for the upgrade
     let client: Client<hyper_util::client::legacy::connect::HttpConnector, Incoming> =
         Client::builder(TokioExecutor::new()).build_http();
 
     match client.request(req).await {
-        Ok(backend_resp) => {
+        Ok(mut backend_resp) => {
             if backend_resp.status() == StatusCode::SWITCHING_PROTOCOLS {
-                // FIXME(websocket): Full duplex WS tunnel requires tokio::select! on both streams
-                // This requires calling `hyper::upgrade::on()` on both the
-                // client request and the backend response, then using
-                // `tokio::io::copy_bidirectional()` to shuttle bytes between
-                // the two upgraded connections. Until then, the connection
-                // will hang after the 101 handshake completes.
-                tracing::warn!(
-                    "WebSocket tunneling not yet implemented — \
-                     connection will hang after upgrade"
-                );
+                // Save the upgrade future for the backend response
+                let backend_upgrade_fut = hyper::upgrade::on(&mut backend_resp);
 
-                // Return 101 to client
-                let mut resp = Response::builder().status(StatusCode::SWITCHING_PROTOCOLS);
-
-                // Copy relevant headers
+                // Build the 101 response to send back to the client, copying WS headers
+                let mut resp_builder = Response::builder().status(StatusCode::SWITCHING_PROTOCOLS);
                 for (key, value) in backend_resp.headers() {
-                    resp = resp.header(key, value);
+                    resp_builder = resp_builder.header(key, value);
                 }
-
                 let resp_body = full_body("");
-                let response = resp.body(resp_body).unwrap();
+                let response = resp_builder.body(resp_body).unwrap();
+
+                // Spawn the bidirectional pipe as a background task
+                tokio::spawn(async move {
+                    let client_conn = match client_upgrade_fut.await {
+                        Ok(c) => c,
+                        Err(e) => {
+                            tracing::error!("WebSocket client upgrade failed: {}", e);
+                            return;
+                        },
+                    };
+                    let backend_conn = match backend_upgrade_fut.await {
+                        Ok(b) => b,
+                        Err(e) => {
+                            tracing::error!("WebSocket backend upgrade failed: {}", e);
+                            return;
+                        },
+                    };
+
+                    // Pipe bytes bidirectionally between client and backend
+                    let mut client_io = hyper_util::rt::TokioIo::new(client_conn);
+                    let mut backend_io = hyper_util::rt::TokioIo::new(backend_conn);
+
+                    match tokio::io::copy_bidirectional(&mut client_io, &mut backend_io).await {
+                        Ok((from_client, from_backend)) => {
+                            tracing::debug!(
+                                "WebSocket tunnel closed: {}B client→backend, {}B backend→client",
+                                from_client,
+                                from_backend
+                            );
+                        },
+                        Err(e) => {
+                            tracing::debug!("WebSocket tunnel error (normal on close): {}", e);
+                        },
+                    }
+                });
 
                 Ok(response)
             } else {

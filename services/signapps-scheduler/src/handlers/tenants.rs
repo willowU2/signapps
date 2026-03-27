@@ -6,38 +6,55 @@ use axum::{
 };
 use serde_json::json;
 use signapps_common::Claims;
+use signapps_db::repositories::TenantRepository;
 use uuid::Uuid;
 
 use crate::AppState;
 
 pub async fn list_tenants(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    // Basic verification - only admins should list all tenants
+    // Only super-admins (role == 1) may list all tenants.
     if claims.role != 1 {
         return Err(StatusCode::FORBIDDEN);
     }
 
-    // Placeholder response until SQL queries are implemented
-    Ok(Json(json!({
-        "data": []
-    })))
+    let tenants = TenantRepository::list(&state.pool, 100, 0)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to list tenants: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(Json(json!({ "data": tenants })))
 }
 
 pub async fn get_tenant(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, StatusCode> {
-    // Users can only view their own tenant unless they are super admins
+    // Users can only view their own tenant unless they are super-admins.
     if claims.role != 1 && claims.tenant_id != Some(id) {
         return Err(StatusCode::FORBIDDEN);
     }
 
+    let tenant = TenantRepository::find_by_id(&state.pool, id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get tenant {}: {}", id, e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?
+        .ok_or(StatusCode::NOT_FOUND)?;
+
     Ok(Json(json!({
-        "id": id,
-        "name": "Placeholder Tenant",
-        "slug": "placeholder"
+        "id": tenant.id,
+        "name": tenant.name,
+        "slug": tenant.slug,
+        "domain": tenant.domain,
+        "plan": tenant.plan,
+        "is_active": tenant.is_active,
+        "created_at": tenant.created_at,
     })))
 }

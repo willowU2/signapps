@@ -138,6 +138,37 @@ pub async fn reply_inbox(
                         use crate::platforms::SocialPlatform;
                         client.reply(&item_id, &payload.content).await
                     },
+                    "twitter" => {
+                        let client = crate::platforms::twitter::TwitterClient {
+                            access_token: token,
+                        };
+                        use crate::platforms::SocialPlatform;
+                        client.reply(&item_id, &payload.content).await
+                    },
+                    "facebook" => {
+                        let page_id = platform_config["page_id"]
+                            .as_str()
+                            .unwrap_or("")
+                            .to_string();
+                        let client = crate::platforms::facebook::FacebookClient {
+                            access_token: token,
+                            page_id,
+                        };
+                        use crate::platforms::SocialPlatform;
+                        client.reply(&item_id, &payload.content).await
+                    },
+                    "linkedin" => {
+                        let author_urn = platform_config["author_urn"]
+                            .as_str()
+                            .unwrap_or("")
+                            .to_string();
+                        let client = crate::platforms::linkedin::LinkedinClient {
+                            access_token: token,
+                            author_urn,
+                        };
+                        use crate::platforms::SocialPlatform;
+                        client.reply(&item_id, &payload.content).await
+                    },
                     _ => {
                         return (
                             StatusCode::NOT_IMPLEMENTED,

@@ -342,4 +342,60 @@ mod tests {
             assert!(code.chars().all(|c| c.is_ascii_digit()));
         }
     }
+
+    #[test]
+    fn test_backup_code_hashing_produces_different_hash_each_time() {
+        // SHA-256 is deterministic — same input → same hash.
+        // Two *different* codes must produce different hashes.
+        let code_a = "12345678";
+        let code_b = "87654321";
+        let hash_a = hash_backup_code(code_a);
+        let hash_b = hash_backup_code(code_b);
+        assert_ne!(
+            hash_a, hash_b,
+            "Different codes must hash to different values"
+        );
+    }
+
+    #[test]
+    fn test_backup_code_hashing_is_deterministic() {
+        let code = "12345678";
+        let hash1 = hash_backup_code(code);
+        let hash2 = hash_backup_code(code);
+        assert_eq!(hash1, hash2, "Same code must always produce the same hash");
+    }
+
+    #[test]
+    fn test_backup_code_hash_is_hex_string() {
+        let code = "99887766";
+        let hash = hash_backup_code(code);
+        // SHA-256 hex is 64 chars
+        assert_eq!(hash.len(), 64);
+        assert!(hash.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn test_totp_secret_generation_produces_valid_base32() {
+        let secret = Secret::generate_secret();
+        let encoded = secret.to_encoded().to_string();
+        // Base32 alphabet: A-Z and 2-7, optionally padded with '='
+        let valid_chars = |c: char| c.is_ascii_uppercase() || ('2'..='7').contains(&c) || c == '=';
+        assert!(!encoded.is_empty(), "Generated secret must not be empty");
+        assert!(
+            encoded.chars().all(valid_chars),
+            "Generated secret must be valid base32: {}",
+            encoded
+        );
+    }
+
+    #[test]
+    fn test_generate_backup_codes_are_unique() {
+        let codes = generate_backup_codes(10);
+        let unique: std::collections::HashSet<_> = codes.iter().collect();
+        assert_eq!(
+            unique.len(),
+            codes.len(),
+            "All backup codes should be unique"
+        );
+    }
 }

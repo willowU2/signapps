@@ -6,6 +6,41 @@ use uuid::Uuid;
 use super::{PlatformError, PlatformResult, SocialPlatform};
 use crate::models::{AccountAnalytics, InboxItem, PlatformPost};
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mastodon_client_creation_stores_credentials() {
+        let client = MastodonClient::new("https://mastodon.social", "token_abc123");
+        assert_eq!(client.instance_url, "https://mastodon.social");
+        assert_eq!(client.access_token, "token_abc123");
+    }
+
+    #[test]
+    fn test_mastodon_api_url_construction() {
+        let client = MastodonClient::new("https://mastodon.social", "token");
+        let url = client.api("/statuses");
+        assert_eq!(url, "https://mastodon.social/api/v1/statuses");
+    }
+
+    #[test]
+    fn test_mastodon_api_url_strips_trailing_slash() {
+        let client = MastodonClient::new("https://mastodon.social/", "token");
+        let url = client.api("/statuses");
+        assert_eq!(
+            url, "https://mastodon.social/api/v1/statuses",
+            "Trailing slash should be stripped from instance URL"
+        );
+    }
+
+    #[test]
+    fn test_mastodon_bearer_format() {
+        let client = MastodonClient::new("https://mastodon.social", "my_access_token");
+        assert_eq!(client.bearer(), "Bearer my_access_token");
+    }
+}
+
 /// Mastodon API client using reqwest.
 pub struct MastodonClient {
     pub instance_url: String,

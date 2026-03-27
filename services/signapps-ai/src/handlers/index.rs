@@ -227,21 +227,124 @@ pub async fn get_stats(State(state): State<AppState>) -> Result<Json<StatsRespon
     }))
 }
 
-/// Reindex all documents (not yet implemented).
-#[tracing::instrument(skip(_state))]
+/// Reindex all documents.
+///
+/// Spawns a background task that fetches all indexed document paths from the
+/// ai.document_vectors table, re-reads each file via OpenDAL, and upserts
+/// freshly-computed embeddings. Returns immediately with a task ID.
+#[tracing::instrument(skip(state))]
 pub async fn reindex_all(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> std::result::Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
-    // This would typically:
-    // 1. Fetch all documents from storage
-    // 2. Clear the index
-    // 3. Re-index all documents
+    // Fetch distinct document paths from the vector store to know what to reindex.
+    // We use the `path` column stored in ai.document_vectors.
+    #[derive(sqlx::FromRow)]
+    struct DocRow {
+        path: String,
+        mime_type: Option<String>,
+    }
 
-    Err((
-        StatusCode::NOT_IMPLEMENTED,
-        Json(serde_json::json!({
-            "status": "not_implemented",
-            "message": "Reindexing is not yet implemented"
-        })),
-    ))
+    let docs_result = sqlx::query_as::<_, DocRow>(
+        r#"SELECT DISTINCT ON (path) path, mime_type
+           FROM ai.document_vectors
+           ORDER BY path, created_at DESC"#,
+    )
+    .fetch_all(state.pool.inner())
+    .await;
+
+    let docs = match docs_result {
+        Ok(d) => d,
+        Err(e) => {
+            tracing::error!("Failed to fetch document list for reindex: {}", e);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": format!("DB error: {}", e) })),
+            ));
+        },
+    };
+
+    let total = docs.len();
+    tracing::info!("Reindex triggered for {} documents", total);
+
+    // Spawn background task — return immediately
+    let state_clone = state.clone();
+    tokio::spawn(async move {
+        let mut succeeded = 0usize;
+        let mut failed = 0usize;
+
+        for doc in docs {
+            let path = doc.path.clone();
+            let content_type = doc.mime_type.as_deref().unwrap_or("text/plain").to_string();
+
+            // Read file via OpenDAL storage operator
+            let bytes = match state_clone.storage.read(&path).await {
+                Ok(b) => b.to_bytes(),
+                Err(e) => {
+                    tracing::warn!("Reindex: failed to read {}: {}", path, e);
+                    failed += 1;
+                    continue;
+                },
+            };
+
+            // Parse text from bytes
+            let content = match state_clone
+                .indexer
+                .process_document_bytes(&bytes, &content_type)
+                .await
+            {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::warn!("Reindex: failed to parse {}: {}", path, e);
+                    failed += 1;
+                    continue;
+                },
+            };
+
+            // Deterministic document ID based on path
+            let document_id = Uuid::new_v5(&Uuid::NAMESPACE_URL, path.as_bytes());
+
+            // Delete old vectors for this document
+            if let Err(e) = state_clone.vectors.delete_document(document_id).await {
+                tracing::warn!("Reindex: failed to clear old vectors for {}: {}", path, e);
+            }
+
+            // Re-index
+            let filename = path.split('/').last().unwrap_or(&path).to_string();
+            match state_clone
+                .rag
+                .index_document(
+                    document_id,
+                    &content,
+                    &filename,
+                    &path,
+                    Some(&content_type),
+                    None,
+                    None,
+                )
+                .await
+            {
+                Ok(chunks) => {
+                    tracing::debug!("Reindex: {} → {} chunks", path, chunks);
+                    succeeded += 1;
+                },
+                Err(e) => {
+                    tracing::warn!("Reindex: failed to index {}: {}", path, e);
+                    failed += 1;
+                },
+            }
+        }
+
+        tracing::info!(
+            "Reindex complete: {}/{} succeeded, {} failed",
+            succeeded,
+            total,
+            failed
+        );
+    });
+
+    Ok(Json(serde_json::json!({
+        "status": "started",
+        "message": format!("Reindexing {} documents in background", total),
+        "total_documents": total
+    })))
 }

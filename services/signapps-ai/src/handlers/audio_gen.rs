@@ -73,6 +73,21 @@ fn create_audiogen_worker() -> Result<Box<dyn AudioGenWorker + Send + Sync>, Str
     }
 }
 
+/// Map an anyhow worker error to an (StatusCode, String) tuple.
+/// Errors that begin with MODEL_NOT_INSTALLED_PREFIX map to 501 Not Implemented;
+/// all others map to 500 Internal Server Error.
+fn map_worker_error(context: &str, e: anyhow::Error) -> (StatusCode, String) {
+    let msg = e.to_string();
+    if msg.contains("MODEL_NOT_INSTALLED:") {
+        (StatusCode::NOT_IMPLEMENTED, format!("{}: {}", context, msg))
+    } else {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("{}: {}", context, msg),
+        )
+    }
+}
+
 /// Store generated audio bytes in OpenDAL storage and return the path.
 async fn store_audio(state: &AppState, audio_bytes: &[u8]) -> Result<String, (StatusCode, String)> {
     let path = format!("ai/generated/{}.wav", Uuid::new_v4());
@@ -122,12 +137,10 @@ pub async fn generate_music(
         model: body.model,
     };
 
-    let result = worker.generate_music(request).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Music generation failed: {e}"),
-        )
-    })?;
+    let result = worker
+        .generate_music(request)
+        .await
+        .map_err(|e| map_worker_error("Music generation failed", e))?;
 
     let audio_url = store_audio(&state, &result.audio).await?;
 
@@ -166,12 +179,10 @@ pub async fn generate_sfx(
         model: body.model,
     };
 
-    let result = worker.generate_sfx(request).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Sound effect generation failed: {e}"),
-        )
-    })?;
+    let result = worker
+        .generate_sfx(request)
+        .await
+        .map_err(|e| map_worker_error("Sound effect generation failed", e))?;
 
     let audio_url = store_audio(&state, &result.audio).await?;
 

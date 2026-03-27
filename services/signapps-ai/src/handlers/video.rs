@@ -110,6 +110,20 @@ fn create_video_understand_worker() -> Result<Box<dyn VideoUnderstandWorker + Se
     }
 }
 
+/// Map an anyhow worker error to an (StatusCode, String) tuple.
+/// Errors with MODEL_NOT_INSTALLED_PREFIX map to 501; others to 500.
+fn map_worker_error(context: &str, e: anyhow::Error) -> (StatusCode, String) {
+    let msg = e.to_string();
+    if msg.contains("MODEL_NOT_INSTALLED:") {
+        (StatusCode::NOT_IMPLEMENTED, format!("{}: {}", context, msg))
+    } else {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("{}: {}", context, msg),
+        )
+    }
+}
+
 /// Store generated video bytes in OpenDAL storage and return the path.
 async fn store_video(state: &AppState, video_bytes: &[u8]) -> Result<String, (StatusCode, String)> {
     let path = format!("ai/generated/{}.mp4", Uuid::new_v4());
@@ -163,12 +177,10 @@ pub async fn generate_video(
         model: body.model,
     };
 
-    let result = worker.text_to_video(request).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Video generation failed: {e}"),
-        )
-    })?;
+    let result = worker
+        .text_to_video(request)
+        .await
+        .map_err(|e| map_worker_error("Video generation failed", e))?;
 
     let video_url = store_video(&state, &result.video).await?;
 
@@ -257,12 +269,10 @@ pub async fn img_to_video(
         model,
     };
 
-    let result = worker.img_to_video(request).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Image-to-video generation failed: {e}"),
-        )
-    })?;
+    let result = worker
+        .img_to_video(request)
+        .await
+        .map_err(|e| map_worker_error("Image-to-video generation failed", e))?;
 
     let video_url = store_video(&state, &result.video).await?;
 

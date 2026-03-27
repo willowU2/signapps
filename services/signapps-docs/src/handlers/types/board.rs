@@ -43,21 +43,43 @@ pub struct ColumnsResponse {
     pub columns: Vec<Column>,
 }
 
-/// Create a new board (Kanban)
+/// Create a new board (Kanban) and persist its initial CRDT state to the
+/// database so the first WebSocket client receives a well-formed structure.
 pub async fn create_board(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(payload): Json<CreateBoardRequest>,
 ) -> Result<(StatusCode, Json<BoardResponse>), (StatusCode, String)> {
     let doc_id = Uuid::new_v4().to_string();
+    let doc_type = "board";
     let board_type = if payload.board_type.is_empty() {
         "kanban".to_string()
     } else {
         payload.board_type
     };
 
+    // Build and persist initial CRDT state (columns YArray, cards YMap, meta YMap)
+    let doc_binary = crate::utils::crdt::initial_state_for_type(doc_type);
+    let doc_uuid = Uuid::parse_str(&doc_id).expect("newly-generated UUID is always valid");
+    sqlx::query(
+        r#"INSERT INTO documents (id, doc_type, doc_binary, updated_at)
+           VALUES ($1, $2, $3, NOW())
+           ON CONFLICT (id) DO NOTHING"#,
+    )
+    .bind(doc_uuid)
+    .bind(doc_type)
+    .bind(doc_binary)
+    .execute(state.pool.inner())
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to persist document: {e}"),
+        )
+    })?;
+
     info!(
         doc_id = %doc_id,
-        doc_type = "board",
+        doc_type = %doc_type,
         name = %payload.name,
         board_type = %board_type,
         "Created board"
@@ -68,7 +90,7 @@ pub async fn create_board(
         Json(BoardResponse {
             id: doc_id,
             name: payload.name,
-            doc_type: "board".to_string(),
+            doc_type: doc_type.to_string(),
             board_type,
             created_at: chrono::Utc::now().to_rfc3339(),
         }),

@@ -159,57 +159,46 @@ impl AiWorker for NativeVision {
 // VisionWorker
 // ---------------------------------------------------------------------------
 
+/// Sentinel prefix for HTTP handlers to map to 501 Not Implemented.
+pub const MODEL_NOT_INSTALLED_PREFIX: &str = "MODEL_NOT_INSTALLED:";
+
 #[async_trait]
 impl VisionWorker for NativeVision {
-    async fn describe(&self, image: Bytes, prompt: Option<&str>) -> Result<VisionResult> {
-        let prompt_text = prompt.unwrap_or("Describe this image in detail.");
-
+    async fn describe(&self, _image: Bytes, _prompt: Option<&str>) -> Result<VisionResult> {
         debug!(
             model = %self.model_id(),
-            image_bytes = image.len(),
-            prompt_len = prompt_text.len(),
-            "native vision describe (skeleton)"
+            "native vision describe — model not installed"
         );
 
-        // TODO: Full implementation outline:
-        //   1. Decode image bytes → raw pixels
-        //   2. Run CLIP encoder to produce image embeddings
-        //   3. Inject image embeddings as special tokens into the prompt
-        //   4. Run LLM inference to generate the description
-        //
-        // For now, return the beta notice so callers know the backend
-        // is not yet producing real descriptions.
-
-        Ok(VisionResult {
-            text: self.beta_notice(),
-            confidence: 0.0,
-            model: self.model_id(),
-        })
+        // The native CLIP + LLM multimodal pipeline is not yet implemented.
+        // Return a sentinel error so HTTP handlers can respond with
+        // 501 Not Implemented instead of 500.
+        anyhow::bail!(
+            "{} Native vision model '{}' is not installed. \
+             Install a multimodal GGUF model or configure VISION_URL / \
+             OPENAI_API_KEY to use an HTTP or cloud backend.",
+            MODEL_NOT_INSTALLED_PREFIX,
+            self.model_id()
+        )
     }
 
-    async fn vqa(&self, image: Bytes, question: &str) -> Result<VisionResult> {
-        debug!(
-            model = %self.model_id(),
-            image_bytes = image.len(),
-            question_len = question.len(),
-            "native vision VQA (skeleton)"
-        );
+    async fn vqa(&self, _image: Bytes, _question: &str) -> Result<VisionResult> {
+        debug!(model = %self.model_id(), "native vision VQA — model not installed");
 
-        // TODO: Same multimodal pipeline as describe(), but with the
-        // user's question as the text prompt.
-
-        Ok(VisionResult {
-            text: self.beta_notice(),
-            confidence: 0.0,
-            model: self.model_id(),
-        })
+        anyhow::bail!(
+            "{} Native vision model '{}' is not installed. \
+             Configure VISION_URL or OPENAI_API_KEY.",
+            MODEL_NOT_INSTALLED_PREFIX,
+            self.model_id()
+        )
     }
 
     async fn batch_describe(&self, images: Vec<Bytes>) -> Result<Vec<VisionResult>> {
-        let mut results = Vec::with_capacity(images.len());
-        for image in images {
-            results.push(self.describe(image, None).await?);
+        // Fail fast on the first image so callers get a clear 501.
+        if !images.is_empty() {
+            self.describe(images.into_iter().next().unwrap(), None)
+                .await?;
         }
-        Ok(results)
+        Ok(vec![])
     }
 }

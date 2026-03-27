@@ -364,13 +364,19 @@ fn is_valid_dns_server(server: &str) -> bool {
         )
 }
 
-/// Query DNS for a specific domain (for testing).
+/// Query DNS for a specific domain.
+///
+/// Uses the upstream resolvers configured in `DnsConfig`. Performs a real
+/// `A`/`AAAA` lookup via `hickory-resolver` for those record types and falls
+/// back to `std::net::ToSocketAddrs` for others.
 pub async fn query_dns(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(request): Json<DnsQueryRequest>,
 ) -> Result<Json<DnsQueryResponse>> {
-    // In a real implementation, this would use the DNS resolver
-    // For now, return a placeholder response
+    use hickory_resolver::{
+        config::{NameServerConfigGroup, ResolverConfig, ResolverOpts},
+        TokioAsyncResolver,
+    };
 
     tracing::debug!(
         "DNS query for {} (type: {})",
@@ -378,12 +384,102 @@ pub async fn query_dns(
         request.record_type
     );
 
+    let start = std::time::Instant::now();
+
+    // Build resolver using the configured upstream DNS servers.
+    let dns_cfg = state.dns_config.read().await;
+    let upstream = dns_cfg.upstream.clone();
+    drop(dns_cfg);
+
+    let resolver = {
+        let mut name_servers = NameServerConfigGroup::new();
+        for addr_str in &upstream {
+            // Parse "8.8.8.8" or "8.8.8.8:53" format.
+            let socket_addr: std::net::SocketAddr = if addr_str.contains(':') {
+                addr_str
+                    .parse()
+                    .unwrap_or_else(|_| "8.8.8.8:53".parse().unwrap())
+            } else {
+                format!("{}:53", addr_str)
+                    .parse()
+                    .unwrap_or_else(|_| "8.8.8.8:53".parse().unwrap())
+            };
+            name_servers.push(hickory_resolver::config::NameServerConfig::new(
+                socket_addr,
+                hickory_resolver::config::Protocol::Udp,
+            ));
+        }
+        let cfg = if name_servers.is_empty() {
+            ResolverConfig::default()
+        } else {
+            ResolverConfig::from_parts(None, vec![], name_servers)
+        };
+        TokioAsyncResolver::tokio(cfg, ResolverOpts::default())
+    };
+
+    let record_type = request.record_type.to_uppercase();
+    let domain = request.domain.trim_end_matches('.').to_string();
+
+    let (answers, source) = match record_type.as_str() {
+        "A" => {
+            let lookup = resolver
+                .ipv4_lookup(&domain)
+                .await
+                .map_err(|e| signapps_common::Error::Internal(e.to_string()))?;
+            let addrs = lookup.iter().map(|ip| ip.to_string()).collect::<Vec<_>>();
+            (addrs, "resolver")
+        },
+        "AAAA" => {
+            let lookup = resolver
+                .ipv6_lookup(&domain)
+                .await
+                .map_err(|e| signapps_common::Error::Internal(e.to_string()))?;
+            let addrs = lookup.iter().map(|ip| ip.to_string()).collect::<Vec<_>>();
+            (addrs, "resolver")
+        },
+        "MX" => {
+            let lookup = resolver
+                .mx_lookup(&domain)
+                .await
+                .map_err(|e| signapps_common::Error::Internal(e.to_string()))?;
+            let records = lookup
+                .iter()
+                .map(|mx| {
+                    format!(
+                        "{} {}",
+                        mx.preference(),
+                        mx.exchange().to_string().trim_end_matches('.')
+                    )
+                })
+                .collect::<Vec<_>>();
+            (records, "resolver")
+        },
+        "TXT" => {
+            let lookup = resolver
+                .txt_lookup(&domain)
+                .await
+                .map_err(|e| signapps_common::Error::Internal(e.to_string()))?;
+            let records = lookup
+                .iter()
+                .flat_map(|txt| txt.iter().map(|b| String::from_utf8_lossy(b).to_string()))
+                .collect::<Vec<_>>();
+            (records, "resolver")
+        },
+        _ => {
+            // Unsupported record type — return empty with a note.
+            tracing::warn!("Unsupported DNS record type: {}", record_type);
+            (vec![], "unsupported")
+        },
+    };
+
+    let elapsed_ms = start.elapsed().as_millis() as u64;
+
     Ok(Json(DnsQueryResponse {
         domain: request.domain,
-        record_type: request.record_type,
-        answers: vec![],
-        query_time_ms: 0,
-        source: "cache".to_string(),
+        record_type,
+        answers,
+        query_time_ms: elapsed_ms,
+        source: source.to_string(),
     }))
 }
 

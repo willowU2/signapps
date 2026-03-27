@@ -152,46 +152,43 @@ impl AiWorker for NativeVideoGen {
 // VideoGenWorker
 // ---------------------------------------------------------------------------
 
+/// Sentinel prefix for HTTP handlers to map to 501 Not Implemented.
+pub const MODEL_NOT_INSTALLED_PREFIX: &str = "MODEL_NOT_INSTALLED:";
+
 #[async_trait]
 impl VideoGenWorker for NativeVideoGen {
     async fn text_to_video(&self, request: VideoGenRequest) -> Result<VideoGenResult> {
         debug!(
             model = %self.model_id(),
             prompt_len = request.prompt.len(),
-            width = ?request.width,
-            height = ?request.height,
-            duration_secs = ?request.duration_secs,
-            "native text_to_video (skeleton)"
+            "native text_to_video — model not installed"
         );
 
-        // TODO: Full implementation outline:
-        //   1. Encode text prompt via T5 encoder
-        //   2. Run diffusion transformer for N steps to produce latent frames
-        //   3. Decode latent frames via 3D-VAE decoder
-        //   4. Assemble frames into video via ffmpeg
-        //
-        // For now, return the beta notice so callers know the backend
-        // is not yet producing real videos.
-
-        anyhow::bail!(self.beta_notice())
+        // The native CogVideoX pipeline (3D-VAE + diffusion + ffmpeg) is not
+        // yet implemented. Return a sentinel error so HTTP handlers can
+        // respond with 501 Not Implemented instead of 500.
+        anyhow::bail!(
+            "{} Native video generation model '{}' is not installed. \
+             Install the CogVideoX model weights or configure VIDEOGEN_URL / \
+             REPLICATE_API_KEY to use an HTTP or cloud backend.",
+            MODEL_NOT_INSTALLED_PREFIX,
+            self.model_id()
+        )
     }
 
     async fn img_to_video(&self, request: ImgToVideoRequest) -> Result<VideoGenResult> {
         debug!(
             model = %self.model_id(),
             image_bytes = request.image.len(),
-            prompt = ?request.prompt,
-            duration_secs = ?request.duration_secs,
-            "native img_to_video (skeleton)"
+            "native img_to_video — model not installed"
         );
 
-        // TODO: Full implementation outline:
-        //   1. Encode input image via 3D-VAE encoder
-        //   2. Optionally encode text prompt via T5
-        //   3. Run diffusion transformer conditioned on image latents
-        //   4. Decode and assemble frames via ffmpeg
-
-        anyhow::bail!(self.beta_notice())
+        anyhow::bail!(
+            "{} Native image-to-video model '{}' is not installed. \
+             Configure VIDEOGEN_URL or REPLICATE_API_KEY.",
+            MODEL_NOT_INSTALLED_PREFIX,
+            self.model_id()
+        )
     }
 
     async fn list_models(&self) -> Result<Vec<ModelInfo>> {

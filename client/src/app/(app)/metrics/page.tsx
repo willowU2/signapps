@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -28,6 +28,7 @@ import {
   Server,
 } from 'lucide-react';
 import { AlertConfig, AlertSeverity } from '@/lib/api';
+import { toast } from 'sonner';
 import { AlertConfigDialog } from '@/components/monitoring/alert-config-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import {
@@ -150,8 +151,13 @@ function MonitoringTab() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const queryClient = useQueryClient();
 
-  const { data: metrics, isLoading } = useMetricsSummary(autoRefresh ? 5000 : undefined);
+  const { data: metrics, isLoading, isError: metricsError } = useMetricsSummary(autoRefresh ? 5000 : undefined);
   const { data: disks = [], isLoading: disksLoading } = useDiskMetrics(autoRefresh ? 10000 : undefined);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (metricsError) toast.error('Failed to load system metrics');
+  }, [metricsError]);
 
   const cpu = metrics?.cpu_usage_percent ?? metrics?.cpu ?? 0;
   const mem = metrics?.memory_usage_percent ?? metrics?.memory ?? 0;

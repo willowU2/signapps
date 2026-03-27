@@ -376,6 +376,20 @@ async function parseSpreadsheet(buffer: ArrayBuffer, ext: string): Promise<Sprea
                 } else {
                     value = extractCellValue(cell.value);
                 }
+                // SAFETY NET: ensure value is ALWAYS a primitive string
+                if (typeof value !== 'string') {
+                    if (value === null || value === undefined) value = '';
+                    else if (typeof value === 'number' || typeof value === 'boolean') value = String(value);
+                    else if (typeof value === 'object') {
+                        const v = value as any;
+                        if (v instanceof Date || v?.toISOString) value = (v.toISOString?.() || '').split('T')[0];
+                        else if (v.result !== undefined) value = String(v.result ?? '');
+                        else if (v.text !== undefined) value = String(v.text ?? '');
+                        else if (v.richText) value = v.richText.map((r: any) => r?.text || '').join('');
+                        else try { value = JSON.stringify(v); } catch { value = ''; }
+                    }
+                    else value = String(value);
+                }
 
                 // Style
                 let style = extractCellStyle(cell);

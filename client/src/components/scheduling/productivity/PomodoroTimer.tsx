@@ -150,7 +150,7 @@ function usePomodoroTimer(settings: PomodoroSettings) {
           oscillator.stop(context.currentTime + 0.5);
         });
       } catch (e) {
-        console.log('Sound not available');
+        // Sound not available in this environment
       }
     }
   }, [settings.soundEnabled]);

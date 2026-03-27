@@ -47,6 +47,9 @@ export const billingApi = {
   listInvoices: () =>
     billingClient.get<Invoice[]>('/invoices'),
 
+  getUsage: () =>
+    billingClient.get<BillingUsage>('/usage'),
+
   health: () =>
     billingClient.get('/health'),
 };

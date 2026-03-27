@@ -2,10 +2,12 @@
 //!
 //! Defines hierarchical trust levels and middleware to enforce minimum trust per endpoint.
 
-use axum::{extract::Request, middleware::Next, response::Response, http::StatusCode};
+use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
 
 /// Trust levels in ascending order of privilege.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 #[repr(u8)]
 pub enum TrustLevel {
     Guest = 0,
@@ -41,6 +43,61 @@ impl TrustLevel {
 impl std::fmt::Display for TrustLevel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.label())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_trust_level_ordering() {
+        assert!(TrustLevel::Guest < TrustLevel::User);
+        assert!(TrustLevel::User < TrustLevel::Editor);
+        assert!(TrustLevel::Editor < TrustLevel::Admin);
+        assert!(TrustLevel::Admin < TrustLevel::SuperAdmin);
+    }
+
+    #[test]
+    fn test_trust_level_from_u8() {
+        assert_eq!(TrustLevel::from_u8(0), TrustLevel::Guest);
+        assert_eq!(TrustLevel::from_u8(1), TrustLevel::User);
+        assert_eq!(TrustLevel::from_u8(2), TrustLevel::Editor);
+        assert_eq!(TrustLevel::from_u8(3), TrustLevel::Admin);
+        assert_eq!(TrustLevel::from_u8(4), TrustLevel::SuperAdmin);
+        // Out-of-range defaults to Guest
+        assert_eq!(TrustLevel::from_u8(99), TrustLevel::Guest);
+    }
+
+    #[test]
+    fn test_trust_level_label() {
+        assert_eq!(TrustLevel::Guest.label(), "guest");
+        assert_eq!(TrustLevel::User.label(), "user");
+        assert_eq!(TrustLevel::Editor.label(), "editor");
+        assert_eq!(TrustLevel::Admin.label(), "admin");
+        assert_eq!(TrustLevel::SuperAdmin.label(), "superadmin");
+    }
+
+    #[test]
+    fn test_trust_level_display() {
+        assert_eq!(format!("{}", TrustLevel::Admin), "admin");
+        assert_eq!(format!("{}", TrustLevel::SuperAdmin), "superadmin");
+    }
+
+    #[test]
+    fn test_sufficient_trust_passes() {
+        // Admin satisfies a requirement of Editor
+        assert!(TrustLevel::Admin >= TrustLevel::Editor);
+        // SuperAdmin satisfies Admin
+        assert!(TrustLevel::SuperAdmin >= TrustLevel::Admin);
+    }
+
+    #[test]
+    fn test_insufficient_trust_rejected() {
+        // User does NOT satisfy Editor requirement
+        assert!(!(TrustLevel::User >= TrustLevel::Editor));
+        // Guest does NOT satisfy User requirement
+        assert!(!(TrustLevel::Guest >= TrustLevel::User));
     }
 }
 

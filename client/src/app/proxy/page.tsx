@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -122,10 +122,14 @@ export default function ProxyPage() {
   const queryClient = useQueryClient();
 
   // data
-  const { data: routes = [], isLoading: loadingRoutes } = useRoutes();
+  const { data: routes = [], isLoading: loadingRoutes, isError: routesError } = useRoutes();
   const { data: certificates = [] } = useCertificates();
   const { data: shieldStats } = useShieldStats();
   const { data: proxyStatus } = useProxyStatus();
+
+  useEffect(() => {
+    if (routesError) toast.error('Failed to load proxy routes');
+  }, [routesError]);
 
   // ui state
   const [activeTab, setActiveTab] = useState('routes');

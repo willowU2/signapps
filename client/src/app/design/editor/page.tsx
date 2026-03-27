@@ -6,6 +6,7 @@ import { Palette } from "lucide-react"
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { useDesignStore } from "@/stores/design-store"
+import { toast } from "sonner"
 
 const DesignEditor = dynamic(
     () => import("@/components/design/design-editor"),
@@ -19,9 +20,16 @@ function DesignEditorContent() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        if (id && (!currentDesign || currentDesign.id !== id)) {
-            loadDesign(id)
+        const init = async () => {
+            if (id && (!currentDesign || currentDesign.id !== id)) {
+                try {
+                    await loadDesign(id)
+                } catch {
+                    toast.error('Failed to load design')
+                }
+            }
         }
+        init()
         // Small delay to ensure store hydration
         const timer = setTimeout(() => setLoading(false), 100)
         return () => clearTimeout(timer)

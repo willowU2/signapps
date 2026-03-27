@@ -663,4 +663,52 @@ mod tests {
         collector.record_request("GET", "/api/test", 200, 0.1);
         // If this runs without panic, the metrics collector is working
     }
+
+    /// Verify that `security_headers_middleware` injects all required headers.
+    #[tokio::test]
+    async fn test_security_headers_present() {
+        use axum::{body::Body, http::Request, middleware, routing::get, Router};
+        use tower::ServiceExt; // for `oneshot`
+
+        let app = Router::new()
+            .route("/ping", get(|| async { "pong" }))
+            .layer(middleware::from_fn(security_headers_middleware));
+
+        let request = Request::builder().uri("/ping").body(Body::empty()).unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        let headers = response.headers();
+
+        assert_eq!(
+            headers
+                .get("x-content-type-options")
+                .and_then(|v| v.to_str().ok()),
+            Some("nosniff"),
+            "x-content-type-options header missing"
+        );
+        assert_eq!(
+            headers.get("x-frame-options").and_then(|v| v.to_str().ok()),
+            Some("DENY"),
+            "x-frame-options header missing"
+        );
+        assert_eq!(
+            headers
+                .get("x-xss-protection")
+                .and_then(|v| v.to_str().ok()),
+            Some("1; mode=block"),
+            "x-xss-protection header missing"
+        );
+        assert_eq!(
+            headers.get("referrer-policy").and_then(|v| v.to_str().ok()),
+            Some("strict-origin-when-cross-origin"),
+            "referrer-policy header missing"
+        );
+        assert_eq!(
+            headers
+                .get("permissions-policy")
+                .and_then(|v| v.to_str().ok()),
+            Some("camera=(), microphone=(), geolocation=()"),
+            "permissions-policy header missing"
+        );
+    }
 }

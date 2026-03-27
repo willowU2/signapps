@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,10 +13,15 @@ import { AddWidgetSheet } from '@/components/dashboard/add-widget-sheet';
 import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
 import { ActivityFeed } from '@/components/crosslinks/ActivityFeed';
 import { ActivityHeatmap } from '@/components/activity-heatmap';
+import { toast } from 'sonner';
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
-  const { isLoading: loading, isFetching: refreshing } = useDashboardData();
+  const { isLoading: loading, isFetching: refreshing, isError } = useDashboardData();
+
+  useEffect(() => {
+    if (isError) toast.error('Failed to load dashboard data');
+  }, [isError]);
   // Granular selectors for optimized re-renders
   const editMode = useDashboardEditMode();
   const { setEditMode, resetLayout } = useDashboardEditActions();

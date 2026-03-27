@@ -76,7 +76,7 @@ export class ErrorBoundaryReporter extends React.Component<
       });
 
       if (response.ok) {
-        console.log('[ErrorBoundary] Error reported successfully');
+        // Error reported successfully
       }
     } catch (err) {
       console.error('[ErrorBoundary] Failed to report error:', err);
