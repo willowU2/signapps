@@ -33,7 +33,7 @@ export function SimultaneousTranslationStub() {
   const [isListening, setIsListening] = useState(false);
   const [segments, setSegments] = useState<TranslationSegment[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const counterRef = useRef(0);
 
   const SpeechRecognitionCtor =
@@ -68,7 +68,7 @@ export function SimultaneousTranslationStub() {
     recognition.continuous = true;
     recognition.interimResults = false;
 
-    recognition.onresult = async (event: SpeechRecognitionEvent) => {
+    recognition.onresult = async (event: any) => {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
           const transcript = event.results[i][0].transcript.trim();
@@ -85,7 +85,7 @@ export function SimultaneousTranslationStub() {
       }
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: any) => {
       setError(`Reconnaissance vocale : ${event.error}`);
       setIsListening(false);
     };

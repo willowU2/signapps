@@ -149,7 +149,7 @@ function extractCellValue(cellValue: ExcelJS.CellValue): string {
     // Final fallback — if it's still an object, try to extract something useful
     if (typeof cellValue === 'object') {
         // Could be a nested result object we didn't catch above
-        const obj = cellValue as Record<string, unknown>;
+        const obj = cellValue as unknown as Record<string, unknown>;
         if ('result' in obj) {
             const r = obj.result;
             if (r === null || r === undefined) return '';

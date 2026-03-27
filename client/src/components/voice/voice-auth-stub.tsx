@@ -24,7 +24,7 @@ export function VoiceAuthStub() {
   const [progress, setProgress] = useState(0); // 0..ENROLL_REPEATS during enrollment
   const [message, setMessage] = useState('');
   const [voiceprint, setVoiceprint] = useState<string[]>([]);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const SpeechRecognitionCtor =
     typeof window !== 'undefined'
@@ -61,10 +61,10 @@ export function VoiceAuthStub() {
       rec.lang = lang;
       rec.continuous = false;
       rec.interimResults = false;
-      rec.onresult = (e: SpeechRecognitionEvent) => {
+      rec.onresult = (e: any) => {
         resolve(e.results[0][0].transcript);
       };
-      rec.onerror = (e: SpeechRecognitionErrorEvent) => reject(new Error(e.error));
+      rec.onerror = (e: any) => reject(new Error(e.error));
       rec.onend = () => reject(new Error('No speech detected'));
       recognitionRef.current = rec;
       rec.start();

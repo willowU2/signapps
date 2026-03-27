@@ -269,7 +269,7 @@ async function buildAIResponse(
     if (selectedAccounts.length > 0) {
       try {
         const btRes = await socialApi.ai.bestTime(selectedAccounts[0].id);
-        bestTimeInfo = `Best time to post: **${btRes.data.day} at ${btRes.data.hour}:00** -- ${btRes.data.reason}`;
+        bestTimeInfo = `Best time to post: **${(btRes.data as any).day} at ${(btRes.data as any).hour}:00** -- ${(btRes.data as any).reason}`;
       } catch {
         // API unavailable, use fallback data
       }

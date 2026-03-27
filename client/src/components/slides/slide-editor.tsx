@@ -136,7 +136,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
     const [copiedFormat, setCopiedFormat] = useState<CopiedTextFormat | null>(null)
 
     const [isListening, setIsListening] = useState(false)
-    const recognitionRef = useRef<SpeechRecognition | null>(null)
+    const recognitionRef = useRef<any>(null)
 
     // --- Page Setup State ---
     const [pageConfig, setPageConfig] = useState<{ orientation: 'portrait' | 'landscape', backgroundColor: string }>({ orientation: 'portrait', backgroundColor: '#ffffff' })
@@ -442,7 +442,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
             let finalTranscript = ""
 
-            recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+            recognitionRef.current.onresult = (event: any) => {
                 let interimTranscript = ""
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript
@@ -470,7 +470,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 }
             }
 
-            recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+            recognitionRef.current.onerror = (event: any) => {
                 console.debug("Speech recognition error", event.error)
                 setIsListening(false)
                 toast.error("Microphone issue: " + event.error)
