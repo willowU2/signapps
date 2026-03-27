@@ -6,6 +6,8 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use gateway::GatewayRouter;
+use models::ModelOrchestrator;
 use opendal::{
     services::{Fs, S3},
     Operator,
@@ -22,21 +24,30 @@ use tower::ServiceBuilder;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 mod embeddings;
+mod gateway;
 mod handlers;
 mod indexer;
 mod llm;
+mod memory;
+mod models;
 mod rag;
 mod vectors;
+mod workers;
 
 use embeddings::EmbeddingsClient;
 use handlers::{
-    action, chat, collections, health, index, model_management, models, providers, search,
-    transcription, webhook,
+    action, audio_gen, capabilities, chat, collections, conversations, doc_parse, gpu_status,
+    health, image_gen, index, model_management, models as model_handlers, providers, search,
+    search_image, transcription, video, vision, webhook,
 };
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
+use rag::chunker::TextChunker;
+use rag::circular_pipeline::CircularPipeline;
+use rag::multimodal_indexer::MultimodalIndexer;
 use rag::RagPipeline;
 use vectors::VectorService;
+use workers::traits::{AiWorker, MultimodalEmbedWorker, VisionWorker};
 
 /// Application state shared across handlers.
 #[derive(Clone)]
@@ -51,6 +62,8 @@ pub struct AppState {
     pub jwt_config: JwtConfig,
     pub model_manager: Option<Arc<ModelManager>>,
     pub hardware: Option<HardwareProfile>,
+    pub gateway: Option<Arc<GatewayRouter>>,
+    pub mm_indexer: Option<Arc<MultimodalIndexer>>,
 }
 
 impl AuthState for AppState {
@@ -116,7 +129,9 @@ async fn main() -> anyhow::Result<()> {
 
         Operator::new(builder)?.finish()
     } else {
-        let root = env_or("STORAGE_ROOT", "/data/signapps");
+        let root = std::env::var("STORAGE_FS_ROOT")
+            .or_else(|_| std::env::var("STORAGE_ROOT"))
+            .unwrap_or_else(|_| "./data/storage".to_string());
         let builder = Fs::default().root(&root);
         Operator::new(builder)?.finish()
     };
@@ -362,25 +377,330 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
+    // Initialize model orchestrator and gateway router
+    let orchestrator = Arc::new(ModelOrchestrator::new(
+        model_manager.clone(),
+        hardware.clone(),
+    ));
+    let gateway = Arc::new(GatewayRouter::new(orchestrator));
+    tracing::info!("Gateway router initialized");
+
+    // Register all workers based on environment variables
+    let registered = register_workers(&gateway).await;
+
+    // Initialize multimodal indexer with optional vision and multimodal embed workers
+    let mut mm_indexer = MultimodalIndexer::new(
+        embeddings.clone(),
+        vectors.clone(),
+        pool.clone(),
+        TextChunker::new(),
+    );
+    if let Some(embed) = registered.mm_embed {
+        mm_indexer = mm_indexer.with_multimodal_embed(embed);
+        tracing::info!("MultimodalIndexer: multimodal embeddings enabled");
+    }
+    if let Some(vis) = registered.vision {
+        mm_indexer = mm_indexer.with_vision(vis);
+        tracing::info!("MultimodalIndexer: vision descriptions enabled");
+    }
+    let mm_indexer = Arc::new(mm_indexer);
+
     // Create application state
     let state = AppState {
-        pool,
-        vectors,
-        embeddings,
+        pool: pool.clone(),
+        vectors: vectors.clone(),
+        embeddings: embeddings.clone(),
         providers,
-        storage,
+        storage: storage.clone(),
         rag,
         indexer,
         jwt_config,
         model_manager: Some(model_manager),
         hardware: Some(hardware),
+        gateway: Some(gateway),
+        mm_indexer: Some(mm_indexer.clone()),
     };
+
+    // Start background circular pipeline (auto-indexes generated media)
+    let circular = Arc::new(CircularPipeline::new(mm_indexer, pool, storage));
+    circular.start();
+    tracing::info!("Circular pipeline started");
 
     // Build router
     let app = create_router(state);
 
     // Start server using bootstrap helper
     signapps_common::bootstrap::run_server(app, &config).await
+}
+
+/// Workers returned from registration that are also needed by the multimodal indexer.
+struct RegisteredWorkers {
+    mm_embed: Option<Arc<dyn MultimodalEmbedWorker>>,
+    vision: Option<Arc<dyn VisionWorker>>,
+}
+
+/// Register AI workers into the gateway based on environment variables.
+///
+/// Each worker type supports both HTTP (self-hosted) and cloud variants.
+/// Workers are only registered when the corresponding env var is set.
+///
+/// Returns references to the multimodal embed and vision workers so they
+/// can also be wired into the [`MultimodalIndexer`].
+async fn register_workers(gateway: &GatewayRouter) -> RegisteredWorkers {
+    let mut mm_embed_worker: Option<Arc<dyn MultimodalEmbedWorker>> = None;
+    let mut vision_worker: Option<Arc<dyn VisionWorker>> = None;
+    // -----------------------------------------------------------------------
+    // Native workers (cfg-gated) — registered first so the gateway router
+    // prefers them over HTTP/Cloud backends (Native > Http > Cloud priority).
+    // -----------------------------------------------------------------------
+
+    // === Native Reranker (ONNX) ===
+    #[cfg(feature = "native-reranker")]
+    {
+        let model_path = std::env::var("RERANKER_ONNX_MODEL")
+            .unwrap_or_else(|_| "data/models/reranker/model.onnx".into());
+        let tokenizer_path = std::env::var("RERANKER_ONNX_TOKENIZER")
+            .unwrap_or_else(|_| "data/models/reranker/tokenizer.json".into());
+        match workers::reranker::NativeReranker::new(&model_path, &tokenizer_path) {
+            Ok(worker) => {
+                gateway.register(Arc::new(worker)).await;
+                tracing::info!("Registered native ONNX reranker");
+            },
+            Err(e) => tracing::warn!("Failed to load native reranker: {}", e),
+        }
+    }
+
+    // === Native Multimodal Embeddings (SigLIP ONNX) ===
+    #[cfg(feature = "native-embedmm")]
+    {
+        let text_model = std::env::var("SIGLIP_TEXT_MODEL")
+            .unwrap_or_else(|_| "data/models/siglip/text_model.onnx".into());
+        let vision_model = std::env::var("SIGLIP_VISION_MODEL")
+            .unwrap_or_else(|_| "data/models/siglip/vision_model.onnx".into());
+        let tokenizer = std::env::var("SIGLIP_TOKENIZER")
+            .unwrap_or_else(|_| "data/models/siglip/tokenizer.json".into());
+        let dim: usize = std::env::var("SIGLIP_DIM")
+            .ok()
+            .and_then(|d| d.parse().ok())
+            .unwrap_or(1024);
+        match workers::embeddings_mm::NativeSigLIP::new(&text_model, &vision_model, &tokenizer, dim)
+        {
+            Ok(worker) => {
+                let worker = Arc::new(worker);
+                mm_embed_worker = Some(worker.clone() as Arc<dyn MultimodalEmbedWorker>);
+                gateway.register(worker as Arc<dyn AiWorker>).await;
+                tracing::info!("Registered native SigLIP embeddings");
+            },
+            Err(e) => tracing::warn!("Failed to load native SigLIP: {}", e),
+        }
+    }
+
+    // === Native Vision (llama.cpp multimodal) ===
+    #[cfg(feature = "native-vision")]
+    {
+        if let Ok(model_path) = std::env::var("VISION_GGUF_MODEL") {
+            let ctx_size: u32 = std::env::var("VISION_CONTEXT_SIZE")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(4096);
+            let gpu_layers: i32 = std::env::var("VISION_GPU_LAYERS")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(-1);
+            let worker = Arc::new(workers::vision::NativeVision::new(
+                &model_path,
+                ctx_size,
+                gpu_layers,
+            ));
+            vision_worker = Some(worker.clone() as Arc<dyn VisionWorker>);
+            gateway.register(worker as Arc<dyn AiWorker>).await;
+            tracing::info!("Registered native vision (llama.cpp)");
+        }
+    }
+
+    // === Native Image Generation (candle) ===
+    #[cfg(feature = "native-imagegen")]
+    {
+        if let Ok(model_path) = std::env::var("IMAGEGEN_MODEL_PATH") {
+            let model_type_str =
+                std::env::var("IMAGEGEN_MODEL_TYPE").unwrap_or_else(|_| "sdxl".into());
+            let model_type = match model_type_str.as_str() {
+                "sd15" => workers::imagegen::native::DiffusionModelType::StableDiffusion15,
+                "sdxl" => workers::imagegen::native::DiffusionModelType::StableDiffusionXL,
+                "flux-schnell" => workers::imagegen::native::DiffusionModelType::Flux1Schnell,
+                "flux-dev" => workers::imagegen::native::DiffusionModelType::Flux1Dev,
+                _ => workers::imagegen::native::DiffusionModelType::StableDiffusionXL,
+            };
+            let worker = workers::imagegen::NativeImageGen::new(
+                std::path::PathBuf::from(model_path),
+                model_type,
+            );
+            gateway.register(Arc::new(worker)).await;
+            tracing::info!("Registered native image generation (candle)");
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // HTTP and Cloud workers — registered after native so the router
+    // uses them as fallbacks.
+    // -----------------------------------------------------------------------
+
+    // === Reranker ===
+    if let Ok(url) = std::env::var("RERANKER_URL") {
+        let model = std::env::var("RERANKER_MODEL").unwrap_or_else(|_| "default".into());
+        let worker = Arc::new(workers::reranker::HttpReranker::new(&url, &model));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("COHERE_API_KEY") {
+        let worker = Arc::new(workers::reranker::CloudReranker::new(&api_key, None));
+        gateway.register(worker).await;
+    }
+
+    // === Multimodal Embeddings ===
+    if let Ok(url) = std::env::var("MULTIMODAL_EMBED_URL") {
+        let model = std::env::var("MULTIMODAL_EMBED_MODEL").unwrap_or_else(|_| "siglip".into());
+        let dim = std::env::var("MULTIMODAL_EMBED_DIM")
+            .ok()
+            .and_then(|d| d.parse().ok())
+            .unwrap_or(1024);
+        let worker = Arc::new(workers::embeddings_mm::HttpMultimodalEmbed::new(
+            &url, &model, dim,
+        ));
+        if mm_embed_worker.is_none() {
+            mm_embed_worker = Some(worker.clone() as Arc<dyn MultimodalEmbedWorker>);
+        }
+        gateway.register(worker as Arc<dyn AiWorker>).await;
+    }
+    if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
+        let worker = Arc::new(workers::embeddings_mm::CloudMultimodalEmbed::new(
+            &api_key, None,
+        ));
+        if mm_embed_worker.is_none() {
+            mm_embed_worker = Some(worker.clone() as Arc<dyn MultimodalEmbedWorker>);
+        }
+        gateway.register(worker as Arc<dyn AiWorker>).await;
+    }
+
+    // === Vision ===
+    if let Ok(url) = std::env::var("VISION_URL") {
+        let model = std::env::var("VISION_MODEL").unwrap_or_else(|_| "default".into());
+        let worker = Arc::new(workers::vision::HttpVision::new(&url, &model));
+        if vision_worker.is_none() {
+            vision_worker = Some(worker.clone() as Arc<dyn VisionWorker>);
+        }
+        gateway.register(worker as Arc<dyn AiWorker>).await;
+    }
+    if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
+        let worker = Arc::new(workers::vision::CloudVision::new(&api_key, None));
+        if vision_worker.is_none() {
+            vision_worker = Some(worker.clone() as Arc<dyn VisionWorker>);
+        }
+        gateway.register(worker as Arc<dyn AiWorker>).await;
+    }
+
+    // === Image Generation ===
+    if let Ok(url) = std::env::var("IMAGEGEN_URL") {
+        let model = std::env::var("IMAGEGEN_MODEL").unwrap_or_else(|_| "default".into());
+        let worker = Arc::new(workers::imagegen::HttpImageGen::new(&url, &model));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
+        let model = std::env::var("IMAGEGEN_CLOUD_MODEL").unwrap_or_else(|_| "dall-e-3".into());
+        let worker = Arc::new(workers::imagegen::CloudImageGen::new(
+            &api_key,
+            Some(&model),
+        ));
+        gateway.register(worker).await;
+    }
+
+    // === Video Generation ===
+    if let Ok(url) = std::env::var("VIDEOGEN_URL") {
+        let model = std::env::var("VIDEOGEN_MODEL").unwrap_or_else(|_| "default".into());
+        let worker = Arc::new(workers::videogen::HttpVideoGen::new(&url, &model));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("REPLICATE_API_KEY") {
+        let model =
+            std::env::var("VIDEOGEN_CLOUD_MODEL").unwrap_or_else(|_| "minimax/video-01".into());
+        let worker = Arc::new(workers::videogen::CloudVideoGen::new(
+            &api_key,
+            Some(&model),
+        ));
+        gateway.register(worker).await;
+    }
+
+    // === Video Understanding ===
+    if let Ok(url) = std::env::var("VIDEO_UNDERSTAND_URL") {
+        let worker = Arc::new(workers::video_understand::HttpVideoUnderstand::new(&url));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("GEMINI_API_KEY") {
+        let model = std::env::var("GEMINI_MODEL").unwrap_or_else(|_| "gemini-1.5-pro".into());
+        let worker = Arc::new(workers::video_understand::CloudVideoUnderstand::new(
+            &api_key,
+            Some(&model),
+        ));
+        gateway.register(worker).await;
+    }
+
+    // === Audio Generation ===
+    if let Ok(url) = std::env::var("AUDIOGEN_URL") {
+        let model = std::env::var("AUDIOGEN_MODEL").unwrap_or_else(|_| "default".into());
+        let worker = Arc::new(workers::audiogen::HttpAudioGen::new(&url, &model));
+        gateway.register(worker).await;
+    }
+    if let Ok(api_key) = std::env::var("REPLICATE_API_KEY") {
+        let model =
+            std::env::var("AUDIOGEN_CLOUD_MODEL").unwrap_or_else(|_| "meta/musicgen:large".into());
+        let worker = Arc::new(workers::audiogen::CloudAudioGen::new(
+            &api_key,
+            Some(&model),
+        ));
+        gateway.register(worker).await;
+    }
+
+    // === Document Parsing ===
+    let ocr_url = std::env::var("OCR_URL").ok();
+    let worker = Arc::new(workers::docparse::NativeDocParse::new(ocr_url));
+    gateway.register(worker).await;
+
+    if let (Ok(endpoint), Ok(key)) = (
+        std::env::var("AZURE_DOC_ENDPOINT"),
+        std::env::var("AZURE_DOC_KEY"),
+    ) {
+        let worker = Arc::new(workers::docparse::CloudDocParse::new(&endpoint, &key));
+        gateway.register(worker).await;
+    }
+
+    // -----------------------------------------------------------------------
+    // Summary
+    // -----------------------------------------------------------------------
+    let caps = gateway.list_capabilities().await;
+    let available: Vec<_> = caps.iter().filter(|c| c.available).collect();
+    tracing::info!(
+        "Gateway initialized: {}/{} capabilities available ({} backends total)",
+        available.len(),
+        caps.len(),
+        caps.iter().map(|c| c.backends.len()).sum::<usize>()
+    );
+    for cap in &available {
+        tracing::info!(
+            "  {:?}: {} backend(s), quality={:.0}%{}",
+            cap.capability,
+            cap.backends.len(),
+            cap.local_quality * 100.0,
+            if cap.upgrade_recommended {
+                " [cloud upgrade recommended]"
+            } else {
+                ""
+            }
+        );
+    }
+
+    RegisteredWorkers {
+        mm_embed: mm_embed_worker,
+        vision: vision_worker,
+    }
 }
 
 /// Create the application router with all routes.
@@ -392,11 +712,46 @@ fn create_router(state: AppState) -> Router {
     let ai_routes = Router::new()
         // Search
         .route("/search", get(search::search))
+        .route("/search/image", post(search_image::search_by_image))
         // Chat
         .route("/chat", post(chat::chat))
         .route("/chat/stream", post(chat::chat_stream))
+        // Conversations
+        .route(
+            "/conversations",
+            get(conversations::list_conversations),
+        )
+        .route(
+            "/conversations/:id",
+            get(conversations::get_conversation)
+                .delete(conversations::delete_conversation),
+        )
         // AQ-AITR: whisper-rs meeting transcription
         .route("/transcribe", post(transcription::transcribe_audio))
+        // Vision
+        .route("/vision/describe", post(vision::describe_image))
+        .route("/vision/vqa", post(vision::visual_qa))
+        .route("/vision/batch", post(vision::batch_describe))
+        // Document parsing
+        .route("/document/parse", post(doc_parse::parse_document))
+        .route("/document/tables", post(doc_parse::extract_tables))
+        // Image generation
+        .route("/image/generate", post(image_gen::generate_image))
+        .route("/image/inpaint", post(image_gen::inpaint_image))
+        .route("/image/img2img", post(image_gen::img2img))
+        .route("/image/upscale", post(image_gen::upscale_image))
+        .route("/image/models", get(image_gen::list_image_models))
+        // Video generation & understanding
+        .route("/video/generate", post(video::generate_video))
+        .route("/video/img2video", post(video::img_to_video))
+        .route("/video/analyze", post(video::analyze_video))
+        .route("/video/extract-frames", post(video::extract_frames))
+        .route("/video/transcribe", post(video::transcribe_video))
+        .route("/video/models", get(video::list_models))
+        // Audio generation
+        .route("/audio/music", post(audio_gen::generate_music))
+        .route("/audio/sfx", post(audio_gen::generate_sfx))
+        .route("/audio/models", get(audio_gen::list_models))
         // Action Execution
         .route("/action", post(action::execute_action))
         // Index
@@ -421,7 +776,7 @@ fn create_router(state: AppState) -> Router {
             get(collections::get_collection_stats),
         )
         // Models & Providers
-        .route("/models", get(models::list_models))
+        .route("/models", get(model_handlers::list_models))
         .route("/providers", get(providers::list_providers))
         // Model management
         .route("/models/local", get(model_management::list_local_models))
@@ -437,6 +792,21 @@ fn create_router(state: AppState) -> Router {
                 .delete(model_management::delete_model),
         )
         .route("/hardware", get(model_management::get_hardware))
+        // Gateway: capabilities & GPU status
+        .route(
+            "/capabilities",
+            get(capabilities::list_capabilities),
+        )
+        .route(
+            "/capabilities/:cap",
+            get(capabilities::get_capability_advice),
+        )
+        .route("/gpu/status", get(gpu_status::get_gpu_status))
+        .route("/gpu/profiles", get(gpu_status::list_profiles))
+        .route(
+            "/models/recommended",
+            get(gpu_status::get_recommended_models),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

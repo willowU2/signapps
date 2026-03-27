@@ -17,7 +17,6 @@ import {
   Container,
   HardDrive,
   Network,
-  MessageSquare,
   MessagesSquare,
   Mail,
   Table,
@@ -57,7 +56,12 @@ import {
   Briefcase,
   Database,
   Palette,
-  Share2
+  Share2,
+  Brain,
+  Search,
+  FlaskConical,
+  FileStack,
+  Cog
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -100,6 +104,18 @@ const navGroupsConfig = [
     ]
   },
   {
+    label: 'AI',
+    icon: Brain,
+    adminOnly: false,
+    items: [
+      { href: '/ai', icon: Brain, label: 'Dashboard', enabled: FEATURES.AI },
+      { href: '/ai/studio', icon: FlaskConical, label: 'Studio', enabled: FEATURES.AI },
+      { href: '/ai/search', icon: Search, label: 'Search', enabled: FEATURES.AI },
+      { href: '/ai/documents', icon: FileStack, label: 'Documents', enabled: FEATURES.AI },
+      { href: '/ai/settings', icon: Cog, label: 'Settings', enabled: FEATURES.AI },
+    ]
+  },
+  {
     label: 'Infrastructure',
     icon: HardDrive,
     mode: 'admin',
@@ -133,7 +149,6 @@ const navGroupsConfig = [
     mode: 'admin',
     adminOnly: true,
     items: [
-      { href: '/ai', icon: MessageSquare, label: 'AI', enabled: FEATURES.AI },
       { href: '/media', icon: Mic, label: 'Media', enabled: FEATURES.MEDIA },
       { href: '/scheduler', icon: Clock, label: 'Scheduler', enabled: FEATURES.SCHEDULER },
       { href: '/analytics', icon: TrendingUp, label: 'Analytics', enabled: FEATURES.METRICS },

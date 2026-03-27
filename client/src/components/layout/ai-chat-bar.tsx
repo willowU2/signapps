@@ -4,10 +4,41 @@ import { SpinnerInfinity } from 'spinners-react';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bot, Mic, ArrowUp, ChevronDown, ChevronUp, X, Sparkles, ExternalLink, FileText, Square } from 'lucide-react';
+import {
+  Bot,
+  ArrowUp,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Sparkles,
+  ExternalLink,
+  FileText,
+  Square,
+  Paperclip,
+  ImageIcon,
+  AudioLines,
+  Video,
+  Wand2,
+  Plus,
+  History,
+  Trash2,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ToolCallDisplay, ToolCallInfo } from '@/components/ai/tool-call-display';
 import { VoiceInput } from '@/components/ui/voice-input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from '@/components/ui/dropdown-menu';
+import { useAiConversations, Conversation } from '@/hooks/use-ai-conversations';
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
   id: string;
@@ -15,8 +46,26 @@ interface ChatMessage {
   content: string;
   sources?: { document_id: string; filename: string; score: number; excerpt: string }[];
   toolCalls?: ToolCallInfo[];
+  generatedMedia?: GeneratedMedia[];
   timestamp: number;
 }
+
+interface Attachment {
+  id: string;
+  file: File;
+  preview?: string; // data URL for images
+  type: 'image' | 'document' | 'audio' | 'video';
+}
+
+interface GeneratedMedia {
+  type: 'image' | 'audio' | 'video';
+  url: string;
+  alt?: string;
+}
+
+type MediaGenMode = 'auto' | 'image' | 'audio' | 'none';
+
+// ─── Constants ──────────────────────────────────────────────────────────────
 
 const suggestions = [
   'Résumer les emails de cette semaine',
@@ -26,8 +75,44 @@ const suggestions = [
 
 const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:3005/api/v1';
 
+const MEDIA_MODE_LABELS: Record<MediaGenMode, { label: string; icon: typeof Wand2 }> = {
+  auto: { label: 'Auto', icon: Wand2 },
+  image: { label: 'Image', icon: ImageIcon },
+  audio: { label: 'Audio', icon: AudioLines },
+  none: { label: 'Aucun', icon: X },
+};
+
+const ACCEPTED_FILE_TYPES = 'image/*,.pdf,.doc,.docx,.txt,.md,.csv,.json,audio/*,video/*';
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function getFileType(file: File): Attachment['type'] {
+  if (file.type.startsWith('image/')) return 'image';
+  if (file.type.startsWith('audio/')) return 'audio';
+  if (file.type.startsWith('video/')) return 'video';
+  return 'document';
+}
+
+function formatRelativeDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 1) return "à l'instant";
+  if (diffMin < 60) return `il y a ${diffMin}min`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `il y a ${diffH}h`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return `il y a ${diffD}j`;
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+
 export function AiChatBar() {
   const router = useRouter();
+
+  // ── Existing state ──
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -38,6 +123,28 @@ export function AiChatBar() {
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // ── New state: conversation tracking ──
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationTitle, setConversationTitle] = useState<string>('Nouvelle conversation');
+
+  // ── New state: attachments ──
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── New state: media generation mode ──
+  const [mediaGenMode, setMediaGenMode] = useState<MediaGenMode>('auto');
+
+  // ── Conversation history store ──
+  const {
+    conversations,
+    fetchConversations,
+    fetchConversation,
+    currentConversation,
+    deleteConversation,
+  } = useAiConversations();
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  // ── Voice transcription ──
   const handleTranscription = useCallback((text: string, isFinal: boolean) => {
     if (isFinal) {
       setValue((prev) => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + text + ' ');
@@ -54,15 +161,81 @@ export function AiChatBar() {
     }
   }, [messages, expanded]);
 
+  // Load conversation when selected from history
+  useEffect(() => {
+    if (currentConversation) {
+      setConversationId(currentConversation.id);
+      setConversationTitle(currentConversation.title || 'Conversation');
+      const loaded: ChatMessage[] = currentConversation.messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({
+          id: m.id,
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          timestamp: new Date(m.created_at).getTime(),
+        }));
+      setMessages(loaded);
+      setExpanded(true);
+    }
+  }, [currentConversation]);
+
+  // ── Attachment handling ──
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newAttachments: Attachment[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const attachment: Attachment = {
+        id: `${Date.now()}-${i}`,
+        file,
+        type: getFileType(file),
+      };
+
+      // Generate preview for images
+      if (attachment.type === 'image') {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setAttachments((prev) =>
+            prev.map((a) =>
+              a.id === attachment.id ? { ...a, preview: ev.target?.result as string } : a
+            )
+          );
+        };
+        reader.readAsDataURL(file);
+      }
+
+      newAttachments.push(attachment);
+    }
+
+    setAttachments((prev) => [...prev, ...newAttachments]);
+
+    // Reset input so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
+  const removeAttachment = useCallback((id: string) => {
+    setAttachments((prev) => {
+      const att = prev.find((a) => a.id === id);
+      if (att?.preview) URL.revokeObjectURL(att.preview);
+      return prev.filter((a) => a.id !== id);
+    });
+  }, []);
+
+  // ── Stop streaming ──
   const stopStreaming = useCallback(() => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
     setIsStreaming(false);
   }, []);
 
+  // ── Send message (enhanced) ──
   const handleSend = useCallback(async (text?: string) => {
     const question = (text || value).trim();
     if (!question || isStreaming) return;
+
+    const currentAttachments = [...attachments];
 
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
@@ -73,6 +246,7 @@ export function AiChatBar() {
 
     setMessages((prev) => [...prev, userMsg]);
     setValue('');
+    setAttachments([]);
     setExpanded(true);
     setIsStreaming(true);
 
@@ -88,6 +262,32 @@ export function AiChatBar() {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
+    // Build request body with new fields
+    const requestBody: Record<string, unknown> = {
+      question,
+      language: 'fr',
+      include_sources: true,
+      enable_tools: true,
+    };
+
+    if (conversationId) {
+      requestBody.conversation_id = conversationId;
+    }
+
+    if (mediaGenMode !== 'auto') {
+      requestBody.generate_media = mediaGenMode === 'none' ? false : mediaGenMode;
+    }
+
+    // Attach file metadata (names, types, sizes)
+    if (currentAttachments.length > 0) {
+      requestBody.attachments = currentAttachments.map((a) => ({
+        filename: a.file.name,
+        content_type: a.file.type,
+        size: a.file.size,
+        type: a.type,
+      }));
+    }
+
     try {
       const res = await fetch(`${AI_URL}/ai/chat/stream`, {
         method: 'POST',
@@ -95,12 +295,7 @@ export function AiChatBar() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          question,
-          language: 'fr',
-          include_sources: true,
-          enable_tools: true,
-        }),
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
 
@@ -112,19 +307,25 @@ export function AiChatBar() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            question,
-            language: 'fr',
-            include_sources: true,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         if (fallbackRes.ok) {
           const data = await fallbackRes.json();
+          // Track conversation_id from response
+          if (data.conversation_id) {
+            setConversationId(data.conversation_id);
+            if (data.conversation_title) setConversationTitle(data.conversation_title);
+          }
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
-                ? { ...m, content: data.answer, sources: data.sources }
+                ? {
+                    ...m,
+                    content: data.answer,
+                    sources: data.sources,
+                    generatedMedia: data.generated_media,
+                  }
                 : m
             )
           );
@@ -213,7 +414,34 @@ export function AiChatBar() {
                   return { ...m, toolCalls };
                 })
               );
+            } else if (event.type === 'media') {
+              // Handle generated media in stream
+              setMessages((prev) =>
+                prev.map((m) => {
+                  if (m.id !== assistantId) return m;
+                  const existing = m.generatedMedia || [];
+                  return {
+                    ...m,
+                    generatedMedia: [...existing, {
+                      type: event.media_type || 'image',
+                      url: event.url,
+                      alt: event.alt,
+                    }],
+                  };
+                })
+              );
+            } else if (event.type === 'conversation') {
+              // Track conversation ID from stream
+              if (event.conversation_id) {
+                setConversationId(event.conversation_id);
+                if (event.title) setConversationTitle(event.title);
+              }
             } else if (event.type === 'done') {
+              // Check for conversation_id in done event
+              if (event.conversation_id) {
+                setConversationId(event.conversation_id);
+                if (event.title) setConversationTitle(event.title);
+              }
               break;
             } else if (event.type === 'error') {
               setMessages((prev) =>
@@ -243,17 +471,48 @@ export function AiChatBar() {
       setIsStreaming(false);
       abortControllerRef.current = null;
     }
-  }, [value, isStreaming]);
+  }, [value, isStreaming, attachments, conversationId, mediaGenMode]);
 
   const handleSuggestion = (suggestion: string) => {
     setFocused(false);
     handleSend(suggestion);
   };
 
+  // ── New conversation ──
+  const startNewConversation = useCallback(() => {
+    setConversationId(null);
+    setConversationTitle('Nouvelle conversation');
+    setMessages([]);
+    setAttachments([]);
+    setExpanded(false);
+  }, []);
+
+  // ── Load conversation from history ──
+  const loadConversation = useCallback((conv: Conversation) => {
+    fetchConversation(conv.id);
+  }, [fetchConversation]);
+
+  // ── Open history ──
+  const handleOpenHistory = useCallback(() => {
+    if (!historyLoaded) {
+      fetchConversations();
+      setHistoryLoaded(true);
+    }
+  }, [historyLoaded, fetchConversations]);
+
   const clearChat = () => {
     setMessages([]);
+    setAttachments([]);
+    setConversationId(null);
+    setConversationTitle('Nouvelle conversation');
     setExpanded(false);
   };
+
+  // Combined input value with interim text
+  const displayValue = value + (interimText ? (value && !value.endsWith(' ') ? ' ' : '') + interimText : '');
+
+  // ── Media generation mode icon ──
+  const MediaIcon = MEDIA_MODE_LABELS[mediaGenMode].icon;
 
   return (
     <div className="fixed bottom-6 left-1/2 z-50 w-full max-w-2xl -translate-x-1/2 px-4">
@@ -284,16 +543,73 @@ export function AiChatBar() {
       {/* Expanded chat panel */}
       {expanded && (
         <div className="mb-3 flex flex-col rounded-xl border border-border bg-card shadow-xl overflow-hidden">
-          {/* Chat header */}
+          {/* Chat header with conversation selector */}
           <div className="flex items-center justify-between border-b border-border px-4 py-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-ai-purple" />
-              <span className="text-xs font-semibold">SignApps AI</span>
-              <span className="text-[10px] text-muted-foreground">
-                {messages.filter((m) => m.role === 'user').length} message{messages.filter((m) => m.role === 'user').length !== 1 ? 's' : ''}
+            <div className="flex items-center gap-2 min-w-0">
+              <Sparkles className="h-4 w-4 shrink-0 text-ai-purple" />
+              <span className="text-xs font-semibold truncate" title={conversationTitle}>
+                {conversationTitle}
+              </span>
+              <span className="text-[10px] text-muted-foreground shrink-0">
+                {messages.filter((m) => m.role === 'user').length} msg
               </span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
+              {/* New conversation */}
+              <button
+                onClick={startNewConversation}
+                className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title="Nouvelle conversation"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+
+              {/* Conversation history dropdown */}
+              <DropdownMenu onOpenChange={(open) => { if (open) handleOpenHistory(); }}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    title="Historique des conversations"
+                  >
+                    <History className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 max-h-72 overflow-y-auto">
+                  <DropdownMenuLabel className="text-xs">Conversations récentes</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {conversations.length === 0 ? (
+                    <div className="px-2 py-3 text-center text-xs text-muted-foreground">
+                      Aucune conversation
+                    </div>
+                  ) : (
+                    conversations.slice(0, 20).map((conv) => (
+                      <DropdownMenuItem
+                        key={conv.id}
+                        className="flex items-center justify-between gap-2 text-xs cursor-pointer"
+                        onSelect={() => loadConversation(conv)}
+                      >
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <span className="truncate font-medium">{conv.title || 'Sans titre'}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {conv.message_count} msg &middot; {formatRelativeDate(conv.updated_at)}
+                          </span>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteConversation(conv.id);
+                          }}
+                          className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Open full AI page */}
               <button
                 onClick={() => router.push('/ai')}
                 className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -301,6 +617,7 @@ export function AiChatBar() {
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </button>
+              {/* Collapse */}
               <button
                 onClick={() => setExpanded(false)}
                 className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -308,6 +625,7 @@ export function AiChatBar() {
               >
                 <ChevronDown className="h-3.5 w-3.5" />
               </button>
+              {/* Clear */}
               <button
                 onClick={clearChat}
                 className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
@@ -356,6 +674,34 @@ export function AiChatBar() {
                       <span className="text-xs text-muted-foreground">Réflexion...</span>
                     </div>
                   )}
+
+                  {/* Generated media */}
+                  {msg.generatedMedia && msg.generatedMedia.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {msg.generatedMedia.map((media, i) => (
+                        <div key={`media-${i}`} className="rounded-lg overflow-hidden border border-border/50">
+                          {media.type === 'image' && (
+                            <img
+                              src={media.url}
+                              alt={media.alt || 'Image générée'}
+                              className="max-w-full max-h-48 object-contain"
+                            />
+                          )}
+                          {media.type === 'audio' && (
+                            <audio controls className="w-full" src={media.url}>
+                              <track kind="captions" />
+                            </audio>
+                          )}
+                          {media.type === 'video' && (
+                            <video controls className="max-w-full max-h-48" src={media.url}>
+                              <track kind="captions" />
+                            </video>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Sources */}
                   {msg.sources && msg.sources.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
@@ -380,6 +726,40 @@ export function AiChatBar() {
         </div>
       )}
 
+      {/* Attachment previews */}
+      {attachments.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2 px-2">
+          {attachments.map((att) => (
+            <div
+              key={att.id}
+              className="group relative flex items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 text-xs shadow-sm"
+            >
+              {att.preview ? (
+                <img
+                  src={att.preview}
+                  alt={att.file.name}
+                  className="h-8 w-8 rounded object-cover"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded bg-muted">
+                  {att.type === 'audio' && <AudioLines className="h-3.5 w-3.5 text-muted-foreground" />}
+                  {att.type === 'video' && <Video className="h-3.5 w-3.5 text-muted-foreground" />}
+                  {att.type === 'document' && <FileText className="h-3.5 w-3.5 text-muted-foreground" />}
+                  {att.type === 'image' && <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />}
+                </div>
+              )}
+              <span className="max-w-24 truncate text-muted-foreground">{att.file.name}</span>
+              <button
+                onClick={() => removeAttachment(att.id)}
+                className="ml-0.5 rounded-full p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Input bar */}
       <div className="glass-panel flex items-center rounded-full p-2 shadow-2xl ai-glow">
         {/* Bot icon */}
@@ -392,12 +772,29 @@ export function AiChatBar() {
           <Bot className="h-5 w-5" />
         </div>
 
+        {/* Attachment button */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-background/10 hover:text-white"
+          title="Joindre un fichier"
+        >
+          <Paperclip className="h-4 w-4" />
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept={ACCEPTED_FILE_TYPES}
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
         {/* Input */}
         <input
           ref={inputRef}
           type="text"
           placeholder="Demander à SignApps AI..."
-          value={value + (interimText ? (value && !value.endsWith(' ') ? ' ' : '') + interimText : '')}
+          value={displayValue}
           onChange={(e) => {
             setValue(e.target.value);
             setInterimText('');
@@ -407,14 +804,49 @@ export function AiChatBar() {
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              handleSend(value + (interimText ? (value && !value.endsWith(' ') ? ' ' : '') + interimText : ''));
+              handleSend(displayValue);
             }
           }}
-          className="flex-1 border-none bg-transparent px-4 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-0"
+          className="flex-1 border-none bg-transparent px-3 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:ring-0"
         />
 
         {/* Actions */}
-        <div className="flex items-center gap-2 pr-2">
+        <div className="flex items-center gap-1 pr-2">
+          {/* Media generation mode dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  'flex h-8 items-center gap-1 rounded-full px-2 text-xs transition-colors',
+                  mediaGenMode !== 'auto'
+                    ? 'bg-ai-purple/20 text-ai-purple'
+                    : 'text-slate-400 hover:bg-background/10 hover:text-white'
+                )}
+                title={`Génération média : ${MEDIA_MODE_LABELS[mediaGenMode].label}`}
+              >
+                <MediaIcon className="h-3.5 w-3.5" />
+                {mediaGenMode !== 'auto' && (
+                  <span className="hidden sm:inline">{MEDIA_MODE_LABELS[mediaGenMode].label}</span>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuLabel className="text-xs">Génération média</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={mediaGenMode} onValueChange={(v) => setMediaGenMode(v as MediaGenMode)}>
+                {(Object.keys(MEDIA_MODE_LABELS) as MediaGenMode[]).map((mode) => {
+                  const { label, icon: Icon } = MEDIA_MODE_LABELS[mode];
+                  return (
+                    <DropdownMenuRadioItem key={mode} value={mode} className="text-xs cursor-pointer">
+                      <Icon className="mr-2 h-3.5 w-3.5" />
+                      {label}
+                    </DropdownMenuRadioItem>
+                  );
+                })}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Expand/collapse toggle */}
           {messages.length > 0 && (
             <button
@@ -441,15 +873,15 @@ export function AiChatBar() {
             </button>
           ) : (
             <>
-              <VoiceInput 
-                onTranscription={handleTranscription} 
+              <VoiceInput
+                onTranscription={handleTranscription}
               />
               <button
-                onClick={() => handleSend(value + (interimText ? (value && !value.endsWith(' ') ? ' ' : '') + interimText : ''))}
-                disabled={!(value.trim() || interimText.trim())}
+                onClick={() => handleSend(displayValue)}
+                disabled={!(value.trim() || interimText.trim() || attachments.length > 0)}
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-full transition-all',
-                  value.trim()
+                  value.trim() || attachments.length > 0
                     ? 'bg-background/20 text-white hover:bg-background/30'
                     : 'text-slate-500'
                 )}

@@ -32,16 +32,84 @@ dotenvy = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true }
 anyhow = { workspace = true }
+dashmap = { workspace = true }
 futures-util = { workspace = true }
 async-stream = { workspace = true }
 async-trait = { workspace = true }
+bytes = { workspace = true }
+base64 = { workspace = true }
+mime_guess = { workspace = true }
 
 # Native LLM inference
 llama-cpp-2 = { version = "0.1", optional = true }
 
+# Native AI inference (candle)
+candle-core = { version = "0.9", optional = true }
+candle-nn = { version = "0.9", optional = true }
+candle-transformers = { version = "0.9", optional = true }
+
+# ONNX Runtime
+ort = { version = "2.0.0-rc", optional = true }
+
+# Image processing
+image = { version = "0.25", optional = true }
+
+# Video processing
+ffmpeg-next = { version = "8", optional = true }
+
+# Hugging Face model hub
+hf-hub = { version = "0.5", optional = true }
+
+# Tokenizers
+tokenizers = { version = "0.22", optional = true }
+
+# Random number generation (for seed generation in native pipelines)
+rand = { workspace = true, optional = true }
+
 [features]
 default = []
+
+# Native LLM inference via llama.cpp
 native-llm = ["dep:llama-cpp-2"]
-cuda = ["llama-cpp-2/cuda"]
-metal = ["llama-cpp-2/metal"]
-vulkan = ["llama-cpp-2/vulkan"]
+cuda = ["llama-cpp-2?/cuda"]
+metal = ["llama-cpp-2?/metal"]
+vulkan = ["llama-cpp-2?/vulkan"]
+
+# Native vision analysis (multimodal llama.cpp)
+native-vision = ["dep:llama-cpp-2"]
+
+# Native image generation (candle Stable Diffusion / FLUX)
+native-imagegen = ["dep:candle-core", "dep:candle-nn", "dep:candle-transformers", "dep:image", "dep:hf-hub", "dep:tokenizers", "dep:rand"]
+
+# Native video generation (candle + ffmpeg)
+native-videogen = ["dep:candle-core", "dep:candle-nn", "dep:candle-transformers", "dep:ffmpeg-next", "dep:image"]
+
+# Native audio generation (candle)
+native-audiogen = ["dep:candle-core", "dep:candle-nn", "dep:candle-transformers"]
+
+# Native reranker (ONNX bge-reranker)
+native-reranker = ["dep:ort", "dep:tokenizers"]
+
+# Native multimodal embeddings (ONNX SigLIP)
+native-embedmm = ["dep:ort", "dep:image", "dep:tokenizers"]
+
+# Native document parsing (ONNX layout models)
+native-docparse = ["dep:ort", "dep:image"]
+
+# Bundle all native features
+native-all = [
+    "native-llm",
+    "native-vision",
+    "native-imagegen",
+    "native-videogen",
+    "native-audiogen",
+    "native-reranker",
+    "native-embedmm",
+    "native-docparse",
+]
+
+# GPU acceleration for candle/ort backends
+gpu-cuda = []
+gpu-rocm = []
+gpu-vulkan = []
+gpu-metal = []

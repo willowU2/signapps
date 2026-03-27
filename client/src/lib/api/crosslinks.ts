@@ -52,6 +52,6 @@ export const signaturesApi = {
 };
 
 export const auditApi = {
-  query: (params: { entity_type: string; entity_id: string; limit?: number }) =>
+  query: (params: { entity_type?: string; entity_id?: string; limit?: number }) =>
     client().get<AuditLogEntry[]>('/audit', { params }),
 };

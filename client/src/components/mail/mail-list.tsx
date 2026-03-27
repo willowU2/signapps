@@ -16,7 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const PAGE_SIZE = 20
 
-interface MailListProps extends ComponentProps<"div"> {
+interface MailListProps extends Omit<ComponentProps<"div">, "onSelect"> {
     items: Mail[]
     selectedId: string | null
     onSelect: (id: string) => void

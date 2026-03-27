@@ -65,7 +65,7 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
     match result {
         Ok(()) => {
             tracing::info!("Root database migrations executed successfully");
-            
+
             // Now run CRATE migrations
             let migrator_crate = sqlx::migrate!("./migrations");
             match migrator_crate.run(&mut *conn).await {
@@ -78,7 +78,7 @@ pub async fn run_migrations(pool: &DatabasePool) -> Result<(), sqlx::migrate::Mi
                     tracing::error!("Crate database migrations failed: {}", e);
                     let _ = conn.detach();
                     Err(e)
-                }
+                },
             }
         },
         Err(e) => {

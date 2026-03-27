@@ -81,7 +81,7 @@ services/
   signapps-containers/  → Port 3002 – Docker container lifecycle (bollard)
   signapps-proxy/       → Port 3003 – Reverse proxy, TLS/ACME, SmartShield
   signapps-storage/     → Port 3004 – File storage (OpenDAL: local FS or S3)
-  signapps-ai/          → Port 3005 – RAG, LLM (multi-provider + native GGUF), pgvector, indexing
+  signapps-ai/          → Port 3005 – AI Gateway: RAG multimodal, LLM, Vision, ImageGen, VideoGen, AudioGen, Reranking
   signapps-securelink/  → Port 3006 – Web tunnels, DNS with ad-blocking
   signapps-scheduler/   → Port 3007 – CRON job management
   signapps-metrics/     → Port 3008 – System monitoring, Prometheus, alerts
@@ -101,6 +101,12 @@ migrations/           → PostgreSQL schema migrations (including pgvector)
 | TTS | piper-rs (native) or HTTP backend | Text-to-speech synthesis |
 | OCR | ocrs + rten (native) or HTTP backend | Optical character recognition |
 | LLM | llama-cpp-2 (native GGUF) + cloud APIs | Language model inference |
+| Vision | llama.cpp multimodal / HTTP / cloud (GPT-4o) | Image analysis, VQA |
+| Image Gen | candle (SD/FLUX) / HTTP (ComfyUI) / cloud (DALL-E) | Text-to-image generation |
+| Video | HTTP / cloud (Gemini, Replicate) | Video understanding + generation |
+| Audio Gen | candle (MusicGen) / HTTP / cloud (Replicate) | Music + SFX generation |
+| Reranking | ONNX Runtime (bge-reranker) / HTTP (TEI) / cloud (Cohere) | Search result reranking |
+| MM Embeddings | ONNX Runtime (SigLIP) / HTTP / cloud (OpenAI) | Cross-modal search (text↔image) |
 | Hardware | sysinfo + GPU probes | Auto-detect GPU/VRAM for model selection |
 
 ### Service Pattern
@@ -123,7 +129,10 @@ Every Rust service follows the same structure:
 - Repository pattern: each entity has a `*Repository` with CRUD methods taking `&PgPool`
 - Models map 1:1 to PostgreSQL tables in the `identity` schema
 - `create_pool(url)` and `run_migrations(pool)` for initialization
-- `VectorRepository` for pgvector operations (384-dim embeddings, HNSW index)
+- `VectorRepository` for pgvector operations (384-dim text embeddings, HNSW index)
+- `MultimodalVectorRepository` for 1024-dim SigLIP multimodal embeddings
+- `ConversationRepository` for AI chat history persistence
+- `GeneratedMediaRepository` for tracking AI-generated media outputs
 
 **signapps-cache:**
 - `CacheService` wrapping `moka::future::Cache` (TTL cache) + `DashMap` (atomic counters)
@@ -144,6 +153,44 @@ Every Rust service follows the same structure:
 - **Routing:** Next.js App Router – pages in `app/`, layouts handle auth guards
 - **Forms:** react-hook-form + zod validation
 - **Real-time:** xterm.js for container logs, EventSource/SSE for streaming
+
+### AI Gateway Architecture (signapps-ai)
+
+signapps-ai is a unified AI gateway with trait-based workers:
+
+```
+gateway/         → Router (Native>Http>Cloud), QualityAdvisor, capability registry
+workers/         → 10 capability workers, each with native/http/cloud backends
+  ├── llm/         LLM chat (Ollama, vLLM, OpenAI, Anthropic, Gemini, llama.cpp)
+  ├── vision/      Image analysis, VQA (vLLM multimodal, GPT-4o Vision)
+  ├── imagegen/    Text-to-image (ComfyUI/A1111, DALL-E 3, candle SD/FLUX)
+  ├── videogen/    Video generation (HTTP, Replicate)
+  ├── video_understand/  Video analysis (HTTP, Gemini 1.5 Pro)
+  ├── audiogen/    Music/SFX generation (HTTP, Replicate)
+  ├── reranker/    Search reranking (TEI, Cohere, ONNX bge-reranker)
+  ├── embeddings_mm/  Multimodal embeddings (SigLIP HTTP, OpenAI, ONNX native)
+  └── docparse/    Document parsing (ocrs native, Azure Doc Intelligence)
+rag/             → Multimodal RAG: dual-space indexer, RRF fusion search, circular pipeline
+memory/          → Conversation memory, context builder, auto-summarizer
+models/          → Multi-GPU model orchestrator with LRU eviction, hardware profiles
+```
+
+**Key patterns:**
+- `AiWorker` base trait + specialized traits (VisionWorker, ImageGenWorker, etc.)
+- `GatewayRouter` routes to best worker: Native > Http > Cloud (unless cloud quality >> local)
+- `ModelOrchestrator` manages VRAM across GPUs with LRU eviction
+- Dual-space pgvector: text 384d (nomic-embed) + multimodal 1024d (SigLIP)
+- Circular pipeline: generated outputs are auto-indexed back into RAG
+
+**Feature flags for native backends:**
+```
+native-reranker    → ONNX bge-reranker
+native-embedmm    → ONNX SigLIP
+native-vision     → llama.cpp multimodal
+native-imagegen   → candle Stable Diffusion / FLUX
+native-all        → all native backends
+gpu-rocm / gpu-cuda / gpu-metal / gpu-vulkan
+```
 
 ### API URL Convention
 
@@ -238,9 +285,23 @@ STT_URL=                                 # empty = native whisper-rs
 TTS_URL=                                 # empty = native piper-rs
 OCR_URL=                                 # empty = native ocrs
 AI_URL=http://localhost:3005/api/v1      # AI service URL for voice pipeline
+
+# AI Multimodal Gateway (signapps-ai)
+RERANKER_URL=                            # TEI reranking endpoint
+COHERE_API_KEY=                          # Cohere cloud reranker
+MULTIMODAL_EMBED_URL=                    # SigLIP/CLIP HTTP service
+VISION_URL=                              # vLLM/Ollama multimodal endpoint
+IMAGEGEN_URL=                            # ComfyUI/A1111 API endpoint
+VIDEOGEN_URL=                            # Video generation service
+VIDEO_UNDERSTAND_URL=                    # Video analysis service
+AUDIOGEN_URL=                            # Audio generation service
+REPLICATE_API_KEY=                       # Replicate (video gen, audio gen)
+GEMINI_API_KEY=                          # Gemini (video understanding)
+AZURE_DOC_ENDPOINT=                      # Azure Document Intelligence
+AZURE_DOC_KEY=                           # Azure Document Intelligence key
 ```
 
-See `.env.example` for the full list.
+See `.env.example` for the full list including native model paths.
 
 ## Préférences de développement
 

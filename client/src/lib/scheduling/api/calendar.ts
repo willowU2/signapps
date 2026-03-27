@@ -398,10 +398,10 @@ export async function fetchTemplates(): Promise<EventTemplate[]> {
   try {
     const response = await calendarApi.get<EventTemplate[]>(TEMPLATES_API_PATH);
     const templates = (response.data || []).map(
-      (t: EventTemplate & { createdAt: string; updatedAt: string }) => ({
+      (t) => ({
         ...t,
-        createdAt: new Date(t.createdAt),
-        updatedAt: new Date(t.updatedAt),
+        createdAt: new Date(t.createdAt as unknown as string),
+        updatedAt: new Date(t.updatedAt as unknown as string),
       })
     );
     // Update local cache with fresh data from API
