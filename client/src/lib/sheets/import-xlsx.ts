@@ -39,30 +39,27 @@ export async function importXlsxToYjs(
 
   const sheetsMetaV2 = doc.getArray<{ id: string; name: string }>('sheets-meta-v2');
 
-  // Step 1: Rename existing default sheet to first Excel sheet name
-  if (sheetsMetaV2.length > 0) {
-    const first = sheetsMetaV2.get(0);
-    doc.transact(() => {
-      sheetsMetaV2.delete(0, 1);
-      sheetsMetaV2.insert(0, [{ id: first.id, name: sheetNames[0] }]);
-    });
-  }
+  // Step 1: Clear all existing sheets and rebuild from scratch.
+  // Re-use the first sheet's ID (typically 'default') so existing grid data
+  // gets overwritten rather than orphaned, but remove every extra sheet that
+  // might be left over from a previous import.
+  const firstId = sheetsMetaV2.length > 0 ? sheetsMetaV2.get(0).id : 'default';
 
-  // Step 2: Create additional sheets — IDs generated upfront so they're
-  // immediately available for data writes (no polling needed)
-  const newSheetIds: string[] = [];
-  for (let i = 1; i < sheetNames.length; i++) {
-    const id = crypto.randomUUID ? crypto.randomUUID() : `sheet-${Date.now()}-${i}`;
-    newSheetIds.push(id);
-  }
+  doc.transact(() => {
+    // Delete all existing sheet metadata
+    if (sheetsMetaV2.length > 0) {
+      sheetsMetaV2.delete(0, sheetsMetaV2.length);
+    }
 
-  if (newSheetIds.length > 0) {
-    doc.transact(() => {
-      for (let i = 0; i < newSheetIds.length; i++) {
-        sheetsMetaV2.push([{ id: newSheetIds[i], name: sheetNames[i + 1] }]);
-      }
-    });
-  }
+    // Insert first Excel sheet re-using the original default ID
+    sheetsMetaV2.push([{ id: firstId, name: sheetNames[0] }]);
+
+    // Create additional sheets with fresh IDs
+    for (let i = 1; i < sheetNames.length; i++) {
+      const id = crypto.randomUUID ? crypto.randomUUID() : `sheet-${Date.now()}-${i}`;
+      sheetsMetaV2.push([{ id, name: sheetNames[i] }]);
+    }
+  });
 
   // Step 3: Build the complete sheet ID list
   const allEntries = sheetsMetaV2.toArray();

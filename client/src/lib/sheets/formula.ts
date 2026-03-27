@@ -82,6 +82,19 @@ function parseCellRef(ref: string): CellRef | null {
     return { col: colToIndex(match[1]), row: parseInt(match[2]) - 1 };
 }
 
+/** Parse a column-only reference like "A" or a full cell ref like "A1".
+ *  Returns { col, row } where row is undefined for whole-column refs. */
+function parseColOrCellRef(ref: string): { col: number; row?: number } | null {
+    const clean = ref.replace(/\$/g, '');
+    // Full cell ref: A1, AB123
+    const full = clean.match(/^([A-Z]+)([0-9]+)$/);
+    if (full) return { col: colToIndex(full[1]), row: parseInt(full[2]) - 1 };
+    // Column-only ref: A, AB
+    const colOnly = clean.match(/^([A-Z]+)$/);
+    if (colOnly) return { col: colToIndex(colOnly[1]) };
+    return null;
+}
+
 function extractSheetPrefix(ref: string): { sheet?: string, rest: string } {
     const m = ref.match(/^(?:'([^']+)'|([A-Z][A-Z0-9_]*))!(.+)$/i);
     if (m) return { sheet: m[1] || m[2], rest: m[3] };
@@ -93,18 +106,22 @@ function resolveRange(rangeStr: string, getData: CellValueGetter, currentCell: {
     const targetSheet = sheet || currentCell?.sheet;
     const parts = rest.replace(/\$/g, '').split(':');
     if (parts.length !== 2) return [];
-    const start = parseCellRef(parts[0]);
-    const end = parseCellRef(parts[1]);
+    // Try full cell refs first, fall back to column-only refs for whole-column ranges
+    const start = parseCellRef(parts[0]) || parseColOrCellRef(parts[0]);
+    const end = parseCellRef(parts[1]) || parseColOrCellRef(parts[1]);
     if (!start || !end) return [];
 
-    const minRow = Math.min(start.row, end.row), maxRow = Math.max(start.row, end.row);
+    const minRow = Math.min(start.row ?? 0, end.row ?? 9999);
+    const maxRow = Math.max(start.row ?? 0, end.row ?? 9999);
     const minCol = Math.min(start.col, end.col), maxCol = Math.max(start.col, end.col);
     const values: number[] = [];
+    let emptyStreak = 0;
 
     for (let r = minRow; r <= maxRow; r++) {
         for (let c = minCol; c <= maxCol; c++) {
             const rawVal = getData(r, c, targetSheet);
             if (rawVal) {
+                emptyStreak = 0;
                 const evaluated = rawVal.startsWith('=')
                     ? evaluateFormula(rawVal, getData, { r, c, sheet: targetSheet }, visited)
                     : rawVal;
@@ -112,6 +129,9 @@ function resolveRange(rangeStr: string, getData: CellValueGetter, currentCell: {
                 if (!isNaN(num)) values.push(num);
             }
         }
+        // Optimization for whole-column ranges: stop after 50 consecutive empty rows
+        if (!getData(r, minCol, targetSheet)) emptyStreak++; else emptyStreak = 0;
+        if (emptyStreak > 50 && (start.row === undefined || end.row === undefined)) break;
     }
     return values;
 }
@@ -121,22 +141,30 @@ function resolveRangeStrings(rangeStr: string, getData: CellValueGetter, current
     const targetSheet = sheet || currentCell?.sheet;
     const parts = rest.replace(/\$/g, '').split(':');
     if (parts.length !== 2) return [];
-    const start = parseCellRef(parts[0]);
-    const end = parseCellRef(parts[1]);
+    // Try full cell refs first, fall back to column-only refs for whole-column ranges
+    const start = parseCellRef(parts[0]) || parseColOrCellRef(parts[0]);
+    const end = parseCellRef(parts[1]) || parseColOrCellRef(parts[1]);
     if (!start || !end) return [];
 
-    const minRow = Math.min(start.row, end.row), maxRow = Math.max(start.row, end.row);
+    const minRow = Math.min(start.row ?? 0, end.row ?? 9999);
+    const maxRow = Math.max(start.row ?? 0, end.row ?? 9999);
     const minCol = Math.min(start.col, end.col), maxCol = Math.max(start.col, end.col);
     const values: string[] = [];
+    let emptyStreak = 0;
 
     for (let r = minRow; r <= maxRow; r++) {
+        let rowHasData = false;
         for (let c = minCol; c <= maxCol; c++) {
             const rawVal = getData(r, c, targetSheet) || '';
+            if (rawVal) rowHasData = true;
             const evaluated = rawVal.startsWith('=')
                 ? evaluateFormula(rawVal, getData, { r, c, sheet: targetSheet }, visited)
                 : rawVal;
             values.push(evaluated);
         }
+        // Optimization for whole-column ranges: stop after 50 consecutive empty rows
+        emptyStreak = rowHasData ? 0 : emptyStreak + 1;
+        if (emptyStreak > 50 && (start.row === undefined || end.row === undefined)) break;
     }
     return values;
 }

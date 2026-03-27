@@ -385,10 +385,14 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
         const arr = sheetsMetaV2.toArray()
         // Allow unquoted names space resilient search
         const cleanName = sheetName.replace(/^'|'$/g, '')
-        const match = arr.find(s => s.name.toUpperCase() === cleanName.toUpperCase())
+        const match = arr.find((s: any) => s.name.toUpperCase() === cleanName.toUpperCase())
         if (!match) return ''
         const gridMap = doc.getMap<CellData>(`grid-${match.id}`)
-        return gridMap.get(`${r},${c}`)?.value || ''
+        const cell = gridMap.get(`${r},${c}`)
+        if (!cell) return ''
+        // Return the formula if present so the evaluator can compute it;
+        // fall back to the cached value otherwise.
+        return cell.formula || cell.value || ''
     }, [doc])
 
     const undo = useCallback(() => { undoManagerRef.current?.undo() }, [])

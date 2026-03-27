@@ -1,4 +1,4 @@
-import { SHEET_ERRORS } from "../formula";
+import { SHEET_ERRORS, colToIndex, evaluateFormula } from "../formula";
 import { registerFunction } from "./registry";
 
 export function registerLogicFunctions() {
@@ -191,8 +191,101 @@ export function registerLogicFunctions() {
     registerFunction("FILTER", filterFn);
     registerFunction("FILTRE", filterFn);
 
-    const vlookupFn: import('./registry').SheetFunction = () => {
-        return SHEET_ERRORS.NA;
+    // VLOOKUP(search_key, range, col_index, [is_sorted])
+    // Supports cross-sheet references and whole-column ranges like OBJECTIFS!$A:$G
+    const vlookupFn: import('./registry').SheetFunction = ({ args, evalArg, getData, visited, currentCell }) => {
+        if (args.length < 3) return SHEET_ERRORS.NA;
+
+        const searchKey = evalArg(args[0]);
+        const rangeStr = args[1].trim();
+        const colIndex = Number(evalArg(args[2]));
+        const isSorted = args.length >= 4 ? isTrueStr(evalArg(args[3])) : true;
+
+        if (isNaN(colIndex) || colIndex < 1) return SHEET_ERRORS.VALUE;
+
+        // Parse range — may include sheet prefix (e.g. OBJECTIFS!$A:$G)
+        let sheet: string | undefined;
+        let rest = rangeStr;
+        const sheetMatch = rest.match(/^(?:'([^']+)'|([A-Z][A-Z0-9_ ]*))!(.+)$/i);
+        if (sheetMatch) {
+            sheet = sheetMatch[1] || sheetMatch[2];
+            rest = sheetMatch[3];
+        }
+        const targetSheet = sheet || currentCell?.sheet;
+
+        // Split into start:end
+        const rangeParts = rest.replace(/\$/g, '').split(':');
+        if (rangeParts.length !== 2) return SHEET_ERRORS.NA;
+
+        // Parse column letters and optional row numbers
+        const parseColRow = (s: string): { col: number; row?: number } | null => {
+            const m = s.match(/^([A-Z]+)(\d+)?$/);
+            if (!m) return null;
+            return { col: colToIndex(m[1]), row: m[2] ? parseInt(m[2]) - 1 : undefined };
+        };
+
+        const startRef = parseColRow(rangeParts[0]);
+        const endRef = parseColRow(rangeParts[1]);
+        if (!startRef || !endRef) return SHEET_ERRORS.NA;
+
+        const startCol = Math.min(startRef.col, endRef.col);
+        const lookupCol = startCol; // First column of range is the lookup column
+        const resultCol = startCol + colIndex - 1;
+
+        // Determine row bounds — whole-column if no row numbers given
+        const minRow = startRef.row ?? 0;
+        const maxRow = endRef.row ?? 9999; // Cap at 10000 rows to avoid perf issues
+
+        // Search for the key in the lookup column
+        const searchNum = Number(searchKey);
+        const searchIsNum = !isNaN(searchNum) && searchKey.trim() !== '';
+        let lastMatch = -1;
+
+        for (let r = minRow; r <= maxRow; r++) {
+            const rawVal = getData(r, lookupCol, targetSheet);
+            if (!rawVal && r > minRow + 500 && lastMatch === -1) {
+                // Optimization: if we've scanned 500+ empty rows with no match, stop
+                // (likely past the data range)
+                let allEmpty = true;
+                for (let probe = r; probe < r + 10 && probe <= maxRow; probe++) {
+                    if (getData(probe, lookupCol, targetSheet)) { allEmpty = false; break; }
+                }
+                if (allEmpty) break;
+            }
+            if (!rawVal) continue;
+
+            const cellVal = rawVal.startsWith('=')
+                ? evaluateFormula(rawVal, getData, { r, c: lookupCol, sheet: targetSheet }, visited)
+                : rawVal;
+
+            if (isSorted) {
+                // For sorted data, find last value <= searchKey
+                if (searchIsNum) {
+                    const cellNum = Number(cellVal);
+                    if (!isNaN(cellNum) && cellNum <= searchNum) lastMatch = r;
+                    else if (!isNaN(cellNum) && cellNum > searchNum) break;
+                } else {
+                    if (cellVal.toUpperCase() <= searchKey.toUpperCase()) lastMatch = r;
+                    else break;
+                }
+            } else {
+                // Exact match
+                if (searchIsNum) {
+                    if (Number(cellVal) === searchNum) { lastMatch = r; break; }
+                } else {
+                    if (cellVal.toUpperCase() === searchKey.toUpperCase()) { lastMatch = r; break; }
+                }
+            }
+        }
+
+        if (lastMatch === -1) return SHEET_ERRORS.NA;
+
+        // Get the result from the target column
+        const resultRaw = getData(lastMatch, resultCol, targetSheet);
+        if (!resultRaw) return '';
+        return resultRaw.startsWith('=')
+            ? evaluateFormula(resultRaw, getData, { r: lastMatch, c: resultCol, sheet: targetSheet }, visited)
+            : resultRaw;
     };
     registerFunction("VLOOKUP", vlookupFn);
     registerFunction("RECHERCHEV", vlookupFn);

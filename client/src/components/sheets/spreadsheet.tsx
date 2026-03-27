@@ -715,14 +715,23 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         const newData: Record<string, string> = {}
         const getData = (r: number, c: number, sheet?: string) => {
             if (sheet) return getCrossSheetValue(sheet, r, c)
-            return data[`${r},${c}`]?.value || ""
+            const cell = data[`${r},${c}`]
+            if (!cell) return ""
+            // Return formula when present so the evaluator can compute it;
+            // otherwise return the plain value.
+            return cell.formula || cell.value || ""
         }
+        const activeSheet = sheets[activeSheetIndex]?.name
         const keys = Object.keys(data)
         for (const key of keys) {
-            newData[key] = evaluateFormula(data[key].value, getData, { r: parseInt(key), c: parseInt(key.split(',')[1]) }, new Set())
+            const cell = data[key]
+            // Prefer formula over cached value so formulas are re-evaluated
+            const expression = cell.formula || cell.value
+            const [rStr, cStr] = key.split(',')
+            newData[key] = evaluateFormula(expression, getData, { r: parseInt(rStr), c: parseInt(cStr), sheet: activeSheet }, new Set())
         }
         setEvaluatedData(newData)
-    }, [data, getCrossSheetValue, globalGridVersion])
+    }, [data, getCrossSheetValue, globalGridVersion, sheets, activeSheetIndex])
 
     // Sync edit value
     useEffect(() => {
