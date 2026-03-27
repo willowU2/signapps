@@ -11,7 +11,7 @@ created_for: "Prochaine instance d'AgentIQ"
 ## Résumé Exécutif
 
 1. Session `0416345b` démarrée le 2026-03-27T23:00:14.285Z
-2. Terminée proprement le 2026-03-27T23:17:19.531Z
+2. Terminée proprement le 2026-03-27T23:39:29.947Z
 3. Travail : (non renseigné)
 
 ---
@@ -77,7 +77,7 @@ Fichiers à lire en priorité :
 |----------|--------|
 | Session ID | 0416345b-dd2b-4467-afc1-260668c62657 |
 | Démarrée | 2026-03-27T23:00:14.285Z |
-| Terminée | 2026-03-27T23:17:19.531Z |
+| Terminée | 2026-03-27T23:39:29.947Z |
 | Crashes enregistrés | 0 |
 | Checkpoints | 0 |
 
