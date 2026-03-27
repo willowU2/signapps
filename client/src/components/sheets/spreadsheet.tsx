@@ -1137,12 +1137,15 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 addSheet(sheetNames[i]);
             }
 
-            // Wait a tick for Yjs sheets to be created and synced
-            await new Promise(r => setTimeout(r, 100));
-
-            // Read back sheet metadata to get actual sheet IDs
+            // Wait for Yjs sheets to be created — poll until all are present
             const sheetsMetaV2 = doc.getArray<{ id: string; name: string }>('sheets-meta-v2');
-            const sheetEntries = sheetsMetaV2.toArray();
+            let sheetEntries = sheetsMetaV2.toArray();
+            const maxWait = 50; // 50 * 100ms = 5 seconds max
+            for (let attempt = 0; attempt < maxWait && sheetEntries.length < sheetNames.length; attempt++) {
+                await new Promise(r => setTimeout(r, 100));
+                sheetEntries = sheetsMetaV2.toArray();
+            }
+            console.log(`[import] Sheet entries: ${sheetEntries.length}/${sheetNames.length}`, sheetEntries.map(s => s.name));
 
             // Import data into each sheet by writing directly to its Yjs grid map
             doc.transact(() => {
