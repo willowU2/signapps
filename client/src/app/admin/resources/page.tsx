@@ -53,6 +53,16 @@ import {
     getReservationStatusLabel,
 } from "@/lib/api/resources"
 import { toast } from "sonner"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const resourceTypeOptions: { value: ResourceTypeCategory; label: string; icon: string }[] = [
     { value: "room", label: "Salle", icon: "🚪" },
@@ -82,6 +92,9 @@ export default function ResourcesPage() {
     const [typeFilter, setTypeFilter] = useState<ResourceTypeCategory | "all">("all")
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [deleteResourceTarget, setDeleteResourceTarget] = useState<Resource | null>(null)
+    const [rejectReservationId, setRejectReservationId] = useState<string | null>(null)
+    const [rejectReason, setRejectReason] = useState("")
     const [newResource, setNewResource] = useState({
         name: "",
         resource_type: "room" as ResourceTypeCategory,
@@ -140,10 +153,15 @@ export default function ResourcesPage() {
         }
     }
 
-    const handleDelete = async (resource: Resource) => {
-        if (!confirm(`Supprimer la ressource "${resource.name}" ? Cette action est irréversible.`)) return
+    const handleDelete = (resource: Resource) => {
+        setDeleteResourceTarget(resource)
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteResourceTarget) return
+        setDeleteResourceTarget(null)
         try {
-            await deleteResource(resource.id)
+            await deleteResource(deleteResourceTarget.id)
         } catch {
             toast.error("Erreur lors de la suppression de la ressource")
         }
@@ -157,10 +175,16 @@ export default function ResourcesPage() {
         }
     }
 
-    const handleReject = async (reservationId: string) => {
-        const reason = prompt("Motif du refus (optionnel):")
+    const handleReject = (reservationId: string) => {
+        setRejectReason("")
+        setRejectReservationId(reservationId)
+    }
+
+    const handleRejectConfirm = async () => {
+        if (!rejectReservationId) return
+        setRejectReservationId(null)
         try {
-            await rejectReservation(reservationId, reason || undefined)
+            await rejectReservation(rejectReservationId, rejectReason || undefined)
         } catch {
             toast.error("Erreur lors du refus de la réservation")
         }
@@ -519,6 +543,41 @@ export default function ResourcesPage() {
                     </TabsContent>
                 </Tabs>
             </div>
+
+            {/* Delete resource confirm */}
+            <AlertDialog open={!!deleteResourceTarget} onOpenChange={() => setDeleteResourceTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer &quot;{deleteResourceTarget?.name}&quot; ?</AlertDialogTitle>
+                        <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteConfirm}>Supprimer</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Reject reservation dialog */}
+            <AlertDialog open={!!rejectReservationId} onOpenChange={() => setRejectReservationId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Refuser la réservation</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            <Input
+                                value={rejectReason}
+                                onChange={e => setRejectReason(e.target.value)}
+                                placeholder="Motif du refus (optionnel)"
+                                className="mt-2"
+                            />
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleRejectConfirm}>Refuser</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     )
 }

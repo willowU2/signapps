@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useCallback } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -36,38 +37,55 @@ interface FormResponse {
 
 import { formsApi } from "@/lib/api/forms"
 import { toast } from "sonner"
+import { EntityLinks } from "@/components/crosslinks/EntityLinks"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function FormsPage() {
     const router = useRouter()
-    const [forms, setForms] = useState<Form[]>([])
-    const [responses, setResponses] = useState<FormResponse[]>([])
+    const queryClient = useQueryClient()
+    const [responses] = useState<FormResponse[]>([])
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingForm, setEditingForm] = useState<Form | null>(null)
     const [newTitle, setNewTitle] = useState("")
     const [newDescription, setNewDescription] = useState("")
     const [copiedId, setCopiedId] = useState<string | null>(null)
+    const [deleteFormId, setDeleteFormId] = useState<string | null>(null)
 
-    useEffect(() => {
-        loadForms()
-    }, [])
-
-    const loadForms = async () => {
-        try {
+    const { data: forms = [] } = useQuery<Form[]>({
+        queryKey: ['forms'],
+        queryFn: async () => {
             const res = await formsApi.list()
-            const mapped = res.data.map((f: any) => ({
-                id: f.id,
-                title: f.title,
-                description: f.description || "",
-                status: (f.is_published ? "published" : "draft") as "published" | "draft",
-                response_count: 0,
-                created_at: f.created_at,
-                public_url: f.is_published ? `${window.location.origin}/f/${f.id}` : undefined
+            return Promise.all(res.data.map(async (f: any) => {
+                let response_count = 0
+                try {
+                    const rr = await formsApi.responses(f.id)
+                    response_count = Array.isArray(rr.data) ? rr.data.length : 0
+                } catch {}
+                return {
+                    id: f.id,
+                    title: f.title,
+                    description: f.description || "",
+                    status: (f.is_published ? "published" : "draft") as "published" | "draft",
+                    response_count,
+                    created_at: f.created_at,
+                    public_url: f.is_published ? `${window.location.origin}/f/${f.id}` : undefined
+                }
             }))
-            setForms(mapped)
-        } catch (e) {
-            console.error("Failed to load forms", e)
-        }
-    }
+        },
+    })
+
+    const loadForms = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ['forms'] })
+    }, [queryClient])
 
     const openCreate = () => {
         setEditingForm(null)
@@ -127,11 +145,16 @@ export default function FormsPage() {
         }
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Supprimer ce formulaire ?")) return
+    const handleDelete = (id: string) => {
+        setDeleteFormId(id)
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteFormId) return
+        setDeleteFormId(null)
         try {
-            await formsApi.delete(id)
-            loadForms(); return 
+            await formsApi.delete(deleteFormId)
+            loadForms()
         } catch (e) {
             console.error("Failed to delete form", e)
         }
@@ -300,6 +323,11 @@ export default function FormsPage() {
                             <Label htmlFor="form-desc">Description</Label>
                             <Textarea id="form-desc" placeholder="Description optionnelle..." rows={3} value={newDescription} onChange={e => setNewDescription(e.target.value)} />
                         </div>
+                        {editingForm && (
+                            <div className="border-t pt-4">
+                                <EntityLinks entityType="form" entityId={editingForm.id} />
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Annuler</Button>
@@ -309,6 +337,19 @@ export default function FormsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={!!deleteFormId} onOpenChange={() => setDeleteFormId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer ce formulaire ?</AlertDialogTitle>
+                        <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteConfirm}>Supprimer</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     )
 }

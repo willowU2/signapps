@@ -7,11 +7,22 @@ import { Button } from "@/components/ui/button"
 import { Map, Plus, Settings2, Trash2, ArrowRight } from "lucide-react"
 import { useFloorPlans, useDeleteFloorPlan } from "@/lib/scheduling/api/resources"
 import { useRouter } from "next/navigation"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function AdminFloorPlans() {
     const { data: floorPlans = [], isLoading } = useFloorPlans()
     const deletePlan = useDeleteFloorPlan()
     const router = useRouter()
+    const [deletePlanId, setDeletePlanId] = useState<string | null>(null)
 
     return (
         <AppLayout>
@@ -78,15 +89,11 @@ export default function AdminFloorPlans() {
                                         <Settings2 className="w-4 h-4" />
                                         Éditer le Layout
                                     </Button>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
                                         className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                                        onClick={() => {
-                                            if (confirm('Voulez-vous vraiment supprimer ce plan ?')) {
-                                                deletePlan.mutate(plan.id)
-                                            }
-                                        }}
+                                        onClick={() => setDeletePlanId(plan.id)}
                                         disabled={deletePlan.isPending}
                                     >
                                         <Trash2 className="w-4 h-4" />
@@ -97,6 +104,19 @@ export default function AdminFloorPlans() {
                     </div>
                 )}
             </div>
+
+            <AlertDialog open={!!deletePlanId} onOpenChange={() => setDeletePlanId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer ce plan ?</AlertDialogTitle>
+                        <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => { if (deletePlanId) { deletePlan.mutate(deletePlanId); setDeletePlanId(null); } }}>Supprimer</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     )
 }

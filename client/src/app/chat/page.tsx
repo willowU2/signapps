@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button"
 import { WorkspaceShell } from "@/components/layout/workspace-shell"
 import { useSelectedChannel, useSelectedChannelName, useChatActions, useIsDm } from "@/lib/store/chat-store"
 import { useEffect } from "react"
-import { usersApi } from "@/lib/api/identity"
-import { toast } from "sonner"
+import { useUsers } from "@/hooks/use-users"
 
 export default function ChatPage() {
     const selectedChannel = useSelectedChannel()
@@ -17,22 +16,14 @@ export default function ChatPage() {
     const isDm = useIsDm()
     const { setSelectedChannel, setUsersMap } = useChatActions()
 
+    const { data: usersData } = useUsers()
+
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await usersApi.list(1, 1000)
-                const users = response.data?.users || response.data || []
-                const map: Record<string, any> = {}
-                users.forEach(u => {
-                    map[u.id] = u
-                })
-                setUsersMap(map)
-            } catch {
-                toast.error("Erreur lors du chargement des utilisateurs.")
-            }
-        }
-        fetchUsers()
-    }, [setUsersMap])
+        if (!usersData) return
+        const map: Record<string, any> = {}
+        usersData.forEach((u: any) => { map[u.id] = u })
+        setUsersMap(map)
+    }, [usersData, setUsersMap])
 
     return (
         <WorkspaceShell

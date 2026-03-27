@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { cn } from "@/lib/utils"
+import { useAutosave } from "@/hooks/use-autosave"
 import { useSpreadsheet } from "./use-spreadsheet"
 import { AiSheetsDialog } from "./ai-sheets-dialog"
 import { PivotTableDialog } from "./pivot-table"
@@ -536,6 +537,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         addSheet, removeSheet, renameSheet, setSheetColor,
         getCrossSheetValue, transact, globalGridVersion
     } = useSpreadsheet(documentId, initialData)
+
+    // Autosave: persists sheet data snapshot to localStorage every 30s
+    useAutosave(`sheet:${documentId}`, { data, sheets, activeSheetIndex })
 
     const hasFetchedRef = useRef(false)
     const hasSanitizedRef = useRef(false)

@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from "react"
 import { Wand2 } from "lucide-react"
 import * as fabric from "fabric"
+import { useAutosave } from "@/hooks/use-autosave"
 import { useSlides } from "./use-slides"
 import { SlideToolbar } from "./slide-toolbar"
 import { SlideCanvas } from "./slide-canvas"
@@ -113,6 +114,10 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         updateSlideMaster, getSlideMaster,
         slides: allSlides, getSlideObjects, getAllSlidesWithObjects
     } = slideState;
+
+    // Autosave: persists slides data to localStorage every 30s
+    const presentationKey = allSlides[0]?.id ?? 'slides'
+    useAutosave(`slides:${presentationKey}`, allSlides)
 
     const fabricCanvasRef = useRef<fabric.Canvas | null>(null)
     const isUpdatingRef = useRef(false)

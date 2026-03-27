@@ -72,6 +72,15 @@ export const loadGoogleFont = (fontFamily: string) => {
 };
 import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu';
 import { Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup } from '@/components/editor/toolbar';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input as UIInput } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -100,6 +109,7 @@ import { Document as DocxDocument, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from 'file-saver';
 import VerEx from 'verbal-expressions';
 import { htmlToMarkdown, markdownToHtml, isMarkdown } from '@/lib/markdown';
+import { useAutosave } from '@/hooks/use-autosave';
 
 const lowlight = createLowlight(common);
 
@@ -405,6 +415,10 @@ const Editor = ({
     const [provider, setProvider] = useState<WebsocketProvider | null>(null);
     const [ydoc] = useState<Y.Doc>(() => new Y.Doc());
 
+    // Autosave: persists editor HTML to localStorage every 30s
+    const [editorHtml, setEditorHtml] = useState('');
+    useAutosave(`doc:${documentId}`, editorHtml);
+
     // Comments state
     const { setActiveComment, sidebarOpen, setSidebarOpen } = useCommentsStore();
 
@@ -553,6 +567,47 @@ const Editor = ({
     const [imageUrl, setImageUrl] = useState('');
     const [fontOpen, setFontOpen] = useState(false);
 
+    // Prompt dialogs replacing window.prompt()
+    // Slash command: image URL
+    const [showSlashImageDialog, setShowSlashImageDialog] = useState(false);
+    const [slashImageUrl, setSlashImageUrl] = useState('');
+    const slashImageCallbackRef = useRef<((url: string) => void) | null>(null);
+
+    // Slash command: embed sheet (3-step)
+    const [showEmbedSheetDialog, setShowEmbedSheetDialog] = useState(false);
+    const [embedSheetId, setEmbedSheetId] = useState('');
+    const [embedSheetName, setEmbedSheetName] = useState('Sheet');
+    const [embedSheetRange, setEmbedSheetRange] = useState('');
+    const embedSheetCallbackRef = useRef<((id: string, name: string, range: string) => void) | null>(null);
+
+    // Ctrl+K link dialog
+    const [showCtrlKLinkDialog, setShowCtrlKLinkDialog] = useState(false);
+    const [ctrlKLinkUrl, setCtrlKLinkUrl] = useState('');
+    const ctrlKLinkPreviousUrl = useRef('');
+
+    // New doc name dialog
+    const [showNewDocDialog, setShowNewDocDialog] = useState(false);
+    const [newDocName, setNewDocName] = useState('');
+
+    // Insert image from menu
+    const [showInsertImageDialog, setShowInsertImageDialog] = useState(false);
+    const [insertImageUrl, setInsertImageUrl] = useState('');
+
+    // Insert link from menu
+    const [showInsertLinkDialog, setShowInsertLinkDialog] = useState(false);
+    const [insertLinkUrl, setInsertLinkUrl] = useState('');
+
+    // Page setup (background color)
+    const [showPageSetupDialog, setShowPageSetupDialog] = useState(false);
+    const [pageBgColorInput, setPageBgColorInput] = useState('');
+
+    // Rename document
+    const [showRenameDialog, setShowRenameDialog] = useState(false);
+    const [renameDocName, setRenameDocName] = useState('');
+
+    // Trash confirm
+    const [showTrashDialog, setShowTrashDialog] = useState(false);
+
     // Google Fonts API Integration Hook
     const [availableFonts, setAvailableFonts] = useState<string[]>(['Inter', 'Arial', 'Times New Roman', 'Georgia', 'Verdana', 'Courier New', 'Comic Sans MS']);
     
@@ -579,6 +634,9 @@ const Editor = ({
     const editor = useEditor({
         immediatelyRender: false, // Required for SSR compatibility with Next.js
         editable: !isReadOnly,
+        onUpdate: ({ editor }) => {
+            setEditorHtml(editor.getHTML());
+        },
         onTransaction: ({ editor }) => {
             let font = editor.getAttributes('textStyle').fontFamily?.replace(/['"]/g, '');
             if (!font && editor.state.selection.empty) {
@@ -795,14 +853,12 @@ const Editor = ({
                             editor,
                             range
                         }: any) => {
-                            const url = window.prompt('Image URL');
-                            if (url) {
-                                editor.chain().focus().deleteRange(range).setImage({
-                                    src: url
-                                }).run();
-                            } else {
-                                editor.chain().focus().deleteRange(range).run();
-                            }
+                            editor.chain().focus().deleteRange(range).run();
+                            slashImageCallbackRef.current = (url: string) => {
+                                if (url) editor.chain().focus().setImage({ src: url }).run();
+                            };
+                            setSlashImageUrl('');
+                            setShowSlashImageDialog(true);
                         },
                     },
                     {
@@ -827,18 +883,14 @@ const Editor = ({
                             editor,
                             range
                         }: any) => {
-                            const sheetId = window.prompt('Sheet ID (from URL)');
-                            if (sheetId) {
-                                const sheetName = window.prompt('Sheet name', 'Sheet') || 'Sheet';
-                                const rangeStr = window.prompt('Range (e.g. A1:D10, leave empty for all)', '') || '';
-                                editor.chain().focus().deleteRange(range).insertSheetEmbed({
-                                    sheetId,
-                                    sheetName,
-                                    range: rangeStr,
-                                }).run();
-                            } else {
-                                editor.chain().focus().deleteRange(range).run();
-                            }
+                            editor.chain().focus().deleteRange(range).run();
+                            embedSheetCallbackRef.current = (id: string, name: string, rangeStr: string) => {
+                                if (id) editor.chain().focus().insertSheetEmbed({ sheetId: id, sheetName: name, range: rangeStr }).run();
+                            };
+                            setEmbedSheetId('');
+                            setEmbedSheetName('Sheet');
+                            setEmbedSheetRange('');
+                            setShowEmbedSheetDialog(true);
                         },
                     },
                 ]),
@@ -1040,13 +1092,9 @@ const Editor = ({
                         // Ctrl+K: Insert/edit link
                         e.preventDefault();
                         const previousUrl = editor.getAttributes('link').href;
-                        const url = window.prompt('URL du lien:', previousUrl || '');
-                        if (url === null) return; // Cancelled
-                        if (url === '') {
-                            editor.chain().focus().unsetLink().run();
-                        } else {
-                            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-                        }
+                        ctrlKLinkPreviousUrl.current = previousUrl || '';
+                        setCtrlKLinkUrl(previousUrl || '');
+                        setShowCtrlKLinkDialog(true);
                     }
                 }
             }
@@ -1780,21 +1828,19 @@ const Editor = ({
         if (action === 'lineHeight_1.5') setDocLineHeight('1.5');
         if (action === 'lineHeight_2') setDocLineHeight('2');
         if (action === 'page_setup') {
-            const color = prompt("Entrez une couleur de fond (ex: #ffffff, #f0f0f0, lightblue):", docBgColor);
-            if (color !== null) setDocBgColor(color);
+            setPageBgColorInput(docBgColor);
+            setShowPageSetupDialog(true);
+            return;
         }
 
         // File Actions
         if (action === 'rename') {
-            const name = prompt("Entrez le nouveau nom du document:");
-            if (name) toast.success(`Document renommé en "${name}" avec succès.`);
+            setRenameDocName('');
+            setShowRenameDialog(true);
             return;
         }
         if (action === 'trash') {
-            if (confirm("Voulez-vous placer ce document dans la corbeille ?")) {
-                toast.success("Document placé dans la corbeille.");
-                window.location.href = '/drive';
-            }
+            setShowTrashDialog(true);
             return;
         }
         if (action === 'open') {
@@ -1835,26 +1881,9 @@ const Editor = ({
         if (action === 'selectAll') editor.commands.selectAll();
         if (action === 'delete') editor.commands.deleteSelection();
         if (action === 'newDoc') {
-            const name = window.prompt("Nom du nouveau document :");
-            if (name === null) return; // User canceled the prompt
-
-            const finalName = name.trim() || 'Document sans titre';
-            const toastId = toast.loading("Création du document...");
-            try {
-                const newNode = await driveApi.createNode({
-                    parent_id: null,
-                    name: finalName,
-                    node_type: 'document',
-                    target_id: null
-                });
-                const targetId = newNode.target_id || newNode.id;
-                toast.success("Document créé !", { id: toastId });
-                window.open(`/docs/editor?id=${targetId}`, '_blank');
-            } catch (err: any) {
-                console.error("Erreur création document:", err);
-                const msg = err?.response?.data?.message || err?.message || String(err);
-                toast.error(`Erreur création: ${msg}`, { id: toastId });
-            }
+            setNewDocName('');
+            setShowNewDocDialog(true);
+            return;
         }
         if (action === 'downloadPdf') {
             toast.info("G\u00E9n\u00E9ration du PDF via le gestionnaire d'impression...");
@@ -1924,23 +1953,14 @@ const Editor = ({
         if (action === 'insertHorizontalRule') editor.commands.setHorizontalRule();
         if (action === 'insertHardBreak') editor.commands.setHardBreak();
         if (action === 'insertImage') {
-            const url = window.prompt('URL de l\'image:');
-            if (url) editor.commands.setImage({
-                src: url
-            });
+            setInsertImageUrl('');
+            setShowInsertImageDialog(true);
+            return;
         }
         if (action === 'insertLink') {
-            const url = window.prompt('URL du lien:');
-            if (url) {
-                // requires a text selection to link, otherwise insert bare text
-                if (editor.state.selection.empty) {
-                    editor.commands.insertContent(`<a href="${url}">${url}</a>`);
-                } else {
-                    editor.chain().focus().extendMarkRange('link').setLink({
-                        href: url
-                    }).run();
-                }
-            }
+            setInsertLinkUrl('');
+            setShowInsertLinkDialog(true);
+            return;
         }
         if (action === 'insertTable') {
             editor.commands.insertTable({
@@ -1978,6 +1998,27 @@ const Editor = ({
         // Focus back
         editor.view.focus();
     }, [editor, handleSummarize, handleTranslate, saveToDrive, exportHtmlDocument, userName, docBgColor]);
+
+    const handleNewDocConfirm = async () => {
+        setShowNewDocDialog(false);
+        const finalName = newDocName.trim() || 'Document sans titre';
+        const toastId = toast.loading("Création du document...");
+        try {
+            const newNode = await driveApi.createNode({
+                parent_id: null,
+                name: finalName,
+                node_type: 'document',
+                target_id: null
+            });
+            const targetId = newNode.target_id || newNode.id;
+            toast.success("Document créé !", { id: toastId });
+            window.open(`/docs/editor?id=${targetId}`, '_blank');
+        } catch (err: any) {
+            console.error("Erreur création document:", err);
+            const msg = err?.response?.data?.message || err?.message || String(err);
+            toast.error(`Erreur création: ${msg}`, { id: toastId });
+        }
+    };
 
     if (!editor || !ydoc || !provider) {
         return <div className="flex items-center justify-center p-8 text-gray-500">Initializing editor...</div>;
@@ -2825,6 +2866,194 @@ const Editor = ({
                 actionLabel={activeModal?.label}
                 onClose={() => setActiveModal(null)}
             />
+
+            {/* Slash command: Image URL */}
+            <Dialog open={showSlashImageDialog} onOpenChange={setShowSlashImageDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>URL de l&apos;image</DialogTitle></DialogHeader>
+                    <UIInput
+                        value={slashImageUrl}
+                        onChange={e => setSlashImageUrl(e.target.value)}
+                        placeholder="https://..."
+                        autoFocus
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                slashImageCallbackRef.current?.(slashImageUrl);
+                                setShowSlashImageDialog(false);
+                            }
+                        }}
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowSlashImageDialog(false)}>Annuler</Button>
+                        <Button onClick={() => { slashImageCallbackRef.current?.(slashImageUrl); setShowSlashImageDialog(false); }}>Insérer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Slash command: Embed Sheet */}
+            <Dialog open={showEmbedSheetDialog} onOpenChange={setShowEmbedSheetDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Intégrer une feuille de calcul</DialogTitle></DialogHeader>
+                    <div className="space-y-3">
+                        <UIInput value={embedSheetId} onChange={e => setEmbedSheetId(e.target.value)} placeholder="Sheet ID (depuis l'URL)" autoFocus />
+                        <UIInput value={embedSheetName} onChange={e => setEmbedSheetName(e.target.value)} placeholder="Nom de la feuille (ex: Sheet)" />
+                        <UIInput value={embedSheetRange} onChange={e => setEmbedSheetRange(e.target.value)} placeholder="Plage (ex: A1:D10, laisser vide pour tout)" />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowEmbedSheetDialog(false)}>Annuler</Button>
+                        <Button disabled={!embedSheetId.trim()} onClick={() => { embedSheetCallbackRef.current?.(embedSheetId, embedSheetName || 'Sheet', embedSheetRange); setShowEmbedSheetDialog(false); }}>Intégrer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Ctrl+K link dialog */}
+            <Dialog open={showCtrlKLinkDialog} onOpenChange={setShowCtrlKLinkDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>URL du lien</DialogTitle></DialogHeader>
+                    <UIInput
+                        value={ctrlKLinkUrl}
+                        onChange={e => setCtrlKLinkUrl(e.target.value)}
+                        placeholder="https://..."
+                        autoFocus
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                if (ctrlKLinkUrl === '') { editor?.chain().focus().unsetLink().run(); }
+                                else { editor?.chain().focus().extendMarkRange('link').setLink({ href: ctrlKLinkUrl }).run(); }
+                                setShowCtrlKLinkDialog(false);
+                            }
+                        }}
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowCtrlKLinkDialog(false)}>Annuler</Button>
+                        <Button onClick={() => {
+                            if (ctrlKLinkUrl === '') { editor?.chain().focus().unsetLink().run(); }
+                            else { editor?.chain().focus().extendMarkRange('link').setLink({ href: ctrlKLinkUrl }).run(); }
+                            setShowCtrlKLinkDialog(false);
+                        }}>OK</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* New document dialog */}
+            <Dialog open={showNewDocDialog} onOpenChange={setShowNewDocDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Nouveau document</DialogTitle></DialogHeader>
+                    <UIInput
+                        value={newDocName}
+                        onChange={e => setNewDocName(e.target.value)}
+                        placeholder="Nom du document"
+                        autoFocus
+                        onKeyDown={e => { if (e.key === 'Enter') handleNewDocConfirm(); }}
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowNewDocDialog(false)}>Annuler</Button>
+                        <Button onClick={handleNewDocConfirm}>Créer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Insert image from menu */}
+            <Dialog open={showInsertImageDialog} onOpenChange={setShowInsertImageDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>URL de l&apos;image</DialogTitle></DialogHeader>
+                    <UIInput
+                        value={insertImageUrl}
+                        onChange={e => setInsertImageUrl(e.target.value)}
+                        placeholder="https://..."
+                        autoFocus
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                if (insertImageUrl) editor?.commands.setImage({ src: insertImageUrl });
+                                setShowInsertImageDialog(false);
+                            }
+                        }}
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowInsertImageDialog(false)}>Annuler</Button>
+                        <Button onClick={() => { if (insertImageUrl) editor?.commands.setImage({ src: insertImageUrl }); setShowInsertImageDialog(false); }}>Insérer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Insert link from menu */}
+            <Dialog open={showInsertLinkDialog} onOpenChange={setShowInsertLinkDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>URL du lien</DialogTitle></DialogHeader>
+                    <UIInput
+                        value={insertLinkUrl}
+                        onChange={e => setInsertLinkUrl(e.target.value)}
+                        placeholder="https://..."
+                        autoFocus
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                if (insertLinkUrl) {
+                                    if (editor?.state.selection.empty) { editor.commands.insertContent(`<a href="${insertLinkUrl}">${insertLinkUrl}</a>`); }
+                                    else { editor?.chain().focus().extendMarkRange('link').setLink({ href: insertLinkUrl }).run(); }
+                                }
+                                setShowInsertLinkDialog(false);
+                            }
+                        }}
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowInsertLinkDialog(false)}>Annuler</Button>
+                        <Button onClick={() => {
+                            if (insertLinkUrl) {
+                                if (editor?.state.selection.empty) { editor.commands.insertContent(`<a href="${insertLinkUrl}">${insertLinkUrl}</a>`); }
+                                else { editor?.chain().focus().extendMarkRange('link').setLink({ href: insertLinkUrl }).run(); }
+                            }
+                            setShowInsertLinkDialog(false);
+                        }}>Insérer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Page setup: background color */}
+            <Dialog open={showPageSetupDialog} onOpenChange={setShowPageSetupDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Couleur de fond</DialogTitle></DialogHeader>
+                    <UIInput
+                        value={pageBgColorInput}
+                        onChange={e => setPageBgColorInput(e.target.value)}
+                        placeholder="#ffffff, lightblue..."
+                        autoFocus
+                        onKeyDown={e => { if (e.key === 'Enter') { setDocBgColor(pageBgColorInput); setShowPageSetupDialog(false); } }}
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowPageSetupDialog(false)}>Annuler</Button>
+                        <Button onClick={() => { setDocBgColor(pageBgColorInput); setShowPageSetupDialog(false); }}>Appliquer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Rename document */}
+            <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Renommer le document</DialogTitle></DialogHeader>
+                    <UIInput
+                        value={renameDocName}
+                        onChange={e => setRenameDocName(e.target.value)}
+                        placeholder="Nouveau nom..."
+                        autoFocus
+                        onKeyDown={e => { if (e.key === 'Enter') { if (renameDocName) toast.success(`Document renommé en "${renameDocName}" avec succès.`); setShowRenameDialog(false); } }}
+                    />
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowRenameDialog(false)}>Annuler</Button>
+                        <Button onClick={() => { if (renameDocName) toast.success(`Document renommé en "${renameDocName}" avec succès.`); setShowRenameDialog(false); }}>Renommer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Trash confirm */}
+            <Dialog open={showTrashDialog} onOpenChange={setShowTrashDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Mettre à la corbeille ?</DialogTitle></DialogHeader>
+                    <p className="text-sm text-muted-foreground">Voulez-vous placer ce document dans la corbeille ?</p>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowTrashDialog(false)}>Annuler</Button>
+                        <Button variant="destructive" onClick={() => { setShowTrashDialog(false); toast.success("Document placé dans la corbeille."); window.location.href = '/drive'; }}>Supprimer</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

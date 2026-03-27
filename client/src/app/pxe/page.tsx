@@ -17,6 +17,16 @@ import { Switch } from "@/components/ui/switch"
 import { Terminal, Upload, Play, Settings, RefreshCw, HardDrive, Cpu, FileJson, CheckCircle2, Trash2, Edit, Plus, Network, Clock } from 'lucide-react';
 import { pxeApi, PxeProfile, PxeAsset, CreatePxeProfileRequest, UpdatePxeProfileRequest, RegisterPxeAssetRequest, UpdatePxeAssetRequest } from "@/lib/api-pxe"
 import { toast } from "sonner"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
 
@@ -29,6 +39,8 @@ export default function PXEDashboard() {
     // Profile form state
     const [profileDialogOpen, setProfileDialogOpen] = useState(false)
     const [editingProfile, setEditingProfile] = useState<PxeProfile | null>(null)
+    const [deleteProfileId, setDeleteProfileId] = useState<string | null>(null)
+    const [deleteAssetId, setDeleteAssetId] = useState<string | null>(null)
     const [profileForm, setProfileForm] = useState<CreatePxeProfileRequest>({
         name: '',
         description: '',
@@ -122,12 +134,16 @@ export default function PXEDashboard() {
         }
     }
 
-    const handleDeleteProfile = async (id: string) => {
-        if (!confirm('Supprimer ce profil ?')) return
+    const handleDeleteProfile = (id: string) => {
+        setDeleteProfileId(id)
+    }
 
+    const handleDeleteProfileConfirm = async () => {
+        if (!deleteProfileId) return
+        setDeleteProfileId(null)
         try {
-            await pxeApi.profiles.delete(id)
-            setProfiles(prev => prev.filter(p => p.id !== id))
+            await pxeApi.profiles.delete(deleteProfileId)
+            setProfiles(prev => prev.filter(p => p.id !== deleteProfileId))
             toast.success('Profil supprim')
         } catch (err) {
             console.debug('Failed to delete profile:', err)
@@ -186,12 +202,16 @@ export default function PXEDashboard() {
         }
     }
 
-    const handleDeleteAsset = async (id: string) => {
-        if (!confirm('Supprimer cet asset ?')) return
+    const handleDeleteAsset = (id: string) => {
+        setDeleteAssetId(id)
+    }
 
+    const handleDeleteAssetConfirm = async () => {
+        if (!deleteAssetId) return
+        setDeleteAssetId(null)
         try {
-            await pxeApi.assets.delete(id)
-            setAssets(prev => prev.filter(a => a.id !== id))
+            await pxeApi.assets.delete(deleteAssetId)
+            setAssets(prev => prev.filter(a => a.id !== deleteAssetId))
             toast.success('Asset supprim')
         } catch (err) {
             console.debug('Failed to delete asset:', err)
@@ -590,6 +610,32 @@ export default function PXEDashboard() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={!!deleteProfileId} onOpenChange={() => setDeleteProfileId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer ce profil ?</AlertDialogTitle>
+                        <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteProfileConfirm}>Supprimer</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={!!deleteAssetId} onOpenChange={() => setDeleteAssetId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer cet asset ?</AlertDialogTitle>
+                        <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteAssetConfirm}>Supprimer</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     )
 }

@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,6 +18,17 @@ import {
   Search, Filter, HardDrive,
 } from "lucide-react"
 import { itAssetsApi, HardwareAsset, CreateHardwareRequest, UpdateHardwareRequest } from "@/lib/api/it-assets"
+import { EntityLinks } from "@/components/crosslinks/EntityLinks"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -74,14 +86,14 @@ function getStatusMeta(status?: string) {
 // ─── Page Component ───────────────────────────────────────────────────────────
 
 export default function ITAssetsPage() {
-  const [assets, setAssets] = useState<HardwareAsset[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const queryClient = useQueryClient()
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingAsset, setEditingAsset] = useState<HardwareAsset | null>(null)
   const [formData, setFormData] = useState(EMPTY_FORM)
   const [isSaving, setIsSaving] = useState(false)
+  const [deleteAsset, setDeleteAsset] = useState<HardwareAsset | null>(null)
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("")
@@ -90,19 +102,17 @@ export default function ITAssetsPage() {
 
   // ── Data loading ──────────────────────────────────────────────────────────
 
-  const loadAssets = async () => {
-    setIsLoading(true)
-    try {
+  const { data: assets = [], isLoading } = useQuery<HardwareAsset[]>({
+    queryKey: ['it-assets'],
+    queryFn: async () => {
       const response = await itAssetsApi.listHardware()
-      setAssets(response.data || [])
-    } catch {
-      console.debug("IT assets backend unavailable")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+      return response.data || []
+    },
+  })
 
-  useEffect(() => { loadAssets() }, [])
+  const loadAssets = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['it-assets'] })
+  }, [queryClient])
 
   // ── Filtered view ─────────────────────────────────────────────────────────
 
@@ -188,13 +198,18 @@ export default function ITAssetsPage() {
     }
   }
 
-  const handleDelete = async (asset: HardwareAsset) => {
-    if (!confirm(`Delete "${asset.name}"?`)) return
+  const handleDelete = (asset: HardwareAsset) => {
+    setDeleteAsset(asset)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteAsset) return
+    setDeleteAsset(null)
     try {
-      await itAssetsApi.deleteHardware(asset.id)
+      await itAssetsApi.deleteHardware(deleteAsset.id)
       loadAssets()
     } catch {
-      setAssets(prev => prev.filter(a => a.id !== asset.id))
+      queryClient.setQueryData<HardwareAsset[]>(['it-assets'], (prev = []) => prev.filter(a => a.id !== deleteAsset.id))
     }
   }
 
@@ -501,6 +516,12 @@ export default function ITAssetsPage() {
             </div>
           </div>
 
+          {editingAsset && (
+            <div className="border-t pt-4">
+              <EntityLinks entityType="it_asset" entityId={editingAsset.id} />
+            </div>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleSave} disabled={!formData.name?.trim() || isSaving}>
@@ -509,6 +530,19 @@ export default function ITAssetsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteAsset} onOpenChange={() => setDeleteAsset(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete &quot;{deleteAsset?.name}&quot;?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   )
 }

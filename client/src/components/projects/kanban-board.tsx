@@ -4,7 +4,15 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Plus, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -118,6 +126,9 @@ function KanbanCardItem({ card, columnIndex, onMove }: CardProps) {
 export function KanbanBoard() {
   const [cards, setCards] = useState<KanbanCard[]>(INITIAL_CARDS);
   const [nextId, setNextId] = useState(INITIAL_CARDS.length + 1);
+  const [showAddCard, setShowAddCard] = useState(false);
+  const [newCardTitle, setNewCardTitle] = useState('');
+  const [pendingColumnId, setPendingColumnId] = useState<ColumnId | null>(null);
 
   function moveCard(id: string, direction: "left" | "right") {
     setCards((prev) =>
@@ -132,21 +143,28 @@ export function KanbanBoard() {
   }
 
   function addCard(columnId: ColumnId) {
-    const title = window.prompt("Titre de la carte :");
-    if (!title?.trim()) return;
+    setNewCardTitle('');
+    setPendingColumnId(columnId);
+    setShowAddCard(true);
+  }
+
+  function handleAddCardConfirm() {
+    if (!newCardTitle.trim() || !pendingColumnId) return;
     const newCard: KanbanCard = {
       id: String(nextId),
-      title: title.trim(),
+      title: newCardTitle.trim(),
       assignee: "??",
       priority: "medium",
       dueDate: new Date(Date.now() + 7 * 86_400_000).toISOString().split("T")[0],
-      column: columnId,
+      column: pendingColumnId,
     };
     setCards((prev) => [...prev, newCard]);
     setNextId((n) => n + 1);
+    setShowAddCard(false);
   }
 
   return (
+    <>
     <div className="flex h-full w-full gap-4 overflow-x-auto p-4 bg-black/[0.02]">
       {COLUMNS.map((col, colIndex) => {
         const columnCards = cards.filter((c) => c.column === col.id);
@@ -188,5 +206,23 @@ export function KanbanBoard() {
         );
       })}
     </div>
+
+    <Dialog open={showAddCard} onOpenChange={setShowAddCard}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Titre de la carte</DialogTitle></DialogHeader>
+        <Input
+          value={newCardTitle}
+          onChange={e => setNewCardTitle(e.target.value)}
+          placeholder="Titre..."
+          autoFocus
+          onKeyDown={e => { if (e.key === 'Enter') handleAddCardConfirm(); }}
+        />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowAddCard(false)}>Annuler</Button>
+          <Button onClick={handleAddCardConfirm} disabled={!newCardTitle.trim()}>Ajouter</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

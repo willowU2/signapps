@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTableSkeleton, CardGridSkeleton } from '@/components/ui/skeleton-loader';
 import { DriveSidebar } from '@/components/storage/drive-sidebar';
@@ -18,14 +20,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ShareDialog } from '@/components/drive/ShareDialog';
 import { RenameSheet } from '@/components/storage/rename-sheet';
 import { EntityContextMenu } from '@/components/context-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { EntityLinks } from '@/components/crosslinks/EntityLinks';
 
 export default function GlobalDrivePage() {
   const router = useRouter();
-  const [nodes, setNodes] = useState<DriveNode[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentFolder, setCurrentFolder] = useState<DriveNode | null>(null);
   const [path, setPath] = useState<DriveNode[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
@@ -39,26 +59,37 @@ export default function GlobalDrivePage() {
   const [renameNode, setRenameNode] = useState<DriveNode | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
 
+  const [detailNode, setDetailNode] = useState<DriveNode | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  // Prompt: create folder
+  const [showFolderPrompt, setShowFolderPrompt] = useState(false);
+  const [folderName, setFolderName] = useState('');
+
+  // Prompt: create document
+  const [showDocPrompt, setShowDocPrompt] = useState(false);
+  const [docName, setDocName] = useState('');
+
+  // Confirm: delete
+  const [deleteNodeId, setDeleteNodeId] = useState<string | null>(null);
+
+  const driveQueryKey = ['drive-nodes', currentFolder?.id ?? null];
+
+  const { data: nodes = [], isLoading: loading } = useQuery<DriveNode[]>({
+    queryKey: driveQueryKey,
+    queryFn: async () => {
+      const data = await driveApi.listNodes(currentFolder?.id || null);
+      return data;
+    },
+  });
+
+  const fetchNodes = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: driveQueryKey });
+  }, [queryClient, currentFolder?.id]);
+
   const filteredNodes = searchQuery.trim()
     ? nodes.filter(n => n.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : nodes;
-
-  const fetchNodes = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await driveApi.listNodes(currentFolder?.id || null);
-      setNodes(data);
-    } catch (e) {
-      console.debug(e);
-      toast.error('Erreur lors du chargement du Drive');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentFolder]);
-
-  useEffect(() => {
-    fetchNodes();
-  }, [fetchNodes]);
 
   const navigateToFolder = (node: DriveNode) => {
     setCurrentFolder(node);
@@ -141,14 +172,18 @@ export default function GlobalDrivePage() {
     }
   };
 
-  const handleCreateFolder = async () => {
-    const name = window.prompt('Nom du nouveau dossier :');
-    if (!name?.trim()) return;
+  const handleCreateFolder = () => {
+    setFolderName('');
+    setShowFolderPrompt(true);
+  };
 
+  const handleCreateFolderConfirm = async () => {
+    if (!folderName.trim()) return;
+    setShowFolderPrompt(false);
     try {
       await driveApi.createNode({
         parent_id: currentFolder?.id || null,
-        name,
+        name: folderName.trim(),
         node_type: 'folder',
         target_id: null
       });
@@ -159,17 +194,22 @@ export default function GlobalDrivePage() {
     }
   };
 
-  const handleCreateDocument = async () => {
-    const name = window.prompt('Nom du nouveau document :') || 'Document sans titre';
+  const handleCreateDocument = () => {
+    setDocName('');
+    setShowDocPrompt(true);
+  };
+
+  const handleCreateDocumentConfirm = async () => {
+    setShowDocPrompt(false);
+    const name = docName.trim() || 'Document sans titre';
     try {
       const newNode = await driveApi.createNode({
         parent_id: currentFolder?.id || null,
         name,
         node_type: 'document',
-        target_id: null // Le backend ou l'éditeur initialisera le vrai documentId plus tard
+        target_id: null
       });
       toast.success('Document créé ! Redirection...');
-      // Le backend aura inséré un target_id ou repris l'id du node
       const targetId = newNode.target_id || newNode.id;
       router.push(`/docs/editor?id=${targetId}`);
     } catch {
@@ -177,10 +217,15 @@ export default function GlobalDrivePage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Voulez-vous vraiment supprimer cet élément ?')) return;
+  const handleDelete = (id: string) => {
+    setDeleteNodeId(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteNodeId) return;
+    setDeleteNodeId(null);
     try {
-      await driveApi.deleteNode(id);
+      await driveApi.deleteNode(deleteNodeId);
       toast.success('Élément envoyé à la corbeille');
       fetchNodes();
     } catch {
@@ -381,9 +426,9 @@ export default function GlobalDrivePage() {
                   <thead className="bg-muted/50 text-muted-foreground">
                     <tr>
                       <th className="px-6 py-3 font-medium">Nom</th>
-                      <th className="px-6 py-3 font-medium w-32">Propriétaire</th>
-                      <th className="px-6 py-3 font-medium w-32">Dernière modif.</th>
-                      <th className="px-6 py-3 font-medium w-24 text-right">Taille</th>
+                      <th className="px-6 py-3 font-medium w-32 hidden md:table-cell">Propriétaire</th>
+                      <th className="px-6 py-3 font-medium w-32 hidden md:table-cell">Dernière modif.</th>
+                      <th className="px-6 py-3 font-medium w-24 text-right hidden md:table-cell">Taille</th>
                       <th className="px-6 py-3 font-medium w-16"></th>
                     </tr>
                   </thead>
@@ -398,9 +443,9 @@ export default function GlobalDrivePage() {
                           {node.node_type === 'folder' ? <Folder className="h-5 w-5 text-blue-500 fill-blue-100 dark:fill-blue-900" /> : <FileText className="h-5 w-5 text-blue-600" />}
                           <span className="font-medium truncate max-w-[300px]">{node.name}</span>
                         </td>
-                        <td className="px-6 py-4 text-muted-foreground">Moi</td>
-                        <td className="px-6 py-4 text-muted-foreground">{new Date(node.updated_at).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 text-muted-foreground text-right">{node.size ? `${(node.size / 1024).toFixed(1)} KB` : '--'}</td>
+                        <td className="px-6 py-4 text-muted-foreground hidden md:table-cell">Moi</td>
+                        <td className="px-6 py-4 text-muted-foreground hidden md:table-cell">{new Date(node.updated_at).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 text-muted-foreground text-right hidden md:table-cell">{node.size ? `${(node.size / 1024).toFixed(1)} KB` : '--'}</td>
                         <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -412,6 +457,7 @@ export default function GlobalDrivePage() {
                               <DropdownMenuItem onClick={() => handleNavigate(node)}>Ouvrir</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setRenameNode(node); setRenameOpen(true); }}>Renommer</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setShareNode(node); setShareOpen(true); }}>Partager</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { setDetailNode(node); setDetailOpen(true); }}>Détails</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={(e) => handleDownload(node, e)} className="gap-2 focus:bg-[#f1f3f4] dark:focus:bg-[#3c4043] cursor-pointer">
                                 <Download className="h-4 w-4 text-[#5f6368] dark:text-[#9aa0a6]" />
@@ -453,6 +499,7 @@ export default function GlobalDrivePage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleNavigate(node)}>Ouvrir</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => { setShareNode(node); setShareOpen(true); }}>Partager</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setDetailNode(node); setDetailOpen(true); }}>Détails</DropdownMenuItem>
                           <DropdownMenuItem onClick={(e) => handleDownload(node, e)} className="gap-2 focus:bg-[#f1f3f4] dark:focus:bg-[#3c4043] cursor-pointer">
                             <Download className="h-4 w-4 text-[#5f6368] dark:text-[#9aa0a6]" />
                             <span className="text-[#3c4043] dark:text-[#e8eaed]">Télécharger</span>
@@ -480,12 +527,90 @@ export default function GlobalDrivePage() {
         </div>
       </div>
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} node={shareNode} />
+
+      {/* File detail sidebar — EntityLinks */}
+      <Sheet open={detailOpen} onOpenChange={setDetailOpen}>
+        <SheetContent side="right" className="w-80">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2 truncate">
+              {detailNode?.node_type === 'folder'
+                ? <Folder className="h-4 w-4 text-blue-500 shrink-0" />
+                : <FileText className="h-4 w-4 text-blue-600 shrink-0" />}
+              <span className="truncate">{detailNode?.name}</span>
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            {detailNode && (
+              <>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div>Modifié le {new Date(detailNode.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                  {detailNode.size && <div>Taille : {(detailNode.size / 1024).toFixed(1)} KB</div>}
+                </div>
+                <div className="border-t pt-4">
+                  <EntityLinks entityType="drive_node" entityId={detailNode.id} />
+                </div>
+              </>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <RenameSheet
         open={renameOpen}
         onOpenChange={setRenameOpen}
         item={renameNode ? { key: renameNode.id, name: renameNode.name, type: renameNode.node_type as 'folder' | 'file' } : null}
         onRename={handleRename}
       />
+
+      {/* Create Folder Dialog */}
+      <Dialog open={showFolderPrompt} onOpenChange={setShowFolderPrompt}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Nouveau dossier</DialogTitle></DialogHeader>
+          <Input
+            value={folderName}
+            onChange={e => setFolderName(e.target.value)}
+            placeholder="Nom du dossier"
+            autoFocus
+            onKeyDown={e => { if (e.key === 'Enter') handleCreateFolderConfirm(); }}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFolderPrompt(false)}>Annuler</Button>
+            <Button onClick={handleCreateFolderConfirm} disabled={!folderName.trim()}>Créer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Document Dialog */}
+      <Dialog open={showDocPrompt} onOpenChange={setShowDocPrompt}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Nouveau document</DialogTitle></DialogHeader>
+          <Input
+            value={docName}
+            onChange={e => setDocName(e.target.value)}
+            placeholder="Nom du document"
+            autoFocus
+            onKeyDown={e => { if (e.key === 'Enter') handleCreateDocumentConfirm(); }}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDocPrompt(false)}>Annuler</Button>
+            <Button onClick={handleCreateDocumentConfirm}>Créer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirm */}
+      <AlertDialog open={!!deleteNodeId} onOpenChange={() => setDeleteNodeId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet élément ?</AlertDialogTitle>
+            <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }

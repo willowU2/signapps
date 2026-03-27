@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Plus, Save, Trash2, GripVertical, Eye, Type, List, CheckSquare, Calendar, Hash, Mail, Image as ImageIcon, CircleDot, ChevronUp, ChevronDown } from "lucide-react"
+import { toast } from "sonner"
 import { useBreadcrumbStore } from "@/lib/store/breadcrumb-store"
 import { closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, useDndMonitor } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
@@ -247,7 +248,7 @@ export default function FormBuilderPage() {
             const updatedFields = fields.map((f, i) => ({ ...f, order: i }))
             await formsApi.update(formId, { fields: updatedFields })
             setFields(updatedFields)
-            alert("Formulaire sauvegardé avec succès 🎉")
+            toast.success("Formulaire sauvegardé avec succès !")
         } catch (err) {
             console.error("Failed to save form:", err)
             setError("Erreur lors de la sauvegarde du formulaire.")

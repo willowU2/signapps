@@ -3,6 +3,16 @@
 import React, { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Plus, Trash2, CalendarIcon, MessageSquare, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useEntityStore } from "@/stores/entity-hub-store";
 import { format, isPast, parseISO } from "date-fns";
 
@@ -174,7 +184,8 @@ export function TaskTree({
   onAddChild,
 }: TaskTreeProps) {
   const { tasks, deleteTask, isLoading } = useEntityStore();
-  
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
   // Filter tasks for this project
   const projectTasks = React.useMemo(() => {
     return tasks.filter((t) => t.project_id === projectId);
@@ -193,11 +204,16 @@ export function TaskTree({
     return buildNode(projectTasks);
   }, [projectTasks]);
 
-  const handleDelete = async (taskId: string) => {
-    if (!confirm("Voulez-vous vraiment supprimer cette tâche ?")) return;
+  const handleDelete = (taskId: string) => {
+    setDeleteTarget(taskId);
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget;
+    setDeleteTarget(null);
     try {
-      await deleteTask(taskId);
+      await deleteTask(id);
     } catch {
       // ignore
     }
@@ -212,17 +228,34 @@ export function TaskTree({
   }
 
   return (
-    <div className="flex flex-col">
-      {tree.map((node) => (
-        <TaskItem
-          key={node.task.id}
-          node={node}
-          level={0}
-          onTaskSelect={onTaskSelect}
-          onAddChild={onAddChild}
-          onDelete={handleDelete}
-        />
-      ))}
-    </div>
+    <>
+      <div className="flex flex-col">
+        {tree.map((node) => (
+          <TaskItem
+            key={node.task.id}
+            node={node}
+            level={0}
+            onTaskSelect={onTaskSelect}
+            onAddChild={onAddChild}
+            onDelete={handleDelete}
+          />
+        ))}
+      </div>
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={open => { if (!open) setDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette tâche ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. La tâche et ses sous-tâches seront définitivement supprimées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

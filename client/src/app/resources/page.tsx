@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, MapPin, Users, Clock, CalendarPlus } from "lucide-react"
+import { Search, MapPin, Users, Clock, CalendarPlus, ExternalLink } from "lucide-react"
 import { useResourcesStore } from "@/stores/resources-store"
 import {
     Resource,
@@ -31,6 +32,8 @@ import {
     getResourceTypeIcon,
     getResourceTypeLabel,
 } from "@/lib/api/resources"
+import { calendarApi } from "@/lib/api/calendar"
+import { EntityLinks } from "@/components/crosslinks/EntityLinks"
 import { toast } from "sonner"
 
 const resourceTypeOptions: { value: ResourceTypeCategory; label: string; icon: string }[] = [
@@ -42,11 +45,17 @@ const resourceTypeOptions: { value: ResourceTypeCategory; label: string; icon: s
 
 export default function ResourcesPublicPage() {
     const {
-        resources,
-        resourcesLoading,
-        fetchResources,
         createReservation,
     } = useResourcesStore()
+
+    const { data: resources = [], isLoading: resourcesLoading } = useQuery<Resource[]>({
+        queryKey: ['resources'],
+        queryFn: async () => {
+            const { resourcesApi } = await import("@/lib/api/resources")
+            const res = await resourcesApi.list()
+            return res.data || []
+        },
+    })
 
     const [search, setSearch] = useState("")
     const [typeFilter, setTypeFilter] = useState<ResourceTypeCategory | "all">("all")
@@ -54,10 +63,9 @@ export default function ResourcesPublicPage() {
     const [isBookingOpen, setIsBookingOpen] = useState(false)
     const [bookingNotes, setBookingNotes] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
-
-    useEffect(() => {
-        fetchResources()
-    }, [fetchResources])
+    const [bookingDate, setBookingDate] = useState("")
+    const [bookingStartTime, setBookingStartTime] = useState("09:00")
+    const [bookingEndTime, setBookingEndTime] = useState("10:00")
 
     const filteredResources = resources.filter(resource => {
         if (!resource.is_available) return false
@@ -72,20 +80,65 @@ export default function ResourcesPublicPage() {
     const handleBookResource = (resource: Resource) => {
         setSelectedResource(resource)
         setBookingNotes("")
+        // Pre-fill with today's date
+        const today = new Date().toISOString().slice(0, 10)
+        setBookingDate(today)
+        setBookingStartTime("09:00")
+        setBookingEndTime("10:00")
         setIsBookingOpen(true)
     }
 
     const handleConfirmBooking = async () => {
         if (!selectedResource) return
+        if (!bookingDate) {
+            toast.error("Veuillez sélectionner une date.")
+            return
+        }
+        if (bookingStartTime >= bookingEndTime) {
+            toast.error("L'heure de fin doit être après l'heure de début.")
+            return
+        }
         setIsSubmitting(true)
+        const startIso = `${bookingDate}T${bookingStartTime}:00`
+        const endIso = `${bookingDate}T${bookingEndTime}:00`
         try {
-            await createReservation(selectedResource.id, undefined, bookingNotes || undefined)
+            const reservation = await createReservation(selectedResource.id, undefined, bookingNotes || undefined)
             setIsBookingOpen(false)
+
+            // Create calendar event after successful booking
+            let calendarEventId: string | undefined
+            try {
+                const calendars = await calendarApi.listCalendars()
+                const calendarId = calendars.data?.[0]?.id
+                if (calendarId) {
+                    const event = await calendarApi.createEvent(calendarId, {
+                        title: `Réservation : ${selectedResource.name}`,
+                        start_time: startIso,
+                        end_time: endIso,
+                        description: bookingNotes || undefined,
+                    })
+                    calendarEventId = event.data?.id
+                }
+            } catch {
+                // Calendar event creation is best-effort
+            }
+
             setSelectedResource(null)
-            alert(selectedResource.requires_approval
-                ? "Votre demande de réservation a été envoyée. Vous serez notifié une fois qu'elle sera approuvée."
-                : "Ressource réservée avec succès !"
-            )
+
+            if (selectedResource.requires_approval) {
+                toast.info("Votre demande de réservation a été envoyée. Vous serez notifié une fois approuvée.")
+            } else if (calendarEventId) {
+                toast.success(
+                    <span>
+                        Ressource réservée !{" "}
+                        <a href="/calendar" className="underline font-medium inline-flex items-center gap-1">
+                            Voir dans le calendrier <ExternalLink className="h-3 w-3" />
+                        </a>
+                    </span>
+                )
+            } else {
+                toast.success("Ressource réservée avec succès !")
+            }
         } catch (error) {
             console.error("Failed to create reservation:", error)
             toast.error("Erreur lors de la réservation. Veuillez réessayer.")
@@ -266,6 +319,38 @@ export default function ResourcesPublicPage() {
                                     )}
                                 </div>
                             )}
+                            <div className="grid grid-cols-1 gap-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="booking-date">Date *</Label>
+                                    <Input
+                                        id="booking-date"
+                                        type="date"
+                                        value={bookingDate}
+                                        onChange={(e) => setBookingDate(e.target.value)}
+                                        min={new Date().toISOString().slice(0, 10)}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="booking-start">Heure de début *</Label>
+                                        <Input
+                                            id="booking-start"
+                                            type="time"
+                                            value={bookingStartTime}
+                                            onChange={(e) => setBookingStartTime(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="booking-end">Heure de fin *</Label>
+                                        <Input
+                                            id="booking-end"
+                                            type="time"
+                                            value={bookingEndTime}
+                                            onChange={(e) => setBookingEndTime(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="notes">Notes (optionnel)</Label>
                                 <Textarea
@@ -275,6 +360,11 @@ export default function ResourcesPublicPage() {
                                     onChange={(e) => setBookingNotes(e.target.value)}
                                 />
                             </div>
+                            {selectedResource && (
+                                <div className="border-t pt-4">
+                                    <EntityLinks entityType="resource" entityId={selectedResource.id} />
+                                </div>
+                            )}
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setIsBookingOpen(false)}>

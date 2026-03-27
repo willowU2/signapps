@@ -51,8 +51,8 @@ export function TaskBoard({ projectId }: TaskBoardProps) {
     );
   }
 
-  // Filter by project when API supports per-project task streams
-  const boardTasks = tasks;
+  // Filter by project when projectId is provided
+  const boardTasks = projectId ? tasks.filter(t => t.projectId === projectId) : tasks;
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);

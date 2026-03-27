@@ -2,7 +2,8 @@
 
 import { SpinnerInfinity } from 'spinners-react';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,10 +58,7 @@ import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 
 export default function SchedulerPage() {
-  const [jobs, setJobs] = useState<ScheduledJob[]>([]);
-  const [stats, setStats] = useState<JobStats | null>(null);
-  const [runningJobs, setRunningJobs] = useState<RunningJob[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<ScheduledJob | null>(null);
   const [saving, setSaving] = useState(false);
@@ -89,27 +87,31 @@ export default function SchedulerPage() {
     enabled: true,
   });
 
-  const fetchJobs = useCallback(async () => {
-    setLoading(true);
-    try {
+  type SchedulerData = { jobs: ScheduledJob[]; stats: JobStats | null; runningJobs: RunningJob[] };
+
+  const { data: schedulerData, isLoading: loading } = useQuery<SchedulerData>({
+    queryKey: ['scheduler-jobs'],
+    queryFn: async () => {
       const [jobsRes, statsRes, runningRes] = await Promise.all([
         schedulerApi.listJobs(),
         schedulerApi.getStats().catch(() => null),
         schedulerApi.getRunning().catch(() => ({ data: [] })),
       ]);
-      setJobs(jobsRes.data || []);
-      if (statsRes?.data) setStats(statsRes.data);
-      setRunningJobs(runningRes?.data || []);
-    } catch {
-      setJobs([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return {
+        jobs: jobsRes.data || [],
+        stats: statsRes?.data ?? null,
+        runningJobs: runningRes?.data || [],
+      };
+    },
+  });
 
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+  const jobs = schedulerData?.jobs ?? [];
+  const stats = schedulerData?.stats ?? null;
+  const runningJobs = schedulerData?.runningJobs ?? [];
+
+  const fetchJobs = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['scheduler-jobs'] });
+  }, [queryClient]);
 
   const handleOpenDialog = (job?: ScheduledJob) => {
     if (job) {

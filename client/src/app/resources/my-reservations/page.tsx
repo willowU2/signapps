@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useCallback } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
 import {
@@ -30,32 +31,26 @@ import { reservationsApi, Reservation, getReservationStatusColor, getReservation
 import { toast } from "sonner"
 
 export default function MyReservationsPage() {
-    const [reservations, setReservations] = useState<Reservation[]>([])
-    const [loading, setLoading] = useState(true)
+    const queryClient = useQueryClient()
 
-    const fetchMyReservations = async () => {
-        setLoading(true)
-        try {
+    const { data: reservations = [], isLoading: loading } = useQuery<Reservation[]>({
+        queryKey: ['my-reservations'],
+        queryFn: async () => {
             const response = await reservationsApi.listMine()
-            setReservations(response.data)
-        } catch (error) {
-            console.error("Failed to fetch reservations:", error)
-            toast.error("Erreur lors du chargement de vos réservations")
-        } finally {
-            setLoading(false)
-        }
-    }
+            return response.data
+        },
+    })
 
-    useEffect(() => {
-        fetchMyReservations()
-    }, [])
+    const fetchMyReservations = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ['my-reservations'] })
+    }, [queryClient])
 
     const handleCancel = async (id: string) => {
         try {
             await reservationsApi.cancel(id)
-            setReservations(prev => prev.map(r =>
-                r.id === id ? { ...r, status: "cancelled" as const } : r
-            ))
+            queryClient.setQueryData<Reservation[]>(['my-reservations'], (prev = []) =>
+                prev.map(r => r.id === id ? { ...r, status: "cancelled" as const } : r)
+            )
         } catch (error) {
             console.error("Failed to cancel reservation:", error)
             toast.error("Erreur lors de l'annulation de la réservation")

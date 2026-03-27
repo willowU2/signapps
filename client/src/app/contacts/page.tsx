@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,6 +10,16 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download } from "lucide-react"
 import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
@@ -41,29 +52,30 @@ const SEED_CONTACTS: Contact[] = [
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function ContactsPage() {
-  const [contacts, setContacts] = useState<Contact[]>([])
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState<ActiveTab>("all")
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<Partial<Contact>>({ tags: [], favorite: false })
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
-  useEffect(() => { loadContacts() }, [])
-
-  const loadContacts = async () => {
-    try {
+  const { data: contacts = SEED_CONTACTS } = useQuery<Contact[]>({
+    queryKey: ['contacts'],
+    queryFn: async () => {
       const client = getClient(ServiceName.CONTACTS)
       const res = await client.get<Contact[]>("/contacts")
-      setContacts(res.data ?? [])
-    } catch {
-      console.debug("Contacts API unavailable, using seed data")
-      setContacts(SEED_CONTACTS)
-    }
-  }
+      return res.data ?? SEED_CONTACTS
+    },
+  })
+
+  const loadContacts = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['contacts'] })
+  }, [queryClient])
 
   // ── Filtered views ──────────────────────────────────────────────────────────
 
-  const filtered = contacts.filter(c => {
+  const filtered = useMemo(() => contacts.filter(c => {
     const q = search.toLowerCase()
     const matchesSearch =
       !q ||
@@ -75,9 +87,12 @@ export default function ContactsPage() {
     if (activeTab === "favorites") return matchesSearch && c.favorite
     if (activeTab === "groups")    return matchesSearch && !!c.group
     return matchesSearch
-  })
+  }), [contacts, search, activeTab])
 
-  const groups = [...new Set(contacts.map(c => c.group).filter(Boolean))] as string[]
+  const groups = useMemo(
+    () => [...new Set(contacts.map(c => c.group).filter(Boolean))] as string[],
+    [contacts]
+  )
 
   // ── CRUD helpers ────────────────────────────────────────────────────────────
 
@@ -103,10 +118,10 @@ export default function ContactsPage() {
       } else {
         await client.post("/contacts", payload)
       }
-      await loadContacts()
+      loadContacts()
     } catch {
       // Optimistic local update when API is unavailable
-      setContacts(prev =>
+      queryClient.setQueryData<Contact[]>(['contacts'], (prev = SEED_CONTACTS) =>
         editingId
           ? prev.map(c => c.id === editingId ? payload : c)
           : [...prev, payload]
@@ -122,13 +137,16 @@ export default function ContactsPage() {
     setIsCreating(true)
   }
 
-  const handleDelete = async (id: string) => {
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    const id = deleteTarget
+    setDeleteTarget(null)
     try {
       const client = getClient(ServiceName.CONTACTS)
       await client.delete(`/contacts/${id}`)
-      await loadContacts()
+      loadContacts()
     } catch {
-      setContacts(prev => prev.filter(c => c.id !== id))
+      queryClient.setQueryData<Contact[]>(['contacts'], (prev = []) => prev.filter(c => c.id !== id))
     }
   }
 
@@ -137,9 +155,9 @@ export default function ContactsPage() {
     try {
       const client = getClient(ServiceName.CONTACTS)
       await client.put(`/contacts/${c.id}`, updated)
-      await loadContacts()
+      loadContacts()
     } catch {
-      setContacts(prev => prev.map(x => x.id === c.id ? updated : x))
+      queryClient.setQueryData<Contact[]>(['contacts'], (prev = []) => prev.map(x => x.id === c.id ? updated : x))
     }
   }
 
@@ -326,7 +344,7 @@ export default function ContactsPage() {
                             <Button size="icon" variant="ghost" title="Modifier" onClick={() => handleEdit(c)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button size="icon" variant="ghost" title="Supprimer" onClick={() => handleDelete(c.id)}>
+                            <Button size="icon" variant="ghost" title="Supprimer" onClick={() => setDeleteTarget(c.id)}>
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
@@ -371,6 +389,21 @@ export default function ContactsPage() {
         </Tabs>
 
       </div>
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={open => { if (!open) setDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce contact ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Le contact sera définitivement supprimé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   )
 }

@@ -30,6 +30,16 @@ import { toast } from "sonner"
 import { Label } from "@/components/ui/label"
 import { Plus, Search, MoreHorizontal, Users, Pencil, Trash2 } from "lucide-react"
 import { FEATURES } from "@/lib/features"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 
 export default function WorkspacesPage() {
@@ -39,6 +49,7 @@ export default function WorkspacesPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isMembersSheetOpen, setIsMembersSheetOpen] = useState(false)
     const [membersWorkspace, setMembersWorkspace] = useState<Workspace | null>(null)
+    const [deleteWorkspaceTarget, setDeleteWorkspaceTarget] = useState<Workspace | null>(null)
 
     const handleOpenMembersSheet = (workspace: Workspace) => {
         setMembersWorkspace(workspace)
@@ -78,14 +89,19 @@ export default function WorkspacesPage() {
         }
     }
 
-    const handleDelete = async (workspace: Workspace) => {
+    const handleDelete = (workspace: Workspace) => {
         if (workspace.is_default) {
             toast.error("Cannot delete the default workspace")
             return
         }
-        if (!confirm(`Delete workspace "${workspace.name}"? This action cannot be undone.`)) return
+        setDeleteWorkspaceTarget(workspace)
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteWorkspaceTarget) return
+        setDeleteWorkspaceTarget(null)
         try {
-            await deleteWorkspace(workspace.id)
+            await deleteWorkspace(deleteWorkspaceTarget.id)
             toast.success("Workspace deleted successfully")
         } catch (error) {
             console.error("Failed to delete workspace:", error)
@@ -212,6 +228,19 @@ export default function WorkspacesPage() {
                         workspace={membersWorkspace}
                     />
                 )}
+
+                <AlertDialog open={!!deleteWorkspaceTarget} onOpenChange={() => setDeleteWorkspaceTarget(null)}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete workspace &quot;{deleteWorkspaceTarget?.name}&quot;?</AlertDialogTitle>
+                            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </AppLayout>
     )

@@ -15,6 +15,16 @@ import { Textarea } from "@/components/ui/textarea"
 import { MonitorSmartphone, Shield, Server, Plug, Settings, History, Lock, Eye, Terminal, X, Trash2, RefreshCw, Edit } from 'lucide-react';
 import { remoteApi, RemoteConnection, CreateConnectionRequest, UpdateConnectionRequest } from "@/lib/api-remote"
 import { toast } from "sonner"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function RemoteAccessDashboard() {
     const [connections, setConnections] = useState<RemoteConnection[]>([])
@@ -25,6 +35,7 @@ export default function RemoteAccessDashboard() {
     const [viewerOpen, setViewerOpen] = useState(false)
     const [creating, setCreating] = useState(false)
     const [editing, setEditing] = useState(false)
+    const [deleteConnectionId, setDeleteConnectionId] = useState<string | null>(null)
     const wsRef = useRef<WebSocket | null>(null)
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -105,12 +116,16 @@ export default function RemoteAccessDashboard() {
         }
     }
 
-    const handleDeleteConnection = async (id: string) => {
-        if (!confirm('Supprimer cette connexion ?')) return
+    const handleDeleteConnection = (id: string) => {
+        setDeleteConnectionId(id)
+    }
 
+    const handleDeleteConnectionConfirm = async () => {
+        if (!deleteConnectionId) return
+        setDeleteConnectionId(null)
         try {
-            await remoteApi.connections.delete(id)
-            setConnections(prev => prev.filter(c => c.id !== id))
+            await remoteApi.connections.delete(deleteConnectionId)
+            setConnections(prev => prev.filter(c => c.id !== deleteConnectionId))
             toast.success('Connexion supprime')
         } catch (err) {
             console.debug('Failed to delete connection:', err)
@@ -547,6 +562,19 @@ export default function RemoteAccessDashboard() {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <AlertDialog open={!!deleteConnectionId} onOpenChange={() => setDeleteConnectionId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer cette connexion ?</AlertDialogTitle>
+                        <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteConnectionConfirm}>Supprimer</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     )
 }

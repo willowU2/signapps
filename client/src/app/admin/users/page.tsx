@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useCallback } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,25 +30,23 @@ import { toast } from "sonner"
 
 
 export default function UsersPage() {
-    const [users, setUsers] = useState<User[]>([])
+    const queryClient = useQueryClient()
     const [search, setSearch] = useState("")
     const [isSheetOpen, setIsSheetOpen] = useState(false)
     const [selectedUser, setSelectedUser] = useState<User | null>(null)
     const [isLoading, setIsLoading] = useState(false)
 
-    const loadUsers = async () => {
-        try {
-            const res = await usersApi.list();
-            // The rust backend might return the list directly, while the swagger says { users: ... }
-            setUsers(Array.isArray(res.data) ? res.data : (res.data?.users || []));
-        } catch {
-            toast.error("Failed to load users");
-        }
-    }
+    const { data: users = [] } = useQuery<User[]>({
+        queryKey: ['admin-users'],
+        queryFn: async () => {
+            const res = await usersApi.list()
+            return Array.isArray(res.data) ? res.data : (res.data?.users || [])
+        },
+    })
 
-    useEffect(() => {
-        loadUsers()
-    }, [])
+    const loadUsers = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+    }, [queryClient])
 
     const handleOpenCreate = () => {
         setSelectedUser(null)

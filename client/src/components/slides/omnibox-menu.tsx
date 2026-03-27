@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 import { Type, Square, Circle, Triangle, Wand2, Minus, LayoutTemplate, Tag, User, Image as ImageIcon, PenTool, Mail, Calendar, Table2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 
 export interface OmniboxItem {
     id: string
@@ -29,6 +38,8 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
     const [selectedIndex, setSelectedIndex] = useState(0)
     const inputRef = useRef<HTMLInputElement>(null)
     const menuRef = useRef<HTMLDivElement>(null)
+    const [showImageDialog, setShowImageDialog] = useState(false)
+    const [imageUrl, setImageUrl] = useState("")
 
     const items: OmniboxItem[] = [
         // Basic
@@ -37,8 +48,8 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
         { id: "table", title: "Table", description: "Insert a 3x3 editable grid", icon: <Table2 className="w-4 h-4 text-gray-500" />, category: "Basic", action: () => onInsertTable(3, 3) },
         {
             id: "image", title: "Image Wrapper", description: "Import web image via URL", icon: <ImageIcon className="w-4 h-4 text-gray-500" />, category: "Basic", action: () => {
-                const url = window.prompt("Enter image URL:", "https://images.unsplash.com/photo-1616469829581-73993eb86b02?w=800&q=80");
-                if (url) onInsertImage(url);
+                setImageUrl("https://images.unsplash.com/photo-1616469829581-73993eb86b02?w=800&q=80");
+                setShowImageDialog(true);
             }
         },
 
@@ -113,14 +124,13 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
         return acc
     }, {} as Record<string, OmniboxItem[]>)
 
-    if (!isOpen) return null
-
     // Ensure menu stays within screen bounds (roughly)
-    const safeX = Math.min(x, window.innerWidth - 320)
-    const safeY = Math.min(y, window.innerHeight - 400)
+    const safeX = typeof window !== 'undefined' ? Math.min(x, window.innerWidth - 320) : x
+    const safeY = typeof window !== 'undefined' ? Math.min(y, window.innerHeight - 400) : y
 
     return (
-        <div
+        <>
+        {!isOpen ? null : <div
             ref={menuRef}
             className="fixed z-50 w-80 bg-background/95 backdrop-blur-xl border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col"
             style={{ left: safeX, top: safeY, maxHeight: 400 }}
@@ -202,6 +212,29 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
                     <kbd className="px-1.5 py-0.5 rounded bg-background border border-gray-200 font-sans shadow-sm">Enter</kbd> to select
                 </div>
             </div>
-        </div>
+        </div>}
+
+        <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
+            <DialogContent>
+                <DialogHeader><DialogTitle>Enter image URL</DialogTitle></DialogHeader>
+                <Input
+                    value={imageUrl}
+                    onChange={e => setImageUrl(e.target.value)}
+                    placeholder="https://..."
+                    autoFocus
+                    onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                            if (imageUrl) { onInsertImage(imageUrl); onClose(); }
+                            setShowImageDialog(false);
+                        }
+                    }}
+                />
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowImageDialog(false)}>Cancel</Button>
+                    <Button onClick={() => { if (imageUrl) { onInsertImage(imageUrl); onClose(); } setShowImageDialog(false); }}>Insert</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+        </>
     )
 }

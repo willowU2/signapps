@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import {
     Inbox,
     File,
@@ -57,6 +57,7 @@ export default function MailPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [searchResults, setSearchResults] = useState<Mail[] | null>(null)
     const [isSearching, setIsSearching] = useState(false)
+    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     const [activeAccountId, setActiveAccountId] = useState<string | undefined>(undefined)
 
@@ -65,33 +66,36 @@ export default function MailPage() {
 
     const mailList = searchResults !== null ? searchResults : storeMailList
 
-    const handleSearch = useCallback(async (q: string) => {
+    const handleSearch = useCallback((q: string) => {
         setSearchQuery(q)
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
         if (!q.trim()) {
             setSearchResults(null)
             return
         }
-        setIsSearching(true)
-        try {
-            const emails = await searchApi.search({ q: q.trim(), limit: 50 })
-            const uiMails: Mail[] = emails.map(email => ({
-                id: email.id,
-                name: email.sender_name || email.sender.split('@')[0],
-                email: email.sender,
-                subject: email.subject || '(Sans objet)',
-                text: email.body_text || email.snippet || '',
-                date: email.received_at || email.created_at || new Date().toISOString(),
-                read: email.is_read ?? false,
-                labels: email.labels || [],
-                folder: 'inbox' as const
-            }))
-            setSearchResults(uiMails)
-        } catch (err) {
-            console.debug('Search failed:', err)
-            setSearchResults([])
-        } finally {
-            setIsSearching(false)
-        }
+        searchDebounceRef.current = setTimeout(async () => {
+            setIsSearching(true)
+            try {
+                const emails = await searchApi.search({ q: q.trim(), limit: 50 })
+                const uiMails: Mail[] = emails.map(email => ({
+                    id: email.id,
+                    name: email.sender_name || email.sender.split('@')[0],
+                    email: email.sender,
+                    subject: email.subject || '(Sans objet)',
+                    text: email.body_text || email.snippet || '',
+                    date: email.received_at || email.created_at || new Date().toISOString(),
+                    read: email.is_read ?? false,
+                    labels: email.labels || [],
+                    folder: 'inbox' as const
+                }))
+                setSearchResults(uiMails)
+            } catch (err) {
+                console.debug('Search failed:', err)
+                setSearchResults([])
+            } finally {
+                setIsSearching(false)
+            }
+        }, 300)
     }, [])
 
     useEffect(() => {
