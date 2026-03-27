@@ -81,30 +81,27 @@ export async function importXlsxToYjs(
     const sheetId = allEntries[i].id;
     const gridMap = doc.getMap<CellData>(`grid-${sheetId}`);
 
-    // Pre-filter: only keep cells with meaningful content
+    // Pre-filter: aggressively reduce cell count to prevent OOM
+    // Google Sheets style: only store cells with visible content
+    const MAX_ROWS_PER_SHEET = 5000; // Cap per sheet to avoid OOM
     const filtered: Array<[string, any]> = [];
     for (const [key, cellData] of Object.entries(cellsMap)) {
+      const [rStr, cStr] = key.split(',');
+      const r = parseInt(rStr, 10);
+      if (r >= MAX_ROWS_PER_SHEET) { skippedCells++; continue; }
+
       const val = ensureString(cellData.value);
-      const hasFormula = !!cellData.formula;
       const hasStyle = cellData.style && Object.keys(cellData.style).length > 0;
       const hasComment = !!cellData.comment;
 
-      // Skip cells that are empty or have only trivial values without styles
-      if (!val && !hasFormula && !hasStyle && !hasComment) { skippedCells++; continue; }
-      // Skip cells that just contain "0" or "false" with no formula/style (filler from Excel)
-      if (!hasFormula && !hasStyle && !hasComment && (val === '0' || val === 'false' || val === '')) {
-        skippedCells++; continue;
-      }
+      // Skip truly empty cells
+      if (!val && !hasStyle && !hasComment) { skippedCells++; continue; }
 
-      // Strip formula to save memory — keep only the value (formulas are 60% of cells)
-      // The formula can be re-imported from the original file if needed
+      // Build minimal cell data — NO formulas stored (saves 60%+ memory)
+      // Values are already the computed results from Excel
       const safeData: any = { value: val };
       if (hasStyle) safeData.style = cellData.style;
       if (hasComment) safeData.comment = cellData.comment;
-      // Only keep formulas for the first 500 rows per sheet (headers + key data)
-      const [rStr] = key.split(',');
-      const r = parseInt(rStr, 10);
-      if (hasFormula && r < 500) safeData.formula = cellData.formula;
 
       filtered.push([key, safeData]);
     }
