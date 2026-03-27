@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileUp, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { aiApi } from '@/lib/api';
 
 interface ExtractedField {
   label: string;
@@ -44,18 +45,45 @@ export function InvoiceOcr() {
 
     setIsLoading(true);
     try {
-      // Simulate OCR processing
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const fileText = await file.text().catch(() => `[Binary file: ${file.name}, type: ${file.type}]`);
+      const prompt = `You are an invoice OCR system. Extract the following fields from this invoice document and respond ONLY with a valid JSON array, no markdown, no explanation.
 
-      const mockData: ExtractedField[] = [
-        { label: 'Vendor Name', value: 'Acme Corp Ltd.', confidence: 0.98 },
-        { label: 'Invoice Amount', value: '€1,250.50', confidence: 0.97 },
-        { label: 'VAT (TVA)', value: '€250.10', confidence: 0.95 },
-        { label: 'IBAN', value: 'FR76 3000 6000 0112 3456 7890 123', confidence: 0.92 },
-        { label: 'Invoice Date', value: '2026-03-15', confidence: 0.99 },
-      ];
+Fields to extract: Vendor Name, Invoice Amount, VAT (TVA), IBAN, Invoice Date.
 
-      setExtracted(mockData);
+For each field provide: {"label": "...", "value": "...", "confidence": 0.XX}
+where confidence is between 0 and 1.
+
+Invoice content:
+${fileText.slice(0, 4000)}
+
+Respond with only the JSON array, example format:
+[{"label":"Vendor Name","value":"Acme Corp","confidence":0.95}]`;
+
+      const response = await aiApi.chat(prompt, { enableTools: false, includesSources: false });
+      const answer = response.data?.answer ?? '';
+
+      let fields: ExtractedField[] = [];
+      const match = answer.match(/\[[\s\S]*\]/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (Array.isArray(parsed)) {
+          fields = parsed.filter(
+            (f: unknown) =>
+              f !== null &&
+              typeof f === 'object' &&
+              'label' in (f as object) &&
+              'value' in (f as object) &&
+              'confidence' in (f as object)
+          );
+        }
+      }
+
+      if (fields.length === 0) {
+        toast.error('AI could not extract invoice fields — check the file content');
+        return;
+      }
+
+      setExtracted(fields);
       setIsValidated(false);
       toast.success('Invoice extracted successfully');
     } catch (error) {

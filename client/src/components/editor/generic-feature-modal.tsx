@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,15 +13,53 @@ import {
     Grid3X3, BarChart3, PieChart, Table, Calculator, Database
 } from 'lucide-react';
 
+interface DocumentVersion {
+    id: string;
+    label?: string;
+    description?: string;
+    createdAt: string;
+    authorName?: string;
+}
+
 interface GenericFeatureModalProps {
     isOpen: boolean;
     onClose: () => void;
     actionId: string | null;
     actionLabel?: string;
+    documentId?: string;
 }
 
-export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: GenericFeatureModalProps) {
+export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, documentId }: GenericFeatureModalProps) {
     const [copied, setCopied] = useState(false);
+    const [versions, setVersions] = useState<DocumentVersion[]>([]);
+    const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
+    const [isRestoring, setIsRestoring] = useState(false);
+
+    useEffect(() => {
+        if (actionId !== 'version_history' || !documentId) return;
+        import('@/lib/office/versions/api').then(({ getVersions }) => {
+            getVersions({ documentId, page: 1, pageSize: 20 }).then((res) => {
+                setVersions(res.versions ?? []);
+            }).catch(() => setVersions([]));
+        });
+    }, [actionId, documentId]);
+
+    const handleRestore = async (versionId: string) => {
+        if (!documentId) return;
+        setIsRestoring(true);
+        try {
+            const { restoreDocumentVersion } = await import('@/lib/office/versions/api');
+            await restoreDocumentVersion(documentId, versionId);
+            const { toast } = await import('sonner');
+            toast.success('Version restored successfully');
+            onClose();
+        } catch {
+            const { toast } = await import('sonner');
+            toast.error('Failed to restore version');
+        } finally {
+            setIsRestoring(false);
+        }
+    };
 
     if (!isOpen || !actionId) return null;
 
@@ -165,33 +203,44 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel }: 
                     <div className="flex-1 p-8 flex flex-col items-center justify-center text-center border-r border-gray-200 dark:border-gray-800">
                         <Clock className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" />
                         <h3 className="text-lg font-medium">Aperçu de la version</h3>
-                        <p className="text-sm text-gray-500 mt-2 max-w-sm">Sélectionnez une version dans le panneau latéral pour voir les modifications apportées à cette date.</p>
+                        {selectedVersionId ? (
+                            <div className="mt-4 space-y-2">
+                                <p className="text-sm text-gray-500">Version sélectionnée : <code className="bg-gray-100 px-1 rounded text-xs">{selectedVersionId.slice(0, 8)}</code></p>
+                                <button
+                                    onClick={() => handleRestore(selectedVersionId)}
+                                    disabled={isRestoring}
+                                    className="mt-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {isRestoring ? 'Restauration...' : 'Restaurer cette version'}
+                                </button>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-gray-500 mt-2 max-w-sm">Sélectionnez une version dans le panneau latéral pour la restaurer.</p>
+                        )}
                     </div>
                     <div className="w-80 bg-gray-50 dark:bg-[#141414] flex flex-col">
                         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
-                            <span className="font-medium">Aujourd'hui</span>
+                            <span className="font-medium">Historique ({versions.length})</span>
                         </div>
                         <ScrollArea className="flex-1">
                             <div className="p-2 space-y-1">
-                                {[1, 2, 3].map((_, i) => (
-                                    <button key={i} className="w-full text-left p-3 hover:bg-background dark:hover:bg-[#1f1f1f] rounded-md transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-800 flex items-start gap-3">
+                                {versions.length === 0 && (
+                                    <p className="text-xs text-gray-400 p-3">{documentId ? 'Aucune version trouvée' : 'Ouvrez un document pour voir ses versions'}</p>
+                                )}
+                                {versions.map((v) => (
+                                    <button
+                                        key={v.id}
+                                        onClick={() => setSelectedVersionId(v.id === selectedVersionId ? null : v.id)}
+                                        className={`w-full text-left p-3 hover:bg-background dark:hover:bg-[#1f1f1f] rounded-md transition-colors border flex items-start gap-3 ${v.id === selectedVersionId ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent hover:border-gray-200 dark:hover:border-gray-800'}`}
+                                    >
                                         <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
                                         <div>
-                                            <div className="text-sm font-medium">{14 - i * 2}:30</div>
-                                            <div className="text-xs text-gray-500 mt-1">Modifié par Vous</div>
+                                            <div className="text-sm font-medium">{v.label || new Date(v.createdAt).toLocaleTimeString()}</div>
+                                            <div className="text-xs text-gray-500 mt-1">{v.authorName || 'Vous'} · {new Date(v.createdAt).toLocaleDateString()}</div>
+                                            {v.description && <div className="text-xs text-gray-400 mt-0.5 truncate max-w-[160px]">{v.description}</div>}
                                         </div>
                                     </button>
                                 ))}
-                                <div className="p-4 border-b border-t border-gray-200 dark:border-gray-800 flex justify-between items-center mt-4">
-                                    <span className="font-medium text-gray-600 dark:text-gray-400">Hier</span>
-                                </div>
-                                <button className="w-full text-left p-3 hover:bg-background dark:hover:bg-[#1f1f1f] rounded-md transition-colors border border-transparent hover:border-gray-200 dark:hover:border-gray-800 flex items-start gap-3">
-                                        <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
-                                        <div>
-                                            <div className="text-sm font-medium">10:15</div>
-                                            <div className="text-xs text-gray-500 mt-1">Version initiale</div>
-                                        </div>
-                                </button>
                             </div>
                         </ScrollArea>
                     </div>

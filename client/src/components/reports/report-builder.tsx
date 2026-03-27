@@ -6,6 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { usersApi, storageApi, calendarApi } from "@/lib/api";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -87,79 +89,61 @@ const OPERATORS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Mock data generators
+// Real data fetchers
 // ---------------------------------------------------------------------------
 
-function generateMockData(source: DataSource, columns: string[]): ReportData[] {
-  const mockRows: ReportData[] = [];
-  const rowCount = 5;
-
-  for (let i = 0; i < rowCount; i++) {
-    const row: ReportData = {};
-    columns.forEach((col) => {
-      switch (source) {
-        case "users":
-          row[col] =
-            col === "id"
-              ? `USR${String(i + 1).padStart(3, "0")}`
-              : col === "email"
-                ? `user${i + 1}@example.com`
-                : col === "name"
-                  ? `User ${i + 1}`
-                  : col === "created_at"
-                    ? "2024-01-15"
-                    : col === "active"
-                      ? i % 2 === 0
-                      : "";
-          break;
-        case "storage":
-          row[col] =
-            col === "id"
-              ? `FILE${String(i + 1).padStart(3, "0")}`
-              : col === "name"
-                ? `document-${i + 1}.pdf`
-                : col === "size"
-                  ? (Math.random() * 100).toFixed(2)
-                  : col === "owner"
-                    ? `user${i + 1}@example.com`
-                    : col === "modified_at"
-                      ? "2024-02-20"
-                      : "";
-          break;
-        case "calendar":
-          row[col] =
-            col === "id"
-              ? `EVT${String(i + 1).padStart(3, "0")}`
-              : col === "title"
-                ? `Meeting ${i + 1}`
-                : col === "start_time"
-                  ? "10:00 AM"
-                  : col === "end_time"
-                    ? "11:00 AM"
-                    : col === "attendees"
-                      ? `${2 + i} people`
-                      : "";
-          break;
-        case "tasks":
-          row[col] =
-            col === "id"
-              ? `TSK${String(i + 1).padStart(3, "0")}`
-              : col === "title"
-                ? `Task ${i + 1}`
-                : col === "status"
-                  ? ["Open", "In Progress", "Done"][i % 3]
-                  : col === "assignee"
-                    ? `user${(i % 3) + 1}@example.com`
-                    : col === "due_date"
-                      ? "2024-03-01"
-                      : "";
-          break;
-      }
-    });
-    mockRows.push(row);
+async function fetchReportData(source: DataSource, columns: string[]): Promise<ReportData[]> {
+  switch (source) {
+    case "users": {
+      const res = await usersApi.list(1, 50);
+      const users = res.data?.users ?? [];
+      return users.map((u) => {
+        const row: ReportData = {};
+        if (columns.includes("id")) row["id"] = u.id;
+        if (columns.includes("email")) row["email"] = u.email ?? "";
+        if (columns.includes("name")) row["name"] = u.display_name || u.username;
+        if (columns.includes("created_at")) row["created_at"] = u.created_at;
+        if (columns.includes("active")) row["active"] = u.last_login ? true : false;
+        return row;
+      });
+    }
+    case "storage": {
+      const bucketsRes = await storageApi.listBuckets();
+      const buckets = bucketsRes.data ?? [];
+      if (buckets.length === 0) return [];
+      const filesRes = await storageApi.listFiles(buckets[0].name);
+      const objects = (filesRes.data as { objects?: { key: string; size: number; last_modified?: string }[] })?.objects ?? [];
+      return objects.slice(0, 50).map((obj, i) => {
+        const row: ReportData = {};
+        if (columns.includes("id")) row["id"] = String(i + 1);
+        if (columns.includes("name")) row["name"] = obj.key.split("/").pop() || obj.key;
+        if (columns.includes("size")) row["size"] = (obj.size / (1024 * 1024)).toFixed(2);
+        if (columns.includes("owner")) row["owner"] = buckets[0].name;
+        if (columns.includes("modified_at")) row["modified_at"] = obj.last_modified ?? "";
+        return row;
+      });
+    }
+    case "calendar": {
+      const calsRes = await calendarApi.listCalendars();
+      const cals = calsRes.data ?? [];
+      if (cals.length === 0) return [];
+      const eventsRes = await calendarApi.listEvents(cals[0].id);
+      const events = eventsRes.data ?? [];
+      return events.slice(0, 50).map((ev) => {
+        const row: ReportData = {};
+        if (columns.includes("id")) row["id"] = ev.id;
+        if (columns.includes("title")) row["title"] = ev.title || "";
+        if (columns.includes("start_time")) row["start_time"] = ev.start_time ? new Date(ev.start_time).toLocaleString() : "";
+        if (columns.includes("end_time")) row["end_time"] = ev.end_time ? new Date(ev.end_time).toLocaleString() : "";
+        if (columns.includes("attendees")) row["attendees"] = ev.location ? ev.location : "N/A";
+        return row;
+      });
+    }
+    case "tasks": {
+      // No tasks API in index — fallback to empty
+      return [];
+    }
   }
-
-  return mockRows;
 }
 
 // ---------------------------------------------------------------------------
@@ -212,6 +196,7 @@ export function ReportBuilder() {
   });
   const [previewData, setPreviewData] = useState<ReportData[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
   const steps = [
     "Select Data Source",
@@ -268,12 +253,22 @@ export function ReportBuilder() {
     }));
   };
 
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (!config.source || config.columns.size === 0) return;
-    const columnArray = Array.from(config.columns);
-    const data = generateMockData(config.source, columnArray);
-    setPreviewData(data);
-    setShowPreview(true);
+    setIsLoadingPreview(true);
+    try {
+      const columnArray = Array.from(config.columns);
+      const data = await fetchReportData(config.source, columnArray);
+      setPreviewData(data);
+      setShowPreview(true);
+      if (data.length === 0) {
+        toast.info("No data found for this source");
+      }
+    } catch {
+      toast.error("Failed to load report data");
+    } finally {
+      setIsLoadingPreview(false);
+    }
   };
 
   const handleSourceChange = (source: string) => {
@@ -493,8 +488,8 @@ export function ReportBuilder() {
           )}
 
           {!showPreview && (
-            <Button onClick={handlePreview} variant="secondary" className="w-full">
-              Generate Preview
+            <Button onClick={handlePreview} variant="secondary" className="w-full" disabled={isLoadingPreview}>
+              {isLoadingPreview ? "Loading data..." : "Generate Preview"}
             </Button>
           )}
 

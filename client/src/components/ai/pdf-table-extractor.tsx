@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileUp, Loader2, Download, Copy, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { aiApi } from '@/lib/api';
 
 interface TableData {
   headers: string[];
@@ -42,20 +43,40 @@ export function PdfTableExtractor() {
 
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const fileText = await file.text().catch(() => `[Binary PDF: ${file.name}]`);
+      const prompt = `You are a PDF table extraction AI. Find and extract the main table from this PDF content.
+Respond ONLY with a valid JSON object, no markdown, no explanation.
 
-      const mockTable: TableData = {
-        headers: ['Product ID', 'Product Name', 'Quantity', 'Unit Price', 'Total'],
-        rows: [
-          ['P001', 'Laptop Pro 15"', '5', '1299.99', '6499.95'],
-          ['P002', 'Mouse Wireless', '25', '24.99', '624.75'],
-          ['P003', 'USB-C Cable', '50', '9.99', '499.50'],
-          ['P004', 'Monitor 27" 4K', '3', '599.99', '1799.97'],
-          ['P005', 'Keyboard Mechanical', '10', '149.99', '1499.90'],
-        ],
-      };
+Format: {"headers": ["col1", "col2", ...], "rows": [["val1", "val2", ...], ...]}
 
-      setTableData(mockTable);
+PDF content:
+${fileText.slice(0, 6000)}
+
+Respond with only the JSON object.`;
+
+      const response = await aiApi.chat(prompt, { enableTools: false, includesSources: false });
+      const answer = response.data?.answer ?? '';
+
+      let table: TableData | null = null;
+      const match = answer.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (
+          parsed &&
+          Array.isArray(parsed.headers) &&
+          Array.isArray(parsed.rows) &&
+          parsed.headers.length > 0
+        ) {
+          table = { headers: parsed.headers, rows: parsed.rows };
+        }
+      }
+
+      if (!table) {
+        toast.error('AI could not extract a table — check the PDF content');
+        return;
+      }
+
+      setTableData(table);
       toast.success('Table extracted successfully');
     } catch (error) {
       toast.error('Failed to extract table from PDF');

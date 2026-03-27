@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { BookOpen, Play, Clock, CheckCircle2, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface Module {
   id: string
@@ -24,59 +25,115 @@ interface Course {
   instructor: string
 }
 
+const STORAGE_KEY = 'learning_courses'
+
+const SEED_COURSES: Course[] = [
+  {
+    id: '1',
+    title: 'Introduction to SignApps',
+    description: 'Get started with SignApps Platform fundamentals',
+    progress: 0,
+    status: 'not-started',
+    instructor: 'John Smith',
+    modules: [
+      { id: '1-1', title: 'Getting Started', duration: 15, completed: false },
+      { id: '1-2', title: 'Dashboard Overview', duration: 20, completed: false },
+      { id: '1-3', title: 'User Management', duration: 25, completed: false },
+      { id: '1-4', title: 'Security Best Practices', duration: 30, completed: false },
+    ],
+  },
+  {
+    id: '2',
+    title: 'Advanced Document Management',
+    description: 'Master document workflows and collaboration',
+    progress: 0,
+    status: 'not-started',
+    instructor: 'Sarah Johnson',
+    modules: [
+      { id: '2-1', title: 'Document Basics', duration: 20, completed: false },
+      { id: '2-2', title: 'Workflow Creation', duration: 40, completed: false },
+      { id: '2-3', title: 'Approvals & Signatures', duration: 35, completed: false },
+    ],
+  },
+  {
+    id: '3',
+    title: 'Compliance & Data Security',
+    description: 'Ensure your organization meets regulatory requirements',
+    progress: 0,
+    status: 'not-started',
+    instructor: 'Michael Chen',
+    modules: [
+      { id: '3-1', title: 'GDPR Essentials', duration: 30, completed: false },
+      { id: '3-2', title: 'Data Retention Policies', duration: 25, completed: false },
+      { id: '3-3', title: 'Audit Trails', duration: 20, completed: false },
+    ],
+  },
+]
+
+function loadCourses(): Course[] {
+  if (typeof window === 'undefined') return SEED_COURSES
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? (JSON.parse(raw) as Course[]) : SEED_COURSES
+  } catch {
+    return SEED_COURSES
+  }
+}
+
+function saveCourses(courses: Course[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(courses))
+  } catch {
+    // storage unavailable
+  }
+}
+
+function recalcCourse(course: Course): Course {
+  const total = course.modules.length
+  const done = course.modules.filter((m) => m.completed).length
+  const progress = total === 0 ? 0 : Math.round((done / total) * 100)
+  const status: Course['status'] =
+    done === 0 ? 'not-started' : done === total ? 'completed' : 'in-progress'
+  return { ...course, progress, status }
+}
+
 export function CourseViewer() {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null)
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockCourses: Course[] = [
-      {
-        id: '1',
-        title: 'Introduction to SignApps',
-        description: 'Get started with SignApps Platform fundamentals',
-        progress: 65,
-        status: 'in-progress',
-        instructor: 'John Smith',
-        modules: [
-          { id: '1-1', title: 'Getting Started', duration: 15, completed: true },
-          { id: '1-2', title: 'Dashboard Overview', duration: 20, completed: true },
-          { id: '1-3', title: 'User Management', duration: 25, completed: false },
-          { id: '1-4', title: 'Security Best Practices', duration: 30, completed: false },
-        ],
-      },
-      {
-        id: '2',
-        title: 'Advanced Document Management',
-        description: 'Master document workflows and collaboration',
-        progress: 30,
-        status: 'in-progress',
-        instructor: 'Sarah Johnson',
-        modules: [
-          { id: '2-1', title: 'Document Basics', duration: 20, completed: true },
-          { id: '2-2', title: 'Workflow Creation', duration: 40, completed: false },
-          { id: '2-3', title: 'Approvals & Signatures', duration: 35, completed: false },
-        ],
-      },
-      {
-        id: '3',
-        title: 'Compliance & Data Security',
-        description: 'Ensure your organization meets regulatory requirements',
-        progress: 100,
-        status: 'completed',
-        instructor: 'Michael Chen',
-        modules: [
-          { id: '3-1', title: 'GDPR Essentials', duration: 30, completed: true },
-          { id: '3-2', title: 'Data Retention Policies', duration: 25, completed: true },
-          { id: '3-3', title: 'Audit Trails', duration: 20, completed: true },
-        ],
-      },
-    ]
-
-    setCourses(mockCourses)
+    setCourses(loadCourses())
     setLoading(false)
   }, [])
+
+  const startModule = (courseId: string, moduleId: string) => {
+    setCourses((prev) => {
+      const updated = prev.map((c) => {
+        if (c.id !== courseId) return c
+        const updatedModules = c.modules.map((m) =>
+          m.id === moduleId ? { ...m, completed: true } : m
+        )
+        return recalcCourse({ ...c, modules: updatedModules })
+      })
+      saveCourses(updated)
+      return updated
+    })
+    toast.success('Module completed')
+  }
+
+  const resetCourse = (courseId: string) => {
+    setCourses((prev) => {
+      const updated = prev.map((c) => {
+        if (c.id !== courseId) return c
+        const resetModules = c.modules.map((m) => ({ ...m, completed: false }))
+        return recalcCourse({ ...c, modules: resetModules })
+      })
+      saveCourses(updated)
+      return updated
+    })
+    toast.success('Course progress reset')
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -89,13 +146,11 @@ export function CourseViewer() {
     }
   }
 
-  const calculateTotalDuration = (modules: Module[]) => {
-    return modules.reduce((sum, m) => sum + m.duration, 0)
-  }
+  const calculateTotalDuration = (modules: Module[]) =>
+    modules.reduce((sum, m) => sum + m.duration, 0)
 
-  const calculateCompletedModules = (modules: Module[]) => {
-    return modules.filter((m) => m.completed).length
-  }
+  const calculateCompletedModules = (modules: Module[]) =>
+    modules.filter((m) => m.completed).length
 
   if (loading) {
     return (
@@ -159,6 +214,16 @@ export function CourseViewer() {
                       <Clock className="w-3 h-3" />
                       <span>{module.duration}m</span>
                     </div>
+                    {!module.completed && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7 px-2"
+                        onClick={() => startModule(course.id, module.id)}
+                      >
+                        Start
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -166,12 +231,28 @@ export function CourseViewer() {
               {/* Action Buttons */}
               <div className="flex gap-2 pt-4">
                 {course.status === 'completed' ? (
-                  <Button className="flex-1" variant="outline">
-                    Review Course
-                  </Button>
+                  <>
+                    <Button className="flex-1" variant="outline">
+                      Review Course
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      variant="ghost"
+                      onClick={() => resetCourse(course.id)}
+                    >
+                      Reset Progress
+                    </Button>
+                  </>
                 ) : (
                   <>
-                    <Button className="flex-1">
+                    <Button
+                      className="flex-1"
+                      onClick={() => {
+                        // Start first uncompleted module
+                        const next = course.modules.find((m) => !m.completed)
+                        if (next) startModule(course.id, next.id)
+                      }}
+                    >
                       {course.status === 'not-started' ? 'Start Course' : 'Resume Course'}
                     </Button>
                     <Button variant="outline" className="flex-1">

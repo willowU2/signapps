@@ -30,30 +30,16 @@ export function VideoMessage() {
   const chunksRef = useRef<Blob[]>([])
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load mock messages on mount
+  // Load messages from localStorage on mount
   useEffect(() => {
-    const mockMessages: VideoMessage[] = [
-      {
-        id: '1',
-        sender: 'Sarah Johnson',
-        date: 'Today, 2:30 PM',
-        duration: 45,
-        thumbnailUrl: '#',
-        videoUrl: '#',
-        isNew: true,
-      },
-      {
-        id: '2',
-        sender: 'Michael Chen',
-        date: 'Yesterday, 10:15 AM',
-        duration: 120,
-        thumbnailUrl: '#',
-        videoUrl: '#',
-        isNew: false,
-      },
-    ]
-    setMessages(mockMessages)
-    setLoading(false)
+    try {
+      const raw = localStorage.getItem('signapps_video_messages');
+      const stored: VideoMessage[] = raw ? JSON.parse(raw) : [];
+      setMessages(stored);
+    } catch {
+      setMessages([]);
+    }
+    setLoading(false);
   }, [])
 
   // Clean up timer on unmount
@@ -147,14 +133,28 @@ export function VideoMessage() {
       isNew: true,
     }
 
-    setMessages([newMessage, ...messages])
+    const updated = [newMessage, ...messages];
+    setMessages(updated);
+    try {
+      // Persist without the blob URL (blob URLs are session-only)
+      const toStore = updated.map((m) => ({ ...m, videoUrl: undefined, thumbnailUrl: undefined }));
+      localStorage.setItem('signapps_video_messages', JSON.stringify(toStore));
+    } catch {
+      // Storage quota exceeded — skip
+    }
     chunksRef.current = []
     setRecordingTime(0)
     toast.success('Message vidéo envoyé')
   }
 
   const handleDelete = (id: string) => {
-    setMessages(messages.filter((m) => m.id !== id))
+    const updated = messages.filter((m) => m.id !== id);
+    setMessages(updated);
+    try {
+      localStorage.setItem('signapps_video_messages', JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
   }
 
   const togglePlayback = (id: string) => {

@@ -24,54 +24,14 @@ export function VoicemailInbox() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockMessages: VoiceMessage[] = [
-      {
-        id: '1',
-        caller: 'John Smith',
-        callerPhone: '+1 (555) 123-4567',
-        date: 'Today, 2:30 PM',
-        duration: 145,
-        transcription:
-          'Hi, this is John calling about the project update. Can you please review the latest documents and get back to me with your thoughts? Thanks.',
-        isNew: true,
-        audioUrl: '#',
-      },
-      {
-        id: '2',
-        caller: 'Sarah Johnson',
-        callerPhone: '+1 (555) 987-6543',
-        date: 'Today, 11:15 AM',
-        duration: 62,
-        transcription: 'Hello, just confirming our meeting tomorrow at 3 PM. Looking forward to discussing the Q4 strategy.',
-        isNew: true,
-        audioUrl: '#',
-      },
-      {
-        id: '3',
-        caller: 'Unknown',
-        callerPhone: '+1 (555) 555-0000',
-        date: 'Yesterday, 5:45 PM',
-        duration: 28,
-        transcription: 'This is an automated reminder about your appointment.',
-        isNew: false,
-        audioUrl: '#',
-      },
-      {
-        id: '4',
-        caller: 'Michael Chen',
-        callerPhone: '+1 (555) 246-8135',
-        date: 'Yesterday, 10:30 AM',
-        duration: 203,
-        transcription:
-          'Hi there, wanted to touch base about the new requirements. I have some concerns about the timeline and resource allocation. Call me back when you get a chance.',
-        isNew: false,
-        audioUrl: '#',
-      },
-    ]
-
-    setMessages(mockMessages)
-    setLoading(false)
+    try {
+      const raw = localStorage.getItem('signapps_voicemails');
+      const stored: VoiceMessage[] = raw ? JSON.parse(raw) : [];
+      setMessages(stored);
+    } catch {
+      setMessages([]);
+    }
+    setLoading(false);
   }, [])
 
   const formatDuration = (seconds: number) => {
@@ -81,7 +41,9 @@ export function VoicemailInbox() {
   }
 
   const handleDelete = (id: string) => {
-    setMessages(messages.filter((m) => m.id !== id))
+    const updated = messages.filter((m) => m.id !== id);
+    setMessages(updated);
+    localStorage.setItem('signapps_voicemails', JSON.stringify(updated));
   }
 
   const toggleTranscription = (id: string) => {
@@ -153,6 +115,7 @@ export function VoicemailInbox() {
                   size="sm"
                   onClick={() => togglePlayback(message.id)}
                   className="flex-1"
+                  disabled={!message.audioUrl || message.audioUrl === '#'}
                 >
                   {playingId === message.id ? (
                     <>
@@ -166,7 +129,11 @@ export function VoicemailInbox() {
                     </>
                   )}
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!message.audioUrl || message.audioUrl === '#'}
+                >
                   <Download className="w-4 h-4" />
                 </Button>
                 <Button

@@ -47,6 +47,9 @@ export const billingApi = {
   listInvoices: () =>
     billingClient.get<Invoice[]>('/invoices'),
 
+  updateInvoiceStatus: (id: string, status: InvoiceStatus) =>
+    billingClient.patch<Invoice>(`/invoices/${id}`, { status }),
+
   getUsage: () =>
     billingClient.get<BillingUsage>('/usage'),
 

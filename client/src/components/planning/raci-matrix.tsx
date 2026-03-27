@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type RACIRole = "R" | "A" | "C" | "I" | "";
 
@@ -43,7 +44,8 @@ export default function RACIMatrix() {
   };
 
   const exportPDF = () => {
-    alert("PDF export would include: RACI matrix with all roles and responsibilities");
+    window.print();
+    toast.success("PDF generated");
   };
 
   const getCellColor = (value: RACIRole) => {

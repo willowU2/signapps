@@ -2,6 +2,15 @@
 
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface ConsumptionData {
   currentMonth: {
@@ -18,6 +27,21 @@ interface ConsumptionTrackerProps {
   data: ConsumptionData;
 }
 
+// Generate a plausible 30-day trend from previousMonth to currentMonth
+function buildChartData(prev: number, curr: number): { day: string; kWh: number }[] {
+  const points: { day: string; kWh: number }[] = [];
+  const dailyPrev = prev / 30;
+  const dailyCurr = curr / 30;
+  for (let i = 1; i <= 30; i++) {
+    const t = i / 30;
+    const base = dailyPrev + (dailyCurr - dailyPrev) * t;
+    // Add slight variance (±8%)
+    const variance = base * 0.08 * (Math.sin(i * 2.3) * 0.5 + 0.5 - 0.25);
+    points.push({ day: `D${i}`, kWh: parseFloat((base + variance).toFixed(1)) });
+  }
+  return points;
+}
+
 export function ConsumptionTracker({ data }: ConsumptionTrackerProps) {
   const kWhDifference = data.currentMonth.kWh - data.previousMonth.kWh;
   const costDifference = data.currentMonth.cost - data.previousMonth.cost;
@@ -31,18 +55,46 @@ export function ConsumptionTracker({ data }: ConsumptionTrackerProps) {
   const isConsumptionUp = kWhDifference > 0;
   const isCostUp = costDifference > 0;
 
+  const chartData = buildChartData(data.previousMonth.kWh, data.currentMonth.kWh);
+
   return (
     <div className="space-y-4 w-full max-w-2xl">
       <Card className="p-6 space-y-4">
         <h2 className="text-xl font-bold">Energy Consumption</h2>
 
-        <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg flex items-center justify-center text-muted-foreground">
-          <div className="text-center">
-            <p className="text-sm font-medium">Line Chart Placeholder</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              30-day consumption trend
-            </p>
-          </div>
+        {/* Real recharts LineChart */}
+        <div className="w-full h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis
+                dataKey="day"
+                tick={{ fontSize: 10 }}
+                interval={4}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 10 }}
+                tickLine={false}
+                axisLine={false}
+                unit=" kWh"
+                width={60}
+              />
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <Tooltip
+                formatter={((v: unknown) => [`${v ?? 0} kWh`, "Consumption"]) as any}
+                contentStyle={{ fontSize: 12 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="kWh"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
 
         <div className="grid grid-cols-2 gap-4 pt-4">

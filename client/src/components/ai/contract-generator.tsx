@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Loader2, Download, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import { aiApi } from '@/lib/api';
 
 interface ContractTemplate {
   id: string;
@@ -78,43 +79,24 @@ export function ContractGenerator() {
 
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const templateName = TEMPLATES.find(t => t.id === formData.template)?.name ?? formData.template;
+      const prompt = `Generate a professional ${templateName} contract with the following parameters:
+- Client/Party: ${formData.clientName}
+- Start Date: ${formData.startDate}
+- End Date: ${formData.endDate || 'Not specified'}
+- Amount: ${formData.amount ? `${formData.amount} ${formData.currency}` : 'To be agreed'}
 
-      const mockPreview = `
-CONTRACT FOR PROFESSIONAL SERVICES
+Write a complete, professional contract in plain text (no markdown). Include all standard clauses for this type of contract: parties, term, compensation, obligations, confidentiality, termination, governing law, and signature block.`;
 
-This Service Agreement ("Agreement") is entered into as of ${formData.startDate}
-by and between the Service Provider and ${formData.clientName} ("Client").
+      const response = await aiApi.chat(prompt, { enableTools: false, includesSources: false });
+      const contractText = response.data?.answer ?? '';
 
-TERM:
-The services shall commence on ${formData.startDate} and continue until ${formData.endDate},
-unless terminated earlier in accordance with the provisions of this Agreement.
+      if (!contractText.trim()) {
+        toast.error('AI did not generate a contract — try again');
+        return;
+      }
 
-COMPENSATION:
-Client agrees to pay Service Provider a total fee of ${formData.amount} ${formData.currency}
-for the services rendered during the term of this Agreement.
-
-SERVICES:
-Service Provider agrees to provide professional services as mutually agreed upon in writing.
-
-CONFIDENTIALITY:
-Both parties agree to maintain the confidentiality of proprietary information shared during
-the term of this Agreement.
-
-TERMINATION:
-Either party may terminate this Agreement with thirty (30) days written notice.
-
-GOVERNING LAW:
-This Agreement shall be governed by and construed in accordance with applicable law.
-
-IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
-
-_______________________________     _______________________________
-Service Provider                   ${formData.clientName}
-Date: ________________            Date: ________________
-      `;
-
-      setGeneratedPreview(mockPreview);
+      setGeneratedPreview(contractText);
       toast.success('Contract generated successfully');
     } catch (error) {
       toast.error('Failed to generate contract');

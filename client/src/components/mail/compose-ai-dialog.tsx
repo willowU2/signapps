@@ -23,9 +23,10 @@ import { useAiRouting } from "@/hooks/use-ai-routing"
 interface ComposeAiDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
+    accountId?: string
 }
 
-export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
+export function ComposeAiDialog({ open, onOpenChange, accountId }: ComposeAiDialogProps) {
     const [recipient, setRecipient] = useState("")
     const [description, setDescription] = useState("")
     const [subject, setSubject] = useState("")
@@ -50,6 +51,7 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
         }
 
         const timer = setTimeout(async () => {
+            if (!accountId) return
             setIsSaving(true)
             try {
                 if (draftId) {
@@ -60,7 +62,7 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
                     })
                 } else {
                     const res = await mailApi.send({
-                        account_id: "00000000-0000-0000-0000-000000000000", // Using stub ID for MVP
+                        account_id: accountId,
                         recipient: recipient.trim() || "",
                         subject: subject.trim() || (description ? description.slice(0, 30) : ""),
                         body_text: body.trim() || "",
@@ -150,6 +152,10 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
     }, [description, recipient, isStreaming, stream, getRouteConfig])
 
     const handleSend = async () => {
+        if (!accountId) {
+            toast.error("Select a mail account first")
+            return
+        }
         if (!recipient.trim() || !subject.trim() || !body.trim()) {
             toast.error("Please fill in all fields")
             return
@@ -164,7 +170,7 @@ export function ComposeAiDialog({ open, onOpenChange }: ComposeAiDialogProps) {
                 })
             } else {
                 await mailApi.send({
-                    account_id: "00000000-0000-0000-0000-000000000000",
+                    account_id: accountId,
                     recipient: recipient.trim(),
                     subject: subject.trim(),
                     body_text: body.trim(),

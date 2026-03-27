@@ -35,6 +35,7 @@ interface FormResponse {
 }
 
 import { formsApi } from "@/lib/api/forms"
+import { toast } from "sonner"
 
 export default function FormsPage() {
     const router = useRouter()
@@ -110,13 +111,19 @@ export default function FormsPage() {
         if (form.status === "draft") {
             try {
                 await formsApi.publish(form.id)
-                loadForms(); return 
+                loadForms(); return
             } catch (e) {
                 console.error("Failed to publish form", e)
+                toast.error("Échec de la publication du formulaire")
             }
         } else {
-            // Actuellement l'API backend ne supporte pas unpublish, on peut l'ignorer ou simuler localement
-            console.warn("Unpublish is not supported by API yet")
+            try {
+                await formsApi.unpublish(form.id)
+                loadForms(); return
+            } catch (e) {
+                console.error("Failed to unpublish form", e)
+                toast.error("Échec de la dépublication du formulaire")
+            }
         }
     }
 

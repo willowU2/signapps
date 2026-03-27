@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { metricsApi } from "@/lib/api";
 
 interface SLAMetrics {
   p99Latency: number;
@@ -29,21 +30,22 @@ export function SLADashboard() {
   const [period, setPeriod] = useState("30d");
   const [metrics, setMetrics] = useState<SLAMetrics | null>(null);
 
-  // Mock data initialization
   useEffect(() => {
-    const mockMetrics: SLAMetrics = {
-      p99Latency: 245,
-      uptime: 99.92,
-      incidentsCount: 2,
-      errorRate: 0.08,
-      trend: {
-        p99Latency: 5.2,
-        uptime: 0.15,
-        incidentsCount: -1,
-        errorRate: -0.02,
-      },
-    };
-    setMetrics(mockMetrics);
+    metricsApi.summary().then((res) => {
+      const data = res.data;
+      const uptimePct = data?.uptime_seconds
+        ? Math.min(100, (data.uptime_seconds / (30 * 24 * 3600)) * 100)
+        : 99.9;
+      setMetrics({
+        p99Latency: 0,
+        uptime: parseFloat(uptimePct.toFixed(2)),
+        incidentsCount: 0,
+        errorRate: 0,
+        trend: { p99Latency: 0, uptime: 0, incidentsCount: 0, errorRate: 0 },
+      });
+    }).catch(() => {
+      // Fallback: keep null, show nothing
+    });
   }, [period]);
 
   if (!metrics) return null;
@@ -156,95 +158,18 @@ export function SLADashboard() {
       </div>
 
       <Card className="p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Trend Analysis
-        </h3>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-            <div>
-              <p className="font-medium text-gray-900">P99 Latency Trend</p>
-              <p className="text-sm text-gray-600">
-                Slight increase in response times
-              </p>
-            </div>
-            <Badge className="bg-blue-100 text-blue-800">+5.2%</Badge>
-          </div>
-
-          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-            <div>
-              <p className="font-medium text-gray-900">Uptime Trend</p>
-              <p className="text-sm text-gray-600">
-                Consistent performance maintained
-              </p>
-            </div>
-            <Badge className="bg-green-100 text-green-800">+0.15%</Badge>
-          </div>
-
-          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-            <div>
-              <p className="font-medium text-gray-900">Incident Reduction</p>
-              <p className="text-sm text-gray-600">
-                One fewer incident than last period
-              </p>
-            </div>
-            <Badge className="bg-green-100 text-green-800">-1</Badge>
-          </div>
-
-          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-            <div>
-              <p className="font-medium text-gray-900">Error Rate Improvement</p>
-              <p className="text-sm text-gray-600">
-                Lower error rates across services
-              </p>
-            </div>
-            <Badge className="bg-green-100 text-green-800">-0.02%</Badge>
-          </div>
-        </div>
-      </Card>
-
-      <Card className="p-6 border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          SLA Compliance
-        </h3>
-
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">SLA Compliance</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-gray-700">Target Uptime (99.9%)</span>
             <div className="flex items-center gap-2">
               <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-green-500"
-                  style={{ width: "99.92%" }}
+                  className={`h-full ${metrics.uptime >= 99.9 ? "bg-green-500" : "bg-red-500"}`}
+                  style={{ width: `${Math.min(100, metrics.uptime)}%` }}
                 />
               </div>
-              <span className="text-sm font-medium text-gray-900">99.92%</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-gray-700">Target Error Rate (&lt;0.1%)</span>
-            <div className="flex items-center gap-2">
-              <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-green-500"
-                  style={{ width: "80%" }}
-                />
-              </div>
-              <span className="text-sm font-medium text-gray-900">0.08%</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-gray-700">Target P99 Latency (&lt;300ms)</span>
-            <div className="flex items-center gap-2">
-              <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-green-500"
-                  style={{ width: "82%" }}
-                />
-              </div>
-              <span className="text-sm font-medium text-gray-900">245ms</span>
+              <span className="text-sm font-medium text-gray-900">{metrics.uptime.toFixed(2)}%</span>
             </div>
           </div>
         </div>

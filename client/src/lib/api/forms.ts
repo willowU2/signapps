@@ -92,6 +92,10 @@ export const formsApi = {
   publish: (id: string) =>
     formsClient().post<Form>(`/forms/${id}/publish`),
 
+  /** Unpublish a published form */
+  unpublish: (id: string) =>
+    formsClient().patch<Form>('/forms/' + id + '/unpublish'),
+
   /** List all responses for a form */
   responses: (id: string) =>
     formsClient().get<FormResponse[]>(`/forms/${id}/responses`),

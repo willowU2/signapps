@@ -13,6 +13,8 @@ import {
   UserCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { meetApi } from "@/lib/api";
 
 interface Participant {
   id: string;
@@ -22,19 +24,12 @@ interface Participant {
   avatar?: string;
 }
 
-const MOCK_PARTICIPANTS: Participant[] = [
-  { id: "1", name: "Alice Dupont", isMuted: false, isSpeaking: true },
-  { id: "2", name: "Bob Martin", isMuted: true, isSpeaking: false },
-  { id: "3", name: "Carol Singh", isMuted: false, isSpeaking: false },
-];
-
 export function AudioConference() {
   const [isJoined, setIsJoined] = useState(false);
-  const [participants, setParticipants] = useState<Participant[]>(
-    MOCK_PARTICIPANTS
-  );
+  const [participants, setParticipants] = useState<Participant[]>([]);
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
+  const [roomId, setRoomId] = useState<string | null>(null);
 
   const handleToggleMute = (participantId: string) => {
     setParticipants(
@@ -44,13 +39,33 @@ export function AudioConference() {
     );
   };
 
-  const handleJoin = () => {
-    setIsJoined(true);
+  const handleJoin = async () => {
+    try {
+      const room = await meetApi.createRoom({ name: `audio-${Date.now()}`, is_private: false });
+      setRoomId(room.data.id);
+      const partsRes = await meetApi.listParticipants(room.data.id).catch(() => ({ data: [] }));
+      const mapped: Participant[] = (partsRes.data ?? []).map((p) => ({
+        id: p.id,
+        name: p.display_name,
+        isMuted: p.is_muted,
+        isSpeaking: false,
+      }));
+      setParticipants(mapped);
+      setIsJoined(true);
+    } catch {
+      toast.error('Failed to join conference — check Meet service');
+      setIsJoined(true);
+      setParticipants([]);
+    }
   };
 
-  const handleLeave = () => {
+  const handleLeave = async () => {
+    if (roomId) {
+      await meetApi.endRoom(roomId).catch(() => {});
+      setRoomId(null);
+    }
     setIsJoined(false);
-    setParticipants(MOCK_PARTICIPANTS);
+    setParticipants([]);
   };
 
   const activeSpeaker = participants.find((p) => p.isSpeaking);

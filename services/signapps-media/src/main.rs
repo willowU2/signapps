@@ -4,6 +4,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use dashmap::DashMap;
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::middleware::auth_middleware;
 use signapps_common::{AuthState, JwtConfig};
@@ -11,6 +12,7 @@ use signapps_runtime::ModelManager;
 use sqlx::PgPool;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
+use uuid::Uuid;
 
 mod audio;
 mod handlers;
@@ -22,6 +24,22 @@ use ocr::OcrBackend;
 use stt::SttBackend;
 use tts::TtsBackend;
 
+/// In-memory job store: job_id → serialized JobStatus fields
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct JobEntry {
+    pub status: String,
+    pub progress: f32,
+    pub total_items: u32,
+    pub completed_items: u32,
+    pub failed_items: u32,
+    pub created_at: String,
+    pub updated_at: String,
+    pub result: Option<serde_json::Value>,
+    pub error: Option<String>,
+}
+
+pub type JobStore = Arc<DashMap<Uuid, JobEntry>>;
+
 #[derive(Clone)]
 pub struct AppState {
     pub pool: PgPool,
@@ -30,6 +48,7 @@ pub struct AppState {
     pub tts: Arc<dyn TtsBackend>,
     pub stt: Arc<dyn SttBackend>,
     pub model_manager: Arc<ModelManager>,
+    pub job_store: JobStore,
 }
 
 #[derive(Clone, Debug)]
@@ -202,6 +221,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         tts,
         stt,
         model_manager,
+        job_store: Arc::new(DashMap::new()),
     });
 
     // Build router

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileCheck, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { aiApi } from '@/lib/api';
 
 interface ExtractedClause {
   type: string;
@@ -38,30 +39,50 @@ export function ContractExtractor() {
 
     setIsLoading(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          // Mock extraction - replace with actual API call
-          const mockClauses: ExtractedClause[] = [
-            { type: 'Parties', value: 'ABC Corporation and XYZ Services Ltd', confidence: 95 },
-            { type: 'Amount', value: '€150,000.00', confidence: 92 },
-            { type: 'Start Date', value: '2024-01-15', confidence: 98 },
-            { type: 'End Date', value: '2025-01-14', confidence: 98 },
-            { type: 'Penalties', value: '5% monthly penalty on overdue payments', confidence: 87 },
-          ];
+      const fileText = await file.text().catch(() => `[Binary file: ${file.name}]`);
+      const prompt = `You are a contract analysis AI. Extract key clauses from the following contract and respond ONLY with a valid JSON array, no markdown, no explanation.
 
-          setClauses(mockClauses);
-          toast.success('Contract analysis completed');
-        } catch (error) {
-          toast.error('Failed to extract clauses');
-        } finally {
-          setIsLoading(false);
+Extract these clause types: Parties, Amount, Start Date, End Date, Penalties, Governing Law, Payment Terms, Termination.
+Only include clauses that are present in the contract.
+
+For each clause: {"type": "...", "value": "...", "confidence": XX}
+where confidence is an integer 0-100.
+
+Contract content:
+${fileText.slice(0, 6000)}
+
+Respond with only the JSON array.`;
+
+      const response = await aiApi.chat(prompt, { enableTools: false, includesSources: false });
+      const answer = response.data?.answer ?? '';
+
+      let extracted: ExtractedClause[] = [];
+      const match = answer.match(/\[[\s\S]*\]/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (Array.isArray(parsed)) {
+          extracted = parsed.filter(
+            (c: unknown) =>
+              c !== null &&
+              typeof c === 'object' &&
+              'type' in (c as object) &&
+              'value' in (c as object) &&
+              'confidence' in (c as object)
+          );
         }
-      };
-      reader.readAsText(file);
+      }
+
+      if (extracted.length === 0) {
+        toast.error('AI could not extract clauses — check the file content');
+        return;
+      }
+
+      setClauses(extracted);
+      toast.success('Contract analysis completed');
     } catch (error) {
-      setIsLoading(false);
       toast.error('Extraction failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 

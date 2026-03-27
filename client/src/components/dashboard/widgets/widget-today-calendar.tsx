@@ -9,14 +9,13 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, Clock, MapPin } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { WidgetRenderProps } from "@/lib/dashboard/types";
+import { calendarApi } from "@/lib/api/calendar";
 
 interface CalendarEvent {
   id: string;
@@ -36,41 +35,52 @@ export function WidgetTodayCalendar({ widget }: WidgetRenderProps) {
 
   const { data: events, isLoading } = useQuery({
     queryKey: ["widget-today-events", limit],
-    queryFn: async () => {
-      // Mock data - in production this would call calendarApi.listTodayEvents()
-      const now = new Date();
-      const mockEvents: CalendarEvent[] = [
-        {
-          id: "1",
-          title: "Standup quotidien",
-          start_time: new Date(now.getTime() + 30 * 60 * 1000).toISOString(),
-          end_time: new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
-          color: "bg-blue-500",
-        },
-        {
-          id: "2",
-          title: "Révision de code - PR#123",
-          start_time: new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-          end_time: new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString(),
-          color: "bg-purple-500",
-        },
-        {
-          id: "3",
-          title: "Déjeuner avec client",
-          start_time: new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString(),
-          end_time: new Date(now.getTime() + 5 * 60 * 60 * 1000).toISOString(),
-          location: "Restaurant Le 6ème Étage",
-          color: "bg-green-500",
-        },
-        {
-          id: "4",
-          title: "Planning session",
-          start_time: new Date(now.getTime() + 6 * 60 * 60 * 1000).toISOString(),
-          end_time: new Date(now.getTime() + 7 * 60 * 60 * 1000).toISOString(),
-          color: "bg-red-500",
-        },
-      ];
-      return mockEvents.slice(0, limit);
+    queryFn: async (): Promise<CalendarEvent[]> => {
+      // Build today's date range
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      // Fetch all calendars first
+      const calendarsRes = await calendarApi.listCalendars();
+      const calendars: Array<{ id: string; color?: string }> = calendarsRes.data ?? [];
+
+      // Fetch today's events from each calendar in parallel
+      const eventsNested = await Promise.all(
+        calendars.map((cal) =>
+          calendarApi
+            .listEvents(cal.id, todayStart, todayEnd)
+            .then((r) =>
+              (r.data ?? []).map((ev: {
+                id: string;
+                title: string;
+                start_time: string;
+                end_time: string;
+                location?: string;
+                is_all_day?: boolean;
+                color?: string;
+              }) => ({
+                id: ev.id,
+                title: ev.title,
+                start_time: ev.start_time,
+                end_time: ev.end_time,
+                location: ev.location,
+                is_all_day: ev.is_all_day,
+                color: ev.color ?? cal.color ?? "bg-blue-500",
+              }))
+            )
+            .catch(() => [])
+        )
+      );
+
+      // Flatten, sort by start_time, and cap at limit
+      const allEvents: CalendarEvent[] = eventsNested.flat();
+      allEvents.sort(
+        (a, b) =>
+          new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+      );
+      return allEvents.slice(0, limit);
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -146,8 +156,9 @@ export function WidgetTodayCalendar({ widget }: WidgetRenderProps) {
                     </div>
                     <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      {formatTime(event.start_time)} -{" "}
-                      {formatTime(event.end_time)}
+                      {event.is_all_day
+                        ? "Toute la journée"
+                        : `${formatTime(event.start_time)} – ${formatTime(event.end_time)}`}
                     </div>
                     {event.location && (
                       <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground">

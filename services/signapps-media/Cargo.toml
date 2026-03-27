@@ -41,6 +41,9 @@ async-stream = "0.3"
 async-trait = "0.1"
 tokio-stream = "0.1"
 
+# Concurrent data structures
+dashmap = "6"
+
 # UUID
 uuid = { version = "1", features = ["v4", "serde"] }
 

@@ -13,6 +13,7 @@ import { CheckCircle2, AlertCircle, Clock, ListTodo } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { WidgetRenderProps } from "@/lib/dashboard/types";
+import { calendarApi, tasksApi } from "@/lib/api/calendar";
 
 interface TaskStats {
   total: number;
@@ -25,16 +26,33 @@ interface TaskStats {
 export function WidgetTasksSummary({ widget }: WidgetRenderProps) {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["widget-tasks-summary"],
-    queryFn: async () => {
-      // Mock data - in production this would call tasksApi.getTasksStats()
-      const mockStats: TaskStats = {
-        total: 24,
-        completed: 12,
-        in_progress: 8,
-        blocked: 1,
-        overdue: 3,
-      };
-      return mockStats;
+    queryFn: async (): Promise<TaskStats> => {
+      // Fetch all calendars first, then aggregate tasks across all of them
+      const calendarsRes = await calendarApi.listCalendars();
+      const calendars = calendarsRes.data ?? [];
+
+      const allTasksNested = await Promise.all(
+        calendars.map((cal: { id: string }) =>
+          tasksApi.listTasks(cal.id).then((r) => r.data ?? []).catch(() => [])
+        )
+      );
+      const allTasks: Array<{ status: string; due_date?: string | null }> = allTasksNested.flat();
+
+      const now = new Date();
+      const total = allTasks.length;
+      const completed = allTasks.filter((t) => t.status === "completed").length;
+      const in_progress = allTasks.filter((t) => t.status === "in_progress").length;
+      // "blocked" is not a native status — count tasks that are open and overdue as blocked
+      const overdue = allTasks.filter(
+        (t) =>
+          t.status !== "completed" &&
+          t.status !== "archived" &&
+          t.due_date != null &&
+          new Date(t.due_date) < now
+      ).length;
+      const blocked = 0; // no native blocked status in the data model
+
+      return { total, completed, in_progress, blocked, overdue };
     },
     staleTime: 5 * 60 * 1000,
   });

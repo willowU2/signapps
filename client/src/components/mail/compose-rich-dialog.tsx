@@ -21,6 +21,7 @@ import { encryptMessage } from "./pgp-settings";
 interface ComposeRichDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    accountId?: string;
     replyTo?: {
         email: string;
         subject: string;
@@ -30,6 +31,7 @@ interface ComposeRichDialogProps {
 export function ComposeRichDialog({
     open,
     onOpenChange,
+    accountId,
     replyTo,
 }: ComposeRichDialogProps) {
     const [recipient, setRecipient] = useState(replyTo?.email || "");
@@ -46,9 +48,13 @@ export function ComposeRichDialog({
 
     const handleSave = useCallback(
         async (html: string, design: object) => {
+            if (!accountId) {
+                toast.error("Select a mail account first");
+                return;
+            }
             try {
                 await mailApi.send({
-                    account_id: "00000000-0000-0000-0000-000000000000",
+                    account_id: accountId,
                     recipient: recipient.trim(),
                     subject: subject.trim() || "(Sans objet)",
                     body_html: html,
@@ -60,7 +66,7 @@ export function ComposeRichDialog({
                 toast.error("Erreur lors de l'enregistrement");
             }
         },
-        [recipient, subject]
+        [accountId, recipient, subject]
     );
 
     const handleSend = useCallback(
@@ -70,6 +76,10 @@ export function ComposeRichDialog({
                 return;
             }
 
+            if (!accountId) {
+                toast.error("Select a mail account first");
+                return;
+            }
             setIsSending(true);
             try {
                 let bodyHtml = html;
@@ -90,7 +100,7 @@ export function ComposeRichDialog({
                 }
 
                 await mailApi.send({
-                    account_id: "00000000-0000-0000-0000-000000000000",
+                    account_id: accountId,
                     recipient: recipient.trim(),
                     cc: cc.trim() || undefined,
                     bcc: bcc.trim() || undefined,
@@ -106,7 +116,7 @@ export function ComposeRichDialog({
                 setIsSending(false);
             }
         },
-        [recipient, cc, bcc, subject, onOpenChange, encryptEnabled, recipientPublicKey]
+        [accountId, recipient, cc, bcc, subject, onOpenChange, encryptEnabled, recipientPublicKey]
     );
 
     const handleReset = () => {
@@ -229,7 +239,7 @@ export function ComposeRichDialog({
 
                         {/* PGP Encryption Toggle */}
                         <ComposeEncryptToggle
-                            accountId="00000000-0000-0000-0000-000000000000"
+                            accountId={accountId ?? ""}
                             enabled={encryptEnabled}
                             onToggle={setEncryptEnabled}
                             recipientPublicKey={recipientPublicKey}

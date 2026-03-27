@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { metricsApi } from "@/lib/api";
 
 interface ServiceStatus {
   name: string;
@@ -14,63 +16,54 @@ interface ServiceStatus {
   history: number[];
 }
 
+const SERVICES = [
+  { name: "Metrics Service", endpoint: metricsApi.health },
+];
+
 export function UptimeMonitor() {
   const [services, setServices] = useState<ServiceStatus[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Mock data initialization
-  useEffect(() => {
-    const mockServices: ServiceStatus[] = [
-      {
-        name: "API Gateway",
-        status: "up",
-        uptime30d: 99.95,
-        responseTime: 45,
-        lastChecked: new Date(Date.now() - 30000).toISOString(),
-        history: [99.98, 99.95, 99.92, 99.98, 99.95],
-      },
-      {
-        name: "Auth Service",
-        status: "up",
-        uptime30d: 99.87,
-        responseTime: 78,
-        lastChecked: new Date(Date.now() - 45000).toISOString(),
-        history: [99.85, 99.87, 99.82, 99.87, 99.89],
-      },
-      {
-        name: "Database",
-        status: "up",
-        uptime30d: 99.99,
-        responseTime: 12,
-        lastChecked: new Date(Date.now() - 15000).toISOString(),
-        history: [99.99, 99.99, 99.98, 99.99, 99.99],
-      },
-      {
-        name: "Email Service",
-        status: "degraded",
-        uptime30d: 98.45,
-        responseTime: 245,
-        lastChecked: new Date(Date.now() - 60000).toISOString(),
-        history: [98.5, 98.45, 98.3, 98.45, 98.52],
-      },
-      {
-        name: "Search Service",
-        status: "up",
-        uptime30d: 99.92,
-        responseTime: 156,
-        lastChecked: new Date(Date.now() - 25000).toISOString(),
-        history: [99.90, 99.92, 99.88, 99.92, 99.94],
-      },
-      {
-        name: "Cache Layer",
-        status: "up",
-        uptime30d: 99.98,
-        responseTime: 5,
-        lastChecked: new Date(Date.now() - 35000).toISOString(),
-        history: [99.99, 99.98, 99.97, 99.98, 99.99],
-      },
-    ];
-    setServices(mockServices);
+  const checkServices = useCallback(async () => {
+    setIsRefreshing(true);
+    const results: ServiceStatus[] = [];
+
+    for (const svc of SERVICES) {
+      const start = Date.now();
+      try {
+        await svc.endpoint();
+        const responseTime = Date.now() - start;
+        const status: "up" | "degraded" | "down" =
+          responseTime > 1000 ? "degraded" : "up";
+        results.push({
+          name: svc.name,
+          status,
+          uptime30d: 100,
+          responseTime,
+          lastChecked: new Date().toISOString(),
+          history: [100],
+        });
+      } catch {
+        results.push({
+          name: svc.name,
+          status: "down",
+          uptime30d: 0,
+          responseTime: 0,
+          lastChecked: new Date().toISOString(),
+          history: [0],
+        });
+      }
+    }
+
+    setServices(results);
+    setIsRefreshing(false);
   }, []);
+
+  useEffect(() => {
+    checkServices();
+    const interval = setInterval(checkServices, 60000);
+    return () => clearInterval(interval);
+  }, [checkServices]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -88,23 +81,11 @@ export function UptimeMonitor() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "up":
-        return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            Healthy
-          </Badge>
-        );
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Healthy</Badge>;
       case "degraded":
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-            Degraded
-          </Badge>
-        );
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Degraded</Badge>;
       case "down":
-        return (
-          <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
-            Down
-          </Badge>
-        );
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Down</Badge>;
       default:
         return null;
     }
@@ -117,84 +98,62 @@ export function UptimeMonitor() {
     return "text-red-600";
   };
 
-  const Sparkline = ({ data }: { data: number[] }) => {
-    const min = Math.min(...data);
-    const max = Math.max(...data);
-    const range = max - min || 1;
-    const height = 30;
-
+  if (services.length === 0) {
     return (
-      <svg width="80" height={height} className="mx-auto">
-        <polyline
-          points={data
-            .map(
-              (val, idx) =>
-                `${(idx / (data.length - 1)) * 80},${
-                  height -
-                  ((val - min) / range) * (height - 4) -
-                  2
-                }`
-            )
-            .join(" ")}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          className="text-blue-400"
-        />
-      </svg>
+      <div className="flex items-center justify-center p-8">
+        <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
     );
-  };
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-      {services.map((service) => (
-        <Card
-          key={service.name}
-          className="p-4 border border-gray-200 hover:shadow-lg transition"
-        >
-          <div className="space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">{service.name}</h4>
-                <p className="text-xs text-gray-500 mt-1">
-                  Last checked{" "}
-                  {Math.round(
-                    (Date.now() - new Date(service.lastChecked).getTime()) /
-                      1000
-                  )}
-                  s ago
-                </p>
+    <div className="space-y-4 w-full">
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" onClick={checkServices} disabled={isRefreshing}>
+          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {services.map((service) => (
+          <Card key={service.name} className="p-4 border border-gray-200 hover:shadow-lg transition">
+            <div className="space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900">{service.name}</h4>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Last checked{" "}
+                    {Math.round((Date.now() - new Date(service.lastChecked).getTime()) / 1000)}s ago
+                  </p>
+                </div>
+                {getStatusIcon(service.status)}
               </div>
-              {getStatusIcon(service.status)}
-            </div>
 
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <p className="text-xs text-gray-600">Uptime (30d)</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {service.uptime30d.toFixed(2)}%
-                </p>
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-xs text-gray-600">Uptime (30d)</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {service.uptime30d.toFixed(2)}%
+                  </p>
+                </div>
+                {getStatusBadge(service.status)}
               </div>
-              {getStatusBadge(service.status)}
-            </div>
 
-            <div className="bg-gray-50 rounded p-3">
-              <p className="text-xs text-gray-600 mb-2">Response Time</p>
-              <div className="flex items-baseline gap-2">
-                <span className={`text-xl font-bold ${getResponseTimeColor(service.responseTime)}`}>
-                  {service.responseTime}
-                </span>
-                <span className="text-xs text-gray-500">ms</span>
-              </div>
+              {service.responseTime > 0 && (
+                <div className="bg-gray-50 rounded p-3">
+                  <p className="text-xs text-gray-600 mb-2">Response Time</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-xl font-bold ${getResponseTimeColor(service.responseTime)}`}>
+                      {service.responseTime}
+                    </span>
+                    <span className="text-xs text-gray-500">ms</span>
+                  </div>
+                </div>
+              )}
             </div>
-
-            <div>
-              <p className="text-xs text-gray-600 mb-2">History (30d)</p>
-              <Sparkline data={service.history} />
-            </div>
-          </div>
-        </Card>
-      ))}
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

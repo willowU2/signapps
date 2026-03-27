@@ -38,43 +38,20 @@ const flagFormSchema = z.object({
 
 type FlagFormValues = z.infer<typeof flagFormSchema>;
 
-const MOCK_FLAGS: FeatureFlag[] = [
-  {
-    id: "1",
-    name: "advanced_search",
-    enabled: true,
-    targetingPercent: 100,
-    description: "Advanced search with filters and facets",
-  },
-  {
-    id: "2",
-    name: "dark_mode",
-    enabled: true,
-    targetingPercent: 75,
-    description: "Dark mode UI support",
-  },
-  {
-    id: "3",
-    name: "ai_assistant",
-    enabled: false,
-    targetingPercent: 25,
-    description: "AI-powered assistant features",
-  },
-  {
-    id: "4",
-    name: "offline_mode",
-    enabled: true,
-    targetingPercent: 50,
-    description: "Offline-first document editing",
-  },
-  {
-    id: "5",
-    name: "webhooks",
-    enabled: false,
-    targetingPercent: 10,
-    description: "Webhook integrations",
-  },
-];
+const STORAGE_KEY = "signapps_feature_flags";
+
+function loadFlags(): FeatureFlag[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFlags(flags: FeatureFlag[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(flags));
+}
 
 export function FeatureFlags() {
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
@@ -90,40 +67,52 @@ export function FeatureFlags() {
   });
 
   useEffect(() => {
-    setFlags(MOCK_FLAGS);
+    setFlags(loadFlags());
     setIsLoading(false);
   }, []);
 
   const handleToggle = (id: string) => {
-    setFlags((prev) =>
-      prev.map((flag) =>
+    setFlags((prev) => {
+      const updated = prev.map((flag) =>
         flag.id === id ? { ...flag, enabled: !flag.enabled } : flag
-      )
-    );
+      );
+      saveFlags(updated);
+      return updated;
+    });
   };
 
   const handleTargetingChange = (id: string, percent: number) => {
     const boundedPercent = Math.max(0, Math.min(100, percent));
-    setFlags((prev) =>
-      prev.map((flag) =>
+    setFlags((prev) => {
+      const updated = prev.map((flag) =>
         flag.id === id ? { ...flag, targetingPercent: boundedPercent } : flag
-      )
-    );
+      );
+      saveFlags(updated);
+      return updated;
+    });
   };
 
   const handleDeleteFlag = (id: string) => {
-    setFlags((prev) => prev.filter((flag) => flag.id !== id));
+    setFlags((prev) => {
+      const updated = prev.filter((flag) => flag.id !== id);
+      saveFlags(updated);
+      return updated;
+    });
   };
 
   const onSubmit = async (data: FlagFormValues) => {
     const newFlag: FeatureFlag = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: data.name,
       enabled: false,
       targetingPercent: 0,
       description: data.description || "",
     };
-    setFlags((prev) => [...prev, newFlag]);
+    setFlags((prev) => {
+      const updated = [...prev, newFlag];
+      saveFlags(updated);
+      return updated;
+    });
     form.reset();
     setIsDialogOpen(false);
   };

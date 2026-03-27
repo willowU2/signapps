@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, Clock, Users, MapPin, CheckCircle2, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { resourcesApi, reservationsApi } from '@/lib/api'
 
 interface TimeSlot {
   time: string
@@ -29,69 +31,33 @@ export function RoomBooking() {
   const [expandedRoom, setExpandedRoom] = useState<string | null>(null)
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockRooms: Room[] = [
-      {
-        id: '1',
-        name: 'Conference Room A',
-        capacity: 12,
-        location: 'Building 1, Floor 2',
-        amenities: ['Projector', 'Whiteboard', 'Video Conference'],
-        availability: 'available',
-        todaySlots: [
-          { time: '09:00', available: true },
-          { time: '10:00', available: false },
-          { time: '11:00', available: true },
-          { time: '14:00', available: true },
-          { time: '15:00', available: false },
-          { time: '16:00', available: true },
-        ],
-      },
-      {
-        id: '2',
-        name: 'Meeting Room B',
-        capacity: 6,
-        location: 'Building 1, Floor 1',
-        amenities: ['Display Screen', 'Whiteboard'],
-        availability: 'available',
-        todaySlots: [
-          { time: '09:00', available: false },
-          { time: '10:00', available: true },
-          { time: '11:00', available: true },
-          { time: '14:00', available: false },
-          { time: '15:00', available: true },
-          { time: '16:00', available: true },
-        ],
-      },
-      {
-        id: '3',
-        name: 'Boardroom',
-        capacity: 20,
-        location: 'Building 2, Floor 3',
-        amenities: ['Full AV Setup', 'Catering', 'Virtual Meeting Support'],
-        availability: 'booked',
-        nextAvailable: 'Tomorrow at 10:00 AM',
-        todaySlots: [],
-      },
-      {
-        id: '4',
-        name: 'Huddle Space',
-        capacity: 4,
-        location: 'Building 1, Floor 2',
-        amenities: ['Smart TV', 'Whiteboard'],
-        availability: 'maintenance',
-        todaySlots: [],
-      },
-    ]
-
-    setRooms(mockRooms)
-    setLoading(false)
-
-    const initialSlots: Record<string, string | null> = {}
-    mockRooms.forEach((room) => {
-      initialSlots[room.id] = null
+    resourcesApi.list('room').then((res) => {
+      const resources = res.data ?? []
+      const mapped: Room[] = resources.map((r) => ({
+        id: r.id,
+        name: r.name,
+        capacity: r.capacity ?? 0,
+        location: [r.building, r.floor, r.location].filter(Boolean).join(', ') || 'N/A',
+        amenities: r.amenities ?? [],
+        availability: r.is_available ? 'available' : 'booked',
+        todaySlots: r.is_available
+          ? ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'].map((time) => ({
+              time,
+              available: true,
+            }))
+          : [],
+      }))
+      setRooms(mapped)
+      const initialSlots: Record<string, string | null> = {}
+      mapped.forEach((room) => {
+        initialSlots[room.id] = null
+      })
+      setSelectedSlots(initialSlots)
+    }).catch(() => {
+      toast.error('Failed to load rooms')
+    }).finally(() => {
+      setLoading(false)
     })
-    setSelectedSlots(initialSlots)
   }, [])
 
   const getAvailabilityBadge = (availability: string) => {
@@ -114,11 +80,20 @@ export function RoomBooking() {
     }))
   }
 
-  const handleBookRoom = (roomId: string) => {
+  const handleBookRoom = async (roomId: string) => {
     const selectedTime = selectedSlots[roomId]
-    if (selectedTime) {
-      alert(`Booked: Room ${roomId} at ${selectedTime}`)
+    if (!selectedTime) return
+    try {
+      await reservationsApi.create({ resource_id: roomId, notes: `Requested time: ${selectedTime}` })
+      toast.success(`Room booked for ${selectedTime}`)
       setSelectedSlots((prev) => ({ ...prev, [roomId]: null }))
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.id === roomId ? { ...r, availability: 'booked' as const, todaySlots: [] } : r
+        )
+      )
+    } catch {
+      toast.error('Failed to book room')
     }
   }
 

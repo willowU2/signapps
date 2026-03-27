@@ -38,46 +38,23 @@ export function LogViewer() {
     new Set(logs.map((log) => log.service))
   ) as string[];
 
-  // Mock data initialization
   useEffect(() => {
-    const mockLogs: LogEntry[] = [
-      {
-        timestamp: new Date(Date.now() - 5000).toISOString(),
-        level: "INFO",
-        service: "auth-service",
-        message: "User login successful",
-        traceId: "trace-001",
-      },
-      {
-        timestamp: new Date(Date.now() - 4000).toISOString(),
-        level: "WARN",
-        service: "database",
-        message: "Connection pool at 85% capacity",
-        traceId: "trace-002",
-      },
-      {
-        timestamp: new Date(Date.now() - 3000).toISOString(),
-        level: "ERROR",
-        service: "email-service",
-        message: "Failed to send verification email",
-        traceId: "trace-003",
-      },
-      {
-        timestamp: new Date(Date.now() - 2000).toISOString(),
-        level: "INFO",
-        service: "api-gateway",
-        message: "Request processed in 145ms",
-        traceId: "trace-004",
-      },
-      {
-        timestamp: new Date(Date.now() - 1000).toISOString(),
-        level: "INFO",
-        service: "auth-service",
-        message: "Token refresh completed",
-        traceId: "trace-005",
-      },
-    ];
-    setLogs(mockLogs);
+    import("@/lib/api").then(({ alertsApi }) => {
+      alertsApi.listHistory(100).then((res) => {
+        const events = res.data ?? [];
+        const mapped: LogEntry[] = events.map((e) => ({
+          timestamp: e.triggered_at,
+          level: e.severity === "critical" ? "ERROR" : e.severity === "warning" ? "WARN" : "INFO",
+          service: e.metric_type,
+          message: e.message,
+          traceId: e.id,
+        }));
+        setLogs(mapped);
+      }).catch(() => {
+        // No backend logs available — start with empty list
+        setLogs([]);
+      });
+    });
   }, []);
 
   // Apply filters

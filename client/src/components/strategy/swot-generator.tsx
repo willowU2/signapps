@@ -14,6 +14,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { aiApi } from "@/lib/api/ai";
+import { toast } from "sonner";
 
 interface SWOTItem {
   id: string;
@@ -77,6 +79,9 @@ export function SWOTGenerator() {
     threats: "",
   });
 
+  const [aiContext, setAiContext] = useState("");
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+
   const handleAddItem = (quadrantKey: keyof SWOTData) => {
     const text = newItems[quadrantKey]?.trim();
     if (!text) return;
@@ -98,15 +103,49 @@ export function SWOTGenerator() {
     });
   };
 
-  const handleAISuggestions = () => {
-    // Placeholder for AI suggestions
-    const suggestions: SWOTData = {
-      strengths: [{ id: "ai1", text: "Innovation technologique" }],
-      weaknesses: [{ id: "ai2", text: "Manque de notoriété" }],
-      opportunities: [{ id: "ai3", text: "Partenariats stratégiques" }],
-      threats: [{ id: "ai4", text: "Changements réglementaires" }],
-    };
-    setSWOTData(suggestions);
+  const handleAISuggestions = async () => {
+    const description = aiContext.trim() || "our company / product";
+    setIsLoadingAI(true);
+    try {
+      const prompt = `Generate a SWOT analysis for: ${description}.
+Respond ONLY with a valid JSON object (no markdown, no explanation) in this exact format:
+{
+  "strengths": ["...", "..."],
+  "weaknesses": ["...", "..."],
+  "opportunities": ["...", "..."],
+  "threats": ["...", "..."]
+}
+Each array should have 3-5 concise items.`;
+
+      const response = await aiApi.chat(prompt, { enableTools: false, includesSources: false });
+      const raw = response.data?.answer ?? "";
+
+      // Extract JSON from response (strip any surrounding markdown if present)
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("No JSON in AI response");
+      const parsed = JSON.parse(jsonMatch[0]) as {
+        strengths?: string[];
+        weaknesses?: string[];
+        opportunities?: string[];
+        threats?: string[];
+      };
+
+      const toItems = (arr: string[] | undefined, prefix: string): SWOTItem[] =>
+        (arr ?? []).map((text, i) => ({ id: `${prefix}${Date.now()}${i}`, text }));
+
+      setSWOTData({
+        strengths: toItems(parsed.strengths, "s"),
+        weaknesses: toItems(parsed.weaknesses, "w"),
+        opportunities: toItems(parsed.opportunities, "o"),
+        threats: toItems(parsed.threats, "t"),
+      });
+      toast.success("AI suggestions loaded");
+    } catch (err) {
+      console.error("SWOT AI error:", err);
+      toast.error("AI suggestions unavailable");
+    } finally {
+      setIsLoadingAI(false);
+    }
   };
 
   return (
@@ -121,11 +160,24 @@ export function SWOTGenerator() {
           size="sm"
           variant="outline"
           onClick={handleAISuggestions}
+          disabled={isLoadingAI}
           className="gap-2"
         >
           <Sparkles className="h-4 w-4" />
-          IA
+          {isLoadingAI ? "..." : "IA"}
         </Button>
+      </div>
+
+      {/* AI Context Input */}
+      <div className="flex gap-2 items-center">
+        <Input
+          type="text"
+          value={aiContext}
+          onChange={(e) => setAiContext(e.target.value)}
+          placeholder="Describe your company / product for AI suggestions..."
+          className="text-sm h-8"
+          onKeyDown={(e) => { if (e.key === "Enter") handleAISuggestions(); }}
+        />
       </div>
 
       {/* SWOT Grid */}

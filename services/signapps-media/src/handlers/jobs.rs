@@ -25,28 +25,27 @@ pub struct JobStatus {
     pub error: Option<String>,
 }
 
-/// Get job status
+/// Get job status from the in-memory job store
 pub async fn get_job_status(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Path(job_id): Path<String>,
 ) -> Result<Json<JobStatus>, (StatusCode, String)> {
-    // Parse job ID
-    let _id = Uuid::parse_str(&job_id)
+    let id = Uuid::parse_str(&job_id)
         .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid job ID".to_string()))?;
 
-    // NOTE: Job status requires persistent job queue (Redis or DB)
-    // For now, return a mock response
-
-    Ok(Json(JobStatus {
-        id: job_id,
-        status: "pending".to_string(),
-        progress: 0.0,
-        total_items: 0,
-        completed_items: 0,
-        failed_items: 0,
-        created_at: chrono::Utc::now().to_rfc3339(),
-        updated_at: chrono::Utc::now().to_rfc3339(),
-        result: None,
-        error: None,
-    }))
+    match state.job_store.get(&id) {
+        Some(entry) => Ok(Json(JobStatus {
+            id: job_id,
+            status: entry.status.clone(),
+            progress: entry.progress,
+            total_items: entry.total_items,
+            completed_items: entry.completed_items,
+            failed_items: entry.failed_items,
+            created_at: entry.created_at.clone(),
+            updated_at: entry.updated_at.clone(),
+            result: entry.result.clone(),
+            error: entry.error.clone(),
+        })),
+        None => Err((StatusCode::NOT_FOUND, format!("Job {} not found", job_id))),
+    }
 }

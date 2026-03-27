@@ -206,14 +206,32 @@ pub struct BatchOcrResponse {
 
 /// Batch process multiple files (async job)
 pub async fn batch_process(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Json(request): Json<BatchOcrRequest>,
 ) -> Result<Json<BatchOcrResponse>, (StatusCode, String)> {
-    let job_id = uuid::Uuid::new_v4().to_string();
+    let job_uuid = uuid::Uuid::new_v4();
+    let job_id = job_uuid.to_string();
+    let total_files = request.files.len();
+    let now = chrono::Utc::now().to_rfc3339();
+
+    state.job_store.insert(
+        job_uuid,
+        crate::JobEntry {
+            status: "queued".to_string(),
+            progress: 0.0,
+            total_items: total_files as u32,
+            completed_items: 0,
+            failed_items: 0,
+            created_at: now.clone(),
+            updated_at: now,
+            result: None,
+            error: None,
+        },
+    );
 
     Ok(Json(BatchOcrResponse {
         job_id,
         status: "queued".to_string(),
-        total_files: request.files.len(),
+        total_files,
     }))
 }

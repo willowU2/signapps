@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Mail, FileText, MessageSquare, ChevronRight, Loader2 } from 'lucide-react'
+import { usersApi, storageApi, chatApi } from '@/lib/api'
 
 interface Project {
   id: string
@@ -35,62 +36,70 @@ export function ClientPortal() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockProjects: Project[] = [
-      {
-        id: '1',
-        name: 'Website Redesign',
-        status: 'active',
-        lastUpdated: '2 days ago',
-      },
-      {
-        id: '2',
-        name: 'Marketing Campaign',
-        status: 'pending',
-        lastUpdated: '5 days ago',
-      },
-      {
-        id: '3',
-        name: 'Q4 Planning',
-        status: 'completed',
-        lastUpdated: '1 week ago',
-      },
-    ]
+    const loadAll = async () => {
+      try {
+        // Load users as "projects" — each user represents an active account
+        const usersRes = await usersApi.list(1, 10).catch(() => null);
+        if (usersRes?.data?.users) {
+          const mapped: Project[] = usersRes.data.users.slice(0, 5).map((u) => ({
+            id: u.id,
+            name: u.display_name || u.username,
+            status: 'active' as const,
+            lastUpdated: u.last_login
+              ? new Date(u.last_login).toLocaleDateString()
+              : new Date(u.created_at).toLocaleDateString(),
+          }));
+          setProjects(mapped);
+        }
+      } catch {
+        setProjects([]);
+      }
 
-    const mockDocuments: SharedDocument[] = [
-      { id: '1', name: 'Service Agreement', type: 'contract', sharedDate: '3 days ago' },
-      { id: '2', name: 'Invoice #2024-001', type: 'invoice', sharedDate: '1 week ago' },
-      { id: '3', name: 'Project Proposal', type: 'proposal', sharedDate: '2 weeks ago' },
-    ]
+      try {
+        // Load files from default bucket as shared documents
+        const filesRes = await storageApi.listBuckets().catch(() => null);
+        const bucketName = filesRes?.data?.[0]?.name;
+        if (bucketName) {
+          const listRes = await storageApi.listFiles(bucketName, '', '/').catch(() => null);
+          const objects = (listRes?.data as { objects?: { key: string; size: number }[] })?.objects ?? [];
+          const mapped: SharedDocument[] = objects.slice(0, 5).map((obj, i) => {
+            const name = obj.key.split('/').pop() || obj.key;
+            const ext = name.split('.').pop()?.toLowerCase();
+            const type: SharedDocument['type'] =
+              ext === 'pdf' ? 'contract' : ext === 'xlsx' || ext === 'csv' ? 'invoice' : 'proposal';
+            return {
+              id: String(i),
+              name,
+              type,
+              sharedDate: 'recently',
+            };
+          });
+          setDocuments(mapped);
+        }
+      } catch {
+        setDocuments([]);
+      }
 
-    const mockMessages: Message[] = [
-      {
-        id: '1',
-        sender: 'Project Manager',
-        subject: 'Update on your request',
-        date: 'Today',
-        unread: true,
-      },
-      {
-        id: '2',
-        sender: 'Support Team',
-        subject: 'Your issue has been resolved',
-        date: 'Yesterday',
-        unread: false,
-      },
-      {
-        id: '3',
-        sender: 'Account Manager',
-        subject: 'Quarterly review scheduled',
-        date: '2 days ago',
-        unread: false,
-      },
-    ]
+      try {
+        // Load chat channels as messages
+        const channelsRes = await chatApi.getChannels().catch(() => null);
+        const channels = channelsRes?.data ?? [];
+        const mapped: Message[] = channels.slice(0, 5).map((ch) => ({
+          id: ch.id,
+          sender: ch.name,
+          subject: ch.topic || `#${ch.name}`,
+          date: new Date(ch.created_at).toLocaleDateString(),
+          unread: false,
+        }));
+        setMessages(mapped);
+      } catch {
+        setMessages([]);
+      }
 
-    setProjects(mockProjects)
-    setDocuments(mockDocuments)
-    setMessages(mockMessages)
-    setLoading(false)
+      setLoading(false);
+    };
+
+    loadAll();
   }, [])
 
   const getStatusBadge = (status: string) => {

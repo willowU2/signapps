@@ -58,6 +58,8 @@ export default function MailPage() {
     const [searchResults, setSearchResults] = useState<Mail[] | null>(null)
     const [isSearching, setIsSearching] = useState(false)
 
+    const [activeAccountId, setActiveAccountId] = useState<string | undefined>(undefined)
+
     const [labels, setLabels] = useState<MailLabel[]>([])
     const [labelsLoading, setLabelsLoading] = useState(false)
 
@@ -120,7 +122,9 @@ export default function MailPage() {
                     icon: a.provider,
                     provider: a.provider
                 }))
-                void uiAccounts // Available for future use
+                if (uiAccounts.length > 0) {
+                    setActiveAccountId(uiAccounts[0].id)
+                }
 
                 // Fetch emails from inbox — initial batch; MailList handles
                 // virtual pagination via IntersectionObserver infinite scroll.
@@ -372,8 +376,8 @@ export default function MailPage() {
                 </div>
             </WorkspaceShell>
 
-            <ComposeAiDialog open={composeAiOpen} onOpenChange={setComposeAiOpen} />
-            <ComposeRichDialog open={composeRichOpen} onOpenChange={setComposeRichOpen} />
+            <ComposeAiDialog open={composeAiOpen} onOpenChange={setComposeAiOpen} accountId={activeAccountId} />
+            <ComposeRichDialog open={composeRichOpen} onOpenChange={setComposeRichOpen} accountId={activeAccountId} />
         </TooltipProvider>
     )
 }
