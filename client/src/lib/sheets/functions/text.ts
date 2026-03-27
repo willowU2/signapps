@@ -194,4 +194,121 @@ export function registerTextFunctions() {
         }
     };
     registerFunction("REGEXREPLACE", regexReplaceFn);
+
+    // TEXT(value, format_text) — format a number or date as text
+    const textFn: import('./registry').SheetFunction = ({ args, evalArg }) => {
+        if (args.length !== 2) return SHEET_ERRORS.NA;
+        const value = evalArg(args[0]);
+        const format = evalArg(args[1]);
+        const formatLower = format.toLowerCase();
+
+        // Date formats — try to parse value as a date (Excel serial number or date string)
+        const tryParseDate = (): Date | null => {
+            const num = Number(value);
+            if (!isNaN(num) && num > 0) {
+                // Excel serial date: days since 1899-12-30
+                const d = new Date(1899, 11, 30);
+                d.setDate(d.getDate() + num);
+                return d;
+            }
+            const d = new Date(value);
+            return isNaN(d.getTime()) ? null : d;
+        };
+
+        // Check for date-related format tokens
+        if (formatLower.includes('d') || formatLower.includes('m') || formatLower.includes('y') || formatLower.includes('j') || formatLower.includes('a')) {
+            const d = tryParseDate();
+            if (d) {
+                // Full weekday name: DDDD / dddd
+                if (/dddd/i.test(format)) {
+                    return d.toLocaleDateString('fr-FR', { weekday: 'long' });
+                }
+                // Short weekday name: DDD / ddd
+                if (/ddd/i.test(format)) {
+                    return d.toLocaleDateString('fr-FR', { weekday: 'short' });
+                }
+                // Full month name: MMMM / mmmm
+                if (/mmmm/i.test(format)) {
+                    return d.toLocaleDateString('fr-FR', { month: 'long' });
+                }
+                // Short month name: MMM / mmm
+                if (/mmm/i.test(format)) {
+                    return d.toLocaleDateString('fr-FR', { month: 'short' });
+                }
+                // dd/mm/yyyy or DD/MM/YYYY or jj/mm/aaaa
+                if (/dd\/mm\/yyyy|jj\/mm\/aaaa/i.test(format)) {
+                    const pad = (n: number) => String(n).padStart(2, '0');
+                    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+                }
+                // mm/dd/yyyy
+                if (/mm\/dd\/yyyy/i.test(format)) {
+                    const pad = (n: number) => String(n).padStart(2, '0');
+                    return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`;
+                }
+                // yyyy-mm-dd
+                if (/yyyy-mm-dd|aaaa-mm-jj/i.test(format)) {
+                    const pad = (n: number) => String(n).padStart(2, '0');
+                    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+                }
+                // dd/mm/yy
+                if (/dd\/mm\/yy|jj\/mm\/aa/i.test(format)) {
+                    const pad = (n: number) => String(n).padStart(2, '0');
+                    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)}`;
+                }
+                // Generic date format with d, m, y tokens
+                let result = format;
+                const pad = (n: number) => String(n).padStart(2, '0');
+                result = result.replace(/yyyy|aaaa/gi, String(d.getFullYear()));
+                result = result.replace(/yy|aa/gi, String(d.getFullYear()).slice(-2));
+                result = result.replace(/dd|jj/gi, pad(d.getDate()));
+                result = result.replace(/\bd\b|\bj\b/gi, String(d.getDate()));
+                result = result.replace(/mm/gi, pad(d.getMonth() + 1));
+                result = result.replace(/\bm\b/gi, String(d.getMonth() + 1));
+                return result;
+            }
+        }
+
+        // Time formats
+        if (formatLower.includes('h') || formatLower.includes(':')) {
+            const d = tryParseDate();
+            if (d) {
+                const pad = (n: number) => String(n).padStart(2, '0');
+                let result = format;
+                result = result.replace(/hh/gi, pad(d.getHours()));
+                result = result.replace(/\bh\b/gi, String(d.getHours()));
+                result = result.replace(/mm/gi, pad(d.getMinutes()));
+                result = result.replace(/ss/gi, pad(d.getSeconds()));
+                return result;
+            }
+        }
+
+        // Number formats: #, 0, %, etc.
+        const num = Number(value);
+        if (!isNaN(num)) {
+            // Percentage format
+            if (format.includes('%')) {
+                const pctFormat = format.replace('%', '');
+                const decimals = (pctFormat.match(/0/g) || []).length;
+                return (num * 100).toFixed(Math.max(0, decimals > 0 ? decimals - 1 : 0)) + '%';
+            }
+            // Number format with decimals: e.g. "0.00", "#,##0.00", "0"
+            if (format.includes('#') || format.includes('0')) {
+                const hasThousands = format.includes(',') || format.includes(' ');
+                const decimalPart = format.split('.')[1] || '';
+                const decimals = (decimalPart.match(/[0#]/g) || []).length;
+                let formatted = num.toFixed(decimals);
+                if (hasThousands) {
+                    const parts = formatted.split('.');
+                    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+                    formatted = parts.join('.');
+                }
+                return formatted;
+            }
+            return String(num);
+        }
+
+        return String(value);
+    };
+    registerFunction("TEXT", textFn);
+    registerFunction("TEXTE", textFn);
 }

@@ -141,6 +141,28 @@ export function registerLogicFunctions() {
     registerFunction("ISTEXT", isTextFn);
     registerFunction("ESTTEXTE", isTextFn);
 
+    const isNumberFn: import('./registry').SheetFunction = ({ args, evalArg }) => {
+        if (args.length !== 1) return SHEET_ERRORS.NA;
+        const val = evalArg(args[0]);
+        if (val === '' || Object.values(SHEET_ERRORS).includes(val)) return "FALSE";
+        return !isNaN(Number(val)) ? "TRUE" : "FALSE";
+    };
+    registerFunction("ISNUMBER", isNumberFn);
+    registerFunction("ESTNUM", isNumberFn);
+
+    // N(value) — convert value to a number. Text = 0, TRUE = 1, FALSE = 0, errors pass through
+    const nFn: import('./registry').SheetFunction = ({ args, evalArg }) => {
+        if (args.length !== 1) return SHEET_ERRORS.NA;
+        const val = evalArg(args[0]);
+        if (Object.values(SHEET_ERRORS).includes(val)) return val;
+        const up = val.toUpperCase();
+        if (up === 'TRUE' || up === 'VRAI') return 1;
+        if (up === 'FALSE' || up === 'FAUX') return 0;
+        const num = Number(val);
+        return isNaN(num) ? 0 : num;
+    };
+    registerFunction("N", nFn);
+
     const isLogicalFn: import('./registry').SheetFunction = ({ args, evalArg }) => {
         if (args.length !== 1) return SHEET_ERRORS.NA;
         const val = evalArg(args[0]);
