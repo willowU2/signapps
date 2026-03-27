@@ -174,6 +174,7 @@ impl RagPipeline {
 
     /// Query with RAG using a specific provider and model.
     /// Falls back to direct LLM chat when embeddings are unavailable.
+    /// Tries alternative providers when the primary one fails.
     pub async fn query_with_provider(
         &self,
         question: &str,
@@ -184,8 +185,6 @@ impl RagPipeline {
         collections: Option<&[String]>,
         security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<RagResponse> {
-        let provider = self.providers.resolve(provider_id)?;
-
         // 1. Try to retrieve relevant context (graceful fallback)
         let search_results = match self
             .search(question, None, collections, security_tags_filter)
@@ -201,33 +200,53 @@ impl RagPipeline {
         // 2. Build context from results
         let context = self.build_context(&search_results);
 
-        // 3. Generate response with LLM
+        // 3. Generate response with LLM — try providers in fallback order
         let messages = self.build_messages(&context, question, language, custom_system_prompt);
+        let provider_ids = self.providers.fallback_order(provider_id);
 
-        let response = provider
-            .chat(
-                messages,
-                model,
-                Some(self.config.max_tokens),
-                Some(self.config.temperature),
-            )
-            .await?;
+        let mut last_error = None;
+        for pid in &provider_ids {
+            let provider = match self.providers.get(pid) {
+                Ok(p) => p,
+                Err(_) => continue,
+            };
 
-        let answer = response
-            .choices
-            .first()
-            .map(|c| c.message.content.clone())
-            .unwrap_or_default();
+            match provider
+                .chat(
+                    messages.clone(),
+                    model,
+                    Some(self.config.max_tokens),
+                    Some(self.config.temperature),
+                )
+                .await
+            {
+                Ok(response) => {
+                    let answer = response
+                        .choices
+                        .first()
+                        .map(|c| c.message.content.clone())
+                        .unwrap_or_default();
 
-        Ok(RagResponse {
-            answer,
-            sources: search_results,
-            usage: response.usage.map(|u| TokenUsage {
-                prompt_tokens: u.prompt_tokens,
-                completion_tokens: u.completion_tokens,
-                total_tokens: u.total_tokens,
-            }),
-        })
+                    return Ok(RagResponse {
+                        answer,
+                        sources: search_results,
+                        usage: response.usage.map(|u| TokenUsage {
+                            prompt_tokens: u.prompt_tokens,
+                            completion_tokens: u.completion_tokens,
+                            total_tokens: u.total_tokens,
+                        }),
+                    });
+                },
+                Err(e) => {
+                    tracing::warn!("Provider '{}' failed for chat, trying next: {}", pid, e);
+                    last_error = Some(e);
+                },
+            }
+        }
+
+        Err(last_error.unwrap_or_else(|| {
+            signapps_common::Error::Internal("No LLM providers available".into())
+        }))
     }
 
     /// Query with streaming response, using default provider.
@@ -250,6 +269,7 @@ impl RagPipeline {
     }
 
     /// Query with streaming response using a specific provider and model.
+    /// Tries alternative providers when the primary one fails.
     pub async fn query_stream_with_provider(
         &self,
         question: &str,
@@ -260,8 +280,6 @@ impl RagPipeline {
         collections: Option<&[String]>,
         security_tags_filter: Option<&serde_json::Value>,
     ) -> Result<(Vec<SearchResult>, mpsc::Receiver<Result<String>>)> {
-        let provider = self.providers.resolve(provider_id)?;
-
         // 1. Try to retrieve relevant context (graceful fallback)
         let search_results = match self
             .search(question, None, collections, security_tags_filter)
@@ -280,19 +298,43 @@ impl RagPipeline {
         // 2. Build context from results
         let context = self.build_context(&search_results);
 
-        // 3. Stream response from LLM
+        // 3. Stream response from LLM — try providers in fallback order
         let messages = self.build_messages(&context, question, language, custom_system_prompt);
+        let provider_ids = self.providers.fallback_order(provider_id);
 
-        let stream = provider
-            .chat_stream(
-                messages,
-                model,
-                Some(self.config.max_tokens),
-                Some(self.config.temperature),
-            )
-            .await?;
+        let mut last_error = None;
+        for pid in &provider_ids {
+            let provider = match self.providers.get(pid) {
+                Ok(p) => p,
+                Err(_) => continue,
+            };
 
-        Ok((search_results, stream))
+            match provider
+                .chat_stream(
+                    messages.clone(),
+                    model,
+                    Some(self.config.max_tokens),
+                    Some(self.config.temperature),
+                )
+                .await
+            {
+                Ok(stream) => {
+                    return Ok((search_results, stream));
+                },
+                Err(e) => {
+                    tracing::warn!(
+                        "Provider '{}' failed for chat_stream, trying next: {}",
+                        pid,
+                        e
+                    );
+                    last_error = Some(e);
+                },
+            }
+        }
+
+        Err(last_error.unwrap_or_else(|| {
+            signapps_common::Error::Internal("No LLM providers available".into())
+        }))
     }
 
     /// Build context string from search results.

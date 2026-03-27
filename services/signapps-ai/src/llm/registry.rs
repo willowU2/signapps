@@ -79,6 +79,27 @@ impl ProviderRegistry {
         }
     }
 
+    /// Build an ordered list of provider IDs to try.
+    ///
+    /// Order: requested provider (if any) -> default -> all others.
+    /// Duplicates are removed so each provider is tried at most once.
+    pub fn fallback_order(&self, requested: Option<&str>) -> Vec<String> {
+        let mut ids: Vec<String> = Vec::new();
+        if let Some(req) = requested {
+            ids.push(req.to_string());
+        }
+        let default_id = self.default_provider_id.clone();
+        if !ids.iter().any(|id| id == &default_id) {
+            ids.push(default_id);
+        }
+        for id in self.providers.keys() {
+            if !ids.iter().any(|existing| existing == id) {
+                ids.push(id.clone());
+            }
+        }
+        ids
+    }
+
     /// Set the default provider ID.
     pub fn set_default(&mut self, id: String) {
         self.default_provider_id = id;
