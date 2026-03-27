@@ -62,5 +62,16 @@ export const driveApi = {
   deleteNode: async (id: string) => {
     await storageClient.delete(`/drive/nodes/${id}`);
   },
+
+  // Upload a file into the drive (optionally under a parent folder)
+  uploadFile: async (file: File, parentId: string | null) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (parentId) formData.append('parent_id', parentId);
+    const response = await storageClient.post<DriveNode>('/drive/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
 };
 

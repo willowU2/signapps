@@ -75,6 +75,7 @@ export const aiApi = {
 
 export interface ChatResponse {
     answer: string;
+    response?: string;
     sources?: { document_id: string; filename: string; score: number; excerpt: string }[];
     tokens_used?: number;
 }

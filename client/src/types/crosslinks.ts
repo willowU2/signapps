@@ -68,6 +68,7 @@ export interface AuditLogEntry {
   entity_id: string;
   old_data?: Record<string, unknown>;
   new_data?: Record<string, unknown>;
+  changes?: Record<string, unknown>;
   metadata: Record<string, unknown>;
   workspace_id?: string;
   created_at: string;

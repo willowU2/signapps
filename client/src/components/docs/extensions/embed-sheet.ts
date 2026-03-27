@@ -91,7 +91,7 @@ export const EmbedSheet = Node.create<EmbedSheetOptions>({
         if (this.options.component) {
             return ReactNodeViewRenderer(this.options.component)
         }
-        return () => ({})
+        return null
     },
 
     addCommands() {

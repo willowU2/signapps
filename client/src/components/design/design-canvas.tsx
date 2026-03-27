@@ -140,10 +140,10 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       });
 
       // Load objects from current page
-      if (page?.objects) {
+      if (page?.objects && canvas) {
         page.objects.forEach((obj) => {
           if (!obj.visible) return;
-          addFabricObject(fabricModule, canvas, obj);
+          addFabricObject(fabricModule, canvas!, obj);
         });
       }
     });
@@ -186,7 +186,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
             evented: !obj.locked,
             visible: obj.visible,
           });
-          existing.moveTo(idx);
+          (existing as any).moveTo?.(idx);
         }
       });
 
@@ -196,7 +196,7 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
 
   // Keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
       const canvas = fabricCanvasRef.current;
       if (!canvas) return;
 
@@ -238,9 +238,8 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       if ((e.ctrlKey || e.metaKey) && e.key === "c") {
         const active = canvas.getActiveObject() as FabricCanvasObject | null;
         if (active) {
-          active.clone((cloned: FabricCanvasObject) => {
-            (window as unknown as Record<string, FabricCanvasObject>).__designClipboard = cloned;
-          });
+          const cloned = await (active.clone as any)() as FabricCanvasObject;
+          (window as unknown as Record<string, FabricCanvasObject>).__designClipboard = cloned;
         }
       }
 
@@ -248,25 +247,24 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
       if ((e.ctrlKey || e.metaKey) && e.key === "v") {
         const clipped = (window as unknown as Record<string, FabricCanvasObject>).__designClipboard;
         if (clipped) {
-          clipped.clone((pasted: FabricCanvasObject) => {
-            pasted.set({
-              left: (pasted.left || 0) + 20,
-              top: (pasted.top || 0) + 20,
-              id: crypto.randomUUID(),
-            } as Partial<fabric.Object>);
-            canvas.add(pasted);
-            canvas.setActiveObject(pasted);
-            canvas.requestRenderAll();
-            const newObj: DesignObject = {
-              id: pasted.id,
-              type: pasted.type === "i-text" || pasted.type === "textbox" ? "text" : pasted.type === "image" ? "image" : "shape",
-              name: `${pasted.type} copy`,
-              fabricData: pasted.toObject(["id"]),
-              locked: false,
-              visible: true,
-            };
-            addObject(newObj);
-          });
+          const pasted = await (clipped.clone as any)() as FabricCanvasObject;
+          pasted.set({
+            left: (pasted.left || 0) + 20,
+            top: (pasted.top || 0) + 20,
+            id: crypto.randomUUID(),
+          } as Partial<fabric.Object>);
+          canvas.add(pasted);
+          canvas.setActiveObject(pasted);
+          canvas.requestRenderAll();
+          const newObj: DesignObject = {
+            id: pasted.id ?? crypto.randomUUID(),
+            type: pasted.type === "i-text" || pasted.type === "textbox" ? "text" : pasted.type === "image" ? "image" : "shape",
+            name: `${pasted.type} copy`,
+            fabricData: pasted.toObject(["id"]),
+            locked: false,
+            visible: true,
+          };
+          addObject(newObj);
         }
       }
 

@@ -205,7 +205,7 @@ function docTypeIcon(docType?: string): React.ComponentType<{ className?: string
 function useCrossAppSearch(query: string) {
   const [results, setResults] = React.useState<CrossAppResult[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
-  const debounceRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
   React.useEffect(() => {
     if (query.length < 2) {

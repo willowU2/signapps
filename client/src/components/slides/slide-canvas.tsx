@@ -58,14 +58,15 @@ export function SlideCanvas({
                 fabricCanvasRef.current.dispose()
             }
 
-            canvas = new fabricModule.Canvas(canvasRef.current, {
+            const c = new fabricModule.Canvas(canvasRef.current, {
                 width: pageConfig.orientation === 'landscape' ? 1056 : 816,
                 height: pageConfig.orientation === 'landscape' ? 816 : 1056,
                 backgroundColor: actualBg
             })
-            fabricCanvasRef.current = canvas
+            canvas = c
+            fabricCanvasRef.current = c
 
-            canvas.on("object:modified", (e: { target?: FabricObjectWithId }) => {
+            c.on("object:modified", (e: { target?: FabricObjectWithId }) => {
                 const target = e.target
                 if (target && target.id) {
                     isUpdatingRef.current = true
@@ -74,7 +75,7 @@ export function SlideCanvas({
                 }
             })
 
-            canvas.on("object:added", (e: { target?: FabricObjectWithId }) => {
+            c.on("object:added", (e: { target?: FabricObjectWithId }) => {
                 const target = e.target
                 if (target && !target.id) {
                     target.id = Math.random().toString(36).substr(2, 9)
@@ -85,24 +86,24 @@ export function SlideCanvas({
             })
 
             // Selection events
-            canvas.on("selection:created", (e: { selected?: FabricObjectWithId[]; target?: FabricObjectWithId }) => {
+            c.on("selection:created", (e: { selected?: FabricObjectWithId[]; target?: FabricObjectWithId }) => {
                 const target = e.selected?.[0] || e.target
                 onSelectionChange(target || null)
             })
 
-            canvas.on("selection:updated", (e: { selected?: FabricObjectWithId[]; target?: FabricObjectWithId }) => {
+            c.on("selection:updated", (e: { selected?: FabricObjectWithId[]; target?: FabricObjectWithId }) => {
                 const target = e.selected?.[0] || e.target
                 onSelectionChange(target || null)
             })
 
             // Deselection Handling
-            canvas.on("selection:cleared", () => {
+            c.on("selection:cleared", () => {
                 if (onSelectionChange) onSelectionChange(null)
                 isUpdatingRef.current = false
             })
 
             // --- 1. Grid Rendering via Native Canvas Context ---
-            canvas.on('after:render', (opt: { ctx?: CanvasRenderingContext2D }) => {
+            c.on('after:render', (opt: { ctx?: CanvasRenderingContext2D }) => {
                 if (!showGrid) return // Wait for prop boolean flag
 
                 const ctx = opt.ctx;
@@ -113,18 +114,18 @@ export function SlideCanvas({
                 ctx.lineWidth = 1;
 
                 // Draw Vertical lines
-                for (let i = 0; i < canvas.getWidth(); i += GRID_SIZE) {
+                for (let i = 0; i < c.getWidth(); i += GRID_SIZE) {
                     ctx.beginPath();
                     ctx.moveTo(i, 0);
-                    ctx.lineTo(i, canvas.getHeight());
+                    ctx.lineTo(i, c.getHeight());
                     ctx.stroke();
                 }
 
                 // Draw Horizontal lines
-                for (let i = 0; i < canvas.getHeight(); i += GRID_SIZE) {
+                for (let i = 0; i < c.getHeight(); i += GRID_SIZE) {
                     ctx.beginPath();
                     ctx.moveTo(0, i);
-                    ctx.lineTo(canvas.getWidth(), i);
+                    ctx.lineTo(c.getWidth(), i);
                     ctx.stroke();
                 }
 
@@ -132,7 +133,7 @@ export function SlideCanvas({
             });
 
             // --- 2. Mathematical Snap-to-Grid during drag ---
-            canvas.on('object:moving', (options: { target?: fabric.Object }) => {
+            c.on('object:moving', (options: { target?: fabric.Object }) => {
                 if (!snapToGrid) return;
                 const target = options.target;
                 if (!target) return;
@@ -150,18 +151,18 @@ export function SlideCanvas({
             let currentGhostText = "";
             let ghostedObject: FabricObjectWithId | null = null;
 
-            canvas.on('text:changed', (e: { target?: FabricObjectWithId }) => {
+            c.on('text:changed', (e: { target?: FabricObjectWithId }) => {
                 const target = e.target;
                 if (!target || target.isEditing === false) return;
 
                 // Clear previous ghost visual
-                if (currentGhostText && ghostedObject && ghostedObject.text.endsWith(currentGhostText)) {
+                if (currentGhostText && ghostedObject && ghostedObject.text?.endsWith(currentGhostText)) {
                     // Removing ghost text before continuing typing
                     ghostedObject.set({
-                        text: ghostedObject.text.slice(0, -currentGhostText.length)
+                        text: ghostedObject.text!.slice(0, -currentGhostText.length)
                     });
                     currentGhostText = "";
-                    canvas.requestRenderAll();
+                    c.requestRenderAll();
                 }
 
                 if (debounceTimer) clearTimeout(debounceTimer);
@@ -189,12 +190,12 @@ export function SlideCanvas({
 
                             // Visual hack for Fabric: append text, and select it to look "ghosted"
                             // A real implementation would draw it under the cursor, but selecting and coloring is a good proxy.
-                            const originalLen = target.text.length;
-                            target.set({ text: target.text + currentGhostText });
+                            const originalLen = (target.text ?? '').length;
+                            target.set({ text: (target.text ?? '') + currentGhostText });
 
                             // Style the ghosted part lightly
-                            target.setSelectionStyles({ fill: '#9ca3af', fontStyle: 'italic' }, originalLen, target.text.length);
-                            canvas.requestRenderAll();
+                            (target as any).setSelectionStyles({ fill: '#9ca3af', fontStyle: 'italic' }, originalLen, (target.text ?? '').length);
+                            c.requestRenderAll();
                         }
                     } catch (err) {
                         console.debug("Smart Compose error:", err);
@@ -203,38 +204,38 @@ export function SlideCanvas({
             });
 
             // We listen to keydown at the canvas container level to catch Tab
-            canvas.wrapperEl.addEventListener('keydown', (e: KeyboardEvent) => {
+            c.wrapperEl.addEventListener('keydown', (e: KeyboardEvent) => {
                 if (e.key === 'Tab' && currentGhostText && ghostedObject) {
                     e.preventDefault();
                     // User accepts the prediction
 
                     // Remove all styling and solidify text
-                    const len = ghostedObject.text.length;
-                    ghostedObject.removeStyle('fill');
-                    ghostedObject.removeStyle('fontStyle');
+                    const len = (ghostedObject.text ?? '').length;
+                    (ghostedObject as any).removeStyle?.('fill');
+                    (ghostedObject as any).removeStyle?.('fontStyle');
                     ghostedObject.set({
                         fill: '#000000', // Reset to black or original color ideally
                         fontStyle: 'normal'
                     });
 
                     // Move cursor to end explicitly
-                    ghostedObject.selectionStart = len;
-                    ghostedObject.selectionEnd = len;
+                    (ghostedObject as any).selectionStart = len;
+                    (ghostedObject as any).selectionEnd = len;
 
                     isUpdatingRef.current = true;
-                    updateObject(ghostedObject.id, ghostedObject.toObject());
+                    updateObject(ghostedObject.id!, ghostedObject.toObject());
                     isUpdatingRef.current = false;
 
                     currentGhostText = "";
                     ghostedObject = null;
-                    canvas.requestRenderAll();
+                    c.requestRenderAll();
                 } else if (e.key !== 'Tab' && currentGhostText && ghostedObject) {
                     // User overrides / ignores suggestion
                     ghostedObject.set({
-                        text: ghostedObject.text.slice(0, -currentGhostText.length)
+                        text: (ghostedObject.text ?? '').slice(0, -currentGhostText.length)
                     });
                     currentGhostText = "";
-                    canvas.requestRenderAll();
+                    c.requestRenderAll();
                 }
             });
 
@@ -282,7 +283,7 @@ export function SlideCanvas({
                     fabricModule.util.enlivenObjects([objData]).then((enlivenedObjects) => {
                         enlivenedObjects.forEach((obj) => {
                             (obj as FabricObjectWithId).id = id
-                            canvas.add(obj)
+                            canvas.add(obj as fabric.FabricObject)
                         })
                     })
                 }
@@ -292,7 +293,7 @@ export function SlideCanvas({
             const allObjs = [...canvas.getObjects()] as (FabricObjectWithId & { zIndex?: number })[];
             allObjs.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
             allObjs.forEach((obj, idx) => {
-                obj.moveTo(idx);
+                (obj as any).moveTo?.(idx);
             });
             
             canvas.requestRenderAll()

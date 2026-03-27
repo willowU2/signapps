@@ -156,7 +156,7 @@ export function ContainerResources() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={100} />
-                  <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
+                  <Tooltip formatter={(v) => typeof v === 'number' ? `${v.toFixed(1)}%` : String(v ?? '')} />
                   <Bar dataKey="cpu_percent" fill="#3b82f6" name="CPU %" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -184,8 +184,10 @@ export function ContainerResources() {
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={100} />
                   <Tooltip
-                    formatter={(v: number, name: string, props: any) =>
-                      `${v.toFixed(1)}% (${formatBytes(props.payload.memory_usage)})`
+                    formatter={(v, _name, props: any) =>
+                      typeof v === 'number'
+                        ? `${v.toFixed(1)}% (${formatBytes(props?.payload?.memory_usage)})`
+                        : String(v ?? '')
                     }
                   />
                   <Bar dataKey="memory_percent" fill="#22c55e" name="Memory %" radius={[0, 4, 4, 0]} />

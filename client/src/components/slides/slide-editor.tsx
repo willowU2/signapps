@@ -24,6 +24,8 @@ import {
     AnimationPanel,
     type ObjectAnimationConfig,
     type SlideTransition,
+    type EntranceAnimation,
+    type ExitAnimation,
 } from "./slide-animations"
 import { TransitionPicker } from "./transition-picker"
 import {
@@ -97,7 +99,7 @@ interface SlideEditorProps {
         // Export helpers for live presentation
         slides?: Array<{ id: string; title: string; notes?: string; transition?: SlideTransitionData }>;
         getSlideObjects?: (slideId: string) => Record<string, fabric.Object>;
-        getAllSlidesWithObjects?: () => Array<{ id: string; objects: fabric.Object[] }>;
+        getAllSlidesWithObjects?: () => Array<{ id: string; objects: Record<string, any> | fabric.Object[] }>;
     }
     isReadOnly?: boolean;
 }
@@ -129,7 +131,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
     const [copiedFormat, setCopiedFormat] = useState<CopiedTextFormat | null>(null)
 
     const [isListening, setIsListening] = useState(false)
-    const recognitionRef = useRef<SpeechRecognition | null>(null)
+    const recognitionRef = useRef<any>(null)
 
     // --- Page Setup State ---
     const [pageConfig, setPageConfig] = useState<{ orientation: 'portrait' | 'landscape', backgroundColor: string }>({ orientation: 'portrait', backgroundColor: '#ffffff' })
@@ -425,8 +427,8 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
     useEffect(() => {
         // Initialize Web Speech API if supported
-        const SpeechRecognitionCtor = (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition
-            || (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+        const SpeechRecognitionCtor = (window as any).SpeechRecognition
+            || (window as any).webkitSpeechRecognition;
         if (SpeechRecognitionCtor) {
             recognitionRef.current = new SpeechRecognitionCtor()
             recognitionRef.current.continuous = true
@@ -435,7 +437,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
             let finalTranscript = ""
 
-            recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+            recognitionRef.current.onresult = (event: any) => {
                 let interimTranscript = ""
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript
@@ -463,7 +465,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 }
             }
 
-            recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+            recognitionRef.current.onerror = (event: any) => {
                 console.debug("Speech recognition error", event.error)
                 setIsListening(false)
                 toast.error("Microphone issue: " + event.error)
@@ -523,7 +525,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
                 // Sync to Yjs
                 isUpdatingRef.current = true;
-                updateObject(target.id, target.toObject());
+                updateObject(target.id!, target.toObject());
                 isUpdatingRef.current = false;
 
                 // Turn off painter after one use
@@ -1403,7 +1405,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                 });
 
                 canvas?.requestRenderAll();
-                updateObject(textObj.id, textObj.toObject());
+                updateObject(textObj.id!, textObj.toObject());
                 toast.success("Texte mis à jour avec succès !", { id: toastId });
 
             } catch (err) {
@@ -1432,7 +1434,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             active.animationDelay = config.delay;
             active.animationExit = config.exitType;
             isUpdatingRef.current = true
-            updateObject(active.id, active.toObject())
+            if (active.id) updateObject(active.id, active.toObject())
             isUpdatingRef.current = false
         }
     }, [updateObject])
@@ -1471,8 +1473,8 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         if (activeObject) {
             const obj = activeObject as FabricObjectWithId & { animationType?: string; animationExit?: string; animationDuration?: number; animationDelay?: number }
             setAnimationConfig({
-                entranceType: obj.animationType || 'none',
-                exitType: obj.animationExit || 'none',
+                entranceType: (obj.animationType || 'none') as EntranceAnimation,
+                exitType: (obj.animationExit || 'none') as ExitAnimation,
                 duration: obj.animationDuration || 500,
                 delay: obj.animationDelay || 0,
             })
@@ -1539,7 +1541,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             )
         })
         const slideNotes = allSlides.map((s) => s.notes || '')
-        const slideTransitions = allSlides.map((s) => s.transition || { type: 'none', duration: 500 })
+        const slideTransitions = allSlides.map((s) => s.transition || { type: 'none' as const, duration: 500 })
 
         return (
             <LivePresenterView
@@ -1990,7 +1992,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                                 const group = (active as FabricObjectWithId & { toGroup?: () => FabricObjectWithId }).toGroup?.();
                                 if (group) {
                                     group.id = groupId;
-                                    updateObject(group.id, (group as fabric.Object).toObject(['id', 'zIndex']));
+                                    updateObject(group.id!, (group as fabric.Object).toObject(['id', 'zIndex']));
                                 }
                                 groupItems.forEach((item) => { if (item.id) removeObject(item.id); });
                                 isUpdatingRef.current = false;
@@ -2011,7 +2013,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                                 if (groupId) removeObject(groupId);
                                 items.forEach((item) => {
                                     if (!item.id) item.id = Math.random().toString(36).substr(2, 9);
-                                    updateObject(item.id, (item as fabric.Object).toObject(['id', 'zIndex']));
+                                    updateObject(item.id!, (item as fabric.Object).toObject(['id', 'zIndex']));
                                 });
                                 isUpdatingRef.current = false;
                                 canvas.requestRenderAll();

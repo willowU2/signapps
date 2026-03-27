@@ -146,6 +146,9 @@ export const storageApi = {
     // Versions
     getFileVersions: (fileId: string) => storageClient.get<any[]>(`/files/${fileId}/versions`),
     restoreFileVersion: (fileId: string, versionId: string) => storageClient.post(`/files/${fileId}/versions/${versionId}/restore`),
+
+    // Quota
+    getQuota: () => storageClient.get('/quotas/me'),
 };
 
 export interface Bucket {
