@@ -152,6 +152,50 @@ export function GlobalHeader() {
     } else if (pathname.startsWith('/users')) {
         headerTitle = "Directory";
         HeaderIcon = <Users className="h-5 w-5 text-cyan-500" />;
+    } else if (pathname.startsWith('/dashboard')) {
+        headerTitle = "Dashboard";
+    } else if (pathname.startsWith('/calendar')) {
+        headerTitle = "Calendar";
+        HeaderIcon = <Calendar className="h-5 w-5 text-blue-500" />;
+    } else if (pathname.startsWith('/keep')) {
+        headerTitle = "Keep";
+    } else if (pathname.startsWith('/design')) {
+        headerTitle = "Design";
+    } else if (pathname.startsWith('/social')) {
+        headerTitle = "Social";
+        HeaderIcon = <Share2 className="h-5 w-5 text-pink-500" />;
+    } else if (pathname.startsWith('/containers')) {
+        headerTitle = "Containers";
+    } else if (pathname.startsWith('/backups')) {
+        headerTitle = "Backups";
+    } else if (pathname.startsWith('/apps')) {
+        headerTitle = "App Store";
+    } else if (pathname.startsWith('/it-assets')) {
+        headerTitle = "IT Assets";
+    } else if (pathname.startsWith('/resources')) {
+        headerTitle = "Resources";
+    } else if (pathname.startsWith('/ai')) {
+        headerTitle = "AI";
+        HeaderIcon = <MessageSquare className="h-5 w-5 text-violet-500" />;
+    } else if (pathname.startsWith('/billing')) {
+        headerTitle = "Billing";
+    } else if (pathname.startsWith('/analytics')) {
+        headerTitle = "Analytics";
+    } else if (pathname.startsWith('/workforce')) {
+        headerTitle = "Workforce";
+    } else if (pathname.startsWith('/admin')) {
+        headerTitle = "Administration";
+        HeaderIcon = <Shield className="h-5 w-5 text-amber-500" />;
+    } else if (pathname.startsWith('/media')) {
+        headerTitle = "Media";
+    } else if (pathname.startsWith('/contacts')) {
+        headerTitle = "Contacts";
+    } else if (pathname.startsWith('/forms')) {
+        headerTitle = "Forms";
+    } else if (pathname.startsWith('/pxe')) {
+        headerTitle = "PXE Deploy";
+    } else if (pathname.startsWith('/remote')) {
+        headerTitle = "Remote Access";
     }
 
     // Generate Contextual Breadcrumbs
@@ -159,8 +203,40 @@ export function GlobalHeader() {
         cal: 'Calendrier',
         dashboard: 'Dashboard',
         docs: 'Documents',
+        sheets: 'Tableurs',
+        slides: 'Présentations',
         tasks: 'Tâches',
         settings: 'Paramètres',
+        calendar: 'Calendrier',
+        keep: 'Notes',
+        design: 'Design',
+        chat: 'Chat',
+        mail: 'Mail',
+        meet: 'Meet',
+        social: 'Social',
+        containers: 'Containers',
+        drive: 'Drive',
+        routes: 'Routes',
+        vpn: 'VPN',
+        backups: 'Sauvegardes',
+        apps: 'App Store',
+        'it-assets': 'IT Assets',
+        ai: 'AI',
+        scheduler: 'Planificateur',
+        monitoring: 'Monitoring',
+        billing: 'Facturation',
+        analytics: 'Analytique',
+        workforce: 'Workforce',
+        admin: 'Administration',
+        users: 'Utilisateurs',
+        workspaces: 'Workspaces',
+        resources: 'Ressources',
+        storage: 'Stockage',
+        media: 'Média',
+        contacts: 'Contacts',
+        forms: 'Formulaires',
+        pxe: 'PXE Deploy',
+        remote: 'Accès distant',
     };
     const pathSegments = pathname.split('/').filter(Boolean);
     const breadcrumbItems = pathSegments.map((segment, index) => {
