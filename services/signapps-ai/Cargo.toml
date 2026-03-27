@@ -88,7 +88,7 @@ native-audiogen = ["dep:candle-core", "dep:candle-nn", "dep:candle-transformers"
 native-reranker = ["dep:ort", "dep:tokenizers"]
 
 # Native multimodal embeddings (ONNX SigLIP)
-native-embedmm = ["dep:ort", "dep:image"]
+native-embedmm = ["dep:ort", "dep:image", "dep:tokenizers"]
 
 # Native document parsing (ONNX layout models)
 native-docparse = ["dep:ort", "dep:image"]
