@@ -221,7 +221,7 @@ export default function AiSettingsPage() {
               <div className="flex items-center gap-4">
                 <Select
                   value={selectedProfileName}
-                  onValueChange={setSelectedProfileId}
+                  onValueChange={setSelectedProfileName}
                 >
                   <SelectTrigger className="w-80">
                     <SelectValue placeholder="Selectionner un profil" />
