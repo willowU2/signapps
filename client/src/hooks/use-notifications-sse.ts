@@ -27,6 +27,7 @@ export function useNotificationsSSE() {
         await fetchEventSource(url, {
           method: 'GET',
           credentials: 'include', // Ensure HttpOnly cookies are sent
+          openWhenHidden: true,   // Prevent AbortError when switching browser tabs
           headers: {
             Accept: 'text/event-stream',
           },
