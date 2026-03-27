@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDesignStore } from "@/stores/design-store";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,11 @@ import DesignTemplateGallery, { TEMPLATES } from "./design-template-gallery";
 
 export default function DesignDashboard() {
   const router = useRouter();
-  const { designs, createDesign, deleteDesign, duplicateDesign, renameDesign, loadDesign } = useDesignStore();
+  const { designs, loadDesigns, createDesign, deleteDesign, duplicateDesign, renameDesign, loadDesign } = useDesignStore();
+
+  useEffect(() => {
+    loadDesigns();
+  }, [loadDesigns]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);

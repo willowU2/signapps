@@ -2,6 +2,7 @@
 
 pub mod backups;
 pub mod calendars;
+pub mod devops;
 pub mod events;
 pub mod jobs;
 pub mod metrics;

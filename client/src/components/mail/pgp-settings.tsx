@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
     Key,
     Copy,
@@ -37,6 +37,9 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { getClient, ServiceName } from "@/lib/api/factory";
+
+const mailClient = getClient(ServiceName.MAIL);
 
 // ============================================================================
 // Key storage helpers (localStorage with encryption via Web Crypto)
@@ -123,6 +126,30 @@ export function PgpSettings({ accountId, accountEmail }: PgpSettingsProps) {
     const [config, setConfig] = useState<PgpAccountConfig>(() =>
         getAccountConfig(accountId)
     );
+    // Load public key metadata from server on mount (private key stays local)
+    useEffect(() => {
+        mailClient.get<{ public_key_pem?: string; fingerprint?: string; algorithm?: string; created_at?: string; enabled?: boolean }>(`/accounts/${accountId}/pgp`)
+            .then((res) => {
+                if (res.data?.public_key_pem) {
+                    const local = getAccountConfig(accountId);
+                    // Merge: server provides public key metadata, local retains private key
+                    const merged: PgpAccountConfig = {
+                        enabled: res.data.enabled ?? local.enabled,
+                        keyPair: {
+                            publicKeyPem: res.data.public_key_pem,
+                            privateKeyPem: local.keyPair?.privateKeyPem ?? "",
+                            fingerprint: res.data.fingerprint ?? local.keyPair?.fingerprint ?? "",
+                            createdAt: res.data.created_at ?? local.keyPair?.createdAt ?? new Date().toISOString(),
+                            algorithm: res.data.algorithm ?? local.keyPair?.algorithm ?? "RSA-OAEP 2048-bit",
+                        },
+                    };
+                    setAccountConfig(accountId, merged);
+                    setConfig(merged);
+                }
+            })
+            .catch(() => {/* use local config as-is */});
+    }, [accountId]);
+
     const [generating, setGenerating] = useState(false);
     const [showPrivateKey, setShowPrivateKey] = useState(false);
     const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -134,6 +161,18 @@ export function PgpSettings({ accountId, accountEmail }: PgpSettingsProps) {
         (newConfig: PgpAccountConfig) => {
             setConfig(newConfig);
             setAccountConfig(accountId, newConfig);
+            // Sync public key to server (private key stays local-only)
+            if (newConfig.keyPair) {
+                mailClient.put(`/accounts/${accountId}/pgp`, {
+                    public_key_pem: newConfig.keyPair.publicKeyPem,
+                    fingerprint: newConfig.keyPair.fingerprint,
+                    algorithm: newConfig.keyPair.algorithm,
+                    created_at: newConfig.keyPair.createdAt,
+                    enabled: newConfig.enabled,
+                }).catch(() => {});
+            } else {
+                mailClient.delete(`/accounts/${accountId}/pgp`).catch(() => {});
+            }
         },
         [accountId]
     );

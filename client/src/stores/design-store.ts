@@ -5,6 +5,9 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import type { Design, DesignMeta, DesignFormat, DesignPage, DesignObject, BrandKit, ExportOptions } from '@/components/design/types';
 import { DESIGN_FORMATS } from '@/components/design/types';
+import { getClient, ServiceName } from '@/lib/api/factory';
+
+const docsClient = getClient(ServiceName.DOCS);
 
 interface DesignState {
   // Dashboard
@@ -25,6 +28,7 @@ interface DesignState {
   rightPanel: boolean;
 
   // Dashboard actions
+  loadDesigns: () => Promise<void>;
   createDesign: (name: string, format: DesignFormat) => string;
   deleteDesign: (id: string) => void;
   duplicateDesign: (id: string) => string;
@@ -99,6 +103,24 @@ export const useDesignStore = create<DesignState>()(
       rightPanel: true,
 
       // Dashboard actions
+      loadDesigns: async () => {
+        try {
+          const res = await docsClient.get<any[]>('/designs');
+          const metas: DesignMeta[] = (res.data ?? []).map((d: any) => ({
+            id: d.id,
+            name: d.name ?? d.title ?? 'Untitled',
+            format: d.format ?? DESIGN_FORMATS[0],
+            createdAt: d.created_at ?? d.createdAt ?? new Date().toISOString(),
+            updatedAt: d.updated_at ?? d.updatedAt ?? new Date().toISOString(),
+          }));
+          if (metas.length > 0) {
+            set({ designs: metas });
+          }
+        } catch {
+          // keep local persist state
+        }
+      },
+
       createDesign: (name, format) => {
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
@@ -129,6 +151,15 @@ export const useDesignStore = create<DesignState>()(
         if (typeof window !== 'undefined') {
           localStorage.setItem(`design-${id}`, JSON.stringify(design));
         }
+        // Sync to API
+        docsClient.post('/designs', {
+          id,
+          name,
+          format,
+          pages: design.pages,
+          created_at: now,
+          updated_at: now,
+        }).catch(() => {});
         return id;
       },
 
@@ -140,6 +171,7 @@ export const useDesignStore = create<DesignState>()(
         if (typeof window !== 'undefined') {
           localStorage.removeItem(`design-${id}`);
         }
+        docsClient.delete(`/designs/${id}`).catch(() => {});
       },
 
       duplicateDesign: (id) => {
@@ -187,11 +219,12 @@ export const useDesignStore = create<DesignState>()(
           designs: s.designs.map((d) => (d.id === id ? { ...d, name, updatedAt: new Date().toISOString() } : d)),
           currentDesign: s.currentDesign?.id === id ? { ...s.currentDesign, name, updatedAt: new Date().toISOString() } : s.currentDesign,
         }));
-        // Persist
+        // Persist locally
         const state = get();
         if (state.currentDesign?.id === id && typeof window !== 'undefined') {
           localStorage.setItem(`design-${id}`, JSON.stringify(state.currentDesign));
         }
+        docsClient.put(`/designs/${id}`, { name }).catch(() => {});
       },
 
       loadDesign: (id) => {
@@ -219,6 +252,12 @@ export const useDesignStore = create<DesignState>()(
           currentDesign: updated,
           designs: s.designs.map((d) => (d.id === updated.id ? { ...d, updatedAt: now } : d)),
         }));
+        docsClient.put(`/designs/${updated.id}`, {
+          name: updated.name,
+          format: updated.format,
+          pages: updated.pages,
+          updated_at: now,
+        }).catch(() => {});
       },
 
       closeDesign: () => {

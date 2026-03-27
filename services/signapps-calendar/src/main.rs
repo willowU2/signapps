@@ -1,7 +1,7 @@
 //! SignApps Calendar Service
 //! Manages shared calendars, events, recurring meetings, and tasks with hierarchical support
 
-use axum::{extract::DefaultBodyLimit, http::StatusCode, middleware, routing::get, Router};
+use axum::{extract::DefaultBodyLimit, http::StatusCode, middleware, Router};
 use dashmap::DashMap;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
@@ -94,10 +94,10 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use axum::routing::{any, delete, post, put};
+    use axum::routing::{any, delete, get, post, put};
     use handlers::{
-        caldav, calendars, events, external_sync, floor_plans, icalendar, notifications, push,
-        recurrence, resources, shares, tasks, timezones, websocket,
+        caldav, calendars, events, external_sync, floor_plans, icalendar, notifications, ooo,
+        polls, push, recurrence, resources, shares, tasks, timezones, websocket,
     };
 
     // Public routes (no auth required)
@@ -228,6 +228,16 @@ fn build_router(state: AppState) -> Router {
         .route("/caldav/calendars/:calendar_id", any(caldav::propfind_calendar))
         .route("/caldav/calendars/:calendar_id/report", post(caldav::report_calendar))
         .route("/caldav/calendars/:calendar_id/events/:event_id.ics", get(caldav::get_event_ics))
+        // Out-of-office settings
+        .route("/api/v1/ooo", get(ooo::get_ooo))
+        .route("/api/v1/ooo", put(ooo::set_ooo))
+        .route("/api/v1/ooo", delete(ooo::delete_ooo))
+        // Scheduling polls
+        .route("/api/v1/polls", get(polls::list_polls))
+        .route("/api/v1/polls", post(polls::create_poll))
+        .route("/api/v1/polls/:id", get(polls::get_poll))
+        .route("/api/v1/polls/:id/vote", post(polls::vote_poll))
+        .route("/api/v1/polls/:id/confirm", post(polls::confirm_poll))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

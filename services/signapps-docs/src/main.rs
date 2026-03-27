@@ -17,7 +17,10 @@ mod handlers;
 mod models;
 mod utils;
 
+use handlers::designs::{create_design, delete_design, get_design, list_designs, update_design};
 use handlers::health::health_handler;
+use handlers::macros::{create_macro, delete_macro, list_macros, update_macro};
+use handlers::notes::{create_note, delete_note, list_notes, update_note};
 use handlers::templates::{create_template, delete_template, get_template, list_templates};
 use handlers::types::{board, chat, sheet, slide, text};
 use handlers::websocket::websocket_handler;
@@ -111,6 +114,22 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/docs/templates", post(create_template))
         .route("/api/v1/docs/templates/:id", get(get_template))
         .route("/api/v1/docs/templates/:id", delete(delete_template))
+        // Sheet macros
+        .route("/api/v1/docs/:doc_id/macros", get(list_macros))
+        .route("/api/v1/docs/:doc_id/macros", post(create_macro))
+        .route("/api/v1/docs/:doc_id/macros/:macro_id", put(update_macro))
+        .route("/api/v1/docs/:doc_id/macros/:macro_id", delete(delete_macro))
+        // Design files
+        .route("/api/v1/designs", get(list_designs))
+        .route("/api/v1/designs", post(create_design))
+        .route("/api/v1/designs/:id", get(get_design))
+        .route("/api/v1/designs/:id", put(update_design))
+        .route("/api/v1/designs/:id", delete(delete_design))
+        // Quick notes (Drive sidebar)
+        .route("/api/v1/keep/notes", get(list_notes))
+        .route("/api/v1/keep/notes", post(create_note))
+        .route("/api/v1/keep/notes/:id", put(update_note))
+        .route("/api/v1/keep/notes/:id", delete(delete_note))
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             auth_middleware::<AppState>,

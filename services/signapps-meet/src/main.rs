@@ -86,8 +86,10 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn build_router(state: AppState) -> Router {
-    use axum::routing::{get, post};
-    use handlers::{participants, recordings, rooms, tokens, waiting_room};
+    use axum::routing::{delete, get, patch, post};
+    use handlers::{
+        participants, recordings, rooms, tokens, video_messages, voicemails, waiting_room,
+    };
 
     // Public routes
     let public_routes = Router::new()
@@ -121,6 +123,20 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/meet/rooms/:id/waiting-room/deny/:user_id", post(waiting_room::deny_user))
         // Meeting history
         .route("/api/v1/meet/history", get(rooms::list_history))
+        // Voicemails
+        .route("/api/v1/meet/voicemails", get(voicemails::list_voicemails))
+        .route("/api/v1/meet/voicemails/:id", delete(voicemails::delete_voicemail))
+        .route("/api/v1/meet/voicemails/:id/read", patch(voicemails::mark_voicemail_read))
+        // Video messages
+        .route(
+            "/api/v1/meet/video-messages",
+            get(video_messages::list_video_messages).post(video_messages::create_video_message),
+        )
+        .route("/api/v1/meet/video-messages/:id", delete(video_messages::delete_video_message))
+        .route(
+            "/api/v1/meet/video-messages/:id/read",
+            patch(video_messages::mark_video_message_read),
+        )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

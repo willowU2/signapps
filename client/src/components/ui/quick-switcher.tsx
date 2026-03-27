@@ -18,6 +18,9 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { getClient, ServiceName } from "@/lib/api/factory";
+
+const identityClient = getClient(ServiceName.IDENTITY);
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -51,6 +54,13 @@ export function trackDocVisit(doc: Omit<RecentDocument, "lastOpenedAt">): void {
   const updated: RecentDocument = { ...doc, lastOpenedAt: new Date().toISOString() };
   const next = [updated, ...filtered].slice(0, MAX_RECENT);
   localStorage.setItem(RECENT_DOCS_KEY, JSON.stringify(next));
+  // Sync to API (fire-and-forget)
+  identityClient.post('/users/me/recent-docs', {
+    doc_id: doc.id,
+    name: doc.name,
+    kind: doc.kind,
+    href: doc.href,
+  }).catch(() => {});
 }
 
 export function clearRecentDocs(): void {
@@ -133,12 +143,27 @@ export function QuickSwitcher() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Load recent docs when opening
+  // Load recent docs when opening — API first, localStorage fallback
   React.useEffect(() => {
-    if (isOpen) {
-      setRecentDocs(getRecentDocs());
-      setQuery("");
-    }
+    if (!isOpen) return;
+    setQuery("");
+    const load = async () => {
+      try {
+        const res = await identityClient.get<any[]>('/users/me/recent-docs');
+        const loaded: RecentDocument[] = (res.data ?? []).map((d: any) => ({
+          id: d.doc_id ?? d.id,
+          name: d.name ?? '',
+          kind: (['text','sheet','slide'].includes(d.kind) ? d.kind : 'text') as DocKind,
+          href: d.href ?? `/docs/${d.doc_id ?? d.id}`,
+          lastOpenedAt: d.last_opened_at ?? d.lastOpenedAt ?? new Date().toISOString(),
+        }));
+        setRecentDocs(loaded);
+        localStorage.setItem(RECENT_DOCS_KEY, JSON.stringify(loaded));
+      } catch {
+        setRecentDocs(getRecentDocs());
+      }
+    };
+    load();
   }, [isOpen]);
 
   const filteredDocs = React.useMemo(() => {

@@ -8,6 +8,7 @@
 
 pub mod coverage;
 pub mod employees;
+pub mod learning;
 pub mod org;
 pub mod validation;
 

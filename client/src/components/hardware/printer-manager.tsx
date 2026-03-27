@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Printer, Circle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface PrinterDevice {
   id: string;
@@ -61,7 +62,7 @@ export default function PrinterManager() {
     // Simulate test print
     setTimeout(() => {
       setTestingPrinterId(null);
-      alert("Test page sent to printer");
+      toast.success("Test page sent to printer");
     }, 2000);
   };
 

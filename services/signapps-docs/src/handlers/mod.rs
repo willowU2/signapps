@@ -1,4 +1,7 @@
+pub mod designs;
 pub mod health;
+pub mod macros;
+pub mod notes;
 pub mod persistence;
 pub mod templates;
 pub mod types;

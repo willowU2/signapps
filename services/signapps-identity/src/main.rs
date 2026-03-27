@@ -250,6 +250,18 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/api-keys", get(handlers::api_keys::list))
         .route("/api/v1/api-keys", post(handlers::api_keys::create))
         .route("/api/v1/api-keys/:id", delete(handlers::api_keys::revoke))
+        .route("/api/v1/api-keys/:id", patch(handlers::api_keys::patch))
+        // Extended user profile (onboarding, streak)
+        .route("/api/v1/users/me/profile", get(handlers::user_profile::get_profile))
+        .route("/api/v1/users/me/profile", patch(handlers::user_profile::patch_profile))
+        // Recent docs
+        .route("/api/v1/users/me/recent-docs", get(handlers::user_profile::list_recent_docs))
+        .route("/api/v1/users/me/recent-docs", post(handlers::user_profile::upsert_recent_doc))
+        // Activity history
+        .route("/api/v1/users/me/history", get(handlers::user_profile::list_history))
+        .route("/api/v1/users/me/history", post(handlers::user_profile::add_history))
+        // Streak check-in
+        .route("/api/v1/users/me/streak/checkin", post(handlers::user_profile::streak_checkin))
         // AQ-GUES: Guest access token routes (auth required to create/list/revoke)
         .route("/api/v1/guest-tokens", post(handlers::guest_tokens::create_guest_token))
         .route("/api/v1/guest-tokens", get(handlers::guest_tokens::list_guest_tokens))
@@ -437,6 +449,15 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/admin/security/events/summary",
             get(handlers::security_events::summary),
         )
+        // Feature flags
+        .route("/api/v1/admin/feature-flags", get(handlers::feature_flags::list))
+        .route("/api/v1/admin/feature-flags", post(handlers::feature_flags::create))
+        .route("/api/v1/admin/feature-flags/:id", put(handlers::feature_flags::update))
+        .route("/api/v1/admin/feature-flags/:id", delete(handlers::feature_flags::delete))
+        // Tenant CSS override
+        .route("/api/v1/admin/tenants/:id/css", get(handlers::tenant_css::get_css))
+        .route("/api/v1/admin/tenants/:id/css", put(handlers::tenant_css::set_css))
+        .route("/api/v1/admin/tenants/:id/css", delete(handlers::tenant_css::clear_css))
         .layer(middleware::from_fn(require_admin))
         .layer(middleware::from_fn_with_state(
             state.clone(),

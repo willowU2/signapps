@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { calendarApi } from '@/lib/api';
+import { getClient, ServiceName } from '@/lib/api/factory';
+
+const docsClient = getClient(ServiceName.DOCS);
 
 type AppType = 'calendar' | 'keep' | 'tasks' | 'gemini' | null;
 
@@ -45,13 +48,42 @@ export function DriveRightSidebar() {
     const [loadingEvents, setLoadingEvents] = useState(false);
 
     useEffect(() => {
-        // Load Keep
-        const savedNotes = localStorage.getItem('drive_keep_notes');
-        if (savedNotes) setNotes(JSON.parse(savedNotes));
-
-        // Load Tasks
-        const savedTasks = localStorage.getItem('drive_tasks');
-        if (savedTasks) setTasks(JSON.parse(savedTasks));
+        // Load notes — API first, localStorage fallback
+        const loadNotes = async () => {
+            try {
+                const res = await docsClient.get<any[]>('/keep/notes');
+                const loaded: Note[] = (res.data ?? []).map((n: any) => ({
+                    id: n.id ?? String(n.created_at ?? Date.now()),
+                    title: n.title ?? '',
+                    content: n.content ?? n.body ?? '',
+                    date: n.created_at ? new Date(n.created_at).getTime() : Date.now(),
+                }));
+                setNotes(loaded);
+                localStorage.setItem('drive_keep_notes', JSON.stringify(loaded));
+            } catch {
+                const savedNotes = localStorage.getItem('drive_keep_notes');
+                if (savedNotes) setNotes(JSON.parse(savedNotes));
+            }
+        };
+        // Load tasks — API first, localStorage fallback
+        const loadTasks = async () => {
+            try {
+                const res = await calendarApi.get<any[]>('/tasks');
+                const loaded: Task[] = (res.data ?? []).map((t: any) => ({
+                    id: t.id ?? String(Date.now()),
+                    text: t.title ?? t.text ?? '',
+                    completed: t.completed ?? t.status === 'done',
+                    date: t.created_at ? new Date(t.created_at).getTime() : Date.now(),
+                }));
+                setTasks(loaded);
+                localStorage.setItem('drive_tasks', JSON.stringify(loaded));
+            } catch {
+                const savedTasks = localStorage.getItem('drive_tasks');
+                if (savedTasks) setTasks(JSON.parse(savedTasks));
+            }
+        };
+        loadNotes();
+        loadTasks();
     }, []);
 
     const saveNotes = (n: Note[]) => {
@@ -62,6 +94,26 @@ export function DriveRightSidebar() {
     const saveTasks = (t: Task[]) => {
         setTasks(t);
         localStorage.setItem('drive_tasks', JSON.stringify(t));
+    };
+
+    const syncNoteCreate = (note: Note) => {
+        docsClient.post('/keep/notes', { id: note.id, title: note.title, content: note.content }).catch(() => {});
+    };
+
+    const syncNoteDelete = (id: string) => {
+        docsClient.delete(`/keep/notes/${id}`).catch(() => {});
+    };
+
+    const syncTaskCreate = (task: Task) => {
+        calendarApi.post('/tasks', { id: task.id, title: task.text, completed: task.completed }).catch(() => {});
+    };
+
+    const syncTaskUpdate = (task: Task) => {
+        calendarApi.put(`/tasks/${task.id}`, { completed: task.completed }).catch(() => {});
+    };
+
+    const syncTaskDelete = (id: string) => {
+        calendarApi.delete(`/tasks/${id}`).catch(() => {});
     };
 
     // Keep actions
@@ -77,6 +129,7 @@ export function DriveRightSidebar() {
             date: Date.now()
         };
         saveNotes([note, ...notes]);
+        syncNoteCreate(note);
         setNewNoteTitle('');
         setNewNoteContent('');
         setIsCreatingNote(false);
@@ -84,6 +137,7 @@ export function DriveRightSidebar() {
 
     const handleDeleteNote = (id: string) => {
         saveNotes(notes.filter(n => n.id !== id));
+        syncNoteDelete(id);
     };
 
     // Tasks actions
@@ -98,15 +152,20 @@ export function DriveRightSidebar() {
             date: Date.now()
         };
         saveTasks([task, ...tasks]);
+        syncTaskCreate(task);
         setNewTaskText('');
     };
 
     const toggleTask = (id: string) => {
-        saveTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+        const updated = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+        saveTasks(updated);
+        const task = updated.find(t => t.id === id);
+        if (task) syncTaskUpdate(task);
     };
 
     const handleDeleteTask = (id: string) => {
         saveTasks(tasks.filter(t => t.id !== id));
+        syncTaskDelete(id);
     };
 
     // Calendar actions

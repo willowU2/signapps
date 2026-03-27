@@ -149,10 +149,36 @@ fn create_router(state: AppState) -> Router {
         .nest("/health", health_routes)
         .nest("/metrics", prometheus_routes);
 
+    // A/B Testing Experiments routes
+    let experiment_routes = Router::new()
+        .route(
+            "/api/v1/experiments",
+            get(handlers::experiments::list_experiments)
+                .post(handlers::experiments::create_experiment),
+        )
+        .route(
+            "/api/v1/experiments/:id",
+            put(handlers::experiments::update_experiment)
+                .delete(handlers::experiments::delete_experiment),
+        );
+
+    // ESG routes
+    let esg_routes = Router::new()
+        .route(
+            "/api/v1/esg/scores",
+            get(handlers::esg::get_esg_scores).put(handlers::esg::upsert_esg_score),
+        )
+        .route(
+            "/api/v1/esg/quarterly",
+            get(handlers::esg::get_esg_quarterly).put(handlers::esg::upsert_esg_quarterly),
+        );
+
     // Protected routes (auth required)
     let protected_routes = Router::new()
         .nest("/api/v1/system", metrics_routes)
         .nest("/api/v1/alerts", alert_routes)
+        .merge(experiment_routes)
+        .merge(esg_routes)
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware::<AppState>,

@@ -209,6 +209,19 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // Learning routes
+    let learning_routes = Router::new()
+        .route("/courses", get(handlers::learning::list_courses))
+        .route("/courses/{id}", get(handlers::learning::get_course))
+        .route(
+            "/courses/{id}/progress",
+            put(handlers::learning::update_progress),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Validation routes
     let validation_routes = Router::new()
         .route("/coverage", post(handlers::validation::validate_coverage))
@@ -241,6 +254,7 @@ fn create_router(state: AppState) -> Router {
         )
         .nest("/api/v1/workforce/coverage/rules", coverage_rule_routes)
         .nest("/api/v1/workforce/validate", validation_routes)
+        .nest("/api/v1/learning", learning_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

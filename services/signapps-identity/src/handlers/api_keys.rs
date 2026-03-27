@@ -181,3 +181,73 @@ pub async fn revoke(
     tracing::info!(user_id = %claims.sub, key_id = %id, "API key revoked");
     Ok(StatusCode::NO_CONTENT)
 }
+
+/// PATCH request body for updating an API key.
+#[derive(Debug, Deserialize)]
+pub struct PatchApiKeyRequest {
+    pub name: Option<String>,
+    pub is_active: Option<bool>,
+}
+
+/// PATCH /api/v1/api-keys/:id — Rename or toggle an API key.
+#[tracing::instrument(skip(state, payload))]
+pub async fn patch(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<PatchApiKeyRequest>,
+) -> Result<Json<ApiKeyItem>> {
+    if let Some(ref name) = payload.name {
+        if name.is_empty() || name.len() > 100 {
+            return Err(Error::Validation(
+                "Name must be 1-100 characters".to_string(),
+            ));
+        }
+    }
+
+    // Build dynamic update — at least one field must be provided
+    if payload.name.is_none() && payload.is_active.is_none() {
+        return Err(Error::Validation("Nothing to update".to_string()));
+    }
+
+    let row = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            String,
+            Vec<String>,
+            Option<DateTime<Utc>>,
+            Option<DateTime<Utc>>,
+            bool,
+            DateTime<Utc>,
+        ),
+    >(
+        r#"UPDATE identity.api_keys
+           SET name       = COALESCE($3, name),
+               is_active  = COALESCE($4, is_active),
+               updated_at = NOW()
+           WHERE id = $1 AND user_id = $2
+           RETURNING id, name, key_prefix, scopes, expires_at, last_used, is_active, created_at"#,
+    )
+    .bind(id)
+    .bind(claims.sub)
+    .bind(payload.name)
+    .bind(payload.is_active)
+    .fetch_optional(&*state.pool)
+    .await?
+    .ok_or_else(|| Error::NotFound("API key not found".to_string()))?;
+
+    tracing::info!(user_id = %claims.sub, key_id = %id, "API key patched");
+
+    Ok(Json(ApiKeyItem {
+        id: row.0,
+        name: row.1,
+        prefix: row.2,
+        scopes: row.3,
+        expires_at: row.4,
+        last_used: row.5,
+        is_active: row.6,
+        created_at: row.7,
+    }))
+}

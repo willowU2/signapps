@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, Copy, Check, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 interface ApiKey {
   id: string;
@@ -15,8 +16,9 @@ interface ApiKey {
 }
 
 const STORAGE_KEY = "signapps_api_keys";
+const identityClient = getClient(ServiceName.IDENTITY);
 
-function loadKeys(): ApiKey[] {
+function loadKeysFromStorage(): ApiKey[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -31,7 +33,7 @@ function loadKeys(): ApiKey[] {
   }
 }
 
-function saveKeys(keys: ApiKey[]) {
+function saveKeysToStorage(keys: ApiKey[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(keys));
 }
 
@@ -42,6 +44,17 @@ function generateToken(): string {
   return "sk_live_" + Array.from(arr).map((b) => chars[b % chars.length]).join("");
 }
 
+function mapApiKeyToLocal(k: any): ApiKey {
+  return {
+    id: k.id ?? k.key_id ?? crypto.randomUUID(),
+    prefix: k.key ?? k.prefix ?? k.token ?? "",
+    scopes: k.scopes ?? [],
+    expiryDate: k.expires_at ? new Date(k.expires_at) : null,
+    lastUsed: k.last_used_at ? new Date(k.last_used_at) : null,
+    isActive: !k.revoked,
+  };
+}
+
 export function ApiKeyManager() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -49,11 +62,22 @@ export function ApiKeyManager() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setApiKeys(loadKeys());
-    setIsLoading(false);
+    const load = async () => {
+      try {
+        const res = await identityClient.get<any[]>('/api-keys');
+        const keys = (res.data ?? []).map(mapApiKeyToLocal);
+        setApiKeys(keys);
+        saveKeysToStorage(keys);
+      } catch {
+        setApiKeys(loadKeysFromStorage());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
   }, []);
 
-  const handleGenerateKey = () => {
+  const handleGenerateKey = async () => {
     const newKey: ApiKey = {
       id: crypto.randomUUID(),
       prefix: generateToken(),
@@ -64,8 +88,16 @@ export function ApiKeyManager() {
     };
     const updated = [newKey, ...apiKeys];
     setApiKeys(updated);
-    saveKeys(updated);
+    saveKeysToStorage(updated);
     toast.success("New API key generated");
+    try {
+      await identityClient.post('/api-keys', {
+        name: `Key ${new Date().toISOString()}`,
+        scopes: newKey.scopes,
+      });
+    } catch {
+      // localStorage has it
+    }
   };
 
   const handleCopy = (prefix: string, id: string) => {
@@ -75,12 +107,17 @@ export function ApiKeyManager() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleRevoke = (id: string) => {
+  const handleRevoke = async (id: string) => {
     if (!confirm("Are you sure you want to revoke this API key? This action cannot be undone.")) return;
     const updated = apiKeys.filter((k) => k.id !== id);
     setApiKeys(updated);
-    saveKeys(updated);
+    saveKeysToStorage(updated);
     toast.success("API key revoked");
+    try {
+      await identityClient.delete(`/api-keys/${id}`);
+    } catch {
+      // already removed from local state
+    }
   };
 
   const formatDate = (date: Date | null): string => {

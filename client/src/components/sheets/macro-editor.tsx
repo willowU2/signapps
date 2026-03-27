@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils"
 import { CellData, ROWS, COLS } from "./types"
 import { X, Play, Save, Trash2, FileCode, ChevronDown, Copy, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
+import { getClient, ServiceName } from "@/lib/api/factory"
+
+const docsClient = getClient(ServiceName.DOCS)
 
 interface MacroApi {
     getCell: (row: number, col: number) => string
@@ -103,15 +106,23 @@ api.alert(daysInMonth + " dates generees");`
     }
 ]
 
-function loadMacros(sheetId: string): SavedMacro[] {
+function loadMacrosFromStorage(sheetId: string): SavedMacro[] {
     try {
         const raw = localStorage.getItem(STORAGE_KEY_PREFIX + sheetId)
         return raw ? JSON.parse(raw) : []
     } catch { return [] }
 }
 
-function saveMacros(sheetId: string, macros: SavedMacro[]) {
+function saveMacrosToStorage(sheetId: string, macros: SavedMacro[]) {
     localStorage.setItem(STORAGE_KEY_PREFIX + sheetId, JSON.stringify(macros))
+}
+
+function mapMacroFromApi(m: any): SavedMacro {
+    return {
+        name: m.name ?? m.title ?? 'Macro',
+        code: m.code ?? m.script ?? '',
+        createdAt: m.created_at ? new Date(m.created_at).getTime() : Date.now(),
+    }
 }
 
 interface MacroEditorProps {
@@ -127,12 +138,26 @@ interface MacroEditorProps {
 export function MacroEditor({ data, evaluatedData, sheetId, sheetName, setCell, transact, onClose }: MacroEditorProps) {
     const [code, setCode] = useState(EXAMPLE_MACROS[0].code)
     const [macroName, setMacroName] = useState('')
-    const [savedMacros, setSavedMacros] = useState<SavedMacro[]>(() => loadMacros(sheetId))
+    const [savedMacros, setSavedMacros] = useState<SavedMacro[]>([])
     const [output, setOutput] = useState<string[]>([])
     const [isRunning, setIsRunning] = useState(false)
     const [showExamples, setShowExamples] = useState(false)
     const [showSaved, setShowSaved] = useState(false)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const res = await docsClient.get<any[]>(`/docs/${sheetId}/macros`)
+                const loaded = (res.data ?? []).map(mapMacroFromApi)
+                setSavedMacros(loaded)
+                saveMacrosToStorage(sheetId, loaded)
+            } catch {
+                setSavedMacros(loadMacrosFromStorage(sheetId))
+            }
+        }
+        load()
+    }, [sheetId])
 
     // Sync tab key in textarea
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -237,16 +262,19 @@ export function MacroEditor({ data, evaluatedData, sheetId, sheetName, setCell, 
 
     const handleSave = useCallback(() => {
         const name = macroName.trim() || `Macro ${savedMacros.length + 1}`
-        const existing = savedMacros.findIndex(m => m.name === name)
+        const existingIdx = savedMacros.findIndex(m => m.name === name)
+        const macro: SavedMacro = { name, code, createdAt: Date.now() }
         let updated: SavedMacro[]
-        if (existing >= 0) {
+        if (existingIdx >= 0) {
             updated = [...savedMacros]
-            updated[existing] = { name, code, createdAt: Date.now() }
+            updated[existingIdx] = macro
+            docsClient.put(`/docs/${sheetId}/macros/${encodeURIComponent(name)}`, { code }).catch(() => {})
         } else {
-            updated = [...savedMacros, { name, code, createdAt: Date.now() }]
+            updated = [...savedMacros, macro]
+            docsClient.post(`/docs/${sheetId}/macros`, { name, code }).catch(() => {})
         }
         setSavedMacros(updated)
-        saveMacros(sheetId, updated)
+        saveMacrosToStorage(sheetId, updated)
         setMacroName(name)
         toast.success(`Macro "${name}" sauvegardee`)
     }, [macroName, code, savedMacros, sheetId])
@@ -254,7 +282,8 @@ export function MacroEditor({ data, evaluatedData, sheetId, sheetName, setCell, 
     const handleDelete = useCallback((name: string) => {
         const updated = savedMacros.filter(m => m.name !== name)
         setSavedMacros(updated)
-        saveMacros(sheetId, updated)
+        saveMacrosToStorage(sheetId, updated)
+        docsClient.delete(`/docs/${sheetId}/macros/${encodeURIComponent(name)}`).catch(() => {})
         toast.info(`Macro "${name}" supprimee`)
     }, [savedMacros, sheetId])
 

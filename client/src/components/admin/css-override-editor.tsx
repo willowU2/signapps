@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, Save, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,9 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { getClient, ServiceName } from "@/lib/api/factory";
+
+const identityClient = getClient(ServiceName.IDENTITY);
 
 const DEFAULT_CSS = `/* Custom CSS Overrides */
 :root {
@@ -33,17 +36,44 @@ button:hover {
 }
 `;
 
+// Tenant ID mapping (demo tenants)
+const TENANT_IDS: Record<string, string> = {
+  "default": "default",
+  "acme-corp": "acme-corp",
+  "tech-startup": "tech-startup",
+  "enterprise": "enterprise",
+};
+
 export function CSSOverrideEditor() {
   const [css, setCSS] = useState(DEFAULT_CSS);
   const [tenant, setTenant] = useState("default");
   const [showPreview, setShowPreview] = useState(false);
   const [isSaved, setIsSaved] = useState(true);
 
-  const handleSave = () => {
-    // In a real app, this would call an API to save CSS to tenant config
+  // Load CSS for selected tenant
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await identityClient.get<{ css: string }>(`/admin/tenants/${TENANT_IDS[tenant]}/css`);
+        setCSS(res.data?.css ?? DEFAULT_CSS);
+      } catch {
+        const cached = localStorage.getItem(`css-override-${tenant}`);
+        setCSS(cached ?? DEFAULT_CSS);
+      }
+      setIsSaved(true);
+    };
+    load();
+  }, [tenant]);
+
+  const handleSave = async () => {
     localStorage.setItem(`css-override-${tenant}`, css);
     setIsSaved(true);
     toast.success("CSS saved successfully");
+    try {
+      await identityClient.put(`/admin/tenants/${TENANT_IDS[tenant]}/css`, { css });
+    } catch {
+      // localStorage already updated
+    }
   };
 
   const handleReset = () => {

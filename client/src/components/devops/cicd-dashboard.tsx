@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { GitBranch, Clock, Zap, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 interface PipelineCard {
   id: string;
@@ -15,8 +17,9 @@ interface PipelineCard {
 }
 
 const STORAGE_KEY = "signapps_pipelines";
+const schedulerClient = getClient(ServiceName.SCHEDULER);
 
-function loadPipelines(): PipelineCard[] {
+function loadPipelinesFromStorage(): PipelineCard[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -27,8 +30,19 @@ function loadPipelines(): PipelineCard[] {
   }
 }
 
-function savePipelines(pipelines: PipelineCard[]) {
+function savePipelinesToStorage(pipelines: PipelineCard[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(pipelines));
+}
+
+function mapPipelineFromApi(p: any): PipelineCard {
+  return {
+    id: p.id ?? crypto.randomUUID(),
+    repoName: p.name ?? p.repo_name ?? p.repository ?? "",
+    branch: p.branch ?? "main",
+    status: (["success","failed","running"].includes(p.status) ? p.status : "running") as PipelineCard["status"],
+    duration: p.duration_seconds ?? p.duration ?? 0,
+    lastRunTime: new Date(p.last_run_at ?? p.created_at ?? Date.now()),
+  };
 }
 
 const getStatusColor = (status: "success" | "failed" | "running"): string => {
@@ -68,10 +82,24 @@ const formatRelativeTime = (date: Date): string => {
 export function CICDDashboard() {
   const [pipelines, setPipelines] = useState<PipelineCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [formRepo, setFormRepo] = useState("");
+  const [formBranch, setFormBranch] = useState("main");
 
   useEffect(() => {
-    setPipelines(loadPipelines());
-    setIsLoading(false);
+    const load = async () => {
+      try {
+        const res = await schedulerClient.get<any[]>('/devops/pipelines');
+        const loaded = (res.data ?? []).map(mapPipelineFromApi);
+        setPipelines(loaded);
+        savePipelinesToStorage(loaded);
+      } catch {
+        setPipelines(loadPipelinesFromStorage());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
   }, []);
 
   useEffect(() => {
@@ -82,37 +110,51 @@ export function CICDDashboard() {
             ? { ...pipeline, duration: pipeline.duration + 1 }
             : pipeline
         );
-        savePipelines(updated);
+        savePipelinesToStorage(updated);
         return updated;
       });
     }, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleAddPipeline = () => {
-    const repoName = window.prompt("Repository name:");
-    if (!repoName?.trim()) return;
-    const branch = window.prompt("Branch name:", "main") || "main";
+  const handleAddPipeline = async () => {
+    if (!formRepo.trim()) return;
     const newPipeline: PipelineCard = {
       id: crypto.randomUUID(),
-      repoName: repoName.trim(),
-      branch,
+      repoName: formRepo.trim(),
+      branch: formBranch || "main",
       status: "running",
       duration: 0,
       lastRunTime: new Date(),
     };
     const updated = [newPipeline, ...pipelines];
     setPipelines(updated);
-    savePipelines(updated);
-    toast.success(`Pipeline for ${repoName} started`);
+    savePipelinesToStorage(updated);
+    setShowForm(false);
+    setFormRepo("");
+    setFormBranch("main");
+    toast.success(`Pipeline for ${formRepo} started`);
+    try {
+      await schedulerClient.post('/devops/pipelines', {
+        name: newPipeline.repoName,
+        branch: newPipeline.branch,
+      });
+    } catch {
+      // localStorage already updated
+    }
   };
 
-  const handleMarkStatus = (id: string, status: "success" | "failed") => {
+  const handleMarkStatus = async (id: string, status: "success" | "failed") => {
     const updated = pipelines.map((p) =>
       p.id === id ? { ...p, status } : p
     );
     setPipelines(updated);
-    savePipelines(updated);
+    savePipelinesToStorage(updated);
+    try {
+      await schedulerClient.put(`/devops/pipelines/${id}`, { status });
+    } catch {
+      // localStorage already updated
+    }
   };
 
   if (isLoading) {
@@ -140,10 +182,19 @@ export function CICDDashboard() {
               {failedCount} failed
             </span>
           </div>
-          <Button size="sm" onClick={handleAddPipeline}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Pipeline
-          </Button>
+          {showForm ? (
+            <div className="flex gap-2">
+              <Input value={formRepo} onChange={(e) => setFormRepo(e.target.value)} placeholder="Repository name" className="h-8 text-sm w-40" autoFocus />
+              <Input value={formBranch} onChange={(e) => setFormBranch(e.target.value)} placeholder="branch" className="h-8 text-sm w-24" />
+              <Button size="sm" onClick={handleAddPipeline}>Start</Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
+            </div>
+          ) : (
+            <Button size="sm" onClick={() => setShowForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Pipeline
+            </Button>
+          )}
         </div>
       </div>
 

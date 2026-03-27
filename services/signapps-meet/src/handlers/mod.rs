@@ -4,6 +4,8 @@ pub mod participants;
 pub mod recordings;
 pub mod rooms;
 pub mod tokens;
+pub mod video_messages;
+pub mod voicemails;
 pub mod waiting_room;
 
 use axum::{extract::State, Json};

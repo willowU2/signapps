@@ -18,8 +18,8 @@ use tower_http::{
 };
 
 use handlers::{
-    accounts, analytics, api_keys, automation, content_sets, inbox, media, post_comments, posts,
-    short_urls, signatures, time_slots, webhooks, workspaces,
+    accounts, ai_threads, analytics, api_keys, automation, content_sets, inbox, media,
+    post_comments, posts, short_urls, signatures, time_slots, webhooks, workspaces,
 };
 
 // ---------------------------------------------------------------------------
@@ -252,6 +252,17 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/social/api-keys/:id/revoke",
             post(api_keys::revoke_api_key),
+        )
+        // AI chat threads
+        .route(
+            "/api/v1/social/ai-threads",
+            get(ai_threads::list_ai_threads).post(ai_threads::create_ai_thread),
+        )
+        .route(
+            "/api/v1/social/ai-threads/:id",
+            get(ai_threads::get_ai_thread)
+                .put(ai_threads::update_ai_thread)
+                .delete(ai_threads::delete_ai_thread),
         )
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

@@ -39,8 +39,11 @@ const flagFormSchema = z.object({
 type FlagFormValues = z.infer<typeof flagFormSchema>;
 
 const STORAGE_KEY = "signapps_feature_flags";
+import { getClient, ServiceName } from "@/lib/api/factory";
+import { toast } from "sonner";
+const identityClient = getClient(ServiceName.IDENTITY);
 
-function loadFlags(): FeatureFlag[] {
+function loadFlagsFromStorage(): FeatureFlag[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -49,8 +52,18 @@ function loadFlags(): FeatureFlag[] {
   }
 }
 
-function saveFlags(flags: FeatureFlag[]) {
+function saveFlagsToStorage(flags: FeatureFlag[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(flags));
+}
+
+function mapFlagFromApi(f: any): FeatureFlag {
+  return {
+    id: f.id ?? f.key ?? crypto.randomUUID(),
+    name: f.name ?? f.key ?? "",
+    enabled: f.enabled ?? false,
+    targetingPercent: f.rollout_percentage ?? f.targeting_percent ?? 0,
+    description: f.description ?? "",
+  };
 }
 
 export function FeatureFlags() {
@@ -67,37 +80,65 @@ export function FeatureFlags() {
   });
 
   useEffect(() => {
-    setFlags(loadFlags());
-    setIsLoading(false);
+    const load = async () => {
+      try {
+        const res = await identityClient.get<any[]>('/admin/feature-flags');
+        const loaded = (res.data ?? []).map(mapFlagFromApi);
+        setFlags(loaded);
+        saveFlagsToStorage(loaded);
+      } catch {
+        setFlags(loadFlagsFromStorage());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
   }, []);
 
-  const handleToggle = (id: string) => {
+  const handleToggle = async (id: string) => {
     setFlags((prev) => {
       const updated = prev.map((flag) =>
         flag.id === id ? { ...flag, enabled: !flag.enabled } : flag
       );
-      saveFlags(updated);
+      saveFlagsToStorage(updated);
       return updated;
     });
+    const flag = flags.find(f => f.id === id);
+    if (!flag) return;
+    try {
+      await identityClient.put(`/admin/feature-flags/${id}`, { enabled: !flag.enabled });
+    } catch {
+      // localStorage updated already
+    }
   };
 
-  const handleTargetingChange = (id: string, percent: number) => {
+  const handleTargetingChange = async (id: string, percent: number) => {
     const boundedPercent = Math.max(0, Math.min(100, percent));
     setFlags((prev) => {
       const updated = prev.map((flag) =>
         flag.id === id ? { ...flag, targetingPercent: boundedPercent } : flag
       );
-      saveFlags(updated);
+      saveFlagsToStorage(updated);
       return updated;
     });
+    try {
+      await identityClient.put(`/admin/feature-flags/${id}`, { rollout_percentage: boundedPercent });
+    } catch {
+      // localStorage updated already
+    }
   };
 
-  const handleDeleteFlag = (id: string) => {
+  const handleDeleteFlag = async (id: string) => {
     setFlags((prev) => {
       const updated = prev.filter((flag) => flag.id !== id);
-      saveFlags(updated);
+      saveFlagsToStorage(updated);
       return updated;
     });
+    try {
+      await identityClient.delete(`/admin/feature-flags/${id}`);
+    } catch {
+      // already removed locally
+    }
   };
 
   const onSubmit = async (data: FlagFormValues) => {
@@ -110,11 +151,21 @@ export function FeatureFlags() {
     };
     setFlags((prev) => {
       const updated = [...prev, newFlag];
-      saveFlags(updated);
+      saveFlagsToStorage(updated);
       return updated;
     });
     form.reset();
     setIsDialogOpen(false);
+    try {
+      await identityClient.post('/admin/feature-flags', {
+        name: data.name,
+        description: data.description,
+        enabled: false,
+        rollout_percentage: 0,
+      });
+    } catch {
+      // localStorage has it
+    }
   };
 
   if (isLoading) {

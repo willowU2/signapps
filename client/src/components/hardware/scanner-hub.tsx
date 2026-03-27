@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Scan, Upload, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ScannerDevice {
   id: string;
@@ -84,7 +85,7 @@ export default function ScannerHub() {
   };
 
   const sendToStorage = (filename: string) => {
-    alert(`Sending ${filename} to cloud storage...`);
+    toast.info(`Sending ${filename} to cloud storage...`);
   };
 
   const showPreview = (filename: string) => {

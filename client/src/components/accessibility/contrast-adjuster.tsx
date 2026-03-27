@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ContrastPreset {
   name: string;
@@ -38,7 +39,7 @@ export default function ContrastAdjuster() {
 
   const autoFix = () => {
     // In production, this would analyze the page and adjust colors
-    alert("Auto-fixing contrast issues. Checking all text elements...");
+    toast.info("Auto-fixing contrast issues. Checking all text elements...");
   };
 
   return (

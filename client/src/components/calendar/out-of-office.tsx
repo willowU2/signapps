@@ -27,6 +27,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { calendarApi } from "@/lib/api/calendar";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -57,10 +58,13 @@ export function getOooSettings(): OutOfOfficeSettings | null {
 
 export function saveOooSettings(settings: OutOfOfficeSettings): void {
   localStorage.setItem(OOO_KEY, JSON.stringify(settings));
+  // fire-and-forget API sync
+  calendarApi.put('/ooo', settings).catch(() => {});
 }
 
 export function clearOooSettings(): void {
   localStorage.removeItem(OOO_KEY);
+  calendarApi.delete('/ooo').catch(() => {});
 }
 
 export function isCurrentlyOoo(): boolean {
@@ -147,16 +151,28 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
 
   // Load existing settings
   useEffect(() => {
-    const existing = getOooSettings();
-    if (existing) {
-      setEnabled(existing.enabled);
-      setStartDate(existing.startDate);
-      setEndDate(existing.endDate);
-      setAutoReplyMessage(existing.autoReplyMessage);
-      setAutoDeclineInvitations(existing.autoDeclineInvitations);
-      setShowOooOnCalendar(existing.showOooOnCalendar);
-      setAutoReplyToEmails(existing.autoReplyToEmails);
-    }
+    const loadSettings = async () => {
+      let existing = getOooSettings();
+      try {
+        const res = await calendarApi.get<OutOfOfficeSettings>('/ooo');
+        if (res.data) {
+          existing = res.data;
+          localStorage.setItem(OOO_KEY, JSON.stringify(existing));
+        }
+      } catch {
+        // use local cache
+      }
+      if (existing) {
+        setEnabled(existing.enabled);
+        setStartDate(existing.startDate);
+        setEndDate(existing.endDate);
+        setAutoReplyMessage(existing.autoReplyMessage);
+        setAutoDeclineInvitations(existing.autoDeclineInvitations);
+        setShowOooOnCalendar(existing.showOooOnCalendar);
+        setAutoReplyToEmails(existing.autoReplyToEmails);
+      }
+    };
+    loadSettings();
   }, [open]);
 
   const handleSave = useCallback(() => {

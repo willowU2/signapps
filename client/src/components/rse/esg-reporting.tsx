@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BarChart3 } from "lucide-react";
 import { toast } from "sonner";
+import { getClient, ServiceName } from "@/lib/api/factory";
+
+const metricsClient = getClient(ServiceName.METRICS);
 
 interface ESGScore {
   category: string;
@@ -55,10 +58,41 @@ export default function ESGReporting() {
   const [editingScore, setEditingScore] = useState<string | null>(null);
   const [editingQuarterIdx, setEditingQuarterIdx] = useState<number | null>(null);
 
-  // Load persisted values on mount
+  // Load persisted values on mount — API first, localStorage fallback
   useEffect(() => {
-    setScores(loadFromStorage<ESGScore[]>(STORAGE_KEY_SCORES, DEFAULT_SCORES));
-    setQuarterly(loadFromStorage<number[]>(STORAGE_KEY_QUARTERLY, DEFAULT_QUARTERLY));
+    const load = async () => {
+      try {
+        const [scoresRes, quarterlyRes] = await Promise.all([
+          metricsClient.get<any>('/esg/scores'),
+          metricsClient.get<any>('/esg/quarterly'),
+        ]);
+        if (scoresRes.data) {
+          const apiScores = Array.isArray(scoresRes.data) ? scoresRes.data : scoresRes.data.scores;
+          if (Array.isArray(apiScores) && apiScores.length > 0) {
+            const mapped = apiScores.map((s: any) => ({
+              category: s.category ?? s.name,
+              score: s.score ?? s.value ?? 0,
+              trend: (['up','down','stable'].includes(s.trend) ? s.trend : 'stable') as ESGScore['trend'],
+              color: s.color ?? 'bg-gray-100 text-gray-800',
+            }));
+            setScores(mapped);
+            localStorage.setItem(STORAGE_KEY_SCORES, JSON.stringify(mapped));
+          }
+        }
+        if (quarterlyRes.data) {
+          const apiQ = Array.isArray(quarterlyRes.data) ? quarterlyRes.data : quarterlyRes.data.quarterly;
+          if (Array.isArray(apiQ) && apiQ.length > 0) {
+            const vals = apiQ.map((q: any) => typeof q === 'number' ? q : q.value ?? q.score ?? 0);
+            setQuarterly(vals);
+            localStorage.setItem(STORAGE_KEY_QUARTERLY, JSON.stringify(vals));
+          }
+        }
+      } catch {
+        setScores(loadFromStorage<ESGScore[]>(STORAGE_KEY_SCORES, DEFAULT_SCORES));
+        setQuarterly(loadFromStorage<number[]>(STORAGE_KEY_QUARTERLY, DEFAULT_QUARTERLY));
+      }
+    };
+    load();
   }, []);
 
   const avgScore = (scores.reduce((sum, s) => sum + s.score, 0) / scores.length).toFixed(1);
@@ -77,6 +111,7 @@ export default function ESGReporting() {
     setScores(updated);
     localStorage.setItem(STORAGE_KEY_SCORES, JSON.stringify(updated));
     setEditingScore(null);
+    metricsClient.put('/esg/scores', { scores: updated }).catch(() => {});
     toast.success(`${category} score updated`);
   };
 
@@ -86,6 +121,7 @@ export default function ESGReporting() {
     setQuarterly(updated);
     localStorage.setItem(STORAGE_KEY_QUARTERLY, JSON.stringify(updated));
     setEditingQuarterIdx(null);
+    metricsClient.put('/esg/quarterly', { quarterly: updated }).catch(() => {});
     toast.success(`Q${idx + 1} trend updated`);
   };
 

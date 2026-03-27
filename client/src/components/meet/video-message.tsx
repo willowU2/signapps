@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Video, Play, Trash2, Loader2, Clock, Send, Square } from 'lucide-react'
 import { toast } from 'sonner'
+import { getClient, ServiceName } from '@/lib/api/factory'
+
+const meetClient = getClient(ServiceName.MEET)
 
 interface VideoMessage {
   id: string
@@ -30,16 +33,37 @@ export function VideoMessage() {
   const chunksRef = useRef<Blob[]>([])
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load messages from localStorage on mount
+  // Load messages — API first, localStorage fallback
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('signapps_video_messages');
-      const stored: VideoMessage[] = raw ? JSON.parse(raw) : [];
-      setMessages(stored);
-    } catch {
-      setMessages([]);
+    const load = async () => {
+      try {
+        const res = await meetClient.get<any[]>('/meet/video-messages')
+        const loaded: VideoMessage[] = (res.data ?? []).map((m: any) => ({
+          id: m.id ?? crypto.randomUUID(),
+          sender: m.sender_name ?? m.sender ?? 'Unknown',
+          date: m.sent_at ?? m.created_at ?? new Date().toISOString(),
+          duration: m.duration_seconds ?? m.duration ?? 0,
+          thumbnailUrl: m.thumbnail_url ?? undefined,
+          videoUrl: m.video_url ?? undefined,
+          isNew: m.is_new ?? m.unread ?? false,
+        }))
+        setMessages(loaded)
+        try {
+          const toStore = loaded.map((m) => ({ ...m, videoUrl: undefined, thumbnailUrl: undefined }))
+          localStorage.setItem('signapps_video_messages', JSON.stringify(toStore))
+        } catch { /* quota */ }
+      } catch {
+        try {
+          const raw = localStorage.getItem('signapps_video_messages')
+          setMessages(raw ? JSON.parse(raw) : [])
+        } catch {
+          setMessages([])
+        }
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false);
+    load()
   }, [])
 
   // Clean up timer on unmount
@@ -133,28 +157,29 @@ export function VideoMessage() {
       isNew: true,
     }
 
-    const updated = [newMessage, ...messages];
-    setMessages(updated);
+    const updated = [newMessage, ...messages]
+    setMessages(updated)
     try {
-      // Persist without the blob URL (blob URLs are session-only)
-      const toStore = updated.map((m) => ({ ...m, videoUrl: undefined, thumbnailUrl: undefined }));
-      localStorage.setItem('signapps_video_messages', JSON.stringify(toStore));
-    } catch {
-      // Storage quota exceeded — skip
-    }
+      const toStore = updated.map((m) => ({ ...m, videoUrl: undefined, thumbnailUrl: undefined }))
+      localStorage.setItem('signapps_video_messages', JSON.stringify(toStore))
+    } catch { /* quota */ }
+    // Upload video blob to API
+    const formData = new FormData()
+    formData.append('video', videoBlob, 'recording.webm')
+    formData.append('duration_seconds', String(recordingTime))
+    meetClient.post('/meet/video-messages', formData).catch(() => {})
     chunksRef.current = []
     setRecordingTime(0)
     toast.success('Message vidéo envoyé')
   }
 
   const handleDelete = (id: string) => {
-    const updated = messages.filter((m) => m.id !== id);
-    setMessages(updated);
+    const updated = messages.filter((m) => m.id !== id)
+    setMessages(updated)
     try {
-      localStorage.setItem('signapps_video_messages', JSON.stringify(updated));
-    } catch {
-      // ignore
-    }
+      localStorage.setItem('signapps_video_messages', JSON.stringify(updated))
+    } catch { /* ignore */ }
+    meetClient.delete(`/meet/video-messages/${id}`).catch(() => {})
   }
 
   const togglePlayback = (id: string) => {

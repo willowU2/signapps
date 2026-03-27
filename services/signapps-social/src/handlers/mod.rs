@@ -1,4 +1,5 @@
 pub mod accounts;
+pub mod ai_threads;
 pub mod analytics;
 pub mod api_keys;
 pub mod automation;

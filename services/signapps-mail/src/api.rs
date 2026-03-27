@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use signapps_common::Claims;
 use uuid::Uuid;
 
+use crate::handlers::pgp::{delete_pgp_config, get_pgp_config, upsert_pgp_config};
 use crate::handlers::rules::{create_rule, delete_rule, get_rule, list_rules, update_rule};
 use crate::handlers::signatures::{get_signature, upsert_signature};
 use crate::handlers::spam::{classify_email, get_spam_settings, train_spam, update_spam_settings};
@@ -102,6 +103,11 @@ pub fn router() -> Router<AppState> {
         .route("/api/v1/mail/search", get(search_emails))
         // Stats
         .route("/api/v1/mail/stats", get(get_stats))
+        // PGP config (public key + settings; private key stays client-side)
+        .route(
+            "/api/v1/mail/accounts/:account_id/pgp",
+            get(get_pgp_config).put(upsert_pgp_config).delete(delete_pgp_config),
+        )
 }
 
 fn patch<H, T, S>(handler: H) -> axum::routing::MethodRouter<S>

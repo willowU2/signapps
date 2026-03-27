@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { getClient, ServiceName } from "@/lib/api/factory";
+
+const identityClient = getClient(ServiceName.IDENTITY);
 
 interface HistoryEntry {
   path: string;
@@ -21,8 +24,15 @@ export function useRecentHistory() {
     try {
       const history: HistoryEntry[] = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
       const filtered = history.filter(h => h.path !== pathname);
-      filtered.unshift({ path: pathname, title: document.title || pathname, visitedAt: new Date().toISOString() });
+      const entry: HistoryEntry = { path: pathname, title: document.title || pathname, visitedAt: new Date().toISOString() };
+      filtered.unshift(entry);
       localStorage.setItem(HISTORY_KEY, JSON.stringify(filtered.slice(0, MAX_ENTRIES)));
+      // Sync to API (fire-and-forget)
+      identityClient.post('/users/me/history', {
+        path: entry.path,
+        title: entry.title,
+        visited_at: entry.visitedAt,
+      }).catch(() => {});
     } catch {}
   }, [pathname]);
 }
@@ -32,7 +42,22 @@ export function RecentHistory() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    try { setEntries(JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]")); } catch {}
+    if (!open) return;
+    const load = async () => {
+      try {
+        const res = await identityClient.get<any[]>('/users/me/history');
+        const loaded: HistoryEntry[] = (res.data ?? []).map((h: any) => ({
+          path: h.path ?? '/',
+          title: h.title ?? h.path ?? '/',
+          visitedAt: h.visited_at ?? h.visitedAt ?? new Date().toISOString(),
+        }));
+        setEntries(loaded);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(loaded));
+      } catch {
+        try { setEntries(JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]")); } catch {}
+      }
+    };
+    load();
   }, [open]);
 
   if (entries.length === 0) return null;

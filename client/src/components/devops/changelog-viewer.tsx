@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { Zap, Bug, Wrench, BookOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 interface ChangelogEntry {
   id: string;
@@ -14,8 +16,9 @@ interface ChangelogEntry {
 }
 
 const STORAGE_KEY = "signapps_changelog";
+const schedulerClient = getClient(ServiceName.SCHEDULER);
 
-function loadEntries(): ChangelogEntry[] {
+function loadEntriesFromStorage(): ChangelogEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -26,13 +29,27 @@ function loadEntries(): ChangelogEntry[] {
   }
 }
 
-function saveEntries(entries: ChangelogEntry[]) {
+function saveEntriesToStorage(entries: ChangelogEntry[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+function mapEntryFromApi(e: any): ChangelogEntry {
+  return {
+    id: e.id ?? crypto.randomUUID(),
+    type: ["feat","fix","chore","docs"].includes(e.type) ? e.type : "feat",
+    description: e.description ?? e.message ?? "",
+    date: new Date(e.date ?? e.created_at ?? Date.now()),
+    version: e.version ?? "1.0.0",
+  };
 }
 
 export function ChangelogViewer() {
   const [entries, setEntries] = useState<Map<string, ChangelogEntry[]>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [formVersion, setFormVersion] = useState("1.0.0");
+  const [formType, setFormType] = useState<ChangelogEntry["type"]>("feat");
+  const [formDesc, setFormDesc] = useState("");
 
   const groupAndSort = (list: ChangelogEntry[]) => {
     const grouped = new Map<string, ChangelogEntry[]>();
@@ -48,34 +65,47 @@ export function ChangelogViewer() {
   };
 
   useEffect(() => {
-    const list = loadEntries();
-    setEntries(groupAndSort(list));
-    setIsLoading(false);
+    const load = async () => {
+      try {
+        const res = await schedulerClient.get<any[]>('/devops/changelog');
+        const list = (res.data ?? []).map(mapEntryFromApi);
+        saveEntriesToStorage(list);
+        setEntries(groupAndSort(list));
+      } catch {
+        const list = loadEntriesFromStorage();
+        setEntries(groupAndSort(list));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
   }, []);
 
-  const handleAddEntry = () => {
-    const version = window.prompt("Version (e.g. 1.0.0):", "1.0.0");
-    if (!version?.trim()) return;
-    const typeInput = window.prompt("Type (feat/fix/chore/docs):", "feat") || "feat";
-    const type = ["feat", "fix", "chore", "docs"].includes(typeInput)
-      ? (typeInput as ChangelogEntry["type"])
-      : "feat";
-    const description = window.prompt("Description:");
-    if (!description?.trim()) return;
-
+  const handleAddEntry = async () => {
+    if (!formDesc.trim() || !formVersion.trim()) return;
     const newEntry: ChangelogEntry = {
       id: crypto.randomUUID(),
-      type,
-      description: description.trim(),
+      type: formType,
+      description: formDesc.trim(),
       date: new Date(),
-      version: version.trim(),
+      version: formVersion.trim(),
     };
-
-    const allEntries = loadEntries();
+    const allEntries = loadEntriesFromStorage();
     const updated = [newEntry, ...allEntries];
-    saveEntries(updated);
+    saveEntriesToStorage(updated);
     setEntries(groupAndSort(updated));
+    setShowForm(false);
+    setFormDesc("");
     toast.success("Changelog entry added");
+    try {
+      await schedulerClient.post('/devops/changelog', {
+        version: newEntry.version,
+        type: newEntry.type,
+        description: newEntry.description,
+      });
+    } catch {
+      // localStorage already updated
+    }
   };
 
   const getTypeIcon = (type: ChangelogEntry["type"]) => {
@@ -110,10 +140,22 @@ export function ChangelogViewer() {
           <BookOpen className="w-5 h-5" />
           <h2 className="text-lg font-semibold">Changelog</h2>
         </div>
-        <Button size="sm" onClick={handleAddEntry}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Entry
-        </Button>
+        {showForm ? (
+          <div className="flex gap-2 flex-wrap">
+            <Input value={formVersion} onChange={(e) => setFormVersion(e.target.value)} placeholder="1.0.0" className="w-24 h-8 text-sm" />
+            <select value={formType} onChange={(e) => setFormType(e.target.value as ChangelogEntry["type"])} className="border rounded px-2 h-8 text-sm">
+              {["feat","fix","chore","docs"].map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <Input value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="Description" className="w-48 h-8 text-sm" onKeyDown={(e) => e.key === "Enter" && handleAddEntry()} />
+            <Button size="sm" onClick={handleAddEntry}>Save</Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
+          </div>
+        ) : (
+          <Button size="sm" onClick={() => setShowForm(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Entry
+          </Button>
+        )}
       </div>
 
       {entries.size === 0 ? (

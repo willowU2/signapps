@@ -472,6 +472,20 @@ fn create_router(state: AppState) -> Router {
             signapps_common::middleware::auth_middleware::<AppState>,
         ));
 
+    // DevOps routes (changelog, pipelines, deployments)
+    let devops_routes = Router::new()
+        .route("/changelog", get(handlers::devops::list_changelog))
+        .route("/changelog", post(handlers::devops::create_changelog))
+        .route("/pipelines", get(handlers::devops::list_pipelines))
+        .route("/pipelines", post(handlers::devops::create_pipeline))
+        .route("/pipelines/{id}", put(handlers::devops::update_pipeline))
+        .route("/deployments", get(handlers::devops::list_deployments))
+        .route("/deployments", post(handlers::devops::create_deployment))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            signapps_common::middleware::auth_middleware::<AppState>,
+        ));
+
     // Metrics routes
     let metrics_routes = Router::new()
         .route("/workload", get(handlers::metrics::get_workload))
@@ -506,6 +520,7 @@ fn create_router(state: AppState) -> Router {
         .nest("/api/v1/admin/backups", backup_routes)
         .nest("/api/v1/notifications", notifications_routes)
         .nest("/api/v1/metrics", metrics_routes)
+        .nest("/api/v1/devops", devops_routes)
         .nest("/health", health_routes)
         .layer(TraceLayer::new_for_http())
         .layer(cors)

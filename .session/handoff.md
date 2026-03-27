@@ -2,7 +2,7 @@
 title: "Handoff"
 description: "Contexte de passation entre sessions AgentIQ"
 last_updated: 2026-03-27
-session_id: "8c1ef54a-9a67-4ee3-a366-ad033345e0c7"
+session_id: "e7c8e09b-c8e0-40e2-ae6c-346dfc0756d5"
 created_for: "Prochaine instance d'AgentIQ"
 ---
 
@@ -10,8 +10,8 @@ created_for: "Prochaine instance d'AgentIQ"
 
 ## Résumé Exécutif
 
-1. Session `8c1ef54a` démarrée le 2026-03-27T14:20:04.875Z
-2. Terminée proprement le 2026-03-27T16:04:20.042Z
+1. Session `e7c8e09b` démarrée le 2026-03-27T16:34:10.722Z
+2. Terminée proprement le 2026-03-27T16:36:32.126Z
 3. Travail : (non renseigné)
 
 ---
@@ -75,9 +75,9 @@ Fichiers à lire en priorité :
 
 | Métrique | Valeur |
 |----------|--------|
-| Session ID | 8c1ef54a-9a67-4ee3-a366-ad033345e0c7 |
-| Démarrée | 2026-03-27T14:20:04.875Z |
-| Terminée | 2026-03-27T16:04:20.042Z |
+| Session ID | e7c8e09b-c8e0-40e2-ae6c-346dfc0756d5 |
+| Démarrée | 2026-03-27T16:34:10.722Z |
+| Terminée | 2026-03-27T16:36:32.126Z |
 | Crashes enregistrés | 0 |
 | Checkpoints | 0 |
 

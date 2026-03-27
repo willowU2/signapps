@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { BookOpen, Play, Clock, CheckCircle2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { workforceApi } from '@/lib/api/workforce'
 
 interface Module {
   id: string
@@ -70,7 +71,7 @@ const SEED_COURSES: Course[] = [
   },
 ]
 
-function loadCourses(): Course[] {
+function loadCoursesFromStorage(): Course[] {
   if (typeof window === 'undefined') return SEED_COURSES
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -85,6 +86,23 @@ function saveCourses(courses: Course[]): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(courses))
   } catch {
     // storage unavailable
+  }
+}
+
+function mapCourseFromApi(c: any): Course {
+  return {
+    id: c.id ?? crypto.randomUUID(),
+    title: c.title ?? c.name ?? '',
+    description: c.description ?? '',
+    progress: c.progress ?? 0,
+    status: (['not-started','in-progress','completed'].includes(c.status) ? c.status : 'not-started') as Course['status'],
+    instructor: c.instructor ?? c.instructor_name ?? '',
+    modules: Array.isArray(c.modules) ? c.modules.map((m: any) => ({
+      id: m.id ?? crypto.randomUUID(),
+      title: m.title ?? '',
+      duration: m.duration_minutes ?? m.duration ?? 0,
+      completed: m.completed ?? false,
+    })) : [],
   }
 }
 
@@ -103,8 +121,23 @@ export function CourseViewer() {
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null)
 
   useEffect(() => {
-    setCourses(loadCourses())
-    setLoading(false)
+    const load = async () => {
+      try {
+        const res = await workforceApi.get<any[]>('/learning/courses')
+        const loaded = (res.data ?? []).map(mapCourseFromApi)
+        if (loaded.length > 0) {
+          saveCourses(loaded)
+          setCourses(loaded)
+        } else {
+          setCourses(loadCoursesFromStorage())
+        }
+      } catch {
+        setCourses(loadCoursesFromStorage())
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
   }, [])
 
   const startModule = (courseId: string, moduleId: string) => {
@@ -117,6 +150,14 @@ export function CourseViewer() {
         return recalcCourse({ ...c, modules: updatedModules })
       })
       saveCourses(updated)
+      const course = updated.find((c) => c.id === courseId)
+      if (course) {
+        workforceApi.put(`/learning/courses/${courseId}/progress`, {
+          progress: course.progress,
+          status: course.status,
+          completed_module_id: moduleId,
+        }).catch(() => {})
+      }
       return updated
     })
     toast.success('Module completed')

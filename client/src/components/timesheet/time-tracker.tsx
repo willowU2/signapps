@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Play, Pause, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -39,7 +40,7 @@ export function TimeTracker({ onEntryComplete }: TimeTrackerProps) {
 
   const handleStart = () => {
     if (!selectedProject || !selectedTask) {
-      alert("Please select a project and task");
+      toast.error("Please select a project and task");
       return;
     }
     setIsRunning(true);

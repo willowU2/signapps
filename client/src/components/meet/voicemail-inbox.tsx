@@ -5,6 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Phone, Play, Pause, Download, Trash2, Loader2, Clock, User } from 'lucide-react'
+import { getClient, ServiceName } from '@/lib/api/factory'
+
+const meetClient = getClient(ServiceName.MEET)
 
 interface VoiceMessage {
   id: string
@@ -24,14 +27,33 @@ export function VoicemailInbox() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('signapps_voicemails');
-      const stored: VoiceMessage[] = raw ? JSON.parse(raw) : [];
-      setMessages(stored);
-    } catch {
-      setMessages([]);
+    const load = async () => {
+      try {
+        const res = await meetClient.get<any[]>('/meet/voicemails')
+        const loaded: VoiceMessage[] = (res.data ?? []).map((m: any) => ({
+          id: m.id ?? crypto.randomUUID(),
+          caller: m.caller_name ?? m.caller ?? 'Unknown',
+          callerPhone: m.caller_phone ?? m.phone ?? undefined,
+          date: m.received_at ?? m.created_at ?? new Date().toISOString(),
+          duration: m.duration_seconds ?? m.duration ?? 0,
+          transcription: m.transcription ?? '',
+          isNew: m.is_new ?? m.unread ?? false,
+          audioUrl: m.audio_url ?? undefined,
+        }))
+        setMessages(loaded)
+        localStorage.setItem('signapps_voicemails', JSON.stringify(loaded))
+      } catch {
+        try {
+          const raw = localStorage.getItem('signapps_voicemails')
+          setMessages(raw ? JSON.parse(raw) : [])
+        } catch {
+          setMessages([])
+        }
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false);
+    load()
   }, [])
 
   const formatDuration = (seconds: number) => {
@@ -40,14 +62,24 @@ export function VoicemailInbox() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  const markRead = async (id: string) => {
+    meetClient.patch(`/meet/voicemails/${id}`, { is_new: false }).catch(() => {})
+  }
+
   const handleDelete = (id: string) => {
-    const updated = messages.filter((m) => m.id !== id);
-    setMessages(updated);
-    localStorage.setItem('signapps_voicemails', JSON.stringify(updated));
+    const updated = messages.filter((m) => m.id !== id)
+    setMessages(updated)
+    localStorage.setItem('signapps_voicemails', JSON.stringify(updated))
+    meetClient.delete(`/meet/voicemails/${id}`).catch(() => {})
   }
 
   const toggleTranscription = (id: string) => {
     setExpandedId(expandedId === id ? null : id)
+    const msg = messages.find((m) => m.id === id)
+    if (msg?.isNew) {
+      setMessages((prev) => prev.map((m) => m.id === id ? { ...m, isNew: false } : m))
+      markRead(id)
+    }
   }
 
   const togglePlayback = (id: string) => {

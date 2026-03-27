@@ -31,6 +31,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { calendarApi } from "@/lib/api/calendar";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -86,8 +87,10 @@ export function savePoll(poll: SchedulePoll): void {
   const idx = polls.findIndex((p) => p.id === poll.id);
   if (idx >= 0) {
     polls[idx] = poll;
+    calendarApi.put(`/polls/${poll.id}`, poll).catch(() => {});
   } else {
     polls.push(poll);
+    calendarApi.post('/polls', poll).catch(() => {});
   }
   localStorage.setItem(POLLS_KEY, JSON.stringify(polls));
 }
@@ -401,7 +404,7 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!poll || !voterName.trim()) return;
     const newVote: PollVote = {
       participantName: voterName.trim(),
@@ -414,14 +417,24 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
     setPoll(updated);
     setSubmitted(true);
     toast.success("Vote submitted");
+    try {
+      await calendarApi.post(`/polls/${poll.id}/vote`, newVote);
+    } catch {
+      // localStorage already updated
+    }
   };
 
-  const handleConfirm = (slotId: string) => {
+  const handleConfirm = async (slotId: string) => {
     if (!poll) return;
     const updated = { ...poll, confirmedSlotId: slotId, status: "confirmed" as const };
     savePoll(updated);
     setPoll(updated);
     toast.success("Time slot confirmed");
+    try {
+      await calendarApi.post(`/polls/${poll.id}/confirm`, { slot_id: slotId });
+    } catch {
+      // localStorage already updated
+    }
   };
 
   // Compute best slot

@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSocialStore } from '@/stores/social-store';
-import { socialApi } from '@/lib/api/social';
+import { socialApi, socialApiClient } from '@/lib/api/social';
 import { PLATFORM_COLORS, PLATFORM_LABELS } from './platform-utils';
 import type { SocialAccount } from '@/lib/api/social';
 
@@ -94,7 +94,7 @@ interface ChatThread {
 
 const THREADS_STORAGE_KEY = 'signsocial-agent-threads';
 
-function loadThreads(): ChatThread[] {
+function loadThreadsFromStorage(): ChatThread[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(THREADS_STORAGE_KEY);
@@ -109,6 +109,22 @@ function saveThreads(threads: ChatThread[]) {
     localStorage.setItem(THREADS_STORAGE_KEY, JSON.stringify(threads));
   } catch {
     // storage unavailable
+  }
+}
+
+async function loadThreadsFromApi(): Promise<ChatThread[]> {
+  try {
+    const res = await socialApiClient.get<any[]>('/social/ai-threads');
+    const threads: ChatThread[] = (res.data ?? []).map((t: any) => ({
+      id: t.id ?? crypto.randomUUID(),
+      title: t.title ?? 'Untitled',
+      messages: Array.isArray(t.messages) ? t.messages : [],
+      createdAt: t.created_at ?? t.createdAt ?? new Date().toISOString(),
+    }));
+    saveThreads(threads);
+    return threads;
+  } catch {
+    return loadThreadsFromStorage();
   }
 }
 
@@ -701,9 +717,10 @@ export function AgentChat() {
   }, [fetchAccounts]);
 
   useEffect(() => {
-    const loaded = loadThreads();
-    setThreads(loaded);
-    threadsRef.current = loaded;
+    loadThreadsFromApi().then((loaded) => {
+      setThreads(loaded);
+      threadsRef.current = loaded;
+    });
   }, []);
 
   // -- Scroll to bottom on new messages --
@@ -720,6 +737,23 @@ export function AgentChat() {
     },
     []
   );
+
+  // -- Sync a single thread to API --
+  const syncThreadToApi = useCallback((thread: ChatThread, isNew: boolean) => {
+    if (isNew) {
+      socialApiClient.post('/social/ai-threads', {
+        id: thread.id,
+        title: thread.title,
+        messages: thread.messages,
+        created_at: thread.createdAt,
+      }).catch(() => {});
+    } else {
+      socialApiClient.put(`/social/ai-threads/${thread.id}`, {
+        title: thread.title,
+        messages: thread.messages,
+      }).catch(() => {});
+    }
+  }, []);
 
   // -- Load a thread --
   const loadThread = useCallback((thread: ChatThread) => {
@@ -747,6 +781,7 @@ export function AgentChat() {
     (threadId: string) => {
       const updated = threadsRef.current.filter((t) => t.id !== threadId);
       persistThreads(updated);
+      socialApiClient.delete(`/social/ai-threads/${threadId}`).catch(() => {});
       if (activeThreadIdRef.current === threadId) {
         startNewChat();
       }
@@ -782,9 +817,11 @@ export function AgentChat() {
 
           let updated: ChatThread[];
           if (existing) {
+            const updatedThread = { ...existing, messages: newMessages };
             updated = prev.map((t) =>
-              t.id === currentThreadId ? { ...t, messages: newMessages } : t
+              t.id === currentThreadId ? updatedThread : t
             );
+            syncThreadToApi(updatedThread, false);
           } else {
             const firstUserMsg = newMessages.find((m) => m.role === 'user');
             const newThread: ChatThread = {
@@ -796,6 +833,7 @@ export function AgentChat() {
             updated = [newThread, ...prev];
             setActiveThreadId(newThread.id);
             activeThreadIdRef.current = newThread.id;
+            syncThreadToApi(newThread, true);
           }
 
           persistThreads(updated);
@@ -804,7 +842,7 @@ export function AgentChat() {
 
       return () => clearInterval(interval);
     },
-    [persistThreads]
+    [persistThreads, syncThreadToApi]
   );
 
   // -- Send message --

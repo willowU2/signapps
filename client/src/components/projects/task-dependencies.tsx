@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ChevronDown, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ function DependencySelector({ task, allTasks, onSelect }: DependencySelectorProp
 
   const handleSelect = (taskId?: string) => {
     if (taskId && detectCycle(allTasks, task.id, taskId)) {
-      alert("Cannot set dependency: would create a circular dependency");
+      toast.error("Cannot set dependency: would create a circular dependency");
       return;
     }
     onSelect(taskId);

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { TrendingUp, Clock, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { getClient, ServiceName } from "@/lib/api/factory";
 
 interface Experiment {
   id: string;
@@ -20,8 +21,9 @@ interface Experiment {
 }
 
 const STORAGE_KEY = "signapps_ab_experiments";
+const metricsClient = getClient(ServiceName.METRICS);
 
-function loadExperiments(): Experiment[] {
+function loadExperimentsFromStorage(): Experiment[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -36,8 +38,24 @@ function loadExperiments(): Experiment[] {
   }
 }
 
-function saveExperiments(experiments: Experiment[]) {
+function saveExperimentsToStorage(experiments: Experiment[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(experiments));
+}
+
+function mapExperimentFromApi(e: any): Experiment {
+  return {
+    id: e.id,
+    name: e.name,
+    variants: (e.variants ?? []).map((v: any) => ({
+      name: v.name,
+      percentage: v.traffic_percentage ?? v.percentage ?? 50,
+      conversions: v.conversions ?? 0,
+    })),
+    status: e.status === "active" ? "running" : e.status ?? "running",
+    winner: e.winner_variant,
+    startDate: new Date(e.created_at ?? e.start_date ?? Date.now()),
+    endDate: e.ended_at ? new Date(e.ended_at) : undefined,
+  };
 }
 
 const getStatusBadge = (status: "running" | "completed"): string => {
@@ -78,18 +96,30 @@ const formatDate = (date: Date): string => {
 export function ABTesting() {
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [newName, setNewName] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    setExperiments(loadExperiments());
-    setIsLoading(false);
+    const load = async () => {
+      try {
+        const res = await metricsClient.get<any[]>('/experiments');
+        const loaded = (res.data ?? []).map(mapExperimentFromApi);
+        setExperiments(loaded);
+        saveExperimentsToStorage(loaded);
+      } catch {
+        setExperiments(loadExperimentsFromStorage());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
   }, []);
 
-  const handleNewExperiment = () => {
-    const name = window.prompt("Experiment name:");
-    if (!name?.trim()) return;
+  const handleNewExperiment = async () => {
+    const name = newName.trim() || `Experiment ${experiments.length + 1}`;
     const exp: Experiment = {
       id: crypto.randomUUID(),
-      name: name.trim(),
+      name,
       variants: [
         { name: "Control (A)", percentage: 50, conversions: 0 },
         { name: "Variant (B)", percentage: 50, conversions: 0 },
@@ -99,8 +129,18 @@ export function ABTesting() {
     };
     const updated = [exp, ...experiments];
     setExperiments(updated);
-    saveExperiments(updated);
+    saveExperimentsToStorage(updated);
+    setNewName("");
+    setShowForm(false);
     toast.success(`Experiment "${exp.name}" created`);
+    try {
+      await metricsClient.post('/experiments', {
+        name: exp.name,
+        variants: exp.variants.map(v => ({ name: v.name, traffic_percentage: v.percentage })),
+      });
+    } catch {
+      // localStorage has it
+    }
   };
 
   if (isLoading) {
@@ -130,10 +170,25 @@ export function ABTesting() {
             completed
           </span>
         </div>
-        <Button onClick={handleNewExperiment} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          New Experiment
-        </Button>
+        {showForm ? (
+          <div className="flex gap-2">
+            <input
+              className="border rounded px-2 py-1 text-sm"
+              placeholder="Experiment name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleNewExperiment()}
+              autoFocus
+            />
+            <Button onClick={handleNewExperiment} size="sm" className="bg-blue-600 hover:bg-blue-700">Create</Button>
+            <Button onClick={() => { setShowForm(false); setNewName(""); }} size="sm" variant="ghost">Cancel</Button>
+          </div>
+        ) : (
+          <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            New Experiment
+          </Button>
+        )}
       </div>
 
       {/* Experiments List */}

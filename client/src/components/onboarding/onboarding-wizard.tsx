@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, ArrowRight, Rocket, Users, FileText, Mail, Calendar } from 'lucide-react';
+import { getClient, ServiceName } from '@/lib/api/factory';
+
+const identityClient = getClient(ServiceName.IDENTITY);
 
 interface OnboardingStep {
   id: string;
@@ -57,15 +60,31 @@ export function OnboardingWizard() {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    const completed = localStorage.getItem(STORAGE_KEY);
-    if (!completed) {
-      const timer = setTimeout(() => setOpen(true), 1500);
-      return () => clearTimeout(timer);
-    }
+    // Check API first, then localStorage
+    const check = async () => {
+      try {
+        const res = await identityClient.get<{ onboarding_completed_at?: string | null }>('/users/me/profile');
+        if (res.data?.onboarding_completed_at) {
+          // Already completed per server — sync local
+          localStorage.setItem(STORAGE_KEY, res.data.onboarding_completed_at);
+          return;
+        }
+      } catch {
+        // Fall through to localStorage check
+      }
+      const completed = localStorage.getItem(STORAGE_KEY);
+      if (!completed) {
+        const timer = setTimeout(() => setOpen(true), 1500);
+        return () => clearTimeout(timer);
+      }
+    };
+    check();
   }, []);
 
   const handleComplete = () => {
-    localStorage.setItem(STORAGE_KEY, new Date().toISOString());
+    const now = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, now);
+    identityClient.patch('/users/me/profile', { onboarding_completed_at: now }).catch(() => {});
     setOpen(false);
   };
 
