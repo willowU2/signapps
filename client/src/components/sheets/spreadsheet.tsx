@@ -1141,7 +1141,18 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                         const r = parseInt(rStr, 10);
                         const c = parseInt(cStr, 10);
                         if (r >= ROWS || c >= COLS) continue;
-                        gridMap.set(`${r},${c}`, cellData as CellData);
+                        // Ensure value is ALWAYS a string before storing in Yjs
+                        const safeCellData = { ...cellData } as CellData;
+                        if (safeCellData.value && typeof safeCellData.value === 'object') {
+                            const v = safeCellData.value as any;
+                            if (v instanceof Date) safeCellData.value = v.toISOString().split('T')[0];
+                            else if (v.toISOString) safeCellData.value = v.toISOString().split('T')[0]; // Date duck-type
+                            else if ('result' in v) safeCellData.value = String(v.result ?? '');
+                            else if ('text' in v) safeCellData.value = String(v.text ?? '');
+                            else if ('richText' in v) safeCellData.value = (v.richText || []).map((r: any) => r.text || '').join('');
+                            else safeCellData.value = '';
+                        }
+                        gridMap.set(`${r},${c}`, safeCellData);
                         totalCount++;
                     }
                 }
@@ -2276,14 +2287,18 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                     const isFindMatch = findMatches.some(m => m.r === r && m.c === c)
                                     const isCurrentFind = findMatches.length > 0 && findMatches[currentFindIdx]?.r === r && findMatches[currentFindIdx]?.c === c
 
-                                    let rawValue = cellData?.value || ""
-                                    // Guard: if value is an object (e.g., Date from Yjs), convert to string
-                                    if (typeof rawValue === 'object') {
-                                        if (rawValue instanceof Date) rawValue = rawValue.toISOString().split('T')[0]
-                                        else if ('result' in rawValue) rawValue = String((rawValue as any).result ?? '')
-                                        else if ('text' in rawValue) rawValue = String((rawValue as any).text ?? '')
-                                        else rawValue = ''
-                                    }
+                                    let rawValue = cellData?.value ?? ""
+                                    // CRITICAL FIX: convert object cell values to strings (Yjs stores Date/formula objects)
+                                    if (rawValue && typeof rawValue === 'object') {
+                                        try {
+                                            if (rawValue instanceof Date) { rawValue = rawValue.toISOString().split('T')[0] }
+                                            else if ('result' in (rawValue as any)) { rawValue = String((rawValue as any).result ?? '') }
+                                            else if ('text' in (rawValue as any)) { rawValue = String((rawValue as any).text ?? '') }
+                                            else if ('formula' in (rawValue as any)) { rawValue = String((rawValue as any).result ?? (rawValue as any).formula ?? '') }
+                                            else if ('richText' in (rawValue as any)) { rawValue = ((rawValue as any).richText || []).map((r: any) => r.text || '').join('') }
+                                            else { rawValue = JSON.stringify(rawValue) }
+                                        } catch { rawValue = '' }
+                                    } else if (typeof rawValue !== 'string') { rawValue = String(rawValue) }
                                     const evaluated = evaluatedData[`${r},${c}`] || rawValue
                                     const displayValue = formatDisplayValue(evaluated, style)
                                     const isErrorVal = (displayValue.startsWith("#") && displayValue.endsWith("!")) || displayValue === "#NAME?" || displayValue === "#N/A"
