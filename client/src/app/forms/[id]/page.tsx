@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Plus, Save, Trash2, GripVertical, Eye, Type, List, CheckSquare, Calendar, Hash, Mail, Image as ImageIcon, CircleDot, ChevronUp, ChevronDown } from "lucide-react"
 import { useBreadcrumbStore } from "@/lib/store/breadcrumb-store"
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
+import { closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, useDndMonitor } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
@@ -26,7 +26,10 @@ interface SortableFieldProps {
 }
 
 function SortableField({ field, index, updateField, removeField }: SortableFieldProps) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: field.id });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+        id: field.id,
+        data: { type: 'form-field' }
+    });
     
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -273,21 +276,18 @@ export default function FormBuilderPage() {
         setFields(fields.filter(f => f.id !== id))
     }
 
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-    );
-
-    const handleDragEnd = (event: DragEndEvent) => {
-        const { active, over } = event;
-        if (over && active.id !== over.id) {
-            setFields((items) => {
-                const oldIndex = items.findIndex(item => item.id === active.id);
-                const newIndex = items.findIndex(item => item.id === over.id);
-                return arrayMove(items, oldIndex, newIndex);
-            });
+    useDndMonitor({
+        onDragEnd(event: DragEndEvent) {
+            const { active, over } = event;
+            if (active.data.current?.type === 'form-field' && over && active.id !== over.id) {
+                setFields((items) => {
+                    const oldIndex = items.findIndex(item => item.id === active.id);
+                    const newIndex = items.findIndex(item => item.id === over.id);
+                    return arrayMove(items, oldIndex, newIndex);
+                });
+            }
         }
-    };
+    });
 
     if (loading) return <AppLayout><div className="flex justify-center p-20">Chargement de l'éditeur...</div></AppLayout>
     if (error || !form) return <AppLayout><div className="p-8 text-destructive">{error || "Formulaire introuvable"}</div></AppLayout>
@@ -333,19 +333,17 @@ export default function FormBuilderPage() {
                                 <p className="text-sm">Ajoutez votre première question en utilisant le panneau latéral.</p>
                             </div>
                         ) : (
-                            <DndContext id="form-builder-dnd" sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                                <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                                    {fields.map((field, index) => (
-                                        <SortableField 
-                                            key={field.id} 
-                                            field={field} 
-                                            index={index} 
-                                            updateField={updateField} 
-                                            removeField={removeField} 
-                                        />
-                                    ))}
-                                </SortableContext>
-                            </DndContext>
+                            <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                                {fields.map((field, index) => (
+                                    <SortableField 
+                                        key={field.id} 
+                                        field={field} 
+                                        index={index} 
+                                        updateField={updateField} 
+                                        removeField={removeField} 
+                                    />
+                                ))}
+                            </SortableContext>
                         )}
                     </div>
 
