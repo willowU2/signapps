@@ -47,6 +47,7 @@ use rag::circular_pipeline::CircularPipeline;
 use rag::multimodal_indexer::MultimodalIndexer;
 use rag::RagPipeline;
 use vectors::VectorService;
+use workers::traits::{AiWorker, MultimodalEmbedWorker, VisionWorker};
 
 /// Application state shared across handlers.
 #[derive(Clone)]
@@ -62,6 +63,7 @@ pub struct AppState {
     pub model_manager: Option<Arc<ModelManager>>,
     pub hardware: Option<HardwareProfile>,
     pub gateway: Option<Arc<GatewayRouter>>,
+    pub mm_indexer: Option<Arc<MultimodalIndexer>>,
 }
 
 impl AuthState for AppState {
@@ -382,7 +384,24 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("Gateway router initialized");
 
     // Register all workers based on environment variables
-    register_workers(&gateway).await;
+    let registered = register_workers(&gateway).await;
+
+    // Initialize multimodal indexer with optional vision and multimodal embed workers
+    let mut mm_indexer = MultimodalIndexer::new(
+        embeddings.clone(),
+        vectors.clone(),
+        pool.clone(),
+        TextChunker::new(),
+    );
+    if let Some(embed) = registered.mm_embed {
+        mm_indexer = mm_indexer.with_multimodal_embed(embed);
+        tracing::info!("MultimodalIndexer: multimodal embeddings enabled");
+    }
+    if let Some(vis) = registered.vision {
+        mm_indexer = mm_indexer.with_vision(vis);
+        tracing::info!("MultimodalIndexer: vision descriptions enabled");
+    }
+    let mm_indexer = Arc::new(mm_indexer);
 
     // Create application state
     let state = AppState {
@@ -397,15 +416,8 @@ async fn main() -> anyhow::Result<()> {
         model_manager: Some(model_manager),
         hardware: Some(hardware),
         gateway: Some(gateway),
+        mm_indexer: Some(mm_indexer.clone()),
     };
-
-    // Initialize multimodal indexer
-    let mm_indexer = Arc::new(MultimodalIndexer::new(
-        embeddings,
-        vectors,
-        pool.clone(),
-        TextChunker::new(),
-    ));
 
     // Start background circular pipeline (auto-indexes generated media)
     let circular = Arc::new(CircularPipeline::new(mm_indexer, pool, storage));
@@ -419,11 +431,22 @@ async fn main() -> anyhow::Result<()> {
     signapps_common::bootstrap::run_server(app, &config).await
 }
 
+/// Workers returned from registration that are also needed by the multimodal indexer.
+struct RegisteredWorkers {
+    mm_embed: Option<Arc<dyn MultimodalEmbedWorker>>,
+    vision: Option<Arc<dyn VisionWorker>>,
+}
+
 /// Register AI workers into the gateway based on environment variables.
 ///
 /// Each worker type supports both HTTP (self-hosted) and cloud variants.
 /// Workers are only registered when the corresponding env var is set.
-async fn register_workers(gateway: &GatewayRouter) {
+///
+/// Returns references to the multimodal embed and vision workers so they
+/// can also be wired into the [`MultimodalIndexer`].
+async fn register_workers(gateway: &GatewayRouter) -> RegisteredWorkers {
+    let mut mm_embed_worker: Option<Arc<dyn MultimodalEmbedWorker>> = None;
+    let mut vision_worker: Option<Arc<dyn VisionWorker>> = None;
     // -----------------------------------------------------------------------
     // Native workers (cfg-gated) — registered first so the gateway router
     // prefers them over HTTP/Cloud backends (Native > Http > Cloud priority).
@@ -461,7 +484,9 @@ async fn register_workers(gateway: &GatewayRouter) {
         match workers::embeddings_mm::NativeSigLIP::new(&text_model, &vision_model, &tokenizer, dim)
         {
             Ok(worker) => {
-                gateway.register(Arc::new(worker)).await;
+                let worker = Arc::new(worker);
+                mm_embed_worker = Some(worker.clone() as Arc<dyn MultimodalEmbedWorker>);
+                gateway.register(worker as Arc<dyn AiWorker>).await;
                 tracing::info!("Registered native SigLIP embeddings");
             },
             Err(e) => tracing::warn!("Failed to load native SigLIP: {}", e),
@@ -480,8 +505,13 @@ async fn register_workers(gateway: &GatewayRouter) {
                 .ok()
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(-1);
-            let worker = workers::vision::NativeVision::new(&model_path, ctx_size, gpu_layers);
-            gateway.register(Arc::new(worker)).await;
+            let worker = Arc::new(workers::vision::NativeVision::new(
+                &model_path,
+                ctx_size,
+                gpu_layers,
+            ));
+            vision_worker = Some(worker.clone() as Arc<dyn VisionWorker>);
+            gateway.register(worker as Arc<dyn AiWorker>).await;
             tracing::info!("Registered native vision (llama.cpp)");
         }
     }
@@ -534,24 +564,36 @@ async fn register_workers(gateway: &GatewayRouter) {
         let worker = Arc::new(workers::embeddings_mm::HttpMultimodalEmbed::new(
             &url, &model, dim,
         ));
-        gateway.register(worker).await;
+        if mm_embed_worker.is_none() {
+            mm_embed_worker = Some(worker.clone() as Arc<dyn MultimodalEmbedWorker>);
+        }
+        gateway.register(worker as Arc<dyn AiWorker>).await;
     }
     if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
         let worker = Arc::new(workers::embeddings_mm::CloudMultimodalEmbed::new(
             &api_key, None,
         ));
-        gateway.register(worker).await;
+        if mm_embed_worker.is_none() {
+            mm_embed_worker = Some(worker.clone() as Arc<dyn MultimodalEmbedWorker>);
+        }
+        gateway.register(worker as Arc<dyn AiWorker>).await;
     }
 
     // === Vision ===
     if let Ok(url) = std::env::var("VISION_URL") {
         let model = std::env::var("VISION_MODEL").unwrap_or_else(|_| "default".into());
         let worker = Arc::new(workers::vision::HttpVision::new(&url, &model));
-        gateway.register(worker).await;
+        if vision_worker.is_none() {
+            vision_worker = Some(worker.clone() as Arc<dyn VisionWorker>);
+        }
+        gateway.register(worker as Arc<dyn AiWorker>).await;
     }
     if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
         let worker = Arc::new(workers::vision::CloudVision::new(&api_key, None));
-        gateway.register(worker).await;
+        if vision_worker.is_none() {
+            vision_worker = Some(worker.clone() as Arc<dyn VisionWorker>);
+        }
+        gateway.register(worker as Arc<dyn AiWorker>).await;
     }
 
     // === Image Generation ===
@@ -651,6 +693,11 @@ async fn register_workers(gateway: &GatewayRouter) {
                 ""
             }
         );
+    }
+
+    RegisteredWorkers {
+        mm_embed: mm_embed_worker,
+        vision: vision_worker,
     }
 }
 

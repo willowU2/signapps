@@ -8,12 +8,16 @@ use axum::{
 use futures_util::stream::Stream;
 use serde::{Deserialize, Serialize};
 use signapps_common::Result;
+use signapps_db::repositories::GeneratedMediaRepository;
 use std::convert::Infallible;
 use std::time::Duration;
 use uuid::Uuid;
 
 use crate::gateway::capability::Capability;
 use crate::memory::{ContextBuilder, ConversationMemory};
+use crate::workers::audiogen::{CloudAudioGen, HttpAudioGen};
+use crate::workers::imagegen::{CloudImageGen, HttpImageGen};
+use crate::workers::traits::{AudioGenWorker, ImageGenRequest, ImageGenWorker, MusicGenRequest};
 use crate::AppState;
 
 const SECURITY_PREFIX: &str = "You are a helpful AI assistant for the SignApps platform. \
@@ -70,9 +74,8 @@ pub struct ChatRequest {
     /// Metadata about uploaded attachments sent with this message.
     #[serde(default)]
     pub attachments: Option<Vec<AttachmentMeta>>,
-    /// Hint for automatic media generation from the response (future iteration).
+    /// Hint for automatic media generation from the response.
     #[serde(default)]
-    #[allow(dead_code)]
     pub generate_media: Option<MediaGenHint>,
 }
 
@@ -290,8 +293,16 @@ pub async fn chat(
         None
     };
 
-    // generated_media: placeholder — full media generation dispatch comes later
-    let generated_media = Vec::new();
+    // Media generation dispatch based on the hint
+    let generated_media = dispatch_media_generation(
+        &state,
+        &payload.generate_media,
+        &payload.question,
+        &response.answer,
+        claims.sub,
+        conversation_id,
+    )
+    .await;
 
     Ok(Json(ChatResponse {
         answer: response.answer,
@@ -497,6 +508,209 @@ pub async fn chat_stream(
             .interval(Duration::from_secs(15))
             .text("keep-alive"),
     )
+}
+
+// ---------------------------------------------------------------------------
+// Media generation dispatch helpers
+// ---------------------------------------------------------------------------
+
+/// Evaluate the media generation hint and dispatch image/audio generation.
+///
+/// Errors are logged and swallowed — media generation must never block the
+/// primary chat response.
+async fn dispatch_media_generation(
+    state: &AppState,
+    hint: &Option<MediaGenHint>,
+    question: &str,
+    llm_answer: &str,
+    user_id: Uuid,
+    conversation_id: Option<Uuid>,
+) -> Vec<GeneratedMediaRef> {
+    let mut generated_media = Vec::new();
+
+    let should_generate_image = match hint {
+        Some(MediaGenHint::Image) => true,
+        Some(MediaGenHint::Auto) => {
+            // Simple heuristic: check if the LLM response mentions
+            // generating/creating an image
+            let answer_lower = llm_answer.to_lowercase();
+            answer_lower.contains("image")
+                || answer_lower.contains("photo")
+                || answer_lower.contains("illustration")
+                || answer_lower.contains("bannière")
+                || answer_lower.contains("visuel")
+        },
+        _ => false,
+    };
+
+    let should_generate_audio = matches!(hint, Some(MediaGenHint::Audio));
+
+    if should_generate_image {
+        match generate_image_for_chat(state, question, user_id, conversation_id).await {
+            Ok(media_ref) => generated_media.push(media_ref),
+            Err(e) => tracing::warn!("Chat image generation failed: {}", e),
+        }
+    }
+
+    if should_generate_audio {
+        match generate_audio_for_chat(state, question, user_id, conversation_id).await {
+            Ok(media_ref) => generated_media.push(media_ref),
+            Err(e) => tracing::warn!("Chat audio generation failed: {}", e),
+        }
+    }
+
+    generated_media
+}
+
+/// Build an image generation worker from environment variables.
+///
+/// Precedence:
+/// 1. `IMAGEGEN_URL` + optional `IMAGEGEN_MODEL` -> [`HttpImageGen`]
+/// 2. `OPENAI_API_KEY` + optional `IMAGEGEN_CLOUD_MODEL` -> [`CloudImageGen`]
+fn create_imagegen_worker(
+) -> std::result::Result<Box<dyn ImageGenWorker + Send + Sync>, anyhow::Error> {
+    if let Ok(url) = std::env::var("IMAGEGEN_URL") {
+        let model = std::env::var("IMAGEGEN_MODEL").unwrap_or_else(|_| "default".into());
+        Ok(Box::new(HttpImageGen::new(&url, &model)))
+    } else if let Ok(api_key) = std::env::var("OPENAI_API_KEY") {
+        let model = std::env::var("IMAGEGEN_CLOUD_MODEL").unwrap_or_else(|_| "dall-e-3".into());
+        Ok(Box::new(CloudImageGen::new(&api_key, Some(&model))))
+    } else {
+        Err(anyhow::anyhow!("No image generation backend configured"))
+    }
+}
+
+/// Build an audio generation worker from environment variables.
+///
+/// Precedence:
+/// 1. `AUDIOGEN_URL` + optional `AUDIOGEN_MODEL` -> [`HttpAudioGen`]
+/// 2. `REPLICATE_API_KEY` -> [`CloudAudioGen`]
+fn create_audiogen_worker(
+) -> std::result::Result<Box<dyn AudioGenWorker + Send + Sync>, anyhow::Error> {
+    if let Ok(url) = std::env::var("AUDIOGEN_URL") {
+        let model = std::env::var("AUDIOGEN_MODEL").unwrap_or_else(|_| "default".into());
+        Ok(Box::new(HttpAudioGen::new(&url, &model)))
+    } else if let Ok(api_key) = std::env::var("REPLICATE_API_KEY") {
+        let model = std::env::var("AUDIOGEN_CLOUD_MODEL").ok();
+        Ok(Box::new(CloudAudioGen::new(&api_key, model.as_deref())))
+    } else {
+        Err(anyhow::anyhow!("No audio generation backend configured"))
+    }
+}
+
+/// Generate an image from the chat question and persist it.
+async fn generate_image_for_chat(
+    state: &AppState,
+    question: &str,
+    user_id: Uuid,
+    conversation_id: Option<Uuid>,
+) -> std::result::Result<GeneratedMediaRef, anyhow::Error> {
+    let worker = create_imagegen_worker()?;
+
+    let prompt = format!("High quality illustration for: {}", question);
+
+    let req = ImageGenRequest {
+        prompt: prompt.clone(),
+        negative_prompt: None,
+        width: Some(1024),
+        height: Some(1024),
+        num_images: Some(1),
+        seed: None,
+        steps: None,
+        guidance_scale: None,
+        model: None,
+    };
+
+    let result = worker.generate(req).await?;
+
+    let image = result
+        .images
+        .first()
+        .ok_or_else(|| anyhow::anyhow!("No image returned from generator"))?;
+
+    // Store in OpenDAL storage
+    let path = format!("ai/generated/{}.png", Uuid::new_v4());
+    state
+        .storage
+        .write(&path, image.to_vec())
+        .await
+        .map_err(|e| anyhow::anyhow!("Storage error: {}", e))?;
+
+    let file_size = image.len() as i64;
+
+    // Record in generated_media table for circular pipeline indexing
+    let _ = GeneratedMediaRepository::create(
+        &state.pool,
+        "image",
+        &prompt,
+        &result.model,
+        &path,
+        Some(file_size),
+        None,
+        conversation_id,
+        user_id,
+    )
+    .await;
+
+    Ok(GeneratedMediaRef {
+        media_type: "image".to_string(),
+        url: path,
+        prompt_used: prompt,
+        model_used: result.model,
+    })
+}
+
+/// Generate audio from the chat question and persist it.
+async fn generate_audio_for_chat(
+    state: &AppState,
+    question: &str,
+    user_id: Uuid,
+    conversation_id: Option<Uuid>,
+) -> std::result::Result<GeneratedMediaRef, anyhow::Error> {
+    let worker = create_audiogen_worker()?;
+
+    let prompt = format!("Background music for: {}", question);
+
+    let req = MusicGenRequest {
+        prompt: prompt.clone(),
+        duration_secs: Some(15.0),
+        temperature: None,
+        seed: None,
+        model: None,
+    };
+
+    let result = worker.generate_music(req).await?;
+
+    // Store in OpenDAL storage
+    let path = format!("ai/generated/{}.wav", Uuid::new_v4());
+    state
+        .storage
+        .write(&path, result.audio.to_vec())
+        .await
+        .map_err(|e| anyhow::anyhow!("Storage error: {}", e))?;
+
+    let file_size = result.audio.len() as i64;
+
+    // Record in generated_media table for circular pipeline indexing
+    let _ = GeneratedMediaRepository::create(
+        &state.pool,
+        "audio",
+        &prompt,
+        &result.model,
+        &path,
+        Some(file_size),
+        None,
+        conversation_id,
+        user_id,
+    )
+    .await;
+
+    Ok(GeneratedMediaRef {
+        media_type: "audio".to_string(),
+        url: path,
+        prompt_used: prompt,
+        model_used: result.model,
+    })
 }
 
 /// Truncate text to a maximum length.
