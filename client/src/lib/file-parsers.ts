@@ -464,9 +464,9 @@ async function parseSpreadsheet(buffer: ArrayBuffer, ext: string): Promise<Sprea
             for (let i = 1; i <= colCount; i++) {
                 const col = worksheet.getColumn(i);
                 if (col.width && col.width > 0) {
-                    // ExcelJS width is in "characters", roughly 7-8px per character.
-                    // Convert to pixels (approximate: 1 Excel width unit ~ 7.5px + 12px padding)
-                    const pxWidth = Math.round(col.width * 7.5 + 12);
+                    // ExcelJS width is in "characters", roughly 8px per character unit.
+                    // Excel width 12.88 → ~103px, default 8.43 → ~67px
+                    const pxWidth = Math.round(col.width * 8);
                     colWidths[i - 1] = pxWidth; // 0-based
                 }
             }

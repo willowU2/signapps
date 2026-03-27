@@ -2343,7 +2343,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                     const isLocked = !!style?.locked
                                     const hasComment = !!cellData?.comment
                                     const hasValidation = !!cellData?.validation
-                                    const isCheckbox = cellData?.validation?.type === 'boolean'
+                                    const isCheckbox = cellData?.validation?.type === 'boolean' || displayValue === 'true' || displayValue === 'false' || displayValue === 'TRUE' || displayValue === 'FALSE'
 
                                     const cellStyle: React.CSSProperties = {
                                         width: cellW, minWidth: cellW, maxWidth: cellW, height: cellH,
@@ -2414,7 +2414,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                                 <input ref={inputRef} className="w-full h-full border-none outline-none bg-background dark:bg-[#2d2e30] px-0.5 m-0 text-[13px] z-30 relative text-[#202124] dark:text-white" value={editValue} onChange={(e) => setEditValue(e.target.value)} onBlur={commitEdit} spellCheck={false} />
                                             ) : isCheckbox ? (
                                                 <div className="w-full h-full flex items-center justify-center">
-                                                    <input type="checkbox" className="w-[15px] h-[15px] cursor-pointer accent-[#1a73e8]" checked={rawValue === 'TRUE'} onChange={(e) => { e.stopPropagation(); setCell(r, c, e.target.checked ? 'TRUE' : 'FALSE') }} onMouseDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()} />
+                                                    <input type="checkbox" className="w-[15px] h-[15px] cursor-pointer accent-[#1a73e8]" checked={rawValue.toUpperCase() === 'TRUE'} onChange={(e) => { e.stopPropagation(); setCell(r, c, e.target.checked ? 'TRUE' : 'FALSE') }} onMouseDown={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()} />
                                                 </div>
                                             ) : isSparkline ? (
                                                 <SparklineCell value={evaluated} width={cellW - 4} height={cellH - 4} />
