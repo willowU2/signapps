@@ -33,7 +33,7 @@ export function useNotificationsSSE() {
           signal: controller.signal,
           onopen: async (response) => {
             if (response.status === 401) {
-              console.error('SSE 401 Unauthorized. Access token might be expired. Forcing token refresh...');
+              console.warn('SSE 401 Unauthorized. Access token might be expired. Forcing token refresh...');
               try {
                 // Hit a protected endpoint with axios so its interceptor refreshes the cookie
                 const identityClient = getClient(ServiceName.IDENTITY);
@@ -45,7 +45,7 @@ export function useNotificationsSSE() {
               throw new Error('SSE_AUTH_ERROR');
             }
             if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-              console.error('Failed to connect to SSE stream: client error', response.status);
+              console.warn('Failed to connect to SSE stream: client error', response.status);
               throw new Error('SSE_CLIENT_ERROR'); // Prevents retries for other client errors
             }
           },
@@ -63,7 +63,7 @@ export function useNotificationsSSE() {
                 // Dispatch global event so the notification bell can update its counter and list
                 window.dispatchEvent(new CustomEvent('new-notification', { detail: data }));
               } catch (e) {
-                console.error('Failed to parse SSE message', e);
+                console.warn('Failed to parse SSE message', e);
               }
             }
           },
@@ -71,7 +71,7 @@ export function useNotificationsSSE() {
             // Reconnects automatically according to fetch-event-source logic
           },
           onerror(err) {
-            console.error('SSE connection error:', err);
+            console.warn('SSE connection error:', err);
             
             if (err.message === 'SSE_AUTH_ERROR') {
               // Return nothing to allow it to retry (with a fresh cookie!)
@@ -86,7 +86,7 @@ export function useNotificationsSSE() {
           }
         });
       } catch (e) {
-        console.error('SSE connection aborted or failed:', e);
+        console.warn('SSE connection aborted or failed:', e);
       }
     };
 
