@@ -1,7 +1,12 @@
 "use client";
 
 import { use } from "react";
-import { PollVoteView } from "@/components/calendar/schedule-poll";
+import dynamic from "next/dynamic";
+
+const PollVoteView = dynamic(
+  () => import("@/components/calendar/scheduling-poll").then((m) => m.PollVoteView),
+  { ssr: false, loading: () => <div className="flex items-center justify-center h-64">Loading poll...</div> }
+);
 
 interface PollPageProps {
   params: Promise<{ id: string }>;
