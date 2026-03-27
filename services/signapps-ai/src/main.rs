@@ -129,7 +129,9 @@ async fn main() -> anyhow::Result<()> {
 
         Operator::new(builder)?.finish()
     } else {
-        let root = env_or("STORAGE_ROOT", "/data/signapps");
+        let root = std::env::var("STORAGE_FS_ROOT")
+            .or_else(|_| std::env::var("STORAGE_ROOT"))
+            .unwrap_or_else(|_| "./data/storage".to_string());
         let builder = Fs::default().root(&root);
         Operator::new(builder)?.finish()
     };
