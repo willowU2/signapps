@@ -6,10 +6,12 @@
 #![allow(dead_code)]
 
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use ort::session::Session;
+use ort::value::Tensor;
 use tokenizers::Tokenizer;
 use tracing::debug;
 
@@ -23,7 +25,7 @@ use crate::workers::{AiWorker, RerankResult, RerankerWorker};
 /// Reranker worker that runs a bge-reranker ONNX model locally via ONNX
 /// Runtime for cross-encoder document scoring.
 pub struct NativeReranker {
-    session: Session,
+    session: Mutex<Session>,
     tokenizer: Tokenizer,
     model_id: String,
     loaded: AtomicBool,
@@ -54,7 +56,7 @@ impl NativeReranker {
             .to_string();
 
         Ok(Self {
-            session,
+            session: Mutex::new(session),
             tokenizer,
             model_id,
             loaded: AtomicBool::new(true),
@@ -136,30 +138,31 @@ impl RerankerWorker for NativeReranker {
             let seq_len = input_ids.len();
 
             // Build ONNX input tensors — shape [1, seq_len] for a single pair.
-            let input_ids_tensor =
-                ort::value::Value::from_array(([1, seq_len], input_ids.into_boxed_slice()))
-                    .context("failed to create input_ids tensor")?;
+            let input_ids_tensor = Tensor::from_array((vec![1i64, seq_len as i64], input_ids))
+                .context("failed to create input_ids tensor")?;
             let attention_mask_tensor =
-                ort::value::Value::from_array(([1, seq_len], attention_mask.into_boxed_slice()))
+                Tensor::from_array((vec![1i64, seq_len as i64], attention_mask))
                     .context("failed to create attention_mask tensor")?;
             let token_type_ids_tensor =
-                ort::value::Value::from_array(([1, seq_len], token_type_ids.into_boxed_slice()))
+                Tensor::from_array((vec![1i64, seq_len as i64], token_type_ids))
                     .context("failed to create token_type_ids tensor")?;
 
             // Run the cross-encoder model.
-            let outputs = self.session.run(ort::inputs![
+            let mut session = self
+                .session
+                .lock()
+                .map_err(|e| anyhow::anyhow!("session lock poisoned: {e}"))?;
+            let outputs = session.run(ort::inputs![
                 "input_ids" => input_ids_tensor,
                 "attention_mask" => attention_mask_tensor,
                 "token_type_ids" => token_type_ids_tensor,
-            ]?)?;
+            ])?;
 
             // Extract the relevance score from the model output.
-            let score_tensor = outputs[0]
+            let (_shape, score_data) = outputs[0]
                 .try_extract_tensor::<f32>()
                 .context("failed to extract score tensor from ONNX output")?;
-            let relevance_score = score_tensor
-                .as_slice()
-                .context("score tensor is not contiguous")?[0];
+            let relevance_score = score_data[0];
 
             scored.push((idx, relevance_score, doc.clone()));
         }
