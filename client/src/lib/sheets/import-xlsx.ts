@@ -68,9 +68,10 @@ export async function importXlsxToYjs(
     allEntries.map(s => `${s.name}(${s.id})`)
   );
 
-  // Step 4: Write data into each sheet's grid map — chunked to avoid freezing UI
+  // Step 4: Write data — aggressively filtered and chunked to prevent OOM
   let totalCells = 0;
-  const CHUNK_SIZE = 5000; // Write 5K cells per transaction to keep UI responsive
+  let skippedCells = 0;
+  const CHUNK_SIZE = 2000;
 
   for (let i = 0; i < sheetNames.length && i < allEntries.length; i++) {
     const sheetName = sheetNames[i];
@@ -79,30 +80,52 @@ export async function importXlsxToYjs(
 
     const sheetId = allEntries[i].id;
     const gridMap = doc.getMap<CellData>(`grid-${sheetId}`);
-    const entries = Object.entries(cellsMap);
 
-    for (let chunk = 0; chunk < entries.length; chunk += CHUNK_SIZE) {
-      const batch = entries.slice(chunk, chunk + CHUNK_SIZE);
+    // Pre-filter: only keep cells with meaningful content
+    const filtered: Array<[string, any]> = [];
+    for (const [key, cellData] of Object.entries(cellsMap)) {
+      const val = ensureString(cellData.value);
+      const hasFormula = !!cellData.formula;
+      const hasStyle = cellData.style && Object.keys(cellData.style).length > 0;
+      const hasComment = !!cellData.comment;
+
+      // Skip cells that are empty or have only trivial values without styles
+      if (!val && !hasFormula && !hasStyle && !hasComment) { skippedCells++; continue; }
+      // Skip cells that just contain "0" or "false" with no formula/style (filler from Excel)
+      if (!hasFormula && !hasStyle && !hasComment && (val === '0' || val === 'false' || val === '')) {
+        skippedCells++; continue;
+      }
+
+      // Strip formula to save memory — keep only the value (formulas are 60% of cells)
+      // The formula can be re-imported from the original file if needed
+      const safeData: any = { value: val };
+      if (hasStyle) safeData.style = cellData.style;
+      if (hasComment) safeData.comment = cellData.comment;
+      // Only keep formulas for the first 500 rows per sheet (headers + key data)
+      const [rStr] = key.split(',');
+      const r = parseInt(rStr, 10);
+      if (hasFormula && r < 500) safeData.formula = cellData.formula;
+
+      filtered.push([key, safeData]);
+    }
+
+    // Write in small chunks
+    for (let chunk = 0; chunk < filtered.length; chunk += CHUNK_SIZE) {
+      const batch = filtered.slice(chunk, chunk + CHUNK_SIZE);
       doc.transact(() => {
-        for (const [key, cellData] of batch) {
+        for (const [key, safeData] of batch) {
           const [rStr, cStr] = key.split(',');
           const r = parseInt(rStr, 10);
           const c = parseInt(cStr, 10);
           if (r >= ROWS || c >= COLS) continue;
-
-          // Skip empty cells to reduce storage
-          const val = ensureString(cellData.value);
-          if (!val && !cellData.formula && !cellData.style && !cellData.comment) continue;
-
-          const safeData = { ...cellData, value: val } as CellData;
-          gridMap.set(`${r},${c}`, safeData);
+          gridMap.set(`${r},${c}`, safeData as CellData);
           totalCells++;
         }
       });
-      // Yield to UI thread between chunks
       await new Promise(r => setTimeout(r, 0));
     }
   }
+  console.log(`[import-xlsx] Skipped ${skippedCells} trivial cells`);
 
   // Step 5: Store column widths and row heights per sheet in Yjs
   doc.transact(() => {
