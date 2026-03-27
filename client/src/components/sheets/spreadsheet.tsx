@@ -105,27 +105,76 @@ const ALL_FUNCTIONS = [
     { name: 'SPARKLINE', desc: 'Mini-graphique dans la cellule', syntax: 'SPARKLINE(plage, [type])' },
 ]
 
+/** Format a numeric string for display using the cell's numberFormat.
+ *  Handles thousands separators (French locale: space), currency (€),
+ *  percentage, dates (Excel serial → dd/mm/yyyy), time, datetime, duration,
+ *  scientific notation, and accounting brackets for negatives. */
 function formatDisplayValue(value: string, style?: CellStyle): string {
-    if (!style?.numberFormat || style.numberFormat === 'auto' || value === '' || isNaN(Number(value))) return value
+    if (!style?.numberFormat || style.numberFormat === 'auto' || style.numberFormat === 'text' || value === '') return value
+    if (isNaN(Number(value))) return value
     const num = Number(value)
     const dec = style.decimals ?? 2
+
+    // Helper: format number with thousands separator (non-breaking space) and decimal comma (French locale)
+    const fmtNum = (n: number, decimals: number): string => {
+        const abs = Math.abs(n)
+        const fixed = abs.toFixed(decimals)
+        const [intPart, decPart] = fixed.split('.')
+        const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0') // non-breaking space
+        const formatted = decPart ? `${grouped},${decPart}` : grouped
+        return n < 0 ? `-${formatted}` : formatted
+    }
+
+    // Helper: Excel serial number → JS Date (Excel epoch: 1899-12-30, with Lotus 123 leap year bug)
+    const serialToDate = (serial: number): Date | null => {
+        if (serial < 0) return null
+        // Excel incorrectly treats 1900 as a leap year (serial 60 = Feb 29, 1900)
+        const adjusted = serial > 59 ? serial - 1 : serial
+        const d = new Date(1899, 11, 30 + adjusted)
+        return isNaN(d.getTime()) ? null : d
+    }
+
     switch (style.numberFormat) {
-        case 'currency': return `${num.toFixed(dec)} \u20AC`
-        case 'percent': return `${(num * 100).toFixed(dec)}%`
-        case 'number': return num.toFixed(dec)
-        case 'accounting': return num < 0 ? `(${Math.abs(num).toFixed(dec)} \u20AC)` : `${num.toFixed(dec)} \u20AC`
-        case 'scientific': return num.toExponential(dec)
+        case 'number':
+            return fmtNum(num, dec)
+        case 'currency':
+            return `${fmtNum(num, dec)} \u20AC`
+        case 'accounting':
+            return num < 0
+                ? `(${fmtNum(Math.abs(num), dec)} \u20AC)`
+                : `${fmtNum(num, dec)} \u20AC`
+        case 'percent':
+            return `${fmtNum(num * 100, dec)}%`
+        case 'scientific':
+            return num.toExponential(dec)
         case 'date': {
-            const d = new Date(1900, 0, num - 1)
-            if (isNaN(d.getTime())) return value
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+            const d = serialToDate(num)
+            if (!d) return value
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
         }
         case 'time': {
-            const totalSeconds = Math.round(num * 86400)
+            const frac = num % 1
+            const totalSeconds = Math.round(Math.abs(frac) * 86400)
             const h = Math.floor(totalSeconds / 3600)
             const m = Math.floor((totalSeconds % 3600) / 60)
             const s = totalSeconds % 60
             return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+        }
+        case 'datetime': {
+            const d = serialToDate(Math.floor(num))
+            if (!d) return value
+            const frac = num % 1
+            const totalSeconds = Math.round(Math.abs(frac) * 86400)
+            const h = Math.floor(totalSeconds / 3600)
+            const mi = Math.floor((totalSeconds % 3600) / 60)
+            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`
+        }
+        case 'duration': {
+            const totalSeconds = Math.round(Math.abs(num) * 86400)
+            const h = Math.floor(totalSeconds / 3600)
+            const m = Math.floor((totalSeconds % 3600) / 60)
+            const s = totalSeconds % 60
+            return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
         }
         default: return value
     }
@@ -1205,7 +1254,20 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             // the colWidths/rowHeights Yjs observer.
             setActiveSheetIndex(0);
 
-            toast.success(`${importResult.totalCells} cellules importées de ${file.name} (${importResult.sheetCount} onglet${importResult.sheetCount > 1 ? 's' : ''})`);
+            // Scroll to top-left and select A1 so imported data is immediately visible
+            gridRef.current?.scrollTo(0, 0);
+            setActiveCell({ r: 0, c: 0 });
+            setSelectedRange(null);
+
+            // Freeze first row by default (header row) for usability with large imports
+            if (importResult.totalCells > 100) {
+                setFreezeRows(1);
+            }
+
+            const sheetLabel = importResult.sheetCount > 1
+                ? `${importResult.sheetCount} onglets (${importResult.sheetNames.join(', ')})`
+                : '1 onglet';
+            toast.success(`Import terminé : ${importResult.totalCells.toLocaleString('fr-FR')} cellules, ${sheetLabel}`, { duration: 5000 });
         } catch(err) {
             console.error('Import error:', err);
             toast.error("Erreur d'importation: " + (err instanceof Error ? err.message : 'Format invalide'));
@@ -1678,10 +1740,10 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     { label: 'Plages protégées', action: 'protected_ranges' }
                 ] },
                 { label: 'Figer', subItems: [
-                    { label: 'Aucune ligne', action: 'unfreezeRow' },
-                    { label: '1 ligne', action: 'freezeRow' },
-                    { label: 'Aucune colonne', action: 'unfreezeCol' },
-                    { label: '1 colonne', action: 'freezeCol' }
+                    { label: 'Figer la première ligne', action: 'freezeRow' },
+                    { label: 'Figer la première colonne', action: 'freezeCol' },
+                    { label: 'Libérer les lignes', action: 'unfreezeRow' },
+                    { label: 'Libérer les colonnes', action: 'unfreezeCol' }
                 ] },
                 { label: 'Regrouper', subItems: [
                     { label: 'Associer lignes/colonnes', action: 'group_rows_cols' },
@@ -2000,8 +2062,8 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 if (action === 'paste') handleContextAction('paste')
                 if (action === 'find') setShowFind(true)
                 if (action === 'toggleGridlines') setShowGridlines(!showGridlines)
-                if (action === 'freezeRow') toggleFreeze()
-                if (action === 'freezeCol') toggleFreeze()
+                if (action === 'freezeRow') { setFreezeRows(1); toast.success('Première ligne figée') }
+                if (action === 'freezeCol') { setFreezeCols(1); toast.success('Première colonne figée') }
                 if (action === 'insertRowAbove') handleContextAction('insertRowAbove')
                 if (action === 'insertRowBelow') handleContextAction('insertRowBelow')
                 if (action === 'insertColLeft') handleContextAction('insertColLeft')
