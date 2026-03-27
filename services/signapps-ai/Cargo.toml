@@ -63,6 +63,9 @@ hf-hub = { version = "0.5", optional = true }
 # Tokenizers
 tokenizers = { version = "0.22", optional = true }
 
+# Random number generation (for seed generation in native pipelines)
+rand = { workspace = true, optional = true }
+
 [features]
 default = []
 
@@ -76,7 +79,7 @@ vulkan = ["llama-cpp-2?/vulkan"]
 native-vision = ["dep:llama-cpp-2"]
 
 # Native image generation (candle Stable Diffusion / FLUX)
-native-imagegen = ["dep:candle-core", "dep:candle-nn", "dep:candle-transformers", "dep:image", "dep:hf-hub", "dep:tokenizers"]
+native-imagegen = ["dep:candle-core", "dep:candle-nn", "dep:candle-transformers", "dep:image", "dep:hf-hub", "dep:tokenizers", "dep:rand"]
 
 # Native video generation (candle + ffmpeg)
 native-videogen = ["dep:candle-core", "dep:candle-nn", "dep:candle-transformers", "dep:ffmpeg-next", "dep:image"]
