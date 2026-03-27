@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Plus, Save, Trash2, GripVertical, Eye, Type, List, CheckSquare, Calendar, Hash, Mail, Image as ImageIcon } from "lucide-react"
+import { ArrowLeft, Plus, Save, Trash2, GripVertical, Eye, Type, List, CheckSquare, Calendar, Hash, Mail, Image as ImageIcon, CircleDot } from "lucide-react"
 import { useBreadcrumbStore } from "@/lib/store/breadcrumb-store"
 
 export default function FormBuilderPage() {
@@ -171,7 +171,7 @@ export default function FormBuilderPage() {
                                                         <SelectItem value="TextArea">Paragraphe</SelectItem>
                                                         <SelectItem value="Number">Nombre</SelectItem>
                                                         <SelectItem value="Email">Email</SelectItem>
-                                                        <SelectItem value="SingleChoice">Liste déroulante</SelectItem>
+                                                        <SelectItem value="SingleChoice">Choix unique (Radio)</SelectItem>
                                                         <SelectItem value="MultipleChoice">Cases à cocher</SelectItem>
                                                         <SelectItem value="Date">Date</SelectItem>
                                                         <SelectItem value="File">Fichier</SelectItem>
@@ -202,7 +202,7 @@ export default function FormBuilderPage() {
                                                         onChange={(e) => updateField(field.id, { options: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                                                         placeholder="Option A, Option B, Option C"
                                                     />
-                                                    <p className="text-[10px] text-muted-foreground mt-1">Les choix s'afficheront sous forme de liste lors de la saisie.</p>
+                                                    <p className="text-[10px] text-muted-foreground mt-1">Les choix s'afficheront sous forme de boutons radio ou de cases à cocher.</p>
                                                 </div>
                                                 
                                                 {field.field_type === 'SingleChoice' && (
@@ -262,8 +262,12 @@ export default function FormBuilderPage() {
                                         <span className="text-xs">Paragraphe</span>
                                     </Button>
                                     <Button variant="outline" className="justify-start h-auto py-3 px-3 hover:border-primary/50" onClick={() => addField('SingleChoice')}>
+                                        <CircleDot className="h-4 w-4 mr-2 text-emerald-500" />
+                                        <span className="text-xs">Choix unique</span>
+                                    </Button>
+                                    <Button variant="outline" className="justify-start h-auto py-3 px-3 hover:border-primary/50" onClick={() => addField('MultipleChoice')}>
                                         <CheckSquare className="h-4 w-4 mr-2 text-emerald-500" />
-                                        <span className="text-xs">Choix</span>
+                                        <span className="text-xs">Choix multiple</span>
                                     </Button>
                                     <Button variant="outline" className="justify-start h-auto py-3 px-3 hover:border-primary/50" onClick={() => addField('Number')}>
                                         <Hash className="h-4 w-4 mr-2 text-orange-500" />
