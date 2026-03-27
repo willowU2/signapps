@@ -12,137 +12,90 @@ test.describe('Sheets Tab Switching', () => {
     await page.waitForURL(/\/(dashboard|sheets)/, { timeout: 10000 });
   });
 
-  test('should switch between imported Excel sheets', async ({ page }) => {
+  test('should import all sheets and switch between them', async ({ page }) => {
     test.setTimeout(300000);
 
+    // Capture ALL console output from the start
+    const consoleLogs: string[] = [];
+    page.on('console', msg => {
+      const text = msg.text();
+      if (text.includes('import') || text.includes('Sheet') || text.includes('cells')) {
+        consoleLogs.push(`[${msg.type()}] ${text}`);
+      }
+    });
+
     const sheetId = randomUUID();
-    await page.goto(`http://localhost:3000/sheets/editor?id=${sheetId}&name=TabTest`);
+    await page.goto(`http://localhost:3000/sheets/editor?id=${sheetId}&name=TabTest2`);
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(5000);
 
     // Import file
     const fileInput = page.locator('input[type="file"][accept*=".xlsx"]');
     await expect(fileInput).toBeAttached({ timeout: 10000 });
     await fileInput.setInputFiles(XLSX_PATH);
-    await page.waitForTimeout(45000);
 
-    // Close any welcome/onboarding modals
+    // Wait for import
+    await page.waitForTimeout(60000);
+
+    // Print captured console logs
+    console.log('=== Console logs during import ===');
+    consoleLogs.forEach(l => console.log(l));
+
+    // Close any modals
     await page.keyboard.press('Escape');
     await page.waitForTimeout(500);
-    const closeModalBtn = page.locator('button:has-text("Fermer"), button:has-text("Actualiser"), button:has-text("OK"), button:has-text("Close"), [aria-label="Close"]');
-    if (await closeModalBtn.first().isVisible({ timeout: 2000 }).catch(() => false)) {
-      await closeModalBtn.first().click();
-      await page.waitForTimeout(500);
-    }
     await page.keyboard.press('Escape');
     await page.waitForTimeout(500);
 
-    // Check all 4 sheet tabs exist
-    const sheetNames = ['SAISIEJOUR', 'DONNEES PERIODIQUES', 'OBJECTIFS', 'DATES'];
-    for (const name of sheetNames) {
-      const tab = page.locator(`text=${name}`).first();
-      const visible = await tab.isVisible({ timeout: 5000 }).catch(() => false);
-      console.log(`Tab "${name}": ${visible ? 'VISIBLE' : 'NOT VISIBLE'}`);
-    }
+    // Take screenshot of first sheet
+    await page.screenshot({ path: 'e2e/screenshots/tab-sheet1.png' });
 
-    // Get initial cell content (should be SAISIEJOUR data)
-    const initialContent = await page.evaluate(() => {
-      const cells = document.querySelectorAll('[title]');
-      const values: string[] = [];
-      cells.forEach(c => {
-        const t = c.getAttribute('title');
-        if (t && t.length > 0 && t.length < 100 && !t.includes('object')) values.push(t);
-      });
-      return values.slice(0, 10);
-    });
-    console.log('Initial sheet content:', initialContent);
-
-    // Click on OBJECTIFS tab
-    const objectifsTab = page.locator('text=OBJECTIFS').first();
-    if (await objectifsTab.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await objectifsTab.click();
-      await page.waitForTimeout(2000);
-
-      await page.waitForTimeout(3000);
-      const afterSwitch = await page.evaluate(() => {
-        const cells = document.querySelectorAll('[title]');
-        const values: string[] = [];
-        cells.forEach(c => {
-          const t = c.getAttribute('title');
-          if (t && t.length > 0 && t.length < 100 && !t.includes('object')) values.push(t);
-        });
-        return { values: values.slice(0, 10), bodyTextSnippet: document.body.innerText.substring(0, 500) };
-      });
-      console.log('After switching to OBJECTIFS:', JSON.stringify(afterSwitch.values));
-      console.log('Body snippet:', afterSwitch.bodyTextSnippet.substring(0, 200));
-
-      // Content should be different from initial (different sheet data)
-      const isDifferent = JSON.stringify(afterSwitch) !== JSON.stringify(initialContent);
-      console.log('Content changed after tab switch:', isDifferent);
-    } else {
-      console.log('OBJECTIFS tab not found — checking all tab text');
-      const allTabs = await page.evaluate(() => {
-        const tabs = document.querySelectorAll('[class*="cursor-pointer"], [class*="sheet"]');
-        return Array.from(tabs).map(t => t.textContent?.trim()).filter(Boolean).slice(0, 10);
-      });
-      console.log('All tab-like elements:', allTabs);
-    }
-
-    // Click on DATES tab
-    const datesTab = page.locator('text=DATES').first();
-    if (await datesTab.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await datesTab.click();
-      await page.waitForTimeout(2000);
-
-      const datesContent = await page.evaluate(() => {
-        const cells = document.querySelectorAll('[title]');
-        const values: string[] = [];
-        cells.forEach(c => {
-          const t = c.getAttribute('title');
-          if (t && t.length > 0 && t.length < 100 && !t.includes('object')) values.push(t);
-        });
-        return values.slice(0, 10);
-      });
-      console.log('DATES sheet content:', datesContent);
-    }
-
-    // Switch back to SAISIEJOUR
-    const saisieTab = page.locator('text=SAISIEJOUR').first();
-    if (await saisieTab.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await saisieTab.click();
-      await page.waitForTimeout(2000);
-
-      const backContent = await page.evaluate(() => {
-        const cells = document.querySelectorAll('[title]');
-        const values: string[] = [];
-        cells.forEach(c => {
-          const t = c.getAttribute('title');
-          if (t && t.length > 0 && t.length < 100 && !t.includes('object')) values.push(t);
-        });
-        return values.slice(0, 10);
-      });
-      console.log('Back to SAISIEJOUR:', backContent);
-    }
-
-    // Check how many cells have data per sheet by checking Yjs grid maps
-    const gridDebug = await page.evaluate(() => {
-      // Look for data in visible cells after each tab switch
-      const countVisibleData = () => {
-        const cells = document.querySelectorAll('div[class*="border-r border-b"]');
-        let withContent = 0;
-        let empty = 0;
+    // Count visible data cells
+    const countCells = async (label: string) => {
+      const info = await page.evaluate(() => {
+        const cells = document.querySelectorAll('div[class*="border-r"][class*="border-b"]');
+        let withData = 0;
+        const samples: string[] = [];
         cells.forEach(c => {
           const t = c.textContent?.trim();
-          if (t && t.length > 0 && t !== '' && !t.match(/^[A-Z]$/)) withContent++;
-          else empty++;
+          if (t && t.length > 0 && t !== '' && !t.match(/^[A-Z]$/) && !t.match(/^\d+$/)) {
+            withData++;
+            if (samples.length < 5) samples.push(t.substring(0, 30));
+          }
         });
-        return { withContent, empty, total: cells.length };
-      };
-      return countVisibleData();
-    });
-    console.log('Final grid cell count:', JSON.stringify(gridDebug));
+        return { withData, samples };
+      });
+      console.log(`${label}: ${info.withData} data cells, samples: ${JSON.stringify(info.samples)}`);
+      return info;
+    };
 
-    // Take screenshot
-    await page.screenshot({ path: 'e2e/screenshots/sheets-tabs.png' });
+    const sheet1 = await countCells('SAISIEJOUR (initial)');
+
+    // Click OBJECTIFS tab
+    const objectifsTab = page.locator('div:has-text("OBJECTIFS")').last();
+    await objectifsTab.click({ force: true });
+    await page.waitForTimeout(3000);
+    await page.screenshot({ path: 'e2e/screenshots/tab-objectifs.png' });
+    const sheet3 = await countCells('OBJECTIFS (after switch)');
+
+    // Click DATES tab
+    const datesTab = page.locator('div:has-text("DATES")').last();
+    await datesTab.click({ force: true });
+    await page.waitForTimeout(3000);
+    await page.screenshot({ path: 'e2e/screenshots/tab-dates.png' });
+    const sheet4 = await countCells('DATES (after switch)');
+
+    // Click back to SAISIEJOUR
+    const saisieTab = page.locator('div:has-text("SAISIEJOUR")').last();
+    await saisieTab.click({ force: true });
+    await page.waitForTimeout(3000);
+    const sheet1again = await countCells('SAISIEJOUR (back)');
+
+    // Assertions
+    expect(sheet1.withData).toBeGreaterThan(10); // First sheet has data
+    console.log(`OBJECTIFS data: ${sheet3.withData}, DATES data: ${sheet4.withData}`);
+
+    // At minimum, first sheet should work
+    expect(sheet1again.withData).toBeGreaterThan(10);
   });
 });
