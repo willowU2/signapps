@@ -86,8 +86,8 @@ export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemPro
             {...attributes}
             {...listeners}
             className={cn(
-                "group flex items-start gap-3 py-3 px-4 transition-all cursor-grab active:cursor-grabbing border-l-2 border-l-transparent border-b border-b-[#f1f3f4]",
-                isOver ? "bg-[#e8f0fe] border-l-[#1a73e8]" : "hover:bg-[#f8f9fa]",
+                "group flex items-start gap-3 py-3 px-4 transition-all cursor-grab active:cursor-grabbing border-l-2 border-l-transparent border-b border-b-border/30",
+                isOver ? "bg-primary/10 border-l-primary" : "hover:bg-muted/50",
                 isDragging && "opacity-50 shadow-lg bg-background border-l-gray-300"
             )}
         >
@@ -100,8 +100,8 @@ export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemPro
                 className={cn(
                     "mt-1 shrink-0 w-[18px] h-[18px] rounded-full border-[1.5px] flex items-center justify-center transition-all duration-200",
                     task.done
-                        ? "bg-[#1a73e8] border-[#1a73e8] shadow-sm"
-                        : "border-[#80868b] hover:border-[#1a73e8] hover:bg-[#e8f0fe] bg-transparent"
+                        ? "bg-primary border-primary shadow-sm"
+                        : "border-muted-foreground hover:border-primary hover:bg-primary/10 bg-transparent"
                 )}
             >
                 {task.done && (
@@ -115,8 +115,8 @@ export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemPro
             <div className="flex-1 min-w-0">
                 <div
                     className={cn(
-                        "text-[14px] leading-snug select-none cursor-pointer text-[#202124]",
-                        task.done && "text-[#80868b] line-through decoration-[#80868b]"
+                        "text-[14px] leading-snug select-none cursor-pointer text-foreground",
+                        task.done && "text-muted-foreground line-through decoration-muted-foreground"
                     )}
                     onClick={() => onToggle(task.id)}
                 >
@@ -128,7 +128,7 @@ export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemPro
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
                         {/* Linked Event Chip - Green indicating scheduled */}
                         {hasLinkedEvent && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium bg-[#e6f4ea] text-[#137333] border border-[#ceead6] transition-colors">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 transition-colors">
                                 <CalendarCheck className="w-3.5 h-3.5" />
                                 Planifié
                             </span>
@@ -139,10 +139,10 @@ export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemPro
                             <span className={cn(
                                 "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium transition-colors",
                                 dueInfo.isOverdue && !task.done
-                                    ? "bg-[#fce8e6] text-[#c5221f] border border-[#fad2cf]"
+                                    ? "bg-destructive/10 text-destructive border border-destructive/20"
                                     : task.done
                                         ? "bg-gray-100 text-gray-400"
-                                        : "bg-[#e8f0fe] text-[#1967d2] border border-[#d2e3fc]"
+                                        : "bg-primary/10 text-primary border border-primary/20"
                             )}>
                                 <Calendar className="w-3.5 h-3.5" />
                                 {dueInfo.text}
@@ -151,18 +151,18 @@ export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemPro
 
                         {/* Chat/Conversation Chip - Google Tasks style */}
                         {task.assignee && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium bg-[#f1f3f4] text-[#3c4043] border border-[#dadce0] hover:bg-[#e8eaed] transition-colors cursor-pointer">
-                                <MessageSquare className="w-3.5 h-3.5 text-[#5f6368]" />
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium bg-muted text-foreground/80 border border-border hover:bg-muted/80 transition-colors cursor-pointer">
+                                <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
                                 Chat
                             </span>
                         )}
 
                         {/* Assignee Chip - Google Tasks avatar pill style */}
                         {task.assignee && (
-                            <span className="inline-flex items-center gap-2 pl-1 pr-3 py-0.5 rounded-full text-[12px] font-medium bg-[#f1f3f4] text-[#3c4043] border border-[#dadce0] hover:bg-[#e8eaed] transition-colors cursor-pointer">
+                            <span className="inline-flex items-center gap-2 pl-1 pr-3 py-0.5 rounded-full text-[12px] font-medium bg-muted text-foreground/80 border border-border hover:bg-muted/80 transition-colors cursor-pointer">
                                 <Avatar className="w-5 h-5 border border-white shadow-sm">
                                     <AvatarImage src={task.assignee.avatar} />
-                                    <AvatarFallback className="text-[9px] bg-[#1a73e8] text-white font-semibold">
+                                    <AvatarFallback className="text-[9px] bg-primary text-white font-semibold">
                                         {getInitials(task.assignee.name)}
                                     </AvatarFallback>
                                 </Avatar>
@@ -176,7 +176,7 @@ export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemPro
                                 {task.attachedFiles!.map((file) => (
                                     <Tooltip key={file.id}>
                                         <TooltipTrigger asChild>
-                                            <span className="inline-flex items-center gap-1.5 pl-2 pr-1 py-0.5 rounded-full text-[11px] font-medium bg-[#fef7e0] text-[#b45309] border border-[#fde68a] hover:bg-[#fef3c7] transition-colors cursor-pointer group/file">
+                                            <span className="inline-flex items-center gap-1.5 pl-2 pr-1 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/15 transition-colors cursor-pointer group/file">
                                                 {getFileIcon(file.name)}
                                                 <span className="max-w-[80px] truncate">{file.name}</span>
                                                 {onRemoveFile && (
@@ -185,7 +185,7 @@ export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemPro
                                                             e.stopPropagation();
                                                             onRemoveFile(task.id, file.id);
                                                         }}
-                                                        className="ml-0.5 p-0.5 rounded-full hover:bg-[#fde68a] opacity-0 group-hover/file:opacity-100 transition-opacity"
+                                                        className="ml-0.5 p-0.5 rounded-full hover:bg-amber-500/20 opacity-0 group-hover/file:opacity-100 transition-opacity"
                                                     >
                                                         <X className="w-3 h-3" />
                                                     </button>
@@ -208,7 +208,7 @@ export function TaskItem({ task, onToggle, onRemove, onRemoveFile }: TaskItemPro
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all text-[#5f6368] hover:text-[#202124] hover:bg-[#f1f3f4] rounded-full shrink-0"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all text-muted-foreground hover:text-foreground hover:bg-muted rounded-full shrink-0"
                 onClick={(e) => {
                     e.stopPropagation();
                     onRemove(task.id);

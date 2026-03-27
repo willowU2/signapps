@@ -27,8 +27,8 @@ export function TaskColumn({ column, tasks, onTaskClick }: TaskColumnProps) {
   return (
     <div className="w-80 flex-shrink-0 flex flex-col bg-background/50 border rounded-xl overflow-hidden shadow-sm h-full max-h-full">
       <div className="px-4 py-3 border-b flex items-center justify-between bg-black/[0.03]">
-        <h3 className="font-semibold text-sm tracking-tight text-[#202124]">{column.title}</h3>
-        <span className="text-xs text-[#5f6368] font-bold bg-background px-2 py-0.5 rounded border shadow-sm">
+        <h3 className="font-semibold text-sm tracking-tight text-foreground">{column.title}</h3>
+        <span className="text-xs text-muted-foreground font-bold bg-background px-2 py-0.5 rounded border shadow-sm">
           {tasks.length}
         </span>
       </div>
@@ -36,7 +36,7 @@ export function TaskColumn({ column, tasks, onTaskClick }: TaskColumnProps) {
       <div 
         ref={setNodeRef} 
         className={`flex-1 p-3 overflow-y-auto space-y-3 bg-black/[0.015] transition-colors ${
-          isOver ? 'bg-blue-50/30' : ''
+          isOver ? 'bg-primary/5' : ''
         }`}
       >
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>

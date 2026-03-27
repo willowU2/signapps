@@ -71,9 +71,9 @@ function TaskItem({
   const isFavorite = node.task.priority === 3 || node.task.title.includes('Freebox');
 
   return (
-    <div className="border-b border-[#f1f3f4] last:border-none">
+    <div className="border-b border-border/30 last:border-none">
       <div
-        className={`flex items-start gap-3 py-3 px-4 hover:bg-[#f8f9fa] group cursor-pointer transition-colors ${
+        className={`flex items-start gap-3 py-3 px-4 hover:bg-muted/50 group cursor-pointer transition-colors ${
           isCompleted ? "opacity-60" : ""
         }`}
         style={{ paddingLeft: `${16 + level * 24}px` }}
@@ -82,7 +82,7 @@ function TaskItem({
         {/* Google style Radio-Checkbox */}
         <div className="pt-0.5 flex-shrink-0">
              <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center ${
-                 isCompleted ? "bg-[#1a73e8] border-[#1a73e8]" : "border-[#5f6368] hover:bg-black/5"
+                 isCompleted ? "bg-primary border-primary" : "border-muted-foreground hover:bg-muted/50"
              }`}>
                 {isCompleted && (
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -95,13 +95,13 @@ function TaskItem({
         {/* Task Details */}
         <div className="flex-1 min-w-0 pr-2">
             <div className="flex items-start justify-between gap-4">
-                <span className={`text-[15px] leading-tight text-[#202124] ${
-                    isCompleted ? "line-through text-[#70757a]" : ""
+                <span className={`text-[15px] leading-tight text-foreground ${
+                    isCompleted ? "line-through text-muted-foreground" : ""
                 }`}>
                     {node.task.title}
                 </span>
 
-                <Star className={`h-5 w-5 flex-shrink-0 ${isFavorite ? "fill-[#1a73e8] text-[#1a73e8]" : "text-[#5f6368] opacity-0 group-hover:opacity-100"}`} />
+                <Star className={`h-5 w-5 flex-shrink-0 ${isFavorite ? "fill-primary text-primary" : "text-muted-foreground opacity-0 group-hover:opacity-100"}`} />
             </div>
 
             {/* Badges row */}
@@ -110,8 +110,8 @@ function TaskItem({
                 {node.task.due_date && (
                     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[12px] font-medium leading-none ${
                         isDelayed 
-                           ? "border-[#fce8e6] text-[#c5221f] bg-transparent" 
-                           : "border-[#dadce0] text-[#3c4043]"
+                           ? "border-destructive/30 text-destructive bg-transparent" 
+                           : "border-border text-foreground/80"
                     }`}>
                         <CalendarIcon className="w-3.5 h-3.5" />
                         <span>{format(parseISO(node.task.due_date), "dd MMM yyyy")}</span>
@@ -125,7 +125,7 @@ function TaskItem({
                     <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="h-6 px-2 text-xs text-[#5f6368] hover:text-[#1a73e8]" 
+                        className="h-6 px-2 text-xs text-muted-foreground hover:text-primary" 
                         onClick={(e) => { e.stopPropagation(); onAddChild?.(node.task.id); }}
                     >
                         <Plus className="h-3.5 w-3.5 mr-1" /> Sous-tâche
@@ -134,7 +134,7 @@ function TaskItem({
                 <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-6 w-6 text-[#5f6368] hover:text-[#d93025] hover:bg-[#fce8e6]" 
+                    className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10" 
                     onClick={(e) => { e.stopPropagation(); onDelete?.(node.task.id); }}
                 >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -144,13 +144,13 @@ function TaskItem({
             {/* Subtasks expander (Google Tasks style) */}
             {hasChildren && (
                  <div 
-                    className="flex items-center gap-2 mt-2 text-[#5f6368] hover:text-[#202124] text-[13px] w-fit"
+                    className="flex items-center gap-2 mt-2 text-muted-foreground hover:text-foreground text-[13px] w-fit"
                     onClick={(e) => {
                         e.stopPropagation();
                         setExpanded(!expanded);
                     }}
                  >
-                     <div className="p-1 rounded-full hover:bg-black/5 -ml-1">
+                     <div className="p-1 rounded-full hover:bg-muted/50 -ml-1">
                         {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                      </div>
                      <span>{node.children.length} sous-tâches</span>
@@ -161,7 +161,7 @@ function TaskItem({
 
       {/* Children Container */}
       {expanded && hasChildren && (
-        <div className="bg-[#f8f9fa]/50">
+        <div className="bg-muted/30">
           {node.children.map((child) => (
             <TaskItem
               key={child.task.id}
@@ -220,11 +220,11 @@ export function TaskTree({
   };
 
   if (isLoading && projectTasks.length === 0) {
-    return <div className="text-center text-[#5f6368] py-8 text-sm">Chargement des tâches...</div>;
+    return <div className="text-center text-muted-foreground py-8 text-sm">Chargement des tâches...</div>;
   }
 
   if (projectTasks.length === 0) {
-    return <div className="text-center text-[#5f6368] py-8 text-sm">Aucune tâche dans ce projet.</div>;
+    return <div className="text-center text-muted-foreground py-8 text-sm">Aucune tâche dans ce projet.</div>;
   }
 
   return (

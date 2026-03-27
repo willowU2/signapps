@@ -40,7 +40,7 @@ export function TaskCard({ task, isOverlay = false, onClick }: TaskCardProps) {
       <div
         ref={setNodeRef}
         style={style}
-        className="w-full h-[100px] bg-blue-50/50 border-2 border-dashed border-blue-200 rounded-lg opacity-50"
+        className="w-full h-[100px] bg-primary/5 border-2 border-dashed border-primary/20 rounded-lg opacity-50"
       />
     );
   }
@@ -80,16 +80,16 @@ export function TaskCard({ task, isOverlay = false, onClick }: TaskCardProps) {
         </div>
       </div>
       
-      <h4 className="text-sm font-semibold text-[#202124] leading-tight mb-1 truncate">
+      <h4 className="text-sm font-semibold text-foreground leading-tight mb-1 truncate">
         {task.title}
       </h4>
       {task.description && (
-        <p className="text-xs text-[#5f6368] line-clamp-2 mb-3 leading-relaxed">
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
           {task.description}
         </p>
       )}
 
-      <div className="flex items-center justify-between text-xs text-[#5f6368] mt-3">
+      <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
         <div className="flex items-center gap-2">
           {task.dueDate ? (
             <div className="flex items-center gap-1.5">
