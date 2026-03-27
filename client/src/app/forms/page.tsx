@@ -142,7 +142,7 @@ export default function FormsPage() {
 
     return (
         <AppLayout>
-            <div className="space-y-6">
+            <div className="space-y-6 max-w-full min-w-0">
                 {/* Header */}
                 <div className="flex flex-wrap justify-between items-center gap-4">
                     <div>
@@ -192,9 +192,9 @@ export default function FormsPage() {
                                 <p className="text-sm">Aucun formulaire. Créez-en un !</p>
                             </div>
                         ) : (
-                            <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {forms.map(form => (
-                                    <Card key={form.id} className="border-border/50 bg-card hover:shadow-md transition-shadow">
+                                    <Card key={form.id} className="border-border/50 bg-card hover:shadow-md transition-shadow min-w-0 overflow-hidden flex flex-col">
                                         <CardHeader className="pb-2">
                                             <div className="flex items-start justify-between gap-2">
                                                 <CardTitle className="text-base font-semibold leading-tight line-clamp-1">
@@ -206,8 +206,8 @@ export default function FormsPage() {
                                             </div>
                                             <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{form.description}</p>
                                         </CardHeader>
-                                        <CardContent className="space-y-4">
-                                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                        <CardContent className="space-y-4 flex-1 flex flex-col justify-end">
+                                            <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto">
                                                 <span className="flex items-center gap-1">
                                                     <Send className="h-3 w-3" />
                                                     {form.response_count} réponse{form.response_count !== 1 ? "s" : ""}
@@ -217,28 +217,34 @@ export default function FormsPage() {
                                                     {new Date(form.created_at).toLocaleDateString("fr-FR")}
                                                 </span>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
-                                                <Button size="sm" variant="default" className="flex-1 whitespace-nowrap" asChild>
+                                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/40">
+                                                <Button size="sm" variant="default" className="w-full text-xs" asChild>
                                                     <Link href={`/forms/${form.id}`}>
                                                         <Edit className="h-3 w-3 mr-1" /> Éditeur
                                                     </Link>
                                                 </Button>
-                                                <Button size="sm" variant="outline" onClick={() => openEdit(form)}>
+                                                <Button size="sm" variant="outline" className="w-full text-xs whitespace-nowrap overflow-hidden text-ellipsis px-2" onClick={() => openEdit(form)}>
                                                     Paramètres
                                                 </Button>
-                                                <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => togglePublish(form)}>
+                                                <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => togglePublish(form)}>
                                                     <Globe className="h-3 w-3 mr-1" />
                                                     {form.status === "published" ? "Dépublier" : "Publier"}
                                                 </Button>
-                                                {form.status === "published" && (
-                                                    <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => copyLink(form)}>
+                                                {form.status === "published" ? (
+                                                    <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => copyLink(form)}>
                                                         <LinkIcon className="h-3 w-3 mr-1" />
-                                                        {copiedId === form.id ? "Copié !" : "Lien"}
+                                                        {copiedId === form.id ? "Copié" : "Lien"}
+                                                    </Button>
+                                                ) : (
+                                                    <Button size="sm" variant="outline" className="w-full text-xs text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(form.id)}>
+                                                        <Trash className="h-3 w-3 mr-1" /> Supprimer
                                                     </Button>
                                                 )}
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive shrink-0" onClick={() => handleDelete(form.id)}>
-                                                    <Trash className="h-4 w-4" />
-                                                </Button>
+                                                {form.status === "published" && (
+                                                    <Button size="sm" variant="ghost" className="col-span-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 mt-1" onClick={() => handleDelete(form.id)}>
+                                                        <Trash className="h-3 w-3 mr-1" /> Mettre à la corbeille
+                                                    </Button>
+                                                )}
                                             </div>
                                         </CardContent>
                                     </Card>
