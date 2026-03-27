@@ -21,16 +21,17 @@ import { SpinnerInfinity } from 'spinners-react';
 // ═══════════════════════════════════════════════════════════════════════════
 
 interface GpuProfile {
-  id: string;
   name: string;
   tier: string;
   description: string;
-  models: ProfileModel[];
+  recommendations: ProfileModel[];
+  total_vram_required_mb: number;
 }
 
 interface ProfileModel {
   capability: string;
   model_id: string;
+  model_name: string;
   vram_mb: number;
   quality_score: number;
 }
@@ -72,7 +73,7 @@ function qualityColor(score: number): string {
 export default function AiSettingsPage() {
   const { gpuStatus, fetchGpuStatus } = useAiCapabilities();
   const [profiles, setProfiles] = useState<GpuProfile[]>([]);
-  const [selectedProfileId, setSelectedProfileId] = useState<string>('');
+  const [selectedProfileName, setSelectedProfileName] = useState<string>('');
   const [loadingProfiles, setLoadingProfiles] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,12 +82,11 @@ export default function AiSettingsPage() {
     setError(null);
     try {
       const client = getClient(ServiceName.AI);
-      const res = await client.get<{ profiles: GpuProfile[] }>('/ai/gpu/profiles');
-      const data = res.data;
-      const list = Array.isArray(data) ? data : data.profiles ?? [];
+      const res = await client.get<GpuProfile[]>('/ai/gpu/profiles');
+      const list = Array.isArray(res.data) ? res.data : [];
       setProfiles(list);
-      if (list.length > 0 && !selectedProfileId) {
-        setSelectedProfileId(list[0].id);
+      if (list.length > 0 && !selectedProfileName) {
+        setSelectedProfileName(list[0].name);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch profiles';
@@ -94,14 +94,14 @@ export default function AiSettingsPage() {
     } finally {
       setLoadingProfiles(false);
     }
-  }, [selectedProfileId]);
+  }, [selectedProfileName]);
 
   useEffect(() => {
     fetchProfiles();
     fetchGpuStatus();
   }, [fetchProfiles, fetchGpuStatus]);
 
-  const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
+  const selectedProfile = profiles.find((p) => p.name === selectedProfileName);
 
   return (
     <div className="container max-w-5xl py-6 space-y-6">
@@ -220,7 +220,7 @@ export default function AiSettingsPage() {
             <>
               <div className="flex items-center gap-4">
                 <Select
-                  value={selectedProfileId}
+                  value={selectedProfileName}
                   onValueChange={setSelectedProfileId}
                 >
                   <SelectTrigger className="w-80">
@@ -228,7 +228,7 @@ export default function AiSettingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {profiles.map((profile) => (
-                      <SelectItem key={profile.id} value={profile.id}>
+                      <SelectItem key={profile.name} value={profile.name}>
                         <div className="flex items-center gap-2">
                           <span>{profile.name}</span>
                           <Badge
@@ -262,7 +262,7 @@ export default function AiSettingsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedProfile.models.map((model) => (
+                        {selectedProfile.recommendations.map((model) => (
                           <tr key={model.capability} className="border-b last:border-b-0">
                             <td className="p-3">
                               <Badge variant="outline" className="text-xs">
@@ -274,13 +274,13 @@ export default function AiSettingsPage() {
                               {formatVram(model.vram_mb)}
                             </td>
                             <td className="p-3 text-right">
-                              <span className={`text-xs font-semibold ${qualityColor(model.quality_score)}`}>
-                                {model.quality_score}%
+                              <span className={`text-xs font-semibold ${qualityColor(model.quality_score * 100)}`}>
+                                {Math.round(model.quality_score * 100)}%
                               </span>
                             </td>
                           </tr>
                         ))}
-                        {selectedProfile.models.length === 0 && (
+                        {selectedProfile.recommendations.length === 0 && (
                           <tr>
                             <td colSpan={4} className="p-4 text-center text-muted-foreground">
                               Aucun modele configure pour ce profil
