@@ -128,6 +128,23 @@ function extractCellValue(cellValue: ExcelJS.CellValue): string {
         }
     }
 
+    // Final fallback — if it's still an object, try to extract something useful
+    if (typeof cellValue === 'object') {
+        // Could be a nested result object we didn't catch above
+        const obj = cellValue as Record<string, unknown>;
+        if ('result' in obj) {
+            const r = obj.result;
+            if (r === null || r === undefined) return '';
+            if (typeof r === 'string') return r;
+            if (typeof r === 'number') return String(r);
+            if (typeof r === 'boolean') return String(r);
+            if (r instanceof Date) return r.toISOString().split('T')[0];
+        }
+        if ('text' in obj && typeof obj.text === 'string') return obj.text;
+        // Last resort — avoid [object Object]
+        try { return JSON.stringify(cellValue); } catch { return ''; }
+    }
+
     return String(cellValue);
 }
 
