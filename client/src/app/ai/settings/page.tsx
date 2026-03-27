@@ -262,7 +262,7 @@ export default function AiSettingsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedProfile.recommendations.map((model) => (
+                        {(selectedProfile.recommendations ?? []).map((model) => (
                           <tr key={model.capability} className="border-b last:border-b-0">
                             <td className="p-3">
                               <Badge variant="outline" className="text-xs">
@@ -280,7 +280,7 @@ export default function AiSettingsPage() {
                             </td>
                           </tr>
                         ))}
-                        {selectedProfile.recommendations.length === 0 && (
+                        {(selectedProfile.recommendations ?? []).length === 0 && (
                           <tr>
                             <td colSpan={4} className="p-4 text-center text-muted-foreground">
                               Aucun modele configure pour ce profil
