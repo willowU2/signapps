@@ -2276,7 +2276,14 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                     const isFindMatch = findMatches.some(m => m.r === r && m.c === c)
                                     const isCurrentFind = findMatches.length > 0 && findMatches[currentFindIdx]?.r === r && findMatches[currentFindIdx]?.c === c
 
-                                    const rawValue = cellData?.value || ""
+                                    let rawValue = cellData?.value || ""
+                                    // Guard: if value is an object (e.g., Date from Yjs), convert to string
+                                    if (typeof rawValue === 'object') {
+                                        if (rawValue instanceof Date) rawValue = rawValue.toISOString().split('T')[0]
+                                        else if ('result' in rawValue) rawValue = String((rawValue as any).result ?? '')
+                                        else if ('text' in rawValue) rawValue = String((rawValue as any).text ?? '')
+                                        else rawValue = ''
+                                    }
                                     const evaluated = evaluatedData[`${r},${c}`] || rawValue
                                     const displayValue = formatDisplayValue(evaluated, style)
                                     const isErrorVal = (displayValue.startsWith("#") && displayValue.endsWith("!")) || displayValue === "#NAME?" || displayValue === "#N/A"
