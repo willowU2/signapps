@@ -125,6 +125,12 @@ test.describe('Sheets XLSX Import', () => {
       ['CV+TK', 'MgBrut', 'CAcomp', 'MGcomp', 'Remise', 'Jour', 'Date'].includes(s)
     );
     expect(hasExpectedHeaders).toBe(true);
+
+    // Check NO [object Object] values
+    const objectObjectCount = cellInfo.samples.filter(s => s.includes('[object Object]')).length;
+    console.log(`[object Object] count in samples: ${objectObjectCount}`);
+    expect(objectObjectCount).toBe(0);
+
     console.log('IMPORT SUCCESS: Excel data loaded with headers and cell content');
   });
 });
