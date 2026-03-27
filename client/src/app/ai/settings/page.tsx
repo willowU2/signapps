@@ -126,13 +126,13 @@ export default function AiSettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium">Tier GPU</p>
-                <Badge className={tierBadgeClass(gpuStatus.tier)}>
-                  {gpuStatus.tier.toUpperCase()}
+                <Badge className={tierBadgeClass(gpuStatus.tier ?? 'cpu')}>
+                  {(gpuStatus.tier ?? 'cpu').toUpperCase()}
                 </Badge>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium">GPUs detectes</p>
-                <p className="text-sm font-semibold">{gpuStatus.gpus.length}</p>
+                <p className="text-sm font-semibold">{(gpuStatus.gpus ?? []).length}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium">VRAM totale</p>
@@ -144,7 +144,7 @@ export default function AiSettingsPage() {
               </div>
 
               {/* GPU names */}
-              {gpuStatus.gpus.map((gpu) => (
+              {(gpuStatus.gpus ?? []).map((gpu) => (
                 <div key={gpu.id} className="col-span-full">
                   <div className="flex items-center gap-2 text-sm">
                     <Cpu className="h-4 w-4 text-muted-foreground" />
@@ -157,7 +157,7 @@ export default function AiSettingsPage() {
                 </div>
               ))}
 
-              {gpuStatus.gpus.length === 0 && (
+              {(gpuStatus.gpus ?? []).length === 0 && (
                 <div className="col-span-full text-sm text-muted-foreground italic flex items-center gap-2">
                   <Server className="h-4 w-4" />
                   Aucun GPU detecte — inference CPU uniquement
