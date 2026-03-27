@@ -468,6 +468,7 @@ function FilterDialog({ col, data, onApply, onClose }: {
 // ============================================================// MAIN SPREADSHEET COMPONENT
 export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'document.xlsx', initialData, initialColWidths, initialRowHeights }: { documentId?: string, documentName?: string, initialData?: any, initialColWidths?: Record<number, number>, initialRowHeights?: Record<number, number> }) {
     const {
+        doc,
         data, setCell, setCellStyle, setCellFull, setCellComment, setCellValidation,
         deleteCell, deleteCellRange, getCellRange, setCellRange,
         insertRow, deleteRow, insertColumn, deleteColumn,
@@ -1108,38 +1109,62 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             const sheetNames = result.sheets;
             if (sheetNames.length === 0) { toast.error("Aucune feuille trouvée"); return; }
 
-            const firstSheetName = sheetNames[0];
-            const cellsMap = result.data[firstSheetName];
-            if (!cellsMap) { toast.error("Aucune donnée trouvée"); return; }
+            let totalCount = 0;
 
-            let count = 0;
-            transact(() => {
-                for (const [key, cellData] of Object.entries(cellsMap)) {
-                    const [rStr, cStr] = key.split(',');
-                    const r = parseInt(rStr, 10);
-                    const c = parseInt(cStr, 10);
-                    if (r >= ROWS || c >= COLS) continue;
-                    setCellFull(r, c, cellData);
-                    count++;
+            // Rename default sheet to first Excel sheet name
+            renameSheet(0, sheetNames[0]);
+
+            // Create additional sheets for remaining Excel sheets
+            for (let i = 1; i < sheetNames.length; i++) {
+                addSheet(sheetNames[i]);
+            }
+
+            // Wait a tick for Yjs sheets to be created and synced
+            await new Promise(r => setTimeout(r, 100));
+
+            // Read back sheet metadata to get actual sheet IDs
+            const sheetsMetaV2 = doc.getArray<{ id: string; name: string }>('sheets-meta-v2');
+            const sheetEntries = sheetsMetaV2.toArray();
+
+            // Import data into each sheet by writing directly to its Yjs grid map
+            doc.transact(() => {
+                for (let i = 0; i < sheetNames.length; i++) {
+                    const sheetName = sheetNames[i];
+                    const cellsMap = result.data[sheetName];
+                    if (!cellsMap || i >= sheetEntries.length) continue;
+
+                    const sheetId = sheetEntries[i].id;
+                    const gridMap = doc.getMap<CellData>(`grid-${sheetId}`);
+
+                    for (const [key, cellData] of Object.entries(cellsMap)) {
+                        const [rStr, cStr] = key.split(',');
+                        const r = parseInt(rStr, 10);
+                        const c = parseInt(cStr, 10);
+                        if (r >= ROWS || c >= COLS) continue;
+                        gridMap.set(`${r},${c}`, cellData as CellData);
+                        totalCount++;
+                    }
                 }
             });
 
-            // Apply column widths if available
-            if (result.colWidths?.[firstSheetName]) {
-                setColWidths(prev => ({ ...prev, ...result.colWidths![firstSheetName] }));
+            // Apply column widths and row heights for the active (first) sheet
+            if (result.colWidths?.[sheetNames[0]]) {
+                setColWidths(prev => ({ ...prev, ...result.colWidths![sheetNames[0]] }));
+            }
+            if (result.rowHeights?.[sheetNames[0]]) {
+                setRowHeights(prev => ({ ...prev, ...result.rowHeights![sheetNames[0]] }));
             }
 
-            // Apply row heights if available
-            if (result.rowHeights?.[firstSheetName]) {
-                setRowHeights(prev => ({ ...prev, ...result.rowHeights![firstSheetName] }));
-            }
+            // Switch to first sheet
+            setActiveSheetIndex(0);
 
-            toast.success(`${count} cellules importées de ${file.name}`);
+            toast.success(`${totalCount} cellules importées de ${file.name} (${sheetNames.length} onglet${sheetNames.length > 1 ? 's' : ''})`);
         } catch(err) {
-            toast.error("Format de fichier invalide");
+            console.error('Import error:', err);
+            toast.error("Erreur d'importation: " + (err instanceof Error ? err.message : 'Format invalide'));
         }
         e.target.value = ''
-    }, [setCellFull, transact, setColWidths, setRowHeights])
+    }, [doc, setCellFull, transact, setColWidths, setRowHeights, addSheet, renameSheet, setActiveSheetIndex])
 
     // ---- File Export (CSV/XLSX) ----
     const exportXLSX = useCallback(async (type: 'xlsx' | 'csv') => {

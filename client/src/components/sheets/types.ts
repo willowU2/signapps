@@ -54,8 +54,8 @@ export const TAB_COLORS = [
     '#46bdc6', '#9334e6', '#d81b60', '#795548', '#607d8b',
 ]
 
-export const ROWS = 200
-export const COLS = 50
+export const ROWS = 10500
+export const COLS = 200
 export const DEFAULT_COL_WIDTH = 100
 export const DEFAULT_ROW_HEIGHT = 21
 export const ROW_HEADER_WIDTH = 46

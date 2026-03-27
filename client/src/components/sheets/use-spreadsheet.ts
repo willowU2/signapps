@@ -399,6 +399,7 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
     }, [doc])
 
     return {
+        doc,
         data, setCell, setCellStyle, setCellFull, setCellComment, setCellValidation,
         deleteCell, deleteCellRange, getCellRange, setCellRange,
         insertRow, deleteRow, insertColumn, deleteColumn,
