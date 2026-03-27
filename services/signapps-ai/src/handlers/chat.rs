@@ -172,12 +172,17 @@ pub async fn chat(
         );
     }
 
-    // Conversation memory: load or create conversation
+    // Conversation memory: load existing or create new conversation
     let memory = ConversationMemory::new(state.pool.clone());
-    let conv = if let Some(cid) = payload.conversation_id {
-        Some(memory.get_or_create(Some(cid), claims.sub).await?)
-    } else {
-        None
+    let conv = match memory
+        .get_or_create(payload.conversation_id, claims.sub)
+        .await
+    {
+        Ok(c) => Some(c),
+        Err(e) => {
+            tracing::warn!("Failed to manage conversation: {}", e);
+            None
+        },
     };
 
     // Build effective question: prepend conversation history if available
