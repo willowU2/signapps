@@ -38,12 +38,12 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
+        <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-8 pb-4 border-b border-border/50">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
             <p className="text-sm text-muted-foreground mt-1">Welcome back. Here's an overview of your systems.</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {editMode && (
               <>
                 <Button
@@ -89,8 +89,8 @@ export default function DashboardPage() {
 
         <WidgetGrid />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
-          <div className="lg:col-span-2 border rounded-xl p-4 bg-card">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-6">
+          <div className="xl:col-span-2 border rounded-xl p-4 bg-card">
             <h2 className="text-base font-semibold mb-3">Activité récente</h2>
             <ActivityFeed limit={20} />
           </div>

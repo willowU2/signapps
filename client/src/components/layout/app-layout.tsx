@@ -25,7 +25,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         className="bg-background"
         header={pathname === '/dashboard' ? <Header /> : <GlobalHeader />}
       >
-        <main className="flex-1 p-6 pr-20 md:pr-24 relative overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 transition-colors">
+        <main className="flex-1 p-4 md:p-6 relative overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40 transition-colors">
           <Breadcrumbs />
           <AnimatePresence mode="wait">
             <motion.div

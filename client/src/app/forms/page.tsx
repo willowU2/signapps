@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import {
-    FileText, Plus, Edit, Trash, Eye, Globe, Link as LinkIcon, Send, FileX, BarChart3
+    FileText, Plus, Edit, Trash, Eye, Globe, Link as LinkIcon, Send, FileX, BarChart3, Calendar
 } from "lucide-react"
 
 interface Form {
@@ -144,7 +144,7 @@ export default function FormsPage() {
         <AppLayout>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-wrap justify-between items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent flex items-center gap-2">
                             <FileText className="h-8 w-8 text-primary" />
@@ -192,7 +192,7 @@ export default function FormsPage() {
                                 <p className="text-sm">Aucun formulaire. Créez-en un !</p>
                             </div>
                         ) : (
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                                 {forms.map(form => (
                                     <Card key={form.id} className="border-border/50 bg-card hover:shadow-md transition-shadow">
                                         <CardHeader className="pb-2">
@@ -206,16 +206,19 @@ export default function FormsPage() {
                                             </div>
                                             <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{form.description}</p>
                                         </CardHeader>
-                                        <CardContent className="space-y-3">
-                                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                        <CardContent className="space-y-4">
+                                            <div className="flex items-center justify-between text-xs text-muted-foreground">
                                                 <span className="flex items-center gap-1">
                                                     <Send className="h-3 w-3" />
                                                     {form.response_count} réponse{form.response_count !== 1 ? "s" : ""}
                                                 </span>
-                                                <span>{new Date(form.created_at).toLocaleDateString("fr-FR")}</span>
+                                                <span className="flex items-center gap-1">
+                                                    <Calendar className="h-3 w-3" />
+                                                    {new Date(form.created_at).toLocaleDateString("fr-FR")}
+                                                </span>
                                             </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                <Button size="sm" variant="default" asChild>
+                                            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
+                                                <Button size="sm" variant="default" className="flex-1 whitespace-nowrap" asChild>
                                                     <Link href={`/forms/${form.id}`}>
                                                         <Edit className="h-3 w-3 mr-1" /> Éditeur
                                                     </Link>
@@ -223,21 +226,18 @@ export default function FormsPage() {
                                                 <Button size="sm" variant="outline" onClick={() => openEdit(form)}>
                                                     Paramètres
                                                 </Button>
-                                                <Button size="sm" variant="outline" onClick={() => togglePublish(form)}>
+                                                <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => togglePublish(form)}>
                                                     <Globe className="h-3 w-3 mr-1" />
                                                     {form.status === "published" ? "Dépublier" : "Publier"}
                                                 </Button>
-                                                <Button size="sm" variant="outline">
-                                                    <Eye className="h-3 w-3 mr-1" /> Réponses
-                                                </Button>
                                                 {form.status === "published" && (
-                                                    <Button size="sm" variant="outline" onClick={() => copyLink(form)}>
+                                                    <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => copyLink(form)}>
                                                         <LinkIcon className="h-3 w-3 mr-1" />
-                                                        {copiedId === form.id ? "Copié !" : "Copier le lien"}
+                                                        {copiedId === form.id ? "Copié !" : "Lien"}
                                                     </Button>
                                                 )}
-                                                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleDelete(form.id)}>
-                                                    <Trash className="h-3 w-3" />
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive shrink-0" onClick={() => handleDelete(form.id)}>
+                                                    <Trash className="h-4 w-4" />
                                                 </Button>
                                             </div>
                                         </CardContent>
