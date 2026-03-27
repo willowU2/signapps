@@ -162,6 +162,20 @@ impl MultimodalIndexer {
             return MediaType::Video;
         }
 
+        // Also match simple media type names (e.g., "image", "audio", "video")
+        if mime == "image" {
+            return MediaType::Image;
+        }
+        if mime == "audio" {
+            return MediaType::Audio;
+        }
+        if mime == "video" {
+            return MediaType::Video;
+        }
+        if mime == "document" || mime == "pdf" {
+            return MediaType::Document;
+        }
+
         // Fallback: treat unknown as text
         MediaType::Text
     }
@@ -700,6 +714,30 @@ mod tests {
         assert_eq!(
             MultimodalIndexer::detect_media_type("video/webm"),
             MediaType::Video
+        );
+    }
+
+    #[test]
+    fn test_detect_media_type_simple_names() {
+        assert_eq!(
+            MultimodalIndexer::detect_media_type("image"),
+            MediaType::Image
+        );
+        assert_eq!(
+            MultimodalIndexer::detect_media_type("audio"),
+            MediaType::Audio
+        );
+        assert_eq!(
+            MultimodalIndexer::detect_media_type("video"),
+            MediaType::Video
+        );
+        assert_eq!(
+            MultimodalIndexer::detect_media_type("document"),
+            MediaType::Document
+        );
+        assert_eq!(
+            MultimodalIndexer::detect_media_type("pdf"),
+            MediaType::Document
         );
     }
 

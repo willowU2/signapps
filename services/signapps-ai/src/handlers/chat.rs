@@ -646,7 +646,7 @@ async fn generate_image_for_chat(
     // Record in generated_media table for circular pipeline indexing
     let _ = GeneratedMediaRepository::create(
         &state.pool,
-        "image",
+        "image/png",
         &prompt,
         &result.model,
         &path,
@@ -699,7 +699,7 @@ async fn generate_audio_for_chat(
     // Record in generated_media table for circular pipeline indexing
     let _ = GeneratedMediaRepository::create(
         &state.pool,
-        "audio",
+        "audio/wav",
         &prompt,
         &result.model,
         &path,
