@@ -526,10 +526,54 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     const [showBorderPicker, setShowBorderPicker] = useState(false)
     const [showChartPicker, setShowChartPicker] = useState(false)
 
-    // Column/Row resize
+    // Column/Row resize — synced to Yjs per sheet
     const [colWidths, setColWidths] = useState<Record<number, number>>(initialColWidths ?? {})
     const [rowHeights, setRowHeights] = useState<Record<number, number>>(initialRowHeights ?? {})
+    const colWidthsRef = useRef<Record<number, number>>(colWidths)
+    const rowHeightsRef = useRef<Record<number, number>>(rowHeights)
+    colWidthsRef.current = colWidths
+    rowHeightsRef.current = rowHeights
     const resizeRef = useRef<{ type: 'col' | 'row', index: number, startPos: number, startSize: number } | null>(null)
+
+    // Sync colWidths/rowHeights from Yjs maps when active sheet changes
+    const currentSheetId = sheets[activeSheetIndex]?.id || 'default'
+    useEffect(() => {
+        const yjsColWidths = doc.getMap<number>(`colWidths-${currentSheetId}`)
+        const yjsRowHeights = doc.getMap<number>(`rowHeights-${currentSheetId}`)
+
+        const loadColWidths = () => {
+            const widths: Record<number, number> = {}
+            yjsColWidths.forEach((v, k) => { widths[Number(k)] = v })
+            setColWidths(widths)
+        }
+        const loadRowHeights = () => {
+            const heights: Record<number, number> = {}
+            yjsRowHeights.forEach((v, k) => { heights[Number(k)] = v })
+            setRowHeights(heights)
+        }
+
+        loadColWidths()
+        loadRowHeights()
+
+        yjsColWidths.observe(loadColWidths)
+        yjsRowHeights.observe(loadRowHeights)
+
+        return () => {
+            yjsColWidths.unobserve(loadColWidths)
+            yjsRowHeights.unobserve(loadRowHeights)
+        }
+    }, [doc, currentSheetId])
+
+    // Persist column width / row height changes to Yjs (observer will update React state)
+    const persistColWidth = useCallback((col: number, width: number) => {
+        const yjsColWidths = doc.getMap<number>(`colWidths-${currentSheetId}`)
+        yjsColWidths.set(String(col), width)
+    }, [doc, currentSheetId])
+
+    const persistRowHeight = useCallback((row: number, height: number) => {
+        const yjsRowHeights = doc.getMap<number>(`rowHeights-${currentSheetId}`)
+        yjsRowHeights.set(String(row), height)
+    }, [doc, currentSheetId])
 
     // Context menu
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, r: number, c: number } | null>(null)
@@ -817,7 +861,17 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             }
         }
         const handleMouseUp = () => {
-            if (resizeRef.current) resizeRef.current = null
+            if (resizeRef.current) {
+                // Persist final size to Yjs so it survives sheet switches
+                const { type, index, startSize } = resizeRef.current
+                resizeRef.current = null
+                // We need to read the final value — grab it from the DOM-driven ref
+                requestAnimationFrame(() => {
+                    const yjsMap = doc.getMap<number>(type === 'col' ? `colWidths-${currentSheetId}` : `rowHeights-${currentSheetId}`)
+                    // The value was already set in React state during drag; read from colWidthsRef/rowHeightsRef
+                    yjsMap.set(String(index), colWidthsRef.current[index] ?? (type === 'col' ? DEFAULT_COL_WIDTH : DEFAULT_ROW_HEIGHT))
+                })
+            }
             setIsDragging(false)
             if (isDragFilling && dragFillEnd && selectionBounds) { performDragFill(); setIsDragFilling(false); setDragFillEnd(null) }
         }
@@ -1133,16 +1187,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             const ext = file.name.split('.').pop()?.toLowerCase() || '';
             const importResult = await importXlsxToYjs(doc, arrayBuffer, ext);
 
-            // Apply column widths and row heights for the active (first) sheet
-            const firstName = importResult.sheetNames[0];
-            if (importResult.colWidths?.[firstName]) {
-                setColWidths(prev => ({ ...prev, ...importResult.colWidths![firstName] }));
-            }
-            if (importResult.rowHeights?.[firstName]) {
-                setRowHeights(prev => ({ ...prev, ...importResult.rowHeights![firstName] }));
-            }
-
-            // Switch to first sheet
+            // Column widths and row heights are now stored per-sheet in Yjs by
+            // importXlsxToYjs. Switching to the first sheet will load them via
+            // the colWidths/rowHeights Yjs observer.
             setActiveSheetIndex(0);
 
             toast.success(`${importResult.totalCells} cellules importées de ${file.name} (${importResult.sheetCount} onglet${importResult.sheetCount > 1 ? 's' : ''})`);
@@ -1151,7 +1198,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             toast.error("Erreur d'importation: " + (err instanceof Error ? err.message : 'Format invalide'));
         }
         e.target.value = ''
-    }, [doc, setColWidths, setRowHeights, setActiveSheetIndex])
+    }, [doc, setActiveSheetIndex])
 
     // ---- File Export (CSV/XLSX) ----
     const exportXLSX = useCallback(async (type: 'xlsx' | 'csv') => {
@@ -1532,9 +1579,11 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             }
         }
         maxWidth = Math.min(maxWidth, 400) // cap at 400px
-        setColWidths(prev => ({ ...prev, [col]: Math.ceil(maxWidth) }))
+        const finalWidth = Math.ceil(maxWidth)
+        setColWidths(prev => ({ ...prev, [col]: finalWidth }))
+        persistColWidth(col, finalWidth)
         toast.success(`Colonne ${indexToCol(col)} ajustée`)
-    }, [data, evaluatedData])
+    }, [data, evaluatedData, persistColWidth])
 
     // ---- Freeze toggle ----
     const toggleFreeze = useCallback(() => {

@@ -104,6 +104,34 @@ export async function importXlsxToYjs(
     }
   }
 
+  // Step 5: Store column widths and row heights per sheet in Yjs
+  doc.transact(() => {
+    for (let i = 0; i < sheetNames.length && i < allEntries.length; i++) {
+      const sheetName = sheetNames[i];
+      const sheetId = allEntries[i].id;
+
+      const parsedColWidths = result.colWidths?.[sheetName];
+      if (parsedColWidths && Object.keys(parsedColWidths).length > 0) {
+        const yjsColWidths = doc.getMap<number>(`colWidths-${sheetId}`);
+        // Clear any existing widths
+        yjsColWidths.forEach((_, key) => yjsColWidths.delete(key));
+        for (const [col, width] of Object.entries(parsedColWidths)) {
+          yjsColWidths.set(String(col), width);
+        }
+      }
+
+      const parsedRowHeights = result.rowHeights?.[sheetName];
+      if (parsedRowHeights && Object.keys(parsedRowHeights).length > 0) {
+        const yjsRowHeights = doc.getMap<number>(`rowHeights-${sheetId}`);
+        // Clear any existing heights
+        yjsRowHeights.forEach((_, key) => yjsRowHeights.delete(key));
+        for (const [row, height] of Object.entries(parsedRowHeights)) {
+          yjsRowHeights.set(String(row), height);
+        }
+      }
+    }
+  });
+
   console.log(`[import-xlsx] Imported ${totalCells} cells across ${sheetNames.length} sheets`);
 
   return {
