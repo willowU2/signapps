@@ -85,6 +85,28 @@ export interface SpreadsheetParseResult {
  * string, number, boolean, Date, CellFormulaValue, CellSharedFormulaValue,
  * CellRichTextValue, CellHyperlinkValue, CellErrorValue, null/undefined.
  */
+/** Safely convert a formula result to a string, handling all possible types */
+function safeResultToString(result: unknown): string {
+    if (result === null || result === undefined) return '';
+    if (typeof result === 'string') return result;
+    if (typeof result === 'number') return String(result);
+    if (typeof result === 'boolean') return String(result);
+    if (result instanceof Date) return result.toISOString().split('T')[0];
+    // Duck-type Date check (cross-realm Date objects)
+    if (typeof result === 'object' && result !== null) {
+        const r = result as any;
+        if (typeof r.toISOString === 'function') return r.toISOString().split('T')[0];
+        if ('error' in r) return String(r.error || '');
+        if ('richText' in r && Array.isArray(r.richText)) return r.richText.map((t: any) => t?.text || '').join('');
+        if ('text' in r) return String(r.text || '');
+        if ('result' in r) return safeResultToString(r.result); // recurse
+        if ('formula' in r) return safeResultToString(r.result); // formula wrapper
+        // Absolutely last resort
+        try { const s = JSON.stringify(r); return s === '{}' ? '' : s; } catch { return ''; }
+    }
+    return String(result);
+}
+
 function extractCellValue(cellValue: ExcelJS.CellValue): string {
     if (cellValue === null || cellValue === undefined) return '';
 
@@ -93,6 +115,10 @@ function extractCellValue(cellValue: ExcelJS.CellValue): string {
     if (typeof cellValue === 'number') return String(cellValue);
     if (typeof cellValue === 'boolean') return String(cellValue);
     if (cellValue instanceof Date) return cellValue.toISOString().split('T')[0];
+    // Duck-type Date for cross-realm objects
+    if (typeof cellValue === 'object' && cellValue !== null && typeof (cellValue as any).toISOString === 'function') {
+        return (cellValue as any).toISOString().split('T')[0];
+    }
 
     // Object types — use type guards
     if (typeof cellValue === 'object') {
@@ -107,20 +133,12 @@ function extractCellValue(cellValue: ExcelJS.CellValue): string {
         // CellFormulaValue: { formula, result }
         if ('formula' in cellValue && typeof (cellValue as ExcelJS.CellFormulaValue).formula === 'string') {
             const fv = cellValue as ExcelJS.CellFormulaValue;
-            const result = fv.result;
-            if (result === null || result === undefined) return '';
-            if (result instanceof Date) return result.toISOString().split('T')[0];
-            if (typeof result === 'object' && 'error' in result) return result.error;
-            return String(result);
+            return safeResultToString(fv.result);
         }
         // CellSharedFormulaValue: { sharedFormula, result }
         if ('sharedFormula' in cellValue) {
             const sv = cellValue as ExcelJS.CellSharedFormulaValue;
-            const result = sv.result;
-            if (result === null || result === undefined) return '';
-            if (result instanceof Date) return result.toISOString().split('T')[0];
-            if (typeof result === 'object' && 'error' in result) return result.error;
-            return String(result);
+            return safeResultToString(sv.result);
         }
         // CellErrorValue: { error: '#N/A' | ... }
         if ('error' in cellValue) {
@@ -145,7 +163,7 @@ function extractCellValue(cellValue: ExcelJS.CellValue): string {
         try { return JSON.stringify(cellValue); } catch { return ''; }
     }
 
-    return String(cellValue);
+    return safeResultToString(cellValue);
 }
 
 /**
