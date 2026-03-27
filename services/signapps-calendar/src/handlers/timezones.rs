@@ -1,10 +1,16 @@
 //! Handlers for timezone operations
 
-use axum::{extract::Query, Json};
+use axum::{
+    extract::{Extension, Query, State},
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
+};
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
+use signapps_common::Claims;
 
-use crate::services;
+use crate::{services, AppState};
 
 #[derive(Debug, Deserialize)]
 pub struct TimezoneListQuery {
@@ -85,4 +91,95 @@ pub async fn convert_timezone(
         original: utc_time.to_rfc3339(),
         converted,
     }))
+}
+
+// ---------------------------------------------------------------------------
+// User timezone preference — SYNC-CALENDAR-TZ
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Serialize)]
+pub struct UserTimezoneResponse {
+    pub timezone: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SetUserTimezoneRequest {
+    pub timezone: String,
+}
+
+/// GET /api/v1/timezones/me — get user's preferred timezone
+pub async fn get_user_timezone(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> impl IntoResponse {
+    match sqlx::query_scalar::<_, Option<String>>(
+        "SELECT timezone FROM calendar.user_settings WHERE user_id = $1",
+    )
+    .bind(claims.sub)
+    .fetch_optional(&*state.pool)
+    .await
+    {
+        Ok(Some(Some(tz))) => (
+            StatusCode::OK,
+            Json(serde_json::json!(UserTimezoneResponse { timezone: tz })),
+        )
+            .into_response(),
+        Ok(_) => (
+            StatusCode::OK,
+            Json(serde_json::json!(UserTimezoneResponse {
+                timezone: "UTC".to_string()
+            })),
+        )
+            .into_response(),
+        Err(e) => {
+            tracing::error!("get_user_timezone: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "database error" })),
+            )
+                .into_response()
+        },
+    }
+}
+
+/// PUT /api/v1/timezones/me — set user's preferred timezone
+pub async fn set_user_timezone(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<SetUserTimezoneRequest>,
+) -> impl IntoResponse {
+    if !services::validate_timezone(&payload.timezone) {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "error": "invalid timezone" })),
+        )
+            .into_response();
+    }
+
+    match sqlx::query(
+        "INSERT INTO calendar.user_settings (user_id, timezone)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id) DO UPDATE SET timezone = EXCLUDED.timezone",
+    )
+    .bind(claims.sub)
+    .bind(&payload.timezone)
+    .execute(&*state.pool)
+    .await
+    {
+        Ok(_) => (
+            StatusCode::OK,
+            Json(serde_json::json!(UserTimezoneResponse {
+                timezone: payload.timezone
+            })),
+        )
+            .into_response(),
+        Err(e) => {
+            tracing::error!("set_user_timezone: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "database error" })),
+            )
+                .into_response()
+        },
+    }
 }

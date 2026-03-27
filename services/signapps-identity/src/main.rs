@@ -9,7 +9,7 @@ mod ldap;
 
 use axum::{
     middleware,
-    routing::{delete, get, post, put},
+    routing::{delete, get, patch, post, put},
     Router,
 };
 use handlers::admin_security;
@@ -208,7 +208,7 @@ fn create_router(state: AppState) -> Router {
         // User preferences
         .route("/api/v1/users/me/preferences", get(handlers::preferences::get_preferences))
         .route("/api/v1/users/me/preferences/sync", post(handlers::preferences::sync_preferences))
-        .route("/api/v1/users/me/preferences/:section", axum::routing::patch(handlers::preferences::patch_preferences))
+        .route("/api/v1/users/me/preferences/:section", patch(handlers::preferences::patch_preferences))
         .route("/api/v1/users/me/preferences/conflicts", get(handlers::preferences::check_conflicts))
         .route("/api/v1/users/me/preferences/reset", post(handlers::preferences::reset_preferences))
         .route("/api/v1/users/me/preferences/export", get(handlers::preferences::export_preferences))
@@ -219,6 +219,29 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/users/me/export/download", get(handlers::data_export::download_export))
         // Activities
         .route("/api/v1/activities", get(handlers::activities::list_activities))
+        // Audit logs — SYNC-AUDIT-ROUTES
+        .route(
+            "/api/v1/audit-logs",
+            get(handlers::audit_logs::list_audit_logs),
+        )
+        .route(
+            "/api/v1/audit-logs/export",
+            get(handlers::audit_logs::export_audit_logs),
+        )
+        .route(
+            "/api/v1/audit-logs/:id",
+            get(handlers::audit_logs::get_audit_log),
+        )
+        .route("/api/v1/audit", post(handlers::audit_logs::query_audit))
+        // Entity links — SYNC-CROSSLINKS
+        .route(
+            "/api/v1/links",
+            get(handlers::entity_links::find_links).post(handlers::entity_links::create_link),
+        )
+        .route(
+            "/api/v1/links/:id",
+            delete(handlers::entity_links::remove_link),
+        )
         // Session management (AQ-SESSMGT)
         .route("/api/v1/auth/sessions", get(handlers::sessions::list))
         .route("/api/v1/auth/sessions", delete(handlers::sessions::revoke_all))

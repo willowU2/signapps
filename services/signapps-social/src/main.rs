@@ -115,6 +115,19 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/social/analytics/posts/:id",
             get(analytics::post_analytics),
         )
+        // SYNC-SOCIAL-ANALYTICS: additional analytics endpoints
+        .route(
+            "/api/v1/social/analytics/followers",
+            get(analytics::followers_timeline),
+        )
+        .route(
+            "/api/v1/social/analytics/by-platform",
+            get(analytics::by_platform),
+        )
+        .route(
+            "/api/v1/social/analytics/top-posts",
+            get(analytics::top_posts),
+        )
         // RSS Feeds
         .route(
             "/api/v1/social/rss-feeds",
@@ -124,6 +137,11 @@ fn create_router(state: AppState) -> Router {
             "/api/v1/social/rss-feeds/:id",
             delete(automation::delete_rss_feed),
         )
+        // SYNC-SOCIAL-RSSCHECK: immediate check trigger
+        .route(
+            "/api/v1/social/rss-feeds/:id/check",
+            post(automation::check_rss_feed_now),
+        )
         // Templates
         .route(
             "/api/v1/social/templates",
@@ -131,7 +149,7 @@ fn create_router(state: AppState) -> Router {
         )
         .route(
             "/api/v1/social/templates/:id",
-            delete(automation::delete_template),
+            patch(automation::update_template).delete(automation::delete_template),
         )
         // AI
         .route("/api/v1/social/ai/generate", post(automation::ai_generate))
@@ -139,6 +157,11 @@ fn create_router(state: AppState) -> Router {
         .route(
             "/api/v1/social/ai/best-time",
             post(automation::ai_best_time),
+        )
+        // SYNC-SOCIAL-SMARTREPLY
+        .route(
+            "/api/v1/social/ai/smart-replies/:inbox_item_id",
+            get(automation::ai_smart_replies),
         )
         // Signatures
         .route(

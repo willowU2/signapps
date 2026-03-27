@@ -39,7 +39,7 @@ export const aiApi = {
     search: (query: string, limit?: number, collections?: string[]) =>
         aiClient.get<SearchResult[]>('/ai/search', { params: { q: query, limit, collections } }),
     semanticSearch: (query: string, options?: { limit?: number; threshold?: number; collections?: string[] }) =>
-        aiClient.get<SemanticSearchResponse>('/ai/semantic-search', {
+        aiClient.get<SemanticSearchResponse>('/search', {
             params: { q: query, limit: options?.limit, threshold: options?.threshold, collections: options?.collections },
         }),
     generateEmbeddings: (input: string | string[]) =>
@@ -75,7 +75,6 @@ export const aiApi = {
 
 export interface ChatResponse {
     answer: string;
-    response?: string;
     sources?: { document_id: string; filename: string; score: number; excerpt: string }[];
     tokens_used?: number;
 }

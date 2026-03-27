@@ -12,6 +12,7 @@ import { CellStyle, CellData, CellValidation, SelectionBounds, ROWS, COLS, DEFAU
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
 import { fetchAndParseDocument, parseSpreadsheetBuffer } from '@/lib/file-parsers'
 import { sanitizeAllSheets } from '@/lib/sheets/sanitize-cells'
+import { importXlsxToYjs } from '@/lib/sheets/import-xlsx'
 import type { SpreadsheetParseResult } from '@/lib/file-parsers'
 import ExcelJS from 'exceljs'
 import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu'

@@ -64,7 +64,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
 
       // Create WebSocket provider
       const provider = new WebsocketProvider(
-        wsUrl.replace(/^(ws|wss):\/\//, ''),
+        wsUrl,
         `calendar-${calendar_id}`,
         ydoc,
         {

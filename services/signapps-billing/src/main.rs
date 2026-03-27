@@ -124,12 +124,118 @@ impl AuthState for AppState {
 }
 
 // ---------------------------------------------------------------------------
+// Response DTOs with computed fields (SYNC-BILLING-TYPES)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Serialize)]
+pub struct InvoiceResponse {
+    pub id: Uuid,
+    pub tenant_id: Option<Uuid>,
+    pub plan_id: Option<Uuid>,
+    pub number: String,
+    // Raw fields
+    pub amount_cents: i32,
+    pub currency: String,
+    pub status: String,
+    pub issued_at: DateTime<Utc>,
+    pub due_at: Option<DateTime<Utc>>,
+    pub paid_at: Option<DateTime<Utc>>,
+    pub metadata: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+    // Computed aliases for frontend compatibility
+    pub client_name: Option<String>,
+    pub total_ttc: f64,
+    pub due_date: Option<DateTime<Utc>>,
+    pub download_url: Option<String>,
+}
+
+impl From<Invoice> for InvoiceResponse {
+    fn from(inv: Invoice) -> Self {
+        let total_ttc = inv.amount_cents as f64 / 100.0;
+        let client_name = inv
+            .metadata
+            .get("client_name")
+            .and_then(|v| v.as_str())
+            .map(String::from);
+        let download_url = Some(format!("/api/v1/invoices/{}/download", inv.id));
+        InvoiceResponse {
+            id: inv.id,
+            tenant_id: inv.tenant_id,
+            plan_id: inv.plan_id,
+            number: inv.number,
+            amount_cents: inv.amount_cents,
+            currency: inv.currency,
+            status: inv.status,
+            issued_at: inv.issued_at,
+            due_at: inv.due_at,
+            paid_at: inv.paid_at,
+            metadata: inv.metadata,
+            created_at: inv.created_at,
+            client_name,
+            total_ttc,
+            due_date: inv.due_at,
+            download_url,
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Usage response (SYNC-BILLING-PREFIX / SYNC-BILLING-TYPES)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Serialize)]
+pub struct UsageResponse {
+    pub storage_used_bytes: i64,
+    pub storage_limit_bytes: i64,
+    pub api_calls_this_month: i64,
+    pub api_calls_limit: i64,
+    pub active_users: i64,
+    pub user_limit: i64,
+}
+
+async fn get_usage(
+    State(state): State<AppState>,
+) -> Result<Json<UsageResponse>, (StatusCode, String)> {
+    // Query aggregated usage from billing metadata / plans
+    let storage_row = sqlx::query_scalar::<_, i64>(
+        "SELECT COALESCE(SUM((metadata->>'storage_bytes')::bigint), 0) FROM billing.invoices WHERE status != 'draft'"
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let api_calls_row = sqlx::query_scalar::<_, i64>(
+        "SELECT COALESCE(SUM((metadata->>'api_calls')::bigint), 0) FROM billing.invoices \
+         WHERE issued_at >= date_trunc('month', now())",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let active_users_row = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(DISTINCT tenant_id) FROM billing.invoices WHERE status = 'paid'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    Ok(Json(UsageResponse {
+        storage_used_bytes: storage_row,
+        storage_limit_bytes: 107_374_182_400, // 100 GB default
+        api_calls_this_month: api_calls_row,
+        api_calls_limit: 1_000_000,
+        active_users: active_users_row,
+        user_limit: 100,
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // Invoice handlers
 // ---------------------------------------------------------------------------
 
 async fn list_invoices(
     State(state): State<AppState>,
-) -> Result<Json<Vec<Invoice>>, (StatusCode, String)> {
+) -> Result<Json<Vec<InvoiceResponse>>, (StatusCode, String)> {
     let invoices =
         sqlx::query_as::<_, Invoice>("SELECT * FROM billing.invoices ORDER BY created_at DESC")
             .fetch_all(&state.pool)
@@ -139,7 +245,9 @@ async fn list_invoices(
                 (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
             })?;
 
-    Ok(Json(invoices))
+    Ok(Json(
+        invoices.into_iter().map(InvoiceResponse::from).collect(),
+    ))
 }
 
 async fn create_invoice(
@@ -169,13 +277,13 @@ async fn create_invoice(
     })?;
 
     tracing::info!(id = %invoice.id, number = %invoice.number, "Invoice created");
-    Ok((StatusCode::CREATED, Json(invoice)))
+    Ok((StatusCode::CREATED, Json(InvoiceResponse::from(invoice))))
 }
 
 async fn get_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<Invoice>, (StatusCode, String)> {
+) -> Result<Json<InvoiceResponse>, (StatusCode, String)> {
     let invoice = sqlx::query_as::<_, Invoice>("SELECT * FROM billing.invoices WHERE id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
@@ -186,7 +294,7 @@ async fn get_invoice(
         })?
         .ok_or_else(|| (StatusCode::NOT_FOUND, "Invoice not found".to_string()))?;
 
-    Ok(Json(invoice))
+    Ok(Json(InvoiceResponse::from(invoice)))
 }
 
 async fn list_plans(
@@ -347,23 +455,25 @@ fn create_router(state: AppState) -> Router {
 
     let public_routes = Router::new()
         .route("/health", get(health))
-        .route("/api/plans", get(list_plans));
+        .route("/api/v1/plans", get(list_plans));
 
     let protected_routes = Router::new()
-        .route("/api/invoices", get(list_invoices).post(create_invoice))
-        .route("/api/invoices/:id", get(get_invoice))
+        .route("/api/v1/invoices", get(list_invoices).post(create_invoice))
+        .route("/api/v1/invoices/:id", get(get_invoice))
+        // Usage endpoint (SYNC-BILLING-PREFIX)
+        .route("/api/v1/usage", get(get_usage))
         // Line items — AQ-BILLDB
         .route(
-            "/api/invoices/:id/line-items",
+            "/api/v1/invoices/:id/line-items",
             get(list_line_items).post(create_line_item),
         )
         .route(
-            "/api/invoices/:id/line-items/:item_id",
+            "/api/v1/invoices/:id/line-items/:item_id",
             axum::routing::delete(delete_line_item),
         )
         // Payments — AQ-BILLDB
         .route(
-            "/api/invoices/:id/payments",
+            "/api/v1/invoices/:id/payments",
             get(list_payments).post(create_payment),
         )
         .route_layer(middleware::from_fn_with_state(

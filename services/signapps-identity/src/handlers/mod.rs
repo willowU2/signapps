@@ -3,9 +3,11 @@
 pub mod activities;
 pub mod admin_security;
 pub mod api_keys;
+pub mod audit_logs;
 pub mod auth;
 pub mod bulk_users;
 pub mod data_export;
+pub mod entity_links;
 pub mod groups;
 pub mod guest_tokens;
 pub mod health;

@@ -1,6 +1,6 @@
 import { createApiClient } from './core';
 
-export const SOCIAL_URL = process.env.NEXT_PUBLIC_SOCIAL_URL || 'http://localhost:3019/api/v1';
+export const SOCIAL_URL = process.env.NEXT_PUBLIC_SOCIAL_URL || 'http://localhost:3019/api/v1/social';
 
 export const socialApiClient = createApiClient(SOCIAL_URL);
 
@@ -350,7 +350,7 @@ export const socialApi = {
     hashtags: (content: string) =>
       socialApiClient.post<{ hashtags: string[] }>('/ai/hashtags', { content }),
     bestTime: (accountId: string) =>
-      socialApiClient.get<{ hour: number; day: string; reason: string }>(`/ai/best-time/${accountId}`),
+      socialApiClient.post<{ best_times: { day_of_week: number; hour: number; engagement_score: number }[] }>(`/ai/best-time`, { account_id: accountId }),
     smartReplies: (inboxItemId: string) =>
       socialApiClient.get<{ suggestions: string[] }>(`/ai/smart-replies/${inboxItemId}`),
   },

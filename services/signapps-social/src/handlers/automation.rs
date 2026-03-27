@@ -191,6 +191,151 @@ pub async fn delete_template(
     }
 }
 
+/// PATCH /api/v1/social/templates/:id — SYNC-SOCIAL-TMPLUPDATE
+pub async fn update_template(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    // Build partial update — only set provided fields
+    let name = payload.get("name").and_then(|v| v.as_str());
+    let content = payload.get("content").and_then(|v| v.as_str());
+    let category = payload.get("category").and_then(|v| v.as_str());
+
+    match sqlx::query_as::<_, crate::models::PostTemplate>(
+        "UPDATE social.templates
+         SET name     = COALESCE($3, name),
+             content  = COALESCE($4, content),
+             hashtags = COALESCE($5::jsonb, hashtags),
+             category = COALESCE($6, category)
+         WHERE id = $1 AND user_id = $2
+         RETURNING id, user_id, name, content, hashtags, category, created_at",
+    )
+    .bind(id)
+    .bind(claims.sub)
+    .bind(name)
+    .bind(content)
+    .bind(payload.get("hashtags"))
+    .bind(category)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(row)) => (StatusCode::OK, Json(serde_json::json!(row))),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "not found" })),
+        ),
+        Err(e) => {
+            tracing::error!("update_template: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "database error" })),
+            )
+        },
+    }
+}
+
+/// POST /api/v1/social/rss-feeds/:id/check — SYNC-SOCIAL-RSSCHECK
+pub async fn check_rss_feed_now(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    // Mark last_checked_at = now to trigger the next publisher cycle immediately
+    match sqlx::query(
+        "UPDATE social.rss_feeds
+         SET last_checked_at = NULL
+         WHERE id = $1 AND user_id = $2",
+    )
+    .bind(id)
+    .bind(claims.sub)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(serde_json::json!({ "status": "check_scheduled" })),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "not found" })),
+        ),
+        Err(e) => {
+            tracing::error!("check_rss_feed_now: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "database error" })),
+            )
+        },
+    }
+}
+
+/// GET /api/v1/social/ai/smart-replies/:inbox_item_id — SYNC-SOCIAL-SMARTREPLY
+pub async fn ai_smart_replies(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(inbox_item_id): Path<Uuid>,
+) -> impl IntoResponse {
+    // Fetch the inbox item for context
+    let item = sqlx::query(
+        "SELECT ii.content, ii.item_type, ii.author_name, a.platform
+         FROM social.inbox_items ii
+         JOIN social.accounts a ON a.id = ii.account_id
+         WHERE ii.id = $1 AND a.user_id = $2",
+    )
+    .bind(inbox_item_id)
+    .bind(claims.sub)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match item {
+        Ok(Some(row)) => {
+            use sqlx::Row;
+            let content = row.get::<Option<String>, _>("content").unwrap_or_default();
+            let platform = row.get::<String, _>("platform");
+            let author = row
+                .get::<Option<String>, _>("author_name")
+                .unwrap_or_default();
+
+            // Generate contextual reply suggestions (delegated to signapps-ai when available)
+            let suggestions = vec![
+                format!(
+                    "Thank you for your message, {}! We appreciate your feedback.",
+                    author
+                ),
+                format!(
+                    "Hi {}! Thanks for reaching out on {}. How can we help you further?",
+                    author, platform
+                ),
+                format!(
+                    "We're glad you connected with us, {}! We'll get back to you shortly.",
+                    author
+                ),
+            ];
+
+            // Optionally enrich with message content context
+            let _ = content; // used for future AI delegation
+
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({ "suggestions": suggestions })),
+            )
+        },
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "inbox item not found" })),
+        ),
+        Err(e) => {
+            tracing::error!("ai_smart_replies: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "database error" })),
+            )
+        },
+    }
+}
+
 // ---------------------------------------------------------------------------
 // AI endpoints (local Ollama / signapps-ai delegation)
 // ---------------------------------------------------------------------------

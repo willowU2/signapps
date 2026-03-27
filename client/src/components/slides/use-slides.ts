@@ -76,7 +76,7 @@ export function useSlides(docId: string = 'slides-demo') {
     useEffect(() => {
         // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
         const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true'
-        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4444'
+        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010'
         const wsUrl = `${baseUrl}/${docId}`
         const webrtcProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
 

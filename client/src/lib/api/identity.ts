@@ -53,7 +53,7 @@ export const authApi = {
 // Preferences API
 export const preferencesApi = {
     get: () => identityClient.get('/users/me/preferences'),
-    sync: (data: any) => identityClient.put('/users/me/preferences', data),
+    sync: (data: any) => identityClient.post('/users/me/preferences/sync', data),
     patch: (section: string, data: any) => identityClient.patch(`/users/me/preferences/${section}`, data),
     reset: () => identityClient.post('/users/me/preferences/reset'),
 };
@@ -122,7 +122,7 @@ export const usersApi = {
         identityClient.get<UserListResponse>('/users', { params: { page, limit } }),
     get: (id: string) => identityClient.get<User>(`/users/${id}`),
     create: (data: CreateUserRequest) => identityClient.post<User>('/users', data),
-    update: (id: string, data: Partial<CreateUserRequest>) =>
+    update: (id: string, data: UpdateUserRequest) =>
         identityClient.put<User>(`/users/${id}`, data),
     delete: (id: string) => identityClient.delete(`/users/${id}`),
 };

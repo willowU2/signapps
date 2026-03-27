@@ -26,7 +26,7 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
     useEffect(() => {
         // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
         const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true'
-        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4444'
+        const baseUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3010'
         const wsUrl = `${baseUrl}/${docId}`
         const wsProvider = new WebsocketProvider(wsUrl, docId, doc, { connect: false })
         const idbProvider = new IndexeddbPersistence(docId, doc)

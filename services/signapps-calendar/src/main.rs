@@ -151,6 +151,11 @@ fn build_router(state: AppState) -> Router {
         // Timezone routes
         .route("/api/v1/timezones/validate", post(timezones::validate_timezone))
         .route("/api/v1/timezones/convert", post(timezones::convert_timezone))
+        // SYNC-CALENDAR-TZ: user preferred timezone
+        .route(
+            "/api/v1/timezones/me",
+            get(timezones::get_user_timezone).put(timezones::set_user_timezone),
+        )
         // Task routes
         .route("/api/v1/calendars/:calendar_id/tasks", post(tasks::create_task))
         .route("/api/v1/calendars/:calendar_id/tasks", get(tasks::list_root_tasks))

@@ -441,7 +441,7 @@ const Editor = ({
     useEffect(() => {
         // Collaboration WebSocket server URL - disabled by default until y-websocket server is deployed
         const collabServerEnabled = process.env.NEXT_PUBLIC_COLLAB_ENABLED === 'true';
-        const baseUrl = process.env.NEXT_PUBLIC_DOCS_WS_URL || 'ws://localhost:4444';
+        const baseUrl = process.env.NEXT_PUBLIC_DOCS_WS_URL || 'ws://localhost:3010';
         const wsUrl = `${baseUrl}/${documentId}`;
 
         const wsProvider = new WebsocketProvider(wsUrl, documentId, ydoc, {

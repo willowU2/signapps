@@ -63,6 +63,7 @@ test.describe('Sheets Tab Switching', () => {
       await objectifsTab.click();
       await page.waitForTimeout(2000);
 
+      await page.waitForTimeout(3000);
       const afterSwitch = await page.evaluate(() => {
         const cells = document.querySelectorAll('[title]');
         const values: string[] = [];
@@ -70,9 +71,10 @@ test.describe('Sheets Tab Switching', () => {
           const t = c.getAttribute('title');
           if (t && t.length > 0 && t.length < 100 && !t.includes('object')) values.push(t);
         });
-        return values.slice(0, 10);
+        return { values: values.slice(0, 10), bodyTextSnippet: document.body.innerText.substring(0, 500) };
       });
-      console.log('After switching to OBJECTIFS:', afterSwitch);
+      console.log('After switching to OBJECTIFS:', JSON.stringify(afterSwitch.values));
+      console.log('Body snippet:', afterSwitch.bodyTextSnippet.substring(0, 200));
 
       // Content should be different from initial (different sheet data)
       const isDifferent = JSON.stringify(afterSwitch) !== JSON.stringify(initialContent);
