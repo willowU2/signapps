@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskForm } from "@/components/tasks/TaskForm";
 import { TaskBoard } from "@/components/tasks/TaskBoard";
+import { CustomKanbanBoard } from "@/components/tasks/CustomKanbanBoard";
 import { TasksHeader } from "@/components/tasks/tasks-header";
 import { ExportDialog } from "@/components/calendar/ExportDialog";
 import { ImportDialog } from "@/components/calendar/ImportDialog";
@@ -27,7 +28,7 @@ export default function TasksPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [parentTaskId, setParentTaskId] = useState<string | undefined>();
   const [treeKey, setTreeKey] = useState(0);
-  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'board' | 'custom-board'>('list');
 
   // Unified Entity Hub sync
   const { projects, fetchTasks, fetchProjects, isLoading } = useEntityStore();
@@ -84,11 +85,11 @@ export default function TasksPage() {
           {/* Content Line Items */}
           <div className="flex-1 overflow-y-auto w-full">
             {isLoading && projects.length === 0 ? (
-              <div className="text-center text-[#5f6368] py-12 text-sm">
+              <div className="text-center text-muted-foreground py-12 text-sm">
                 Chargement...
               </div>
             ) : projects.length === 0 ? (
-              <div className="text-center text-[#5f6368] py-12 text-sm">
+              <div className="text-center text-muted-foreground py-12 text-sm">
                 Aucun projet trouvé. Veuillez d'abord créer un projet dans le Hub.
               </div>
             ) : selectedProjectId && (
@@ -99,10 +100,16 @@ export default function TasksPage() {
                           projectId={selectedProjectId}
                           onAddChild={handleAddChild}
                       />
-                    ) : (
-                      <TaskBoard 
+                    ) : viewMode === 'board' ? (
+                      <TaskBoard
                           key={`board-${treeKey}`}
-                          projectId={selectedProjectId} 
+                          projectId={selectedProjectId}
+                      />
+                    ) : (
+                      // IDEA-130: Custom Kanban with user-defined columns
+                      <CustomKanbanBoard
+                          key={`custom-board-${treeKey}`}
+                          projectId={selectedProjectId}
                       />
                     )}
                 </div>

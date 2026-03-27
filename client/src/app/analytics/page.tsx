@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useQuery } from '@tanstack/react-query';
 import { schedulerMetricsApi as metricsApi } from '@/lib/api/metrics';
@@ -19,27 +18,24 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { Calendar, Target, Clock, AlertTriangle } from 'lucide-react';
-import { toast } from 'sonner';
+import { Calendar, Target, Clock, AlertTriangle, BarChart3 } from 'lucide-react';
 
 export default function AnalyticsPage() {
   const { data: workload, isLoading: workloadLoading, isError: workloadError } = useQuery({
     queryKey: ['metrics', 'workload'],
     queryFn: () => metricsApi.getWorkload(),
+    retry: 1,
   });
 
   const { data: resources, isLoading: resourcesLoading, isError: resourcesError } = useQuery({
     queryKey: ['metrics', 'resources'],
     queryFn: () => metricsApi.getResources(),
+    retry: 1,
   });
 
-  useEffect(() => {
-    if (workloadError || resourcesError) {
-      toast.error('Failed to load analytics data');
-    }
-  }, [workloadError, resourcesError]);
+  const isLoading = (workloadLoading && !workloadError) || (resourcesLoading && !resourcesError);
 
-  if (workloadLoading || resourcesLoading) {
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="space-y-6">
@@ -47,6 +43,31 @@ export default function AnalyticsPage() {
           <p className="text-muted-foreground mb-8">Loading your metrics...</p>
           <CardGridSkeleton count={4} />
           <Skeleton className="h-64 w-full rounded-2xl mt-4" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Show empty state when API is unavailable
+  if (workloadError && resourcesError) {
+    return (
+      <AppLayout>
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Analytics</h1>
+            <p className="text-muted-foreground mt-1">
+              Supervisez votre charge de travail et l&apos;utilisation des ressources.
+            </p>
+          </div>
+          <Card className="border border-border/50 bg-card shadow-sm">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">{"Donn\u00e9es non disponibles"}</h3>
+              <p className="text-sm text-muted-foreground">
+                {"Le service d'analytics n'est pas disponible pour le moment."}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </AppLayout>
     );

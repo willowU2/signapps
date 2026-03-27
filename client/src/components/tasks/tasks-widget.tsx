@@ -60,23 +60,23 @@ export function TasksWidget() {
     return (
         <div className="flex flex-col h-[calc(100vh-3.5rem)] bg-background">
             {/* Google Tasks Style Header - Clean white design */}
-            <div className="px-4 pt-5 pb-3 border-b border-[#f1f3f4]">
+            <div className="px-4 pt-5 pb-3 border-b border-border/30">
                 {/* TASKS label */}
-                <div className="text-[11px] font-semibold text-[#5f6368] tracking-widest uppercase mb-2">
+                <div className="text-[11px] font-semibold text-muted-foreground tracking-widest uppercase mb-2">
                     TASKS
                 </div>
 
                 {/* List Dropdown */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-1 text-[22px] font-normal text-[#202124] hover:bg-[#f1f3f4] rounded-md px-2 py-1 -ml-2 transition-colors">
+                        <button className="flex items-center gap-1 text-[22px] font-normal text-foreground hover:bg-muted rounded-md px-2 py-1 -ml-2 transition-colors">
                             {selectedList?.name || "My Tasks"}
-                            <svg width="20" height="20" viewBox="0 0 24 24" className="text-[#5f6368] fill-current ml-1">
+                            <svg width="20" height="20" viewBox="0 0 24 24" className="text-muted-foreground fill-current ml-1">
                                 <path d="M7 10l5 5 5-5H7z"></path>
                             </svg>
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56 rounded-xl shadow-lg border-[#dadce0]">
+                    <DropdownMenuContent align="start" className="w-56 rounded-xl shadow-lg border-border">
                         {lists.map((list) => (
                             <DropdownMenuItem
                                 key={list.id}
@@ -88,24 +88,24 @@ export function TasksWidget() {
                                         className="w-3 h-3 rounded-sm"
                                         style={{ backgroundColor: list.color || '#4285f4' }}
                                     />
-                                    <span className="text-[14px] text-[#202124]">{list.name}</span>
+                                    <span className="text-[14px] text-foreground">{list.name}</span>
                                 </div>
                                 {selectedListId === list.id && (
-                                    <Check className="w-4 h-4 text-[#1a73e8]" />
+                                    <Check className="w-4 h-4 text-primary" />
                                 )}
                             </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onClick={() => setSelectedList(null)}
-                            className="text-[#5f6368] rounded-lg"
+                            className="text-muted-foreground rounded-lg"
                         >
                             Voir toutes les tâches
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
-                <p className="text-[13px] text-[#5f6368] mt-1.5">
+                <p className="text-[13px] text-muted-foreground mt-1.5">
                     {pendingTasks.length === 0
                         ? "Aucune tâche en attente"
                         : `${pendingTasks.length} tâche${pendingTasks.length > 1 ? 's' : ''} en attente`}
@@ -117,13 +117,13 @@ export function TasksWidget() {
                 <div className="py-1">
                     {filteredTasks.length === 0 ? (
                         <div className="text-center py-16 px-4">
-                            <div className="w-16 h-16 rounded-full bg-[#f1f3f4] mx-auto mb-4 flex items-center justify-center">
-                                <ListTodo className="w-8 h-8 text-[#9aa0a6]" />
+                            <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
+                                <ListTodo className="w-8 h-8 text-muted-foreground/70" />
                             </div>
-                            <p className="text-[14px] text-[#5f6368] font-medium">
+                            <p className="text-[14px] text-muted-foreground font-medium">
                                 Aucune tâche pour le moment
                             </p>
-                            <p className="text-[13px] text-[#9aa0a6] mt-1">
+                            <p className="text-[13px] text-muted-foreground/70 mt-1">
                                 Ajoutez une tâche ci-dessous
                             </p>
                         </div>
@@ -146,9 +146,9 @@ export function TasksWidget() {
 
                             {/* Completed Tasks */}
                             {completedTasks.length > 0 && (
-                                <div className="mt-2 border-t border-[#f1f3f4]">
+                                <div className="mt-2 border-t border-border/30">
                                     <div className="px-4 py-3">
-                                        <span className="text-[11px] font-semibold text-[#5f6368] uppercase tracking-wider">
+                                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                                             Terminées ({completedTasks.length})
                                         </span>
                                     </div>
@@ -171,18 +171,18 @@ export function TasksWidget() {
             </ScrollArea>
 
             {/* Add Task Form - Google Tasks Style */}
-            <div className="p-4 border-t border-[#f1f3f4] bg-background">
+            <div className="p-4 border-t border-border/30 bg-background">
                 <form onSubmit={handleAddTask} className="space-y-3">
                     <div className="flex items-center gap-3">
                         {/* Plus icon like Google Tasks */}
-                        <div className="w-[18px] h-[18px] rounded-full border-[1.5px] border-[#80868b] flex items-center justify-center shrink-0">
-                            <Plus className="w-3 h-3 text-[#80868b]" />
+                        <div className="w-[18px] h-[18px] rounded-full border-[1.5px] border-muted-foreground flex items-center justify-center shrink-0">
+                            <Plus className="w-3 h-3 text-muted-foreground" />
                         </div>
                         <Input
                             placeholder="Ajouter une tâche"
                             value={newTask}
                             onChange={(e) => setNewTask(e.target.value)}
-                            className="border-0 border-b border-[#e8eaed] rounded-none px-0 h-9 text-[14px] text-[#202124] placeholder:text-[#80868b] focus-visible:ring-0 focus-visible:border-[#1a73e8] transition-colors"
+                            className="border-0 border-b border-border rounded-none px-0 h-9 text-[14px] text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:border-primary transition-colors"
                         />
                     </div>
 
@@ -204,8 +204,8 @@ export function TasksWidget() {
                             className={cn(
                                 "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium transition-colors",
                                 formattedDate
-                                    ? "bg-[#e8f0fe] text-[#1967d2] border border-[#d2e3fc] hover:bg-[#d2e3fc]"
-                                    : "bg-[#f1f3f4] text-[#5f6368] hover:bg-[#e8eaed] border border-transparent"
+                                    ? "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15"
+                                    : "bg-muted text-muted-foreground hover:bg-muted/80 border border-transparent"
                             )}
                         >
                             <CalendarIcon className="w-3.5 h-3.5" />
@@ -216,7 +216,7 @@ export function TasksWidget() {
                             <button
                                 type="button"
                                 onClick={() => setDueDate("")}
-                                className="text-[12px] text-[#5f6368] hover:text-[#202124] transition-colors"
+                                className="text-[12px] text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 Effacer
                             </button>
@@ -227,7 +227,7 @@ export function TasksWidget() {
                             <Button
                                 type="submit"
                                 size="sm"
-                                className="ml-auto bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-full h-8 px-4 text-[13px] font-medium shadow-sm"
+                                className="ml-auto bg-primary hover:bg-primary/90 text-white rounded-full h-8 px-4 text-[13px] font-medium shadow-sm"
                             >
                                 Enregistrer
                             </Button>

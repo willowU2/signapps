@@ -62,12 +62,13 @@ export default function BackupsPage() {
   const [restoreProfileId, setRestoreProfileId] = useState<string | null>(null);
   const [runsProfileId, setRunsProfileId] = useState<string | null>(null);
 
-  const { data: profilesData, isLoading } = useQuery({
+  const { data: profilesData, isLoading, isError } = useQuery({
     queryKey: ['backup-profiles'],
     queryFn: async () => {
       const res = await backupsApi.list();
       return res.data.profiles;
     },
+    retry: 1,
   });
 
   const profiles = profilesData || [];
@@ -99,7 +100,7 @@ export default function BackupsPage() {
     onError: () => toast.error('Failed to toggle profile'),
   });
 
-  if (isLoading) {
+  if (isLoading && !isError) {
     return (
       <AppLayout>
         <div className="space-y-6">
@@ -129,7 +130,17 @@ export default function BackupsPage() {
         {/* AQ-BKPVER: Backup verification status */}
         <BackupVerificationStatus />
 
-        {profiles.length === 0 ? (
+        {isError ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <HardDrive className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Aucune sauvegarde</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Le service de sauvegardes n&apos;est pas disponible pour le moment.
+              </p>
+            </CardContent>
+          </Card>
+        ) : profiles.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <HardDrive className="h-12 w-12 text-muted-foreground mb-4" />
