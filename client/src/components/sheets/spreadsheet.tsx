@@ -842,9 +842,12 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         setEvaluatedData(newData)
     }, [data, getCrossSheetValue, globalGridVersion, sheets, activeSheetIndex])
 
-    // Sync edit value
+    // Sync edit value — prefer formula over display value so the formula bar shows formulas
     useEffect(() => {
-        if (activeCell && !isEditing) setEditValue(data[`${activeCell.r},${activeCell.c}`]?.value || "")
+        if (activeCell && !isEditing) {
+            const cell = data[`${activeCell.r},${activeCell.c}`]
+            setEditValue(cell?.formula || cell?.value || "")
+        }
     }, [activeCell, data, isEditing])
 
     // Formula autocomplete suggestions
@@ -1588,7 +1591,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
 
     const handleDoubleClick = (r: number, c: number) => {
         if (data[`${r},${c}`]?.style?.locked) { toast.info('Cellule verrouill\u00E9e'); return }
+        const cell = data[`${r},${c}`]
         setActiveCell({ r, c }); setSelectedRange({ start: { r, c }, end: { r, c } })
+        setEditValue(cell?.formula || cell?.value || "")
         setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0)
     }
 
@@ -1617,11 +1622,12 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 setSelectedRange({ start: { r: 0, c: 0 }, end: { r: effectiveRows - 1, c: COLS - 1 } });
                 return;
             }
+            // Ctrl+B/I/U/5 → formatting shortcuts (work in both edit and navigation mode)
+            if (e.key === 'b') { e.preventDefault(); toggleBoolFormat('bold'); return }
+            if (e.key === 'i') { e.preventDefault(); toggleBoolFormat('italic'); return }
+            if (e.key === 'u') { e.preventDefault(); toggleBoolFormat('underline'); return }
+            if (e.key === '5') { e.preventDefault(); toggleBoolFormat('strikethrough'); return }
             if (!isEditing) {
-                if (e.key === 'b') { e.preventDefault(); toggleBoolFormat('bold'); return }
-                if (e.key === 'i') { e.preventDefault(); toggleBoolFormat('italic'); return }
-                if (e.key === 'u') { e.preventDefault(); toggleBoolFormat('underline'); return }
-                if (e.key === '5') { e.preventDefault(); toggleBoolFormat('strikethrough'); return }
                 // Ctrl+Espace -> Sélectionner la colonne entière
                 if (e.key === ' ') {
                     e.preventDefault();
@@ -1687,7 +1693,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             if (e.shiftKey && e.key === 'Enter') { e.preventDefault(); commitEdit(); moveCell(-1, 0); return; }
             if (e.key === 'Enter') { e.preventDefault(); commitEdit(); moveCell(1, 0) }
             if (e.key === 'Tab') { e.preventDefault(); commitEdit(); moveCell(0, e.shiftKey ? -1 : 1) }
-            if (e.key === 'Escape') { e.preventDefault(); setIsEditing(false); setEditValue(data[`${activeCell!.r},${activeCell!.c}`]?.value || ""); setAutocompleteSuggestions([]) }
+            if (e.key === 'Escape') { e.preventDefault(); setIsEditing(false); const cellEsc = data[`${activeCell!.r},${activeCell!.c}`]; setEditValue(cellEsc?.formula || cellEsc?.value || ""); setAutocompleteSuggestions([]) }
             
             if (e.key === 'ArrowUp') { e.preventDefault(); commitEdit(); moveCell(-1, 0) }
             if (e.key === 'ArrowDown') { e.preventDefault(); commitEdit(); moveCell(1, 0) }
@@ -1732,7 +1738,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         else if (e.key === 'Tab') { e.preventDefault(); moveCell(0, e.shiftKey ? -1 : 1) }
         else if (e.key === 'Enter') {
             e.preventDefault()
-            if (data[`${activeCell.r},${activeCell.c}`]?.style?.locked) { toast.info('Cellule verrouill\u00E9e'); return }
+            const cellE = data[`${activeCell.r},${activeCell.c}`]
+            if (cellE?.style?.locked) { toast.info('Cellule verrouill\u00E9e'); return }
+            setEditValue(cellE?.formula || cellE?.value || "")
             setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0)
         }
         else if (e.key === 'Home') { e.preventDefault(); const r = activeCell.r; setActiveCell({ r, c: 0 }); setSelectedRange({ start: { r, c: 0 }, end: { r, c: 0 } }); scrollToCell(r, 0) }
@@ -1744,7 +1752,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             if (selectionBounds) deleteCellRange(selectionBounds.minR, selectionBounds.maxR, selectionBounds.minC, selectionBounds.maxC)
         } else if (e.key === 'F2') {
             e.preventDefault()
-            if (data[`${activeCell.r},${activeCell.c}`]?.style?.locked) { toast.info('Cellule verrouill\u00E9e'); return }
+            const cellF2 = data[`${activeCell.r},${activeCell.c}`]
+            if (cellF2?.style?.locked) { toast.info('Cellule verrouill\u00E9e'); return }
+            setEditValue(cellF2?.formula || cellF2?.value || "")
             setIsEditing(true); setTimeout(() => inputRef.current?.focus(), 0)
         } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
             if (data[`${activeCell.r},${activeCell.c}`]?.style?.locked) { toast.info('Cellule verrouill\u00E9e'); return }
@@ -1819,10 +1829,44 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     const { startC, endC } = visibleCols
 
     return (
-        <div ref={mainContainerRef} className={cn("w-full h-full flex flex-col bg-background dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none", paintFormat && "cursor-cell")} tabIndex={0} onKeyDown={handleKeyDown}>
+        <div ref={mainContainerRef} className={cn("spreadsheet-root w-full h-full flex flex-col bg-background dark:bg-[#1f1f1f] text-[#202124] dark:text-[#e8eaed] outline-none font-sans text-sm select-none", paintFormat && "cursor-cell")} tabIndex={0} onKeyDown={handleKeyDown}>
+
+            {/* Print-friendly layout — hide chrome, show all rows */}
+            <style>{`
+                @media print {
+                    body { background: white !important; }
+                    /* Hide menu bar, toolbar, formula bar, sheet tabs, and app shell */
+                    nav, header, .sidebar,
+                    [data-print-hide],
+                    [data-sheet-tabs] {
+                        display: none !important;
+                    }
+                    .spreadsheet-root {
+                        height: auto !important;
+                        overflow: visible !important;
+                    }
+                    /* Make the grid container visible without clipping */
+                    .spreadsheet-root > div[class*="overflow-auto"] {
+                        overflow: visible !important;
+                        height: auto !important;
+                        transform: none !important;
+                    }
+                    /* Show all cell content, no clipping */
+                    [style*="overflow: hidden"] {
+                        overflow: visible !important;
+                    }
+                    /* Hide scrollbars */
+                    ::-webkit-scrollbar { display: none !important; }
+                    /* Preserve cell background colors */
+                    td, th, [role="gridcell"], div {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                }
+            `}</style>
 
             {/* ===== MENU BAR ===== */}
-            <div className="-ml-1.5 flex flex-col pt-0.5">
+            <div data-print-hide className="-ml-1.5 flex flex-col pt-0.5">
                 <EditorMenu menus={[
         {
             id: 'file', label: 'Fichier', items: [
@@ -2243,7 +2287,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             </div>
 
             {/* ===== TOOLBAR ===== */}
-            <Toolbar className="overflow-x-auto custom-scrollbar flex-nowrap min-h-[44px]">
+            <Toolbar data-print-hide className="overflow-x-auto custom-scrollbar flex-nowrap min-h-[44px]">
                     <TBtn onClick={undo} title="Annuler (Ctrl+Z)"><Undo className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={redo} title="R\u00E9tablir (Ctrl+Y)"><Redo className="w-[18px] h-[18px]" /></TBtn>
                     <TBtn onClick={() => window.print()} title="Imprimer (Ctrl+P)"><Printer className="w-[18px] h-[18px]" /></TBtn>
@@ -2436,7 +2480,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
 
             {/* ===== FORMULA BAR ===== */}
             {showFormulaBar && (
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-background dark:bg-[#1a1a1a] shrink-0 h-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10">
+            <div data-print-hide className="flex items-center gap-2 px-4 py-2 border-b border-[#e3e3e3] dark:border-[#3c4043] bg-background dark:bg-[#1a1a1a] shrink-0 h-10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10">
                 <div className="w-12 h-6 flex items-center justify-center bg-[#f1f3f4] dark:bg-[#3c4043] rounded font-medium text-[12px] shrink-0 tracking-wide select-text border border-[#e3e3e3] dark:border-[#5f6368]">
                     {activeCell ? `${indexToCol(activeCell.c)}${activeCell.r + 1}` : ''}
                 </div>
@@ -2665,7 +2709,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             </div>
 
             {/* ===== SHEET TABS + STATUS BAR ===== */}
-            <div className="flex items-center h-10 border-t border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] px-1 shrink-0 z-20 shadow-[0_-1px_3px_0_rgba(0,0,0,0.05)]">
+            <div data-sheet-tabs className="flex items-center h-10 border-t border-[#e3e3e3] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124] px-1 shrink-0 z-20 shadow-[0_-1px_3px_0_rgba(0,0,0,0.05)]">
                 <button className="p-2 hover:bg-[#e8eaed] dark:hover:bg-[#303134] rounded-full text-[#5f6368] mx-1 transition-colors" onClick={() => addSheet(`Sheet${sheets.length + 1}`)}>
                     <Plus className="w-5 h-5" />
                 </button>
