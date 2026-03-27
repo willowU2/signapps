@@ -116,7 +116,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
     } = slideState;
 
     // Autosave: persists slides data to localStorage every 30s
-    const presentationKey = allSlides[0]?.id ?? 'slides'
+    const presentationKey = (allSlides ?? [])[0]?.id ?? 'slides'
     useAutosave(`slides:${presentationKey}`, allSlides)
 
     const fabricCanvasRef = useRef<fabric.Canvas | null>(null)

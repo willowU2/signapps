@@ -11,7 +11,7 @@ created_for: "Prochaine instance d'AgentIQ"
 ## Résumé Exécutif
 
 1. Session `e7c8e09b` démarrée le 2026-03-27T16:34:10.722Z
-2. Terminée proprement le 2026-03-27T22:17:58.733Z
+2. Terminée proprement le 2026-03-27T22:24:28.990Z
 3. Travail : (non renseigné)
 
 ---
@@ -77,7 +77,7 @@ Fichiers à lire en priorité :
 |----------|--------|
 | Session ID | e7c8e09b-c8e0-40e2-ae6c-346dfc0756d5 |
 | Démarrée | 2026-03-27T16:34:10.722Z |
-| Terminée | 2026-03-27T22:17:58.733Z |
+| Terminée | 2026-03-27T22:24:28.990Z |
 | Crashes enregistrés | 0 |
 | Checkpoints | 0 |
 
