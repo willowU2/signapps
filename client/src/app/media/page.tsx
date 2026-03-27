@@ -6,16 +6,7 @@
  * is split into media-content.tsx and loaded lazily via next/dynamic so
  * it is excluded from the initial JS payload.
  */
-import dynamic from 'next/dynamic';
-
-const MediaContent = dynamic(() => import('./media-content'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
-      Loading Media Tools…
-    </div>
-  ),
-});
+import { MediaContent } from './media-wrapper';
 
 export default function MediaPage() {
   return <MediaContent />;
