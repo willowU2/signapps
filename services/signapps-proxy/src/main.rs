@@ -12,6 +12,7 @@ use signapps_common::middleware::{
 use signapps_common::{AuthState, JwtConfig};
 use signapps_db::DatabasePool;
 use tower::ServiceBuilder;
+use tower_http::compression::CompressionLayer;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 mod handlers;
@@ -308,6 +309,8 @@ fn create_router(state: AppState) -> Router {
             ServiceBuilder::new()
                 .layer(middleware::from_fn(request_id_middleware))
                 .layer(middleware::from_fn(logging_middleware))
+                // Brotli-first compression (falls back to gzip/deflate per Accept-Encoding)
+                .layer(CompressionLayer::new())
                 .layer(cors),
         )
         .with_state(state)

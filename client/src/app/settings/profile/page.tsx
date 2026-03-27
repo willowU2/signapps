@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FileUploadProgressBar } from '@/components/application/file-upload/file-upload-progress-bar';
+import { PasswordStrength } from '@/components/auth/password-strength';
 
 const roleLabels: Record<number, string> = {
   0: 'Administrator',
@@ -462,6 +463,7 @@ export default function ProfilePage() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
+                    {newPassword && <PasswordStrength password={newPassword} showRequirements={true} />}
                   </div>
 
                   <div className="space-y-2">

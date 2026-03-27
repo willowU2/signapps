@@ -8,6 +8,7 @@ import { Flag, RotateCcw } from 'lucide-react';
 import { useFeatureFlags } from '@/lib/feature-flags';
 import { FEATURES } from '@/lib/features';
 import { toast } from 'sonner';
+import { TenantFeatureFlags } from '@/components/admin/tenant-feature-flags';
 
 export default function FeatureFlagsPage() {
   const { isEnabled, setOverride, clearOverride, clearAll, getAll } = useFeatureFlags();
@@ -102,6 +103,8 @@ export default function FeatureFlagsPage() {
             );
           })}
         </div>
+
+        <TenantFeatureFlags />
       </div>
     </AppLayout>
   );

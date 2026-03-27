@@ -48,6 +48,11 @@ import { EmbedSheet } from './extensions/embed-sheet';
 import { SheetEmbedView } from './sheet-embed';
 // Sprint 6: Media
 import Youtube from '@tiptap/extension-youtube';
+// Sprint 7: Editor Improvements
+import { MathInline, MathBlock } from './extensions/math';
+import { MermaidDiagram } from './extensions/mermaid';
+import { Columns, ColumnBlock } from './extensions/columns';
+import { SuggestionMode, SuggestionInsertion, SuggestionDeletion } from './extensions/suggestion-mode';
 import { useCommentsStore } from '@/stores/comments-store';
 import { v4 as uuidv4 } from 'uuid';
 import { useEffect, useState, useRef, useCallback } from 'react';
@@ -91,7 +96,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Sparkles, Wand2, CheckCheck, FileText, Pencil, ArrowRight, Languages, X, Square, Bold, Italic, Underline as UnderlineIcon, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered, CheckSquare, Quote, Heading1, Heading2, Heading3, Subscript as SubscriptIcon, Superscript as SuperscriptIcon, Palette, Highlighter, Table as TableIcon, Image as ImageIcon, Link as LinkIcon, Undo, Redo, Menu, Bot, Code, FileImage, Smile, MessageSquare, MessageSquarePlus, Trash2, ChevronRight, ChevronDown, Check, Video, Mic, Download, Upload, FileSpreadsheet, Table2 } from 'lucide-react';
+import { Sparkles, Wand2, CheckCheck, FileText, Pencil, ArrowRight, Languages, X, Square, Bold, Italic, Underline as UnderlineIcon, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered, CheckSquare, Quote, Heading1, Heading2, Heading3, Subscript as SubscriptIcon, Superscript as SuperscriptIcon, Palette, Highlighter, Table as TableIcon, Image as ImageIcon, Link as LinkIcon, Undo, Redo, Menu, Bot, Code, FileImage, Smile, MessageSquare, MessageSquarePlus, Trash2, ChevronRight, ChevronDown, Check, Video, Mic, Download, Upload, FileSpreadsheet, Table2, Maximize2, Minimize2, Target, Clock, Eye, EyeOff, Columns2, BookOpen, MessageCircle, GitBranch, SplitSquareHorizontal, CheckCircle } from 'lucide-react';
 import { useAiStream } from '@/hooks/use-ai-stream';
 import { toast } from 'sonner';
 import { VoiceInput } from '@/components/ui/voice-input';
@@ -608,6 +613,25 @@ const Editor = ({
     // Trash confirm
     const [showTrashDialog, setShowTrashDialog] = useState(false);
 
+    // IDEA-001: Focus mode
+    const [isFocusMode, setIsFocusMode] = useState(false);
+
+    // IDEA-002: Word count daily goal
+    const [wordGoal, setWordGoal] = useState<number | null>(null);
+    const [showWordGoalDialog, setShowWordGoalDialog] = useState(false);
+    const [wordGoalInput, setWordGoalInput] = useState('');
+
+    // IDEA-009: Split view (editor + markdown preview)
+    const [splitView, setSplitView] = useState(false);
+
+    // IDEA-010 / IDEA-011: Resolved comments & threading
+    const [resolvedComments, setResolvedComments] = useState<string[]>([]);
+    const [commentReplies, setCommentReplies] = useState<Record<string, Array<{id: string; author: string; text: string; timestamp: number}>>>({});
+    const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
+
+    // IDEA-012: Suggestion mode
+    const [suggestionModeActive, setSuggestionModeActive] = useState(false);
+
     // Google Fonts API Integration Hook
     const [availableFonts, setAvailableFonts] = useState<string[]>(['Inter', 'Arial', 'Times New Roman', 'Georgia', 'Verdana', 'Courier New', 'Comic Sans MS']);
     
@@ -937,6 +961,15 @@ const Editor = ({
                     setActiveComment(commentId);
                 },
             }),
+            // Sprint 7: Editor Improvements
+            MathInline,
+            MathBlock,
+            MermaidDiagram,
+            Columns,
+            ColumnBlock,
+            SuggestionMode.configure({ enabled: false, author: userName || 'Anonymous', authorId: 'local' }),
+            SuggestionInsertion,
+            SuggestionDeletion,
             Collaboration.configure({
                 document: ydoc || undefined,
                 provider: provider || undefined,
@@ -1048,6 +1081,13 @@ const Editor = ({
     // Global keyboard shortcuts
     useEffect(() => {
         const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            // IDEA-001: F11 toggle focus mode
+            if (e.key === 'F11') {
+                e.preventDefault();
+                setIsFocusMode(prev => !prev);
+                return;
+            }
+
             if (e.ctrlKey || e.metaKey) {
                 const key = e.key.toLowerCase();
 
@@ -1084,6 +1124,14 @@ const Editor = ({
                         setCtrlKLinkUrl(previousUrl || '');
                         setShowCtrlKLinkDialog(true);
                     }
+                    // IDEA-013: Ctrl+1-6 heading shortcuts
+                    else if (key === '1') { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 1 }).run(); }
+                    else if (key === '2') { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 2 }).run(); }
+                    else if (key === '3') { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 3 }).run(); }
+                    else if (key === '4') { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 4 }).run(); }
+                    else if (key === '5' && !e.shiftKey) { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 5 }).run(); }
+                    else if (key === '6') { e.preventDefault(); editor.chain().focus().toggleHeading({ level: 6 }).run(); }
+                    else if (key === '0') { e.preventDefault(); editor.chain().focus().setParagraph().run(); }
                 }
             }
         };
@@ -1353,6 +1401,86 @@ const Editor = ({
         toast.success(`Exporté en ${type.toUpperCase()}`);
     }, [editor, documentName]);
 
+    // IDEA-007: EPUB export
+    const exportToEpub = useCallback(() => {
+        if (!editor) return;
+        const html = editor.getHTML();
+        const title = documentName.replace(/\.(docx|html|epub)$/, '') || 'document';
+        // Build a minimal EPUB 3 ZIP structure in-browser
+        const opf = `<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>${title}</dc:title>
+    <dc:language>fr</dc:language>
+    <dc:identifier id="uid">urn:uuid:signapps-${Date.now()}</dc:identifier>
+  </metadata>
+  <manifest>
+    <item id="chapter1" href="chapter1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+  </manifest>
+  <spine toc="ncx"><itemref idref="chapter1"/></spine>
+</package>`;
+        const xhtml = `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">
+<head><meta charset="utf-8"/><title>${title}</title>
+<style>body{font-family:Georgia,serif;font-size:1em;line-height:1.6;margin:2em;}</style>
+</head><body>${html}</body></html>`;
+        const toc = `<?xml version="1.0" encoding="utf-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+<head><meta name="dtb:uid" content="urn:uuid:signapps-${Date.now()}"/></head>
+<docTitle><text>${title}</text></docTitle>
+<navMap><navPoint id="np1" playOrder="1"><navLabel><text>${title}</text></navLabel><content src="chapter1.xhtml"/></navPoint></navMap>
+</ncx>`;
+        // Serialize as concatenated blob with EPUB container
+        const container = `<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+  <rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>`;
+        // Since we have no zip library in scope, we produce a self-contained HTML file with .epub extension notice
+        const epubBlob = new Blob([
+            `<!-- This is an EPUB-compatible HTML export. For a full EPUB, use a server-side converter. -->\n`,
+            `<!-- container.xml -->\n${container}\n`,
+            `<!-- content.opf -->\n${opf}\n`,
+            `<!-- chapter1.xhtml -->\n${xhtml}\n`,
+            `<!-- toc.ncx -->\n${toc}`,
+        ], { type: 'text/html;charset=utf-8' });
+        saveAs(epubBlob, `${title}.epub.html`);
+        toast.info('EPUB exporté (format HTML compatible EPUB — utilisez Calibre pour convertir en .epub natif)');
+    }, [editor, documentName]);
+
+    // IDEA-008: Better PDF export with page numbers and margins
+    const exportToPdfEnhanced = useCallback(() => {
+        if (!editor) return;
+        const title = documentName.replace(/\.(docx|html|epub)$/, '') || 'document';
+        const html = editor.getHTML();
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) { window.print(); return; }
+        printWindow.document.write(`<!DOCTYPE html><html><head>
+<meta charset="utf-8"/>
+<title>${title}</title>
+<style>
+  @page { margin: 2cm; size: A4; }
+  @page :first { margin-top: 3cm; }
+  body { font-family: Georgia, serif; font-size: 11pt; line-height: 1.6; color: #000; }
+  h1,h2,h3,h4,h5,h6 { page-break-after: avoid; }
+  img { max-width: 100%; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #ccc; padding: 4px 8px; }
+  pre, code { font-family: 'Courier New', monospace; font-size: 9pt; background: #f5f5f5; padding: 2px 4px; }
+  /* Header */
+  @top-center { content: "${title}"; font-size: 9pt; color: #666; }
+  /* Footer with page numbers */
+  @bottom-center { content: "Page " counter(page) " / " counter(pages); font-size: 9pt; color: #666; }
+  .print-header { text-align: center; font-size: 9pt; color: #666; border-bottom: 1px solid #eee; padding-bottom: 0.5cm; margin-bottom: 1cm; }
+  .print-footer { text-align: center; font-size: 9pt; color: #666; border-top: 1px solid #eee; padding-top: 0.5cm; margin-top: 1cm; }
+</style>
+</head><body>
+<div class="print-header">${title} — SignApps Docs</div>
+${html}
+<script>window.onload = () => { window.print(); window.close(); }</script>
+</body></html>`);
+        printWindow.document.close();
+    }, [editor, documentName]);
+
     // Export to Markdown
     const exportToMarkdown = useCallback(() => {
         if (!editor) return;
@@ -1481,6 +1609,12 @@ const Editor = ({
                     label: 'Document PDF (.pdf)',
                     action: 'downloadPdf'
                 }, {
+                    label: 'PDF amélioré (numéros de page)',
+                    action: 'downloadPdfEnhanced'
+                }, {
+                    label: 'EPUB (.epub)',
+                    action: 'downloadEpub'
+                }, {
                     label: 'Microsoft Word (.docx)',
                     action: 'download_docx'
                 }, {
@@ -1489,6 +1623,9 @@ const Editor = ({
                 }, {
                     label: 'Texte brut (.txt)',
                     action: 'download_txt'
+                }, {
+                    label: 'Markdown (.md)',
+                    action: 'downloadMarkdown'
                 }]
             },
             {
@@ -1624,6 +1761,12 @@ const Editor = ({
         }, {
             label: 'Plein écran',
             action: 'fullScreen'
+        }, {
+            label: 'Mode focus (F11)',
+            action: 'focusMode'
+        }, {
+            label: 'Vue partagée Markdown',
+            action: 'splitView'
         }]
     }, {
         id: 'insert',
@@ -1696,6 +1839,17 @@ const Editor = ({
             label: 'Commentaire',
             action: 'comment',
             shortcut: 'Ctrl+Alt+M'
+        }, {
+            sep: true
+        }, {
+            label: 'Colonnes',
+            subItems: [{ label: '2 colonnes', action: 'insert2Columns' }, { label: '3 colonnes', action: 'insert3Columns' }]
+        }, {
+            label: 'Mode suggestion',
+            action: 'suggestionMode'
+        }, {
+            label: 'Objectif de mots',
+            action: 'wordGoal'
         }]
     }, {
         id: 'format',
@@ -1775,7 +1929,7 @@ const Editor = ({
         }]
     }];
 
-    const NATIVE_ACTIONS = ['rename', 'trash', 'open', 'print', 'fullScreen', 'wordCount', 'undo', 'redo', 'selectAll', 'delete', 'newDoc', 'downloadPdf', 'cut', 'copy', 'paste', 'pasteText', 'toggleBold', 'toggleItalic', 'toggleUnderline', 'toggleStrike', 'toggleSuperscript', 'toggleSubscript', 'clearFormat', 'toggleH1', 'toggleH2', 'toggleH3', 'setParagraph', 'toggleOrderedList', 'toggleBulletList', 'toggleTaskList', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'insertHorizontalRule', 'insertHardBreak', 'insertImage', 'insertLink', 'insertTable', 'insertCode', 'tableAddRowBefore', 'tableAddRowAfter', 'tableAddColBefore', 'tableAddColAfter', 'tableDeleteRow', 'tableDeleteCol', 'tableDeleteTable', 'tableMergeCells', 'aiGenerate', 'aiSummarize', 'translateEn', 'findReplace', 'comment', 'fontSize_smaller', 'fontSize_larger', 'lineHeight_1', 'lineHeight_1.15', 'lineHeight_1.5', 'lineHeight_2', 'page_setup', 'saveToDrive', 'download_docx', 'mailMerge'];
+    const NATIVE_ACTIONS = ['rename', 'trash', 'open', 'print', 'fullScreen', 'wordCount', 'undo', 'redo', 'selectAll', 'delete', 'newDoc', 'downloadPdf', 'downloadPdfEnhanced', 'downloadEpub', 'downloadMarkdown', 'cut', 'copy', 'paste', 'pasteText', 'toggleBold', 'toggleItalic', 'toggleUnderline', 'toggleStrike', 'toggleSuperscript', 'toggleSubscript', 'clearFormat', 'toggleH1', 'toggleH2', 'toggleH3', 'setParagraph', 'toggleOrderedList', 'toggleBulletList', 'toggleTaskList', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'insertHorizontalRule', 'insertHardBreak', 'insertImage', 'insertLink', 'insertTable', 'insertCode', 'tableAddRowBefore', 'tableAddRowAfter', 'tableAddColBefore', 'tableAddColAfter', 'tableDeleteRow', 'tableDeleteCol', 'tableDeleteTable', 'tableMergeCells', 'aiGenerate', 'aiSummarize', 'translateEn', 'findReplace', 'comment', 'fontSize_smaller', 'fontSize_larger', 'lineHeight_1', 'lineHeight_1.15', 'lineHeight_1.5', 'lineHeight_2', 'page_setup', 'saveToDrive', 'download_docx', 'mailMerge', 'focusMode', 'splitView', 'wordGoal', 'suggestionMode', 'insert2Columns', 'insert3Columns'];
 
     // Handle Menu Actions
     const handleMenuAction = useCallback(async (action: string, label?: string) => {
@@ -1880,6 +2034,46 @@ const Editor = ({
         if (action === 'download_docx') {
             await exportHtmlDocument('docx');
         }
+        if (action === 'downloadPdfEnhanced') {
+            exportToPdfEnhanced();
+            return;
+        }
+        if (action === 'downloadEpub') {
+            exportToEpub();
+            return;
+        }
+        if (action === 'downloadMarkdown') {
+            exportToMarkdown();
+            return;
+        }
+        // IDEA-001: Focus mode
+        if (action === 'focusMode') {
+            setIsFocusMode(prev => !prev);
+            return;
+        }
+        // IDEA-009: Split view
+        if (action === 'splitView') {
+            setSplitView(prev => !prev);
+            return;
+        }
+        // IDEA-002: Word goal dialog
+        if (action === 'wordGoal') {
+            setWordGoalInput(wordGoal ? String(wordGoal) : '');
+            setShowWordGoalDialog(true);
+            return;
+        }
+        // IDEA-012: Suggestion mode
+        if (action === 'suggestionMode') {
+            const next = !suggestionModeActive;
+            setSuggestionModeActive(next);
+            if (next) editor.commands.enableSuggestionMode();
+            else editor.commands.disableSuggestionMode();
+            toast.info(next ? 'Mode suggestion activé' : 'Mode suggestion désactivé');
+            return;
+        }
+        // IDEA-006: Columns
+        if (action === 'insert2Columns') { editor.chain().focus().setColumns(2).run(); return; }
+        if (action === 'insert3Columns') { editor.chain().focus().setColumns(3).run(); return; }
 
         // Native clipboard if possible, fallback to execCommand
         if (action === 'cut' || action === 'copy' || action === 'paste' || action === 'pasteText') {
@@ -2013,16 +2207,35 @@ const Editor = ({
     }
 
     return (
-        <div className={`flex flex-col h-full bg-[#f8f9fa] dark:bg-[#1a1a1a] overflow-hidden ${className}`}>
-            {/* Top Bar (Menus only, simplified) */}
+        <div className={`flex flex-col h-full bg-[#f8f9fa] dark:bg-[#1a1a1a] overflow-hidden ${className} ${isFocusMode ? 'focus-mode' : ''}`}>
+            {/* Top Bar (Menus only, simplified) — hidden in focus mode (IDEA-001) */}
+            {!isFocusMode && (
             <div className="flex items-center px-4 py-1.5 bg-[#f9fbfd] dark:bg-background border-b border-transparent flex-shrink-0">
                 <div className="-ml-1.5">
                     <EditorMenu menus={editorMenus} onAction={handleMenuAction} />
                 </div>
+                {/* Focus mode button */}
+                <button
+                    onClick={() => setIsFocusMode(true)}
+                    className="ml-auto p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors"
+                    title="Mode focus (F11)"
+                >
+                    <Maximize2 className="w-4 h-4" />
+                </button>
             </div>
+            )}
 
-            {/* Formatting Ribbon */}
-            <Toolbar>
+            {/* Formatting Ribbon — hidden in focus mode (IDEA-001) */}
+            {isFocusMode && (
+                <div className="flex items-center justify-end px-4 py-1 bg-black/80 text-white text-xs">
+                    <span className="mr-2 opacity-60">Mode focus — appuyez sur F11 pour quitter</span>
+                    <button onClick={() => setIsFocusMode(false)} className="flex items-center gap-1 hover:text-gray-300 transition-colors">
+                        <Minimize2 className="w-3.5 h-3.5" />
+                        Quitter
+                    </button>
+                </div>
+            )}
+            {!isFocusMode && <Toolbar>
                 {/* Undo/Redo */}
                 <div className="flex items-center mx-1 relative">
                     <VoiceInput
@@ -2513,6 +2726,32 @@ const Editor = ({
 
                 <ToolbarDivider />
 
+                {/* IDEA-009: Split view toggle */}
+                <ToolbarButton
+                    onClick={() => setSplitView(prev => !prev)}
+                    isActive={splitView}
+                    title="Vue partagée Markdown"
+                >
+                    <SplitSquareHorizontal className="w-4 h-4" />
+                </ToolbarButton>
+
+                {/* IDEA-012: Suggestion mode toggle */}
+                <ToolbarButton
+                    onClick={() => {
+                        const next = !suggestionModeActive;
+                        setSuggestionModeActive(next);
+                        if (next) editor.commands.enableSuggestionMode();
+                        else editor.commands.disableSuggestionMode();
+                        toast.info(next ? 'Mode suggestion activé' : 'Mode suggestion désactivé');
+                    }}
+                    isActive={suggestionModeActive}
+                    title="Mode suggestion (proposer des modifications)"
+                >
+                    <GitBranch className="w-4 h-4" />
+                </ToolbarButton>
+
+                <ToolbarDivider />
+
                 {/* AI Integrations Toggle */}
                 <button
                     onClick={() => setShowAiToolbar(!showAiToolbar)}
@@ -2521,7 +2760,7 @@ const Editor = ({
                     <Bot className="w-4 h-4" />
                     <span className="text-[12px] font-medium hidden sm:inline">AI Tools</span>
                 </button>
-            </Toolbar>
+            </Toolbar>}
 
             {/* AI Auxiliary Toolbar */}
             {showAiToolbar && (
@@ -2566,8 +2805,20 @@ const Editor = ({
 
 
             {/* Editor Canvas Area */}
-            <div className="flex-1 overflow-y-auto w-full relative pb-16 custom-scrollbar bg-[#f8f9fa] dark:bg-[#1b1b1b] flex flex-row justify-center py-6">
-                <div className="flex-1 min-w-0 max-w-[816px]">
+            <div className={`flex-1 overflow-y-auto w-full relative pb-16 custom-scrollbar bg-[#f8f9fa] dark:bg-[#1b1b1b] flex flex-row justify-center py-6 ${splitView ? 'gap-0' : ''}`}>
+                {/* IDEA-009: Split view Markdown preview */}
+                {splitView && (
+                    <div className="flex-1 min-w-0 max-w-[400px] border-r border-gray-200 dark:border-gray-700 overflow-y-auto p-6 font-mono text-sm">
+                        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Markdown</span>
+                            <SplitSquareHorizontal className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <pre className="whitespace-pre-wrap text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                            {htmlToMarkdown(editor.getHTML())}
+                        </pre>
+                    </div>
+                )}
+                <div className={`flex-1 min-w-0 ${splitView ? 'max-w-[816px]' : 'max-w-[816px]'}`}>
                     {/* Main Content Area constrained like Google Docs (A4 Paper) */}
                     <div
                         className="w-[816px] shrink-0 min-h-[1056px] bg-background dark:bg-[#1f1f1f] shadow-[0_1px_3px_auto_rgba(0,0,0,0.1)] ring-1 ring-[#e2e2e2] dark:ring-[#ffffff1a] rounded-sm relative mt-2 mb-10 mx-auto px-20 pt-16"
@@ -2742,49 +2993,54 @@ const Editor = ({
                     </div>
                 </div>
 
-                {/* Table of Contents Sidebar */}
-                <div className="hidden lg:block w-[240px] shrink-0 border-l border-gray-100 dark:border-gray-800/50 p-6 pt-12 overflow-y-auto max-h-full sticky top-0 custom-scrollbar">
+                {/* IDEA-014: Floating sticky Table of Contents Sidebar */}
+                {!isFocusMode && (
+                <div className="hidden lg:block w-[240px] shrink-0 border-l border-gray-100 dark:border-gray-800/50 p-4 pt-8 overflow-y-auto max-h-full sticky top-0 custom-scrollbar">
                     {toc.length > 0 && (
-                        <div className="space-y-4">
-                            <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">On this page</h3>
-                            <nav className="flex flex-col gap-1.5">
+                        <div className="space-y-3">
+                            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                                <BookOpen className="w-3 h-3" /> Sur cette page
+                            </h3>
+                            <nav className="flex flex-col gap-1">
                                 {toc.map((heading) => (
                                     <button
                                         key={heading.id}
                                         onClick={() => {
-                                            // Extract pos from heading.id (e.g. "heading-123" -> 123)
                                             const pos = parseInt(heading.id.split('-')[1]);
                                             if (!isNaN(pos) && editor) {
-                                                // Set cursor to the heading
                                                 editor.chain().focus().setTextSelection(pos).run();
-                                                // Scroll into view (Tiptap handles this automatically with focus)
                                             }
                                         }}
-                                        className={`text-left text-[13px] hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate
-                                            ${heading.level === 1 ? 'font-medium text-gray-800 dark:text-gray-200 mt-2' : ''}
+                                        className={`text-left text-[12px] hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate py-0.5
+                                            ${heading.level === 1 ? 'font-medium text-gray-800 dark:text-gray-200 mt-1' : ''}
                                             ${heading.level === 2 ? 'text-gray-600 dark:text-gray-400 ml-3' : ''}
-                                            ${heading.level === 3 ? 'text-gray-500 dark:text-gray-500 ml-6' : ''}
+                                            ${heading.level === 3 ? 'text-gray-500 dark:text-gray-500 ml-6 text-[11px]' : ''}
                                         `}
                                     >
-                                        {heading.text || 'Untitled page section'}
+                                        {heading.text || 'Section sans titre'}
                                     </button>
                                 ))}
                             </nav>
                         </div>
                     )}
 
-                    {/* Comments Section */}
+                    {/* Comments Section — IDEA-010 (resolve) + IDEA-011 (threaded replies) */}
                     {showComments && comments.length > 0 && (
-                        <div className="mt-8 space-y-4">
+                        <div className="mt-6 space-y-3">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">Comments</h3>
-                                <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{comments.length}</span>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                                    <MessageCircle className="w-3 h-3" /> Commentaires
+                                </h3>
+                                <span className="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-full">
+                                    {comments.filter(c => !resolvedComments.includes(c.id)).length}
+                                </span>
                             </div>
-                            <div className="flex flex-col gap-3">
-                                {comments.map((comment) => (
+                            <div className="flex flex-col gap-2">
+                                {/* Active comments */}
+                                {comments.filter(c => !resolvedComments.includes(c.id)).map((comment) => (
                                     <div
                                         key={comment.id}
-                                        className={`p-3 rounded-lg border text-sm transition-all relative group
+                                        className={`p-2.5 rounded-lg border text-sm transition-all relative group
                                             ${activeCommentId === comment.id
                                                 ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20 shadow-sm'
                                                 : 'border-gray-200 dark:border-gray-800 bg-background dark:bg-[#202124] hover:border-gray-300 dark:hover:border-gray-700'
@@ -2793,16 +3049,26 @@ const Editor = ({
                                         onClick={() => setActiveCommentId(comment.id)}
                                     >
                                         <div className="flex items-center justify-between mb-1">
-                                            <span className="font-semibold text-[13px] text-gray-800 dark:text-gray-200">{comment.author}</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[11px] text-gray-500">{new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            <span className="font-semibold text-[12px] text-gray-800 dark:text-gray-200">{comment.author}</span>
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-[10px] text-gray-500">{new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                {/* IDEA-010: Resolve button */}
                                                 <button
-                                                    className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 rounded transition-all"
+                                                    className="opacity-0 group-hover:opacity-100 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 p-0.5 rounded transition-all"
+                                                    title="Résoudre"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        if (editor) {
-                                                            editor.chain().focus().unsetComment(comment.id).run();
-                                                        }
+                                                        setResolvedComments(prev => [...prev, comment.id]);
+                                                        if (activeCommentId === comment.id) setActiveCommentId(null);
+                                                    }}
+                                                >
+                                                    <CheckCircle className="w-3 h-3" />
+                                                </button>
+                                                <button
+                                                    className="opacity-0 group-hover:opacity-100 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-0.5 rounded transition-all"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        editor.chain().focus().unsetComment(comment.id).run();
                                                         setComments(prev => prev.filter(c => c.id !== comment.id));
                                                         if (activeCommentId === comment.id) setActiveCommentId(null);
                                                     }}
@@ -2817,27 +3083,164 @@ const Editor = ({
                                                 const newText = e.target.value;
                                                 setComments(prev => prev.map(c => c.id === comment.id ? { ...c, text: newText } : c));
                                             }}
-                                            placeholder="Add a comment..."
-                                            className="w-full bg-transparent border-none resize-none focus:outline-none text-gray-700 dark:text-gray-300 min-h-[40px] text-[13px]"
+                                            placeholder="Ajouter un commentaire..."
+                                            className="w-full bg-transparent border-none resize-none focus:outline-none text-gray-700 dark:text-gray-300 min-h-[36px] text-[12px]"
                                         />
+                                        {/* IDEA-011: Threaded replies */}
+                                        {(commentReplies[comment.id] || []).map(reply => (
+                                            <div key={reply.id} className="mt-1.5 ml-3 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
+                                                <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300">{reply.author}</span>
+                                                <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">{reply.text}</p>
+                                            </div>
+                                        ))}
+                                        {activeCommentId === comment.id && (
+                                            <div className="mt-2 flex gap-1">
+                                                <input
+                                                    type="text"
+                                                    value={replyInputs[comment.id] || ''}
+                                                    onChange={e => setReplyInputs(prev => ({ ...prev, [comment.id]: e.target.value }))}
+                                                    placeholder="Répondre..."
+                                                    className="flex-1 text-[11px] border border-gray-200 dark:border-gray-700 rounded px-2 py-1 bg-transparent focus:outline-none focus:border-blue-400"
+                                                    onKeyDown={e => {
+                                                        if (e.key === 'Enter' && replyInputs[comment.id]?.trim()) {
+                                                            const replyText = replyInputs[comment.id].trim();
+                                                            setCommentReplies(prev => ({
+                                                                ...prev,
+                                                                [comment.id]: [...(prev[comment.id] || []), {
+                                                                    id: uuidv4(),
+                                                                    author: userName || 'Anonymous',
+                                                                    text: replyText,
+                                                                    timestamp: Date.now(),
+                                                                }]
+                                                            }));
+                                                            setReplyInputs(prev => ({ ...prev, [comment.id]: '' }));
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
+                                {/* IDEA-010: Resolved comments section */}
+                                {resolvedComments.filter(id => comments.find(c => c.id === id)).length > 0 && (
+                                    <details className="mt-2">
+                                        <summary className="text-[10px] text-gray-400 cursor-pointer hover:text-gray-600 flex items-center gap-1">
+                                            <CheckCircle className="w-3 h-3 text-green-500" />
+                                            {resolvedComments.filter(id => comments.find(c => c.id === id)).length} résolus
+                                        </summary>
+                                        <div className="mt-1 flex flex-col gap-1.5 opacity-60">
+                                            {resolvedComments
+                                                .filter(id => comments.find(c => c.id === id))
+                                                .map(id => {
+                                                    const c = comments.find(cm => cm.id === id)!;
+                                                    return (
+                                                        <div key={id} className="p-2 rounded border border-gray-100 dark:border-gray-800 text-[11px] text-gray-500">
+                                                            <span className="font-medium">{c.author}:</span> {c.text || '(vide)'}
+                                                            <button
+                                                                className="ml-2 text-blue-400 hover:underline"
+                                                                onClick={() => setResolvedComments(prev => prev.filter(r => r !== id))}
+                                                            >
+                                                                Rouvrir
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })
+                                            }
+                                        </div>
+                                    </details>
+                                )}
                             </div>
                         </div>
                     )}
                 </div>
+                )}
             </div>
 
-            {/* Global Character/Word Count Status Bar */}
+            {/* Word Goal Dialog — IDEA-002 */}
+            <Dialog open={showWordGoalDialog} onOpenChange={setShowWordGoalDialog}>
+                <DialogContent>
+                    <DialogHeader><DialogTitle>Objectif de mots quotidien</DialogTitle></DialogHeader>
+                    <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">Définissez un objectif de mots pour cette session.</p>
+                        <div className="flex gap-2">
+                            {[500, 1000, 2000].map(n => (
+                                <Button key={n} variant="outline" size="sm" onClick={() => setWordGoalInput(String(n))} className={wordGoalInput === String(n) ? 'border-primary' : ''}>
+                                    {n} mots
+                                </Button>
+                            ))}
+                        </div>
+                        <UIInput
+                            type="number"
+                            value={wordGoalInput}
+                            onChange={e => setWordGoalInput(e.target.value)}
+                            placeholder="Nombre de mots personnalisé..."
+                            onKeyDown={e => { if (e.key === 'Enter') { setWordGoal(parseInt(wordGoalInput) || null); setShowWordGoalDialog(false); } }}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => { setWordGoal(null); setShowWordGoalDialog(false); }}>Supprimer l&apos;objectif</Button>
+                        <Button onClick={() => { setWordGoal(parseInt(wordGoalInput) || null); setShowWordGoalDialog(false); }}>Définir</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Global Character/Word Count Status Bar — IDEA-002 + IDEA-003 */}
             <div className="flex-none flex items-center justify-between px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-[#202124] border-t border-gray-200 dark:border-gray-800 shadow-[0_-1px_3px_rgba(0,0,0,0.02)] z-10 w-full relative">
                 <OfflineIndicator />
-                <div className="flex items-center">
-                    <span className="mr-4">
-                        {editor.storage.characterCount?.words() || 0} mots
+                <div className="flex items-center gap-4">
+                    {/* Word count + goal */}
+                    <button
+                        onClick={() => { setWordGoalInput(wordGoal ? String(wordGoal) : ''); setShowWordGoalDialog(true); }}
+                        className="flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        title="Définir un objectif de mots"
+                    >
+                        <Target className="w-3 h-3" />
+                        <span>
+                            {(() => {
+                                const words = editor.storage.characterCount?.words() || 0;
+                                if (wordGoal) {
+                                    const pct = Math.min(100, Math.round((words / wordGoal) * 100));
+                                    return `${words} / ${wordGoal} mots (${pct}%)`;
+                                }
+                                return `${words} mots`;
+                            })()}
+                        </span>
+                        {wordGoal && (() => {
+                            const words = editor.storage.characterCount?.words() || 0;
+                            const pct = Math.min(100, (words / wordGoal) * 100);
+                            return (
+                                <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all ${pct >= 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                                        style={{ width: `${pct}%` }}
+                                    />
+                                </div>
+                            );
+                        })()}
+                    </button>
+                    {/* Reading time — IDEA-003 */}
+                    <span className="flex items-center gap-1" title="Temps de lecture estimé">
+                        <Clock className="w-3 h-3" />
+                        ~{Math.max(1, Math.ceil((editor.storage.characterCount?.words() || 0) / 200))} min
                     </span>
                     <span>
-                        {editor.storage.characterCount?.characters() || 0} caractères
+                        {editor.storage.characterCount?.characters() || 0} car.
                     </span>
+                    {/* IDEA-012: Suggestion mode badge */}
+                    {suggestionModeActive && (
+                        <span className="flex items-center gap-1 text-orange-500 font-medium">
+                            <GitBranch className="w-3 h-3" />
+                            Suggestions
+                        </span>
+                    )}
+                    {/* IDEA-001: Focus mode toggle in status bar */}
+                    <button
+                        onClick={() => setIsFocusMode(prev => !prev)}
+                        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                        title="Mode focus (F11)"
+                    >
+                        {isFocusMode ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+                    </button>
                 </div>
             </div>
 

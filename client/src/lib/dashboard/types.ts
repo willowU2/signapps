@@ -132,7 +132,7 @@ export interface DashboardPreset {
   /** Preset description */
   description: string;
   /** Target audience (role-based) */
-  targetRole?: "developer" | "manager" | "analyst" | "admin" | "all";
+  targetRole?: "developer" | "manager" | "analyst" | "admin" | "hr" | "sales" | "all";
   /** Icon */
   icon: LucideIcon;
   /** Preview image URL */

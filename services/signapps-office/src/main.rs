@@ -47,7 +47,14 @@ async fn main() {
 
     let app = Router::new()
         // Health check
-        .route("/health", get(|| async { "OK" }))
+        .route("/health", get(|| async {
+            axum::Json(serde_json::json!({
+                "status": "ok",
+                "service": "signapps-office",
+                "version": env!("CARGO_PKG_VERSION"),
+                "uptime_seconds": signapps_common::healthz::uptime_seconds()
+            }))
+        }))
 
         // ═══════════════════════════════════════════════════════════════════════
         // CONVERSION ROUTES - Tiptap/HTML/Markdown → DOCX/PDF/MD/HTML/TXT

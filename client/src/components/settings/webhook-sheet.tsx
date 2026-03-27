@@ -2,7 +2,7 @@
 
 import { SpinnerInfinity } from 'spinners-react';
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { WebhookTemplatesDialog, WebhookTemplate } from "./webhook-templates";
 
 
 const WEBHOOK_EVENTS = [
@@ -79,6 +80,13 @@ export function WebhookSheet({
   isLoading,
 }: WebhookSheetProps) {
   const isEditing = !!webhook;
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+
+  const applyTemplate = (tpl: WebhookTemplate) => {
+    form.setValue("name", tpl.name);
+    form.setValue("url", tpl.url_placeholder);
+    form.setValue("events", tpl.events);
+  };
 
   const form = useForm<WebhookFormValues>({
     resolver: zodResolver(webhookFormSchema),
@@ -138,6 +146,24 @@ export function WebhookSheet({
               : "Create a new webhook to receive real-time notifications from SignApps."}
           </SheetDescription>
         </SheetHeader>
+
+        {!isEditing && (
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setTemplatesOpen(true)}
+            >
+              Use a Template
+            </Button>
+            <WebhookTemplatesDialog
+              open={templatesOpen}
+              onOpenChange={setTemplatesOpen}
+              onSelect={applyTemplate}
+            />
+          </div>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 mt-6">

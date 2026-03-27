@@ -64,6 +64,7 @@ pub mod email_templates;
 pub mod error;
 pub mod events;
 pub mod graphql_layer;
+pub mod healthz;
 pub mod indexer;
 pub mod marketplace;
 pub mod middleware;

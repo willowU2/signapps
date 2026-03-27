@@ -79,6 +79,17 @@ const serwist = new Serwist({
         ],
       }),
     },
+    // Navigation (HTML documents): network-first with cache fallback for offline
+    {
+      matcher: ({ request }) => request.destination === "document",
+      handler: new NetworkFirst({
+        cacheName: "pages-cache",
+        plugins: [
+          new ExpirationPlugin({ maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 }),
+        ],
+        networkTimeoutSeconds: 5,
+      }),
+    },
     // Keep Serwist defaults as fallback
     ...defaultCache,
   ],

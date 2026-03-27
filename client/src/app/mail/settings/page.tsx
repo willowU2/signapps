@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { mailApi, type MailAccount } from "@/lib/api/mail";
 import { toast } from "sonner";
+import { EmailAutomationRules } from "@/components/workflow/email-automation-rules";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -344,6 +345,11 @@ export default function MailSettingsPage() {
             )}
           </>
         )}
+
+        {/* IDEA-127: Email automation rules */}
+        <div className="pt-6 border-t mt-6">
+          <EmailAutomationRules />
+        </div>
       </div>
     </AppLayout>
   );

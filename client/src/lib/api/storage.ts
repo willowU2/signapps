@@ -146,10 +146,26 @@ export const storageApi = {
     // Versions
     getFileVersions: (fileId: string) => storageClient.get<any[]>(`/files/${fileId}/versions`),
     restoreFileVersion: (fileId: string, versionId: string) => storageClient.post(`/files/${fileId}/versions/${versionId}/restore`),
+    downloadFileVersion: (fileId: string, versionId: string) =>
+        storageClient.get(`/files/${fileId}/versions/${versionId}/download`, { responseType: 'arraybuffer' }),
 
     // Quota
     getQuota: () => storageClient.get('/quotas/me'),
+
+    // Full-text search within file contents
+    searchContent: (params: { q: string; bucket?: string; limit?: number }) =>
+        storageClient.get<ContentSearchResult[]>('/search/content', { params }),
 };
+
+export interface ContentSearchResult {
+    file_id: string;
+    bucket: string;
+    key: string;
+    name: string;
+    snippet: string;
+    score: number;
+    last_modified: string;
+}
 
 export interface Bucket {
     name: string;

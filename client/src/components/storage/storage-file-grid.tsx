@@ -9,6 +9,8 @@ interface StorageFileGridProps {
   onNavigate: (file: FileItem) => void;
   onPreview: (file: FileItem) => void;
   onAction: (action: string, item: FileItem) => void;
+  selectedKeys?: Set<string>;
+  onToggleSelect?: (key: string) => void;
 }
 
 export function StorageFileGrid({
@@ -18,6 +20,8 @@ export function StorageFileGrid({
   onNavigate,
   onPreview,
   onAction,
+  selectedKeys,
+  onToggleSelect,
 }: StorageFileGridProps) {
   if (viewMode === 'grid' || viewMode === 'tree') {
     return (
@@ -30,6 +34,8 @@ export function StorageFileGrid({
             onPreview={() => onPreview(file)}
             onAction={onAction}
             viewMode={driveView}
+            selected={selectedKeys?.has(file.key)}
+            onSelect={onToggleSelect ? () => onToggleSelect(file.key) : undefined}
           />
         ))}
       </div>
@@ -53,6 +59,8 @@ export function StorageFileGrid({
             onPreview={() => onPreview(file)}
             onAction={onAction}
             viewMode={driveView}
+            selected={selectedKeys?.has(file.key)}
+            onSelect={onToggleSelect ? () => onToggleSelect(file.key) : undefined}
           />
         ))}
       </div>

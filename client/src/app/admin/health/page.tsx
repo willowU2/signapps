@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, CheckCircle2, XCircle, Activity } from 'lucide-react';
 import { ServiceName } from '@/lib/api/factory';
+import { HealthThresholdsPanel } from '@/components/admin/health-thresholds-panel';
 
 // ─── Service registry ─────────────────────────────────────────────────────────
 
@@ -182,6 +183,7 @@ export default function HealthPage() {
                 Last checked: {lastRefresh.toLocaleTimeString()}
               </span>
             )}
+            <HealthThresholdsPanel />
             <Button
               variant="outline"
               size="sm"

@@ -37,10 +37,11 @@ const FORMAT_OPTIONS: { id: ExportFormat; label: string; icon: React.ReactNode; 
   { id: "svg", label: "SVG", icon: <FileCode className="h-5 w-5" />, desc: "Scalable vector format" },
 ];
 
+// IDEA-062: DPI-aware export — resolution selector (72/150/300 DPI) in export dialog
 const DPI_OPTIONS: { value: ExportDPI; label: string; desc: string }[] = [
-  { value: 72, label: "72 DPI", desc: "Web" },
-  { value: 150, label: "150 DPI", desc: "Medium" },
-  { value: 300, label: "300 DPI", desc: "Print" },
+  { value: 72, label: "72 DPI", desc: "Screen / Web" },
+  { value: 150, label: "150 DPI", desc: "Digital / Medium" },
+  { value: 300, label: "300 DPI", desc: "Print / High-res" },
 ];
 
 export default function DesignExportDialog({ open, onOpenChange, fabricCanvasRef }: DesignExportDialogProps) {

@@ -14,7 +14,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { type User, isAdmin, isActive } from "@/lib/api-admin"
-import { Plus, Search, MoreHorizontal } from "lucide-react"
+import { Plus, Search, MoreHorizontal, UserCog, Upload } from "lucide-react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -27,6 +27,8 @@ import { UserSheet } from "@/components/admin/user-sheet"
 import { usersApi } from "@/lib/api/identity"
 import { CreateUserRequest, UpdateUserRequest } from "@/lib/api"
 import { toast } from "sonner"
+import { BulkUserImportDialog } from "@/components/admin/bulk-user-import-dialog"
+import { ImpersonateDialog } from "@/components/admin/impersonate-dialog"
 
 
 export default function UsersPage() {
@@ -35,6 +37,8 @@ export default function UsersPage() {
     const [isSheetOpen, setIsSheetOpen] = useState(false)
     const [selectedUser, setSelectedUser] = useState<User | null>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const [importOpen, setImportOpen] = useState(false)
+    const [impersonateUser, setImpersonateUser] = useState<User | null>(null)
 
     const { data: users = [] } = useQuery<User[]>({
         queryKey: ['admin-users'],
@@ -89,9 +93,14 @@ export default function UsersPage() {
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-                    <Button onClick={handleOpenCreate}>
-                        <Plus className="mr-2 h-4 w-4" /> Add User
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setImportOpen(true)}>
+                            <Upload className="mr-2 h-4 w-4" /> Import CSV
+                        </Button>
+                        <Button onClick={handleOpenCreate}>
+                            <Plus className="mr-2 h-4 w-4" /> Add User
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -149,6 +158,10 @@ export default function UsersPage() {
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem onClick={() => handleOpenEdit(user)}>Edit</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setImpersonateUser(user)}>
+                                                    <UserCog className="h-3.5 w-3.5 mr-2" />
+                                                    View as user
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -167,6 +180,18 @@ export default function UsersPage() {
                 onSubmit={handleSubmit}
                 isLoading={isLoading}
             />
+            <BulkUserImportDialog
+                open={importOpen}
+                onOpenChange={setImportOpen}
+                onImported={loadUsers}
+            />
+            {impersonateUser && (
+                <ImpersonateDialog
+                    user={impersonateUser}
+                    open={!!impersonateUser}
+                    onOpenChange={(v) => !v && setImpersonateUser(null)}
+                />
+            )}
         </AppLayout>
     )
 }

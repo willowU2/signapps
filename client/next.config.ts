@@ -1,5 +1,6 @@
 import path from "path";
 import withSerwistInit from "@serwist/next";
+import withBundleAnalyzer from "@next/bundle-analyzer";
 
 const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
@@ -69,4 +70,8 @@ const nextConfig = {
   serverExternalPackages: ["onnxruntime-web"],
 };
 
-export default withSerwist(nextConfig);
+const withAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
+export default withAnalyzer(withSerwist(nextConfig));

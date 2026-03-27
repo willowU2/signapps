@@ -34,6 +34,9 @@ import { BottomTabs, BottomTabsSpacer, MobileScopeSwitcher } from '../mobile/Bot
 import { FAB } from '../quick-actions/FAB';
 import { MiniMonthView } from '../views/MonthView';
 import type { ScopeType, ViewType } from '@/lib/scheduling/types';
+import { EventTemplateSelector } from '@/components/calendar/event-templates';
+import { PrintableAgendaButton } from '@/components/calendar/printable-agenda';
+import { useSchedulingStore as useSchedStore } from '@/stores/scheduling/scheduling-store';
 
 // ============================================================================
 // Types
@@ -245,6 +248,25 @@ function Sidebar({
 function Header({ onCreateItem, onCreatePoll, onOpenOoo }: { onCreateItem?: (type: string) => void; onCreatePoll?: () => void; onOpenOoo?: () => void }) {
   const scope = useSchedulingStore((state) => state.scope);
   const currentScope = scopes.find((s) => s.id === scope);
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const timeItems = useSchedStore((state) => state.timeItems);
+
+  // Convert TimeItems to Event shape for printable agenda
+  const printableEvents = React.useMemo(() => timeItems.map((item) => ({
+    id: item.id,
+    calendar_id: '',
+    title: item.title,
+    description: item.description,
+    location: undefined,
+    start_time: item.startTime ? new Date(item.startTime).toISOString() : new Date().toISOString(),
+    end_time: item.endTime ? new Date(item.endTime).toISOString() : new Date().toISOString(),
+    timezone: 'UTC',
+    created_by: '',
+    is_all_day: item.allDay ?? false,
+    is_deleted: false,
+    created_at: item.createdAt ? new Date(item.createdAt).toISOString() : new Date().toISOString(),
+    updated_at: item.updatedAt ? new Date(item.updatedAt).toISOString() : new Date().toISOString(),
+  })), [timeItems]);
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-background px-4">
@@ -266,6 +288,13 @@ function Header({ onCreateItem, onCreatePoll, onOpenOoo }: { onCreateItem?: (typ
       <div className="flex items-center gap-2">
         <ViewSwitcher className="hidden md:inline-flex" />
         <ViewSwitcherDropdown className="inline-flex md:hidden" />
+        {/* Event templates (IDEA-047) */}
+        <EventTemplateSelector
+          onSelect={(template) => {
+            // Convert template to event creation with pre-filled fields
+            onCreateItem?.('event')
+          }}
+        />
 
         {onCreatePoll && (
           <Tooltip>
@@ -300,6 +329,13 @@ function Header({ onCreateItem, onCreatePoll, onOpenOoo }: { onCreateItem?: (typ
             <TooltipContent>Out of Office</TooltipContent>
           </Tooltip>
         )}
+
+        {/* Printable agenda (IDEA-048) */}
+        <PrintableAgendaButton
+          events={printableEvents as any}
+          currentDate={currentDate}
+          calendarName="Planning"
+        />
 
         <Button
           size="sm"

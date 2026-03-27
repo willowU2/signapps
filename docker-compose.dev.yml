@@ -1,0 +1,288 @@
+# docker-compose.dev.yml — IDEA-110
+# Complete SignApps dev environment: all Rust services + PostgreSQL + Next.js
+# Usage: docker compose -f docker-compose.dev.yml up
+#
+# Prerequisites: Docker Desktop with BuildKit enabled.
+# All services share the `signapps-dev` network and a single Postgres instance.
+
+name: signapps-dev
+
+services:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Infrastructure
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: signapps-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: signapps
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: signapps
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U signapps"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - signapps-dev
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Backend Rust services (pre-built release binaries)
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  identity:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: signapps-identity
+    container_name: signapps-identity
+    restart: unless-stopped
+    environment: &common-env
+      DATABASE_URL: postgres://signapps:password@postgres:5432/signapps
+      JWT_SECRET: dev_secret_change_in_production_32chars
+      SERVER_PORT: "3025"
+      RUST_LOG: info
+    ports:
+      - "3025:3025"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - signapps-dev
+    healthcheck: &rust-healthcheck
+      test: ["CMD-SHELL", "wget -qO- http://localhost:$${SERVER_PORT}/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ai:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: signapps-ai
+    container_name: signapps-ai
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVER_PORT: "3005"
+    ports:
+      - "3005:3005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - signapps-dev
+    healthcheck:
+      <<: *rust-healthcheck
+
+  calendar:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: signapps-calendar
+    container_name: signapps-calendar
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVER_PORT: "3011"
+    ports:
+      - "3011:3011"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - signapps-dev
+    healthcheck:
+      <<: *rust-healthcheck
+
+  chat:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: signapps-chat
+    container_name: signapps-chat
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVER_PORT: "3020"
+    ports:
+      - "3020:3020"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - signapps-dev
+    healthcheck:
+      <<: *rust-healthcheck
+
+  contacts:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: signapps-contacts
+    container_name: signapps-contacts
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVER_PORT: "3021"
+    ports:
+      - "3021:3021"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - signapps-dev
+    healthcheck:
+      <<: *rust-healthcheck
+
+  docs:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: signapps-docs
+    container_name: signapps-docs
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVER_PORT: "3010"
+    ports:
+      - "3010:3010"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - signapps-dev
+    healthcheck:
+      <<: *rust-healthcheck
+
+  mail:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: signapps-mail
+    container_name: signapps-mail
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVER_PORT: "3012"
+    ports:
+      - "3012:3012"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - signapps-dev
+    healthcheck:
+      <<: *rust-healthcheck
+
+  metrics:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: signapps-metrics
+    container_name: signapps-metrics
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVER_PORT: "3008"
+    ports:
+      - "3008:3008"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - signapps-dev
+    healthcheck:
+      <<: *rust-healthcheck
+
+  notifications:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: signapps-notifications
+    container_name: signapps-notifications
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVER_PORT: "3026"
+    ports:
+      - "3026:3026"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - signapps-dev
+    healthcheck:
+      <<: *rust-healthcheck
+
+  storage:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE: signapps-storage
+    container_name: signapps-storage
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      SERVER_PORT: "3004"
+      STORAGE_PATH: /data/storage
+    ports:
+      - "3004:3004"
+    volumes:
+      - storage-data:/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - signapps-dev
+    healthcheck:
+      <<: *rust-healthcheck
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Frontend
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: signapps-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - signapps-dev
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Volumes & Networks
+# ─────────────────────────────────────────────────────────────────────────────
+
+volumes:
+  pgdata:
+  storage-data:
+
+networks:
+  signapps-dev:
+    driver: bridge

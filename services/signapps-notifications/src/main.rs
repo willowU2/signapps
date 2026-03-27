@@ -252,7 +252,12 @@ async fn mark_all_read(
 }
 
 async fn health() -> impl IntoResponse {
-    Json(serde_json::json!({ "status": "ok" }))
+    Json(serde_json::json!({
+        "status": "ok",
+        "service": "signapps-notifications",
+        "version": env!("CARGO_PKG_VERSION"),
+        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+    }))
 }
 
 // ---------------------------------------------------------------------------

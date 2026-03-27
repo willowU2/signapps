@@ -17,6 +17,7 @@ mod handlers;
 mod models;
 mod utils;
 
+use handlers::classify::classify_document;
 use handlers::designs::{create_design, delete_design, get_design, list_designs, update_design};
 use handlers::health::health_handler;
 use handlers::macros::{create_macro, delete_macro, list_macros, update_macro};
@@ -125,6 +126,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/v1/designs/:id", get(get_design))
         .route("/api/v1/designs/:id", put(update_design))
         .route("/api/v1/designs/:id", delete(delete_design))
+        // Document classification (IDEA-106)
+        .route("/api/v1/docs/classify", post(classify_document))
         // Quick notes (Drive sidebar)
         .route("/api/v1/keep/notes", get(list_notes))
         .route("/api/v1/keep/notes", post(create_note))

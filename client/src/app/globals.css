@@ -192,6 +192,72 @@
   }
 }
 
+/* =========================================
+   IDEA-092: High Contrast Mode
+   Activated by adding .high-contrast to <html>
+   ========================================= */
+.high-contrast {
+  --border: oklch(0.4 0.02 250);
+  --input: oklch(0.4 0.02 250);
+  --muted-foreground: oklch(0.3 0.02 240);
+  --ring: oklch(0.45 0.15 260 / 80%);
+}
+
+.high-contrast.dark {
+  --border: oklch(0.7 0.02 260);
+  --input: oklch(0.7 0.02 260);
+  --muted-foreground: oklch(0.8 0.02 260);
+  --ring: oklch(0.7 0.15 260 / 80%);
+}
+
+.high-contrast * {
+  --tw-ring-offset-shadow: 0 0 0 2px var(--background);
+  outline-offset: 2px;
+}
+
+.high-contrast button,
+.high-contrast a,
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  border-width: 2px !important;
+}
+
+/* =========================================
+   IDEA-093: Reduced Motion
+   Disables all CSS animations and transitions
+   when the user prefers reduced motion.
+   ========================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================
+   IDEA-094: Enhanced Focus Indicators
+   Visible focus rings on all interactive elements.
+   Uses ring-2 + ring-offset-2 pattern consistent
+   with Tailwind's focus-visible utilities.
+   ========================================= */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--ring, oklch(0.45 0.15 260 / 80%));
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+
+  /* Remove outline for mouse/touch users — only show for keyboard */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
 /* Handsontable Dark Mode Overrides */
 .dark .handsontable {
   color: var(--foreground);
@@ -663,6 +729,41 @@
   body:has(.ProseMirror) tr,
   body:has(.ProseMirror) td {
     page-break-inside: avoid;
+  }
+}
+
+/* =========================================
+   IDEA-099: Touch-friendly docs toolbar
+   On small screens the toolbar buttons are
+   made larger (min 44×44px) and the font
+   selectors are hidden to save space.
+   ========================================= */
+@media (max-width: 767px) {
+  /* Larger tap targets for every toolbar button */
+  .editor-toolbar [data-slot="button"],
+  .editor-toolbar button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 0.5rem !important;
+  }
+
+  /* Hide secondary selectors (font family, size) on mobile — accessed via … menu */
+  .editor-toolbar .toolbar-font-family,
+  .editor-toolbar .toolbar-font-size,
+  .editor-toolbar .toolbar-zoom {
+    display: none !important;
+  }
+
+  /* Wrap toolbar into a horizontal scrollable strip */
+  .editor-toolbar {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .editor-toolbar::-webkit-scrollbar {
+    display: none;
   }
 }
 

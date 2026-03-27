@@ -23,6 +23,10 @@ import { WidgetTodayCalendar } from './widgets/widget-today-calendar';
 import { WidgetTasksSummary } from './widgets/widget-tasks-summary';
 import { WidgetUnreadEmails } from './widgets/widget-unread-emails';
 import { WidgetActiveTasks } from './widgets/widget-active-tasks';
+// IDEA-122: Extended widget library
+import { WidgetWeather } from './widgets/widget-weather';
+import { WidgetRssFeed } from './widgets/widget-rss-feed';
+import { WidgetQuickNotes } from './widgets/widget-quick-notes';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -67,6 +71,13 @@ function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
       return <WidgetUnreadEmails {...renderProps} />;
     case 'active-tasks':
       return <WidgetActiveTasks {...renderProps} />;
+    // IDEA-122: Extended widget library
+    case 'weather':
+      return <WidgetWeather {...renderProps} />;
+    case 'rss-feed':
+      return <WidgetRssFeed {...renderProps} />;
+    case 'quick-notes':
+      return <WidgetQuickNotes {...renderProps} />;
     default:
       return <div className="p-4 text-muted-foreground text-center">Widget inconnu: {widget.type}</div>;
   }

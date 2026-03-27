@@ -26,3 +26,4 @@ tower-http = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 chrono = { workspace = true }
+reqwest = { workspace = true }

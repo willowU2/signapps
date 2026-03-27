@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCw, Pencil, Plus, RotateCcw } from 'lucide-react';
+import { DashboardPdfExportButton } from '@/components/dashboard/dashboard-pdf-export';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDashboardData } from '@/hooks/use-dashboard';
 import { useDashboardEditMode, useDashboardEditActions } from '@/stores/dashboard-store';
@@ -77,6 +78,8 @@ export default function DashboardPage() {
               <Pencil className="mr-2 h-4 w-4" />
               {editMode ? 'Done' : 'Edit'}
             </Button>
+            {/* IDEA-125: Dashboard PDF export */}
+            <DashboardPdfExportButton />
             <Button
               variant="outline"
               size="sm"

@@ -1,7 +1,7 @@
 //! SignApps Calendar Service
 //! Manages shared calendars, events, recurring meetings, and tasks with hierarchical support
 
-use axum::{extract::DefaultBodyLimit, http::StatusCode, middleware, Router};
+use axum::{extract::DefaultBodyLimit, middleware, Router};
 use dashmap::DashMap;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
@@ -182,6 +182,11 @@ fn build_router(state: AppState) -> Router {
         .route("/api/v1/resources/type/:resource_type", get(resources::list_resources_by_type))
         .route("/api/v1/resources/availability", post(resources::check_availability))
         .route("/api/v1/resources/:resource_id/book", post(resources::book_resources))
+        // Meeting time suggestions (IDEA-105)
+        .route(
+            "/api/v1/calendar/meeting-suggestions",
+            post(handlers::meeting_suggestions::suggest_meeting_times),
+        )
         // iCalendar import/export routes
         .route("/api/v1/calendars/:calendar_id/export", get(icalendar::export_calendar))
         .route("/api/v1/calendars/:calendar_id/feed.ics", get(icalendar::get_calendar_feed))
@@ -275,6 +280,11 @@ fn build_router(state: AppState) -> Router {
         .with_state(state)
 }
 
-async fn health_check() -> StatusCode {
-    StatusCode::OK
+async fn health_check() -> axum::Json<serde_json::Value> {
+    axum::Json(serde_json::json!({
+        "status": "ok",
+        "service": "signapps-calendar",
+        "version": env!("CARGO_PKG_VERSION"),
+        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+    }))
 }

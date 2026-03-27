@@ -9,6 +9,10 @@ import { PivotTableDialog } from "./pivot-table"
 import { ChartDialog } from "./chart-dialog"
 import { FloatingChart } from "./chart-panel"
 import { MacroEditor } from "./macro-editor"
+import { NamedRangesDialog, type NamedRange } from "./named-ranges-dialog"
+import { PrintPreviewDialog } from "./print-preview-dialog"
+import { AdvancedValidationDialog, type AdvancedValidation } from "./advanced-validation-dialog"
+import { AdvancedCondFormatDialog, type AdvCondRule } from "./advanced-cond-format-dialog"
 import { CellStyle, CellData, CellValidation, SelectionBounds, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS, getEffectiveRows } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
 import { fetchAndParseDocument } from '@/lib/file-parsers'
@@ -735,6 +739,24 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     // CSV import ref
     const csvInputRef = useRef<HTMLInputElement>(null)
 
+    // IDEA-016: Freeze pane visual indicator — state already exists (freezeRows, freezeCols)
+    // IDEA-017: CSV drag-drop — handled in drag events on grid
+    const [isDragOver, setIsDragOver] = useState(false)
+
+    // IDEA-018: Named ranges
+    const [namedRanges, setNamedRanges] = useState<NamedRange[]>([])
+    const [showNamedRanges, setShowNamedRanges] = useState(false)
+
+    // IDEA-020: Print preview
+    const [showPrintPreview, setShowPrintPreview] = useState(false)
+
+    // IDEA-021: Advanced data validation dialog
+    const [showAdvancedValidation, setShowAdvancedValidation] = useState(false)
+
+    // IDEA-022: Advanced conditional formatting
+    const [advCondRules, setAdvCondRules] = useState<AdvCondRule[]>([])
+    const [showAdvCondFormat, setShowAdvCondFormat] = useState(false)
+
     // Formula cache
     const [evaluatedData, setEvaluatedData] = useState<Record<string, string>>({})
 
@@ -819,6 +841,18 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         return { count, sum, avg: sum / values.length, min: Math.min(...values), max: Math.max(...values) }
     }, [selectionBounds, evaluatedData, data])
 
+    // IDEA-018: Named range resolver — expand named ranges in formula text before evaluation
+    const expandNamedRanges = useCallback((formula: string): string => {
+        if (!formula.startsWith('=') || namedRanges.length === 0) return formula
+        let expanded = formula
+        for (const nr of namedRanges) {
+            // Replace exact word boundaries of the name with the range
+            const re = new RegExp(`\\b${nr.name}\\b`, 'g')
+            expanded = expanded.replace(re, nr.range)
+        }
+        return expanded
+    }, [namedRanges])
+
     // ---- Formula recalculation (optimized: only cells with data) ----
     useEffect(() => {
         const newData: Record<string, string> = {}
@@ -835,7 +869,8 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         for (const key of keys) {
             const cell = data[key]
             // Prefer formula over cached value so formulas are re-evaluated
-            const expression = cell.formula || cell.value
+            const raw = cell.formula || cell.value
+            const expression = expandNamedRanges(raw)
             const [rStr, cStr] = key.split(',')
             newData[key] = evaluateFormula(expression, getData, { r: parseInt(rStr), c: parseInt(cStr), sheet: activeSheet }, new Set())
         }
@@ -965,6 +1000,50 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         window.addEventListener('mouseup', handleMouseUp)
         return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp) }
     })
+
+    // IDEA-022: Advanced conditional formatting helpers
+    const selectionNumValues = useMemo(() => {
+        if (!selectionBounds) return { min: 0, max: 100 }
+        const nums: number[] = []
+        for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++)
+            for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++) {
+                const v = Number(evaluatedData[`${r},${c}`] || data[`${r},${c}`]?.value || '')
+                if (!isNaN(v)) nums.push(v)
+            }
+        return { min: Math.min(...nums, 0), max: Math.max(...nums, 1) }
+    }, [selectionBounds, evaluatedData, data])
+
+    const advCondFormatOverlay = useCallback((r: number, c: number): { dataBar?: { pct: number; color: string; showVal: boolean }; icon?: string; bgColor?: string } | null => {
+        if (advCondRules.length === 0) return null
+        const rawVal = evaluatedData[`${r},${c}`] || data[`${r},${c}`]?.value || ''
+        const num = Number(rawVal)
+        const { min, max } = selectionNumValues
+        const pct = max !== min ? ((num - min) / (max - min)) * 100 : 50
+
+        for (const rule of advCondRules) {
+            if (rule.type === 'data_bar' && !isNaN(num)) {
+                return { dataBar: { pct: Math.max(0, Math.min(100, pct)), color: rule.color, showVal: rule.showValue } }
+            }
+            if (rule.type === 'color_scale' && !isNaN(num)) {
+                // Interpolate between minColor and maxColor
+                const p = Math.max(0, Math.min(1, (num - min) / (max - min || 1)))
+                const hex2rgb = (h: string) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]
+                const [r1, g1, b1] = hex2rgb(rule.minColor)
+                const [r2, g2, b2] = hex2rgb(rule.maxColor)
+                const ri = Math.round(r1 + (r2 - r1) * p)
+                const gi = Math.round(g1 + (g2 - g1) * p)
+                const bi = Math.round(b1 + (b2 - b1) * p)
+                return { bgColor: `rgb(${ri},${gi},${bi})` }
+            }
+            if (rule.type === 'icon_set' && !isNaN(num)) {
+                const [t1, t2] = rule.thresholds
+                const icons = rule.iconSet === 'traffic' ? ['🔴', '🟡', '🟢'] : rule.iconSet === 'arrows' ? ['↓', '→', '↑'] : ['☆', '★', '★★']
+                const icon = pct <= t1 ? icons[0] : pct <= t2 ? icons[1] : icons[2]
+                return { icon }
+            }
+        }
+        return null
+    }, [advCondRules, evaluatedData, data, selectionNumValues])
 
     // ---- Conditional formatting evaluation ----
     const condFormatColor = useCallback((r: number, c: number): string | undefined => {
@@ -1822,6 +1901,40 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         setScrollLeft(gridRef.current.scrollLeft)
     }, [])
 
+    // IDEA-017: CSV drag-drop import
+    const handleGridDragOver = useCallback((e: React.DragEvent) => {
+        const hasFile = Array.from(e.dataTransfer.items).some(i => i.kind === 'file')
+        if (hasFile) { e.preventDefault(); setIsDragOver(true) }
+    }, [])
+
+    const handleGridDragLeave = useCallback(() => setIsDragOver(false), [])
+
+    const handleGridDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault()
+        setIsDragOver(false)
+        const file = Array.from(e.dataTransfer.files).find(f => f.name.endsWith('.csv') || f.name.endsWith('.tsv') || f.name.endsWith('.txt'))
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+            const text = ev.target?.result as string
+            if (!text) return
+            const sep = file.name.endsWith('.tsv') ? '\t' : ','
+            const rows = text.split(/\r?\n/)
+            const startR = activeCell?.r ?? 0
+            const startC = activeCell?.c ?? 0
+            transact(() => {
+                rows.forEach((row, ri) => {
+                    const cols = row.split(sep)
+                    cols.forEach((val, ci) => {
+                        if (val.trim()) setCell(startR + ri, startC + ci, val.trim())
+                    })
+                })
+            })
+            toast.success(`CSV importé: ${rows.length} ligne(s) depuis ${file.name}`)
+        }
+        reader.readAsText(file)
+    }, [activeCell, setCell, transact])
+
     // ============================================================
     // RENDER
     // ============================================================
@@ -1882,7 +1995,8 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 { label: 'Télécharger', subItems: [
                     { label: 'Microsoft Excel (.xlsx)', action: 'export_xlsx' },
                     { label: 'Valeurs séparées par des virgules (.csv)', action: 'export_csv' },
-                    { label: 'Document PDF (.pdf)', action: 'print' }
+                    { label: 'Document PDF (.pdf)', action: 'print' },
+                { label: 'Aperçu avant impression', action: 'print_preview' }
                 ] },
                 { label: 'Approbations', action: 'approvals' },
                 { sep: true },
@@ -2032,6 +2146,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 { sep: true },
                 { label: 'Convertir en tableau', action: 'convert_to_table', shortcut: 'Ctrl+Alt+T' },
                 { label: 'Mise en forme conditionnelle', action: 'condFormat' },
+                { label: 'M.E.F. conditionnelle avancée', action: 'advanced_cond_format' },
                 { label: 'Couleurs en alternance', action: 'bandedRows' },
                 { sep: true },
                 { label: 'Effacer la mise en forme', action: 'clearFormat', shortcut: 'Ctrl+\\' }
@@ -2062,6 +2177,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 { sep: true },
                 { label: 'Statistiques de colonne', action: 'column_stats' },
                 { label: 'Validation des données', action: 'validation' },
+                { label: 'Validation avancée', action: 'advanced_validation' },
                 { label: 'Nettoyage des données', subItems: [
                     { label: 'Suggestions de nettoyage', action: 'cleanup_suggestions' },
                     { label: 'Supprimer les doublons', action: 'remove_duplicates' },
@@ -2283,6 +2399,14 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 if (action === 'pivot_table') { setShowPivotDialog(true); return }
                 if (action === 'chartDialog') { setShowChartDialog(true); return }
                 if (action === 'macroEditor') { setShowMacroEditor(true); return }
+                // IDEA-018: Named ranges
+                if (action === 'named_ranges') { setShowNamedRanges(true); return }
+                // IDEA-020: Print preview
+                if (action === 'print_preview') { setShowPrintPreview(true); return }
+                // IDEA-021: Advanced data validation
+                if (action === 'advanced_validation') { setShowAdvancedValidation(true); return }
+                // IDEA-022: Advanced conditional formatting
+                if (action === 'advanced_cond_format') { setShowAdvCondFormat(true); return }
             }} />
             </div>
 
@@ -2493,7 +2617,16 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             )}
 
             {/* ===== GRID (Virtualized) ===== */}
-            <div ref={gridRef} className="relative flex-1 overflow-auto bg-background dark:bg-[#1f1f1f] will-change-transform" style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left' }} onScroll={handleScroll}>
+            <div ref={gridRef} className="relative flex-1 overflow-auto bg-background dark:bg-[#1f1f1f] will-change-transform" style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top left' }} onScroll={handleScroll} onDragOver={handleGridDragOver} onDragLeave={handleGridDragLeave} onDrop={handleGridDrop}>
+                {/* IDEA-017: CSV drag-drop overlay */}
+                {isDragOver && (
+                    <div className="absolute inset-0 z-[500] bg-[#1a73e8]/10 border-4 border-dashed border-[#1a73e8] flex items-center justify-center pointer-events-none rounded">
+                        <div className="bg-background rounded-xl shadow-xl px-6 py-4 text-center">
+                            <p className="font-semibold text-[#1a73e8]">Déposer le fichier CSV</p>
+                            <p className="text-[12px] text-muted-foreground mt-1">Le contenu sera inséré à la cellule active</p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Find & Replace */}
                 {showFind && (
@@ -2536,7 +2669,27 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                         })}
                     </div>
 
-                    {/* Rows (virtualized) */}
+                    {/* IDEA-016: Freeze pane visual indicator — blue lines at frozen boundaries */}
+                {freezeRows > 0 && (
+                    <div className="absolute z-30 pointer-events-none" style={{
+                        left: 0, right: 0,
+                        top: COL_HEADER_HEIGHT + rowOffsets[freezeRows] - scrollTop,
+                        height: 2,
+                        background: 'linear-gradient(to right, transparent, #1a73e8 20%, #1a73e8 80%, transparent)',
+                        boxShadow: '0 0 6px rgba(26,115,232,0.5)'
+                    }} />
+                )}
+                {freezeCols > 0 && (
+                    <div className="absolute z-30 pointer-events-none" style={{
+                        top: 0, bottom: 0,
+                        left: ROW_HEADER_WIDTH + colOffsets[freezeCols] - scrollLeft,
+                        width: 2,
+                        background: 'linear-gradient(to bottom, transparent, #1a73e8 20%, #1a73e8 80%, transparent)',
+                        boxShadow: '0 0 6px rgba(26,115,232,0.5)'
+                    }} />
+                )}
+
+                {/* Rows (virtualized) */}
                     {/* Spacer for rows before visible range */}
                     {startR > 0 && <div style={{ height: rowOffsets[startR] }} />}
                     {Array.from({ length: endR - startR + 1 }).map((_, ri) => {
@@ -2594,6 +2747,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                     let cellH = 0; for (let mr = 0; mr < mergeRows; mr++) cellH += getRowHeight(r + mr)
 
                                     const condColor = condFormatColor(r, c)
+                                    const advOverlay = advCondFormatOverlay(r, c)
                                     const isFrozenCell = c < freezeCols
 
                                     const bandedBg = bandedRows && !style?.fillColor && !condColor && !inRect && !isActive && r % 2 === 0 ? '#f8f9fa' : undefined
@@ -2614,7 +2768,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                         fontFamily: style?.fontFamily,
                                         fontSize: style?.fontSize ? `${style.fontSize}px` : undefined,
                                         color: isUrl ? '#1a73e8' : style?.textColor,
-                                        backgroundColor: condColor
+                                        backgroundColor: advOverlay?.bgColor
+                                            ? advOverlay.bgColor
+                                            : condColor
                                             ? `${condColor}22`
                                             : style?.fillColor || (inRect && !isActive ? 'rgba(66,133,244,0.08)' : bandedBg),
                                         whiteSpace: style?.wrap ? 'pre-wrap' : 'nowrap',
@@ -2663,6 +2819,16 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                                 </button>
                                             )}
                                             {condColor && <div className="absolute inset-0 border-l-[3px] pointer-events-none z-[5]" style={{ borderColor: condColor }} />}
+                                            {/* IDEA-022: Advanced cond format — data bar */}
+                                            {advOverlay?.dataBar && (
+                                                <div className="absolute inset-0 flex items-center pointer-events-none z-[4]">
+                                                    <div style={{ width: `${advOverlay.dataBar.pct}%`, height: '70%', backgroundColor: advOverlay.dataBar.color, opacity: 0.45, borderRadius: 2 }} />
+                                                </div>
+                                            )}
+                                            {/* IDEA-022: Advanced cond format — icon set */}
+                                            {advOverlay?.icon && (
+                                                <span className="absolute left-0.5 top-1/2 -translate-y-1/2 text-[11px] pointer-events-none z-[6] leading-none">{advOverlay.icon}</span>
+                                            )}
                                             {inRect && (
                                                 <>
                                                     {r === selectionBounds!.minR && <div className="absolute top-0 left-0 right-[-1px] h-[2px] bg-[#1a73e8] z-10" />}
@@ -2850,6 +3016,50 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     })}
                     <div className="px-3 py-1 text-[10px] text-[#9aa0a6] border-t border-[#e3e3e3] dark:border-[#5f6368] mt-0.5">Tab pour insérer</div>
                 </div>
+            )}
+
+            {/* IDEA-018: Named ranges dialog */}
+            {showNamedRanges && (
+                <NamedRangesDialog
+                    namedRanges={namedRanges}
+                    onAdd={(nr) => setNamedRanges(prev => [...prev, nr])}
+                    onRemove={(name) => setNamedRanges(prev => prev.filter(n => n.name !== name))}
+                    onUpdate={(oldName, nr) => setNamedRanges(prev => prev.map(n => n.name === oldName ? nr : n))}
+                    onClose={() => setShowNamedRanges(false)}
+                />
+            )}
+
+            {/* IDEA-020: Print preview */}
+            {showPrintPreview && (
+                <PrintPreviewDialog
+                    data={data}
+                    evaluatedData={evaluatedData}
+                    colWidths={colWidths}
+                    rowHeights={rowHeights}
+                    sheetName={sheets[activeSheetIndex]?.name || 'Sheet1'}
+                    onClose={() => setShowPrintPreview(false)}
+                />
+            )}
+
+            {/* IDEA-021: Advanced data validation */}
+            {showAdvancedValidation && activeCell && (
+                <AdvancedValidationDialog
+                    current={data[`${activeCell.r},${activeCell.c}`]?.validation as AdvancedValidation | undefined}
+                    onApply={(v) => {
+                        if (activeCell) setCellValidation(activeCell.r, activeCell.c, v as any)
+                    }}
+                    onClose={() => setShowAdvancedValidation(false)}
+                />
+            )}
+
+            {/* IDEA-022: Advanced conditional formatting */}
+            {showAdvCondFormat && (
+                <AdvancedCondFormatDialog
+                    rules={advCondRules}
+                    onAdd={(rule) => setAdvCondRules(prev => [...prev, rule])}
+                    onRemove={(id) => setAdvCondRules(prev => prev.filter(r => r.id !== id))}
+                    onClose={() => setShowAdvCondFormat(false)}
+                />
             )}
 
             {/* Hidden CSV/XLSX import input */}

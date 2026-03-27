@@ -1,11 +1,14 @@
 "use client";
 
+// IDEA-064: Ruler and grid overlay — toggleable rulers on top/left edges + configurable grid
+
 import { useEffect, useRef, useCallback, useState } from "react";
 import type * as fabric from "fabric";
 import { useDesignStore } from "@/stores/design-store";
 import type { DesignObject } from "./types";
-import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize, Ruler } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DesignRuler, RulerCorner, RULER_SIZE } from "./design-ruler";
 
 const GRID_SIZE = 20;
 
@@ -47,10 +50,14 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
 
   // Scale to fit container
   const [displayScale, setDisplayScale] = useState(1);
+  const [showRulers, setShowRulers] = useState(true);
+  const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
+  const [scrollPos, setScrollPos] = useState({ x: 0, y: 0 });
 
   const recalcScale = useCallback(() => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+    setContainerSize({ w: rect.width, h: rect.height });
     const padding = 80;
     const scaleX = (rect.width - padding) / canvasW;
     const scaleY = (rect.height - padding) / canvasH;
@@ -346,44 +353,88 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
   const totalScale = displayScale * zoom;
 
   return (
-    <div ref={containerRef} className="relative flex-1 overflow-auto bg-muted/30">
-      {/* Zoom controls */}
-      <div className="absolute bottom-4 right-4 z-10 flex items-center gap-1 bg-background/90 backdrop-blur-sm border rounded-lg shadow-sm px-1 py-1">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomOut}>
-          <ZoomOut className="h-3.5 w-3.5" />
-        </Button>
-        <span className="text-xs font-medium w-12 text-center tabular-nums">
-          {Math.round(totalScale * 100)}%
-        </span>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomIn}>
-          <ZoomIn className="h-3.5 w-3.5" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomFit}>
-          <Maximize className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+    <div className="relative flex-1 flex flex-col overflow-hidden bg-muted/30">
+      {/* Rulers top row */}
+      {showRulers && (
+        <div className="flex shrink-0" style={{ height: RULER_SIZE }}>
+          <RulerCorner />
+          <DesignRuler
+            orientation="horizontal"
+            length={containerSize.w - RULER_SIZE}
+            scale={totalScale}
+            offset={scrollPos.x + (containerSize.w - RULER_SIZE - canvasW * totalScale) / 2}
+          />
+        </div>
+      )}
 
-      {/* Canvas wrapper */}
-      <div className="flex items-center justify-center min-h-full min-w-full p-10">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left ruler */}
+        {showRulers && (
+          <DesignRuler
+            orientation="vertical"
+            length={containerSize.h - RULER_SIZE}
+            scale={totalScale}
+            offset={scrollPos.y + (containerSize.h - RULER_SIZE - canvasH * totalScale) / 2}
+          />
+        )}
+
+        {/* Scrollable canvas area */}
         <div
-          ref={wrapperRef}
-          className="shadow-[0_4px_24px_-8px_rgba(0,0,0,0.15)] rounded-sm relative"
-          style={{
-            width: canvasW * totalScale,
-            height: canvasH * totalScale,
-            transform: `scale(1)`,
-            transformOrigin: "center center",
+          ref={containerRef}
+          className="relative flex-1 overflow-auto"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setScrollPos({ x: -el.scrollLeft, y: -el.scrollTop });
           }}
         >
-          <div
-            style={{
-              width: canvasW,
-              height: canvasH,
-              transform: `scale(${totalScale})`,
-              transformOrigin: "top left",
-            }}
-          >
-            <canvas ref={canvasElRef} />
+          {/* Zoom controls */}
+          <div className="absolute bottom-4 right-4 z-10 flex items-center gap-1 bg-background/90 backdrop-blur-sm border rounded-lg shadow-sm px-1 py-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setShowRulers((r) => !r)}
+              title={showRulers ? "Hide rulers" : "Show rulers"}
+            >
+              <Ruler className={`h-3.5 w-3.5 ${showRulers ? "text-primary" : ""}`} />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomOut}>
+              <ZoomOut className="h-3.5 w-3.5" />
+            </Button>
+            <span className="text-xs font-medium w-12 text-center tabular-nums">
+              {Math.round(totalScale * 100)}%
+            </span>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomIn}>
+              <ZoomIn className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomFit}>
+              <Maximize className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+
+          {/* Canvas wrapper */}
+          <div className="flex items-center justify-center min-h-full min-w-full p-10">
+            <div
+              ref={wrapperRef}
+              className="shadow-[0_4px_24px_-8px_rgba(0,0,0,0.15)] rounded-sm relative"
+              style={{
+                width: canvasW * totalScale,
+                height: canvasH * totalScale,
+                transform: `scale(1)`,
+                transformOrigin: "center center",
+              }}
+            >
+              <div
+                style={{
+                  width: canvasW,
+                  height: canvasH,
+                  transform: `scale(${totalScale})`,
+                  transformOrigin: "top left",
+                }}
+              >
+                <canvas ref={canvasElRef} />
+              </div>
+            </div>
           </div>
         </div>
       </div>

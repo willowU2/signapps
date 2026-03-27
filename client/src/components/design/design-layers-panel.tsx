@@ -22,6 +22,7 @@ interface DesignLayersPanelProps {
   fabricCanvasRef: React.MutableRefObject<any | null>;
 }
 
+// IDEA-061: Layer lock/unlock toggle — always-visible lock icon for locked layers, syncs to fabric canvas
 export default function DesignLayersPanel({ fabricCanvasRef }: DesignLayersPanelProps) {
   const objects = useDesignObjects();
   const { selectedObjectIds, setSelectedObjects } = useDesignStore();
@@ -151,28 +152,45 @@ export default function DesignLayersPanel({ fabricCanvasRef }: DesignLayersPanel
                     <span className="flex-1 truncate">{obj.name}</span>
                   )}
 
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-0.5">
+                    {/* Lock icon: always visible when locked, hover for unlock toggle */}
                     <button
-                      onClick={(e) => { e.stopPropagation(); toggleObjectVisibility(obj.id); }}
-                      className="p-0.5 rounded hover:bg-muted"
-                      title={obj.visible ? "Hide" : "Show"}
-                    >
-                      {obj.visible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleObjectLock(obj.id); }}
-                      className="p-0.5 rounded hover:bg-muted"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleObjectLock(obj.id);
+                        // Sync locked state to fabric canvas
+                        const canvas = fabricCanvasRef.current;
+                        if (canvas) {
+                          const fObj = canvas.getObjects().find((o: any) => o.id === obj.id);
+                          if (fObj) {
+                            const nowLocked = !obj.locked;
+                            fObj.set({ selectable: !nowLocked, evented: !nowLocked, hasControls: !nowLocked, lockMovementX: nowLocked, lockMovementY: nowLocked });
+                            if (nowLocked && canvas.getActiveObject() === fObj) canvas.discardActiveObject();
+                            canvas.requestRenderAll();
+                          }
+                        }
+                      }}
+                      className={cn("p-0.5 rounded hover:bg-muted transition-opacity", obj.locked ? "opacity-100 text-amber-500" : "opacity-0 group-hover:opacity-100")}
                       title={obj.locked ? "Unlock" : "Lock"}
                     >
                       {obj.locked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(obj.id); }}
-                      className="p-0.5 rounded hover:bg-destructive/10"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3 w-3 text-destructive" />
-                    </button>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleObjectVisibility(obj.id); }}
+                        className="p-0.5 rounded hover:bg-muted"
+                        title={obj.visible ? "Hide" : "Show"}
+                      >
+                        {obj.visible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(obj.id); }}
+                        className="p-0.5 rounded hover:bg-destructive/10"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

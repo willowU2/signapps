@@ -108,6 +108,15 @@ pub fn router() -> Router<AppState> {
             "/api/v1/mail/accounts/:account_id/pgp",
             get(get_pgp_config).put(upsert_pgp_config).delete(delete_pgp_config),
         )
+        // Priority scoring (IDEA-107)
+        .route(
+            "/api/v1/mail/emails/:id/priority-score",
+            axum::routing::post(crate::handlers::priority::score_single),
+        )
+        .route(
+            "/api/v1/mail/priority-score/batch",
+            axum::routing::post(crate::handlers::priority::score_batch),
+        )
 }
 
 fn patch<H, T, S>(handler: H) -> axum::routing::MethodRouter<S>

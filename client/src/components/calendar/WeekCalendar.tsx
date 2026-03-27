@@ -1,18 +1,21 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useCallback } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, isToday, addDays, getHours, getMinutes, differenceInMinutes } from "date-fns";
 import { useCalendarStore, useCalendarSelection, useCalendarTimezones } from "@/stores/calendar-store";
 import { useEvents } from "@/hooks/use-events";
 import { Event } from "@/types/calendar";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DragCreateLayer, useDragCreate, DragSelection } from "./drag-create-event";
+import { MultiDayEventBars, isMultiDay } from "./multi-day-events";
 
 interface WeekCalendarProps {
     selectedCalendarId?: string;
+    onCreateEvent?: (startTime?: Date, endTime?: Date) => void;
 }
 
-export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
+export function WeekCalendar({ selectedCalendarId, onCreateEvent }: WeekCalendarProps) {
     // Granular selectors for optimized re-renders
     const currentDate = useCalendarStore((state) => state.currentDate);
     const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
@@ -36,16 +39,19 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
 
     const hours = Array.from({ length: 24 }, (_, i) => i);
 
-    // Group events by day for easier rendering
+    // Separate multi-day events from timed events
+    const singleDayEvents = useMemo(() => events.filter((e) => !isMultiDay(e)), [events])
+
+    // Group single-day events by day for easier rendering
     const eventsByDay = useMemo(() => {
         const grouped = new Map<string, Event[]>();
-        events.forEach((event) => {
+        singleDayEvents.forEach((event) => {
             const date = new Date(event.start_time).toDateString();
             if (!grouped.has(date)) grouped.set(date, []);
             grouped.get(date)!.push(event);
         });
         return grouped;
-    }, [events]);
+    }, [singleDayEvents]);
 
     const handlePrevWeek = () => {
         const newDate = addDays(currentDate, -7);
@@ -56,6 +62,11 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
         const newDate = addDays(currentDate, 7);
         setCurrentDate(newDate);
     };
+
+    // Drag-create handler
+    const { handleCreate } = useDragCreate(useCallback((startTime: Date, endTime: Date) => {
+        onCreateEvent?.(startTime, endTime)
+    }, [onCreateEvent]))
 
     const getEventStyle = (event: Event) => {
         const start = new Date(event.start_time);
@@ -94,24 +105,40 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
             </div>
 
             {/* Grid Header */}
-            <div className="flex border-b">
-                {/* Timezone Headers */}
-                <div className="flex min-w-max border-r bg-muted/50">
-                    {timezones.map((tz, i) => (
-                        <div key={tz} className={`w-16 text-center py-2 text-xs font-medium text-muted-foreground ${i > 0 ? 'border-l' : ''}`}>
-                            <span className="truncate block px-1" title={tz}>{tz.split('/').pop()?.replace('_', ' ') || tz}</span>
+            <div className="flex flex-col border-b">
+                <div className="flex">
+                    {/* Timezone Headers */}
+                    <div className="flex min-w-max border-r bg-muted/50">
+                        {timezones.map((tz, i) => (
+                            <div key={tz} className={`w-16 text-center py-2 text-xs font-medium text-muted-foreground ${i > 0 ? 'border-l' : ''}`}>
+                                <span className="truncate block px-1" title={tz}>{tz.split('/').pop()?.replace('_', ' ') || tz}</span>
+                            </div>
+                        ))}
+                    </div>
+                    {/* Days Headers */}
+                    {weekDays.map((day) => (
+                        <div key={day.toString()} className={`flex-1 text-center py-2 border-r font-semibold min-w-[100px] ${isToday(day) ? "text-blue-600" : ""}`}>
+                            <div>{format(day, "EEE")}</div>
+                            <div className={`text-lg ${isToday(day) ? "bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto mt-1" : ""}`}>
+                                {format(day, "d")}
+                            </div>
                         </div>
                     ))}
                 </div>
-                {/* Days Headers */}
-                {weekDays.map((day) => (
-                    <div key={day.toString()} className={`flex-1 text-center py-2 border-r font-semibold min-w-[100px] ${isToday(day) ? "text-blue-600" : ""}`}>
-                        <div>{format(day, "EEE")}</div>
-                        <div className={`text-lg ${isToday(day) ? "bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto mt-1" : ""}`}>
-                            {format(day, "d")}
+                {/* Multi-day events bar (IDEA-045) */}
+                {events.some(isMultiDay) && (
+                    <div className="flex border-t border-dashed border-gray-200 bg-muted/20">
+                        <div className="flex min-w-max border-r" style={{ minWidth: `${timezones.length * 64}px` }} />
+                        <div className="flex-1 relative px-1 py-1">
+                            <MultiDayEventBars
+                                events={events}
+                                weekDays={weekDays}
+                                onEventClick={selectEvent}
+                                selectedEventId={selectedEventId}
+                            />
                         </div>
                     </div>
-                ))}
+                )}
             </div>
 
             {/* Time Grid */}
@@ -148,11 +175,14 @@ export function WeekCalendar({ selectedCalendarId }: WeekCalendarProps) {
 
                     {/* Days Columns */}
                     {weekDays.map((day) => (
-                        <div key={day.toString()} className="border-r relative h-[1440px]">
+                        <div key={day.toString()} className="border-r relative h-[1440px] flex-1 min-w-[100px]">
                             {/* Hour lines */}
                             {hours.map((hour) => (
                                 <div key={hour} className="h-[60px] border-b border-dashed border-gray-100 dark:border-gray-800"></div>
                             ))}
+
+                            {/* Drag-create layer (IDEA-043) */}
+                            <DragCreateLayer day={day} hourHeight={60} onCreateEvent={handleCreate} />
 
                             {/* Events */}
                             {eventsByDay.get(day.toDateString())?.map((event) => (

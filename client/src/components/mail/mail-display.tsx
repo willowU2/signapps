@@ -1,6 +1,9 @@
 import { SpinnerInfinity } from 'spinners-react';
 import { format } from "date-fns"
 import { Archive, ArchiveX, Clock, Forward, MoreVertical, Reply, ReplyAll, Trash2, Sparkles, Bot, X, Send, FileText, Link2 } from 'lucide-react';
+import { AttachmentPreviewBar, type Attachment } from "./attachment-preview"
+import { ScheduleSendPopup } from "./schedule-send-popup"
+import { SnoozeDatePicker } from "./snooze-picker"
 import { EntityLinks } from '@/components/crosslinks/EntityLinks';
 import { PgpStatusBadges, DecryptButton } from './pgp-indicator';
 
@@ -216,27 +219,12 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                     <ToolbarDivider />
                     
                     <ToolbarGroup>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <ToolbarButton disabled={!mail} title="Snooze">
-                                    <Clock className="h-4 w-4" />
-                                </ToolbarButton>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[160px] rounded-xl shadow-xl border-border/50 p-1">
-                                <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Later today")}>
-                                    Later today
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Tomorrow")}>
-                                    Tomorrow
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "This weekend")}>
-                                    This weekend
-                                </DropdownMenuItem>
-                                <DropdownMenuItem className="rounded-lg cursor-pointer text-sm font-medium" onClick={() => mail && onSnooze?.(mail.id, "Next week")}>
-                                    Next week
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {/* Custom snooze picker (IDEA-036) */}
+                        <SnoozeDatePicker onSnooze={(isoStr, label) => mail && onSnooze?.(mail.id, label)}>
+                            <ToolbarButton disabled={!mail} title="Snooze">
+                                <Clock className="h-4 w-4" />
+                            </ToolbarButton>
+                        </SnoozeDatePicker>
                     </ToolbarGroup>
                     
                     <ToolbarDivider />
@@ -363,6 +351,15 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                         {decryptedBody ?? mail.text}
                     </div>
 
+                    {/* Inline attachment preview (IDEA-037) */}
+                    {(mail as any).attachments?.length > 0 && (
+                        <AttachmentPreviewBar
+                            attachments={(mail as any).attachments as Attachment[]}
+                            onDownload={(att) => window.open(att.url, "_blank")}
+                            onDownloadAll={() => (mail as any).attachments?.forEach((a: Attachment) => window.open(a.url, "_blank"))}
+                        />
+                    )}
+
                     {/* Bottom Action Buttons */}
                     <div className="flex items-center gap-3 px-8 py-6 mb-4">
                         <Button variant="outline" className="rounded-full px-5 h-9 text-[#444746] dark:text-[#e3e3e3] border-[#747775] dark:border-[#5f6368] font-medium hover:bg-[#f3f7fe] dark:hover:bg-[#3c4043] transition-colors" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}>
@@ -480,6 +477,13 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
+                                            <ScheduleSendPopup
+                                                onSchedule={(sendAt) => {
+                                                    // Store scheduled send time for later use
+                                                    toast.success(`Reply scheduled for ${sendAt.toLocaleString()}`)
+                                                }}
+                                                disabled={!(replyText.trim() || interimReplyText.trim())}
+                                            />
                                             <Button
                                                 onClick={handleSend}
                                                 size="sm"

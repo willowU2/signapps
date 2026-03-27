@@ -2,6 +2,7 @@
 //! Manages contacts and address book with group support
 
 mod carddav;
+mod carddav_sync;
 
 use axum::{
     extract::{Path, State},
@@ -200,8 +201,13 @@ async fn list_groups(State(state): State<AppState>) -> impl IntoResponse {
     Json(groups.clone())
 }
 
-async fn health_check() -> StatusCode {
-    StatusCode::OK
+async fn health_check() -> axum::Json<serde_json::Value> {
+    axum::Json(serde_json::json!({
+        "status": "ok",
+        "service": "signapps-contacts",
+        "version": env!("CARGO_PKG_VERSION"),
+        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+    }))
 }
 
 // ---------------------------------------------------------------------------
@@ -238,6 +244,10 @@ fn create_router(state: AppState) -> Router {
         .route("/api/v1/contacts/groups", get(list_groups))
         .route("/api/v1/contacts/export/vcf", get(carddav::export_vcf))
         .route("/api/v1/contacts/import/vcf", post(carddav::import_vcf))
+        .route(
+            "/api/v1/contacts/carddav/sync",
+            post(carddav_sync::sync_carddav),
+        )
         .route(
             "/api/v1/contacts/:id",
             get(get_contact).put(update_contact).delete(delete_contact),

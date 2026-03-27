@@ -6,6 +6,7 @@ pub mod events;
 pub mod external_sync;
 pub mod floor_plans;
 pub mod icalendar;
+pub mod meeting_suggestions;
 pub mod notifications;
 pub mod ooo;
 pub mod polls;

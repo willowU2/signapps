@@ -7,6 +7,9 @@ import {
   type NotificationPreferences,
 } from "@/lib/api/notifications";
 import { toast } from "sonner";
+import { NotificationGranularPrefs } from "@/components/notifications/notification-granular-prefs";
+import { NotificationDndSchedule } from "@/components/notifications/notification-dnd-schedule";
+import { NotificationSounds } from "@/components/notifications/notification-sounds";
 
 // ─── Known services ───────────────────────────────────────────────────────────
 
@@ -261,6 +264,15 @@ export default function NotificationPreferencesPage() {
                 />
               ))}
             </Section>
+
+            {/* IDEA-114: Granular per-module, per-event prefs */}
+            <NotificationGranularPrefs />
+
+            {/* IDEA-116: DND schedule */}
+            <NotificationDndSchedule />
+
+            {/* IDEA-117: Custom sounds */}
+            <NotificationSounds />
 
             {/* Save button */}
             <div className="flex justify-end">

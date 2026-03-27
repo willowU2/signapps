@@ -32,7 +32,11 @@ export type WidgetType =
   | 'storage-usage'
   | 'performance-chart'
   | 'unread-emails'
-  | 'active-tasks';
+  | 'active-tasks'
+  // IDEA-122: Extended widget library
+  | 'weather'
+  | 'rss-feed'
+  | 'quick-notes';
 
 export interface WidgetConfig {
   id: string;
@@ -42,6 +46,8 @@ export interface WidgetConfig {
   w: number;
   h: number;
   config?: Record<string, unknown>;
+  // IDEA-124: Per-widget refresh interval in seconds (0 = no auto-refresh)
+  refreshInterval?: number;
 }
 
 export interface BookmarkItem {
@@ -85,6 +91,10 @@ export const WIDGET_CATALOG: { type: WidgetType; label: string; description: str
   // Social
   { type: 'team-activity', label: 'Activité Équipe', description: 'Activité récente de l\'équipe', defaultW: 6, defaultH: 4, category: 'social' },
   { type: 'notifications', label: 'Notifications', description: 'Dernières notifications', defaultW: 4, defaultH: 3, category: 'social' },
+  // IDEA-122: Extended widget library
+  { type: 'weather', label: 'Météo', description: 'Météo locale en temps réel', defaultW: 4, defaultH: 3, category: 'productivity' },
+  { type: 'rss-feed', label: 'RSS Feed', description: 'Flux RSS personnalisé', defaultW: 4, defaultH: 4, category: 'content' },
+  { type: 'quick-notes', label: 'Notes rapides', description: 'Bloc-notes personnel', defaultW: 4, defaultH: 3, category: 'productivity' },
 ];
 
 interface DashboardStore {
@@ -98,6 +108,8 @@ interface DashboardStore {
   updateLayout: (layouts: { i: string; x: number; y: number; w: number; h: number }[]) => void;
   setEditMode: (editing: boolean) => void;
   resetLayout: () => void;
+  // IDEA-124: Update per-widget config (including refreshInterval)
+  updateWidgetConfig: (id: string, config: Partial<WidgetConfig['config'] & { refreshInterval?: number }>) => void;
 
   addBookmark: (bookmark: Omit<BookmarkItem, 'id'>) => void;
   removeBookmark: (id: string) => void;
@@ -166,6 +178,21 @@ export const useDashboardStore = create<DashboardStore>()(
         set({ widgets: DEFAULT_WIDGETS });
         syncDashboardLayoutToBackend(DEFAULT_WIDGETS);
       },
+
+      updateWidgetConfig: (id, updates) =>
+        set((state) => {
+          const newWidgets = state.widgets.map((w) => {
+            if (w.id !== id) return w;
+            const { refreshInterval, ...configUpdates } = updates as Record<string, unknown>;
+            return {
+              ...w,
+              config: { ...(w.config ?? {}), ...configUpdates },
+              ...(refreshInterval !== undefined ? { refreshInterval: refreshInterval as number } : {}),
+            };
+          });
+          syncDashboardLayoutToBackend(newWidgets);
+          return { widgets: newWidgets };
+        }),
 
       addBookmark: (bookmark) =>
         set((state) => ({

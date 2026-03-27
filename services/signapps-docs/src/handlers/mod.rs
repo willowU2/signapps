@@ -1,3 +1,4 @@
+pub mod classify;
 pub mod designs;
 pub mod health;
 pub mod macros;

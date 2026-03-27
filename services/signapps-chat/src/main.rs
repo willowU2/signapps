@@ -124,8 +124,13 @@ impl AppState {
 // Handlers — Channels
 // ---------------------------------------------------------------------------
 
-async fn health_check() -> StatusCode {
-    StatusCode::OK
+async fn health_check() -> axum::Json<serde_json::Value> {
+    axum::Json(serde_json::json!({
+        "status": "ok",
+        "service": "signapps-chat",
+        "version": env!("CARGO_PKG_VERSION"),
+        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+    }))
 }
 
 async fn list_channels(State(state): State<AppState>) -> impl IntoResponse {

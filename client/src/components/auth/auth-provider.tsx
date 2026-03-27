@@ -6,6 +6,7 @@ import { useEffect, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import { SessionTimeoutWarning } from './session-timeout-warning';
 
 // Routes that don't require authentication
 const publicRoutes = ['/login', '/login/verify'];
@@ -121,5 +122,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <SessionTimeoutWarning />
+    </>
+  );
 }

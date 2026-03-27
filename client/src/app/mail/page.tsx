@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback, useTransition } from "react"
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh"
 import {
     Inbox,
     File,
@@ -58,6 +59,8 @@ export default function MailPage() {
     const [searchResults, setSearchResults] = useState<Mail[] | null>(null)
     const [isSearching, setIsSearching] = useState(false)
     const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const mailContainerRef = useRef<HTMLDivElement>(null)
+    const [, startRefreshTransition] = useTransition()
 
     const [activeAccountId, setActiveAccountId] = useState<string | undefined>(undefined)
 
@@ -65,6 +68,28 @@ export default function MailPage() {
     const [labelsLoading, setLabelsLoading] = useState(false)
 
     const mailList = searchResults !== null ? searchResults : storeMailList
+
+    const handleRefresh = useCallback(() => {
+        startRefreshTransition(async () => {
+            try {
+                const emails = await mailApi.list({ folder_type: 'inbox', limit: 50 })
+                const uiMails: Mail[] = emails.map(email => ({
+                    id: email.id,
+                    name: email.sender_name || email.sender.split('@')[0],
+                    email: email.sender,
+                    subject: email.subject || '(Sans objet)',
+                    text: email.body_text || email.snippet || '',
+                    date: email.received_at || email.created_at || new Date().toISOString(),
+                    read: email.is_read ?? false,
+                    labels: email.labels || [],
+                    folder: 'inbox' as const
+                }))
+                setMailList(uiMails)
+            } catch { /* silent on pull-to-refresh failure */ }
+        })
+    }, [setMailList, startRefreshTransition])
+
+    usePullToRefresh({ onRefresh: handleRefresh, scrollContainerRef: mailContainerRef })
 
     const handleSearch = useCallback((q: string) => {
         setSearchQuery(q)

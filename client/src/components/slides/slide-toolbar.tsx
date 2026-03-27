@@ -3,7 +3,7 @@ import {
     MousePointer2, Hand, ZoomIn, ZoomOut,
     Undo2, Redo2, Download, Trash2,
     Grid, Magnet, Type, Square, Wand2, Mic, Paintbrush, Settings2,
-    Sparkles, LayoutTemplate, MonitorPlay, LayoutGrid
+    Sparkles, LayoutTemplate, MonitorPlay, LayoutGrid, Pencil, Crosshair
 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -59,6 +59,12 @@ interface SlideToolbarProps {
     onStartLivePresentation?: () => void
     // Auto layout
     onAutoLayout?: () => void
+    // Smart guides
+    smartGuidesEnabled?: boolean
+    onToggleSmartGuides?: () => void
+    // Drawing mode
+    isDrawingMode?: boolean
+    onToggleDrawingMode?: () => void
 }
 
 export function SlideToolbar({
@@ -93,7 +99,11 @@ export function SlideToolbar({
     onToggleMasterEditor,
     showMasterEditor,
     onStartLivePresentation,
-    onAutoLayout
+    onAutoLayout,
+    smartGuidesEnabled,
+    onToggleSmartGuides,
+    isDrawingMode,
+    onToggleDrawingMode
 }: SlideToolbarProps) {
     return (
         <Toolbar className="overflow-x-auto custom-scrollbar flex-nowrap min-h-[44px]">
@@ -128,6 +138,16 @@ export function SlideToolbar({
                 <ToolbarButton onClick={onToggleSnap} isActive={snapToGrid} title="Aligner sur la grille">
                     <Magnet className="w-4 h-4" />
                 </ToolbarButton>
+                {onToggleSmartGuides !== undefined && (
+                    <ToolbarButton onClick={onToggleSmartGuides} isActive={smartGuidesEnabled} title="Guides intelligents">
+                        <Crosshair className="w-4 h-4" />
+                    </ToolbarButton>
+                )}
+                {onToggleDrawingMode !== undefined && (
+                    <ToolbarButton onClick={onToggleDrawingMode} isActive={isDrawingMode} title="Dessin libre">
+                        <Pencil className="w-4 h-4" />
+                    </ToolbarButton>
+                )}
             </ToolbarGroup>
 
             <ToolbarDivider />

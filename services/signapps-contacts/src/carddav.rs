@@ -125,7 +125,7 @@ pub fn vcard_to_contact(vcard_str: &str) -> Option<Contact> {
 }
 
 /// Split a vCard collection (multiple VCARD blocks) into individual blocks.
-fn split_vcards(input: &str) -> Vec<&str> {
+pub fn split_vcards(input: &str) -> Vec<&str> {
     let mut blocks = Vec::new();
     let mut start: Option<usize> = None;
 

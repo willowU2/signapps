@@ -48,6 +48,9 @@ import { VersionHistorySheet } from '@/components/storage/version-history-sheet'
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
 import { ShareSheet } from '@/components/storage/share-sheet';
+import { BulkActionToolbar } from '@/components/storage/bulk-action-toolbar';
+import { InlineAudioPlayer } from '@/components/storage/inline-audio-player';
+import { ContentSearchDialog } from '@/components/storage/content-search-dialog';
 
 // Import storage components
 import { OverviewStats, AlertsPanel, HealthGauge, QuotaCard } from './components/dashboard';
@@ -130,9 +133,58 @@ export default function StoragePage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareItem, setShareItem] = useState<FileItem | null>(null);
 
+  // Bulk selection state
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+
+  // Inline audio player
+  const [audioFile, setAudioFile] = useState<FileItem | null>(null);
+
+  // Content search
+  const [contentSearchOpen, setContentSearchOpen] = useState(false);
+
+  const AUDIO_EXTS = ['mp3', 'ogg', 'wav', 'flac', 'aac', 'm4a'];
+  const isAudio = (f: FileItem) =>
+    f.type === 'file' && AUDIO_EXTS.includes(f.name.split('.').pop()?.toLowerCase() ?? '');
+
+  const toggleSelect = useCallback((key: string) => {
+    setSelectedFiles(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => setSelectedFiles(new Set()), []);
+
+  const handleBulkDelete = async (items: FileItem[]) => {
+    if (!currentBucket) return;
+    if (!confirm(`Delete ${items.length} item(s)? This cannot be undone.`)) return;
+    try {
+      await Promise.all(items.map(f => storageApi.delete(currentBucket, f.key)));
+      toast.success(`${items.length} item(s) deleted`);
+      clearSelection();
+      fetchFiles();
+    } catch { toast.error('Bulk delete failed'); }
+  };
+
+  const handleBulkMove = (items: FileItem[]) => {
+    if (items.length === 1) { setMoveItem(items[0]); setMoveDialogOpen(true); }
+    else toast.info('Select a single item for move or use drag-and-drop');
+  };
+
+  const handleBulkCopy = (items: FileItem[]) => {
+    toast.info(`Copy for ${items.length} item(s) — use Move for now`);
+  };
+
+  const handleBulkTag = (items: FileItem[]) => {
+    if (items.length === 1 && items[0].id) { setTagFile(items[0]); setFileTagsOpen(true); }
+    else toast.info('Select a single tagged file to manage tags');
+  };
+
   const handleAction = async (action: string, item: FileItem) => {
     if (action === 'open') {
       if (item.type === 'folder') handleNavigate(item);
+      else if (isAudio(item)) setAudioFile(item);
       else if (isPreviewable(item)) handlePreview(item);
     } else if (action === 'download') {
       handleDownload(item);
@@ -734,14 +786,38 @@ export default function StoragePage() {
                           <p className="text-sm">Drag files here or click New</p>
                         </div>
                       ) : (
-                        <StorageFileGrid
-                          files={displayFiles}
-                          viewMode={viewMode}
-                          driveView={driveView}
-                          onNavigate={(file) => file.type === 'folder' && handleNavigate(file)}
-                          onPreview={(file) => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
-                          onAction={handleAction}
-                        />
+                        <div className="space-y-2">
+                          {audioFile && (
+                            <InlineAudioPlayer
+                              file={audioFile}
+                              bucket={currentBucket}
+                              currentPath={currentPath}
+                              onClose={() => setAudioFile(null)}
+                            />
+                          )}
+                          {selectedFiles.size > 0 && (
+                            <BulkActionToolbar
+                              selectedItems={displayFiles.filter(f => selectedFiles.has(f.key))}
+                              onClearSelection={clearSelection}
+                              onSelectAll={() => setSelectedFiles(new Set(displayFiles.map(f => f.key)))}
+                              onBulkDelete={handleBulkDelete}
+                              onBulkMove={handleBulkMove}
+                              onBulkCopy={handleBulkCopy}
+                              onBulkTag={handleBulkTag}
+                              totalCount={displayFiles.length}
+                            />
+                          )}
+                          <StorageFileGrid
+                            files={displayFiles}
+                            viewMode={viewMode}
+                            driveView={driveView}
+                            onNavigate={(file) => file.type === 'folder' && handleNavigate(file)}
+                            onPreview={(file) => file.type === 'file' && isPreviewable(file) && handlePreview(file)}
+                            onAction={handleAction}
+                            selectedKeys={selectedFiles}
+                            onToggleSelect={toggleSelect}
+                          />
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -1042,6 +1118,11 @@ export default function StoragePage() {
           </DialogContent>
         </Dialog>
         <ShareSheet open={shareDialogOpen} onOpenChange={setShareDialogOpen} item={shareItem} />
+        <ContentSearchDialog
+          open={contentSearchOpen}
+          onOpenChange={setContentSearchOpen}
+          currentBucket={currentBucket}
+        />
       </>
     </AppLayout>
   );

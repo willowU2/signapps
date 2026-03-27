@@ -20,8 +20,12 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { ProviderConnector } from '@/components/calendar/external-sync/provider-connector';
+import { CalendarEventTriggers } from '@/components/workflow/calendar-event-triggers';
 import { SyncConfigPanel } from '@/components/calendar/external-sync/sync-config-panel';
 import { useExternalSyncStore, selectHasUnresolvedConflicts } from '@/stores/external-sync-store';
+import { CategoryManager } from '@/components/calendar/category-colors';
+import { PublicCalendarLink } from '@/components/calendar/public-calendar-link';
+import { Palette, Globe } from 'lucide-react';
 
 // ============================================================================
 // Sync Logs Tab
@@ -220,7 +224,7 @@ export default function CalendarSettingsPage() {
       )}
 
       <Tabs defaultValue="connections" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="connections" className="flex gap-2">
             <Link2 className="h-4 w-4" />
             <span className="hidden sm:inline">Connexions</span>
@@ -240,6 +244,21 @@ export default function CalendarSettingsPage() {
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
             )}
           </TabsTrigger>
+          {/* IDEA-050: Category colors */}
+          <TabsTrigger value="categories" className="flex gap-2">
+            <Palette className="h-4 w-4" />
+            <span className="hidden sm:inline">Catégories</span>
+          </TabsTrigger>
+          {/* IDEA-046: Public link */}
+          <TabsTrigger value="sharing" className="flex gap-2">
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">Partage</span>
+          </TabsTrigger>
+          {/* IDEA-128: Calendar event triggers */}
+          <TabsTrigger value="triggers" className="flex gap-2">
+            <Calendar className="h-4 w-4" />
+            <span className="hidden sm:inline">Déclencheurs</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="connections" className="mt-6">
@@ -256,6 +275,23 @@ export default function CalendarSettingsPage() {
 
         <TabsContent value="conflicts" className="mt-6">
           <ConflictsTab />
+        </TabsContent>
+
+        <TabsContent value="categories" className="mt-6">
+          <div className="max-w-lg">
+            <CategoryManager />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sharing" className="mt-6">
+          <div className="max-w-lg space-y-4">
+            <PublicCalendarLink calendarId="default" calendarName="My Calendar" />
+          </div>
+        </TabsContent>
+
+        {/* IDEA-128: Calendar event triggers */}
+        <TabsContent value="triggers" className="mt-6">
+          <CalendarEventTriggers />
         </TabsContent>
       </Tabs>
     </div>

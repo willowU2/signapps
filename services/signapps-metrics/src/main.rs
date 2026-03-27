@@ -184,9 +184,21 @@ fn create_router(state: AppState) -> Router {
             auth_middleware::<AppState>,
         ));
 
+    // API quota routes (admin-protected)
+    let quota_routes = Router::new()
+        .route(
+            "/api/v1/metrics/api-quota",
+            get(handlers::api_quota::list_api_quotas),
+        )
+        .route(
+            "/api/v1/metrics/api-quota/:user_id",
+            get(handlers::api_quota::get_user_api_quota),
+        );
+
     // Admin routes (auth + admin role required)
     let admin_routes = Router::new()
         .nest("/api/v1/admin/analytics", analytics_routes)
+        .merge(quota_routes)
         .layer(middleware::from_fn(require_admin))
         .layer(middleware::from_fn_with_state(
             state.clone(),

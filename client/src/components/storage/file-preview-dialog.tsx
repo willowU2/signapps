@@ -18,6 +18,7 @@ import { ArchivePreview } from './previews/archive-preview';
 import { DocumentPreview } from './previews/document-preview';
 import { CodePreview } from './previews/code-preview';
 import { PDFPreview } from './previews/pdf-preview';
+import { MarkdownPreview } from './previews/markdown-preview';
 import dynamic from 'next/dynamic';
 import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
@@ -58,7 +59,7 @@ interface FilePreviewDialogProps {
   onNavigate?: (file: FileItem) => void;
 }
 
-type PreviewType = 'image' | 'pdf' | 'text' | 'code' | 'markdown' | 'spreadsheet' | 'slides' | 'video' | 'audio' | 'archive' | 'document' | 'unsupported';
+type PreviewType = 'image' | 'pdf' | 'text' | 'code' | 'markdown' | 'richtext' | 'spreadsheet' | 'slides' | 'video' | 'audio' | 'archive' | 'document' | 'unsupported';
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
 const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'ogv'];
@@ -66,7 +67,8 @@ const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'];
 const ARCHIVE_EXTENSIONS = ['zip', 'tar', 'gz', 'rar', '7z', 'bz2', 'xz'];
 const TEXT_EXTENSIONS = ['txt', 'log', 'xml', 'yaml', 'yml', 'ini', 'conf', 'cfg', 'rtf'];
 const CODE_EXTENSIONS = ['js', 'ts', 'tsx', 'jsx', 'py', 'rs', 'go', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'php', 'rb', 'swift', 'kt', 'scala', 'sh', 'bash', 'zsh', 'ps1', 'sql', 'html', 'css', 'scss', 'less', 'json', 'toml'];
-const MARKDOWN_EXTENSIONS = ['md', 'mdx', 'markdown', 'doc', 'docx', 'odt'];
+const MARKDOWN_EXTENSIONS = ['md', 'mdx', 'markdown'];
+const RICHTEXT_EXTENSIONS = ['doc', 'docx', 'odt'];
 const SPREADSHEET_EXTENSIONS = ['csv', 'tsv', 'xls', 'xlsx', 'ods'];
 const SLIDES_EXTENSIONS = ['ppt', 'pptx', 'odp'];
 
@@ -92,6 +94,9 @@ function getPreviewType(file: FileItem): PreviewType {
   }
   if (MARKDOWN_EXTENSIONS.includes(ext)) {
     return 'markdown';
+  }
+  if (RICHTEXT_EXTENSIONS.includes(ext)) {
+    return 'richtext';
   }
   if (SPREADSHEET_EXTENSIONS.includes(ext)) {
     return 'spreadsheet';
@@ -218,6 +223,10 @@ export function FilePreviewDialog({
         const url = URL.createObjectURL(blob);
         setBlobUrl(url);
       } else if (type === 'markdown') {
+        // Pure markdown: render as HTML
+        const text = await blob.text();
+        setContent(text);
+      } else if (type === 'richtext') {
         if (file.name.toLowerCase().endsWith('.docx')) {
             const arrayBuffer = await blob.arrayBuffer();
             const result = await mammoth.convertToHtml({ arrayBuffer });
@@ -410,6 +419,13 @@ export function FilePreviewDialog({
         ) : null;
 
       case 'markdown':
+        return content !== null ? (
+          <div className="border rounded-lg overflow-hidden bg-background">
+            <MarkdownPreview content={content} />
+          </div>
+        ) : null;
+
+      case 'richtext':
         return (
           <div className="w-full h-[75vh] border rounded-lg overflow-hidden bg-background dark:bg-[#1f1f1f] relative">
             {parsedDocsContent !== null ? (

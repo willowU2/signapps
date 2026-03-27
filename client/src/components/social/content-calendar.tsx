@@ -147,6 +147,7 @@ export function ContentCalendar({
   const [current, setCurrent] = useState(new Date());
   const [selectedPost, setSelectedPost] = useState<ScheduledPost | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
 
   // Month view
   const monthDays = useMemo(() => {
@@ -249,10 +250,11 @@ export function ContentCalendar({
                       key={i}
                       className={`min-h-[80px] border-b border-r p-1 ${
                         !day ? "bg-muted/20" : "hover:bg-muted/30 cursor-pointer"
-                      } transition-colors`}
+                      } transition-colors ${draggedId && day && dragOverDate === day.toDateString() ? "ring-2 ring-blue-400 bg-blue-50/40 dark:bg-blue-900/10" : ""}`}
                       onClick={() => day && onNewPost?.(day)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => day && handleDrop(day)}
+                      onDragOver={(e) => { e.preventDefault(); if (day) setDragOverDate(day.toDateString()); }}
+                      onDragLeave={() => setDragOverDate(null)}
+                      onDrop={() => { day && handleDrop(day); setDragOverDate(null); }}
                     >
                       {day && (
                         <>
@@ -267,15 +269,21 @@ export function ContentCalendar({
                           </span>
                           <div className="mt-1 space-y-0.5">
                             {dayPosts.slice(0, 2).map((p) => (
-                              <PostPill
+                              <div
                                 key={p.id}
-                                post={p}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedPost(p);
-                                  onPostClick?.(p);
-                                }}
-                              />
+                                draggable
+                                onDragStart={(e) => { e.stopPropagation(); setDraggedId(p.id); }}
+                                onDragEnd={() => setDraggedId(null)}
+                              >
+                                <PostPill
+                                  post={p}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedPost(p);
+                                    onPostClick?.(p);
+                                  }}
+                                />
+                              </div>
                             ))}
                             {dayPosts.length > 2 && (
                               <span className="text-xs text-muted-foreground pl-1">

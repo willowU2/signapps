@@ -32,6 +32,8 @@ const MeetRoom = dynamic(
     () => import("@/components/meet/meet-room").then((m) => ({ default: m.MeetRoom })),
     { ssr: false, loading: () => <div className="flex items-center justify-center h-full text-muted-foreground">Loading meeting room…</div> }
 )
+// IDEA-129: Real-time transcription overlay
+import { LiveTranscriptionOverlay } from "@/components/meet/live-transcription-overlay"
 import {
     Copy,
     Plus,
@@ -133,6 +135,8 @@ export default function MeetPage() {
     const [liveRoomId, setLiveRoomId] = useState("")
     const [liveToken, setLiveToken] = useState("")
     const [isConnecting, setIsConnecting] = useState(false)
+    // IDEA-129: Live transcription overlay state
+    const [showTranscription, setShowTranscription] = useState(false)
 
     // ── API data ─────────────────────────────────────────────────────────────
     const [rooms, setRooms] = useState<Room[]>([])
@@ -381,7 +385,7 @@ export default function MeetPage() {
     if (inRoom) {
         return (
             <AppLayout>
-                <div className="h-[calc(100vh-8rem)] w-full flex items-center justify-center">
+                <div className="h-[calc(100vh-8rem)] w-full flex items-center justify-center relative">
                     <MeetRoom
                         roomId={liveRoomId}
                         token={liveToken}
@@ -389,8 +393,23 @@ export default function MeetPage() {
                         onLeave={() => {
                             setInRoom(false)
                             setLiveToken("")
+                            setShowTranscription(false)
                         }}
                     />
+                    {/* IDEA-129: Real-time transcription overlay */}
+                    <LiveTranscriptionOverlay
+                        visible={showTranscription}
+                        onClose={() => setShowTranscription(false)}
+                        useWhisper={false}
+                    />
+                    {!showTranscription && (
+                        <button
+                            onClick={() => setShowTranscription(true)}
+                            className="absolute bottom-24 right-4 z-20 flex items-center gap-1.5 rounded-full bg-black/60 text-white text-xs px-3 py-1.5 hover:bg-black/80 transition-colors"
+                        >
+                            CC Transcription
+                        </button>
+                    )}
                 </div>
             </AppLayout>
         )

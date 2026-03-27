@@ -68,7 +68,36 @@ export default function AuditReportPage() {
     link.download = `audit-report-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    toast.success(`${filtered.length} entrées exportées`);
+    toast.success(`${filtered.length} entrées exportées (CSV)`);
+  };
+
+  const exportJson = () => {
+    if (filtered.length === 0) return;
+    // SIEM-ready structured format (IDEA-078 + IDEA-082)
+    const payload = {
+      export_time: new Date().toISOString(),
+      total: filtered.length,
+      format_version: '1.0',
+      events: filtered.map(e => ({
+        id: e.id,
+        timestamp: e.created_at,
+        action: e.action,
+        entity_type: e.entity_type,
+        entity_id: e.entity_id,
+        actor_id: e.actor_id,
+        changes: e.changes || {},
+        source: 'signapps-audit',
+      })),
+    };
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `audit-report-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filtered.length} entrées exportées (JSON/SIEM)`);
   };
 
   return (
@@ -90,6 +119,10 @@ export default function AuditReportPage() {
             <Button variant="outline" onClick={exportCsv}>
               <Download className="h-4 w-4 mr-2" />
               Export CSV
+            </Button>
+            <Button variant="outline" onClick={exportJson}>
+              <Download className="h-4 w-4 mr-2" />
+              Export JSON
             </Button>
           </div>
         </div>

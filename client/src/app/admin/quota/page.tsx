@@ -2,12 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { HardDrive, RefreshCw, AlertTriangle, AlertCircle, Search } from 'lucide-react';
-import { quotasApi, type QuotaUsage } from '@/lib/api/storage';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
+import { HardDrive, RefreshCw, AlertTriangle, AlertCircle, Search, Settings2 } from 'lucide-react';
+import { quotasApi, type QuotaUsage, type SetQuotaRequest } from '@/lib/api/storage';
 import { getUsers, type User } from '@/lib/api-admin';
 import { toast } from 'sonner';
 
@@ -41,10 +45,83 @@ function QuotaBar({ used, limit, warn = 80, crit = 90 }: { used: number; limit?:
   );
 }
 
+// ── Edit quota dialog ──────────────────────────────────────────────────────
+
+function EditQuotaDialog({
+  user,
+  open,
+  onOpenChange,
+  onSaved,
+}: { user: User; open: boolean; onOpenChange: (v: boolean) => void; onSaved: () => void }) {
+  const [storageGB, setStorageGB] = useState('');
+  const [maxFiles, setMaxFiles] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const req: SetQuotaRequest = {};
+      const gb = parseFloat(storageGB);
+      if (!isNaN(gb) && gb > 0) req.max_storage_bytes = Math.round(gb * 1024 ** 3);
+      const f = parseInt(maxFiles, 10);
+      if (!isNaN(f) && f > 0) req.max_files = f;
+      await quotasApi.setUserQuota(user.id, req);
+      toast.success(`Quota updated for ${user.username}`);
+      onSaved();
+      onOpenChange(false);
+    } catch { toast.error('Failed to update quota'); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Settings2 className="h-5 w-5" />
+            Set Quota — {user.username}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Max Storage (GB)</Label>
+            <Input
+              type="number"
+              min="0.1"
+              step="0.5"
+              placeholder="e.g. 10"
+              value={storageGB}
+              onChange={e => setStorageGB(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">Leave blank to keep current limit</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Max Files</Label>
+            <Input
+              type="number"
+              min="1"
+              placeholder="e.g. 10000"
+              value={maxFiles}
+              onChange={e => setMaxFiles(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────
+
 export default function QuotaPage() {
   const [userQuotas, setUserQuotas] = useState<UserQuota[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [editUser, setEditUser] = useState<User | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -169,9 +246,14 @@ export default function QuotaPage() {
                             <p className="text-sm text-muted-foreground">No quota configured</p>
                           )}
                         </div>
-                        <Button variant="ghost" size="sm" onClick={() => handleRecalculate(user.id)} className="shrink-0">
-                          <RefreshCw className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button variant="ghost" size="sm" onClick={() => setEditUser(user)} title="Edit quota">
+                            <Settings2 className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleRecalculate(user.id)} title="Recalculate">
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -181,6 +263,15 @@ export default function QuotaPage() {
           </CardContent>
         </Card>
       </div>
+
+      {editUser && (
+        <EditQuotaDialog
+          user={editUser}
+          open={!!editUser}
+          onOpenChange={(v) => !v && setEditUser(null)}
+          onSaved={fetchData}
+        />
+      )}
     </AppLayout>
   );
 }

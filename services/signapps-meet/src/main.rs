@@ -85,6 +85,15 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+async fn meet_health() -> axum::Json<serde_json::Value> {
+    axum::Json(serde_json::json!({
+        "status": "ok",
+        "service": "signapps-meet",
+        "version": env!("CARGO_PKG_VERSION"),
+        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+    }))
+}
+
 fn build_router(state: AppState) -> Router {
     use axum::routing::{delete, get, patch, post};
     use handlers::{
@@ -93,7 +102,7 @@ fn build_router(state: AppState) -> Router {
 
     // Public routes
     let public_routes = Router::new()
-        .route("/health", get(|| async { "OK" }))
+        .route("/health", get(meet_health))
         .route("/api/v1/meet/config", get(handlers::get_config));
 
     // Protected routes

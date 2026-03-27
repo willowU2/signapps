@@ -1,4 +1,4 @@
-// Tiptap extensions for SignApps Docs
+// Tiptap extensions for SignApps Docs — Sprint 7 improvements included
 export { FontSize } from './font-size';
 export { Comment, commentPluginKey } from './comment';
 export type { CommentData, CommentReply, CommentOptions } from './comment';
@@ -36,3 +36,10 @@ export { Footnote } from './footnote';
 // Sprint 5: Cross-App Embeds
 export { EmbedSheet } from './embed-sheet';
 export type { EmbedSheetOptions } from './embed-sheet';
+
+// Sprint 7: Editor Improvements (IDEA-004 to IDEA-015)
+export { MathInline, MathBlock } from './math';
+export { MermaidDiagram } from './mermaid';
+export { Columns, ColumnBlock } from './columns';
+export { SuggestionMode, SuggestionInsertion, SuggestionDeletion, suggestionPluginKey } from './suggestion-mode';
+export type { SuggestionOptions } from './suggestion-mode';

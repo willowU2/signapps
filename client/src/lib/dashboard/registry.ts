@@ -445,9 +445,76 @@ export const dashboardPresets: DashboardPreset[] = [
   },
 ];
 
+// IDEA-122: Register extended widgets
+import { Cloud, StickyNote, Rss } from 'lucide-react';
+
+widgetRegistry.set('weather', {
+  type: 'weather',
+  name: 'Météo',
+  description: 'Météo locale en temps réel (Open-Meteo)',
+  category: 'productivity',
+  icon: Cloud,
+  size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
+  isPublic: true,
+});
+
+widgetRegistry.set('quick-notes', {
+  type: 'quick-notes',
+  name: 'Notes rapides',
+  description: 'Bloc-notes personnel persistant',
+  category: 'productivity',
+  icon: StickyNote,
+  size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
+  isPublic: true,
+});
+
+widgetRegistry.set('rss-feed', {
+  type: 'rss-feed',
+  name: 'RSS Feed',
+  description: 'Flux RSS personnalisé',
+  category: 'content',
+  icon: Rss,
+  size: { minW: 3, minH: 3, defaultW: 4, defaultH: 4 },
+  isPublic: true,
+  defaultConfig: { feedUrl: 'https://news.ycombinator.com/rss', title: 'Hacker News' },
+});
+
 export function getPreset(id: string): DashboardPreset | undefined {
   return dashboardPresets.find((p) => p.id === id);
 }
+
+// IDEA-123: Additional role-based presets for HR and Sales
+dashboardPresets.push(
+  {
+    id: 'hr',
+    name: 'RH',
+    description: 'Focus sur l\'équipe et les talents',
+    targetRole: 'hr',
+    icon: Users,
+    widgets: [
+      { type: 'stat-cards', x: 0, y: 0, w: 12, h: 2, config: {} },
+      { type: 'team-activity', x: 0, y: 2, w: 8, h: 5, config: { limit: 20 } },
+      { type: 'upcoming-events', x: 8, y: 2, w: 4, h: 5, config: { limit: 8 } },
+      { type: 'recent-tasks', x: 0, y: 7, w: 6, h: 4, config: { limit: 8, filterStatus: 'all' } },
+      { type: 'quick-notes', x: 6, y: 7, w: 6, h: 4, config: {} },
+    ],
+  },
+  {
+    id: 'sales',
+    name: 'Commercial',
+    description: 'Focus sur les emails, tâches et agenda',
+    targetRole: 'sales',
+    icon: TrendingUp,
+    widgets: [
+      { type: 'stat-cards', x: 0, y: 0, w: 12, h: 2, config: {} },
+      { type: 'unread-emails', x: 0, y: 2, w: 4, h: 2, config: {} },
+      { type: 'active-tasks', x: 4, y: 2, w: 4, h: 2, config: {} },
+      { type: 'today-calendar', x: 8, y: 2, w: 4, h: 2, config: {} },
+      { type: 'recent-emails', x: 0, y: 4, w: 6, h: 5, config: { limit: 10 } },
+      { type: 'upcoming-events', x: 6, y: 4, w: 6, h: 5, config: { limit: 8 } },
+    ],
+  }
+);
 
 export function getPresetsForRole(
   role?: string

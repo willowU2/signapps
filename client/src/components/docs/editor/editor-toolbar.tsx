@@ -244,7 +244,7 @@ export function EditorToolbar({
     if (!editor) return null;
 
     return (
-        <div className="flex flex-wrap items-center gap-0.5 px-4 py-1.5 w-full bg-[#edf2fa] dark:bg-[#3c4043] shrink-0 border-b border-transparent dark:border-[#5f6368]">
+        <div className="editor-toolbar flex flex-wrap items-center gap-0.5 px-4 py-1.5 w-full bg-[#edf2fa] dark:bg-[#3c4043] shrink-0 border-b border-transparent dark:border-[#5f6368]">
             <ToolbarBtn variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground mr-1">
                 <Search className="h-4 w-4 text-[#444746]" />
             </ToolbarBtn>
@@ -297,6 +297,7 @@ export function EditorToolbar({
 
             <div className="flex items-center gap-1">
                 {/* Zoom */}
+                <div className="toolbar-zoom flex items-center">
                 <Select defaultValue="100%">
                     <SelectTrigger className="h-7 w-[75px] border-transparent bg-transparent hover:bg-muted focus:ring-0 text-sm font-medium text-[#444746] dark:text-[#e8eaed]">
                         <SelectValue placeholder="100%" />
@@ -309,6 +310,7 @@ export function EditorToolbar({
                         <SelectItem value="200%">200%</SelectItem>
                     </SelectContent>
                 </Select>
+                </div>
 
                 <Separator orientation="vertical" className="h-5 mx-0.5" />
 
@@ -341,6 +343,7 @@ export function EditorToolbar({
 
                 <Separator orientation="vertical" className="h-5 mx-0.5" />
 
+                <div className="toolbar-font-family">
                 <Select value={currentFontFamily} onValueChange={handleFontFamilyChange}>
                     <SelectTrigger className="h-7 w-[120px] border-transparent bg-transparent hover:bg-muted focus:ring-0 text-sm font-medium text-[#444746] dark:text-[#e8eaed]">
                         <SelectValue placeholder="Arial" />
@@ -353,10 +356,11 @@ export function EditorToolbar({
                         ))}
                     </SelectContent>
                 </Select>
+                </div>
 
                 <Separator orientation="vertical" className="h-5 mx-0.5" />
 
-                <div className="flex items-center -space-x-1">
+                <div className="toolbar-font-size flex items-center -space-x-1">
                     <ToolbarBtn
                         variant="ghost"
                         size="icon"

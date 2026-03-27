@@ -36,6 +36,7 @@ import { UserPlus, Upload, Trash2 } from 'lucide-react';
 import { User, CreateUserRequest, UpdateUserRequest, Workspace } from "@/lib/api";
 import { workspacesApi } from "@/lib/api/tenant";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PasswordStrength } from "@/components/auth/password-strength";
 
 const userFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(50),
@@ -86,6 +87,8 @@ export function UserSheet({
       avatar_url: "",
     },
   });
+
+  const watchedPassword = form.watch("password");
 
   useEffect(() => {
     if (open) {
@@ -283,6 +286,9 @@ export function UserSheet({
                           {...field}
                         />
                       </FormControl>
+                      {watchedPassword && (
+                        <PasswordStrength password={watchedPassword} showRequirements={false} />
+                      )}
                       <FormMessage className="text-xs font-semibold text-destructive mt-1.5" />
                     </FormItem>
                   )}

@@ -1,9 +1,9 @@
 'use client';
 
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/lib/store';
 import { useEntityStore } from '@/stores/entity-hub-store';
@@ -168,7 +168,42 @@ const isItemActive = (href: string, pathname: string) => {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { sidebarCollapsed, setSidebarCollapsed } = useUIStore();
+
+  // Prefetch on hover for faster navigation
+  const handlePrefetch = useCallback((href: string) => {
+    router.prefetch(href);
+  }, [router]);
+
+  // Arrow key navigation within an expanded nav group
+  const handleNavKeyDown = useCallback((
+    e: React.KeyboardEvent<HTMLElement>,
+    groupIndex: number,
+    itemIndex: number,
+    totalItems: number,
+  ) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = Math.min(itemIndex + 1, totalItems - 1);
+      const el = document.querySelector<HTMLElement>(
+        `[data-nav-group="${groupIndex}"] [data-nav-item="${next}"]`
+      );
+      el?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = Math.max(itemIndex - 1, 0);
+      const el = document.querySelector<HTMLElement>(
+        `[data-nav-group="${groupIndex}"] [data-nav-item="${prev}"]`
+      );
+      el?.focus();
+    } else if (e.key === 'Escape') {
+      const btn = document.querySelector<HTMLElement>(
+        `[data-nav-group-btn="${groupIndex}"]`
+      );
+      btn?.focus();
+    }
+  }, []);
   const { workspaces, selectedWorkspaceId, setSelectedWorkspace, fetchWorkspaces, projects } = useEntityStore();
   const { isAdmin } = usePermissions();
 
@@ -286,6 +321,7 @@ export function Sidebar() {
           ) : (
              <Link
               href="/dashboard"
+              onMouseEnter={() => handlePrefetch('/dashboard')}
               className={cn(
                 'group flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-semibold transition-all duration-200 mb-2',
                 pathname === '/dashboard'
@@ -350,9 +386,11 @@ export function Sidebar() {
             }
 
             return (
-              <div key={group.label} className="space-y-1">
+              <div key={group.label} className="space-y-1" data-nav-group={groupIndex}>
                 <button
+                  data-nav-group-btn={groupIndex}
                   onClick={() => toggleGroup(groupIndex)}
+                  aria-expanded={isExpanded}
                   className={cn(
                     'group flex w-full items-center justify-between rounded-lg px-2 py-2 text-sm font-semibold transition-all duration-200',
                     isExpanded
@@ -382,7 +420,7 @@ export function Sidebar() {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden space-y-1"
                     >
-                      {group.items.map((item) => {
+                      {group.items.map((item, itemIndex) => {
                         const isActive = isItemActive(item.href, pathname);
                         const Icon = item.icon;
 
@@ -390,6 +428,10 @@ export function Sidebar() {
                           <Link
                             key={item.href}
                             href={item.href}
+                            data-nav-item={itemIndex}
+                            onMouseEnter={() => handlePrefetch(item.href)}
+                            onKeyDown={(e) => handleNavKeyDown(e, groupIndex, itemIndex, group.items.length)}
+                            aria-current={isActive ? 'page' : undefined}
                             className={cn(
                               'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ml-4 border-l-2',
                               isActive

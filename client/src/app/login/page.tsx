@@ -30,7 +30,16 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showLdapDialog, setShowLdapDialog] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [trustDevice, setTrustDevice] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const TRUST_DEVICE_KEY = 'trusted_device_until';
+  const isDeviceTrusted = () => {
+    if (typeof window === 'undefined') return false;
+    const until = localStorage.getItem(TRUST_DEVICE_KEY);
+    if (!until) return false;
+    return new Date(until).getTime() > Date.now();
+  };
 
   const searchParams = useSearchParams();
   const autoParam = searchParams.get('auto');
@@ -64,6 +73,12 @@ export default function LoginPage() {
       if (response.data.access_token && response.data.refresh_token) {
         localStorage.setItem('access_token', response.data.access_token);
         localStorage.setItem('refresh_token', response.data.refresh_token);
+
+        // Trust device for 30 days
+        if (trustDevice) {
+          const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+          localStorage.setItem(TRUST_DEVICE_KEY, until);
+        }
 
         // Set user data from response or fetch it
         if (response.data.user) {
@@ -163,15 +178,27 @@ export default function LoginPage() {
               )}
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="remember"
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked === true)}
-              />
-              <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                Remember me
-              </Label>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                />
+                <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
+                  Remember me
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="trust-device"
+                  checked={trustDevice}
+                  onCheckedChange={(checked) => setTrustDevice(checked === true)}
+                />
+                <Label htmlFor="trust-device" className="text-sm font-normal cursor-pointer">
+                  Trust this device for 30 days
+                </Label>
+              </div>
             </div>
 
             <Button

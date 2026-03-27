@@ -23,8 +23,13 @@ impl signapps_common::middleware::AuthState for AppState {
     }
 }
 
-pub async fn health_check() -> &'static str {
-    "OK"
+pub async fn health_check() -> axum::Json<serde_json::Value> {
+    axum::Json(serde_json::json!({
+        "status": "ok",
+        "service": "signapps-remote",
+        "version": env!("CARGO_PKG_VERSION"),
+        "uptime_seconds": signapps_common::healthz::uptime_seconds()
+    }))
 }
 
 #[tokio::main]
