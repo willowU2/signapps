@@ -11,6 +11,7 @@ import { MacroEditor } from "./macro-editor"
 import { CellStyle, CellData, CellValidation, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
 import { fetchAndParseDocument, parseSpreadsheetBuffer } from '@/lib/file-parsers'
+import { sanitizeAllSheets } from '@/lib/sheets/sanitize-cells'
 import type { SpreadsheetParseResult } from '@/lib/file-parsers'
 import ExcelJS from 'exceljs'
 import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu'
@@ -480,6 +481,23 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     } = useSpreadsheet(documentId, initialData)
 
     const hasFetchedRef = useRef(false)
+    const hasSanitizedRef = useRef(false)
+
+    // Auto-sanitize corrupted Yjs data (fixes [object Object] from old parser)
+    useEffect(() => {
+        if (doc && !hasSanitizedRef.current) {
+            hasSanitizedRef.current = true
+            // Run async to not block render
+            setTimeout(() => {
+                try {
+                    const fixed = sanitizeAllSheets(doc)
+                    if (fixed > 0) console.log(`[Spreadsheet] Auto-sanitized ${fixed} corrupted cells`)
+                } catch (e) {
+                    console.warn('[Spreadsheet] Sanitize failed:', e)
+                }
+            }, 500)
+        }
+    }, [doc])
 
     // Selection
     const [selectedRange, setSelectedRange] = useState<{ start: { r: number, c: number }, end: { r: number, c: number } } | null>(null)
