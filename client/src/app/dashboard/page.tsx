@@ -89,8 +89,8 @@ export default function DashboardPage() {
 
         <WidgetGrid />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
-          <div className="lg:col-span-2 border rounded-xl p-4 bg-card">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-6">
+          <div className="xl:col-span-2 border rounded-xl p-4 bg-card">
             <h2 className="text-base font-semibold mb-3">Activité récente</h2>
             <ActivityFeed limit={20} />
           </div>
