@@ -2555,6 +2555,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                     const hasValidation = !!cellData?.validation
                                     const isCheckbox = cellData?.validation?.type === 'boolean' || displayValue === 'true' || displayValue === 'false' || displayValue === 'TRUE' || displayValue === 'FALSE'
 
+                                    const isMerged = mergeRows > 1 || mergeCols2 > 1
                                     const cellStyle: React.CSSProperties = {
                                         width: cellW, minWidth: cellW, maxWidth: cellW, height: cellH,
                                         fontWeight: style?.bold ? 700 : undefined,
@@ -2567,13 +2568,15 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                         backgroundColor: condColor
                                             ? `${condColor}22`
                                             : style?.fillColor || (inRect && !isActive ? 'rgba(66,133,244,0.08)' : bandedBg),
-                                        whiteSpace: style?.wrap ? 'normal' : 'nowrap',
+                                        whiteSpace: style?.wrap ? 'pre-wrap' : 'nowrap',
                                         borderTopWidth: style?.borderTop ? 2 : undefined,
                                         borderRightWidth: style?.borderRight ? 2 : undefined,
                                         borderBottomWidth: style?.borderBottom ? 2 : undefined,
                                         borderLeftWidth: style?.borderLeft ? 2 : undefined,
                                         borderColor: (style?.borderTop || style?.borderRight || style?.borderBottom || style?.borderLeft) ? '#202124' : undefined,
                                         borderStyle: 'solid',
+                                        // Merged cells that span rows need z-index to not be painted over by subsequent rows
+                                        ...(isMerged && mergeRows > 1 ? { position: 'relative', zIndex: 5 } : {}),
                                         ...(isFrozenCell ? { position: 'sticky', left: ROW_HEADER_WIDTH + colOffsets[c], zIndex: 21 } : {}),
                                     }
 
@@ -2633,7 +2636,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                                     <ExternalLink className="w-3 h-3 inline mr-1 opacity-60" />{displayValue}
                                                 </a>
                                             ) : (
-                                                <span className={cn("truncate w-full select-text", isErrorVal && "text-[#d93025] font-semibold text-center", displayValue === "" && "opacity-0")} title={hasComment ? `💬 ${cellData!.comment}\n${rawValue}` : (isErrorVal ? "Erreur" : rawValue)} style={style?.rotation ? { transform: `rotate(${style.rotation}deg)`, display: 'inline-block', transformOrigin: 'left center' } : undefined}>
+                                                <span className={cn(style?.wrap ? "w-full select-text break-words" : "truncate w-full select-text", isErrorVal && "text-[#d93025] font-semibold text-center", displayValue === "" && "opacity-0")} title={hasComment ? `💬 ${cellData!.comment}\n${rawValue}` : (isErrorVal ? "Erreur" : rawValue)} style={style?.rotation ? { transform: `rotate(${style.rotation}deg)`, display: 'inline-block', transformOrigin: 'left center' } : undefined}>
                                                     {displayValue}
                                                 </span>
                                             )}

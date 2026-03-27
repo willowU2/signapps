@@ -174,8 +174,85 @@ function argbToHex(argb: string | undefined): string | undefined {
     if (!argb || argb.length < 6) return undefined;
     // ExcelJS ARGB is typically 8 chars: 2 alpha + 6 RGB. Sometimes 6 chars (no alpha).
     const rgb = argb.length === 8 ? argb.substring(2) : argb;
-    // Filter out default black/white "000000" from theme colors that aren't explicitly set
     return '#' + rgb;
+}
+
+/**
+ * Excel theme color palette — the default Office theme colors.
+ * Indices: 0=lt1(white), 1=dk1(black), 2=lt2(light gray), 3=dk2(dark),
+ *          4=accent1(blue), 5=accent2(orange), 6=accent3(gray),
+ *          7=accent4(gold), 8=accent5(blue-light), 9=accent6(green)
+ */
+const EXCEL_THEME_COLORS: string[] = [
+    'FFFFFF', // 0: lt1 (white)
+    '000000', // 1: dk1 (black)
+    'E7E6E6', // 2: lt2 (light gray)
+    '44546A', // 3: dk2 (dark blue-gray)
+    '4472C4', // 4: accent1 (blue)
+    'ED7D31', // 5: accent2 (orange)
+    'A5A5A5', // 6: accent3 (gray)
+    'FFC000', // 7: accent4 (gold)
+    '5B9BD5', // 8: accent5 (light blue)
+    '70AD47', // 9: accent6 (green)
+];
+
+/**
+ * Apply tint to a hex color. Tint > 0 lightens toward white, tint < 0 darkens toward black.
+ * Excel uses the HSL tint model.
+ */
+function applyTint(hexColor: string, tint: number): string {
+    const r = parseInt(hexColor.substring(0, 2), 16);
+    const g = parseInt(hexColor.substring(2, 4), 16);
+    const b = parseInt(hexColor.substring(4, 6), 16);
+
+    const apply = (c: number): number => {
+        if (tint < 0) {
+            return Math.round(c * (1 + tint));
+        } else {
+            return Math.round(c + (255 - c) * tint);
+        }
+    };
+
+    const nr = Math.min(255, Math.max(0, apply(r)));
+    const ng = Math.min(255, Math.max(0, apply(g)));
+    const nb = Math.min(255, Math.max(0, apply(b)));
+
+    return nr.toString(16).padStart(2, '0') +
+           ng.toString(16).padStart(2, '0') +
+           nb.toString(16).padStart(2, '0');
+}
+
+/**
+ * Resolve an ExcelJS color object (which may have argb, theme+tint, or indexed) to a CSS hex.
+ */
+function resolveColor(color: { argb?: string; theme?: number; tint?: number; indexed?: number } | undefined): string | undefined {
+    if (!color) return undefined;
+    // Direct ARGB — most common
+    if (color.argb) {
+        return argbToHex(color.argb);
+    }
+    // Theme color with optional tint
+    if (color.theme !== undefined && color.theme >= 0 && color.theme < EXCEL_THEME_COLORS.length) {
+        let hex = EXCEL_THEME_COLORS[color.theme];
+        if (color.tint && color.tint !== 0) {
+            hex = applyTint(hex, color.tint);
+        }
+        return '#' + hex;
+    }
+    // Indexed color (legacy Excel format) — common indexed colors
+    if (color.indexed !== undefined) {
+        const INDEXED_COLORS: Record<number, string> = {
+            0: '#000000', 1: '#FFFFFF', 2: '#FF0000', 3: '#00FF00',
+            4: '#0000FF', 5: '#FFFF00', 6: '#FF00FF', 7: '#00FFFF',
+            8: '#000000', 9: '#FFFFFF', 10: '#FF0000', 11: '#00FF00',
+            12: '#0000FF', 13: '#FFFF00', 14: '#FF00FF', 15: '#00FFFF',
+            16: '#800000', 17: '#008000', 18: '#000080', 19: '#808000',
+            20: '#800080', 21: '#008080', 22: '#C0C0C0', 23: '#808080',
+            64: '#000000', // system foreground
+        };
+        return INDEXED_COLORS[color.indexed];
+    }
+    return undefined;
 }
 
 /**
@@ -194,8 +271,8 @@ function extractCellStyle(cell: ExcelJS.Cell): CellStyle | undefined {
         if (font.strike) { style.strikethrough = true; hasStyle = true; }
         if (font.size) { style.fontSize = font.size; hasStyle = true; }
         if (font.name) { style.fontFamily = font.name; hasStyle = true; }
-        if (font.color?.argb) {
-            const hex = argbToHex(font.color.argb);
+        if (font.color) {
+            const hex = resolveColor(font.color as { argb?: string; theme?: number; tint?: number; indexed?: number });
             if (hex) { style.textColor = hex; hasStyle = true; }
         }
     }
@@ -204,8 +281,13 @@ function extractCellStyle(cell: ExcelJS.Cell): CellStyle | undefined {
     const fill = cell.fill;
     if (fill && fill.type === 'pattern') {
         const patternFill = fill as ExcelJS.FillPattern;
-        if (patternFill.fgColor?.argb) {
-            const hex = argbToHex(patternFill.fgColor.argb);
+        if (patternFill.fgColor) {
+            const hex = resolveColor(patternFill.fgColor as { argb?: string; theme?: number; tint?: number; indexed?: number });
+            if (hex) { style.fillColor = hex; hasStyle = true; }
+        }
+        // Some Excel files only set bgColor, not fgColor
+        if (!patternFill.fgColor && patternFill.bgColor) {
+            const hex = resolveColor(patternFill.bgColor as { argb?: string; theme?: number; tint?: number; indexed?: number });
             if (hex) { style.fillColor = hex; hasStyle = true; }
         }
     }

@@ -208,10 +208,38 @@ export function registerTextFunctions() {
             if (!isNaN(num) && num > 0) {
                 // Excel serial date: days since 1899-12-30
                 const d = new Date(1899, 11, 30);
-                d.setDate(d.getDate() + num);
+                d.setDate(d.getDate() + Math.floor(num));
+                // Preserve fractional day as time
+                const frac = num - Math.floor(num);
+                if (frac > 0) {
+                    d.setHours(Math.floor(frac * 24));
+                    d.setMinutes(Math.floor((frac * 24 * 60) % 60));
+                    d.setSeconds(Math.floor((frac * 24 * 3600) % 60));
+                }
                 return d;
             }
-            const d = new Date(value);
+            // Parse date strings in local timezone (not UTC)
+            // "2020-09-01" → new Date("2020-09-01T00:00:00") to avoid UTC midnight shift
+            const str = String(value).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+                const d = new Date(str + 'T00:00:00');
+                return isNaN(d.getTime()) ? null : d;
+            }
+            // "01/09/2020" (DD/MM/YYYY) or "09/01/2020" (MM/DD/YYYY) — try DD/MM/YYYY first (French locale)
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+                const [a, b, y] = str.split('/').map(Number);
+                // Try DD/MM/YYYY first (European)
+                if (a >= 1 && a <= 31 && b >= 1 && b <= 12) {
+                    const d = new Date(y, b - 1, a);
+                    if (!isNaN(d.getTime())) return d;
+                }
+                // Fallback to MM/DD/YYYY
+                if (b >= 1 && b <= 31 && a >= 1 && a <= 12) {
+                    const d = new Date(y, a - 1, b);
+                    if (!isNaN(d.getTime())) return d;
+                }
+            }
+            const d = new Date(str);
             return isNaN(d.getTime()) ? null : d;
         };
 
