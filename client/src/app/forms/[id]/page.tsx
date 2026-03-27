@@ -195,14 +195,46 @@ export default function FormBuilderPage() {
                                         {(field.field_type === 'SingleChoice' || field.field_type === 'MultipleChoice') && (
                                             <div className="space-y-4 mb-4 bg-muted/20 p-3 rounded-md border">
                                                 <div>
-                                                    <Label className="text-xs font-semibold text-muted-foreground mb-2 block">Options disponibles (séparées par une virgule)</Label>
-                                                    <Input 
-                                                        className="h-9 text-sm bg-background"
-                                                        value={field.options?.join(', ') || ''}
-                                                        onChange={(e) => updateField(field.id, { options: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                                                        placeholder="Option A, Option B, Option C"
-                                                    />
-                                                    <p className="text-[10px] text-muted-foreground mt-1">Les choix s'afficheront sous forme de boutons radio ou de cases à cocher.</p>
+                                                    <Label className="text-xs font-semibold text-muted-foreground mb-2 block">Options disponibles</Label>
+                                                    <div className="space-y-2">
+                                                        {(field.options || []).map((opt, i) => (
+                                                            <div key={i} className="flex items-center gap-2">
+                                                                <Input 
+                                                                    className="h-9 text-sm bg-background flex-1"
+                                                                    value={opt}
+                                                                    onChange={(e) => {
+                                                                        const newOpts = [...(field.options || [])];
+                                                                        newOpts[i] = e.target.value;
+                                                                        updateField(field.id, { options: newOpts });
+                                                                    }}
+                                                                    placeholder={`Option ${i + 1}`}
+                                                                />
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="icon" 
+                                                                    onClick={() => {
+                                                                        const newOpts = [...(field.options || [])];
+                                                                        newOpts.splice(i, 1);
+                                                                        updateField(field.id, { options: newOpts });
+                                                                    }}
+                                                                    className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                        <Button 
+                                                            variant="outline" 
+                                                            size="sm" 
+                                                            className="mt-2 text-xs border-dashed"
+                                                            onClick={() => {
+                                                                const newOpts = [...(field.options || []), `Option ${(field.options?.length || 0) + 1}`];
+                                                                updateField(field.id, { options: newOpts });
+                                                            }}
+                                                        >
+                                                            <Plus className="h-3 w-3 mr-1" /> Ajouter une option
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                                 
                                                 {field.field_type === 'SingleChoice' && (
