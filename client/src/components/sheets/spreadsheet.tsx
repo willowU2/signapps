@@ -324,14 +324,14 @@ function MiniChart({ type, values, onClose }: { type: 'bar' | 'line' | 'pie', va
 }
 
 // ---- Find & Replace Bar ----
-function FindReplaceBar({ findText, replaceText, matchCount, currentMatch, showReplace, onFindChange, onReplaceChange, onNext, onPrev, onReplace, onReplaceAll, onToggleReplace, onClose }: {
-    findText: string, replaceText: string, matchCount: number, currentMatch: number, showReplace: boolean,
+function FindReplaceBar({ findText, replaceText, matchCount, currentMatch, showReplace, searchAllSheets, onFindChange, onReplaceChange, onNext, onPrev, onReplace, onReplaceAll, onToggleReplace, onToggleAllSheets, onClose }: {
+    findText: string, replaceText: string, matchCount: number, currentMatch: number, showReplace: boolean, searchAllSheets: boolean,
     onFindChange: (v: string) => void, onReplaceChange: (v: string) => void,
     onNext: () => void, onPrev: () => void, onReplace: () => void, onReplaceAll: () => void,
-    onToggleReplace: () => void, onClose: () => void
+    onToggleReplace: () => void, onToggleAllSheets: () => void, onClose: () => void
 }) {
     return (
-        <div className="absolute top-0 right-4 z-50 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-b-lg shadow-lg p-2 flex flex-col gap-1.5 w-[340px]">
+        <div className="absolute top-0 right-4 z-50 bg-background dark:bg-[#2d2e30] border border-[#dadce0] dark:border-[#5f6368] rounded-b-lg shadow-lg p-2 flex flex-col gap-1.5 w-[380px]">
             <div className="flex items-center gap-1.5">
                 <button onClick={onToggleReplace} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded shrink-0" title={showReplace ? "Masquer remplacer" : "Afficher remplacer"}>
                     {showReplace ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -344,6 +344,12 @@ function FindReplaceBar({ findText, replaceText, matchCount, currentMatch, showR
                 <button onClick={onPrev} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded" title="Pr\u00E9c\u00E9dent"><ChevronLeft className="w-3.5 h-3.5" /></button>
                 <button onClick={onNext} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded" title="Suivant"><ChevronRight className="w-3.5 h-3.5" /></button>
                 <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-[#3c4043] rounded" title="Fermer"><X className="w-3.5 h-3.5" /></button>
+            </div>
+            <div className="flex items-center gap-1.5 ml-6">
+                <label className="flex items-center gap-1.5 text-[11px] text-[#5f6368] dark:text-[#9aa0a6] cursor-pointer select-none">
+                    <input type="checkbox" checked={searchAllSheets} onChange={onToggleAllSheets} className="w-3 h-3 rounded accent-[#1a73e8]" />
+                    Rechercher dans tous les onglets
+                </label>
             </div>
             {showReplace && (
                 <div className="flex items-center gap-1.5 ml-6">
@@ -658,7 +664,8 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     const [showReplaceToggle, setShowReplaceToggle] = useState(false)
     const [findText, setFindText] = useState("")
     const [replaceText, setReplaceText] = useState("")
-    const [findMatches, setFindMatches] = useState<{ r: number, c: number }[]>([])
+    const [findAllSheets, setFindAllSheets] = useState(false)
+    const [findMatches, setFindMatches] = useState<{ r: number, c: number, sheetIdx?: number }[]>([])
     const [currentFindIdx, setCurrentFindIdx] = useState(0)
 
     // Conditional formatting
@@ -877,21 +884,39 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         return () => obs.disconnect()
     }, [])
 
-    // Find matches
+    // Find matches (supports searching across all sheets)
     useEffect(() => {
         if (!findText) { setFindMatches([]); return }
-        const matches: { r: number, c: number }[] = []
+        const matches: { r: number, c: number, sheetIdx?: number }[] = []
         const lower = findText.toLowerCase()
-        for (const key of Object.keys(data)) {
-            const val = data[key]?.value || ''
-            if (val.toLowerCase().includes(lower)) {
-                const [r, c] = key.split(',').map(Number)
-                matches.push({ r, c })
+
+        if (findAllSheets) {
+            // Search all sheets via Yjs maps
+            for (let si = 0; si < sheets.length; si++) {
+                const gridMap = doc.getMap<CellData>(`grid-${sheets[si].id}`)
+                const sheetData = gridMap.toJSON() as Record<string, CellData>
+                for (const [key, cellData] of Object.entries(sheetData)) {
+                    const val = cellData?.value || ''
+                    if (val.toLowerCase().includes(lower)) {
+                        const [r, c] = key.split(',').map(Number)
+                        matches.push({ r, c, sheetIdx: si })
+                    }
+                }
+            }
+        } else {
+            // Search only active sheet
+            for (const key of Object.keys(data)) {
+                const val = data[key]?.value || ''
+                if (val.toLowerCase().includes(lower)) {
+                    const [r, c] = key.split(',').map(Number)
+                    matches.push({ r, c })
+                }
             }
         }
+
         setFindMatches(matches)
         setCurrentFindIdx(0)
-    }, [findText, data])
+    }, [findText, data, findAllSheets, sheets, doc])
 
     // Resize mouse handlers
     useEffect(() => {
@@ -1203,30 +1228,63 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         const i = ((idx % findMatches.length) + findMatches.length) % findMatches.length
         setCurrentFindIdx(i)
         const m = findMatches[i]
-        setActiveCell(m); setSelectedRange({ start: m, end: m })
-        // Scroll into view
-        if (gridRef.current) {
-            gridRef.current.scrollTop = Math.max(0, rowOffsets[m.r] - viewportH / 3)
-            gridRef.current.scrollLeft = Math.max(0, colOffsets[m.c] - viewportW / 3)
+
+        // Switch sheet if match is on a different sheet
+        if (m.sheetIdx != null && m.sheetIdx !== activeSheetIndex) {
+            setActiveSheetIndex(m.sheetIdx)
         }
-    }, [findMatches, rowOffsets, colOffsets, viewportH, viewportW])
+
+        setActiveCell({ r: m.r, c: m.c }); setSelectedRange({ start: { r: m.r, c: m.c }, end: { r: m.r, c: m.c } })
+        // Scroll into view (use setTimeout for cross-sheet nav so offsets are recalculated)
+        const doScroll = () => {
+            if (gridRef.current) {
+                gridRef.current.scrollTop = Math.max(0, rowOffsets[m.r] - viewportH / 3)
+                gridRef.current.scrollLeft = Math.max(0, colOffsets[m.c] - viewportW / 3)
+            }
+        }
+        if (m.sheetIdx != null && m.sheetIdx !== activeSheetIndex) {
+            setTimeout(doScroll, 150)
+        } else {
+            doScroll()
+        }
+    }, [findMatches, rowOffsets, colOffsets, viewportH, viewportW, activeSheetIndex, setActiveSheetIndex])
 
     const doReplace = useCallback(() => {
         if (findMatches.length === 0) return
         const m = findMatches[currentFindIdx]
-        const val = data[`${m.r},${m.c}`]?.value || ''
-        setCell(m.r, m.c, val.replace(new RegExp(findText, 'i'), replaceText))
-    }, [findMatches, currentFindIdx, data, findText, replaceText, setCell])
+
+        if (m.sheetIdx != null) {
+            // Replace in specific sheet via Yjs
+            const gridMap = doc.getMap<CellData>(`grid-${sheets[m.sheetIdx].id}`)
+            const key = `${m.r},${m.c}`
+            const cell = gridMap.get(key)
+            const val = cell?.value || ''
+            gridMap.set(key, { ...cell, value: val.replace(new RegExp(findText, 'i'), replaceText) })
+        } else {
+            const val = data[`${m.r},${m.c}`]?.value || ''
+            setCell(m.r, m.c, val.replace(new RegExp(findText, 'i'), replaceText))
+        }
+    }, [findMatches, currentFindIdx, data, findText, replaceText, setCell, doc, sheets])
 
     const doReplaceAll = useCallback(() => {
         let count = 0
-        for (const m of findMatches) {
-            const val = data[`${m.r},${m.c}`]?.value || ''
-            setCell(m.r, m.c, val.replace(new RegExp(findText, 'gi'), replaceText))
-            count++
-        }
+        doc.transact(() => {
+            for (const m of findMatches) {
+                if (m.sheetIdx != null) {
+                    const gridMap = doc.getMap<CellData>(`grid-${sheets[m.sheetIdx].id}`)
+                    const key = `${m.r},${m.c}`
+                    const cell = gridMap.get(key)
+                    const val = cell?.value || ''
+                    gridMap.set(key, { ...cell, value: val.replace(new RegExp(findText, 'gi'), replaceText) })
+                } else {
+                    const val = data[`${m.r},${m.c}`]?.value || ''
+                    setCell(m.r, m.c, val.replace(new RegExp(findText, 'gi'), replaceText))
+                }
+                count++
+            }
+        })
         toast.success(`${count} remplacement(s)`)
-    }, [findMatches, data, findText, replaceText, setCell])
+    }, [findMatches, data, findText, replaceText, setCell, doc, sheets])
 
     // ---- Autocomplete insert ----
     const insertAutocomplete = useCallback((fnName: string) => {
@@ -1275,54 +1333,154 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         e.target.value = ''
     }, [doc, setActiveSheetIndex])
 
+    // ---- Build full workbook from all Yjs sheets (with styles & column widths) ----
+    const buildFullWorkbook = useCallback(() => {
+        const workbook = new ExcelJS.Workbook()
+
+        for (const sheet of sheets) {
+            const worksheet = workbook.addWorksheet(sheet.name)
+            const gridMap = doc.getMap<CellData>(`grid-${sheet.id}`)
+            const sheetData = gridMap.toJSON() as Record<string, CellData>
+
+            // Write cells with values and styles
+            for (const [key, cellData] of Object.entries(sheetData)) {
+                if (!cellData) continue
+                const [rStr, cStr] = key.split(',')
+                const r = parseInt(rStr, 10) + 1 // ExcelJS is 1-based
+                const c = parseInt(cStr, 10) + 1
+                const cell = worksheet.getCell(r, c)
+
+                // Set value — try to preserve numeric types
+                const raw = cellData.value
+                if (raw != null && raw !== '') {
+                    const num = Number(raw)
+                    cell.value = raw !== '' && !isNaN(num) && isFinite(num) ? num : raw
+                }
+
+                // Apply styles
+                const s = cellData.style
+                if (s) {
+                    // Font
+                    const font: Partial<ExcelJS.Font> = {}
+                    if (s.bold) font.bold = true
+                    if (s.italic) font.italic = true
+                    if (s.underline) font.underline = true
+                    if (s.strikethrough) font.strike = true
+                    if (s.textColor) font.color = { argb: 'FF' + s.textColor.replace('#', '') }
+                    if (s.fontFamily) font.name = s.fontFamily
+                    if (s.fontSize) font.size = s.fontSize
+                    if (Object.keys(font).length > 0) cell.font = font as ExcelJS.Font
+
+                    // Fill
+                    if (s.fillColor) {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: 'FF' + s.fillColor.replace('#', '') },
+                        }
+                    }
+
+                    // Alignment
+                    const alignment: Partial<ExcelJS.Alignment> = {}
+                    if (s.align) alignment.horizontal = s.align
+                    if (s.verticalAlign) alignment.vertical = s.verticalAlign
+                    if (s.wrap) alignment.wrapText = true
+                    if (s.rotation && typeof s.rotation === 'number') alignment.textRotation = s.rotation
+                    if (Object.keys(alignment).length > 0) cell.alignment = alignment as ExcelJS.Alignment
+
+                    // Borders
+                    const border: Partial<ExcelJS.Borders> = {}
+                    const thinBorder: ExcelJS.Border = { style: 'thin', color: { argb: 'FF000000' } }
+                    if (s.borderTop) border.top = thinBorder
+                    if (s.borderRight) border.right = thinBorder
+                    if (s.borderBottom) border.bottom = thinBorder
+                    if (s.borderLeft) border.left = thinBorder
+                    if (Object.keys(border).length > 0) cell.border = border as ExcelJS.Borders
+
+                    // Number format
+                    if (s.numberFormat && s.numberFormat !== 'auto') {
+                        const decimals = s.decimals ?? 2
+                        const decPart = decimals > 0 ? '.' + '0'.repeat(decimals) : ''
+                        switch (s.numberFormat) {
+                            case 'currency': cell.numFmt = `#,##0${decPart} €`; break
+                            case 'percent': cell.numFmt = `0${decPart}%`; break
+                            case 'number': cell.numFmt = `#,##0${decPart}`; break
+                            case 'date': cell.numFmt = 'DD/MM/YYYY'; break
+                            case 'time': cell.numFmt = 'HH:MM:SS'; break
+                            case 'datetime': cell.numFmt = 'DD/MM/YYYY HH:MM'; break
+                            case 'scientific': cell.numFmt = `0${decPart}E+00`; break
+                            case 'accounting': cell.numFmt = `_-* #,##0${decPart} €_-`; break
+                        }
+                    }
+
+                    // Merged cells
+                    if (s.mergeRows && s.mergeRows > 1 || s.mergeCols && s.mergeCols > 1) {
+                        const mr = s.mergeRows || 1
+                        const mc = s.mergeCols || 1
+                        worksheet.mergeCells(r, c, r + mr - 1, c + mc - 1)
+                    }
+                }
+            }
+
+            // Apply column widths
+            const cwMap = doc.getMap<number>(`colWidths-${sheet.id}`)
+            cwMap.forEach((width, colStr) => {
+                const col = parseInt(colStr, 10) + 1
+                worksheet.getColumn(col).width = Math.round(width / 7.5) // px to Excel character units
+            })
+
+            // Apply row heights
+            const rhMap = doc.getMap<number>(`rowHeights-${sheet.id}`)
+            rhMap.forEach((height, rowStr) => {
+                const row = parseInt(rowStr, 10) + 1
+                worksheet.getRow(row).height = height * 0.75 // px to Excel points
+            })
+        }
+
+        return workbook
+    }, [doc, sheets])
+
     // ---- File Export (CSV/XLSX) ----
     const exportXLSX = useCallback(async (type: 'xlsx' | 'csv') => {
-        const rowsToExport: any[][] = []
-        let maxR = 0;
-        let maxC = 0;
-
-        for (const key of Object.keys(data)) {
-            if (data[key]?.value) {
-                const [rStr, cStr] = key.split(',')
-                maxR = Math.max(maxR, parseInt(rStr, 10));
-                maxC = Math.max(maxC, parseInt(cStr, 10));
-            }
-        }
-
-        for (let r = 0; r <= maxR; r++) {
-            const row: any[] = []
-            for (let c = 0; c <= maxC; c++) {
-                row.push(data[`${r},${c}`]?.value || '')
-            }
-            rowsToExport.push(row)
-        }
-
         try {
-            const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet(sheets[activeSheetIndex]?.name || 'Sheet1');
-            rowsToExport.forEach(row => worksheet.addRow(row));
+            const workbook = buildFullWorkbook()
 
-            let buffer: ArrayBuffer;
-            let mimeType: string;
+            let buffer: ArrayBuffer
+            let mimeType: string
+            let filename: string
+
             if (type === 'csv') {
-                buffer = await workbook.csv.writeBuffer() as ArrayBuffer;
-                mimeType = 'text/csv';
+                // CSV only supports one sheet — export active sheet
+                const activeWs = workbook.getWorksheet(sheets[activeSheetIndex]?.name || 'Sheet1')
+                const csvWorkbook = new ExcelJS.Workbook()
+                const csvSheet = csvWorkbook.addWorksheet('Sheet1')
+                if (activeWs) {
+                    activeWs.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                        csvSheet.getRow(rowNumber).values = row.values as ExcelJS.CellValue[]
+                    })
+                }
+                buffer = await csvWorkbook.csv.writeBuffer() as ArrayBuffer
+                mimeType = 'text/csv'
+                filename = `${documentName || sheets[activeSheetIndex]?.name || 'document'}.csv`
             } else {
-                buffer = await workbook.xlsx.writeBuffer() as ArrayBuffer;
-                mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                buffer = await workbook.xlsx.writeBuffer() as ArrayBuffer
+                mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                filename = `${documentName || 'document'}.xlsx`
             }
-            const blob = new Blob([buffer], { type: mimeType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${sheets[activeSheetIndex]?.name || 'document'}.${type}`;
-            a.click();
-            URL.revokeObjectURL(url);
-            toast.success(`Exporté en ${type.toUpperCase()}`);
+
+            const blob = new Blob([buffer], { type: mimeType })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = filename
+            a.click()
+            URL.revokeObjectURL(url)
+            toast.success(`Exporté en ${type.toUpperCase()} (${sheets.length} onglet${sheets.length > 1 ? 's' : ''})`)
         } catch (err) {
-            toast.error(`Erreur d'export ${type.toUpperCase()}`);
+            console.error('Export error:', err)
+            toast.error(`Erreur d'export ${type.toUpperCase()}`)
         }
-    }, [data, sheets, activeSheetIndex])
+    }, [buildFullWorkbook, sheets, activeSheetIndex, documentName])
 
     // ---- Save To Drive ----
     const saveToDrive = useCallback(async () => {
@@ -1334,48 +1492,22 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         const tId = toast.loading("Enregistrement dans le Drive...");
 
         try {
-            const workbook = new ExcelJS.Workbook();
-
-            // On convertit chaque feuille du classeur S'il n'y a que le data global on fait une seule sheet
-            const rowsToExport: any[][] = [];
-            let maxR = 0; let maxC = 0;
-
-            for (const key of Object.keys(data)) {
-                if (data[key]?.value) {
-                    const [rStr, cStr] = key.split(',');
-                    maxR = Math.max(maxR, parseInt(rStr, 10));
-                    maxC = Math.max(maxC, parseInt(cStr, 10));
-                }
-            }
-
-            for (let r = 0; r <= maxR; r++) {
-                const row: any[] = [];
-                for (let c = 0; c <= maxC; c++) {
-                    row.push(data[`${r},${c}`]?.value || '');
-                }
-                rowsToExport.push(row);
-            }
-
-            const worksheet = workbook.addWorksheet(sheets[activeSheetIndex]?.name || 'Sheet1');
-            rowsToExport.forEach(row => worksheet.addRow(row));
+            const workbook = buildFullWorkbook()
 
             // Créer un blob type XLSX
             const wbout = await workbook.xlsx.writeBuffer();
             const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            
+
             // Envoyer à l'API backend
-            // Note: on utilise 'drive' comme paramètre de bucket par défaut 
-            // puisque Global Drive route l'upload générique au bucket principal (qui peut être "drive" ou "general"). 
-            // "drive" est le bucket utilisé par fetchAndParseDocument
             const targetKey = `${documentId}.xlsx`;
             await storageApi.uploadWithKey('drive', targetKey, blob);
-            
+
             toast.success("Enregistré avec succès !", { id: tId });
         } catch(err: any) {
             console.error("Erreur enregistrement spreadsheet", err);
             toast.error("Erreur d'enregistrement: " + err.message, { id: tId });
         }
-    }, [data, sheets, activeSheetIndex, documentName, documentId]);
+    }, [buildFullWorkbook, documentName, documentId]);
 
     // ---- Cell interactions ----
     const commitEdit = () => {
@@ -2321,12 +2453,14 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                         findText={findText} replaceText={replaceText}
                         matchCount={findMatches.length} currentMatch={currentFindIdx}
                         showReplace={showReplaceToggle}
+                        searchAllSheets={findAllSheets}
                         onFindChange={setFindText} onReplaceChange={setReplaceText}
                         onNext={() => navigateToFind(currentFindIdx + 1)}
                         onPrev={() => navigateToFind(currentFindIdx - 1)}
                         onReplace={doReplace} onReplaceAll={doReplaceAll}
                         onToggleReplace={() => setShowReplaceToggle(!showReplaceToggle)}
-                        onClose={() => { setShowFind(false); setFindText('') }}
+                        onToggleAllSheets={() => setFindAllSheets(prev => !prev)}
+                        onClose={() => { setShowFind(false); setFindText(''); setFindAllSheets(false) }}
                     />
                 )}
 
