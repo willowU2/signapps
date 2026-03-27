@@ -3,6 +3,15 @@
 -- Feature: AQ-BILLDB — Line items and payments for billing service
 
 -- ============================================================================
+-- Skipped because `billing` schema and `billing.invoices` table 
+-- are missing from the earlier migrations.
+-- Uncomment and fix when the missing dependencies are available.
+-- ============================================================================
+
+/*
+CREATE SCHEMA IF NOT EXISTS billing;
+
+-- ============================================================================
 -- Line items for invoices
 -- ============================================================================
 
@@ -36,3 +45,4 @@ CREATE TABLE IF NOT EXISTS billing.payments (
 );
 
 CREATE INDEX idx_payments_invoice ON billing.payments(invoice_id);
+*/
