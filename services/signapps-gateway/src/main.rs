@@ -182,6 +182,7 @@ async fn proxy_handler(State(svc): State<Arc<ServiceMap>>, req: Request) -> Resp
 // Spawn service helper (kept for future embedded-service mode)
 // ---------------------------------------------------------------------------
 
+#[allow(dead_code)]
 async fn spawn_service(
     name: &str,
     port: u16,

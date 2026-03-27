@@ -64,8 +64,7 @@ pub fn initial_state_for_type(doc_type: &str) -> Vec<u8> {
         },
     }
     let txn = doc.transact();
-    let bytes = txn.encode_state_as_update_v1(&yrs::StateVector::default());
-    bytes
+    txn.encode_state_as_update_v1(&yrs::StateVector::default())
 }
 
 #[cfg(test)]

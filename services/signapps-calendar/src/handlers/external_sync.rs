@@ -658,6 +658,7 @@ async fn fetch_microsoft_calendar_events(
         date_time: Option<String>,
     }
 
+    #[allow(dead_code)]
     #[derive(serde::Deserialize)]
     struct MsEvent {
         subject: Option<String>,
@@ -916,6 +917,7 @@ struct OAuthTokens {
 }
 
 /// Deserialize response from OAuth2 token endpoints.
+#[allow(dead_code)]
 #[derive(Debug, serde::Deserialize)]
 struct OAuthTokenResponse {
     access_token: String,
