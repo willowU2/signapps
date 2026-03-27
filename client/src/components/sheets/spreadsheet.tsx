@@ -902,11 +902,16 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
 
     // ---- Formatting helpers ----
     const applyToSelection = useCallback((stylePatch: Partial<CellStyle>) => {
-        if (!selectionBounds) return
-        for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++)
-            for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++)
-                setCellStyle(r, c, stylePatch)
-    }, [selectionBounds, setCellStyle])
+        if (selectionBounds) {
+            transact(() => {
+                for (let r = selectionBounds.minR; r <= selectionBounds.maxR; r++)
+                    for (let c = selectionBounds.minC; c <= selectionBounds.maxC; c++)
+                        setCellStyle(r, c, stylePatch)
+            })
+        } else if (activeCell) {
+            setCellStyle(activeCell.r, activeCell.c, stylePatch)
+        }
+    }, [selectionBounds, activeCell, setCellStyle, transact])
 
     const toggleBoolFormat = useCallback((prop: keyof CellStyle) => {
         applyToSelection({ [prop]: !activeCellStyle[prop] })
@@ -932,22 +937,25 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     }, [activeCellStyle, applyToSelection])
 
     const applyBorders = useCallback((type: string) => {
-        if (!selectionBounds) return
-        const { minR, maxR, minC, maxC } = selectionBounds
-        for (let r = minR; r <= maxR; r++) {
-            for (let c = minC; c <= maxC; c++) {
-                let patch: Partial<CellStyle> = {}
-                if (type === 'none') patch = { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false }
-                else if (type === 'all') patch = { borderTop: true, borderRight: true, borderBottom: true, borderLeft: true }
-                else if (type === 'outer') patch = { borderTop: r === minR, borderBottom: r === maxR, borderLeft: c === minC, borderRight: c === maxC }
-                else if (type === 'top') patch = { borderTop: r === minR }
-                else if (type === 'bottom') patch = { borderBottom: r === maxR }
-                else if (type === 'left') patch = { borderLeft: c === minC }
-                else if (type === 'right') patch = { borderRight: c === maxC }
-                setCellStyle(r, c, patch)
+        const bounds = selectionBounds || (activeCell ? { minR: activeCell.r, maxR: activeCell.r, minC: activeCell.c, maxC: activeCell.c } : null)
+        if (!bounds) return
+        const { minR, maxR, minC, maxC } = bounds
+        transact(() => {
+            for (let r = minR; r <= maxR; r++) {
+                for (let c = minC; c <= maxC; c++) {
+                    let patch: Partial<CellStyle> = {}
+                    if (type === 'none') patch = { borderTop: false, borderRight: false, borderBottom: false, borderLeft: false }
+                    else if (type === 'all') patch = { borderTop: true, borderRight: true, borderBottom: true, borderLeft: true }
+                    else if (type === 'outer') patch = { borderTop: r === minR, borderBottom: r === maxR, borderLeft: c === minC, borderRight: c === maxC }
+                    else if (type === 'top') patch = { borderTop: r === minR }
+                    else if (type === 'bottom') patch = { borderBottom: r === maxR }
+                    else if (type === 'left') patch = { borderLeft: c === minC }
+                    else if (type === 'right') patch = { borderRight: c === maxC }
+                    setCellStyle(r, c, patch)
+                }
             }
-        }
-    }, [selectionBounds, setCellStyle])
+        })
+    }, [selectionBounds, activeCell, setCellStyle, transact])
 
     // ---- Clipboard ----
     const doCopy = useCallback(() => {
