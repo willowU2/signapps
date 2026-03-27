@@ -36,8 +36,8 @@ export function useNotificationsSSE() {
               console.error('SSE 401 Unauthorized. Access token might be expired. Forcing token refresh...');
               try {
                 // Hit a protected endpoint with axios so its interceptor refreshes the cookie
-                const schedulerClient = getClient(ServiceName.SCHEDULER);
-                await schedulerClient.get('/health');
+                const identityClient = getClient(ServiceName.IDENTITY);
+                await identityClient.get('/auth/me');
               } catch (e) {
                 // Ignore errors
               }

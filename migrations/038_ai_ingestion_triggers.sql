@@ -52,16 +52,16 @@ CREATE TRIGGER trg_ai_ingest_mail_emails
 AFTER INSERT OR UPDATE OR DELETE ON mail.emails
 FOR EACH ROW EXECUTE FUNCTION trigger_queue_ai_ingestion();
 
--- Chat Messages
-DROP TRIGGER IF EXISTS trg_ai_ingest_chat_messages ON chat.messages;
-CREATE TRIGGER trg_ai_ingest_chat_messages
-AFTER INSERT OR UPDATE OR DELETE ON chat.messages
-FOR EACH ROW EXECUTE FUNCTION trigger_queue_ai_ingestion();
+-- Chat Messages (table removed in previous PR)
+-- DROP TRIGGER IF EXISTS trg_ai_ingest_chat_messages ON chat.messages;
+-- CREATE TRIGGER trg_ai_ingest_chat_messages
+-- AFTER INSERT OR UPDATE OR DELETE ON chat.messages
+-- FOR EACH ROW EXECUTE FUNCTION trigger_queue_ai_ingestion();
 
 -- Calendar Events
-DROP TRIGGER IF EXISTS trg_ai_ingest_calendar_events ON calendar_events;
+DROP TRIGGER IF EXISTS trg_ai_ingest_calendar_events ON calendar.events;
 CREATE TRIGGER trg_ai_ingest_calendar_events
-AFTER INSERT OR UPDATE OR DELETE ON calendar_events
+AFTER INSERT OR UPDATE OR DELETE ON calendar.events
 FOR EACH ROW EXECUTE FUNCTION trigger_queue_ai_ingestion();
 
 -- Projects (Entity Hub)

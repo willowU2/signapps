@@ -1,6 +1,8 @@
 -- AQ-SECEVT: Create security_events table for security event alerting
+CREATE SCHEMA IF NOT EXISTS platform;
+
 CREATE TABLE IF NOT EXISTS platform.security_events (
-    id          UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_type  TEXT NOT NULL,
     severity    TEXT NOT NULL DEFAULT 'info',
     actor_id    UUID,

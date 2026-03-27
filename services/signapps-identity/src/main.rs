@@ -41,7 +41,7 @@ async fn main() -> anyhow::Result<()> {
     // Run global database migrations orchestrator
     if let Err(e) = run_migrations(&pool).await {
         tracing::warn!(
-            "Database migrations could not be completed, continuing anyway: {}",
+            "Database migrations could not be completed, continuing anyway: {:?}",
             e
         );
     }

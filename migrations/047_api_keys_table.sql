@@ -1,6 +1,6 @@
 -- AQ-APIKEY: Create api_keys table for API key management
 CREATE TABLE IF NOT EXISTS identity.api_keys (
-    id          UUID PRIMARY KEY DEFAULT gen_uuid_v7(),
+    id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id     UUID NOT NULL REFERENCES identity.users(id) ON DELETE CASCADE,
     name        TEXT NOT NULL,
     key_prefix  TEXT NOT NULL,
