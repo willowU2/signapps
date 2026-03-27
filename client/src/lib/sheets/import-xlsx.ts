@@ -71,31 +71,41 @@ export async function importXlsxToYjs(
     allEntries.map(s => `${s.name}(${s.id})`)
   );
 
-  // Step 4: Write data into each sheet's grid map
+  // Step 4: Write data into each sheet's grid map — chunked to avoid freezing UI
   let totalCells = 0;
-  doc.transact(() => {
-    for (let i = 0; i < sheetNames.length && i < allEntries.length; i++) {
-      const sheetName = sheetNames[i];
-      const cellsMap = result.data[sheetName];
-      if (!cellsMap) continue;
+  const CHUNK_SIZE = 5000; // Write 5K cells per transaction to keep UI responsive
 
-      const sheetId = allEntries[i].id;
-      const gridMap = doc.getMap<CellData>(`grid-${sheetId}`);
+  for (let i = 0; i < sheetNames.length && i < allEntries.length; i++) {
+    const sheetName = sheetNames[i];
+    const cellsMap = result.data[sheetName];
+    if (!cellsMap) continue;
 
-      for (const [key, cellData] of Object.entries(cellsMap)) {
-        const [rStr, cStr] = key.split(',');
-        const r = parseInt(rStr, 10);
-        const c = parseInt(cStr, 10);
-        if (r >= ROWS || c >= COLS) continue;
+    const sheetId = allEntries[i].id;
+    const gridMap = doc.getMap<CellData>(`grid-${sheetId}`);
+    const entries = Object.entries(cellsMap);
 
-        // Ensure value is a string — prevents [object Object] rendering
-        const safeData = { ...cellData } as CellData;
-        safeData.value = ensureString(safeData.value);
-        gridMap.set(`${r},${c}`, safeData);
-        totalCells++;
-      }
+    for (let chunk = 0; chunk < entries.length; chunk += CHUNK_SIZE) {
+      const batch = entries.slice(chunk, chunk + CHUNK_SIZE);
+      doc.transact(() => {
+        for (const [key, cellData] of batch) {
+          const [rStr, cStr] = key.split(',');
+          const r = parseInt(rStr, 10);
+          const c = parseInt(cStr, 10);
+          if (r >= ROWS || c >= COLS) continue;
+
+          // Skip empty cells to reduce storage
+          const val = ensureString(cellData.value);
+          if (!val && !cellData.formula && !cellData.style && !cellData.comment) continue;
+
+          const safeData = { ...cellData, value: val } as CellData;
+          gridMap.set(`${r},${c}`, safeData);
+          totalCells++;
+        }
+      });
+      // Yield to UI thread between chunks
+      await new Promise(r => setTimeout(r, 0));
     }
-  });
+  }
 
   console.log(`[import-xlsx] Imported ${totalCells} cells across ${sheetNames.length} sheets`);
 
