@@ -1,5 +1,5 @@
 import type * as Y from 'yjs';
-import { parseSpreadsheetBuffer, type SpreadsheetParseResult } from '@/lib/file-parsers';
+import { parseSpreadsheetBuffer } from '@/lib/file-parsers';
 import type { CellData } from '@/components/sheets/types';
 import { ROWS, COLS } from '@/components/sheets/types';
 

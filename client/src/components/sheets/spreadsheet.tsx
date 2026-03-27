@@ -10,10 +10,9 @@ import { FloatingChart } from "./chart-panel"
 import { MacroEditor } from "./macro-editor"
 import { CellStyle, CellData, CellValidation, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
-import { fetchAndParseDocument, parseSpreadsheetBuffer } from '@/lib/file-parsers'
+import { fetchAndParseDocument } from '@/lib/file-parsers'
 import { sanitizeAllSheets } from '@/lib/sheets/sanitize-cells'
 import { importXlsxToYjs } from '@/lib/sheets/import-xlsx'
-import type { SpreadsheetParseResult } from '@/lib/file-parsers'
 import ExcelJS from 'exceljs'
 import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu'
 import { GenericFeatureModal } from '@/components/editor/generic-feature-modal'
@@ -1116,88 +1115,34 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         setAutocompleteSuggestions([])
     }, [editValue, activeCell, setCell])
 
-    // ---- File Import (CSV/XLSX) — preserves formulas, styles, merges, comments, validation ----
+    // ---- File Import (CSV/XLSX) — delegated to import-xlsx module for fresh Turbopack compilation ----
     const importFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
         try {
             const arrayBuffer = await file.arrayBuffer();
             const ext = file.name.split('.').pop()?.toLowerCase() || '';
-            const result = await parseSpreadsheetBuffer(arrayBuffer, ext);
-
-            const sheetNames = result.sheets;
-            if (sheetNames.length === 0) { toast.error("Aucune feuille trouvée"); return; }
-
-            let totalCount = 0;
-
-            // Rename default sheet to first Excel sheet name
-            renameSheet(0, sheetNames[0]);
-
-            // Create additional sheets for remaining Excel sheets
-            for (let i = 1; i < sheetNames.length; i++) {
-                addSheet(sheetNames[i]);
-            }
-
-            // Wait for Yjs sheets to be created — poll until all are present
-            const sheetsMetaV2 = doc.getArray<{ id: string; name: string }>('sheets-meta-v2');
-            let sheetEntries = sheetsMetaV2.toArray();
-            const maxWait = 50; // 50 * 100ms = 5 seconds max
-            for (let attempt = 0; attempt < maxWait && sheetEntries.length < sheetNames.length; attempt++) {
-                await new Promise(r => setTimeout(r, 100));
-                sheetEntries = sheetsMetaV2.toArray();
-            }
-            console.log(`[import] Sheet entries: ${sheetEntries.length}/${sheetNames.length}`, sheetEntries.map(s => s.name));
-
-            // Import data into each sheet by writing directly to its Yjs grid map
-            doc.transact(() => {
-                for (let i = 0; i < sheetNames.length; i++) {
-                    const sheetName = sheetNames[i];
-                    const cellsMap = result.data[sheetName];
-                    if (!cellsMap || i >= sheetEntries.length) continue;
-
-                    const sheetId = sheetEntries[i].id;
-                    const gridMap = doc.getMap<CellData>(`grid-${sheetId}`);
-
-                    for (const [key, cellData] of Object.entries(cellsMap)) {
-                        const [rStr, cStr] = key.split(',');
-                        const r = parseInt(rStr, 10);
-                        const c = parseInt(cStr, 10);
-                        if (r >= ROWS || c >= COLS) continue;
-                        // Ensure value is ALWAYS a string before storing in Yjs
-                        const safeCellData = { ...cellData } as CellData;
-                        if (safeCellData.value && typeof safeCellData.value === 'object') {
-                            const v = safeCellData.value as any;
-                            if (v instanceof Date) safeCellData.value = v.toISOString().split('T')[0];
-                            else if (v.toISOString) safeCellData.value = v.toISOString().split('T')[0]; // Date duck-type
-                            else if ('result' in v) safeCellData.value = String(v.result ?? '');
-                            else if ('text' in v) safeCellData.value = String(v.text ?? '');
-                            else if ('richText' in v) safeCellData.value = (v.richText || []).map((r: any) => r.text || '').join('');
-                            else safeCellData.value = '';
-                        }
-                        gridMap.set(`${r},${c}`, safeCellData);
-                        totalCount++;
-                    }
-                }
-            });
+            const importResult = await importXlsxToYjs(doc, arrayBuffer, ext);
 
             // Apply column widths and row heights for the active (first) sheet
-            if (result.colWidths?.[sheetNames[0]]) {
-                setColWidths(prev => ({ ...prev, ...result.colWidths![sheetNames[0]] }));
+            const firstName = importResult.sheetNames[0];
+            if (importResult.colWidths?.[firstName]) {
+                setColWidths(prev => ({ ...prev, ...importResult.colWidths![firstName] }));
             }
-            if (result.rowHeights?.[sheetNames[0]]) {
-                setRowHeights(prev => ({ ...prev, ...result.rowHeights![sheetNames[0]] }));
+            if (importResult.rowHeights?.[firstName]) {
+                setRowHeights(prev => ({ ...prev, ...importResult.rowHeights![firstName] }));
             }
 
             // Switch to first sheet
             setActiveSheetIndex(0);
 
-            toast.success(`${totalCount} cellules importées de ${file.name} (${sheetNames.length} onglet${sheetNames.length > 1 ? 's' : ''})`);
+            toast.success(`${importResult.totalCells} cellules importées de ${file.name} (${importResult.sheetCount} onglet${importResult.sheetCount > 1 ? 's' : ''})`);
         } catch(err) {
             console.error('Import error:', err);
             toast.error("Erreur d'importation: " + (err instanceof Error ? err.message : 'Format invalide'));
         }
         e.target.value = ''
-    }, [doc, setCellFull, transact, setColWidths, setRowHeights, addSheet, renameSheet, setActiveSheetIndex])
+    }, [doc, setColWidths, setRowHeights, setActiveSheetIndex])
 
     // ---- File Export (CSV/XLSX) ----
     const exportXLSX = useCallback(async (type: 'xlsx' | 'csv') => {
