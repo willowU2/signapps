@@ -352,6 +352,11 @@ pub async fn dashboard_stats(
         "disconnected"
     };
 
+    // Sum today's traffic from the rolling history.
+    let traffic = state.traffic_history.read().await;
+    let bytes_in_today: u64 = traffic.iter().map(|p| p.bytes_in).sum();
+    let bytes_out_today: u64 = traffic.iter().map(|p| p.bytes_out).sum();
+
     Ok(Json(DashboardStatsResponse {
         tunnels_active,
         tunnels_total: tunnels.len(),
@@ -360,22 +365,16 @@ pub async fn dashboard_stats(
         relay_total_count: relays.len(),
         dns_queries_today: dns_stats.total_queries,
         ads_blocked_today: dns_stats.blocked_queries,
-        bytes_in_today: 0u64,
-        bytes_out_today: 0u64,
+        bytes_in_today,
+        bytes_out_today,
     }))
 }
 
-/// Traffic data point.
-#[derive(Debug, Serialize)]
-pub struct TrafficPoint {
-    pub timestamp: String,
-    pub bytes_in: u64,
-    pub bytes_out: u64,
-}
+/// Traffic data point — re-exported from AppState definition.
+pub use crate::TrafficPoint;
 
-/// Get traffic history (placeholder - returns empty for now).
-pub async fn dashboard_traffic(State(_state): State<AppState>) -> Result<Json<Vec<TrafficPoint>>> {
-    // Traffic history would be stored in a time-series manner
-    // For now, return empty array
-    Ok(Json(vec![]))
+/// Get rolling traffic history (last 60 minutes, one point per minute).
+pub async fn dashboard_traffic(State(state): State<AppState>) -> Result<Json<Vec<TrafficPoint>>> {
+    let history = state.traffic_history.read().await;
+    Ok(Json(history.iter().cloned().collect()))
 }

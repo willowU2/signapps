@@ -48,6 +48,7 @@ import {
   Legend,
 } from 'recharts';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { AnomalyAlertPanel } from '@/components/monitoring/anomaly-alert-panel';
 import { AlertConfig, AlertSeverity } from '@/lib/api';
 import { AlertConfigDialog } from '@/components/monitoring/alert-config-dialog';
@@ -106,8 +107,12 @@ export default function MonitoringPage() {
   const [history, setHistory] = useState<MetricPoint[]>([]);
 
   // React Query hooks
-  const { data: queryMetrics, isLoading: loading } = useMetricsSummary(autoRefresh ? refreshInterval : undefined);
+  const { data: queryMetrics, isLoading: loading, isError: metricsError } = useMetricsSummary(autoRefresh ? refreshInterval : undefined);
   const { data: disks = [] } = useDiskMetrics(autoRefresh ? refreshInterval : undefined);
+
+  useEffect(() => {
+    if (metricsError) toast.error('Failed to load system metrics');
+  }, [metricsError]);
 
   // Use SSE metrics when real-time is enabled, otherwise use polling data
   const metrics = realtimeEnabled && streamMetrics ? streamMetrics : queryMetrics;

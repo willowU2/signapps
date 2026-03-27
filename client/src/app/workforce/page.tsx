@@ -8,6 +8,7 @@
  */
 
 import * as React from 'react';
+import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -68,12 +69,12 @@ export default function WorkforcePage() {
   const [nodeSheetParentId, setNodeSheetParentId] = React.useState<string | undefined>();
 
   // Queries
-  const { data: treeData, isLoading: isTreeLoading } = useQuery({
+  const { data: treeData, isLoading: isTreeLoading, isError: isTreeError } = useQuery({
     queryKey: ['workforce', 'tree'],
     queryFn: () => orgNodesApi.getTree({ max_depth: 10 }),
   });
 
-  const { data: employeesData, isLoading: isEmployeesLoading } = useQuery({
+  const { data: employeesData, isLoading: isEmployeesLoading, isError: isEmployeesError } = useQuery({
     queryKey: ['workforce', 'employees', selectedNode?.id, searchQuery],
     queryFn: () => employeesApi.list({
       org_node_id: selectedNode?.id,
@@ -82,6 +83,14 @@ export default function WorkforcePage() {
       page_size: 100,
     }),
   });
+
+  React.useEffect(() => {
+    if (isTreeError) toast.error('Failed to load organization tree');
+  }, [isTreeError]);
+
+  React.useEffect(() => {
+    if (isEmployeesError) toast.error('Failed to load employees');
+  }, [isEmployeesError]);
 
   // Stats for header cards
   const stats = React.useMemo(() => {

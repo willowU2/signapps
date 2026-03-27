@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Plus, Download, Upload, MoreVertical, ExternalLink, X, Settings } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskForm } from "@/components/tasks/TaskForm";
@@ -32,8 +33,14 @@ export default function TasksPage() {
   const { projects, fetchTasks, fetchProjects, isLoading } = useEntityStore();
 
   useEffect(() => {
-    fetchTasks();
-    fetchProjects();
+    const load = async () => {
+      try {
+        await Promise.all([fetchTasks(), fetchProjects()]);
+      } catch {
+        toast.error('Failed to load tasks');
+      }
+    };
+    load();
   }, [fetchTasks, fetchProjects]);
 
   // Load projects on mount

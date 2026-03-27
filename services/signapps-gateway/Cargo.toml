@@ -42,6 +42,11 @@ anyhow = { workspace = true }
 chrono = { workspace = true }
 dotenvy = { workspace = true }
 
+# HTTP client for reverse-proxy forwarding
+reqwest = { workspace = true }
+uuid = { workspace = true }
+bytes = { workspace = true }
+
 # NOTE: In the full implementation, each service would be an optional dependency:
 # signapps-identity = { path = "../signapps-identity", optional = true }
 # signapps-storage = { path = "../signapps-storage", optional = true }

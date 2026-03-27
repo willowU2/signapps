@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use futures::stream::StreamExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use uuid::Uuid;
 
 use crate::models::{CreateConnectionRequest, RemoteConnection, UpdateConnectionRequest};
@@ -166,46 +167,176 @@ pub async fn connection_gateway_ws(
 
 async fn handle_guacamole_socket(mut socket: WebSocket, connection_id: Uuid, state: AppState) {
     tracing::info!(
-        "Upgraded unified WebSocket for Remote Connection: {}",
+        "Upgraded WebSocket for Remote Connection: {}",
         connection_id
     );
 
     // 1. Fetch credentials from DB
     let conn_record = match sqlx::query_as::<_, RemoteConnection>(
-        r#"SELECT id, hardware_id, name, protocol, hostname, port, username, password_encrypted, private_key_encrypted, parameters, created_at, updated_at
-           FROM remote.connections WHERE id = $1"#
+        r#"SELECT id, hardware_id, name, protocol, hostname, port, username, password_encrypted,
+                  private_key_encrypted, parameters, created_at, updated_at
+           FROM remote.connections WHERE id = $1"#,
     )
     .bind(connection_id)
     .fetch_one(state.db.inner())
-    .await {
+    .await
+    {
         Ok(c) => c,
         Err(_) => {
-            let _ = socket.send(Message::Text("4.error,404.Connection not found;".to_string())).await;
+            let _ = socket
+                .send(Message::Text(
+                    "4.error,404.Connection not found;".to_string(),
+                ))
+                .await;
             return;
-        }
+        },
     };
 
-    // FIXME(guacamole): Connect to guacd:4822 via TcpStream for RDP/VNC tunneling
-    // Perform the Guacamole Handshake `select, protocol`, send `size` and `audio` formats,
-    // and pipe the TCP frame stream bi-directionally to the WebSocket.
+    // 2. Resolve guacd address (configurable via env, default localhost:4822)
+    let guacd_host = std::env::var("GUACD_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+    let guacd_port: u16 = std::env::var("GUACD_PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or(4822);
 
-    // Connection sequence to the frontend Canvas viewer:
-    let _ = socket
-        .send(Message::Text("4.size,1.0,4.1024,3.768;".to_string()))
-        .await;
-    let _ = socket
-        .send(Message::Text(format!("5.ready,{}.;", conn_record.protocol)))
-        .await;
+    let guacd_addr = format!("{}:{}", guacd_host, guacd_port);
 
-    while let Some(Ok(msg)) = socket.next().await {
-        if let Message::Text(text) = msg {
-            tracing::debug!("Received browser GUAC instruction: {}", text);
-            // Echo back an ACK or basic sync token to keep the canvas alive
-            if text.starts_with("4.sync") {
-                let _ = socket.send(Message::Text(text)).await;
-            }
+    // 3. Open TCP connection to guacd
+    let tcp_stream = match tokio::net::TcpStream::connect(&guacd_addr).await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to connect to guacd at {}: {}", guacd_addr, e);
+            let _ = socket
+                .send(Message::Text("5.error,14.guacd unreachable;".to_string()))
+                .await;
+            return;
+        },
+    };
+
+    tracing::info!("Connected to guacd at {}", guacd_addr);
+
+    // 4. Perform Guacamole handshake:
+    //    → select <protocol>
+    //    ← args
+    //    → size, audio, video, image, connect
+    let protocol = conn_record.protocol.to_lowercase();
+    let select_instr = format!("6.select,{}.{};", protocol.len(), protocol);
+
+    let (mut guacd_read, mut guacd_write) = tcp_stream.into_split();
+
+    // Send select
+    if let Err(e) = guacd_write.write_all(select_instr.as_bytes()).await {
+        tracing::error!("Failed to send select to guacd: {}", e);
+        return;
+    }
+
+    // Read args response from guacd
+    let mut args_buf = vec![0u8; 4096];
+    let n = match guacd_read.read(&mut args_buf).await {
+        Ok(n) if n > 0 => n,
+        _ => {
+            tracing::error!("guacd did not return args");
+            return;
+        },
+    };
+    let args_msg = String::from_utf8_lossy(&args_buf[..n]).to_string();
+    tracing::debug!("guacd args: {}", args_msg);
+
+    // Build connect instruction with credentials
+    let hostname = &conn_record.hostname;
+    let port = if conn_record.port > 0 {
+        conn_record.port
+    } else if protocol == "rdp" {
+        3389
+    } else {
+        5900
+    };
+    let username = conn_record.username.as_deref().unwrap_or("");
+    let password = conn_record.password_encrypted.as_deref().unwrap_or("");
+
+    // Build connection params: hostname, port, username, password (ignore-cert for RDP)
+    let connect_parts: Vec<String> = vec![
+        format!("{}.{}", hostname.len(), hostname),
+        format!("{}.{}", port.to_string().len(), port),
+        format!("{}.{}", username.len(), username),
+        format!("{}.{}", password.len(), password),
+    ];
+    let connect_body = connect_parts.join(",");
+    let connect_instr = format!("7.connect,{};", connect_body);
+
+    // Send size, audio, video, image, connect
+    let size_instr = "4.size,1.0,4.1024,3.768;";
+    let audio_instr = "5.audio;";
+    let video_instr = "5.video;";
+    let image_instr = "5.image;";
+
+    for instr in [
+        size_instr,
+        audio_instr,
+        video_instr,
+        image_instr,
+        &connect_instr,
+    ] {
+        if let Err(e) = guacd_write.write_all(instr.as_bytes()).await {
+            tracing::error!("Failed to send handshake instruction: {}", e);
+            return;
         }
     }
 
-    tracing::info!("Remote connection {} cleanly terminated.", connection_id);
+    tracing::info!(
+        "Guacamole handshake complete for connection {}",
+        connection_id
+    );
+
+    // 5. Pipe data bidirectionally: browser WebSocket ↔ guacd TCP
+    //    Use tokio::select! to handle both directions concurrently.
+    loop {
+        let mut guacd_buf = vec![0u8; 65536];
+        tokio::select! {
+            // Data from browser → guacd
+            ws_msg = socket.next() => {
+                match ws_msg {
+                    Some(Ok(Message::Text(text))) => {
+                        if let Err(e) = guacd_write.write_all(text.as_bytes()).await {
+                            tracing::debug!("Write to guacd failed (connection closed?): {}", e);
+                            break;
+                        }
+                    },
+                    Some(Ok(Message::Binary(data))) => {
+                        if let Err(e) = guacd_write.write_all(&data).await {
+                            tracing::debug!("Write to guacd failed: {}", e);
+                            break;
+                        }
+                    },
+                    Some(Ok(Message::Close(_))) | None => {
+                        tracing::info!("Browser WebSocket closed for connection {}", connection_id);
+                        break;
+                    },
+                    _ => {},
+                }
+            },
+            // Data from guacd → browser
+            guacd_result = guacd_read.read(&mut guacd_buf) => {
+                match guacd_result {
+                    Ok(0) => {
+                        tracing::info!("guacd closed connection {}", connection_id);
+                        break;
+                    },
+                    Ok(n) => {
+                        let msg = String::from_utf8_lossy(&guacd_buf[..n]).to_string();
+                        if let Err(e) = socket.send(Message::Text(msg)).await {
+                            tracing::debug!("Send to browser failed: {}", e);
+                            break;
+                        }
+                    },
+                    Err(e) => {
+                        tracing::debug!("guacd read error: {}", e);
+                        break;
+                    },
+                }
+            },
+        }
+    }
+
+    tracing::info!("Remote connection {} terminated.", connection_id);
 }

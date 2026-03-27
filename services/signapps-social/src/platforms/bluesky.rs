@@ -6,6 +6,63 @@ use uuid::Uuid;
 use super::{PlatformError, PlatformResult, SocialPlatform};
 use crate::models::{AccountAnalytics, InboxItem, PlatformPost};
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bluesky_client_creation_stores_credentials() {
+        let client = BlueskyClient::new("https://bsky.social", "did:plc:abc123", "jwt_token_xyz");
+        assert_eq!(client.pds_url, "https://bsky.social");
+        assert_eq!(client.did, "did:plc:abc123");
+        assert_eq!(client.access_jwt, "jwt_token_xyz");
+    }
+
+    #[test]
+    fn test_bluesky_xrpc_url_construction() {
+        let client = BlueskyClient::new("https://bsky.social", "did:plc:abc", "token");
+        let url = client.xrpc("com.atproto.repo.createRecord");
+        assert_eq!(
+            url,
+            "https://bsky.social/xrpc/com.atproto.repo.createRecord"
+        );
+    }
+
+    #[test]
+    fn test_bluesky_xrpc_strips_trailing_slash() {
+        let client = BlueskyClient::new("https://bsky.social/", "did:plc:abc", "token");
+        let url = client.xrpc("app.bsky.actor.getProfile");
+        assert_eq!(url, "https://bsky.social/xrpc/app.bsky.actor.getProfile");
+    }
+
+    #[test]
+    fn test_bluesky_bearer_format() {
+        let client = BlueskyClient::new("https://bsky.social", "did:plc:abc", "my_jwt");
+        assert_eq!(client.bearer(), "Bearer my_jwt");
+    }
+
+    #[test]
+    fn test_at_uri_rkey_extraction() {
+        // Simulate the rkey extraction logic used in publish()
+        let at_uri = "at://did:plc:abc123/app.bsky.feed.post/3jzfcijpj2z2m";
+        let rkey = at_uri.rsplit('/').next().unwrap();
+        assert_eq!(rkey, "3jzfcijpj2z2m");
+    }
+
+    #[test]
+    fn test_at_uri_rkey_used_in_platform_url() {
+        // Verify the URL construction from AT URI used in publish()
+        let did = "did:plc:abc123";
+        let at_uri = format!("at://{}/app.bsky.feed.post/rkey_abc", did);
+        let rkey = at_uri.rsplit('/').next().unwrap();
+        let platform_url = format!("https://bsky.app/profile/{}/post/{}", did, rkey);
+        assert_eq!(
+            platform_url,
+            "https://bsky.app/profile/did:plc:abc123/post/rkey_abc"
+        );
+    }
+}
+
 /// Bluesky AT Protocol client.
 pub struct BlueskyClient {
     pub pds_url: String,

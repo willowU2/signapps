@@ -48,20 +48,19 @@ function StatCard({ label, value, sub, trend }: { label: string; value: string; 
 export default function EmailAnalyticsPage() {
   const [data, setData] = useState<EmailAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const client = getClient(ServiceName.MAIL);
       const res = await client.get<EmailAnalyticsSummary>('/mail/analytics');
       setData(res.data);
-    } catch {
-      // Generate mock-free placeholder with zeros
-      setData({
-        total_sent: 0, total_delivered: 0, total_bounced: 0,
-        delivery_rate: 0, bounce_rate: 0, history: [],
-      });
-      toast.error('Mail analytics endpoint unavailable');
+    } catch (err) {
+      const msg = 'Mail analytics endpoint unavailable';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -84,6 +83,12 @@ export default function EmailAnalyticsPage() {
             Refresh
           </Button>
         </div>
+
+        {error && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+            {error} — please check that the mail service is running.
+          </div>
+        )}
 
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="Total Sent" value={data?.total_sent.toLocaleString() ?? '—'} sub="All time" />

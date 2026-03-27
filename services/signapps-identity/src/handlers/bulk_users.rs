@@ -218,14 +218,22 @@ pub async fn import_users(
 
 /// GET /api/v1/admin/users/export
 ///
-/// Returns all users as a CSV file attachment.
-/// Currently returns a synthetic header-only CSV (no DB reads in this in-memory impl).
-#[tracing::instrument(skip(_state))]
-pub async fn export_users(State(_state): State<AppState>) -> impl IntoResponse {
-    // In-memory stub: return the CSV header + zero rows.
-    // A real implementation would query the DB.
-    let sample_rows: Vec<CsvUserRow> = vec![];
-    let csv_body = render_csv(&sample_rows);
+/// Returns all users as a CSV file attachment, fetched from the database.
+#[tracing::instrument(skip(state))]
+pub async fn export_users(State(state): State<AppState>) -> impl IntoResponse {
+    let rows = match fetch_all_users_as_csv_rows(&state).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to export users: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                [("Content-Type", "text/plain"), ("Content-Disposition", "")],
+                e.to_string(),
+            );
+        },
+    };
+
+    let csv_body = render_csv(&rows);
 
     (
         StatusCode::OK,
@@ -235,6 +243,55 @@ pub async fn export_users(State(_state): State<AppState>) -> impl IntoResponse {
         ],
         csv_body,
     )
+}
+
+/// Query all users from the database and convert to CSV rows.
+async fn fetch_all_users_as_csv_rows(
+    state: &AppState,
+) -> std::result::Result<Vec<CsvUserRow>, signapps_common::Error> {
+    use signapps_db::repositories::UserRepository;
+
+    // Fetch up to 10 000 users (avoids unbounded payload).
+    let users = UserRepository::list(&state.pool, 10_000, 0).await?;
+
+    let rows = users
+        .into_iter()
+        .map(|u| {
+            let (first_name, last_name) = split_display_name(u.display_name.as_deref());
+            CsvUserRow {
+                email: u.email.unwrap_or_default(),
+                first_name,
+                last_name,
+                role: Some(role_id_to_name(u.role)),
+                department: None,
+            }
+        })
+        .collect();
+
+    Ok(rows)
+}
+
+/// Split a "First Last" display name into first / last components.
+fn split_display_name(display_name: Option<&str>) -> (String, String) {
+    match display_name {
+        None | Some("") => (String::new(), String::new()),
+        Some(name) => {
+            let mut parts = name.splitn(2, ' ');
+            let first = parts.next().unwrap_or("").to_string();
+            let last = parts.next().unwrap_or("").to_string();
+            (first, last)
+        },
+    }
+}
+
+/// Convert numeric role ID to a human-readable name.
+fn role_id_to_name(role: i16) -> String {
+    match role {
+        1 => "user".to_string(),
+        2 => "admin".to_string(),
+        3 => "superadmin".to_string(),
+        _ => "user".to_string(),
+    }
 }
 
 /// POST /api/v1/admin/users/bulk-action

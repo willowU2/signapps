@@ -2,7 +2,7 @@
 
 import { SpinnerInfinity } from 'spinners-react';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -61,9 +61,13 @@ import {
 
 export default function RoutesPage() {
   const queryClient = useQueryClient();
-  const { data: routes = [], isLoading: loading } = useRoutes();
+  const { data: routes = [], isLoading: loading, isError: routesError } = useRoutes();
   const { data: certificates = [] } = useCertificates();
   const { data: shieldStats = null } = useShieldStats();
+
+  useEffect(() => {
+    if (routesError) toast.error('Failed to load routes');
+  }, [routesError]);
 
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('routes');

@@ -8,9 +8,11 @@ use axum::{
     response::Response,
     Json,
 };
+use base64;
 use image::{imageops::FilterType, DynamicImage, ImageFormat, ImageReader, RgbaImage};
 use lopdf::Document as PdfDocument;
 use pdfium_render::prelude::*;
+use reqwest;
 use serde::{Deserialize, Serialize};
 use signapps_common::{Error, Result};
 use std::io::Cursor;
@@ -795,11 +797,77 @@ pub async fn get_preview(
                 .map_err(|e| Error::Internal(e.to_string()))?)
         },
         PreviewType::Document => {
-            // Return document as HTML or images
-            // FIXME(preview): Implement doc conversion (requires libreoffice or pandoc)
-            Err(Error::Internal(
-                "Document preview not implemented".to_string(),
-            ))
+            // For DOCX: call signapps-office convert endpoint to get HTML preview.
+            // For other doc types: fall back to a plain-text download redirect.
+            let ext = key.rsplit('.').next().unwrap_or("").to_lowercase();
+
+            if ext == "docx" || content_type.contains("wordprocessingml") {
+                let object = state.storage.get_object(&bucket, &key).await?;
+                let office_url = std::env::var("OFFICE_SERVICE_URL")
+                    .unwrap_or_else(|_| "http://localhost:3014".to_string());
+
+                // Build multipart form for the office convert endpoint
+                let file_part = reqwest::multipart::Part::bytes(object.data.to_vec())
+                    .file_name(key.clone())
+                    .mime_str(
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    )
+                    .map_err(|e| Error::Internal(format!("MIME error: {}", e)))?;
+                let form = reqwest::multipart::Form::new()
+                    .text("input_format", "html")
+                    .text("target_format", "html")
+                    .part("file", file_part);
+
+                let client = reqwest::Client::new();
+                match client
+                    .post(format!("{}/api/v1/office/convert", office_url))
+                    .multipart(form)
+                    .send()
+                    .await
+                {
+                    Ok(resp) if resp.status().is_success() => {
+                        if let Ok(json) = resp.json::<serde_json::Value>().await {
+                            if let Some(html_b64) = json["data_base64"].as_str() {
+                                use base64::Engine;
+                                if let Ok(html_bytes) =
+                                    base64::engine::general_purpose::STANDARD.decode(html_b64)
+                                {
+                                    return Ok(Response::builder()
+                                        .status(StatusCode::OK)
+                                        .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
+                                        .header(header::CACHE_CONTROL, "public, max-age=300")
+                                        .body(Body::from(html_bytes))
+                                        .map_err(|e| Error::Internal(e.to_string()))?);
+                                }
+                            }
+                        }
+                        Err(Error::Internal(
+                            "Office service returned invalid response".to_string(),
+                        ))
+                    },
+                    _ => {
+                        // Office service unavailable: redirect to download
+                        Ok(Response::builder()
+                            .status(StatusCode::SEE_OTHER)
+                            .header(
+                                header::LOCATION,
+                                format!("/api/v1/files/{}/{}", bucket, key),
+                            )
+                            .body(Body::empty())
+                            .map_err(|e| Error::Internal(e.to_string()))?)
+                    },
+                }
+            } else {
+                // For other document types (ODT, RTF…): redirect to download
+                Ok(Response::builder()
+                    .status(StatusCode::SEE_OTHER)
+                    .header(
+                        header::LOCATION,
+                        format!("/api/v1/files/{}/{}", bucket, key),
+                    )
+                    .body(Body::empty())
+                    .map_err(|e| Error::Internal(e.to_string()))?)
+            }
         },
         PreviewType::None => Err(Error::BadRequest(
             "Preview not available for this file type".to_string(),

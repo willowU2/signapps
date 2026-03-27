@@ -78,6 +78,92 @@ impl RateLimiter {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::thread;
+    use std::time::Duration;
+
+    #[test]
+    fn test_rate_limiter_allows_within_limit() {
+        let config = RateLimiterConfig {
+            max_tokens: 5.0,
+            refill_rate: 1.0,
+        };
+        let limiter = RateLimiter::new(config);
+
+        // First 5 requests should be allowed (max_tokens = 5)
+        for _ in 0..5 {
+            assert!(
+                limiter.check("client1"),
+                "Request within limit should be allowed"
+            );
+        }
+    }
+
+    #[test]
+    fn test_rate_limiter_blocks_exceeding_limit() {
+        let config = RateLimiterConfig {
+            max_tokens: 3.0,
+            refill_rate: 0.1, // very slow refill
+        };
+        let limiter = RateLimiter::new(config);
+
+        // Exhaust the bucket
+        for _ in 0..3 {
+            limiter.check("client2");
+        }
+
+        // Next request should be blocked
+        assert!(
+            !limiter.check("client2"),
+            "Request exceeding limit should be blocked"
+        );
+    }
+
+    #[test]
+    fn test_rate_limiter_resets_after_window() {
+        let config = RateLimiterConfig {
+            max_tokens: 2.0,
+            refill_rate: 100.0, // fast refill
+        };
+        let limiter = RateLimiter::new(config);
+
+        // Exhaust bucket
+        limiter.check("client3");
+        limiter.check("client3");
+        assert!(
+            !limiter.check("client3"),
+            "Should be blocked after exhaustion"
+        );
+
+        // Wait for refill (100 tokens/sec × 0.1s = 10 tokens)
+        thread::sleep(Duration::from_millis(100));
+
+        // Should be allowed again after refill
+        assert!(
+            limiter.check("client3"),
+            "Should be allowed after window reset"
+        );
+    }
+
+    #[test]
+    fn test_rate_limiter_isolates_keys() {
+        let config = RateLimiterConfig {
+            max_tokens: 1.0,
+            refill_rate: 0.1,
+        };
+        let limiter = RateLimiter::new(config);
+
+        // Exhaust client_a
+        limiter.check("client_a");
+        assert!(!limiter.check("client_a"), "client_a should be blocked");
+
+        // client_b is independent
+        assert!(limiter.check("client_b"), "client_b should not be affected");
+    }
+}
+
 /// Axum middleware for rate limiting by client IP.
 pub async fn rate_limit_middleware(
     limiter: RateLimiter,

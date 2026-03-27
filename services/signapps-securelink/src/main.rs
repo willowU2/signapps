@@ -31,6 +31,17 @@ mod vpn;
 use dns::{Blocklist as DnsBlocklist, DnsConfig as DnsServiceConfig, DnsStats};
 use tunnel::{TunnelClient, TunnelClientConfig};
 
+/// A single traffic data point (one per minute, rolling window of 60 minutes).
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct TrafficPoint {
+    /// ISO-8601 timestamp.
+    pub timestamp: String,
+    /// Bytes received since the last tick.
+    pub bytes_in: u64,
+    /// Bytes sent since the last tick.
+    pub bytes_out: u64,
+}
+
 /// Application state (standalone mode - no database required).
 #[derive(Clone)]
 pub struct AppState {
@@ -42,6 +53,8 @@ pub struct AppState {
     pub blocklists: Arc<RwLock<Vec<DnsBlocklist>>>,
     /// DNS statistics.
     pub dns_stats: Arc<RwLock<DnsStats>>,
+    /// Rolling traffic history (last 60 minutes, one point per minute).
+    pub traffic_history: Arc<RwLock<std::collections::VecDeque<TrafficPoint>>>,
     /// JWT configuration for auth middleware.
     pub jwt_config: JwtConfig,
 }
@@ -186,8 +199,31 @@ async fn main() -> std::io::Result<()> {
         dns_config: Arc::new(RwLock::new(dns_config)),
         blocklists: Arc::new(RwLock::new(default_blocklists)),
         dns_stats: Arc::new(RwLock::new(DnsStats::default())),
+        traffic_history: Arc::new(RwLock::new(std::collections::VecDeque::with_capacity(60))),
         jwt_config,
     };
+
+    // Spawn background task: record one traffic data point per minute.
+    {
+        let history = state.traffic_history.clone();
+        tokio::spawn(async move {
+            let mut ticker = tokio::time::interval(tokio::time::Duration::from_secs(60));
+            loop {
+                ticker.tick().await;
+                let ts = chrono::Utc::now().to_rfc3339();
+                let point = TrafficPoint {
+                    timestamp: ts,
+                    bytes_in: 0,
+                    bytes_out: 0,
+                };
+                let mut h = history.write().await;
+                if h.len() >= 60 {
+                    h.pop_front();
+                }
+                h.push_back(point);
+            }
+        });
+    }
 
     // Build router
     let app = create_router(state);

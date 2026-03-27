@@ -24,6 +24,20 @@ pub struct BatchDescribeResponse {
 // Worker construction
 // ---------------------------------------------------------------------------
 
+/// Map an anyhow worker error to an (StatusCode, String) tuple.
+/// Errors with MODEL_NOT_INSTALLED_PREFIX map to 501; others to 500.
+fn map_worker_error(context: &str, e: anyhow::Error) -> (StatusCode, String) {
+    let msg = e.to_string();
+    if msg.contains("MODEL_NOT_INSTALLED:") {
+        (StatusCode::NOT_IMPLEMENTED, format!("{}: {}", context, msg))
+    } else {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("{}: {}", context, msg),
+        )
+    }
+}
+
 /// Build a vision worker from environment variables.
 ///
 /// Precedence:
@@ -100,12 +114,7 @@ pub async fn describe_image(
     let result = worker
         .describe(bytes::Bytes::from(image), prompt.as_deref())
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Vision describe failed: {e}"),
-            )
-        })?;
+        .map_err(|e| map_worker_error("Vision describe failed", e))?;
 
     Ok(Json(result))
 }
@@ -180,12 +189,7 @@ pub async fn visual_qa(
     let result = worker
         .vqa(bytes::Bytes::from(image), &question)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Vision VQA failed: {e}"),
-            )
-        })?;
+        .map_err(|e| map_worker_error("Vision VQA failed", e))?;
 
     Ok(Json(result))
 }
@@ -235,12 +239,10 @@ pub async fn batch_describe(
 
     let image_bytes: Vec<bytes::Bytes> = images.into_iter().map(bytes::Bytes::from).collect();
 
-    let results = worker.batch_describe(image_bytes).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Vision batch describe failed: {e}"),
-        )
-    })?;
+    let results = worker
+        .batch_describe(image_bytes)
+        .await
+        .map_err(|e| map_worker_error("Vision batch describe failed", e))?;
 
     let count = results.len();
     Ok(Json(BatchDescribeResponse { results, count }))

@@ -259,6 +259,37 @@ async fn publish_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> im
     }
 }
 
+async fn unpublish_form(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
+    let result = sqlx::query_as::<_, signapps_db::models::Form>(
+        r#"UPDATE forms.forms SET is_published = FALSE, updated_at = NOW()
+           WHERE id = $1 RETURNING *"#,
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(form)) => {
+            tracing::info!(id = %id, "Form unpublished");
+            (
+                StatusCode::OK,
+                Json(serde_json::json!({ "id": id, "is_published": form.is_published })),
+            )
+        },
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Form not found" })),
+        ),
+        Err(e) => {
+            tracing::error!("Failed to unpublish form: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": "Internal Error" })),
+            )
+        },
+    }
+}
+
 async fn submit_response(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -370,6 +401,10 @@ fn create_router(state: AppState) -> Router {
             get(get_form).put(update_form).delete(delete_form),
         )
         .route("/api/v1/forms/:id/publish", post(publish_form))
+        .route(
+            "/api/v1/forms/:id/unpublish",
+            axum::routing::patch(unpublish_form),
+        )
         .route("/api/v1/forms/:id/responses", get(list_responses))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
@@ -402,7 +437,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     tracing::info!("Running fallback SQL creation for forms schema to bypass sqlx caching...");
-    let fallback_sql = include_str!("../../../migrations/047_create_forms.sql");
+    let fallback_sql = include_str!("../../../migrations/051_create_forms.sql");
     use sqlx::Executor;
     match db_pool.inner().execute(fallback_sql).await {
         Ok(_) => tracing::info!("Forms tables successfully created via fallback SQL"),

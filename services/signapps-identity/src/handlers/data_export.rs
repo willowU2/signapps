@@ -51,8 +51,9 @@ pub struct DataExportJob {
     pub requested_at: DateTime<Utc>,
     /// When the export completed (or failed), if applicable.
     pub completed_at: Option<DateTime<Utc>>,
-    /// URL (or token) from which the export can be downloaded once completed.
-    /// In this foundation version this is a placeholder path.
+    /// URL from which the export can be downloaded once completed.
+    /// Points to the authenticated GET /api/v1/users/me/export/download endpoint
+    /// which fetches live user data from the database.
     pub download_url: Option<String>,
 }
 

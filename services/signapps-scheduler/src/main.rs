@@ -166,12 +166,12 @@ async fn main() -> Result<()> {
     }
 
     let state = AppState {
-        pool,
+        pool: pool.clone(),
         scheduler,
         jwt_config,
         tx_notifications,
         redis_client,
-        backup_store: new_backup_store(),
+        backup_store: new_backup_store(pool),
     };
 
     // Build router

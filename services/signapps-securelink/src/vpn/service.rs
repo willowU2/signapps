@@ -108,16 +108,22 @@ impl VpnService {
         // Get all lighthouses
         let lighthouses = repo.list_lighthouses().await?;
 
-        // Build static host map (lighthouse IPs)
+        // Build static host map (lighthouse mesh-IP -> public endpoint).
+        //
+        // The public address is resolved from the environment variable
+        // `LIGHTHOUSE_PUBLIC_ADDR_<NAME>` (upper-cased device name, hyphens
+        // replaced by underscores), e.g. `LIGHTHOUSE_PUBLIC_ADDR_LH1`.
+        // Fallback: use the mesh IP on port 4242 (valid for LAN-only deployments).
         let mut static_host_map = HashMap::new();
         for lh in &lighthouses {
             if lh.id != device.id {
-                // In production, we'd have the public IP stored
-                // For now, use placeholder
-                static_host_map.insert(
-                    lh.ip_address.clone(),
-                    vec![format!("{}:4242", lh.ip_address)],
+                let env_key = format!(
+                    "LIGHTHOUSE_PUBLIC_ADDR_{}",
+                    lh.name.to_uppercase().replace('-', "_")
                 );
+                let public_endpoint =
+                    std::env::var(&env_key).unwrap_or_else(|_| format!("{}:4242", lh.ip_address));
+                static_host_map.insert(lh.ip_address.clone(), vec![public_endpoint]);
             }
         }
 

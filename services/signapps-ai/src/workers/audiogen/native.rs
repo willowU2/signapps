@@ -151,6 +151,12 @@ impl AiWorker for NativeAudioGen {
 // AudioGenWorker
 // ---------------------------------------------------------------------------
 
+/// Sentinel error type returned by the native audio generation worker
+/// when the model pipeline is not yet installed.
+///
+/// Callers that inspect this error string can map it to HTTP 501.
+pub const MODEL_NOT_INSTALLED_PREFIX: &str = "MODEL_NOT_INSTALLED:";
+
 #[async_trait]
 impl AudioGenWorker for NativeAudioGen {
     async fn generate_music(&self, request: MusicGenRequest) -> Result<AudioGenResult> {
@@ -159,20 +165,19 @@ impl AudioGenWorker for NativeAudioGen {
             prompt_len = request.prompt.len(),
             duration_secs = ?request.duration_secs,
             temperature = ?request.temperature,
-            "native generate_music (skeleton)"
+            "native generate_music — model not installed"
         );
 
-        // TODO: Full implementation outline:
-        //   1. Encode text prompt via T5 text encoder
-        //   2. Run transformer decoder auto-regressively to produce
-        //      EnCodec audio tokens
-        //   3. Decode audio tokens via EnCodec decoder to PCM
-        //   4. Encode PCM to WAV/MP3
-        //
-        // For now, return the beta notice so callers know the backend
-        // is not yet producing real audio.
-
-        anyhow::bail!(self.beta_notice())
+        // The native MusicGen pipeline (T5 + transformer + EnCodec) is not
+        // yet implemented. Return a sentinel error so HTTP handlers can
+        // respond with 501 Not Implemented instead of 500.
+        anyhow::bail!(
+            "{} Native audio generation model '{}' is not installed. \
+             Install the MusicGen model weights or configure AUDIOGEN_URL / \
+             REPLICATE_API_KEY to use an HTTP or cloud backend.",
+            MODEL_NOT_INSTALLED_PREFIX,
+            self.model_id()
+        )
     }
 
     async fn generate_sfx(&self, request: SfxGenRequest) -> Result<AudioGenResult> {
@@ -180,15 +185,15 @@ impl AudioGenWorker for NativeAudioGen {
             model = %self.model_id(),
             prompt_len = request.prompt.len(),
             duration_secs = ?request.duration_secs,
-            "native generate_sfx (skeleton)"
+            "native generate_sfx — model not installed"
         );
 
-        // TODO: Full implementation outline:
-        //   1. Encode SFX prompt via T5 text encoder
-        //   2. Run transformer decoder for short-form audio generation
-        //   3. Decode via EnCodec and encode to output format
-
-        anyhow::bail!(self.beta_notice())
+        anyhow::bail!(
+            "{} Native SFX generation model '{}' is not installed. \
+             Configure AUDIOGEN_URL or REPLICATE_API_KEY.",
+            MODEL_NOT_INSTALLED_PREFIX,
+            self.model_id()
+        )
     }
 
     async fn list_models(&self) -> Result<Vec<ModelInfo>> {

@@ -8402,6 +8402,7 @@ dependencies = [
  "js-sys",
  "log",
  "mime",
+ "mime_guess",
  "native-tls",
  "once_cell",
  "percent-encoding",
@@ -10087,9 +10088,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum 0.7.9",
+ "bytes",
  "chrono",
  "dotenvy",
  "futures 0.3.31",
+ "reqwest 0.12.28",
  "serde",
  "serde_json",
  "signapps-cache",
@@ -10101,12 +10104,14 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
 name = "signapps-identity"
 version = "0.1.0"
 dependencies = [
+ "aes-gcm",
  "anyhow",
  "argon2",
  "async-trait",
@@ -10116,6 +10121,7 @@ dependencies = [
  "chrono",
  "config",
  "dotenvy",
+ "hex",
  "hmac",
  "jsonwebtoken",
  "ldap3",
@@ -10523,6 +10529,7 @@ dependencies = [
  "tower-http 0.5.2",
  "tracing",
  "tracing-subscriber",
+ "urlencoding",
  "uuid",
 ]
 

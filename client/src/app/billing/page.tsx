@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
-import { billingApi, type Invoice, type InvoiceStatus } from "@/lib/api/billing";
+import { billingApi, type BillingUsage, type Invoice, type InvoiceStatus } from "@/lib/api/billing";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -27,6 +27,15 @@ function formatDate(iso: string): string {
     month: "short",
     year: "numeric",
   });
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 o";
+  const units = ["o", "Ko", "Mo", "Go", "To"];
+  const exp = Math.floor(Math.log(bytes) / Math.log(1024));
+  const idx = Math.min(exp, units.length - 1);
+  const val = bytes / Math.pow(1024, idx);
+  return `${val.toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -108,6 +117,7 @@ type Tab = "invoices" | "quotes";
 
 export default function BillingPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [usage, setUsage] = useState<BillingUsage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("invoices");
@@ -118,20 +128,23 @@ export default function BillingPage() {
     setLoading(true);
     setError(null);
 
-    billingApi
-      .listInvoices()
-      .then((res) => {
-        if (!cancelled) setInvoices(res.data ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          // Backend stub — treat as empty list, not a hard error
+    Promise.allSettled([billingApi.listInvoices(), billingApi.getUsage()]).then(
+      ([invoicesResult, usageResult]) => {
+        if (cancelled) return;
+
+        if (invoicesResult.status === "fulfilled") {
+          setInvoices((invoicesResult.value as any).data ?? []);
+        } else {
           setInvoices([]);
         }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+
+        if (usageResult.status === "fulfilled") {
+          setUsage((usageResult.value as any).data ?? null);
+        }
+
+        setLoading(false);
+      }
+    );
 
     return () => {
       cancelled = true;
@@ -187,7 +200,7 @@ export default function BillingPage() {
         />
       </div>
 
-      {/* Usage placeholder cards */}
+      {/* Usage cards — live data from billing API */}
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
           Utilisation
@@ -195,21 +208,53 @@ export default function BillingPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <UsageCard
             label="Stockage"
-            used="—"
-            limit="5 Go"
-            pct={0}
+            used={
+              usage
+                ? formatBytes(usage.storage_used_bytes)
+                : "—"
+            }
+            limit={
+              usage && usage.storage_limit_bytes > 0
+                ? formatBytes(usage.storage_limit_bytes)
+                : "5 Go"
+            }
+            pct={
+              usage && usage.storage_limit_bytes > 0
+                ? Math.round(
+                    (usage.storage_used_bytes / usage.storage_limit_bytes) * 100
+                  )
+                : 0
+            }
           />
           <UsageCard
             label="Appels API ce mois"
-            used="—"
-            limit="Illimité"
-            pct={0}
+            used={usage ? String(usage.api_calls_this_month) : "—"}
+            limit={
+              usage && usage.api_calls_limit > 0
+                ? String(usage.api_calls_limit)
+                : "Illimité"
+            }
+            pct={
+              usage && usage.api_calls_limit > 0
+                ? Math.round(
+                    (usage.api_calls_this_month / usage.api_calls_limit) * 100
+                  )
+                : 0
+            }
           />
           <UsageCard
             label="Utilisateurs actifs"
-            used="—"
-            limit="Illimité"
-            pct={0}
+            used={usage ? String(usage.active_users) : "—"}
+            limit={
+              usage && usage.user_limit > 0
+                ? String(usage.user_limit)
+                : "Illimité"
+            }
+            pct={
+              usage && usage.user_limit > 0
+                ? Math.round((usage.active_users / usage.user_limit) * 100)
+                : 0
+            }
           />
         </div>
       </section>

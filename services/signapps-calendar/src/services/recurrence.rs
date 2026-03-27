@@ -229,6 +229,19 @@ mod tests {
     }
 
     #[test]
+    fn test_daily_recurrence_correct_dates() {
+        let start = Utc.with_ymd_and_hms(2025, 3, 1, 9, 0, 0).unwrap();
+        let range_end = Utc.with_ymd_and_hms(2025, 3, 4, 23, 59, 59).unwrap();
+
+        let result = expand_rrule("FREQ=DAILY", start, start, range_end, 10).unwrap();
+        assert_eq!(result.len(), 4); // Mar 1, 2, 3, 4
+        assert_eq!(result[0].day(), 1);
+        assert_eq!(result[1].day(), 2);
+        assert_eq!(result[2].day(), 3);
+        assert_eq!(result[3].day(), 4);
+    }
+
+    #[test]
     fn test_weekly_with_byday() {
         let start = Utc.with_ymd_and_hms(2025, 1, 6, 9, 0, 0).unwrap(); // Monday
         let range_end = Utc.with_ymd_and_hms(2025, 1, 20, 23, 59, 59).unwrap();
@@ -239,9 +252,100 @@ mod tests {
     }
 
     #[test]
+    fn test_weekly_byday_only_returns_correct_weekdays() {
+        // Start on Monday 2025-01-06; run for 2 weeks with only MO and FR
+        let start = Utc.with_ymd_and_hms(2025, 1, 6, 10, 0, 0).unwrap(); // Monday
+        let range_end = Utc.with_ymd_and_hms(2025, 1, 19, 23, 59, 59).unwrap();
+
+        let result = expand_rrule("FREQ=WEEKLY;BYDAY=MO,FR", start, start, range_end, 100).unwrap();
+
+        // All returned dates must be Monday or Friday
+        for dt in &result {
+            let wd = dt.weekday();
+            assert!(
+                wd == Weekday::Mon || wd == Weekday::Fri,
+                "Expected Mon or Fri, got {:?} on {}",
+                wd,
+                dt
+            );
+        }
+    }
+
+    #[test]
+    fn test_monthly_recurrence_with_count_limit() {
+        let start = Utc.with_ymd_and_hms(2025, 1, 15, 10, 0, 0).unwrap();
+        let range_end = Utc.with_ymd_and_hms(2026, 12, 31, 23, 59, 59).unwrap();
+
+        let result = expand_rrule("FREQ=MONTHLY;COUNT=4", start, start, range_end, 50).unwrap();
+        assert_eq!(
+            result.len(),
+            4,
+            "COUNT=4 should produce exactly 4 instances"
+        );
+        // Each occurrence should be roughly 1 month apart
+        assert_eq!(result[0].month(), 1);
+        assert_eq!(result[1].month(), 2);
+        assert_eq!(result[2].month(), 3);
+        assert_eq!(result[3].month(), 4);
+    }
+
+    #[test]
+    fn test_monthly_recurrence_respects_max_count() {
+        let start = Utc.with_ymd_and_hms(2025, 1, 1, 0, 0, 0).unwrap();
+        let range_end = Utc.with_ymd_and_hms(2030, 1, 1, 0, 0, 0).unwrap();
+
+        // max_count=3 should cap results
+        let result = expand_rrule("FREQ=MONTHLY", start, start, range_end, 3).unwrap();
+        assert!(result.len() <= 3, "max_count should cap expansions");
+    }
+
+    #[test]
+    fn test_recurrence_exception_by_range_filtering() {
+        // Range starts after first occurrence — first should be excluded
+        let start = Utc.with_ymd_and_hms(2025, 1, 1, 10, 0, 0).unwrap();
+        let range_start = Utc.with_ymd_and_hms(2025, 1, 3, 0, 0, 0).unwrap();
+        let range_end = Utc.with_ymd_and_hms(2025, 1, 5, 23, 59, 59).unwrap();
+
+        let result = expand_rrule("FREQ=DAILY", start, range_start, range_end, 100).unwrap();
+        // Jan 1 and Jan 2 should NOT be in results (before range_start)
+        for dt in &result {
+            assert!(
+                *dt >= range_start,
+                "All occurrences must be within the range, got {}",
+                dt
+            );
+        }
+    }
+
+    #[test]
     fn test_validate() {
         assert!(validate_rrule("FREQ=DAILY;INTERVAL=2").is_ok());
         assert!(validate_rrule("INTERVAL=2").is_err());
         assert!(validate_rrule("FREQ=HOURLY").is_err());
+    }
+
+    #[test]
+    fn test_validate_rrule_valid_expressions() {
+        assert!(validate_rrule("FREQ=WEEKLY;BYDAY=MO,WE,FR").is_ok());
+        assert!(validate_rrule("FREQ=MONTHLY;COUNT=12").is_ok());
+        assert!(validate_rrule("FREQ=YEARLY;INTERVAL=1").is_ok());
+    }
+
+    #[test]
+    fn test_validate_rrule_rejects_missing_freq() {
+        assert!(validate_rrule("COUNT=5").is_err());
+        assert!(validate_rrule("BYDAY=MO").is_err());
+    }
+
+    #[test]
+    fn test_validate_rrule_rejects_unsupported_freq() {
+        assert!(validate_rrule("FREQ=HOURLY").is_err());
+        assert!(validate_rrule("FREQ=MINUTELY").is_err());
+    }
+
+    #[test]
+    fn test_count_occurrences_extracts_count() {
+        assert_eq!(count_occurrences("FREQ=DAILY;COUNT=10"), Some(10));
+        assert_eq!(count_occurrences("FREQ=WEEKLY;BYDAY=MO"), None);
     }
 }

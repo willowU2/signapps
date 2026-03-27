@@ -9,7 +9,6 @@ use axum::{http::header, response::IntoResponse, Json};
 use serde_json::json;
 
 /// `GET /api/v1/openapi.json` — Returns the OpenAPI 3.1 spec for the Identity service.
-#[allow(dead_code)]
 pub async fn openapi_spec() -> impl IntoResponse {
     let spec = json!({
         "openapi": "3.1.0",

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useEntityStore } from "@/stores/entity-hub-store";
 import { useUIStore } from "@/lib/store";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,12 +33,21 @@ export default function EntityHubAdminPage() {
   } = useUIStore();
 
   useEffect(() => {
-    fetchWorkspaces();
-    fetchCalendars();
-    fetchResources();
-    fetchProjects();
-    fetchTasks();
-    fetchEvents();
+    const load = async () => {
+      try {
+        await Promise.all([
+          fetchWorkspaces(),
+          fetchCalendars(),
+          fetchResources(),
+          fetchProjects(),
+          fetchTasks(),
+          fetchEvents(),
+        ]);
+      } catch {
+        toast.error('Failed to load entity hub data');
+      }
+    };
+    load();
   }, []);
 
   return (
