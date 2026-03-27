@@ -38,12 +38,12 @@ export default function DashboardPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-border/50">
+        <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-8 pb-4 border-b border-border/50">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
             <p className="text-sm text-muted-foreground mt-1">Welcome back. Here's an overview of your systems.</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {editMode && (
               <>
                 <Button
