@@ -636,6 +636,14 @@ const Editor = ({
         editable: !isReadOnly,
         onUpdate: ({ editor }) => {
             setEditorHtml(editor.getHTML());
+            // Update TOC
+            const headings: { id: string; text: string; level: number }[] = [];
+            editor.state.doc.descendants((node, pos) => {
+                if (node.type.name === 'heading') {
+                    headings.push({ id: `heading-${pos}`, text: node.textContent, level: node.attrs.level });
+                }
+            });
+            setToc(headings);
         },
         onTransaction: ({ editor }) => {
             let font = editor.getAttributes('textStyle').fontFamily?.replace(/['"]/g, '');
@@ -958,26 +966,6 @@ const Editor = ({
                 return false;
             },
         },
-        onUpdate: ({
-            editor
-        }) => {
-            const headings: {
-                id: string,
-                text: string,
-                level: number
-            }[] = [];
-            editor.state.doc.descendants((node, pos) => {
-                if (node.type.name === 'heading') {
-                    const id = `heading-${pos}`;
-                    headings.push({
-                        id,
-                        text: node.textContent,
-                        level: node.attrs.level,
-                    });
-                }
-            });
-            setToc(headings);
-        }
     }, [ydoc, provider, isReadOnly, userName, initialContent]);
 
     const [, forceUpdate] = useState({});

@@ -32,6 +32,12 @@ export const FEATURES = {
   VPN: true,
   DOCS: true,
   COLLAB: true,
+  KEEP: true,
+  DESIGN: true,
+  BILLING: true,
+  ANALYTICS: true,
+  WORKFORCE: true,
+  ORG_CHART: false, // Page non encore implémentée
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SERVICES SKELETON (NON FONCTIONNELS - CACHÉS)

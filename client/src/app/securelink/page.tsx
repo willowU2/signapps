@@ -1276,7 +1276,7 @@ function DnsTab() {
                 </TableRow>
               ) : (
                 records.map((rec, i) => (
-                  <TableRow key={i}>
+                  <TableRow key={rec.name + '-' + rec.record_type}>
                     <TableCell className="font-mono text-sm">{rec.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{rec.record_type}</Badge>

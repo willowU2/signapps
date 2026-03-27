@@ -44,7 +44,13 @@ import {
   Sun,
   Moon,
   DoorOpen,
-  Building2
+  Building2,
+  Notebook,
+  Palette,
+  Share2,
+  Receipt,
+  BarChart3,
+  Film,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
@@ -74,6 +80,8 @@ const navGroupsConfig = [
       { href: '/calendar', icon: Calendar, label: 'Calendar', enabled: FEATURES.CALENDAR },
       { href: '/tasks', icon: CheckSquare, label: 'Tasks', enabled: FEATURES.SCHEDULER },
       { href: '/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
+      { href: '/keep', icon: Notebook, label: 'Keep', enabled: FEATURES.KEEP },
+      { href: '/design', icon: Palette, label: 'Design', enabled: FEATURES.DESIGN },
     ]
   },
   {
@@ -83,6 +91,7 @@ const navGroupsConfig = [
     items: [
       { href: '/chat', icon: MessagesSquare, label: 'Chat', enabled: FEATURES.COLLAB },
       { href: '/meet', icon: Video, label: 'Meet', enabled: FEATURES.MEET },
+      { href: '/social', icon: Share2, label: 'Social', enabled: FEATURES.SOCIAL },
     ]
   },
   {
@@ -107,6 +116,7 @@ const navGroupsConfig = [
       { href: '/it-assets', icon: Server, label: 'IT Assets', enabled: FEATURES.IT_ASSETS },
       { href: '/pxe', icon: Terminal, label: 'PXE Deploy', enabled: FEATURES.PXE },
       { href: '/remote', icon: MonitorSmartphone, label: 'Remote Access', enabled: FEATURES.REMOTE },
+      { href: '/media', icon: Film, label: 'Media', enabled: FEATURES.MEDIA },
     ]
   },
   {
@@ -117,6 +127,9 @@ const navGroupsConfig = [
       { href: '/ai', icon: MessageSquare, label: 'AI', enabled: FEATURES.AI },
       { href: '/scheduler', icon: Clock, label: 'Scheduler', enabled: FEATURES.SCHEDULER },
       { href: '/monitoring', icon: Activity, label: 'Monitoring', enabled: FEATURES.METRICS },
+      { href: '/billing', icon: Receipt, label: 'Billing', enabled: FEATURES.BILLING },
+      { href: '/analytics', icon: BarChart3, label: 'Analytics', enabled: FEATURES.ANALYTICS },
+      { href: '/workforce', icon: Users, label: 'Workforce', enabled: FEATURES.WORKFORCE },
     ]
   },
   {
@@ -130,6 +143,7 @@ const navGroupsConfig = [
       { href: '/admin/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
       { href: '/admin/storage', icon: HardDrive, label: 'Storage Config', enabled: FEATURES.STORAGE },
       { href: '/settings', icon: Settings, label: 'Settings', enabled: true },
+      { href: '/admin/org', icon: Network, label: 'Org Chart', enabled: FEATURES.ORG_CHART },
     ]
   }
 ];

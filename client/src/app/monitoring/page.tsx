@@ -829,8 +829,8 @@ export default function MonitoringPage() {
       <ConfirmDialog
         open={deleteConfigId !== null}
         onOpenChange={(open) => { if (!open) setDeleteConfigId(null); }}
-        title="Delete Alert Configuration"
-        description="Are you sure you want to delete this alert configuration? This action cannot be undone."
+        title="Supprimer la configuration d'alerte"
+        description="Êtes-vous sûr de vouloir supprimer cette configuration d'alerte ? Cette action est irréversible."
         onConfirm={() => {
           if (deleteConfigId) handleDeleteConfig(deleteConfigId);
           setDeleteConfigId(null);

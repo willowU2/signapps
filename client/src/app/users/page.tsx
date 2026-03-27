@@ -1033,14 +1033,14 @@ export default function UsersPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => handleEdit(user)}>
                 <Pencil className="mr-2 h-4 w-4" />
-                Edit
+                Modifier
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => openResetPasswordDialog(user)}
                 disabled={user.auth_provider === 'ldap'}
               >
                 <Key className="mr-2 h-4 w-4" />
-                Reset Password
+                Réinitialiser le mot de passe
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -1049,7 +1049,7 @@ export default function UsersPage() {
                 disabled={user.username === 'admin'}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete
+                Supprimer
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -1203,19 +1203,18 @@ export default function UsersPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer l&apos;utilisateur</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete user "{deleteDialog.user?.username}"? This action
-              cannot be undone.
+              Êtes-vous sûr de vouloir supprimer l&apos;utilisateur &quot;{deleteDialog.user?.username}&quot; ? Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground"
             >
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1231,23 +1230,23 @@ export default function UsersPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reset Password</DialogTitle>
+            <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
-              Set a new password for user <strong>{resetPasswordDialog.user?.username}</strong>
+              Définir un nouveau mot de passe pour l&apos;utilisateur <strong>{resetPasswordDialog.user?.username}</strong>
             </p>
             <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
+              <Label htmlFor="newPassword">Nouveau mot de passe</Label>
               <Input
                 id="newPassword"
                 type="password"
-                placeholder="Enter new password"
+                placeholder="Saisir le nouveau mot de passe"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Password must be at least 8 characters
+                Le mot de passe doit contenir au moins 8 caractères
               </p>
             </div>
           </div>
@@ -1259,14 +1258,14 @@ export default function UsersPage() {
                 setNewPassword('');
               }}
             >
-              Cancel
+              Annuler
             </Button>
             <Button
               onClick={handleResetPassword}
               disabled={resettingPassword || newPassword.length < 8}
             >
               {resettingPassword && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-              Reset Password
+              Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>

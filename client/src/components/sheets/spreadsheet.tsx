@@ -2570,18 +2570,19 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                                     const isFindMatch = findMatches.some(m => m.r === r && m.c === c)
                                     const isCurrentFind = findMatches.length > 0 && findMatches[currentFindIdx]?.r === r && findMatches[currentFindIdx]?.c === c
 
-                                    let rawValue = cellData?.value ?? ""
-                                    // CRITICAL FIX: convert object cell values to strings (Yjs stores Date/formula objects)
-                                    if (rawValue && typeof rawValue === 'object') {
+                                    let rawValue: string = typeof cellData?.value === 'string' ? cellData.value : ''
+                                    // Safety: if Yjs stored an object instead of string, convert it
+                                    if (cellData?.value && typeof cellData.value !== 'string') {
+                                        const v = cellData.value as any
                                         try {
-                                            if (rawValue instanceof Date) { rawValue = rawValue.toISOString().split('T')[0] }
-                                            else if ('result' in (rawValue as any)) { rawValue = String((rawValue as any).result ?? '') }
-                                            else if ('text' in (rawValue as any)) { rawValue = String((rawValue as any).text ?? '') }
-                                            else if ('formula' in (rawValue as any)) { rawValue = String((rawValue as any).result ?? (rawValue as any).formula ?? '') }
-                                            else if ('richText' in (rawValue as any)) { rawValue = ((rawValue as any).richText || []).map((r: any) => r.text || '').join('') }
-                                            else { rawValue = JSON.stringify(rawValue) }
+                                            if (v instanceof Date || typeof v.toISOString === 'function') rawValue = (v.toISOString?.() || '').split('T')[0]
+                                            else if (typeof v === 'number' || typeof v === 'boolean') rawValue = String(v)
+                                            else if (v.result !== undefined) rawValue = String(v.result ?? '')
+                                            else if (v.text !== undefined) rawValue = String(v.text ?? '')
+                                            else if (v.richText) rawValue = v.richText.map((r: any) => r?.text || '').join('')
+                                            else rawValue = JSON.stringify(v)
                                         } catch { rawValue = '' }
-                                    } else if (typeof rawValue !== 'string') { rawValue = String(rawValue) }
+                                    }
                                     const evaluated = evaluatedData[`${r},${c}`] || rawValue
                                     const displayValue = formatDisplayValue(evaluated, style)
                                     const isErrorVal = (displayValue.startsWith("#") && displayValue.endsWith("!")) || displayValue === "#NAME?" || displayValue === "#N/A"

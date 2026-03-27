@@ -537,7 +537,7 @@ export default function VpnPage() {
     return (
       <AppLayout>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold">Web Tunnels</h1>
+          <h1 className="text-3xl font-bold">Tunnels Web</h1>
           <CardGridSkeleton count={4} className="md:grid-cols-4" />
           <Skeleton className="h-64" />
         </div>
@@ -550,15 +550,15 @@ export default function VpnPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Web Tunnels</h1>
+            <h1 className="text-3xl font-bold">Tunnels Web</h1>
             <p className="text-muted-foreground">
-              Expose your local services securely without opening ports
+              Exposez vos services locaux de manière sécurisée sans ouvrir de ports
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={fetchData}>
               <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
+              Actualiser
             </Button>
           </div>
         </div>
@@ -579,7 +579,7 @@ export default function VpnPage() {
             </TabsTrigger>
             <TabsTrigger value="dns">
               <Shield className="mr-2 h-4 w-4" />
-              DNS & Blocking
+              DNS & Filtrage
             </TabsTrigger>
           </TabsList>
 
@@ -606,26 +606,26 @@ export default function VpnPage() {
             <div className="flex justify-end">
               <Button onClick={() => handleOpenTunnelDialog()}>
                 <Plus className="mr-2 h-4 w-4" />
-                New Tunnel
+                Nouveau tunnel
               </Button>
             </div>
 
             <Card>
               <CardHeader>
-                <CardTitle>Configured Tunnels</CardTitle>
+                <CardTitle>Tunnels configurés</CardTitle>
                 <CardDescription>
-                  Tunnels expose your local services via a public URL
+                  Les tunnels exposent vos services locaux via une URL publique
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Local Service</TableHead>
-                      <TableHead>Public URL</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Traffic</TableHead>
+                      <TableHead>Nom</TableHead>
+                      <TableHead>Service local</TableHead>
+                      <TableHead>URL publique</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Trafic</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -635,7 +635,7 @@ export default function VpnPage() {
                         <TableCell>
                           <div className="font-medium">{tunnel.name}</div>
                           <div className="text-xs text-muted-foreground">
-                            Relay: {tunnel.relay_name || 'Default'}
+                            Relais : {tunnel.relay_name || 'Défaut'}
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-sm">
@@ -681,11 +681,11 @@ export default function VpnPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => handleOpenTunnelDialog(tunnel)}>
                                 <Pencil className="mr-2 h-4 w-4" />
-                                Edit
+                                Modifier
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleReconnectTunnel(tunnel)}>
                                 <RefreshCw className="mr-2 h-4 w-4" />
-                                Reconnect
+                                Reconnecter
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -693,7 +693,7 @@ export default function VpnPage() {
                                 onClick={() => setDeleteDialog({ open: true, type: 'tunnel', item: tunnel })}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
+                                Supprimer
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -703,7 +703,7 @@ export default function VpnPage() {
                     {tunnels.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          No tunnels configured. Click &quot;New Tunnel&quot; to create one.
+                          Aucun tunnel configuré. Cliquez sur &quot;Nouveau tunnel&quot; pour en créer un.
                         </TableCell>
                       </TableRow>
                     )}
@@ -718,7 +718,7 @@ export default function VpnPage() {
             <div className="flex justify-end">
               <Button onClick={() => handleOpenRelayDialog()}>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Relay
+                Ajouter un relais
               </Button>
             </div>
 
@@ -727,11 +727,11 @@ export default function VpnPage() {
               <CardContent className="flex items-start gap-4 p-4">
                 <Radio className="h-5 w-5 text-blue-500 mt-0.5" />
                 <div>
-                  <h4 className="font-medium">What is a Relay?</h4>
+                  <h4 className="font-medium">Qu&apos;est-ce qu&apos;un relais ?</h4>
                   <p className="text-sm text-muted-foreground mt-1">
-                    A relay is a server on the internet that acts as a bridge between your local services
-                    and the outside world. It receives incoming connections and forwards them through
-                    your tunnel, without requiring you to open any ports on your router or firewall.
+                    Un relais est un serveur sur internet qui fait le pont entre vos services locaux
+                    et le monde extérieur. Il reçoit les connexions entrantes et les achemine via
+                    votre tunnel, sans nécessiter l&apos;ouverture de ports sur votre routeur ou pare-feu.
                   </p>
                 </div>
               </CardContent>
@@ -739,20 +739,20 @@ export default function VpnPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Configured Relays</CardTitle>
+                <CardTitle>Relais configurés</CardTitle>
                 <CardDescription>
-                  Relay servers that handle your tunnel connections
+                  Serveurs relais qui gèrent vos connexions de tunnel
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
+                      <TableHead>Nom</TableHead>
                       <TableHead>URL</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Statut</TableHead>
                       <TableHead>Tunnels</TableHead>
-                      <TableHead>Latency</TableHead>
+                      <TableHead>Latence</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -786,16 +786,16 @@ export default function VpnPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => handleOpenRelayDialog(relay)}>
                                 <Pencil className="mr-2 h-4 w-4" />
-                                Edit
+                                Modifier
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleTestRelay(relay)}>
                                 <Activity className="mr-2 h-4 w-4" />
-                                Test Connection
+                                Tester la connexion
                               </DropdownMenuItem>
                               {!relay.is_primary && (
                                 <DropdownMenuItem onClick={() => handleSetPrimaryRelay(relay)}>
                                   <CheckCircle className="mr-2 h-4 w-4" />
-                                  Set as Primary
+                                  Définir comme principal
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuSeparator />
@@ -804,7 +804,7 @@ export default function VpnPage() {
                                 onClick={() => setDeleteDialog({ open: true, type: 'relay', item: relay })}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
+                                Supprimer
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -814,7 +814,7 @@ export default function VpnPage() {
                     {relays.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          No relays configured. Add a relay to start creating tunnels.
+                          Aucun relais configuré. Ajoutez un relais pour commencer à créer des tunnels.
                         </TableCell>
                       </TableRow>
                     )}
@@ -849,14 +849,14 @@ export default function VpnPage() {
       <Dialog open={tunnelDialogOpen} onOpenChange={setTunnelDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingTunnel ? 'Edit Tunnel' : 'New Tunnel'}</DialogTitle>
+            <DialogTitle>{editingTunnel ? 'Modifier le tunnel' : 'Nouveau tunnel'}</DialogTitle>
             <DialogDescription>
-              Create a tunnel to expose a local service via a public URL
+              Créez un tunnel pour exposer un service local via une URL publique
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="tunnelName">Tunnel Name</Label>
+              <Label htmlFor="tunnelName">Nom du tunnel</Label>
               <Input
                 id="tunnelName"
                 placeholder="my-webapp"
@@ -865,7 +865,7 @@ export default function VpnPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="localAddr">Local Address</Label>
+              <Label htmlFor="localAddr">Adresse locale</Label>
               <Input
                 id="localAddr"
                 placeholder="localhost:3000"
@@ -873,7 +873,7 @@ export default function VpnPage() {
                 onChange={(e) => setTunnelForm({ ...tunnelForm, local_addr: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
-                The local service to expose (e.g., localhost:8080)
+                Le service local à exposer (ex : localhost:8080)
               </p>
             </div>
             <div className="space-y-2">
@@ -889,13 +889,13 @@ export default function VpnPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="relay">Relay</Label>
+              <Label htmlFor="relay">Relais</Label>
               <Select
                 value={tunnelForm.relay_id}
                 onValueChange={(value) => setTunnelForm({ ...tunnelForm, relay_id: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a relay" />
+                  <SelectValue placeholder="Sélectionner un relais" />
                 </SelectTrigger>
                 <SelectContent>
                   {relays.map((relay) => (
@@ -914,11 +914,11 @@ export default function VpnPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTunnelDialogOpen(false)}>
-              Cancel
+              Annuler
             </Button>
             <Button onClick={handleSaveTunnel} disabled={submitting}>
               {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-              {editingTunnel ? 'Save Changes' : 'Create Tunnel'}
+              {editingTunnel ? 'Enregistrer' : 'Créer le tunnel'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -928,14 +928,14 @@ export default function VpnPage() {
       <Dialog open={relayDialogOpen} onOpenChange={setRelayDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingRelay ? 'Edit Relay' : 'Add Relay'}</DialogTitle>
+            <DialogTitle>{editingRelay ? 'Modifier le relais' : 'Ajouter un relais'}</DialogTitle>
             <DialogDescription>
-              Configure a relay server for your tunnels
+              Configurer un serveur relais pour vos tunnels
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="relayName">Relay Name</Label>
+              <Label htmlFor="relayName">Nom du relais</Label>
               <Input
                 id="relayName"
                 placeholder="My Relay"
@@ -944,7 +944,7 @@ export default function VpnPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="relayUrl">Relay URL</Label>
+              <Label htmlFor="relayUrl">URL du relais</Label>
               <Input
                 id="relayUrl"
                 placeholder="wss://relay.example.com"
@@ -952,11 +952,11 @@ export default function VpnPage() {
                 onChange={(e) => setRelayForm({ ...relayForm, url: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
-                WebSocket URL of the relay server
+                URL WebSocket du serveur relais
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="relayToken">Authentication Token (optional)</Label>
+              <Label htmlFor="relayToken">Jeton d&apos;authentification (optionnel)</Label>
               <Input
                 id="relayToken"
                 type="password"
@@ -967,9 +967,9 @@ export default function VpnPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <Label>Set as Primary</Label>
+                <Label>Définir comme principal</Label>
                 <p className="text-xs text-muted-foreground">
-                  New tunnels will use this relay by default
+                  Les nouveaux tunnels utiliseront ce relais par défaut
                 </p>
               </div>
               <Switch
@@ -980,11 +980,11 @@ export default function VpnPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRelayDialogOpen(false)}>
-              Cancel
+              Annuler
             </Button>
             <Button onClick={handleSaveRelay} disabled={submitting}>
               {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-              {editingRelay ? 'Save Changes' : 'Add Relay'}
+              {editingRelay ? 'Enregistrer' : 'Ajouter un relais'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -994,9 +994,9 @@ export default function VpnPage() {
       <Dialog open={blocklistDialogOpen} onOpenChange={setBlocklistDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Blocklist</DialogTitle>
+            <DialogTitle>Ajouter une liste de blocage</DialogTitle>
             <DialogDescription>
-              Add a blocklist URL to block ads and trackers
+              Ajouter une URL de liste de blocage pour bloquer les publicités et traceurs
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1018,17 +1018,17 @@ export default function VpnPage() {
                 onChange={(e) => setBlocklistForm({ ...blocklistForm, url: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
-                URL to a hosts-style blocklist file
+                URL vers un fichier de liste de blocage au format hosts
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBlocklistDialogOpen(false)}>
-              Cancel
+              Annuler
             </Button>
             <Button onClick={handleAddBlocklist} disabled={submitting}>
               {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-              Add Blocklist
+              Ajouter la liste
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1038,14 +1038,14 @@ export default function VpnPage() {
       <Dialog open={dnsRecordDialogOpen} onOpenChange={setDnsRecordDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingDnsRecord ? 'Edit DNS Record' : 'Add DNS Record'}</DialogTitle>
+            <DialogTitle>{editingDnsRecord ? 'Modifier l\'enregistrement DNS' : 'Ajouter un enregistrement DNS'}</DialogTitle>
             <DialogDescription>
-              Create a custom DNS record override
+              Créer une substitution d&apos;enregistrement DNS personnalisé
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="recordType">Record Type</Label>
+              <Label htmlFor="recordType">Type d&apos;enregistrement</Label>
               <Select
                 value={dnsRecordForm.type}
                 onValueChange={(value: 'A' | 'AAAA' | 'CNAME' | 'TXT') =>
@@ -1082,7 +1082,7 @@ export default function VpnPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="recordTtl">TTL (seconds)</Label>
+              <Label htmlFor="recordTtl">TTL (secondes)</Label>
               <Input
                 id="recordTtl"
                 type="number"
@@ -1094,11 +1094,11 @@ export default function VpnPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDnsRecordDialogOpen(false)}>
-              Cancel
+              Annuler
             </Button>
             <Button onClick={handleSaveDnsRecord} disabled={submitting}>
               {submitting && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-              {editingDnsRecord ? 'Save Changes' : 'Add Record'}
+              {editingDnsRecord ? 'Enregistrer' : 'Ajouter'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1112,30 +1112,30 @@ export default function VpnPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete {deleteDialog.type === 'dns-record' ? 'DNS Record' : deleteDialog.type}?
+              Supprimer {deleteDialog.type === 'dns-record' ? 'l\'enregistrement DNS' : deleteDialog.type === 'tunnel' ? 'le tunnel' : deleteDialog.type === 'relay' ? 'le relais' : 'la liste'} ?
             </AlertDialogTitle>
             <AlertDialogDescription>
               {deleteDialog.type === 'tunnel' && (
-                <>Are you sure you want to delete the tunnel &quot;{(deleteDialog.item as Tunnel)?.name}&quot;? This will disconnect all active connections.</>
+                <>Êtes-vous sûr de vouloir supprimer le tunnel &quot;{(deleteDialog.item as Tunnel)?.name}&quot; ? Toutes les connexions actives seront déconnectées.</>
               )}
               {deleteDialog.type === 'relay' && (
-                <>Are you sure you want to delete the relay &quot;{(deleteDialog.item as Relay)?.name}&quot;? All tunnels using this relay will be disconnected.</>
+                <>Êtes-vous sûr de vouloir supprimer le relais &quot;{(deleteDialog.item as Relay)?.name}&quot; ? Tous les tunnels utilisant ce relais seront déconnectés.</>
               )}
               {deleteDialog.type === 'blocklist' && (
-                <>Are you sure you want to remove the blocklist &quot;{(deleteDialog.item as Blocklist)?.name}&quot;?</>
+                <>Êtes-vous sûr de vouloir supprimer la liste &quot;{(deleteDialog.item as Blocklist)?.name}&quot; ?</>
               )}
               {deleteDialog.type === 'dns-record' && (
-                <>Are you sure you want to delete the DNS record for &quot;{(deleteDialog.item as CustomDnsRecord)?.name}&quot;?</>
+                <>Êtes-vous sûr de vouloir supprimer l&apos;enregistrement DNS pour &quot;{(deleteDialog.item as CustomDnsRecord)?.name}&quot; ?</>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground"
             >
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

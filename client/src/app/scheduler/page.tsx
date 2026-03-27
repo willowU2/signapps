@@ -2,7 +2,7 @@
 
 import { SpinnerInfinity } from 'spinners-react';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
@@ -52,7 +52,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Clock, Play, MoreVertical, Pencil, Trash2, Terminal, Container, Server, RefreshCw, CheckCircle, XCircle, History } from 'lucide-react';
+import { Plus, Clock, Play, MoreVertical, Pencil, Trash2, Terminal, Container, Server, RefreshCw, CheckCircle, XCircle, History, ArrowUpDown } from 'lucide-react';
 import { schedulerApi, ScheduledJob, JobRun, JobStats, RunningJob } from '@/lib/api';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
@@ -87,6 +87,9 @@ export default function SchedulerPage() {
     enabled: true,
   });
 
+  const [sortField, setSortField] = useState<string>('name')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
   type SchedulerData = { jobs: ScheduledJob[]; stats: JobStats | null; runningJobs: RunningJob[] };
 
   const { data: schedulerData, isLoading: loading } = useQuery<SchedulerData>({
@@ -108,6 +111,20 @@ export default function SchedulerPage() {
   const jobs = schedulerData?.jobs ?? [];
   const stats = schedulerData?.stats ?? null;
   const runningJobs = schedulerData?.runningJobs ?? [];
+
+  const sortedJobs = useMemo(() => {
+    return [...jobs].sort((a, b) => {
+      const aVal = (a as any)[sortField] ?? '';
+      const bVal = (b as any)[sortField] ?? '';
+      const cmp = String(aVal).localeCompare(String(bVal), 'fr', { numeric: true });
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [jobs, sortField, sortDir]);
+
+  const toggleSort = (field: string) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
+  };
 
   const fetchJobs = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['scheduler-jobs'] });
@@ -344,16 +361,22 @@ export default function SchedulerPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>État</TableHead>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Planification</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('name')}>
+                    <span className="flex items-center gap-1">Nom {sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('cron_expression')}>
+                    <span className="flex items-center gap-1">Planification {sortField === 'cron_expression' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                  </TableHead>
                   <TableHead>Cible</TableHead>
-                  <TableHead>Dernière Exécution</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('last_run')}>
+                    <span className="flex items-center gap-1">Dernière Exécution {sortField === 'last_run' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                  </TableHead>
                   <TableHead>Dernier Statut</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {jobs.map((job) => (
+                {sortedJobs.map((job) => (
                   <TableRow key={job.id}>
                     <TableCell>
                       <Switch
@@ -425,7 +448,7 @@ export default function SchedulerPage() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {jobs.length === 0 && (
+                {sortedJobs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Aucune tâche planifiée. Cliquez sur &quot;Nouvelle Tâche&quot; pour en créer une.
@@ -446,7 +469,7 @@ export default function SchedulerPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nom de la Tâche</Label>
+              <Label htmlFor="name">Nom de la Tâche *</Label>
               <Input
                 id="name"
                 placeholder="Sauvegarde base de données"
@@ -466,7 +489,7 @@ export default function SchedulerPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cron">Expression CRON</Label>
+              <Label htmlFor="cron">Expression CRON *</Label>
               <Input
                 id="cron"
                 placeholder="0 0 * * *"

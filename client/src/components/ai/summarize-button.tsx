@@ -30,7 +30,7 @@ export function SummarizeButton({ getText, className }: SummarizeButtonProps) {
         `Résume ce document de manière concise en français, en bullet points :\n\n${text.slice(0, 4000)}`,
         { systemPrompt: 'Tu es un assistant qui résume des documents de manière claire et concise.', language: 'fr' }
       );
-      setSummary(res.data?.answer || res.data?.response || 'Résumé indisponible');
+      setSummary(res.data?.answer || (res.data as any)?.response || 'Résumé indisponible');
     } catch {
       toast.error('Erreur lors de la génération du résumé');
     } finally {

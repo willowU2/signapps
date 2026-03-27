@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Server, MonitorSmartphone, Cpu, Network, Printer,
   Plus, Trash, Edit, Target, ShieldCheck, Wrench, Archive,
-  Search, Filter, HardDrive,
+  Search, Filter, HardDrive, ArrowUpDown,
 } from "lucide-react"
 import { itAssetsApi, HardwareAsset, CreateHardwareRequest, UpdateHardwareRequest } from "@/lib/api/it-assets"
 import { EntityLinks } from "@/components/crosslinks/EntityLinks"
@@ -99,6 +99,8 @@ export default function ITAssetsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<string>("all")
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [sortField, setSortField] = useState<string>('name')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
   // ── Data loading ──────────────────────────────────────────────────────────
 
@@ -132,6 +134,20 @@ export default function ITAssetsPage() {
       return matchesSearch && matchesType && matchesStatus
     })
   }, [assets, searchQuery, filterType, filterStatus])
+
+  const sortedAssets = useMemo(() => {
+    return [...filteredAssets].sort((a, b) => {
+      const aVal = (a as any)[sortField] ?? ''
+      const bVal = (b as any)[sortField] ?? ''
+      const cmp = String(aVal).localeCompare(String(bVal), 'fr', { numeric: true })
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [filteredAssets, sortField, sortDir])
+
+  const toggleSort = (field: string) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortField(field); setSortDir('asc') }
+  }
 
   // ── Stats ─────────────────────────────────────────────────────────────────
 
@@ -310,10 +326,18 @@ export default function ITAssetsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Serial Number</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('name')}>
+                      <span className="flex items-center gap-1">Name {sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('type')}>
+                      <span className="flex items-center gap-1">Type {sortField === 'type' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('serial_number')}>
+                      <span className="flex items-center gap-1">Serial Number {sortField === 'serial_number' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                    </TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('status')}>
+                      <span className="flex items-center gap-1">Status {sortField === 'status' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                    </TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>Assigned To</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -326,7 +350,7 @@ export default function ITAssetsPage() {
                         Loading assets…
                       </TableCell>
                     </TableRow>
-                  ) : filteredAssets.length === 0 ? (
+                  ) : sortedAssets.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                         {assets.length === 0
@@ -334,7 +358,7 @@ export default function ITAssetsPage() {
                           : "No assets match the current filters."}
                       </TableCell>
                     </TableRow>
-                  ) : filteredAssets.map(asset => {
+                  ) : sortedAssets.map(asset => {
                     const status = getStatusMeta(asset.status)
                     return (
                       <TableRow key={asset.id} className="group">

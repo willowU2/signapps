@@ -20,7 +20,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download } from "lucide-react"
+import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
 import { contactsApi } from "@/lib/api/contacts"
@@ -59,8 +60,10 @@ export default function ContactsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<Partial<Contact>>({ tags: [], favorite: false })
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [sortField, setSortField] = useState<string>('name')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
-  const { data: contacts = SEED_CONTACTS } = useQuery<Contact[]>({
+  const { data: contacts = SEED_CONTACTS, isLoading } = useQuery<Contact[]>({
     queryKey: ['contacts'],
     queryFn: async () => {
       const client = getClient(ServiceName.CONTACTS)
@@ -88,6 +91,20 @@ export default function ContactsPage() {
     if (activeTab === "groups")    return matchesSearch && !!c.group
     return matchesSearch
   }), [contacts, search, activeTab])
+
+  const sortedFiltered = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const aVal = (a as any)[sortField] ?? ''
+      const bVal = (b as any)[sortField] ?? ''
+      const cmp = String(aVal).localeCompare(String(bVal), 'fr', { numeric: true })
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  }, [filtered, sortField, sortDir])
+
+  const toggleSort = (field: string) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortField(field); setSortDir('asc') }
+  }
 
   const groups = useMemo(
     () => [...new Set(contacts.map(c => c.group).filter(Boolean))] as string[],
@@ -190,6 +207,30 @@ export default function ContactsPage() {
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 w-48" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-10 w-full" />
+          <div className="space-y-2">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </AppLayout>
+    )
+  }
 
   return (
     <AppLayout>
@@ -309,23 +350,31 @@ export default function ContactsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nom</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead className="hidden md:table-cell">Téléphone</TableHead>
-                      <TableHead className="hidden lg:table-cell">Entreprise</TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('name')}>
+                        <span className="flex items-center gap-1">Nom {sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                      </TableHead>
+                      <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('email')}>
+                        <span className="flex items-center gap-1">Email {sortField === 'email' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell cursor-pointer select-none" onClick={() => toggleSort('phone')}>
+                        <span className="flex items-center gap-1">Téléphone {sortField === 'phone' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell cursor-pointer select-none" onClick={() => toggleSort('company')}>
+                        <span className="flex items-center gap-1">Entreprise {sortField === 'company' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
+                      </TableHead>
                       <TableHead className="hidden lg:table-cell">Tags</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.length === 0 && (
+                    {sortedFiltered.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
                           Aucun contact trouvé.
                         </TableCell>
                       </TableRow>
                     )}
-                    {filtered.map(c => (
+                    {sortedFiltered.map(c => (
                       <TableRow key={c.id}>
                         <TableCell className="font-medium">{c.name}</TableCell>
                         <TableCell className="text-muted-foreground">{c.email}</TableCell>
