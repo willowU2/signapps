@@ -1,7 +1,7 @@
 import type * as Y from 'yjs';
 import { parseSpreadsheetBuffer } from '@/lib/file-parsers';
 import type { CellData } from '@/components/sheets/types';
-import { ROWS, COLS } from '@/components/sheets/types';
+import { MAX_ROW, COLS } from '@/components/sheets/types';
 
 function ensureString(v: unknown): string {
   if (v === null || v === undefined) return '';
@@ -81,14 +81,12 @@ export async function importXlsxToYjs(
     const sheetId = allEntries[i].id;
     const gridMap = doc.getMap<CellData>(`grid-${sheetId}`);
 
-    // Pre-filter: aggressively reduce cell count to prevent OOM
-    // Google Sheets style: only store cells with visible content
-    const MAX_ROWS_PER_SHEET = 5000; // Cap per sheet to avoid OOM
+    // Pre-filter: only store cells with visible content (Google Sheets style sparse storage)
     const filtered: Array<[string, any]> = [];
     for (const [key, cellData] of Object.entries(cellsMap)) {
       const [rStr, cStr] = key.split(',');
       const r = parseInt(rStr, 10);
-      if (r >= MAX_ROWS_PER_SHEET) { skippedCells++; continue; }
+      if (r >= MAX_ROW) { skippedCells++; continue; }
 
       const val = ensureString(cellData.value);
       const hasStyle = cellData.style && Object.keys(cellData.style).length > 0;
@@ -114,7 +112,7 @@ export async function importXlsxToYjs(
           const [rStr, cStr] = key.split(',');
           const r = parseInt(rStr, 10);
           const c = parseInt(cStr, 10);
-          if (r >= ROWS || c >= COLS) continue;
+          if (r >= MAX_ROW || c >= COLS) continue;
           gridMap.set(`${r},${c}`, safeData as CellData);
           totalCells++;
         }

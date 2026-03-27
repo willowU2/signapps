@@ -5,7 +5,7 @@ import { DndContext, closestCenter, DragEndEvent, DragStartEvent, DragOverlay, u
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { cn } from "@/lib/utils"
-import { CellData, ROWS, COLS } from "./types"
+import { CellData, COLS, getEffectiveRows } from "./types"
 import { X, GripVertical, Table2 } from "lucide-react"
 import { toast } from "sonner"
 import { AggFn, PivotField, PivotConfig, Zone, buildPivot } from "./pivot-engine"
@@ -53,7 +53,7 @@ export function PivotTableDialog({ data, onClose, onInsertSheet }: PivotTablePro
         for (let c = 0; c < COLS; c++) { const v = data[`0,${c}`]?.value; if (!v) break; headers.push(v) }
         const fields: PivotField[] = headers.map((name, i) => ({ id: `f${i}`, name, colIndex: i }))
         const rows: string[][] = []
-        for (let r = 1; r < ROWS; r++) {
+        for (let r = 1; r < getEffectiveRows(data); r++) {
             const row: string[] = []; let has = false
             for (let c = 0; c < headers.length; c++) { const v = data[`${r},${c}`]?.value ?? ''; row.push(v); if (v) has = true }
             if (!has) break; rows.push(row)

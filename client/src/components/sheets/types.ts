@@ -54,10 +54,21 @@ export const TAB_COLORS = [
     '#46bdc6', '#9334e6', '#d81b60', '#795548', '#607d8b',
 ]
 
-export const ROWS = 10500
+export const ROWS = 200 // Minimum visible rows for empty sheets
+export const MAX_ROW = 100000 // Absolute maximum
 export const COLS = 200
 export const DEFAULT_COL_WIDTH = 100
 export const DEFAULT_ROW_HEIGHT = 21
+
+/** Returns the effective row count: max(ROWS, highest_row_in_data + 50), capped at MAX_ROW */
+export function getEffectiveRows(data: Record<string, CellData>): number {
+    let maxRow = 0
+    for (const key of Object.keys(data)) {
+        const r = parseInt(key.split(',')[0], 10)
+        if (r > maxRow) maxRow = r
+    }
+    return Math.min(MAX_ROW, Math.max(ROWS, maxRow + 50))
+}
 export const ROW_HEADER_WIDTH = 46
 export const COL_HEADER_HEIGHT = 25
 

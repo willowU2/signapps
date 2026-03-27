@@ -7,7 +7,7 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts"
 import { cn } from "@/lib/utils"
-import { CellData, SelectionBounds, ROWS, COLS } from "./types"
+import { CellData, SelectionBounds, COLS } from "./types"
 import { X, BarChart2, TrendingUp, PieChart as PieIcon, ScatterChart as ScatterIcon, AreaChart as AreaIcon, Download, Palette } from "lucide-react"
 import { toast } from "sonner"
 

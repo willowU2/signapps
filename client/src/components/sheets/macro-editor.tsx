@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef, useMemo, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { CellData, ROWS, COLS } from "./types"
+import { CellData, MAX_ROW, COLS } from "./types"
 import { X, Play, Save, Trash2, FileCode, ChevronDown, Copy, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
@@ -182,11 +182,11 @@ export function MacroEditor({ data, evaluatedData, sheetId, sheetName, setCell, 
 
         const api: MacroApi = {
             getCell: (row: number, col: number): string => {
-                if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return ''
+                if (row < 0 || row >= MAX_ROW || col < 0 || col >= COLS) return ''
                 return evaluatedData[`${row},${col}`] || data[`${row},${col}`]?.value || ''
             },
             setCell: (row: number, col: number, value: string) => {
-                if (row < 0 || row >= ROWS || col < 0 || col >= COLS) {
+                if (row < 0 || row >= MAX_ROW || col < 0 || col >= COLS) {
                     logs.push(`[WARN] setCell(${row}, ${col}) hors limites`)
                     return
                 }

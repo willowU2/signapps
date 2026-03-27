@@ -8,7 +8,7 @@ import { PivotTableDialog } from "./pivot-table"
 import { ChartDialog } from "./chart-dialog"
 import { FloatingChart } from "./chart-panel"
 import { MacroEditor } from "./macro-editor"
-import { CellStyle, CellData, CellValidation, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS } from "./types"
+import { CellStyle, CellData, CellValidation, SelectionBounds, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS, getEffectiveRows } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
 import { fetchAndParseDocument } from '@/lib/file-parsers'
 import { sanitizeAllSheets } from '@/lib/sheets/sanitize-cells'
@@ -422,12 +422,14 @@ function FilterDialog({ col, data, onApply, onClose }: {
     col: number, data: Record<string, CellData>, onApply: (values: Set<string>) => void, onClose: () => void
 }) {
     const uniqueValues = useMemo(() => {
-        const values: string[] = []
-        for (let r = 0; r < ROWS; r++) {
-            const v = data[`${r},${col}`]?.value
-            if (v && !values.includes(v)) values.push(v)
+        const seen = new Set<string>()
+        for (const key of Object.keys(data)) {
+            const c = parseInt(key.split(',')[1], 10)
+            if (c !== col) continue
+            const v = data[key]?.value
+            if (v && !seen.has(v)) seen.add(v)
         }
-        return values.sort()
+        return Array.from(seen).sort()
     }, [col, data])
 
     const [checked, setChecked] = useState<Set<string>>(new Set(uniqueValues))
@@ -679,6 +681,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     const getColWidth = (c: number) => colWidths[c] ?? DEFAULT_COL_WIDTH
     const getRowHeight = (r: number) => rowHeights[r] ?? DEFAULT_ROW_HEIGHT
 
+    // Dynamic row count: expands based on data, minimum 200 for empty sheets
+    const effectiveRows = useMemo(() => getEffectiveRows(data), [data])
+
     // ---- Precompute cumulative offsets for virtualization ----
     const colOffsets = useMemo(() => {
         const offsets = new Float64Array(COLS + 1)
@@ -687,13 +692,13 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     }, [colWidths])
 
     const rowOffsets = useMemo(() => {
-        const offsets = new Float64Array(ROWS + 1)
-        for (let r = 0; r < ROWS; r++) offsets[r + 1] = offsets[r] + getRowHeight(r)
+        const offsets = new Float64Array(effectiveRows + 1)
+        for (let r = 0; r < effectiveRows; r++) offsets[r + 1] = offsets[r] + getRowHeight(r)
         return offsets
-    }, [rowHeights])
+    }, [rowHeights, effectiveRows])
 
     const totalWidth = colOffsets[COLS]
-    const totalHeight = rowOffsets[ROWS]
+    const totalHeight = rowOffsets[effectiveRows]
 
     // Binary search for first visible row/col
     const findFirst = (offsets: Float64Array, scroll: number): number => {
@@ -706,10 +711,10 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         const first = findFirst(rowOffsets, scrollTop)
         const startR = Math.max(0, first - VIRT_BUFFER)
         let endR = first
-        while (endR < ROWS && rowOffsets[endR] < scrollTop + viewportH) endR++
-        endR = Math.min(ROWS - 1, endR + VIRT_BUFFER)
+        while (endR < effectiveRows && rowOffsets[endR] < scrollTop + viewportH) endR++
+        endR = Math.min(effectiveRows - 1, endR + VIRT_BUFFER)
         return { startR, endR }
-    }, [scrollTop, viewportH, rowOffsets])
+    }, [scrollTop, viewportH, rowOffsets, effectiveRows])
 
     const visibleCols = useMemo(() => {
         const first = findFirst(colOffsets, scrollLeft)
@@ -856,7 +861,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 const y = e.clientY - rect.top + st - COL_HEADER_HEIGHT
                 let col = findFirst(colOffsets, Math.max(0, x))
                 let row = findFirst(rowOffsets, Math.max(0, y))
-                col = Math.min(COLS - 1, col); row = Math.min(ROWS - 1, row)
+                col = Math.min(COLS - 1, col); row = Math.min(effectiveRows - 1, row)
                 setDragFillEnd({ r: row, c: col })
             }
         }
@@ -1214,12 +1219,11 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         let maxR = 0;
         let maxC = 0;
 
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                if (data[`${r},${c}`]?.value) {
-                    maxR = Math.max(maxR, r);
-                    maxC = Math.max(maxC, c);
-                }
+        for (const key of Object.keys(data)) {
+            if (data[key]?.value) {
+                const [rStr, cStr] = key.split(',')
+                maxR = Math.max(maxR, parseInt(rStr, 10));
+                maxC = Math.max(maxC, parseInt(cStr, 10));
             }
         }
 
@@ -1274,12 +1278,11 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             const rowsToExport: any[][] = [];
             let maxR = 0; let maxC = 0;
 
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    if (data[`${r},${c}`]?.value) {
-                        maxR = Math.max(maxR, r);
-                        maxC = Math.max(maxC, c);
-                    }
+            for (const key of Object.keys(data)) {
+                if (data[key]?.value) {
+                    const [rStr, cStr] = key.split(',');
+                    maxR = Math.max(maxR, parseInt(rStr, 10));
+                    maxC = Math.max(maxC, parseInt(cStr, 10));
                 }
             }
 
@@ -1330,13 +1333,13 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
 
     const moveCell = useCallback((dr: number, dc: number) => {
         if (!activeCell) return
-        const nr = Math.max(0, Math.min(ROWS - 1, activeCell.r + dr))
+        const nr = Math.max(0, Math.min(effectiveRows - 1, activeCell.r + dr))
         const nc = Math.max(0, Math.min(COLS - 1, activeCell.c + dc))
         setActiveCell({ r: nr, c: nc })
         setSelectedRange({ start: { r: nr, c: nc }, end: { r: nr, c: nc } })
         scrollToCell(nr, nc)
         setTimeout(() => mainContainerRef.current?.focus({ preventScroll: true }), 0)
-    }, [activeCell, scrollToCell])
+    }, [activeCell, scrollToCell, effectiveRows])
 
     // Ctrl+Arrow: jump to next non-empty / empty boundary
     const jumpCell = useCallback((dr: number, dc: number) => {
@@ -1345,7 +1348,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         const currentHasData = !!data[`${r},${c}`]?.value
         for (let i = 0; i < 200; i++) {
             const nr = r + dr, nc = c + dc
-            if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) break
+            if (nr < 0 || nr >= effectiveRows || nc < 0 || nc >= COLS) break
             r = nr; c = nc
             const hasData = !!data[`${r},${c}`]?.value
             if (currentHasData && !hasData) break
@@ -1354,7 +1357,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         setActiveCell({ r, c })
         setSelectedRange({ start: { r, c }, end: { r, c } })
         scrollToCell(r, c)
-    }, [activeCell, data, scrollToCell])
+    }, [activeCell, data, scrollToCell, effectiveRows])
 
     // Find last cell with data
     const findLastDataCell = useCallback((): { r: number, c: number } => {
@@ -1413,7 +1416,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 setIsEditing(false);
                 commitEdit();
                 setActiveCell({ r: 0, c: 0 });
-                setSelectedRange({ start: { r: 0, c: 0 }, end: { r: ROWS - 1, c: COLS - 1 } });
+                setSelectedRange({ start: { r: 0, c: 0 }, end: { r: effectiveRows - 1, c: COLS - 1 } });
                 return;
             }
             if (!isEditing) {
@@ -1426,7 +1429,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     e.preventDefault();
                     if (activeCell) {
                         setActiveCell({ r: 0, c: activeCell.c });
-                        setSelectedRange({ start: { r: 0, c: activeCell.c }, end: { r: ROWS - 1, c: activeCell.c } });
+                        setSelectedRange({ start: { r: 0, c: activeCell.c }, end: { r: effectiveRows - 1, c: activeCell.c } });
                     }
                     return;
                 }
@@ -1516,7 +1519,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             if (e.key === 'ArrowRight') dc = 1;
 
             if (selectedRange) {
-                const newR = Math.max(0, Math.min(ROWS - 1, selectedRange.end.r + dr));
+                const newR = Math.max(0, Math.min(effectiveRows - 1, selectedRange.end.r + dr));
                 const newC = Math.max(0, Math.min(COLS - 1, selectedRange.end.c + dc));
                 setSelectedRange({ start: selectedRange.start, end: { r: newR, c: newC } });
                 scrollToCell(newR, newC);
@@ -1576,11 +1579,14 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     // ---- Column auto-fit ----
     const autoFitColumn = useCallback((col: number) => {
         let maxWidth = 40 // minimum width
-        for (let r = 0; r < ROWS; r++) {
-            const cellVal = evaluatedData[`${r},${col}`] || data[`${r},${col}`]?.value || ''
+        // Iterate only existing data keys for this column (sparse)
+        for (const key of Object.keys(data)) {
+            const c = parseInt(key.split(',')[1], 10)
+            if (c !== col) continue
+            const cellVal = evaluatedData[key] || data[key]?.value || ''
             if (cellVal) {
                 // Estimate character width (~7.5px per char at 13px font, plus 16px padding)
-                const fontSize = data[`${r},${col}`]?.style?.fontSize || 13
+                const fontSize = data[key]?.style?.fontSize || 13
                 const charWidth = fontSize * 0.6
                 const width = cellVal.length * charWidth + 16
                 if (width > maxWidth) maxWidth = width
@@ -2267,7 +2273,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
 
                     {/* Column headers */}
                     <div className="flex sticky top-0 z-30 select-none" style={{ height: COL_HEADER_HEIGHT }}>
-                        <div className="bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative cursor-pointer hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] transition-colors" style={{ width: ROW_HEADER_WIDTH, minWidth: ROW_HEADER_WIDTH, height: COL_HEADER_HEIGHT }} onClick={() => { setSelectedRange({ start: { r: 0, c: 0 }, end: { r: ROWS - 1, c: COLS - 1 } }); setActiveCell({ r: 0, c: 0 }) }} title="Tout sélectionner">
+                        <div className="bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative cursor-pointer hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] transition-colors" style={{ width: ROW_HEADER_WIDTH, minWidth: ROW_HEADER_WIDTH, height: COL_HEADER_HEIGHT }} onClick={() => { setSelectedRange({ start: { r: 0, c: 0 }, end: { r: effectiveRows - 1, c: COLS - 1 } }); setActiveCell({ r: 0, c: 0 }) }} title="Tout sélectionner">
                             <div className={cn("absolute top-1 left-1 h-1.5 w-1.5 rounded-full shadow-sm", isConnected ? "bg-[#1e8e3e]" : "bg-[#d93025] animate-pulse")} />
                         </div>
                         {/* Spacer for cols before visible range */}
@@ -2278,7 +2284,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                             const w = getColWidth(c)
                             const isFrozen = c < freezeCols
                             return (
-                                <div key={c} className={cn("flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] font-medium shrink-0 transition-colors relative group cursor-pointer", inSel ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6] hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043]", isFrozen && "bg-[#e8f0fe]/50")} style={{ width: w, minWidth: w, maxWidth: w, height: COL_HEADER_HEIGHT, ...(isFrozen ? { position: 'sticky', left: ROW_HEADER_WIDTH + colOffsets[c], zIndex: 41 } : {}) }} onClick={(e) => { if (e.shiftKey && activeCell) { setSelectedRange({ start: { r: 0, c: activeCell.c }, end: { r: ROWS - 1, c } }) } else { setSelectedRange({ start: { r: 0, c }, end: { r: ROWS - 1, c } }); setActiveCell({ r: 0, c }) } }}>
+                                <div key={c} className={cn("flex items-center justify-center border-r border-b border-[#c0c0c0] dark:border-[#5f6368] text-[12px] font-medium shrink-0 transition-colors relative group cursor-pointer", inSel ? "bg-[#e8f0fe] dark:bg-[#3c4043] text-[#1a73e8]" : "bg-[#f8f9fa] dark:bg-[#202124] text-[#444746] dark:text-[#9aa0a6] hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043]", isFrozen && "bg-[#e8f0fe]/50")} style={{ width: w, minWidth: w, maxWidth: w, height: COL_HEADER_HEIGHT, ...(isFrozen ? { position: 'sticky', left: ROW_HEADER_WIDTH + colOffsets[c], zIndex: 41 } : {}) }} onClick={(e) => { if (e.shiftKey && activeCell) { setSelectedRange({ start: { r: 0, c: activeCell.c }, end: { r: effectiveRows - 1, c } }) } else { setSelectedRange({ start: { r: 0, c }, end: { r: effectiveRows - 1, c } }); setActiveCell({ r: 0, c }) } }}>
                                     {indexToCol(c)}
                                     <div className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-[#1a73e8] opacity-0 group-hover:opacity-100 transition-opacity z-10" onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); resizeRef.current = { type: 'col', index: c, startPos: e.clientX, startSize: w } }} onDoubleClick={(e) => { e.preventDefault(); e.stopPropagation(); autoFitColumn(c) }} />
                                 </div>

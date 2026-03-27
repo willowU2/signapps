@@ -4,7 +4,7 @@ import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { v4 as uuidv4 } from 'uuid'
-import { CellData, CellStyle, CellValidation, SheetInfo, ROWS, COLS } from './types'
+import { CellData, CellStyle, CellValidation, SheetInfo, COLS, MAX_ROW } from './types'
 
 export type { CellStyle, CellData, CellValidation, SheetInfo }
 
@@ -95,7 +95,8 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
         }
     }, [doc])
 
-    // Watch active sheet's grid map
+    // Watch active sheet's grid map (debounced sync to prevent OOM on large imports)
+    const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     useEffect(() => {
         const gridMap = doc.getMap<CellData>(activeMapKey)
 
@@ -109,9 +110,15 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
         um.on('stack-item-added', updateUndoState)
         um.on('stack-item-popped', updateUndoState)
 
-        const sync = () => setData(gridMap.toJSON())
+        const sync = () => {
+            if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current)
+            syncTimeoutRef.current = setTimeout(() => {
+                setData(gridMap.toJSON())
+            }, 100)
+        }
         gridMap.observe(sync)
-        sync()
+        // Immediate sync on first load
+        setData(gridMap.toJSON())
 
         // Apply initial data if grid is empty
         if (initialData && gridMap.keys().next().done) {
@@ -123,6 +130,7 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
         }
 
         return () => {
+            if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current)
             gridMap.unobserve(sync)
             um.destroy()
         }
@@ -205,80 +213,91 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
 
     const insertRow = useCallback((atRow: number) => {
         const gridMap = getGridMap()
+        // Collect only existing keys at or after atRow, sorted descending so shifts don't collide
+        const keysToShift: Array<[number, number, CellData]> = []
+        gridMap.forEach((cell, key) => {
+            const [rStr, cStr] = key.split(',')
+            const r = parseInt(rStr, 10)
+            if (r >= atRow) keysToShift.push([r, parseInt(cStr, 10), cell])
+        })
+        keysToShift.sort((a, b) => b[0] - a[0]) // descending by row
         doc.transact(() => {
-            for (let r = ROWS - 1; r >= atRow; r--) {
-                for (let c = 0; c < COLS; c++) {
-                    const cell = gridMap.get(`${r},${c}`)
-                    if (cell) {
-                        gridMap.set(`${r + 1},${c}`, cell)
-                        gridMap.delete(`${r},${c}`)
-                    }
-                }
+            for (const [r, c, cell] of keysToShift) {
+                gridMap.set(`${r + 1},${c}`, cell)
+                gridMap.delete(`${r},${c}`)
             }
         })
     }, [doc, getGridMap])
 
     const deleteRow = useCallback((atRow: number) => {
         const gridMap = getGridMap()
+        // Collect keys to delete (exact row) and keys to shift (rows after)
+        const keysToDelete: string[] = []
+        const keysToShift: Array<[number, number, CellData]> = []
+        gridMap.forEach((cell, key) => {
+            const [rStr, cStr] = key.split(',')
+            const r = parseInt(rStr, 10)
+            if (r === atRow) keysToDelete.push(key)
+            else if (r > atRow) keysToShift.push([r, parseInt(cStr, 10), cell])
+        })
+        keysToShift.sort((a, b) => a[0] - b[0]) // ascending by row
         doc.transact(() => {
-            for (let c = 0; c < COLS; c++) {
-                gridMap.delete(`${atRow},${c}`)
-            }
-            for (let r = atRow + 1; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    const cell = gridMap.get(`${r},${c}`)
-                    if (cell) {
-                        gridMap.set(`${r - 1},${c}`, cell)
-                        gridMap.delete(`${r},${c}`)
-                    }
-                }
+            for (const key of keysToDelete) gridMap.delete(key)
+            for (const [r, c, cell] of keysToShift) {
+                gridMap.set(`${r - 1},${c}`, cell)
+                gridMap.delete(`${r},${c}`)
             }
         })
     }, [doc, getGridMap])
 
     const insertColumn = useCallback((atCol: number) => {
         const gridMap = getGridMap()
+        const keysToShift: Array<[number, number, CellData]> = []
+        gridMap.forEach((cell, key) => {
+            const [rStr, cStr] = key.split(',')
+            const c = parseInt(cStr, 10)
+            if (c >= atCol) keysToShift.push([parseInt(rStr, 10), c, cell])
+        })
+        keysToShift.sort((a, b) => b[1] - a[1]) // descending by col
         doc.transact(() => {
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = COLS - 1; c >= atCol; c--) {
-                    const cell = gridMap.get(`${r},${c}`)
-                    if (cell) {
-                        gridMap.set(`${r},${c + 1}`, cell)
-                        gridMap.delete(`${r},${c}`)
-                    }
-                }
+            for (const [r, c, cell] of keysToShift) {
+                gridMap.set(`${r},${c + 1}`, cell)
+                gridMap.delete(`${r},${c}`)
             }
         })
     }, [doc, getGridMap])
 
     const deleteColumn = useCallback((atCol: number) => {
         const gridMap = getGridMap()
+        const keysToDelete: string[] = []
+        const keysToShift: Array<[number, number, CellData]> = []
+        gridMap.forEach((cell, key) => {
+            const [rStr, cStr] = key.split(',')
+            const c = parseInt(cStr, 10)
+            if (c === atCol) keysToDelete.push(key)
+            else if (c > atCol) keysToShift.push([parseInt(rStr, 10), c, cell])
+        })
+        keysToShift.sort((a, b) => a[1] - b[1]) // ascending by col
         doc.transact(() => {
-            for (let r = 0; r < ROWS; r++) {
-                gridMap.delete(`${r},${atCol}`)
-                for (let c = atCol + 1; c < COLS; c++) {
-                    const cell = gridMap.get(`${r},${c}`)
-                    if (cell) {
-                        gridMap.set(`${r},${c - 1}`, cell)
-                        gridMap.delete(`${r},${c}`)
-                    }
-                }
+            for (const key of keysToDelete) gridMap.delete(key)
+            for (const [r, c, cell] of keysToShift) {
+                gridMap.set(`${r},${c - 1}`, cell)
+                gridMap.delete(`${r},${c}`)
             }
         })
     }, [doc, getGridMap])
 
     const sortColumn = useCallback((col: number, ascending: boolean) => {
         const gridMap = getGridMap()
-        const rowsData: { r: number, cells: Map<number, CellData> }[] = []
-        for (let r = 0; r < ROWS; r++) {
-            const cells = new Map<number, CellData>()
-            let hasData = false
-            for (let c = 0; c < COLS; c++) {
-                const cell = gridMap.get(`${r},${c}`)
-                if (cell) { cells.set(c, cell); hasData = true }
-            }
-            if (hasData) rowsData.push({ r, cells })
-        }
+        // Collect rows sparsely from existing keys
+        const rowMap = new Map<number, Map<number, CellData>>()
+        gridMap.forEach((cell, key) => {
+            const [rStr, cStr] = key.split(',')
+            const r = parseInt(rStr, 10), c = parseInt(cStr, 10)
+            if (!rowMap.has(r)) rowMap.set(r, new Map())
+            rowMap.get(r)!.set(c, cell)
+        })
+        const rowsData = Array.from(rowMap.entries()).map(([r, cells]) => ({ r, cells }))
 
         rowsData.sort((a, b) => {
             const aVal = a.cells.get(col)?.value || ''
