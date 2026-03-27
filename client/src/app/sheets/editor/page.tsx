@@ -31,6 +31,7 @@ const Spreadsheet = dynamic(
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { fetchAndParseDocument } from "@/lib/file-parsers"
+import type { SpreadsheetParseResult } from "@/lib/file-parsers"
 import { toast } from "sonner"
 
 function SheetsContent() {
@@ -39,6 +40,8 @@ function SheetsContent() {
     const name = searchParams.get('name') || ''
 
     const [initialData, setInitialData] = useState<any>(undefined)
+    const [initialColWidths, setInitialColWidths] = useState<Record<number, number> | undefined>(undefined)
+    const [initialRowHeights, setInitialRowHeights] = useState<Record<number, number> | undefined>(undefined)
     const [loading, setLoading] = useState(id !== 'new-spreadsheet' && name !== '')
 
     useEffect(() => {
@@ -48,9 +51,17 @@ function SheetsContent() {
                 .catch(() => fetchAndParseDocument('drive', name, name))
                 .then(res => {
                     if (res && res.type === 'spreadsheet' && 'data' in res && res.data) {
-                        const sheets = Object.keys(res.data)
-                        if (sheets.length > 0) {
-                            setInitialData(res.data[sheets[0]])
+                        const result = res as SpreadsheetParseResult
+                        const sheetNames = Object.keys(result.data)
+                        if (sheetNames.length > 0) {
+                            const firstSheet = sheetNames[0]
+                            setInitialData(result.data[firstSheet])
+                            if (result.colWidths?.[firstSheet]) {
+                                setInitialColWidths(result.colWidths[firstSheet])
+                            }
+                            if (result.rowHeights?.[firstSheet]) {
+                                setInitialRowHeights(result.rowHeights[firstSheet])
+                            }
                         }
                     }
                     setLoading(false)
@@ -74,7 +85,7 @@ function SheetsContent() {
                     </div>
                 )}
                 <div className="flex-1 overflow-hidden relative">
-                    {!loading && <Spreadsheet documentId={id} documentName={name || 'document.xlsx'} initialData={initialData} />}
+                    {!loading && <Spreadsheet documentId={id} documentName={name || 'document.xlsx'} initialData={initialData} initialColWidths={initialColWidths} initialRowHeights={initialRowHeights} />}
                 </div>
             </div>
         </EditorLayout>

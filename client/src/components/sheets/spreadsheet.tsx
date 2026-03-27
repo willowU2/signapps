@@ -10,7 +10,8 @@ import { FloatingChart } from "./chart-panel"
 import { MacroEditor } from "./macro-editor"
 import { CellStyle, CellData, CellValidation, SelectionBounds, ROWS, COLS, DEFAULT_COL_WIDTH, DEFAULT_ROW_HEIGHT, ROW_HEADER_WIDTH, COL_HEADER_HEIGHT, PRESET_COLORS, FONTS, TAB_COLORS } from "./types"
 import { evaluateFormula, indexToCol, colToIndex } from "@/lib/sheets/formula"
-import { fetchAndParseDocument } from '@/lib/file-parsers'
+import { fetchAndParseDocument, parseSpreadsheetBuffer } from '@/lib/file-parsers'
+import type { SpreadsheetParseResult } from '@/lib/file-parsers'
 import ExcelJS from 'exceljs'
 import { EditorMenu, MenuGroup, MenuItem } from '@/components/editor/editor-menu'
 import { GenericFeatureModal } from '@/components/editor/generic-feature-modal'
@@ -465,7 +466,7 @@ function FilterDialog({ col, data, onApply, onClose }: {
 // ============================================================
 // MAIN SPREADSHEET COMPONENT
 // ============================================================// MAIN SPREADSHEET COMPONENT
-export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'document.xlsx', initialData }: { documentId?: string, documentName?: string, initialData?: any }) {
+export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'document.xlsx', initialData, initialColWidths, initialRowHeights }: { documentId?: string, documentName?: string, initialData?: any, initialColWidths?: Record<number, number>, initialRowHeights?: Record<number, number> }) {
     const {
         data, setCell, setCellStyle, setCellFull, setCellComment, setCellValidation,
         deleteCell, deleteCellRange, getCellRange, setCellRange,
@@ -507,8 +508,8 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
     const [showChartPicker, setShowChartPicker] = useState(false)
 
     // Column/Row resize
-    const [colWidths, setColWidths] = useState<Record<number, number>>({})
-    const [rowHeights, setRowHeights] = useState<Record<number, number>>({})
+    const [colWidths, setColWidths] = useState<Record<number, number>>(initialColWidths ?? {})
+    const [rowHeights, setRowHeights] = useState<Record<number, number>>(initialRowHeights ?? {})
     const resizeRef = useRef<{ type: 'col' | 'row', index: number, startPos: number, startSize: number } | null>(null)
 
     // Context menu
@@ -1095,40 +1096,50 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         setAutocompleteSuggestions([])
     }, [editValue, activeCell, setCell])
 
-    // ---- File Import (CSV/XLSX) ----
+    // ---- File Import (CSV/XLSX) — preserves formulas, styles, merges, comments, validation ----
     const importFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
         try {
             const arrayBuffer = await file.arrayBuffer();
-            const workbook = new ExcelJS.Workbook();
             const ext = file.name.split('.').pop()?.toLowerCase() || '';
-            if (ext === 'csv' || ext === 'tsv' || ext === 'txt') {
-                await workbook.csv.read(new Blob([arrayBuffer]).stream() as any);
-            } else {
-                await workbook.xlsx.load(arrayBuffer);
-            }
-            const firstSheet = workbook.worksheets[0];
-            if (!firstSheet) { toast.error("Aucune feuille trouvée"); return; }
+            const result = await parseSpreadsheetBuffer(arrayBuffer, ext);
+
+            const sheetNames = result.sheets;
+            if (sheetNames.length === 0) { toast.error("Aucune feuille trouvée"); return; }
+
+            const firstSheetName = sheetNames[0];
+            const cellsMap = result.data[firstSheetName];
+            if (!cellsMap) { toast.error("Aucune donnée trouvée"); return; }
 
             let count = 0;
-            firstSheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-                if (rowNumber - 1 >= ROWS) return;
-                row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
-                    if (colNumber - 1 >= COLS) return;
-                    const val = cell.value;
-                    if (val !== undefined && val !== null && val !== "") {
-                        setCell(rowNumber - 1, colNumber - 1, String(val));
-                        count++;
-                    }
-                });
+            transact(() => {
+                for (const [key, cellData] of Object.entries(cellsMap)) {
+                    const [rStr, cStr] = key.split(',');
+                    const r = parseInt(rStr, 10);
+                    const c = parseInt(cStr, 10);
+                    if (r >= ROWS || c >= COLS) continue;
+                    setCellFull(r, c, cellData);
+                    count++;
+                }
             });
+
+            // Apply column widths if available
+            if (result.colWidths?.[firstSheetName]) {
+                setColWidths(prev => ({ ...prev, ...result.colWidths![firstSheetName] }));
+            }
+
+            // Apply row heights if available
+            if (result.rowHeights?.[firstSheetName]) {
+                setRowHeights(prev => ({ ...prev, ...result.rowHeights![firstSheetName] }));
+            }
+
             toast.success(`${count} cellules importées de ${file.name}`);
         } catch(err) {
             toast.error("Format de fichier invalide");
         }
         e.target.value = ''
-    }, [setCell])
+    }, [setCellFull, transact, setColWidths, setRowHeights])
 
     // ---- File Export (CSV/XLSX) ----
     const exportXLSX = useCallback(async (type: 'xlsx' | 'csv') => {
