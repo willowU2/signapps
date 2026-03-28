@@ -13,6 +13,7 @@ import {
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
+import { ChangelogDialog } from '@/components/onboarding/ChangelogDialog';
 
 // SSR-safe mounted check without setState-in-effect
 const subscribe = () => () => {};
@@ -88,6 +89,7 @@ export function Header() {
 
       {/* Right: actions */}
       <div className="flex items-center gap-1 min-w-[240px] justify-end">
+        <ChangelogDialog />
         <NotificationPopover />
 
         <Button

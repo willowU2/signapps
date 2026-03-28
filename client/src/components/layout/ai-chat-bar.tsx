@@ -37,6 +37,7 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { useAiConversations, Conversation } from '@/hooks/use-ai-conversations';
+import { useUIStore } from '@/lib/store';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -561,8 +562,15 @@ export function AiChatBar() {
   // ── Media generation mode icon ──
   const MediaIcon = MEDIA_MODE_LABELS[mediaGenMode].icon;
 
+  const { sidebarCollapsed, rightSidebarOpen } = useUIStore();
+
   return (
-    <div className="fixed bottom-6 left-1/2 z-50 w-full max-w-2xl -translate-x-1/2 px-4">
+    <div className={cn(
+      "fixed bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none transition-all duration-200",
+      sidebarCollapsed ? "md:pl-16" : "md:pl-64",
+      rightSidebarOpen ? "md:pr-[24rem]" : "md:pr-16"
+    )}>
+      <div className="w-full max-w-2xl px-4 pointer-events-auto flex flex-col">
       {/* Suggestions (only when collapsed and focused) */}
       {focused && !expanded && (
         <div className="mb-3 rounded-lg border border-border bg-card p-3 shadow-xl">
@@ -941,6 +949,7 @@ export function AiChatBar() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }

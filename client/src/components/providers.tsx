@@ -20,7 +20,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { GlobalModals } from '@/components/global-modals';
 import { GlobalHooks } from '@/components/global-hooks';
 import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
-import { ChangelogDialog } from '@/components/onboarding/ChangelogDialog';
 import { RouteProgressBar } from '@/components/layout/route-progress-bar';
 import { PasswordExpiryBanner } from '@/components/auth/password-expiry-banner';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
@@ -99,7 +98,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <GlobalModals />
                     <GlobalHooks />
                     <OnboardingWizard />
-                    <ChangelogDialog />
                   </PermissionsProvider>
                 </PreferencesProvider>
               </TenantProvider>

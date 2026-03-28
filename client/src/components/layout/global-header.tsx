@@ -31,6 +31,7 @@ import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
+import { ChangelogDialog } from '@/components/onboarding/ChangelogDialog';
 import { RecentHistory } from '@/components/recent-history';
 import { NotificationBadge } from '@/components/notifications/notification-badge';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -449,6 +450,7 @@ export function GlobalHeader() {
 
                 {!showDocActions && (
                     <div className="mr-2 flex items-center gap-2">
+                        <ChangelogDialog />
                         <RecentHistory />
                         <NotificationPopover />
                     </div>
