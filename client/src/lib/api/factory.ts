@@ -125,6 +125,31 @@ const clientCache = new Map<ServiceName, AxiosInstance>();
 
 let refreshPromise: Promise<void> | null = null;
 
+/**
+ * Non-critical API paths that should NOT trigger error toasts or login redirects
+ * on 401/403. These endpoints are called on initial page load and may fail
+ * legitimately when the backend hasn't been set up yet.
+ */
+const SILENT_AUTH_PATHS = [
+  '/users/me/profile',
+  '/users/me/history',
+  '/users/me/preferences',
+  '/activities',
+  '/workspaces/mine',
+  '/workspaces',
+  '/links',
+  '/audit',
+  '/notifications',
+];
+
+/**
+ * Check if a request URL matches a non-critical path that should be silenced on auth errors
+ */
+function isSilentAuthPath(url?: string): boolean {
+  if (!url) return false;
+  return SILENT_AUTH_PATHS.some(path => url.includes(path));
+}
+
 function addAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
   // Cookies are automatically sent via withCredentials: true
   // Add workspace context header
@@ -139,8 +164,20 @@ function addAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequest
 
 async function handleAuthError(error: AxiosError, client: AxiosInstance): Promise<any> {
   const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+  const status = error.response?.status;
+  const requestUrl = originalRequest?.url || '';
 
-  if (error.response?.status === 401 && !originalRequest._retry) {
+  // For non-critical paths, silently reject 401/403 without redirect or retry
+  if ((status === 401 || status === 403) && isSilentAuthPath(requestUrl)) {
+    return Promise.reject(error);
+  }
+
+  // For 403 errors on any path, reject without redirect (user is authenticated but lacks permission)
+  if (status === 403) {
+    return Promise.reject(error);
+  }
+
+  if (status === 401 && !originalRequest._retry) {
     originalRequest._retry = true;
 
     if (typeof window !== 'undefined') {
@@ -160,6 +197,10 @@ async function handleAuthError(error: AxiosError, client: AxiosInstance): Promis
         // Retry original request (the cookie is now updated)
         return client(originalRequest);
       } catch (refreshError) {
+        // Don't redirect for non-critical paths even on refresh failure
+        if (isSilentAuthPath(requestUrl)) {
+          return Promise.reject(refreshError);
+        }
         clearAuthAndRedirect();
         return Promise.reject(refreshError);
       }

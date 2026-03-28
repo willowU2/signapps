@@ -83,8 +83,8 @@ export function SalesForecast({ deals }: Props) {
                   tickFormatter={formatEur}
                 />
                 <Tooltip
-                  formatter={(value: number, name: string) => [
-                    new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value),
+                  formatter={(value, name) => [
+                    new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(Number(value)),
                     name === "weighted" ? "Pondéré" : "Best case"
                   ]}
                 />

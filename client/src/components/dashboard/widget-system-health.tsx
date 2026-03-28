@@ -64,7 +64,7 @@ export function WidgetSystemHealth() {
               >
                 <span className="text-sm">{service.name}</span>
                 <div className="flex items-center gap-1">
-                  <div className={`h-2 w-2 rounded-full ${service.status === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <div className={`h-2 w-2 rounded-full ${service.status === 'online' ? 'bg-green-500' : 'bg-muted-foreground/40'}`} />
                   <span className="text-xs text-muted-foreground">:{service.port}</span>
                 </div>
               </div>

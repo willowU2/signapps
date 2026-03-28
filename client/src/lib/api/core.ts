@@ -41,13 +41,33 @@ export function createApiClient(baseURL: string): AxiosInstance {
         return config;
     });
 
+    // Non-critical paths that should silently fail on 401/403
+    const SILENT_PATHS = [
+        '/users/me/profile', '/users/me/history', '/users/me/preferences',
+        '/activities', '/workspaces/mine', '/workspaces', '/links',
+        '/audit', '/notifications',
+    ];
+    const isSilentPath = (url?: string) => url ? SILENT_PATHS.some(p => url.includes(p)) : false;
+
     // Response interceptor for token refresh
     client.interceptors.response.use(
         (response) => response,
         async (error) => {
             const originalRequest = error.config;
+            const status = error.response?.status;
+            const requestUrl = originalRequest?.url || '';
 
-            if (error.response?.status === 401 && !originalRequest._retry) {
+            // Silently reject non-critical paths on 401/403
+            if ((status === 401 || status === 403) && isSilentPath(requestUrl)) {
+                return Promise.reject(error);
+            }
+
+            // 403 = authenticated but forbidden, don't redirect
+            if (status === 403) {
+                return Promise.reject(error);
+            }
+
+            if (status === 401 && !originalRequest._retry) {
                 originalRequest._retry = true;
 
                 if (typeof window !== 'undefined') {
@@ -56,10 +76,13 @@ export function createApiClient(baseURL: string): AxiosInstance {
                         await axios.post(`${IDENTITY_URL}/auth/refresh`, null, {
                             withCredentials: true,
                         });
-                        
+
                         // Retry original request (the cookie is now updated)
                         return client(originalRequest);
                     } catch (refreshError) {
+                        if (isSilentPath(requestUrl)) {
+                            return Promise.reject(refreshError);
+                        }
                         localStorage.removeItem('auth-storage');
                         if (!window.location.pathname.startsWith('/login')) {
                             window.location.href = '/login';

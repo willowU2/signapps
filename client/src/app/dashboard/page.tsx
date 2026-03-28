@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,17 +12,16 @@ import { useDashboardEditMode, useDashboardEditActions } from '@/stores/dashboar
 import { WidgetGrid } from '@/components/dashboard/widget-grid';
 import { AddWidgetSheet } from '@/components/dashboard/add-widget-sheet';
 import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
-import { ActivityFeed } from '@/components/crosslinks/ActivityFeed';
+import { GlobalActivityFeed } from '@/components/crosslinks/GlobalActivityFeed';
+import { FeatureDiscoveryChecklist } from '@/components/onboarding/FeatureDiscoveryChecklist';
 import { ActivityHeatmap } from '@/components/activity-heatmap';
-import { toast } from 'sonner';
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
-  const { isLoading: loading, isFetching: refreshing, isError } = useDashboardData();
+  const { isLoading: loading, isFetching: refreshing } = useDashboardData();
 
-  useEffect(() => {
-    if (isError) toast.error('Failed to load dashboard data');
-  }, [isError]);
+  // Silently handle dashboard data errors - services may not all be running
+  // No toast needed: individual widgets handle their own error states
   // Granular selectors for optimized re-renders
   const editMode = useDashboardEditMode();
   const { setEditMode, resetLayout } = useDashboardEditActions();
@@ -97,10 +96,12 @@ export default function DashboardPage() {
 
         <WidgetGrid />
 
+        <FeatureDiscoveryChecklist />
+
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-6">
           <div className="xl:col-span-2 border rounded-xl p-4 bg-card">
-            <h2 className="text-base font-semibold mb-3">Activité récente</h2>
-            <ActivityFeed limit={20} />
+            <h2 className="text-base font-semibold mb-3">Activité globale</h2>
+            <GlobalActivityFeed limit={20} />
           </div>
           <div className="border rounded-xl p-4 bg-card">
             <h2 className="text-base font-semibold mb-3">Heatmap d'activité</h2>

@@ -50,14 +50,20 @@ export const useEntityStore = create<EntityState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await workspacesApi.mine();
-      const data = response.data; 
+      const data = response.data;
       set((state) => ({
         workspaces: data,
         selectedWorkspaceId: state.selectedWorkspaceId || (data.length > 0 ? data[0].id : null),
         isLoading: false
       }));
     } catch (error: any) {
-      set({ error: error.message || 'Failed to fetch workspaces', isLoading: false });
+      // Silently handle 401/403 - user may not have workspace access yet
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        set({ workspaces: [], isLoading: false });
+      } else {
+        set({ error: error.message || 'Failed to fetch workspaces', isLoading: false });
+      }
     }
   },
 
