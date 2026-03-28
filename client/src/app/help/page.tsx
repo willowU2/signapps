@@ -268,7 +268,7 @@ export default function HelpPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-8 max-w-5xl">
+      <div className="space-y-8 w-full">
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="p-3 bg-blue-500/10 rounded-xl">

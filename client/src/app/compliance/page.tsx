@@ -17,7 +17,7 @@ import { RegulatoryCalendar } from "@/components/compliance/regulatory-calendar"
 export default function CompliancePage() {
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto space-y-6 p-6">
+      <div className="w-full space-y-6 p-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6 text-blue-500" /> Compliance & Legal

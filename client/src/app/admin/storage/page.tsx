@@ -12,7 +12,7 @@ export default function AdminStorageSettingsPage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6 p-6 pb-24 max-w-7xl mx-auto w-full">
+      <div className="flex flex-col gap-6 pb-24 w-full">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Storage & Indexing</h1>
           <p className="text-muted-foreground">

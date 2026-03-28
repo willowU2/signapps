@@ -12,7 +12,7 @@ export default function DocumentsPage() {
 
     return (
         <div className="flex-1 overflow-auto">
-            <div className="max-w-5xl mx-auto p-6 space-y-6">
+            <div className="w-full p-6 space-y-6">
                 {/* Header */}
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">

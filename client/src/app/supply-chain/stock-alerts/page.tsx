@@ -105,7 +105,7 @@ export default function StockAlertsPage() {
         </div>
 
         {/* Alert summary */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { type: 'out', count: alerts.filter(a => a.type === 'out').length },
             { type: 'low', count: alerts.filter(a => a.type === 'low').length },

@@ -12,7 +12,7 @@ import { Zap } from 'lucide-react';
 export default function GamificationPage() {
   return (
     <AppLayout>
-      <div className="container max-w-4xl py-6 space-y-6">
+      <div className="w-full py-6 space-y-6">
         <div className="flex items-center gap-3">
           <Zap className="w-6 h-6 text-yellow-500" />
           <div>

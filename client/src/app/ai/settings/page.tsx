@@ -79,7 +79,7 @@ export default function AiSettingsPage() {
   const recs = selectedProfile?.recommendations || [];
 
   return (
-    <div className="container max-w-5xl py-6 space-y-6">
+    <div className="w-full py-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">AI Settings</h1>
         <p className="text-muted-foreground">

@@ -12,7 +12,7 @@ import { Code, Activity, Wifi, Server, Database, RefreshCw } from 'lucide-react'
 export default function DeveloperToolsPage() {
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="w-full space-y-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Code className="h-6 w-6 text-primary" />

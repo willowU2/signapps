@@ -200,7 +200,7 @@ export default function CalendarSettingsPage() {
   }, [loadConnections]);
 
   return (
-    <div className="container mx-auto py-10 max-w-4xl">
+    <div className="w-full py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Paramètres du calendrier</h1>
         <p className="text-muted-foreground mt-2">

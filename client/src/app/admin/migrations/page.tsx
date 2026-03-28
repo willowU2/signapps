@@ -65,7 +65,7 @@ export default function MigrationStatusPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Database className="h-8 w-8 text-primary" />
@@ -81,7 +81,7 @@ export default function MigrationStatusPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-4 text-center">
               <p className="text-3xl font-bold text-green-600">{totalApplied}</p>

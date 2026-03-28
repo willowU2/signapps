@@ -13,7 +13,7 @@ import { CreditCard, Award, Tag, Shield, FileText, Mail } from 'lucide-react';
 export default function PrintPage() {
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="w-full space-y-4">
         <div>
           <h1 className="text-2xl font-bold">Print & Physical</h1>
           <p className="text-sm text-muted-foreground mt-1">

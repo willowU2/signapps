@@ -12,7 +12,7 @@ export default function AdminTenantPage() {
         </p>
       </div>
     }>
-      <div className="container max-w-4xl py-6">
+      <div className="w-full py-6">
         <TenantSettingsPage />
       </div>
     </AdminOnly>

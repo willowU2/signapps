@@ -7,7 +7,7 @@ import { BarChart2 } from 'lucide-react';
 export default function ReportsPage() {
   return (
     <AppLayout>
-      <div className="container max-w-5xl py-6 space-y-6">
+      <div className="w-full py-6 space-y-6">
         <div className="flex items-center gap-3">
           <BarChart2 className="w-6 h-6 text-primary" />
           <div>

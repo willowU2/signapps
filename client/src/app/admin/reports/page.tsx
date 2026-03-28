@@ -516,7 +516,7 @@ function SecurityReportTab() {
               <CardTitle className="text-base">Vulnerabilites par severite</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="text-center p-3 rounded-lg bg-red-500/10">
                   <p className="text-2xl font-bold text-red-600">{report.vulnerabilities.critical}</p>
                   <p className="text-xs text-muted-foreground">Critique</p>

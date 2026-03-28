@@ -6,7 +6,7 @@ import { PreferencesPage } from "@/lib/preferences";
 export default function SettingsPreferencesPage() {
   return (
     <AppLayout>
-      <div className="max-w-4xl py-2">
+      <div className="w-full py-2">
         <PreferencesPage />
       </div>
     </AppLayout>

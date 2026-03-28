@@ -356,7 +356,7 @@ export default function FormBuilderPage() {
 
     return (
         <AppLayout>
-            <div className="flex-1 space-y-6 max-w-5xl mx-auto p-4 md:p-8">
+            <div className="flex-1 space-y-6 w-full p-4 md:p-8">
 
                 {/* Header Navbar */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-4 rounded-xl border shadow-sm">

@@ -225,6 +225,19 @@
   .fade-in {
     animation: fadeIn 0.2s ease-in;
   }
+
+  /* ── Responsive layout helpers ── */
+  .page-container {
+    @apply w-full;
+  }
+
+  .table-responsive {
+    @apply w-full overflow-x-auto;
+  }
+
+  .card-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+  }
 }
 
 @keyframes fadeIn {

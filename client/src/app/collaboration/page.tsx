@@ -11,7 +11,7 @@ import { GitBranch, Layers, BookOpen, FileText } from 'lucide-react';
 export default function CollaborationPage() {
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="w-full space-y-4">
         <div>
           <h1 className="text-2xl font-bold">Collaboration</h1>
           <p className="text-sm text-muted-foreground mt-1">

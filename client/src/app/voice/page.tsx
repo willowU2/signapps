@@ -13,7 +13,7 @@ import { FileText, Mic, Zap, Rss, FileAudio, Edit3 } from 'lucide-react';
 export default function VoicePage() {
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto space-y-4">
+      <div className="w-full space-y-4">
         <div>
           <h1 className="text-2xl font-bold">Voice & Audio</h1>
           <p className="text-sm text-muted-foreground mt-1">

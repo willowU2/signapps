@@ -13,7 +13,7 @@ import { VisionAnalyzer } from '@/components/ai/vision-analyzer';
 
 export default function StudioPage() {
   return (
-    <div className="container max-w-6xl py-6 space-y-6">
+    <div className="w-full py-6 space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Media Studio</h1>

@@ -36,7 +36,7 @@ export default function MailAdvancedPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto space-y-6 p-6">
+      <div className="w-full space-y-6 p-6">
         <div>
           <h1 className="text-2xl font-bold">Advanced Mail</h1>
           <p className="text-sm text-muted-foreground mt-1">

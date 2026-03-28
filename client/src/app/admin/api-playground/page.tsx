@@ -96,7 +96,7 @@ export default function ApiPlaygroundPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="w-full space-y-4">
         <div>
           <h1 className="text-2xl font-bold">API Playground</h1>
           <p className="text-sm text-muted-foreground mt-1">Test SignApps microservices with authentication support</p>

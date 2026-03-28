@@ -57,7 +57,7 @@ export function Header() {
   return (
     <header className="h-16 flex shrink-0 items-center justify-between px-4 bg-card dark:bg-background border-b border-border z-50">
       {/* Left: hamburger + logo */}
-      <div className="flex items-center gap-4 min-w-[240px]">
+      <div className="flex items-center gap-2 md:gap-4 md:min-w-[240px]">
         <Button
           variant="ghost"
           size="icon"
@@ -92,14 +92,14 @@ export function Header() {
       <div className="flex-1" />
 
       {/* Right: actions */}
-      <div className="flex items-center gap-1 min-w-[240px] justify-end">
-        <ChangelogDialog />
+      <div className="flex items-center gap-1 md:min-w-[240px] justify-end">
+        <span className="hidden md:inline-flex"><ChangelogDialog /></span>
         <NotificationPopover />
 
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full text-muted-foreground"
+          className="hidden md:inline-flex rounded-full text-muted-foreground"
           onClick={() => router.push('/settings')}
           title="Help"
         >
@@ -109,7 +109,7 @@ export function Header() {
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full text-muted-foreground"
+          className="hidden md:inline-flex rounded-full text-muted-foreground"
           onClick={() => router.push('/settings')}
           title="Settings"
         >
@@ -133,7 +133,7 @@ export function Header() {
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full text-muted-foreground mr-2"
+          className="hidden md:inline-flex rounded-full text-muted-foreground mr-2"
           title="Apps"
         >
           <LayoutGrid className="h-5 w-5" />

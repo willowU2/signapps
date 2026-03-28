@@ -10,7 +10,7 @@ function ComposeContent() {
   const initialContent = searchParams.get('content') ?? '';
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="w-full">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Compose Post</h1>
         <p className="text-muted-foreground text-sm mt-1">Create and publish to your connected social accounts</p>
