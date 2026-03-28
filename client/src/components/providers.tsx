@@ -23,6 +23,8 @@ import { GlobalModals } from '@/components/global-modals';
 import { GlobalHooks } from '@/components/global-hooks';
 import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
 import { ChangelogDialog } from '@/components/onboarding/ChangelogDialog';
+import { RouteProgressBar } from '@/components/layout/route-progress-bar';
+import { PasswordExpiryBanner } from '@/components/auth/password-expiry-banner';
 
 function LoadingFallback() {
   return (
@@ -86,6 +88,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
               <TenantProvider>
                 <PreferencesProvider>
                   <PermissionsProvider>
+                    <RouteProgressBar />
+                    {!pathname?.startsWith('/login') && <PasswordExpiryBanner />}
                     {children}
                     {!pathname?.startsWith('/login') && (
                       <>

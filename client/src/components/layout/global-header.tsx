@@ -23,10 +23,13 @@ import { Input } from '@/components/ui/input';
 import {
     LogOut, User as UserIcon, Settings, PanelLeft, PanelRight,
     Share2, MessageSquare, History, HardDrive, Mail, CheckSquare,
-    Video, Activity, Route, Calendar, Shield, Users, MessageCircle, Search, SlidersHorizontal, FileText
+    Video, Activity, Route, Calendar, Shield, Users, MessageCircle, Search, SlidersHorizontal, FileText,
+    Clock
 } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
 import { RecentHistory } from '@/components/recent-history';
 import { NotificationBadge } from '@/components/notifications/notification-badge';
@@ -494,6 +497,12 @@ export function GlobalHeader() {
                                 <span className="text-xs font-normal text-muted-foreground">
                                     {user?.email}
                                 </span>
+                                {user?.last_login && (
+                                    <span className="text-xs font-normal text-muted-foreground flex items-center gap-1 mt-1">
+                                        <Clock className="h-3 w-3" />
+                                        Derniere connexion : {formatDistanceToNow(new Date(user.last_login), { addSuffix: true, locale: fr })}
+                                    </span>
+                                )}
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />

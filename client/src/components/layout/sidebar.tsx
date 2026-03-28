@@ -26,6 +26,8 @@ import {
   MessageSquare,
   Route,
   X,
+  Mail,
+  CheckSquare,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -53,6 +55,9 @@ const quickActions = [
 // ── Nav items with optional badge keys ──
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord', color: '', badgeKey: null },
+  { href: '/mail', icon: Mail, label: 'Mail', color: 'text-blue-500', badgeKey: 'mail' as const },
+  { href: '/chat', icon: MessageSquare, label: 'Chat', color: 'text-primary', badgeKey: 'chat' as const },
+  { href: '/tasks', icon: CheckSquare, label: 'Taches', color: 'text-green-500', badgeKey: 'tasks' as const },
   { href: '/containers', icon: Container, label: 'Containers', color: 'text-crm', badgeKey: 'containers' as const },
   { href: '/apps', icon: Store, label: 'App Store', color: 'text-inventory', badgeKey: null },
   { href: '/storage', icon: HardDrive, label: 'Drive', color: 'text-muted-foreground', badgeKey: 'storage' as const },
@@ -178,9 +183,15 @@ export function Sidebar() {
                   <>
                     <span className="flex-1">{item.label}</span>
                     {badgeValue !== undefined && badgeValue > 0 && (
-                      <span className="ml-auto text-xs font-semibold text-muted-foreground">
-                        {badgeValue}
-                      </span>
+                      (item.badgeKey === 'mail' || item.badgeKey === 'chat' || item.badgeKey === 'tasks') ? (
+                        <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                          {badgeValue > 99 ? '99+' : badgeValue}
+                        </span>
+                      ) : (
+                        <span className="ml-auto text-xs font-semibold text-muted-foreground">
+                          {badgeValue}
+                        </span>
+                      )
                     )}
                   </>
                 )}
