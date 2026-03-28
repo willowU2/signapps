@@ -34,10 +34,12 @@ export function TasksWidget() {
     const [dueDate, setDueDate] = useState<string>("");
     const dateInputRef = useRef<HTMLInputElement>(null);
 
-    const selectedList = lists.find(l => l.id === selectedListId) || lists[0];
+    const safeLists = lists || [];
+    const safeTasks = tasks || [];
+    const selectedList = safeLists.find(l => l.id === selectedListId) || safeLists[0];
     const filteredTasks = selectedListId
-        ? tasks.filter(t => t.listId === selectedListId)
-        : tasks;
+        ? safeTasks.filter(t => t.listId === selectedListId)
+        : safeTasks;
 
     const pendingTasks = filteredTasks.filter(t => !t.done);
     const completedTasks = filteredTasks.filter(t => t.done);

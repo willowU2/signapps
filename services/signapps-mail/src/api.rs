@@ -149,8 +149,10 @@ pub struct CreateAccountRequest {
     pub provider: String,
     pub imap_server: Option<String>,
     pub imap_port: Option<i32>,
+    pub imap_use_tls: Option<bool>,
     pub smtp_server: Option<String>,
     pub smtp_port: Option<i32>,
+    pub smtp_use_tls: Option<bool>,
     pub app_password: Option<String>,
 }
 
@@ -159,8 +161,10 @@ pub struct UpdateAccountRequest {
     pub display_name: Option<String>,
     pub imap_server: Option<String>,
     pub imap_port: Option<i32>,
+    pub imap_use_tls: Option<bool>,
     pub smtp_server: Option<String>,
     pub smtp_port: Option<i32>,
+    pub smtp_use_tls: Option<bool>,
     pub app_password: Option<String>,
     pub signature_html: Option<String>,
     pub signature_text: Option<String>,
@@ -425,15 +429,21 @@ async fn test_smtp_connection(account: &MailAccount) -> (bool, Option<String>) {
     let Some(ref smtp_server) = account.smtp_server else {
         return (false, Some("SMTP server not configured".to_string()));
     };
-    let Some(ref password) = account.app_password else {
-        return (false, Some("App password not set".to_string()));
-    };
+    let smtp_port = account.smtp_port.unwrap_or(587) as u16;
+    let use_tls = account.smtp_use_tls.unwrap_or(true);
 
-    let creds = Credentials::new(account.email_address.clone(), password.clone());
-
-    let mailer_result: Result<AsyncSmtpTransport<Tokio1Executor>, _> =
+    let mailer_result: Result<AsyncSmtpTransport<Tokio1Executor>, _> = if use_tls {
+        let Some(ref password) = account.app_password else {
+            return (false, Some("App password not set".to_string()));
+        };
+        let creds = Credentials::new(account.email_address.clone(), password.clone());
         AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)
-            .map(|builder| builder.credentials(creds).build());
+            .map(|builder| builder.credentials(creds).port(smtp_port).build())
+    } else {
+        Ok(AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(smtp_server)
+            .port(smtp_port)
+            .build())
+    };
 
     match mailer_result {
         Ok(mailer) => match mailer.test_connection().await {
@@ -810,10 +820,6 @@ async fn send_via_smtp(
         .smtp_server
         .as_ref()
         .ok_or("SMTP server not configured")?;
-    let password = account
-        .app_password
-        .as_ref()
-        .ok_or("App password not set")?;
 
     let from: Mailbox = account.email_address.parse()?;
     let to: Mailbox = payload.recipient.parse()?;
@@ -845,11 +851,29 @@ async fn send_via_smtp(
         message_builder.body(text)?
     };
 
-    let creds = Credentials::new(account.email_address.clone(), password.clone());
+    let smtp_port = account.smtp_port.unwrap_or(587) as u16;
+    let use_tls = account.smtp_use_tls.unwrap_or(true);
 
-    let mailer = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)?
-        .credentials(creds)
-        .build();
+    let mailer = if use_tls {
+        // TLS mode with authentication
+        let password = account.app_password.as_ref().ok_or("App password not set")?;
+        let creds = Credentials::new(account.email_address.clone(), password.clone());
+        AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)?
+            .credentials(creds)
+            .port(smtp_port)
+            .build()
+    } else {
+        // Plain mode (no TLS, optional auth) — for local/test servers like Mailpit
+        let mut builder = AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(smtp_server)
+            .port(smtp_port);
+        if let Some(ref password) = account.app_password {
+            if !password.is_empty() {
+                let creds = Credentials::new(account.email_address.clone(), password.clone());
+                builder = builder.credentials(creds);
+            }
+        }
+        builder.build()
+    };
 
     mailer.send(email).await?;
 

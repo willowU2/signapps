@@ -36,9 +36,14 @@ export function RightSidebar() {
   const router = useRouter();
   const { rightSidebarOpen, activeRightWidget, setRightSidebarOpen, setActiveRightWidget } = useUIStore();
   const [mounted, setMounted] = useState(false);
-  const [panelMode, setPanelMode] = useState<"widget" | "apps">("apps");
+  const [panelMode, setPanelMode] = useState<"widget" | "apps">("widget");
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Force panel closed on first mount to reset any stale localStorage state
+  useEffect(() => {
+    setRightSidebarOpen(false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isOpen = mounted ? rightSidebarOpen : false;
 
