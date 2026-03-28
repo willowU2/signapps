@@ -217,6 +217,19 @@ async fn list_channels(State(state): State<AppState>) -> impl IntoResponse {
     Json(channels)
 }
 
+async fn get_channel(State(state): State<AppState>, Path(id): Path<Uuid>) -> impl IntoResponse {
+    match state.channels.get(&id) {
+        Some(channel) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(channel.clone()).unwrap_or_default()),
+        ),
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Channel not found" })),
+        ),
+    }
+}
+
 async fn create_channel(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -236,6 +249,54 @@ async fn create_channel(
     state.messages.insert(channel.id, Vec::new());
     tracing::info!(id = %channel.id, name = %channel.name, "Channel created");
     (StatusCode::CREATED, Json(channel))
+}
+
+async fn update_channel(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<CreateChannelRequest>,
+) -> impl IntoResponse {
+    match state.channels.get_mut(&id) {
+        Some(mut channel) => {
+            channel.name = payload.name;
+            if let Some(topic) = payload.topic {
+                channel.topic = Some(topic);
+            }
+            if let Some(is_private) = payload.is_private {
+                channel.is_private = is_private;
+            }
+            channel.updated_at = Utc::now().to_rfc3339();
+            let updated = channel.clone();
+            tracing::info!(id = %id, "Channel updated");
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(updated).unwrap_or_default()),
+            )
+        },
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Channel not found" })),
+        ),
+    }
+}
+
+async fn delete_channel(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    match state.channels.remove(&id) {
+        Some(_) => {
+            state.messages.remove(&id);
+            tracing::info!(id = %id, "Channel deleted");
+            (StatusCode::NO_CONTENT, Json(serde_json::json!({})))
+        },
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Channel not found" })),
+        ),
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -870,6 +931,10 @@ fn create_router(state: AppState) -> Router {
     let protected_routes = Router::new()
         // Channels
         .route("/api/v1/channels", get(list_channels).post(create_channel))
+        .route(
+            "/api/v1/channels/:id",
+            get(get_channel).put(update_channel).delete(delete_channel),
+        )
         // Messages
         .route("/api/v1/channels/:id/messages", get(list_messages).post(send_message))
         // File upload per channel

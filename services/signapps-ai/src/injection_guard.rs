@@ -83,7 +83,10 @@ mod tests {
 
     #[test]
     fn test_clean_input() {
-        assert!(matches!(check_injection("What is the weather today?"), InjectionResult::Clean));
+        assert!(matches!(
+            check_injection("What is the weather today?"),
+            InjectionResult::Clean
+        ));
     }
 
     #[test]

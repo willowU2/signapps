@@ -220,14 +220,14 @@ export default function AppsPage() {
           <div>
             <h1 className="text-3xl font-bold">App Store</h1>
             <p className="text-sm text-muted-foreground">
-              {filteredApps.length} apps
+              {filteredApps.length} application{filteredApps.length !== 1 ? 's' : ''}
               {totalPages > 1 && ` (page ${page}/${totalPages})`}
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="default" onClick={() => setCustomAppOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Custom App
+              Ajouter une app
             </Button>
             <Button variant="outline" onClick={() => setSourcesOpen(true)}>
               <Settings2 className="mr-2 h-4 w-4" />
@@ -235,7 +235,7 @@ export default function AppsPage() {
             </Button>
             <Button variant="outline" onClick={handleRefreshAll} disabled={refreshing}>
               <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
+              Actualiser
             </Button>
           </div>
         </div>

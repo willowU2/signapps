@@ -107,7 +107,7 @@ pub async fn suggest_meeting_times(
 
     let busy: Vec<(DateTime<Utc>, DateTime<Utc>, Uuid)> = rows
         .into_iter()
-        .filter_map(|r| r.user_id.map(|uid| (r.start_time, r.end_time, uid)))
+        .map(|r| (r.start_time, r.end_time, r.user_id))
         .collect();
 
     // Enumerate candidate slots (step = duration / 2, clamped to 15 min min)

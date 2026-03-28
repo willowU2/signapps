@@ -417,7 +417,7 @@ export default function ContactsPage() {
               <form onSubmit={handleSave} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-1">
                   <Label htmlFor="c-name">Nom *</Label>
-                  <Input id="c-name" required placeholder="Alice Martin" value={form.name ?? ""} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                  <Input id="c-name" required autoFocus placeholder="Alice Martin" value={form.name ?? ""} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="c-email">Email *</Label>

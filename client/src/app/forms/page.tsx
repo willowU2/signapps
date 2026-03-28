@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import {
@@ -60,7 +61,7 @@ export default function FormsPage() {
     const [copiedId, setCopiedId] = useState<string | null>(null)
     const [deleteFormId, setDeleteFormId] = useState<string | null>(null)
 
-    const { data: forms = [] } = useQuery<Form[]>({
+    const { data: forms = [], isLoading: formsLoading } = useQuery<Form[]>({
         queryKey: ['forms'],
         queryFn: async () => {
             const res = await formsApi.list()
@@ -222,7 +223,21 @@ export default function FormsPage() {
                     </TabsList>
 
                     <TabsContent value="forms" className="mt-4">
-                        {forms.length === 0 ? (
+                        {formsLoading ? (
+                            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <Card key={i} className="border-border/50 bg-card overflow-hidden">
+                                        <CardHeader className="pb-2">
+                                            <Skeleton className="h-5 w-3/4" />
+                                            <Skeleton className="h-3 w-full mt-2" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <Skeleton className="h-8 w-full" />
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : forms.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3">
                                 <FileX className="h-12 w-12 opacity-30" />
                                 <p className="text-sm">Aucun formulaire. Créez-en un !</p>
@@ -323,7 +338,7 @@ export default function FormsPage() {
                     <div className="space-y-4 py-2">
                         <div className="space-y-1">
                             <Label htmlFor="form-title">Titre</Label>
-                            <Input id="form-title" placeholder="Mon formulaire..." value={newTitle} onChange={e => setNewTitle(e.target.value)} />
+                            <Input id="form-title" placeholder="Mon formulaire..." value={newTitle} onChange={e => setNewTitle(e.target.value)} autoFocus />
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="form-desc">Description</Label>

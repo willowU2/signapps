@@ -124,7 +124,11 @@ pub async fn chat(
             payload.model.as_deref(),
             payload.language.as_deref(),
             payload.system_prompt.as_deref(),
-            payload.collection.as_ref().map(|c| vec![c.clone()]).as_deref(),
+            payload
+                .collection
+                .as_ref()
+                .map(|c| vec![c.clone()])
+                .as_deref(),
             None,
         )
         .await?;

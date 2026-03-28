@@ -43,8 +43,8 @@ export default function AnalyticsPage() {
     return (
       <AppLayout>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold tracking-tight mb-2 text-foreground">Analytics</h1>
-          <p className="text-muted-foreground mb-8">Loading your metrics...</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Analytics</h1>
+          <p className="text-muted-foreground mt-1">Chargement de vos métriques...</p>
           <CardGridSkeleton count={4} />
           <Skeleton className="h-64 w-full rounded-2xl mt-4" />
         </div>

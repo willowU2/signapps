@@ -23,6 +23,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, MapPin, Users, Clock, CalendarPlus, ExternalLink } from "lucide-react"
 import { useResourcesStore } from "@/stores/resources-store"
@@ -194,8 +195,22 @@ export default function ResourcesPublicPage() {
                 </div>
 
                 {resourcesLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="text-muted-foreground">Chargement des ressources...</div>
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <Card key={i} className="overflow-hidden">
+                                <CardHeader className="pb-2">
+                                    <Skeleton className="h-5 w-2/3" />
+                                    <Skeleton className="h-3 w-full mt-1" />
+                                </CardHeader>
+                                <CardContent>
+                                    <Skeleton className="h-4 w-1/2 mb-2" />
+                                    <Skeleton className="h-4 w-1/3" />
+                                </CardContent>
+                                <CardFooter>
+                                    <Skeleton className="h-9 w-full" />
+                                </CardFooter>
+                            </Card>
+                        ))}
                     </div>
                 ) : filteredResources.length === 0 ? (
                     <Card>

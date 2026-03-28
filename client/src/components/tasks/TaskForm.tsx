@@ -99,25 +99,26 @@ export function TaskForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create Task</DialogTitle>
+          <DialogTitle>Créer une tâche</DialogTitle>
           <DialogDescription>
             {parentTaskId
-              ? "Create a subtask"
-              : "Create a new task in your task list"}
+              ? "Créer une sous-tâche"
+              : "Ajouter une nouvelle tâche à votre liste"}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
+            <Label htmlFor="title">Titre *</Label>
             <Input
               id="title"
               name="title"
-              placeholder="Task title"
+              placeholder="Titre de la tâche"
               value={formData.title}
               onChange={handleInputChange}
               required
+              autoFocus
             />
           </div>
 
@@ -127,7 +128,7 @@ export function TaskForm({
             <Textarea
               id="description"
               name="description"
-              placeholder="Add details..."
+              placeholder="Ajouter des détails..."
               rows={3}
               value={formData.description}
               onChange={handleInputChange}
@@ -136,7 +137,7 @@ export function TaskForm({
 
           {/* Priority */}
           <div className="space-y-2">
-            <Label htmlFor="priority">Priority</Label>
+            <Label htmlFor="priority">Priorité</Label>
             <Select value={formData.priority} onValueChange={(val) => {
               setFormData((prev) => ({ ...prev, priority: val }));
             }}>
@@ -155,7 +156,7 @@ export function TaskForm({
 
           {/* Due date */}
           <div className="space-y-2">
-            <Label htmlFor="due_date">Due Date</Label>
+            <Label htmlFor="due_date">Échéance</Label>
             <Input
               id="due_date"
               name="due_date"
@@ -167,7 +168,7 @@ export function TaskForm({
 
           {/* Assignee */}
           <div className="space-y-2">
-            <Label>Assignee</Label>
+            <Label>Assigné à</Label>
             <TaskAssigneeSelector
               assigneeId={formData.assignee_id}
               onAssigneeChange={(userId) =>
@@ -180,7 +181,7 @@ export function TaskForm({
           {formData.due_date && (
             <div className="flex items-center justify-between">
               <Label htmlFor="reminder" className="text-sm">
-                Reminder before due date
+                Rappel avant l&apos;échéance
               </Label>
               <Switch
                 id="reminder"
@@ -199,10 +200,10 @@ export function TaskForm({
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              Cancel
+              Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Task"}
+              {isSubmitting ? "Création..." : "Créer la tâche"}
             </Button>
           </DialogFooter>
         </form>

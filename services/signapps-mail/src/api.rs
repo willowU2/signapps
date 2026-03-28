@@ -450,9 +450,11 @@ async fn test_smtp_connection(account: &MailAccount) -> (bool, Option<String>) {
         AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)
             .map(|builder| builder.credentials(creds).port(smtp_port).build())
     } else {
-        Ok(AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(smtp_server)
-            .port(smtp_port)
-            .build())
+        Ok(
+            AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(smtp_server)
+                .port(smtp_port)
+                .build(),
+        )
     };
 
     match mailer_result {
@@ -866,7 +868,10 @@ async fn send_via_smtp(
 
     let mailer = if use_tls {
         // TLS mode with authentication
-        let password = account.app_password.as_ref().ok_or("App password not set")?;
+        let password = account
+            .app_password
+            .as_ref()
+            .ok_or("App password not set")?;
         let creds = Credentials::new(account.email_address.clone(), password.clone());
         AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_server)?
             .credentials(creds)
@@ -874,8 +879,8 @@ async fn send_via_smtp(
             .build()
     } else {
         // Plain mode (no TLS, optional auth) — for local/test servers like Mailpit
-        let mut builder = AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(smtp_server)
-            .port(smtp_port);
+        let mut builder =
+            AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(smtp_server).port(smtp_port);
         if let Some(ref password) = account.app_password {
             if !password.is_empty() {
                 let creds = Credentials::new(account.email_address.clone(), password.clone());

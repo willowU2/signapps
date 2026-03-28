@@ -97,7 +97,6 @@ export function VoiceInput({
 
       recognition.onerror = (event) => {
         if (event.error !== 'aborted') {
-          console.warn('Speech recognition warning:', event.error);
           if (event.error === 'no-speech') {
              // no-speech est un timeout normal, on laissera onend redémarrer via activeRef
              return;

@@ -44,7 +44,6 @@ function checkPermission(
 
   const parts = requiredPermission.split(":");
   if (parts.length !== 2) {
-    console.warn(`Invalid permission format: ${requiredPermission}. Expected "resource:action"`);
     return true;
   }
 

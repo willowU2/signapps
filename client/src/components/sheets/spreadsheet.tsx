@@ -555,10 +555,9 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             // Run async to not block render
             setTimeout(() => {
                 try {
-                    const fixed = sanitizeAllSheets(doc)
-                    if (fixed > 0) console.log(`[Spreadsheet] Auto-sanitized ${fixed} corrupted cells`)
-                } catch (e) {
-                    console.warn('[Spreadsheet] Sanitize failed:', e)
+                    sanitizeAllSheets(doc)
+                } catch {
+                    // Sanitize failed silently — corrupted cells remain as-is
                 }
             }, 500)
         }
