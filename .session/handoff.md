@@ -11,7 +11,7 @@ created_for: "Prochaine instance d'AgentIQ"
 ## Résumé Exécutif
 
 1. Session `82cb53cf` démarrée le 2026-03-28T21:55:39.544Z
-2. Terminée proprement le 2026-03-28T21:57:33.152Z
+2. Terminée proprement le 2026-03-28T21:59:13.349Z
 3. Travail : (non renseigné)
 
 ---
@@ -77,7 +77,7 @@ Fichiers à lire en priorité :
 |----------|--------|
 | Session ID | 82cb53cf-8f33-4ddc-920c-d2491d682db3 |
 | Démarrée | 2026-03-28T21:55:39.544Z |
-| Terminée | 2026-03-28T21:57:33.152Z |
+| Terminée | 2026-03-28T21:59:13.349Z |
 | Crashes enregistrés | 0 |
 | Checkpoints | 0 |
 

@@ -11,9 +11,69 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
 import { ChangelogDialog } from '@/components/onboarding/ChangelogDialog';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import Link from 'next/link';
+import { useBreadcrumbStore } from '@/lib/store/breadcrumb-store';
+
+const LABEL_MAP: Record<string, string> = {
+  dashboard: 'Dashboard',
+  docs: 'Documents',
+  sheets: 'Classeurs',
+  slides: 'Présentations',
+  mail: 'Mail',
+  contacts: 'Contacts',
+  tasks: 'Tâches',
+  social: 'Social',
+  design: 'Design',
+  keep: 'Notes',
+  admin: 'Administration',
+  users: 'Utilisateurs',
+  settings: 'Paramètres',
+  crm: 'CRM',
+  billing: 'Facturation',
+  forms: 'Formulaires',
+  calendar: 'Calendrier',
+  chat: 'Chat',
+  meet: 'Meet',
+  drive: 'Drive',
+  projects: 'Projets',
+  apps: 'App Store',
+  containers: 'Containers',
+  ai: 'IA',
+  monitoring: 'Monitoring',
+  storage: 'Stockage',
+  analytics: 'Analytique',
+  workforce: 'Workforce',
+  media: 'Média',
+  resources: 'Ressources',
+  bookmarks: 'Favoris',
+  help: 'Aide',
+  profile: 'Profil',
+  preferences: 'Préférences',
+  notifications: 'Notifications',
+  webhooks: 'Webhooks',
+  security: 'Sécurité',
+  appearance: 'Apparence',
+  editor: 'Éditeur',
+  deals: 'Pipeline',
+  'it-assets': 'IT Assets',
+  backups: 'Sauvegardes',
+  vpn: 'VPN',
+  routes: 'Routes',
+  scheduler: 'Planificateur',
+  remote: 'Accès distant',
+  pxe: 'PXE Deploy',
+};
 
 // SSR-safe mounted check without setState-in-effect
 const subscribe = () => () => {};
@@ -24,7 +84,21 @@ export function Header() {
   const { theme, setTheme, toggleSidebar } = useUIStore();
   const { user } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
+  const { customLabels } = useBreadcrumbStore();
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  // Build breadcrumb items from pathname
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const breadcrumbItems = pathSegments.map((segment, index) => {
+    const url = `/${pathSegments.slice(0, index + 1).join('/')}`;
+    const isLast = index === pathSegments.length - 1;
+    const label = customLabels[segment]
+      || LABEL_MAP[segment]
+      || segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+    const displayLabel = label.length > 24 ? `${label.substring(0, 10)}…` : label;
+    return { label: displayLabel, url, isLast };
+  });
   // Branding from localStorage (set by InstanceBranding settings)
   const [instanceLogo, setInstanceLogo] = useState<string | null>(null);
   const [instanceName, setInstanceName] = useState<string | null>(null);
@@ -88,8 +162,34 @@ export function Header() {
         </button>
       </div>
 
-      {/* Center spacer */}
-      <div className="flex-1" />
+      {/* Center: Breadcrumbs */}
+      <div className="hidden md:flex flex-1 items-center justify-center">
+        {breadcrumbItems.length > 0 && (
+          <Breadcrumb>
+            <BreadcrumbList className="gap-1 sm:gap-1.5">
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/dashboard" className="text-xs text-muted-foreground hover:text-foreground">Accueil</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {breadcrumbItems.map((item) => (
+                <div key={item.url} className="flex items-center gap-1 sm:gap-1.5">
+                  <BreadcrumbSeparator className="[&>svg]:size-3" />
+                  <BreadcrumbItem>
+                    {item.isLast ? (
+                      <BreadcrumbPage className="text-xs font-semibold">{item.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink asChild>
+                        <Link href={item.url} className="text-xs text-muted-foreground hover:text-foreground">{item.label}</Link>
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </div>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
+        )}
+      </div>
 
       {/* Right: actions */}
       <div className="flex items-center gap-1 md:min-w-[240px] justify-end">

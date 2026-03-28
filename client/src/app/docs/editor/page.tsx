@@ -4,10 +4,11 @@ import { Suspense } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import { EditorLayout } from '@/components/layout/editor-layout';
-import { FileText } from 'lucide-react';
+import { FileText, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import { EntityLinks } from '@/components/crosslinks/EntityLinks';
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 function EditorSkeleton() {
     return (
@@ -46,12 +47,21 @@ function EditorContent() {
 
     return (
         <EditorLayout documentId={id} documentName={name || 'Sans titre'} icon={<FileText className="w-5 h-5 text-blue-600" />}>
-            <Editor documentId={id} documentName={name || undefined} className="h-full" bucket={name ? 'drive' : undefined} fileName={name || undefined} userName={userName} />
-            {id !== 'new' && (
-                <div className="border-t p-4 bg-background/50">
-                    <EntityLinks entityType="document" entityId={id} />
+            <div className="flex flex-col h-full">
+                <div className="px-4 pt-3 pb-1 border-b bg-background/50 shrink-0">
+                    <Link href="/docs" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        <ArrowLeft className="h-4 w-4" /> Documents
+                    </Link>
                 </div>
-            )}
+                <div className="flex-1 overflow-hidden">
+                    <Editor documentId={id} documentName={name || undefined} className="h-full" bucket={name ? 'drive' : undefined} fileName={name || undefined} userName={userName} />
+                </div>
+                {id !== 'new' && (
+                    <div className="border-t p-4 bg-background/50">
+                        <EntityLinks entityType="document" entityId={id} />
+                    </div>
+                )}
+            </div>
         </EditorLayout>
     );
 }

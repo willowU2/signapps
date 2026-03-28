@@ -2,8 +2,9 @@
 
 import dynamic from "next/dynamic"
 import { EditorLayout } from "@/components/layout/editor-layout"
-import { Table } from "lucide-react"
+import { Table, ArrowLeft } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import Link from "next/link"
 
 function EditorSkeleton() {
     return (
@@ -79,6 +80,11 @@ function SheetsContent() {
     return (
         <EditorLayout documentId={id} documentName={name || 'Sans titre'} icon={<Table className="w-5 h-5 text-green-600" />}>
             <div className="flex flex-col h-full relative">
+                <div className="px-4 pt-3 pb-1 border-b bg-background/50 shrink-0">
+                    <Link href="/sheets" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                        <ArrowLeft className="h-4 w-4" /> Classeurs
+                    </Link>
+                </div>
                 {loading && (
                     <div className="absolute inset-0 z-50 bg-background/80 dark:bg-black/80 flex items-center justify-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
