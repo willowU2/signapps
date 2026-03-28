@@ -520,6 +520,18 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                     No message selected
                 </div>
             )}
+
+            {/* Email-to-Task Dialog */}
+            {mail && (
+                <EmailToTaskDialog
+                    open={showTaskDialog}
+                    onOpenChange={setShowTaskDialog}
+                    emailSubject={mail.subject}
+                    emailBody={mail.text}
+                    emailFrom={mail.name}
+                    emailId={mail.id}
+                />
+            )}
         </div>
     )
 }

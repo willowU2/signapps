@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button"
 import { WorkspaceShell } from "@/components/layout/workspace-shell"
 import { useSelectedChannel, useSelectedChannelName, useChatActions, useIsDm } from "@/lib/store/chat-store"
 import { useEffect, useState } from "react"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { useUsers } from "@/hooks/use-users"
 import { chatApi } from "@/lib/api/chat"
 import { FEATURES } from "@/lib/features"
 
 export default function ChatPage() {
+    usePageTitle('Chat')
     const selectedChannel = useSelectedChannel()
     const selectedChannelName = useSelectedChannelName()
     const isDm = useIsDm()

@@ -357,7 +357,7 @@ export default function SchedulingPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <ScrollArea className="h-[calc(100vh-20rem)]">
+              <ScrollArea className="h-[min(calc(100vh-20rem),600px)]">
                 <div className="space-y-1 px-4 pb-4">
                   <button
                     onClick={() => setSelectedResource(null)}
@@ -447,7 +447,7 @@ export default function SchedulingPage() {
             {/* Grid */}
             <Card>
               <CardContent className="p-0">
-                <ScrollArea className="h-[calc(100vh-18rem)]">
+                <ScrollArea className="h-[min(calc(100vh-18rem),640px)]">
                   <div className="min-w-[800px]">
                     {/* Day headers */}
                     <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b sticky top-0 bg-background z-10">

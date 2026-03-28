@@ -8,6 +8,7 @@
  */
 
 import * as React from 'react';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { format } from 'date-fns';
 import { SchedulingHub, SchedulingContent } from '@/components/scheduling/core/SchedulingHub';
 import { DayView, ThreeDayView } from '@/components/scheduling/views/DayView';
@@ -33,6 +34,7 @@ import type { ScheduleBlock, CreateEventInput } from '@/lib/scheduling/types/sch
 import type { TimeItem } from '@/lib/scheduling/types';
 
 export default function SchedulingPage() {
+  usePageTitle('Calendrier');
   const { activeTab, currentDate } = useSchedulingNavigation();
   // Use calendar-store for view (controlled by ViewSwitcher)
   const view = useCalendarStore((state) => state.view);

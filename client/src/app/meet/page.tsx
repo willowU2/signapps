@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -128,6 +129,7 @@ function RecordingStatusBadge({ status }: { status: Recording["status"] }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function MeetPage() {
+    usePageTitle('Réunions')
     const searchParams = useSearchParams()
 
     // ── LiveKit room state (kept from original) ──────────────────────────────
