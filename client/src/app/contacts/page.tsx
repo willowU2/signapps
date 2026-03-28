@@ -20,7 +20,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown, Upload, GitMerge, Gift, Settings2, MapPin, Clock, Building2, History } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown, Upload, GitMerge, Gift, Settings2, MapPin, Clock, Building2, History, Tag, X, FileDown } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
@@ -80,6 +81,10 @@ export default function ContactsPage() {
   const [activities, setActivities] = useState<ContactActivity[]>([])
   const [selectedContactForHistory, setSelectedContactForHistory] = useState<string | null>(null)
   const [vcfImportFile, setVcfImportFile] = useState<File | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkTagInput, setBulkTagInput] = useState("")
+  const [showBulkTag, setShowBulkTag] = useState(false)
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
   const { data: contacts = SEED_CONTACTS, isLoading } = useQuery<Contact[]>({
     queryKey: ['contacts'],
@@ -248,6 +253,78 @@ export default function ContactsPage() {
     )
   }
 
+  // ── Bulk operations ──────────────────────────────────────────────────────────
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedFiltered.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(sortedFiltered.map(c => c.id)))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds)
+    setBulkDeleteOpen(false)
+    try {
+      const client = getClient(ServiceName.CONTACTS)
+      await Promise.all(ids.map(id => client.delete(`/contacts/${id}`)))
+      loadContacts()
+    } catch {
+      queryClient.setQueryData<Contact[]>(['contacts'], (prev = []) =>
+        prev.filter(c => !selectedIds.has(c.id))
+      )
+    }
+    setSelectedIds(new Set())
+    toast.success(`${ids.length} contact(s) supprime(s).`)
+  }
+
+  const handleBulkExportCsv = () => {
+    const selected = contacts.filter(c => selectedIds.has(c.id))
+    const header = "Nom,Email,Telephone,Entreprise,Tags"
+    const rows = selected.map(c =>
+      [c.name, c.email, c.phone ?? "", c.company ?? "", c.tags.join("; ")]
+        .map(v => `"${v.replace(/"/g, '""')}"`)
+        .join(",")
+    )
+    const csv = [header, ...rows].join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = "contacts-export.csv"
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+    toast.success(`${selected.length} contact(s) exporte(s) en CSV.`)
+  }
+
+  const handleBulkAddTag = () => {
+    if (!bulkTagInput.trim()) return
+    const tag = bulkTagInput.trim()
+    queryClient.setQueryData<Contact[]>(['contacts'], (prev = []) =>
+      prev.map(c =>
+        selectedIds.has(c.id) && !c.tags.includes(tag)
+          ? { ...c, tags: [...c.tags, tag] }
+          : c
+      )
+    )
+    toast.success(`Tag "${tag}" ajoute a ${selectedIds.size} contact(s).`)
+    setBulkTagInput("")
+    setShowBulkTag(false)
+    setSelectedIds(new Set())
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   if (isLoading) {
@@ -405,12 +482,58 @@ export default function ContactsPage() {
             )}
           </div>
 
+          {/* Bulk action toolbar */}
+          {selectedIds.size > 0 && (activeTab === "all" || activeTab === "favorites") && (
+            <div className="flex items-center gap-2 flex-wrap rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5">
+              <span className="text-sm font-medium">
+                {selectedIds.size} selectionne{selectedIds.size > 1 ? "s" : ""}
+              </span>
+              <div className="flex-1" />
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={handleBulkExportCsv}>
+                <FileDown className="h-3.5 w-3.5" />
+                Exporter CSV
+              </Button>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowBulkTag(!showBulkTag)}>
+                <Tag className="h-3.5 w-3.5" />
+                Ajouter un tag
+              </Button>
+              <Button size="sm" variant="destructive" className="gap-1.5" onClick={() => setBulkDeleteOpen(true)}>
+                <Trash2 className="h-3.5 w-3.5" />
+                Supprimer
+              </Button>
+              <Button size="sm" variant="ghost" className="gap-1" onClick={() => setSelectedIds(new Set())}>
+                <X className="h-3.5 w-3.5" />
+              </Button>
+              {showBulkTag && (
+                <div className="flex items-center gap-2 w-full pt-2 border-t border-border/50 mt-1">
+                  <Input
+                    className="h-8 max-w-[200px]"
+                    placeholder="Nom du tag..."
+                    value={bulkTagInput}
+                    onChange={e => setBulkTagInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") handleBulkAddTag() }}
+                  />
+                  <Button size="sm" onClick={handleBulkAddTag} disabled={!bulkTagInput.trim()}>
+                    Ajouter
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           {(["all", "favorites"] as ActiveTab[]).map(tab => (
             <TabsContent key={tab} value={tab}>
               <Card className="border-border/50">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={sortedFiltered.length > 0 && selectedIds.size === sortedFiltered.length}
+                          onCheckedChange={toggleSelectAll}
+                          aria-label="Tout selectionner"
+                        />
+                      </TableHead>
                       <TableHead className="cursor-pointer select-none" onClick={() => toggleSort('name')}>
                         <span className="flex items-center gap-1">Nom {sortField === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}</span>
                       </TableHead>
@@ -430,13 +553,20 @@ export default function ContactsPage() {
                   <TableBody>
                     {sortedFiltered.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
                           Aucun contact trouvé.
                         </TableCell>
                       </TableRow>
                     )}
                     {sortedFiltered.map(c => (
-                      <TableRow key={c.id}>
+                      <TableRow key={c.id} className={selectedIds.has(c.id) ? "bg-primary/5" : ""}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.has(c.id)}
+                            onCheckedChange={() => toggleSelect(c.id)}
+                            aria-label={`Selectionner ${c.name}`}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{c.name}</TableCell>
                         <TableCell className="text-muted-foreground">{c.email}</TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground">{c.phone ?? "—"}</TableCell>
@@ -602,6 +732,22 @@ export default function ContactsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk delete confirmation */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer {selectedIds.size} contact(s) ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Les {selectedIds.size} contacts sélectionnés seront définitivement supprimés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete}>Supprimer tout</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

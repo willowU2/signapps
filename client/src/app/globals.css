@@ -213,3 +213,22 @@
     box-shadow: 0 0 15px rgba(19, 91, 236, 0.15);
   }
 }
+
+/* ───────────── Skip-to-content link (accessibility) ───────────── */
+.sr-only:focus {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  padding: 1rem;
+  background: var(--background);
+  color: var(--foreground);
+  clip: auto;
+  width: auto;
+  height: auto;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary);
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

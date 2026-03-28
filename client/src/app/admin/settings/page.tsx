@@ -28,6 +28,8 @@ import {
   Server,
   Key,
   Webhook,
+  Download,
+  Upload,
 } from 'lucide-react';
 
 // ─── General Settings ───────────────────────────────────────────────
@@ -248,17 +250,93 @@ export default function AdminSettingsPage() {
     }));
   };
 
+  // ─── Export / Import ──────────────────────────────────────────────
+  const handleExportConfig = () => {
+    const config = {
+      _exportedAt: new Date().toISOString(),
+      _version: '1.0',
+      general,
+      security,
+      email: { ...email, smtpPassword: '' },
+      storage: { ...storage, s3AccessKey: '', s3SecretKey: '' },
+      integrations: {
+        ...integrations,
+        apiKeys: integrations.apiKeys.map((k) => ({ ...k, key: '' })),
+      },
+    };
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `signapps-config-${format(new Date(), 'yyyy-MM-dd')}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success('Configuration exportee avec succes');
+  };
+
+  const handleImportConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        if (data.general) setGeneral((prev) => ({ ...prev, ...data.general }));
+        if (data.security) setSecurity((prev) => ({ ...prev, ...data.security }));
+        if (data.email) setEmail((prev) => ({ ...prev, ...data.email }));
+        if (data.storage) setStorage((prev) => ({ ...prev, ...data.storage }));
+        if (data.integrations) setIntegrations((prev) => ({ ...prev, ...data.integrations }));
+        toast.success('Configuration importee avec succes');
+      } catch {
+        toast.error("Le fichier JSON est invalide ou corrompu.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const format = (d: Date, fmt: string) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-          <Settings className="size-8" />
-          Paramètres de la plateforme
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Configuration générale, sécurité, messagerie, stockage et intégrations.
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <Settings className="size-8" />
+            Paramètres de la plateforme
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Configuration générale, sécurité, messagerie, stockage et intégrations.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportConfig} className="gap-2">
+            <Download className="size-4" />
+            Exporter
+          </Button>
+          <label className="cursor-pointer">
+            <Button variant="outline" asChild className="gap-2">
+              <span>
+                <Upload className="size-4" />
+                Importer
+              </span>
+            </Button>
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleImportConfig}
+            />
+          </label>
+        </div>
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">

@@ -684,6 +684,7 @@ export function AiChatBar() {
                             <img
                               src={media.url}
                               alt={media.alt || 'Image générée'}
+                              loading="lazy"
                               className="max-w-full max-h-48 object-contain"
                             />
                           )}
@@ -738,6 +739,7 @@ export function AiChatBar() {
                 <img
                   src={att.preview}
                   alt={att.file.name}
+                  loading="lazy"
                   className="h-8 w-8 rounded object-cover"
                 />
               ) : (

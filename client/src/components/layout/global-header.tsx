@@ -481,7 +481,7 @@ export function GlobalHeader() {
                 {/* User Menu */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="gap-2">
+                        <Button variant="ghost" className="gap-2" aria-label="Menu utilisateur">
                             <Avatar className="h-8 w-8">
                                 {user?.avatar_url && <AvatarImage src={user.avatar_url} alt={user.username} />}
                                 <AvatarFallback>
