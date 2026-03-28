@@ -32,6 +32,20 @@ services:
     networks:
       - signapps-dev
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: signapps-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    environment:
+      MP_DATABASE: /data/mailpit.db
+    volumes:
+      - mailpit-data:/data
+    networks:
+      - signapps-dev
+
   # ─────────────────────────────────────────────────────────────────────────────
   # Backend Rust services (pre-built release binaries)
   # ─────────────────────────────────────────────────────────────────────────────
@@ -282,6 +296,7 @@ services:
 volumes:
   pgdata:
   storage-data:
+  mailpit-data:
 
 networks:
   signapps-dev:
