@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useDashboardData } from '@/hooks/use-dashboard';
 import { useDashboardStore } from '@/stores/dashboard-store';
 import { WidgetGrid } from '@/components/dashboard/widget-grid';
-import { AddWidgetDialog } from '@/components/dashboard/add-widget-dialog';
+import { AddWidgetSheet as AddWidgetDialog } from '@/components/dashboard/add-widget-sheet';
 import { AiDailyBrief } from '@/components/dashboard/ai-daily-brief';
 import { UnifiedStats } from '@/components/dashboard/unified-stats';
 import { RecentFiles } from '@/components/dashboard/recent-files';
