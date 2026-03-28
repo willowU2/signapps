@@ -95,14 +95,13 @@ export function RightSidebar() {
           </Button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            {/* Widget mode */}
-            {panelMode === "widget" && (
-              <div className="p-0">
-                {activeRightWidget === "chat"     && <ChatWidget />}
-                {activeRightWidget === "calendar" && <CalendarWidget />}
-                {activeRightWidget === "tasks"    && <TasksWidget />}
+        <ScrollArea className="flex-1">
+          {/* Widget mode */}
+          {panelMode === "widget" && (
+            <div className="p-0">
+              {activeRightWidget === "chat"     && <ChatWidget />}
+              {activeRightWidget === "calendar" && <CalendarWidget />}
+              {activeRightWidget === "tasks"    && <TasksWidget />}
               {activeRightWidget === "notes"    && (
                 <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
                   <StickyNote className="h-4 w-4" /> Notes Widget Loading...
@@ -150,10 +149,9 @@ export function RightSidebar() {
                 );
               })}
             </div>
-              )}
-            </ScrollArea>
-          </div>
-        </div>
+          )}
+        </ScrollArea>
+      </div>
 
       {/* Icon Bar (always visible, fixed on far right) */}
       <div className="hidden md:flex fixed top-0 right-0 bottom-0 w-16 bg-background border-l border-border z-40 flex-col items-center py-4 gap-1">

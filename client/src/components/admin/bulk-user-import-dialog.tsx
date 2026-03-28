@@ -152,7 +152,7 @@ export function BulkUserImportDialog({ open, onOpenChange, onImported }: BulkUse
                     <TableCell>
                       {r.valid
                         ? <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        : <AlertCircle className="h-4 w-4 text-red-500" title={r.error} />
+                        : <span title={r.error}><AlertCircle className="h-4 w-4 text-red-500" /></span>
                       }
                     </TableCell>
                     <TableCell className="font-mono text-xs">{r.username}</TableCell>

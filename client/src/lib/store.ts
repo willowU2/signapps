@@ -71,12 +71,19 @@ interface UIState {
   rightSidebarOpen: boolean;
   activeRightWidget: RightWidgetType;
   theme: 'light' | 'dark' | 'system';
+  // Modal state
+  createWorkspaceModalOpen: boolean;
+  createProjectModalOpen: boolean;
+  createTaskModalOpen: boolean;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleRightSidebar: () => void;
   setRightSidebarOpen: (open: boolean) => void;
   setActiveRightWidget: (widget: RightWidgetType) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  setCreateWorkspaceModalOpen: (open: boolean) => void;
+  setCreateProjectModalOpen: (open: boolean) => void;
+  setCreateTaskModalOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -87,12 +94,18 @@ export const useUIStore = create<UIState>()(
       rightSidebarOpen: false,
       activeRightWidget: 'chat',
       theme: 'system',
+      createWorkspaceModalOpen: false,
+      createProjectModalOpen: false,
+      createTaskModalOpen: false,
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
       setRightSidebarOpen: (open) => set({ rightSidebarOpen: open }),
       setActiveRightWidget: (widget) => set({ activeRightWidget: widget, rightSidebarOpen: true }),
       setTheme: (theme) => set({ theme }),
+      setCreateWorkspaceModalOpen: (open) => set({ createWorkspaceModalOpen: open }),
+      setCreateProjectModalOpen: (open) => set({ createProjectModalOpen: open }),
+      setCreateTaskModalOpen: (open) => set({ createTaskModalOpen: open }),
     }),
     {
       name: 'ui-storage',
@@ -207,17 +220,44 @@ export const usePinnedAppsStore = create<PinnedAppsState>()(
 );
 
 // Quick Tasks State
+export interface AttachedFile {
+  id: string;
+  name: string;
+  size?: number;
+  type?: string;
+  url?: string;
+  path?: string;
+  attachedAt?: string;
+}
+
+export interface QuickTaskList {
+  id: string;
+  name: string;
+}
+
 export interface QuickTask {
   id: string;
   label: string;
   done: boolean;
+  // Extended optional fields
+  dueDate?: string;
+  listId?: string;
+  linkedEventId?: string;
+  attachedFiles?: AttachedFile[];
+  assignee?: { name: string; avatar?: string };
 }
 
 interface QuickTasksState {
   tasks: QuickTask[];
-  addTask: (label: string) => void;
+  lists: QuickTaskList[];
+  selectedListId: string | null;
+  addTask: (label: string, dueDate?: string) => void;
   toggleTask: (id: string) => void;
   removeTask: (id: string) => void;
+  removeFileFromTask: (taskId: string, fileId: string) => void;
+  setSelectedList: (listId: string | null) => void;
+  attachFileToTask: (taskId: string, file: AttachedFile) => void;
+  linkEventToTask: (taskId: string, eventId: string) => void;
 }
 
 export const useQuickTasksStore = create<QuickTasksState>()(
@@ -228,9 +268,11 @@ export const useQuickTasksStore = create<QuickTasksState>()(
         { id: '2', label: 'Mettre à jour les certificats SSL', done: false },
         { id: '3', label: 'Valider les backups', done: true },
       ],
-      addTask: (label) =>
+      lists: [{ id: 'default', name: 'My Tasks' }],
+      selectedListId: null,
+      addTask: (label, dueDate) =>
         set((state) => ({
-          tasks: [...state.tasks, { id: Date.now().toString(), label, done: false }],
+          tasks: [...state.tasks, { id: Date.now().toString(), label, done: false, dueDate }],
         })),
       toggleTask: (id) =>
         set((state) => ({
@@ -238,6 +280,29 @@ export const useQuickTasksStore = create<QuickTasksState>()(
         })),
       removeTask: (id) =>
         set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
+      removeFileFromTask: (taskId, fileId) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === taskId
+              ? { ...t, attachedFiles: (t.attachedFiles || []).filter((f) => f.id !== fileId) }
+              : t
+          ),
+        })),
+      setSelectedList: (listId) => set({ selectedListId: listId }),
+      attachFileToTask: (taskId, file) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === taskId
+              ? { ...t, attachedFiles: [...(t.attachedFiles || []), file] }
+              : t
+          ),
+        })),
+      linkEventToTask: (taskId, eventId) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === taskId ? { ...t, linkedEventId: eventId } : t
+          ),
+        })),
     }),
     { name: 'quick-tasks-storage' }
   )
