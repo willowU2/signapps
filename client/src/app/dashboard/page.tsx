@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCw, Pencil, Plus, RotateCcw, SlidersHorizontal, Search, ChevronDown, ChevronUp, Pin, FileText, Mail, CalendarDays } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { logActivity } from '@/hooks/use-activity-tracker';
 import { useDashboardData } from '@/hooks/use-dashboard';
 import { useDashboardStore } from '@/stores/dashboard-store';
 import { WidgetGrid } from '@/components/dashboard/widget-grid';
@@ -179,14 +180,14 @@ export default function DashboardPage() {
           <>
             {/* Quick actions */}
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={() => router.push('/docs')}>
+              <Button variant="outline" size="sm" onClick={() => { logActivity('created', 'Nouveau document', 'Via dashboard'); router.push('/docs'); }}>
                 <FileText className="mr-2 h-4 w-4 text-blue-500" /> Nouveau document
               </Button>
-              <Button variant="outline" size="sm" onClick={() => router.push('/mail')}>
+              <Button variant="outline" size="sm" onClick={() => { logActivity('created', 'Nouvel email', 'Via dashboard'); router.push('/mail'); }}>
                 <Mail className="mr-2 h-4 w-4 text-amber-500" /> Nouveau mail
               </Button>
-              <Button variant="outline" size="sm" onClick={() => router.push('/cal')}>
-                <CalendarDays className="mr-2 h-4 w-4 text-green-500" /> Nouvelle réunion
+              <Button variant="outline" size="sm" onClick={() => { logActivity('created', 'Nouvelle reunion', 'Via dashboard'); router.push('/cal'); }}>
+                <CalendarDays className="mr-2 h-4 w-4 text-green-500" /> Nouvelle reunion
               </Button>
             </div>
 

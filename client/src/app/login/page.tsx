@@ -16,6 +16,7 @@ import { Eye, EyeOff, Loader2, ShieldAlert } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { LdapLoginDialog } from '@/components/auth/ldap-login-dialog';
 import { parseApiError } from '@/lib/errors';
+import { logActivity } from '@/hooks/use-activity-tracker';
 
 const loginSchema = z.object({
   username: z.string().min(1, "Le nom d'utilisateur est requis"),
@@ -135,6 +136,9 @@ export default function LoginPage() {
         // Sync cookie immediately so middleware sees authenticated state
         const cookieValue = JSON.stringify({ state: { isAuthenticated: true } });
         document.cookie = `auth-storage=${encodeURIComponent(cookieValue)}; path=/; max-age=31536000; SameSite=Lax`;
+
+        // Log login activity
+        logActivity('login', data.username, 'Connexion reussie');
 
         // Redirect to saved path or dashboard
         const redirectPath = redirectAfterLogin || '/dashboard';

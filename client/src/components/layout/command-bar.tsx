@@ -9,11 +9,13 @@ import {
     Search, FileText, Mail, User, Mic, Monitor, Calendar,
     LayoutDashboard, Building2, FolderOpen, Plus, CheckSquare,
     File, MessageSquare, HardDrive, Settings, Shield, Users,
-    Clock, UserPlus, Video, Star, History,
+    Clock, UserPlus, Video, Star, History, Pencil, BookOpen,
+    Upload,
 } from 'lucide-react';
 import { useEntityStore } from '@/stores/entity-hub-store';
 import { useUIStore } from '@/lib/store';
 import { useCommandBarStore } from '@/stores/command-bar-store';
+import { logActivity } from '@/hooks/use-activity-tracker';
 
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = React.useState<T>(value);
@@ -52,10 +54,14 @@ const NAV_ITEMS = [
 // Action items: quick-create shortcuts
 // ---------------------------------------------------------------------------
 const ACTION_ITEMS = [
-    { label: 'Nouveau document',  icon: FileText,  href: '/docs/new'             },
-    { label: 'Nouveau contact',   icon: UserPlus,  href: '/workforce/new'        },
-    { label: 'Nouvelle réunion',  icon: Video,     href: '/meet/new'             },
-    { label: 'Nouvelle tâche',    icon: CheckSquare, action: 'createTask'        },
+    { label: 'Nouveau document',  icon: FileText,    href: '/docs?new=true'        },
+    { label: 'Nouvel email',      icon: Mail,        href: '/mail?compose=true'    },
+    { label: 'Nouveau contact',   icon: UserPlus,    href: '/contacts?new=true'    },
+    { label: 'Nouvelle tâche',    icon: CheckSquare, action: 'createTask'          },
+    { label: 'Nouvelle réunion',  icon: Video,       href: '/meet?new=true'        },
+    { label: 'Nouveau tableur',   icon: FileText,    href: '/sheets?new=true'      },
+    { label: 'Nouvelle note',     icon: Pencil,      href: '/keep?new=true'        },
+    { label: 'Upload fichier',    icon: Upload,      href: '/drive?upload=true'    },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -168,13 +174,30 @@ export function CommandBar() {
                             </Command.Group>
                         )}
 
+                        {/* Deep search shortcut – always visible when user has typed a query */}
+                        {debouncedQuery.length > 0 && (
+                            <Command.Group heading="Recherche avancée" className="text-xs font-semibold text-muted-foreground px-2 py-2">
+                                <Command.Item
+                                    value={`search documents ai ${debouncedQuery}`}
+                                    onSelect={() => runCommand(() => {
+                                        logActivity('search', debouncedQuery, 'AI deep search');
+                                        router.push(`/ai/search?q=${encodeURIComponent(debouncedQuery)}`);
+                                    })}
+                                    className="flex items-center px-3 py-2.5 rounded-lg cursor-pointer transition-colors text-sm data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary text-foreground hover:bg-primary/10 hover:text-primary"
+                                >
+                                    <BookOpen className="mr-3 h-4 w-4 shrink-0" />
+                                    <span>Rechercher &laquo;{debouncedQuery}&raquo; dans les documents (IA)...</span>
+                                </Command.Item>
+                            </Command.Group>
+                        )}
+
                         {/* Navigation */}
                         <Command.Group heading="Navigation" className="text-xs font-semibold text-muted-foreground px-2 py-2">
                             {NAV_ITEMS.map(item => (
                                 <Command.Item
                                     key={item.href}
                                     value={item.label}
-                                    onSelect={() => runCommand(() => router.push(item.href))}
+                                    onSelect={() => { logActivity('navigated', item.label, item.href); runCommand(() => router.push(item.href)); }}
                                     className={itemCls}
                                 >
                                     <item.icon className="mr-3 h-4 w-4 shrink-0" />
@@ -197,6 +220,7 @@ export function CommandBar() {
                                     key={item.label}
                                     value={item.label}
                                     onSelect={() => {
+                                        logActivity('created', item.label, 'Via command bar');
                                         if ('action' in item && item.action === 'createTask') {
                                             runCommand(() => setCreateTaskModalOpen(true));
                                         } else if ('href' in item) {

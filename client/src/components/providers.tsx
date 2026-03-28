@@ -16,6 +16,7 @@ import { AccessibilityProvider } from '@/components/accessibility/a11y-provider'
 
 import { NotificationPermissionDialog } from '@/components/notifications/notification-permission-dialog';
 import { CommandBar } from '@/components/layout/command-bar';
+import { FloatingActionButton } from '@/components/layout/floating-action-button';
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GlobalModals } from '@/components/global-modals';
@@ -97,6 +98,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       {!pathname?.startsWith('/login') && (
                         <>
                           <CommandBar />
+                          <FloatingActionButton />
                           <MobileBottomNav />
                           <PwaInstallPrompt />
                         </>

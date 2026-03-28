@@ -24,10 +24,10 @@ import {
     LogOut, User as UserIcon, Settings, PanelLeft, PanelRight,
     Share2, MessageSquare, History, HardDrive, Mail, CheckSquare,
     Video, Activity, Route, Calendar, Shield, Users, MessageCircle, Search, SlidersHorizontal, FileText,
-    Clock, HelpCircle, Star
+    Clock, HelpCircle, Star, Copy, Check
 } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { NotificationPopover } from '@/components/notifications/notification-popover';
@@ -56,8 +56,20 @@ export function GlobalHeader() {
     const { currentWorkspace, members, fetchMembers } = useTenantStore();
     const presenceUsers = usePresenceStore((state) => state.users);
 
+    const [linkCopied, setLinkCopied] = useState(false);
+
     useEffect(() => {
         setMounted(true);
+    }, []);
+
+    const handleCopyLink = useCallback(async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+        } catch {
+            // Clipboard not available
+        }
     }, []);
 
     useEffect(() => {
@@ -369,29 +381,51 @@ export function GlobalHeader() {
                     )}
                     <div className="flex flex-col">
                         {/* Dynamic Breadcrumbs */}
-                        <Breadcrumb className="mb-0.5 hidden sm:block">
-                            <BreadcrumbList className="gap-1 sm:gap-1.5 min-h-[20px]">
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink asChild>
-                                        <Link href="/dashboard" className="text-xs">Accueil</Link>
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
-                                {breadcrumbItems.map((item, index) => (
-                                    <div key={item.url} className="flex items-center gap-1 sm:gap-1.5">
-                                        <BreadcrumbSeparator className="[&>svg]:size-3" />
-                                        <BreadcrumbItem>
-                                            {item.isLast ? (
-                                                <BreadcrumbPage className="text-xs font-semibold">{item.label}</BreadcrumbPage>
+                        <div className="flex items-center gap-1 mb-0.5 hidden sm:flex">
+                            <Breadcrumb>
+                                <BreadcrumbList className="gap-1 sm:gap-1.5 min-h-[20px]">
+                                    <BreadcrumbItem>
+                                        <BreadcrumbLink asChild>
+                                            <Link href="/dashboard" className="text-xs">Accueil</Link>
+                                        </BreadcrumbLink>
+                                    </BreadcrumbItem>
+                                    {breadcrumbItems.map((item, index) => (
+                                        <div key={item.url} className="flex items-center gap-1 sm:gap-1.5">
+                                            <BreadcrumbSeparator className="[&>svg]:size-3" />
+                                            <BreadcrumbItem>
+                                                {item.isLast ? (
+                                                    <BreadcrumbPage className="text-xs font-semibold">{item.label}</BreadcrumbPage>
+                                                ) : (
+                                                    <BreadcrumbLink asChild>
+                                                        <Link href={item.url || '#'} className="text-xs">{item.label}</Link>
+                                                    </BreadcrumbLink>
+                                                )}
+                                            </BreadcrumbItem>
+                                        </div>
+                                    ))}
+                                </BreadcrumbList>
+                            </Breadcrumb>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            onClick={handleCopyLink}
+                                            className="ml-1 rounded p-0.5 text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted transition-colors"
+                                            title="Copier le lien de cette page"
+                                        >
+                                            {linkCopied ? (
+                                                <Check className="h-3 w-3 text-green-500" />
                                             ) : (
-                                                <BreadcrumbLink asChild>
-                                                    <Link href={item.url || '#'} className="text-xs">{item.label}</Link>
-                                                </BreadcrumbLink>
+                                                <Copy className="h-3 w-3" />
                                             )}
-                                        </BreadcrumbItem>
-                                    </div>
-                                ))}
-                            </BreadcrumbList>
-                        </Breadcrumb>
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom" className="text-xs">
+                                        {linkCopied ? 'Lien copié !' : 'Copier le lien'}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
 
                         {showDocActions ? (
                             <input
