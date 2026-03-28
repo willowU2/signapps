@@ -121,8 +121,10 @@ export interface CreateAccountRequest {
     provider: string
     imap_server?: string
     imap_port?: number
+    imap_use_tls?: boolean
     smtp_server?: string
     smtp_port?: number
+    smtp_use_tls?: boolean
     app_password?: string
 }
 
@@ -141,77 +143,77 @@ export interface UpdateAccountRequest {
 
 export const accountApi = {
     list: async (): Promise<MailAccount[]> => {
-        const res = await mailClient.get('/accounts')
+        const res = await mailClient.get('/mail/accounts')
         return res.data
     },
 
     get: async (id: string): Promise<MailAccount> => {
-        const res = await mailClient.get(`/accounts/${id}`)
+        const res = await mailClient.get(`/mail/accounts/${id}`)
         return res.data
     },
 
     create: async (data: CreateAccountRequest): Promise<MailAccount> => {
-        const res = await mailClient.post('/accounts', data)
+        const res = await mailClient.post('/mail/accounts', data)
         return res.data
     },
 
     update: async (id: string, data: UpdateAccountRequest): Promise<MailAccount> => {
-        const res = await mailClient.patch(`/accounts/${id}`, data)
+        const res = await mailClient.patch(`/mail/accounts/${id}`, data)
         return res.data
     },
 
     delete: async (id: string): Promise<void> => {
-        await mailClient.delete(`/accounts/${id}`)
+        await mailClient.delete(`/mail/accounts/${id}`)
     },
 
     sync: async (id: string): Promise<{ status: string }> => {
-        const res = await mailClient.post(`/accounts/${id}/sync`)
+        const res = await mailClient.post(`/mail/accounts/${id}/sync`)
         return res.data
     },
 
     test: async (id: string): Promise<{ imap_ok: boolean; smtp_ok: boolean; imap_error?: string; smtp_error?: string }> => {
-        const res = await mailClient.post(`/accounts/${id}/test`)
+        const res = await mailClient.post(`/mail/accounts/${id}/test`)
         return res.data
     },
 
     // IDEA-261: Email aliases
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listAliases: async (accountId: string): Promise<any[]> => {
-        const res = await mailClient.get(`/accounts/${accountId}/aliases`)
+        const res = await mailClient.get(`/mail/accounts/${accountId}/aliases`)
         return res.data
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createAlias: async (accountId: string, data: { alias_email: string; display_name: string }): Promise<any> => {
-        const res = await mailClient.post(`/accounts/${accountId}/aliases`, data)
+        const res = await mailClient.post(`/mail/accounts/${accountId}/aliases`, data)
         return res.data
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     updateAlias: async (accountId: string, aliasId: string, data: Partial<{ alias_email: string; display_name: string }>): Promise<any> => {
-        const res = await mailClient.patch(`/accounts/${accountId}/aliases/${aliasId}`, data)
+        const res = await mailClient.patch(`/mail/accounts/${accountId}/aliases/${aliasId}`, data)
         return res.data
     },
     deleteAlias: async (accountId: string, aliasId: string): Promise<void> => {
-        await mailClient.delete(`/accounts/${accountId}/aliases/${aliasId}`)
+        await mailClient.delete(`/mail/accounts/${accountId}/aliases/${aliasId}`)
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setDefaultAlias: async (accountId: string, aliasId: string): Promise<any> => {
-        const res = await mailClient.post(`/accounts/${accountId}/aliases/${aliasId}/set-default`)
+        const res = await mailClient.post(`/mail/accounts/${accountId}/aliases/${aliasId}/set-default`)
         return res.data
     },
 
     // IDEA-264: Delegation
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listDelegations: async (accountId: string): Promise<any[]> => {
-        const res = await mailClient.get(`/accounts/${accountId}/delegations`)
+        const res = await mailClient.get(`/mail/accounts/${accountId}/delegations`)
         return res.data
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createDelegation: async (accountId: string, data: object): Promise<any> => {
-        const res = await mailClient.post(`/accounts/${accountId}/delegations`, data)
+        const res = await mailClient.post(`/mail/accounts/${accountId}/delegations`, data)
         return res.data
     },
     revokeDelegation: async (accountId: string, delegationId: string): Promise<void> => {
-        await mailClient.delete(`/accounts/${accountId}/delegations/${delegationId}`)
+        await mailClient.delete(`/mail/accounts/${accountId}/delegations/${delegationId}`)
     },
 }
 
@@ -222,12 +224,12 @@ export const accountApi = {
 export const folderApi = {
     list: async (accountId?: string): Promise<MailFolder[]> => {
         const params = accountId ? { account_id: accountId } : {}
-        const res = await mailClient.get('/folders', { params })
+        const res = await mailClient.get('/mail/folders', { params })
         return res.data
     },
 
     get: async (id: string): Promise<MailFolder> => {
-        const res = await mailClient.get(`/folders/${id}`)
+        const res = await mailClient.get(`/mail/folders/${id}`)
         return res.data
     },
 }
@@ -277,70 +279,70 @@ export interface UpdateEmailRequest {
 
 export const mailApi = {
     list: async (query?: EmailQuery): Promise<Email[]> => {
-        const res = await mailClient.get('/emails', { params: query })
+        const res = await mailClient.get('/mail/emails', { params: query })
         return res.data
     },
 
     get: async (id: string): Promise<Email> => {
-        const res = await mailClient.get(`/emails/${id}`)
+        const res = await mailClient.get(`/mail/emails/${id}`)
         return res.data
     },
 
     send: async (data: SendEmailRequest): Promise<Email> => {
-        const res = await mailClient.post('/emails', data)
+        const res = await mailClient.post('/mail/emails', data)
         return res.data
     },
 
     update: async (id: string, data: UpdateEmailRequest): Promise<Email> => {
-        const res = await mailClient.patch(`/emails/${id}`, data)
+        const res = await mailClient.patch(`/mail/emails/${id}`, data)
         return res.data
     },
 
     delete: async (id: string): Promise<void> => {
-        await mailClient.delete(`/emails/${id}`)
+        await mailClient.delete(`/mail/emails/${id}`)
     },
 
     getAttachments: async (id: string): Promise<Attachment[]> => {
-        const res = await mailClient.get(`/emails/${id}/attachments`)
+        const res = await mailClient.get(`/mail/emails/${id}/attachments`)
         return res.data
     },
 
     // IDEA-263: Recurring emails
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createRecurring: async (data: object): Promise<any> => {
-        const res = await mailClient.post('/emails/recurring', data)
+        const res = await mailClient.post('/mail/emails/recurring', data)
         return res.data
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     updateRecurring: async (id: string, data: object): Promise<any> => {
-        const res = await mailClient.patch(`/emails/recurring/${id}`, data)
+        const res = await mailClient.patch(`/mail/emails/recurring/${id}`, data)
         return res.data
     },
     deleteRecurring: async (id: string): Promise<void> => {
-        await mailClient.delete(`/emails/recurring/${id}`)
+        await mailClient.delete(`/mail/emails/recurring/${id}`)
     },
 
     // IDEA-265: Read tracking
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getTrackingRecords: async (params: object): Promise<any[]> => {
-        const res = await mailClient.get('/emails/tracking', { params })
+        const res = await mailClient.get('/mail/emails/tracking', { params })
         return res.data
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getTrackingStats: async (params: object): Promise<any> => {
-        const res = await mailClient.get('/emails/tracking/stats', { params })
+        const res = await mailClient.get('/mail/emails/tracking/stats', { params })
         return res.data
     },
 
     // IDEA-266: AI categorization
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     categorizeInbox: async (data: object): Promise<any> => {
-        const res = await mailClient.post('/emails/categorize', data)
+        const res = await mailClient.post('/mail/emails/categorize', data)
         return res.data
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     saveCategorizeSettings: async (data: object): Promise<any> => {
-        const res = await mailClient.put('/emails/categorize/settings', data)
+        const res = await mailClient.put('/mail/emails/categorize/settings', data)
         return res.data
     },
 }
@@ -363,22 +365,22 @@ export interface UpdateLabelRequest {
 export const labelApi = {
     list: async (accountId?: string): Promise<MailLabel[]> => {
         const params = accountId ? { account_id: accountId } : {}
-        const res = await mailClient.get('/labels', { params })
+        const res = await mailClient.get('/mail/labels', { params })
         return res.data
     },
 
     create: async (data: CreateLabelRequest): Promise<MailLabel> => {
-        const res = await mailClient.post('/labels', data)
+        const res = await mailClient.post('/mail/labels', data)
         return res.data
     },
 
     update: async (id: string, data: UpdateLabelRequest): Promise<MailLabel> => {
-        const res = await mailClient.patch(`/labels/${id}`, data)
+        const res = await mailClient.patch(`/mail/labels/${id}`, data)
         return res.data
     },
 
     delete: async (id: string): Promise<void> => {
-        await mailClient.delete(`/labels/${id}`)
+        await mailClient.delete(`/mail/labels/${id}`)
     },
 }
 
@@ -394,14 +396,14 @@ export interface SearchQuery {
 
 export const searchApi = {
     search: async (query: SearchQuery): Promise<Email[]> => {
-        const res = await mailClient.get('/search', { params: query })
+        const res = await mailClient.get('/mail/search', { params: query })
         return res.data
     },
 }
 
 export const statsApi = {
     get: async (): Promise<MailStats> => {
-        const res = await mailClient.get('/stats')
+        const res = await mailClient.get('/mail/stats')
         return res.data
     },
 }
@@ -461,22 +463,22 @@ export interface UpdateSpamSettingsRequest {
 
 export const spamApi = {
     classify: async (data: ClassifyRequest): Promise<ClassifyResponse> => {
-        const res = await mailClient.post('/spam/classify', data)
+        const res = await mailClient.post('/mail/spam/classify', data)
         return res.data
     },
 
     train: async (data: TrainRequest): Promise<TrainResponse> => {
-        const res = await mailClient.post('/spam/train', data)
+        const res = await mailClient.post('/mail/spam/train', data)
         return res.data
     },
 
     getSettings: async (accountId: string): Promise<SpamStatsResponse> => {
-        const res = await mailClient.get(`/spam/settings/${accountId}`)
+        const res = await mailClient.get(`/mail/spam/settings/${accountId}`)
         return res.data
     },
 
     updateSettings: async (accountId: string, data: UpdateSpamSettingsRequest): Promise<SpamSettings> => {
-        const res = await mailClient.patch(`/spam/settings/${accountId}`, data)
+        const res = await mailClient.patch(`/mail/spam/settings/${accountId}`, data)
         return res.data
     },
 }

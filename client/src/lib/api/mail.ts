@@ -42,8 +42,10 @@ export interface CreateAccountRequest {
     provider: string;
     imap_server?: string;
     imap_port?: number;
+    imap_use_tls?: boolean;
     smtp_server?: string;
     smtp_port?: number;
+    smtp_use_tls?: boolean;
     app_password?: string;
 }
 

@@ -1,10 +1,92 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import {
+  Plus,
+  Trash2,
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
+  Mail,
+  Globe,
+  Server,
+  TestTube,
+} from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
-import { mailApi, type MailAccount } from "@/lib/api/mail";
+import {
+  accountApi,
+  type MailAccount,
+  type CreateAccountRequest,
+} from "@/lib/api-mail";
+import { mailApi } from "@/lib/api/mail";
 import { toast } from "sonner";
 import { EmailAutomationRules } from "@/components/workflow/email-automation-rules";
+
+// ─── Provider presets ────────────────────────────────────────────────────────
+
+type ProviderPreset = {
+  label: string;
+  icon: React.ReactNode;
+  provider: string;
+  imap_server: string;
+  imap_port: number;
+  imap_use_tls: boolean;
+  smtp_server: string;
+  smtp_port: number;
+  smtp_use_tls: boolean;
+  needsPassword: boolean;
+};
+
+const PROVIDER_PRESETS: ProviderPreset[] = [
+  {
+    label: "Gmail",
+    icon: <Mail className="h-5 w-5 text-red-500" />,
+    provider: "gmail",
+    imap_server: "imap.gmail.com",
+    imap_port: 993,
+    imap_use_tls: true,
+    smtp_server: "smtp.gmail.com",
+    smtp_port: 587,
+    smtp_use_tls: true,
+    needsPassword: true,
+  },
+  {
+    label: "Outlook",
+    icon: <Globe className="h-5 w-5 text-blue-500" />,
+    provider: "outlook",
+    imap_server: "outlook.office365.com",
+    imap_port: 993,
+    imap_use_tls: true,
+    smtp_server: "smtp.office365.com",
+    smtp_port: 587,
+    smtp_use_tls: true,
+    needsPassword: true,
+  },
+  {
+    label: "Personnalise",
+    icon: <Server className="h-5 w-5 text-gray-500" />,
+    provider: "custom",
+    imap_server: "",
+    imap_port: 993,
+    imap_use_tls: true,
+    smtp_server: "",
+    smtp_port: 587,
+    smtp_use_tls: true,
+    needsPassword: true,
+  },
+  {
+    label: "Local (Mailpit/Test)",
+    icon: <TestTube className="h-5 w-5 text-green-500" />,
+    provider: "local",
+    imap_server: "localhost",
+    imap_port: 1143,
+    imap_use_tls: false,
+    smtp_server: "localhost",
+    smtp_port: 1025,
+    smtp_use_tls: false,
+    needsPassword: false,
+  },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,12 +161,14 @@ function Field({
   onChange,
   placeholder,
   type = "text",
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   type?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="space-y-1">
@@ -96,9 +180,433 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        disabled={disabled}
         className="w-full rounded-md border bg-background px-3 py-2 text-sm
-          focus:outline-none focus:ring-2 focus:ring-primary"
+          focus:outline-none focus:ring-2 focus:ring-primary
+          disabled:opacity-50 disabled:cursor-not-allowed"
       />
+    </div>
+  );
+}
+
+// ─── Add Account Wizard ──────────────────────────────────────────────────────
+
+function AddAccountWizard({
+  onCreated,
+  onCancel,
+}: {
+  onCreated: () => void;
+  onCancel: () => void;
+}) {
+  const [step, setStep] = useState<"provider" | "details">("provider");
+  const [selectedPreset, setSelectedPreset] = useState<ProviderPreset | null>(null);
+  const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [imapServer, setImapServer] = useState("");
+  const [imapPort, setImapPort] = useState("993");
+  const [imapUseTls, setImapUseTls] = useState(true);
+  const [smtpServer, setSmtpServer] = useState("");
+  const [smtpPort, setSmtpPort] = useState("587");
+  const [smtpUseTls, setSmtpUseTls] = useState(true);
+  const [appPassword, setAppPassword] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const handleSelectProvider = (preset: ProviderPreset) => {
+    setSelectedPreset(preset);
+    setImapServer(preset.imap_server);
+    setImapPort(String(preset.imap_port));
+    setImapUseTls(preset.imap_use_tls);
+    setSmtpServer(preset.smtp_server);
+    setSmtpPort(String(preset.smtp_port));
+    setSmtpUseTls(preset.smtp_use_tls);
+    setStep("details");
+  };
+
+  const handleCreate = async () => {
+    if (!email.trim()) {
+      toast.error("Veuillez saisir une adresse email");
+      return;
+    }
+    if (!selectedPreset) return;
+
+    setCreating(true);
+    try {
+      const payload: CreateAccountRequest = {
+        email_address: email.trim(),
+        display_name: displayName.trim() || undefined,
+        provider: selectedPreset.provider,
+        imap_server: imapServer || undefined,
+        imap_port: parseInt(imapPort) || undefined,
+        imap_use_tls: imapUseTls,
+        smtp_server: smtpServer || undefined,
+        smtp_port: parseInt(smtpPort) || undefined,
+        smtp_use_tls: smtpUseTls,
+        app_password: appPassword.trim() || undefined,
+      };
+      await accountApi.create(payload);
+      toast.success("Compte ajouté avec succes !");
+      onCreated();
+    } catch (err) {
+      console.error("Failed to create account:", err);
+      toast.error("Impossible de creer le compte");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (step === "provider") {
+    return (
+      <div className="rounded-xl border bg-card p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Ajouter un compte</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Choisissez votre fournisseur de messagerie.
+            </p>
+          </div>
+          <button
+            onClick={onCancel}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Annuler
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {PROVIDER_PRESETS.map((preset) => (
+            <button
+              key={preset.provider}
+              onClick={() => handleSelectProvider(preset)}
+              className="flex items-center gap-3 px-4 py-4 rounded-lg border bg-background hover:bg-accent hover:border-primary/50 transition-all text-left"
+            >
+              {preset.icon}
+              <div>
+                <p className="font-medium text-sm">{preset.label}</p>
+                <p className="text-xs text-muted-foreground">
+                  {preset.provider === "custom"
+                    ? "Serveur IMAP/SMTP personnalise"
+                    : preset.provider === "local"
+                    ? "localhost:1025, sans TLS"
+                    : `${preset.imap_server}`}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const isCustom = selectedPreset?.provider === "custom";
+
+  return (
+    <div className="rounded-xl border bg-card p-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {selectedPreset?.icon}
+          <div>
+            <h2 className="text-lg font-semibold">
+              {selectedPreset?.label} - Configuration
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Renseignez les informations de votre compte.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setStep("provider")}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Retour
+          </button>
+          <button
+            onClick={onCancel}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field
+          label="Adresse email"
+          value={email}
+          onChange={setEmail}
+          placeholder="vous@exemple.com"
+          type="email"
+        />
+        <Field
+          label="Nom d'affichage (optionnel)"
+          value={displayName}
+          onChange={setDisplayName}
+          placeholder="Jean Dupont"
+        />
+
+        {selectedPreset?.needsPassword && (
+          <div className="sm:col-span-2">
+            <Field
+              label="Mot de passe d'application"
+              value={appPassword}
+              onChange={setAppPassword}
+              placeholder={
+                selectedPreset.provider === "gmail"
+                  ? "Mot de passe d'app Google (16 caracteres)"
+                  : "Mot de passe"
+              }
+              type="password"
+            />
+            {selectedPreset.provider === "gmail" && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Generez un mot de passe d&apos;application depuis{" "}
+                <a
+                  href="https://myaccount.google.com/apppasswords"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  myaccount.google.com/apppasswords
+                </a>
+              </p>
+            )}
+          </div>
+        )}
+
+        <Field
+          label="Serveur IMAP"
+          value={imapServer}
+          onChange={setImapServer}
+          placeholder="imap.exemple.com"
+          disabled={!isCustom}
+        />
+        <Field
+          label="Port IMAP"
+          value={imapPort}
+          onChange={setImapPort}
+          placeholder="993"
+          disabled={!isCustom}
+        />
+        <Field
+          label="Serveur SMTP"
+          value={smtpServer}
+          onChange={setSmtpServer}
+          placeholder="smtp.exemple.com"
+          disabled={!isCustom}
+        />
+        <Field
+          label="Port SMTP"
+          value={smtpPort}
+          onChange={setSmtpPort}
+          placeholder="587"
+          disabled={!isCustom}
+        />
+
+        {isCustom && (
+          <>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="imap-tls"
+                checked={imapUseTls}
+                onChange={(e) => setImapUseTls(e.target.checked)}
+                className="rounded"
+              />
+              <label htmlFor="imap-tls" className="text-sm">
+                IMAP TLS/SSL
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="smtp-tls"
+                checked={smtpUseTls}
+                onChange={(e) => setSmtpUseTls(e.target.checked)}
+                className="rounded"
+              />
+              <label htmlFor="smtp-tls" className="text-sm">
+                SMTP TLS/STARTTLS
+              </label>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3 pt-2">
+        <button
+          onClick={handleCreate}
+          disabled={creating || !email.trim()}
+          className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground
+            text-sm font-medium hover:bg-primary/90 transition-colors
+            disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {creating ? (
+            <>
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              Creation...
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4" />
+              Ajouter le compte
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Account Card ─────────────────────────────────────────────────────────────
+
+function AccountCard({
+  account,
+  onDeleted,
+  onSynced,
+}: {
+  account: MailAccount;
+  onDeleted: () => void;
+  onSynced: () => void;
+}) {
+  const [syncing, setSyncing] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    imap_ok: boolean;
+    smtp_ok: boolean;
+    imap_error?: string;
+    smtp_error?: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await accountApi.sync(account.id);
+      toast.success("Synchronisation lancee");
+      onSynced();
+    } catch {
+      toast.error("Echec de la synchronisation");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await accountApi.test(account.id);
+      setTestResult(result);
+      if (result.imap_ok && result.smtp_ok) {
+        toast.success("Connexion reussie !");
+      } else {
+        toast.error("Certains tests ont echoue");
+      }
+    } catch {
+      toast.error("Impossible de tester la connexion");
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Supprimer le compte ${account.email_address} ?`)) return;
+    setDeleting(true);
+    try {
+      await accountApi.delete(account.id);
+      toast.success("Compte supprime");
+      onDeleted();
+    } catch {
+      toast.error("Impossible de supprimer le compte");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Mail className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="font-medium text-sm">{account.email_address}</p>
+            <p className="text-xs text-muted-foreground">
+              {account.provider} &middot; {account.status || "active"}
+              {account.last_sync_at && (
+                <> &middot; Synchro: {new Date(account.last_sync_at).toLocaleString()}</>
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="p-2 rounded-md hover:bg-accent transition-colors disabled:opacity-50"
+            title="Synchroniser"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+          </button>
+          <button
+            onClick={handleTest}
+            disabled={testing}
+            className="p-2 rounded-md hover:bg-accent transition-colors disabled:opacity-50"
+            title="Tester la connexion"
+          >
+            <TestTube className={`h-4 w-4 ${testing ? "animate-pulse" : ""}`} />
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50"
+            title="Supprimer"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Server details */}
+      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+        <div>
+          IMAP: {account.imap_server || "N/A"}:{account.imap_port || "N/A"}
+          {account.imap_use_tls ? " (TLS)" : ""}
+        </div>
+        <div>
+          SMTP: {account.smtp_server || "N/A"}:{account.smtp_port || "N/A"}
+          {account.smtp_use_tls ? " (TLS)" : ""}
+        </div>
+      </div>
+
+      {/* Test results */}
+      {testResult && (
+        <div className="flex items-center gap-4 text-xs pt-1">
+          <span className="flex items-center gap-1">
+            {testResult.imap_ok ? (
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+            ) : (
+              <XCircle className="h-3.5 w-3.5 text-red-500" />
+            )}
+            IMAP {testResult.imap_ok ? "OK" : testResult.imap_error || "Echec"}
+          </span>
+          <span className="flex items-center gap-1">
+            {testResult.smtp_ok ? (
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+            ) : (
+              <XCircle className="h-3.5 w-3.5 text-red-500" />
+            )}
+            SMTP {testResult.smtp_ok ? "OK" : testResult.smtp_error || "Echec"}
+          </span>
+        </div>
+      )}
+
+      {account.last_error && (
+        <p className="text-xs text-destructive bg-destructive/10 rounded px-2 py-1">
+          {account.last_error}
+        </p>
+      )}
     </div>
   );
 }
@@ -134,7 +642,7 @@ function SignatureBuilder({
         signature_html: signatureHtml,
         signature_text: signatureText,
       });
-      toast.success("Signature enregistrée");
+      toast.success("Signature enregistree");
       onSaved();
     } catch {
       toast.error("Impossible d'enregistrer la signature");
@@ -174,7 +682,7 @@ function SignatureBuilder({
           <Field label="Nom complet" value={sig.name} onChange={setField("name")} placeholder="Jean Dupont" />
           <Field label="Poste / Fonction" value={sig.title} onChange={setField("title")} placeholder="Directeur Technique" />
           <Field label="Entreprise" value={sig.company} onChange={setField("company")} placeholder="SignApps" />
-          <Field label="Téléphone" value={sig.phone} onChange={setField("phone")} placeholder="+33 1 23 45 67 89" />
+          <Field label="Telephone" value={sig.phone} onChange={setField("phone")} placeholder="+33 1 23 45 67 89" />
           <Field label="E-mail" value={sig.email} onChange={setField("email")} placeholder="jean@exemple.fr" type="email" />
           <Field label="Site web" value={sig.website} onChange={setField("website")} placeholder="https://exemple.fr" type="url" />
           <div className="sm:col-span-2">
@@ -194,7 +702,7 @@ function SignatureBuilder({
               value={sig.extra_html}
               onChange={(e) => setField("extra_html")(e.target.value)}
               rows={3}
-              placeholder='<a href="https://linkedin.com/in/…">LinkedIn</a>'
+              placeholder='<a href="https://linkedin.com/in/...">LinkedIn</a>'
               className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono
                 focus:outline-none focus:ring-2 focus:ring-primary resize-y"
             />
@@ -218,11 +726,11 @@ function SignatureBuilder({
       {/* Live preview */}
       <div className="space-y-2">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Aperçu
+          Apercu
         </p>
         <div
           className="rounded-xl border bg-white dark:bg-zinc-900 p-6 min-h-24 overflow-auto"
-          dangerouslySetInnerHTML={{ __html: preview || "<em style='color:#999'>Aperçu vide</em>" }}
+          dangerouslySetInnerHTML={{ __html: preview || "<em style='color:#999'>Apercu vide</em>" }}
         />
       </div>
 
@@ -235,12 +743,12 @@ function SignatureBuilder({
             text-sm font-medium hover:bg-primary/90 transition-colors
             disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? "Enregistrement…" : "Enregistrer la signature"}
+          {saving ? "Enregistrement..." : "Enregistrer la signature"}
         </button>
         <button
           onClick={() => {
             navigator.clipboard.writeText(preview);
-            toast.success("HTML copié dans le presse-papier");
+            toast.success("HTML copie dans le presse-papier");
           }}
           className="px-4 py-2.5 rounded-lg border text-sm font-medium hover:bg-accent transition-colors"
         >
@@ -257,12 +765,12 @@ export default function MailSettingsPage() {
   const [accounts, setAccounts] = useState<MailAccount[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showAddWizard, setShowAddWizard] = useState(false);
 
   const loadAccounts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await mailApi.listAccounts();
-      const list = res.data;
+      const list = await accountApi.list();
       setAccounts(list);
       if (list.length > 0 && !selectedId) setSelectedId(list[0].id);
     } catch {
@@ -285,30 +793,66 @@ export default function MailSettingsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Paramètres Mail</h1>
+            <h1 className="text-2xl font-bold">Parametres Mail</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Gérez vos signatures email par compte.
+              Gerez vos comptes de messagerie et signatures.
             </p>
           </div>
           <a href="/mail" className="text-sm text-primary hover:underline">
-            ← Retour au mail
+            &larr; Retour au mail
           </a>
         </div>
 
+        {/* Add Account button / wizard */}
+        {showAddWizard ? (
+          <AddAccountWizard
+            onCreated={() => {
+              setShowAddWizard(false);
+              loadAccounts();
+            }}
+            onCancel={() => setShowAddWizard(false)}
+          />
+        ) : (
+          <button
+            onClick={() => setShowAddWizard(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed
+              border-primary/30 hover:border-primary/60 text-primary hover:bg-primary/5 transition-all text-sm font-medium"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un compte
+          </button>
+        )}
+
         {loading ? (
           <div className="h-48 rounded-xl bg-muted animate-pulse" />
-        ) : accounts.length === 0 ? (
+        ) : accounts.length === 0 && !showAddWizard ? (
           <div className="rounded-xl border p-12 text-center text-muted-foreground">
-            <p className="font-medium">Aucun compte mail configuré.</p>
+            <Mail className="h-12 w-12 mx-auto mb-3 opacity-40" />
+            <p className="font-medium">Aucun compte mail configure.</p>
             <p className="text-sm mt-1">
-              Ajoutez un compte depuis les paramètres de compte.
+              Cliquez sur &quot;Ajouter un compte&quot; pour commencer.
             </p>
           </div>
         ) : (
           <>
-            {/* Account selector */}
+            {/* Account list */}
+            {accounts.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold">Comptes configures</h2>
+                {accounts.map((acc) => (
+                  <AccountCard
+                    key={acc.id}
+                    account={acc}
+                    onDeleted={loadAccounts}
+                    onSynced={loadAccounts}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Account selector for signature */}
             {accounts.length > 1 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 pt-4 border-t">
                 {accounts.map((a) => (
                   <button
                     key={a.id}
@@ -330,10 +874,10 @@ export default function MailSettingsPage() {
               <div className="rounded-xl border bg-card p-6 space-y-4">
                 <div>
                   <h2 className="text-lg font-semibold">
-                    Signature — {selectedAccount.email_address}
+                    Signature &mdash; {selectedAccount.email_address}
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Cette signature sera ajoutée automatiquement à vos messages sortants.
+                    Cette signature sera ajoutee automatiquement a vos messages sortants.
                   </p>
                 </div>
                 <SignatureBuilder
