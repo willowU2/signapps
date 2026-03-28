@@ -863,7 +863,7 @@ export default function AIPage() {
 
   return (
     <>
-      <div className="flex h-[calc(100vh-8rem)]">
+      <div className="flex min-h-0 flex-1 h-[min(calc(100vh-8rem),800px)]">
         {/* Sidebar - Conversation History */}
         <div className={cn(
           "flex flex-col border-r bg-muted/30 transition-all duration-300",

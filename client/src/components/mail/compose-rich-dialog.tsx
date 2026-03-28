@@ -142,7 +142,7 @@ export function ComposeRichDialog({
                     "p-0 gap-0 overflow-hidden",
                     isFullscreen
                         ? "w-screen h-screen max-w-none max-h-none rounded-none"
-                        : "max-w-4xl h-[85vh]"
+                        : "w-[calc(100vw-2rem)] max-w-4xl h-[85vh] max-h-[calc(100vh-2rem)]"
                 )}
             >
                 <DialogHeader className="px-4 py-3 border-b flex flex-row items-center justify-between space-y-0">

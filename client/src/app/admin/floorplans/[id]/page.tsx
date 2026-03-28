@@ -172,7 +172,7 @@ export default function FloorPlanEditor() {
 
     return (
         <AppLayout>
-            <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
+            <div className="flex flex-col min-h-0 flex-1 bg-background">
                 {/* Header Navbar */}
                 <div className="flex items-center justify-between px-6 py-4 border-b bg-background z-10">
                     <div className="flex items-center gap-4">

@@ -156,7 +156,7 @@ export function Sidebar() {
         href={safeHref}
         title={item.label}
         className={cn(
-          'flex items-center gap-4 py-2.5 text-sm font-medium transition-all duration-150',
+          'flex items-center gap-4 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150',
           sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6',
           isActive
             ? 'bg-accent text-accent-foreground font-semibold'
@@ -213,7 +213,7 @@ export function Sidebar() {
           href={safeHref}
           title={app.label}
           className={cn(
-            'flex flex-1 items-center gap-4 py-2.5 text-sm font-medium transition-all duration-150',
+            'flex flex-1 items-center gap-4 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150',
             sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6 pl-5',
             isActive
               ? 'bg-accent text-accent-foreground font-semibold'

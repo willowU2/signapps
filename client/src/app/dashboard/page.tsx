@@ -18,6 +18,7 @@ import { AiDailyBrief } from '@/components/dashboard/ai-daily-brief';
 import { UnifiedStats } from '@/components/dashboard/unified-stats';
 import { RecentFiles } from '@/components/dashboard/recent-files';
 import { GlobalActivityFeed as ActivityFeed } from '@/components/crosslinks/GlobalActivityFeed';
+import { UpcomingEventsCard } from '@/components/dashboard/upcoming-events-card';
 import { APP_REGISTRY, APP_CATEGORIES, type AppEntry } from '@/lib/app-registry';
 import { usePinnedAppsStore } from '@/lib/store';
 import { resetAllBreakers } from '@/lib/circuit-breaker';
@@ -195,6 +196,9 @@ export default function DashboardPage() {
 
             <AiDailyBrief data={data} />
             <UnifiedStats data={data} />
+
+            {/* Upcoming Events */}
+            <UpcomingEventsCard />
 
             {/* All Apps toggle */}
             <div>

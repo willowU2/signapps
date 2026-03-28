@@ -396,7 +396,7 @@ export default function MeetPage() {
     if (inRoom) {
         return (
             <AppLayout>
-                <div className="h-[calc(100vh-8rem)] w-full flex items-center justify-center relative">
+                <div className="min-h-[400px] h-[min(calc(100vh-8rem),800px)] w-full flex items-center justify-center relative">
                     <MeetRoom
                         roomId={liveRoomId}
                         token={liveToken}
