@@ -99,6 +99,7 @@ function CategorySection({ category, apps, onDragStart }: {
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { data, isLoading: loading, isFetching: refreshing } = useDashboardData();
   const { editMode, setEditMode, resetLayout } = useDashboardStore();
   const [addWidgetOpen, setAddWidgetOpen] = useState(false);

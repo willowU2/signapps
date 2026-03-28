@@ -40,7 +40,7 @@ export function StorageRulesSettings() {
       const data = await storageSettingsApi.getStorageRules();
       setRules(data);
     } catch (error) {
-      toast.error("Failed to load storage rules");
+      toast.error("Impossible de charger les règles de stockage");
       console.debug(error);
     } finally {
       setIsLoading(false);
@@ -72,7 +72,7 @@ export function StorageRulesSettings() {
   const handleSave = async () => {
     try {
       if (!editForm.file_type || !editForm.target_bucket) {
-        toast.error("File type and Target bucket are required");
+        toast.error("Le type de fichier et le bucket cible sont requis");
         return;
       }
 
@@ -83,16 +83,16 @@ export function StorageRulesSettings() {
 
       if (editingId === "new") {
         await storageSettingsApi.createStorageRule(payload);
-        toast.success("Storage rule created");
+        toast.success("Règle de stockage créée");
       } else if (editingId) {
         await storageSettingsApi.updateStorageRule(editingId, payload);
-        toast.success("Storage rule updated");
+        toast.success("Règle de stockage mise à jour");
       }
       
       setEditingId(null);
       fetchRules();
     } catch (error) {
-      toast.error("Failed to save storage rule");
+      toast.error("Impossible d'enregistrer la règle de stockage");
       console.debug(error);
     }
   };

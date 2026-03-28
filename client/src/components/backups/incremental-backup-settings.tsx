@@ -35,7 +35,7 @@ export function IncrementalBackupSettings() {
     setSaving(true);
     await new Promise(r => setTimeout(r, 600));
     setSaving(false);
-    toast.success('Incremental backup settings saved');
+    toast.success('Paramètres de sauvegarde incrémentielle enregistrés');
   };
 
   const estimatedSavings = config.enabled

@@ -75,7 +75,7 @@ export function SelfServicePortal() {
   ]);
 
   const handleSavePreferences = () => {
-    toast.success("Preferences saved successfully");
+    toast.success("Préférences enregistrées");
   };
 
   const handleSubscriptionChange = (key: keyof typeof subscriptions) => {

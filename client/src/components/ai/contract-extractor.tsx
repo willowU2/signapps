@@ -22,7 +22,7 @@ export function ContractExtractor() {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       if (selectedFile.size > 50 * 1024 * 1024) {
-        toast.error('File size must be less than 50MB');
+        toast.error('La taille du fichier doit être inférieure à 50 Mo');
         return;
       }
       setFile(selectedFile);
@@ -33,7 +33,7 @@ export function ContractExtractor() {
 
   const handleExtract = async () => {
     if (!file) {
-      toast.error('Please upload a contract');
+      toast.error('Veuillez téléverser un contrat');
       return;
     }
 
@@ -78,9 +78,9 @@ Respond with only the JSON array.`;
       }
 
       setClauses(extracted);
-      toast.success('Contract analysis completed');
+      toast.success('Analyse du contrat terminée');
     } catch (error) {
-      toast.error('Extraction failed');
+      toast.error('Extraction échouée');
     } finally {
       setIsLoading(false);
     }

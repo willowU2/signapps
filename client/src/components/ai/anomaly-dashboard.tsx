@@ -82,7 +82,7 @@ export function AnomalyDashboard() {
       setAnomalies(detectedAnomalies);
       setLastRefresh(new Date());
     } catch (error) {
-      toast.error('Failed to fetch anomaly data');
+      toast.error('Impossible de charger les données d\'anomalies');
     } finally {
       setIsLoading(false);
     }

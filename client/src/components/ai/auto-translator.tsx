@@ -105,7 +105,7 @@ Provide only the translated content without any explanations.`;
       reader.readAsText(file);
     } catch (error) {
       setIsLoading(false);
-      toast.error('Translation failed');
+      toast.error('Traduction échouée');
     }
   };
 
@@ -123,7 +123,7 @@ Provide only the translated content without any explanations.`;
     a.download = fileName;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('File downloaded');
+    toast.success('Fichier téléchargé');
   };
 
   return (

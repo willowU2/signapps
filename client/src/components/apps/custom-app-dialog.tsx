@@ -40,7 +40,7 @@ export function CustomAppDialog({
 
     const handleInstall = async () => {
         if (!name.trim() || !image.trim()) {
-            toast.error('Name and image are required');
+            toast.error('Le nom et l\'image sont requis');
             return;
         }
 

@@ -73,7 +73,7 @@ export function ContractGenerator() {
 
   const handleGenerate = async () => {
     if (!formData.template || !formData.clientName || !formData.startDate) {
-      toast.error('Please fill in all required fields');
+      toast.error('Veuillez remplir tous les champs requis');
       return;
     }
 
@@ -97,9 +97,9 @@ Write a complete, professional contract in plain text (no markdown). Include all
       }
 
       setGeneratedPreview(contractText);
-      toast.success('Contract generated successfully');
+      toast.success('Contrat généré avec succès');
     } catch (error) {
-      toast.error('Failed to generate contract');
+      toast.error('Impossible de générer le contrat');
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +107,7 @@ Write a complete, professional contract in plain text (no markdown). Include all
 
   const handleDownload = () => {
     if (!generatedPreview) {
-      toast.error('No contract to download');
+      toast.error('Aucun contrat à télécharger');
       return;
     }
 
@@ -119,7 +119,7 @@ Write a complete, professional contract in plain text (no markdown). Include all
     link.click();
     window.URL.revokeObjectURL(url);
 
-    toast.success('Contract downloaded');
+    toast.success('Contrat téléchargé');
   };
 
   return (

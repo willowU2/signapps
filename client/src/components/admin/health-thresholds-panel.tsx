@@ -91,7 +91,7 @@ export function HealthThresholdsPanel({ onThresholdsChange }: HealthThresholdsPa
   const handleSave = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(thresholds));
     onThresholdsChange?.(thresholds);
-    toast.success('Health thresholds saved');
+    toast.success('Seuils de santé enregistrés');
     setOpen(false);
   };
 

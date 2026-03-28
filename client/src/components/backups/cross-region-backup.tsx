@@ -41,7 +41,7 @@ export function CrossRegionBackup() {
   const [newPath, setNewPath] = useState('');
 
   const addLocation = () => {
-    if (!newName || !newPath) { toast.error('Name and path are required'); return; }
+    if (!newName || !newPath) { toast.error('Le nom et le chemin sont requis'); return; }
     setLocations(prev => [...prev, {
       id: Date.now().toString(),
       name: newName,
@@ -51,7 +51,7 @@ export function CrossRegionBackup() {
       status: 'pending',
     }]);
     setNewName(''); setNewPath(''); setAdding(false);
-    toast.success('Secondary backup location added');
+    toast.success('Emplacement de sauvegarde secondaire ajouté');
   };
 
   const toggle = (id: string) => {
@@ -60,7 +60,7 @@ export function CrossRegionBackup() {
 
   const remove = (id: string) => {
     setLocations(prev => prev.filter(l => l.id !== id));
-    toast.success('Location removed');
+    toast.success('Emplacement supprimé');
   };
 
   return (
