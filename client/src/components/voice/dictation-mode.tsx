@@ -12,11 +12,11 @@ export function DictationMode() {
   const [active, setActive] = useState(false);
   const [text, setText] = useState('');
   const [interim, setInterim] = useState('');
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const accumulatedRef = useRef('');
 
   const startDictation = useCallback(() => {
-    const SpeechRec = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRec) { toast.error('Speech recognition not supported in this browser'); return; }
 
     const rec = new SpeechRec();
@@ -38,7 +38,7 @@ export function DictationMode() {
       setInterim(newInterim);
     };
 
-    rec.onerror = (e) => {
+    rec.onerror = (e: any) => {
       if (e.error !== 'no-speech') { toast.error(`Dictation error: ${e.error}`); }
     };
 

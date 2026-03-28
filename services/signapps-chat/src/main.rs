@@ -286,13 +286,24 @@ async fn send_message(
         updated_at: now,
     };
 
-    state.messages.entry(channel_id).or_default().push(msg.clone());
+    state
+        .messages
+        .entry(channel_id)
+        .or_default()
+        .push(msg.clone());
 
     // Update unread counts for all users (simplified: increment a global counter)
-    broadcast(&state, "new_message", serde_json::to_value(&msg).unwrap_or_default());
+    broadcast(
+        &state,
+        "new_message",
+        serde_json::to_value(&msg).unwrap_or_default(),
+    );
 
     tracing::info!(id = %msg.id, channel = %channel_id, "Message sent");
-    (StatusCode::CREATED, Json(serde_json::to_value(&msg).unwrap_or_default()))
+    (
+        StatusCode::CREATED,
+        Json(serde_json::to_value(&msg).unwrap_or_default()),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -330,7 +341,10 @@ async fn upload_file(
         size,
     };
 
-    (StatusCode::CREATED, Json(serde_json::to_value(attachment).unwrap_or_default()))
+    (
+        StatusCode::CREATED,
+        Json(serde_json::to_value(attachment).unwrap_or_default()),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -352,14 +366,21 @@ async fn add_reaction(
             *count = serde_json::json!(count.as_u64().unwrap_or(0) + 1);
             msg.updated_at = Utc::now().to_rfc3339();
 
-            broadcast(&state, "reaction_added", serde_json::json!({
-                "message_id": message_id,
-                "emoji": payload.emoji,
-                "user_id": claims.sub,
-                "count": reactions[&payload.emoji],
-            }));
+            broadcast(
+                &state,
+                "reaction_added",
+                serde_json::json!({
+                    "message_id": message_id,
+                    "emoji": payload.emoji,
+                    "user_id": claims.sub,
+                    "count": reactions[&payload.emoji],
+                }),
+            );
 
-            return (StatusCode::CREATED, Json(serde_json::json!({ "status": "ok" })));
+            return (
+                StatusCode::CREATED,
+                Json(serde_json::json!({ "status": "ok" })),
+            );
         }
     }
     // Also check DM messages
@@ -371,11 +392,17 @@ async fn add_reaction(
                 .or_insert(serde_json::json!(0));
             *count = serde_json::json!(count.as_u64().unwrap_or(0) + 1);
             msg.updated_at = Utc::now().to_rfc3339();
-            return (StatusCode::CREATED, Json(serde_json::json!({ "status": "ok" })));
+            return (
+                StatusCode::CREATED,
+                Json(serde_json::json!({ "status": "ok" })),
+            );
         }
     }
 
-    (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Message not found" })))
+    (
+        StatusCode::NOT_FOUND,
+        Json(serde_json::json!({ "error": "Message not found" })),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -392,15 +419,25 @@ async fn pin_message(
             if let Some(msg) = entry.value_mut().iter_mut().find(|m| m.id == message_id) {
                 msg.is_pinned = true;
                 msg.updated_at = Utc::now().to_rfc3339();
-                broadcast(&state, "message_pinned", serde_json::json!({
-                    "channel_id": channel_id,
-                    "message_id": message_id,
-                }));
-                return (StatusCode::OK, Json(serde_json::json!({ "status": "pinned" })));
+                broadcast(
+                    &state,
+                    "message_pinned",
+                    serde_json::json!({
+                        "channel_id": channel_id,
+                        "message_id": message_id,
+                    }),
+                );
+                return (
+                    StatusCode::OK,
+                    Json(serde_json::json!({ "status": "pinned" })),
+                );
             }
         }
     }
-    (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Message not found" })))
+    (
+        StatusCode::NOT_FOUND,
+        Json(serde_json::json!({ "error": "Message not found" })),
+    )
 }
 
 async fn unpin_message(
@@ -413,11 +450,17 @@ async fn unpin_message(
             if let Some(msg) = entry.value_mut().iter_mut().find(|m| m.id == message_id) {
                 msg.is_pinned = false;
                 msg.updated_at = Utc::now().to_rfc3339();
-                return (StatusCode::OK, Json(serde_json::json!({ "status": "unpinned" })));
+                return (
+                    StatusCode::OK,
+                    Json(serde_json::json!({ "status": "unpinned" })),
+                );
             }
         }
     }
-    (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Message not found" })))
+    (
+        StatusCode::NOT_FOUND,
+        Json(serde_json::json!({ "error": "Message not found" })),
+    )
 }
 
 async fn list_pinned(
@@ -427,9 +470,15 @@ async fn list_pinned(
     match state.messages.get(&channel_id) {
         Some(msgs) => {
             let pinned: Vec<&ChatMessage> = msgs.iter().filter(|m| m.is_pinned).collect();
-            (StatusCode::OK, Json(serde_json::to_value(pinned).unwrap_or_default()))
-        }
-        None => (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Channel not found" }))),
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(pinned).unwrap_or_default()),
+            )
+        },
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Channel not found" })),
+        ),
     }
 }
 
@@ -441,9 +490,15 @@ async fn list_dms(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
-    let rooms: Vec<DirectMessageRoom> = state.dm_rooms
+    let rooms: Vec<DirectMessageRoom> = state
+        .dm_rooms
         .iter()
-        .filter(|e| e.value().participants.iter().any(|p| p.user_id == claims.sub))
+        .filter(|e| {
+            e.value()
+                .participants
+                .iter()
+                .any(|p| p.user_id == claims.sub)
+        })
         .map(|e| e.value().clone())
         .collect();
     Json(rooms)
@@ -460,18 +515,30 @@ async fn create_dm(
     all_ids.sort();
 
     for entry in state.dm_rooms.iter() {
-        let mut room_ids: Vec<Uuid> = entry.value().participants.iter().map(|p| p.user_id).collect();
+        let mut room_ids: Vec<Uuid> = entry
+            .value()
+            .participants
+            .iter()
+            .map(|p| p.user_id)
+            .collect();
         room_ids.sort();
         if room_ids == all_ids {
-            return (StatusCode::OK, Json(serde_json::to_value(entry.value().clone()).unwrap_or_default()));
+            return (
+                StatusCode::OK,
+                Json(serde_json::to_value(entry.value().clone()).unwrap_or_default()),
+            );
         }
     }
 
     let now = Utc::now().to_rfc3339();
-    let mut participants: Vec<DmParticipant> = payload.participant_ids.iter().map(|id| DmParticipant {
-        user_id: *id,
-        username: id.to_string(),
-    }).collect();
+    let mut participants: Vec<DmParticipant> = payload
+        .participant_ids
+        .iter()
+        .map(|id| DmParticipant {
+            user_id: *id,
+            username: id.to_string(),
+        })
+        .collect();
     participants.push(DmParticipant {
         user_id: claims.sub,
         username: claims.username.clone(),
@@ -487,7 +554,10 @@ async fn create_dm(
     state.dm_rooms.insert(room_id, room.clone());
     state.dm_messages.insert(room_id, Vec::new());
 
-    (StatusCode::CREATED, Json(serde_json::to_value(room).unwrap_or_default()))
+    (
+        StatusCode::CREATED,
+        Json(serde_json::to_value(room).unwrap_or_default()),
+    )
 }
 
 async fn delete_dm(
@@ -500,9 +570,15 @@ async fn delete_dm(
             state.dm_rooms.remove(&room_id);
             state.dm_messages.remove(&room_id);
             (StatusCode::NO_CONTENT, Json(serde_json::json!({})))
-        }
-        Some(_) => (StatusCode::FORBIDDEN, Json(serde_json::json!({ "error": "Not a participant" }))),
-        None => (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "DM not found" }))),
+        },
+        Some(_) => (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({ "error": "Not a participant" })),
+        ),
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "DM not found" })),
+        ),
     }
 }
 
@@ -511,8 +587,14 @@ async fn list_dm_messages(
     Path(room_id): Path<Uuid>,
 ) -> impl IntoResponse {
     match state.dm_messages.get(&room_id) {
-        Some(msgs) => (StatusCode::OK, Json(serde_json::to_value(&*msgs).unwrap_or_default())),
-        None => (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "DM room not found" }))),
+        Some(msgs) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(&*msgs).unwrap_or_default()),
+        ),
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "DM room not found" })),
+        ),
     }
 }
 
@@ -523,7 +605,10 @@ async fn send_dm_message(
     Json(payload): Json<SendMessageRequest>,
 ) -> impl IntoResponse {
     if !state.dm_rooms.contains_key(&room_id) {
-        return (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "DM not found" })));
+        return (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "DM not found" })),
+        );
     }
 
     let now = Utc::now().to_rfc3339();
@@ -541,22 +626,31 @@ async fn send_dm_message(
         updated_at: now.clone(),
     };
 
-    state.dm_messages.entry(room_id).or_default().push(msg.clone());
+    state
+        .dm_messages
+        .entry(room_id)
+        .or_default()
+        .push(msg.clone());
     if let Some(mut room) = state.dm_rooms.get_mut(&room_id) {
         room.last_message_at = Some(now);
     }
 
-    broadcast(&state, "new_message", serde_json::to_value(&msg).unwrap_or_default());
-    (StatusCode::CREATED, Json(serde_json::to_value(&msg).unwrap_or_default()))
+    broadcast(
+        &state,
+        "new_message",
+        serde_json::to_value(&msg).unwrap_or_default(),
+    );
+    (
+        StatusCode::CREATED,
+        Json(serde_json::to_value(&msg).unwrap_or_default()),
+    )
 }
 
 // ---------------------------------------------------------------------------
 // Handlers — Presence (IDEA-136)
 // ---------------------------------------------------------------------------
 
-async fn get_presence(
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+async fn get_presence(State(state): State<AppState>) -> impl IntoResponse {
     let entries: Vec<PresenceEntry> = state.presence.iter().map(|e| e.value().clone()).collect();
     Json(entries)
 }
@@ -572,8 +666,15 @@ async fn set_presence(
         updated_at: Utc::now().to_rfc3339(),
     };
     state.presence.insert(claims.sub, entry.clone());
-    broadcast(&state, "presence_updated", serde_json::to_value(&entry).unwrap_or_default());
-    (StatusCode::OK, Json(serde_json::to_value(entry).unwrap_or_default()))
+    broadcast(
+        &state,
+        "presence_updated",
+        serde_json::to_value(&entry).unwrap_or_default(),
+    );
+    (
+        StatusCode::OK,
+        Json(serde_json::to_value(entry).unwrap_or_default()),
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -588,12 +689,19 @@ async fn search_messages(
     let query = params.q.to_lowercase();
     match state.messages.get(&channel_id) {
         Some(msgs) => {
-            let results: Vec<&ChatMessage> = msgs.iter()
+            let results: Vec<&ChatMessage> = msgs
+                .iter()
                 .filter(|m| m.content.to_lowercase().contains(&query))
                 .collect();
-            (StatusCode::OK, Json(serde_json::to_value(results).unwrap_or_default()))
-        }
-        None => (StatusCode::NOT_FOUND, Json(serde_json::json!({ "error": "Channel not found" }))),
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(results).unwrap_or_default()),
+            )
+        },
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({ "error": "Channel not found" })),
+        ),
     }
 }
 
@@ -608,17 +716,27 @@ async fn get_read_status(
 ) -> impl IntoResponse {
     let key = format!("{}:{}", channel_id, claims.sub);
     match state.read_status.get(&key) {
-        Some(s) => (StatusCode::OK, Json(serde_json::to_value(s.clone()).unwrap_or_default())),
+        Some(s) => (
+            StatusCode::OK,
+            Json(serde_json::to_value(s.clone()).unwrap_or_default()),
+        ),
         None => {
-            let msg_count = state.messages.get(&channel_id).map(|m| m.len() as u64).unwrap_or(0);
+            let msg_count = state
+                .messages
+                .get(&channel_id)
+                .map(|m| m.len() as u64)
+                .unwrap_or(0);
             let status = ReadStatus {
                 channel_id,
                 user_id: claims.sub,
                 unread_count: msg_count,
                 last_read_at: Utc::now().to_rfc3339(),
             };
-            (StatusCode::OK, Json(serde_json::to_value(status).unwrap_or_default()))
-        }
+            (
+                StatusCode::OK,
+                Json(serde_json::to_value(status).unwrap_or_default()),
+            )
+        },
     }
 }
 
@@ -635,14 +753,18 @@ async fn mark_channel_read(
         last_read_at: Utc::now().to_rfc3339(),
     };
     state.read_status.insert(key, status.clone());
-    (StatusCode::OK, Json(serde_json::to_value(status).unwrap_or_default()))
+    (
+        StatusCode::OK,
+        Json(serde_json::to_value(status).unwrap_or_default()),
+    )
 }
 
 async fn get_all_unread(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
-    let statuses: Vec<ReadStatus> = state.read_status
+    let statuses: Vec<ReadStatus> = state
+        .read_status
         .iter()
         .filter(|e| e.value().user_id == claims.sub)
         .map(|e| e.value().clone())
@@ -672,18 +794,25 @@ async fn export_channel(
                 let mut csv = String::from("id,username,content,created_at\n");
                 for m in msgs.iter() {
                     let content = m.content.replace('"', "\"\"");
-                    csv.push_str(&format!("{},{},{},{}\n",
-                        m.id, m.username,
-                        format!("\"{}\"", content),
-                        m.created_at
+                    csv.push_str(&format!(
+                        "{},{},\"{}\",{}\n",
+                        m.id, m.username, content, m.created_at
                     ));
                 }
-                (StatusCode::OK, [(axum::http::header::CONTENT_TYPE, "text/csv")], csv)
+                (
+                    StatusCode::OK,
+                    [(axum::http::header::CONTENT_TYPE, "text/csv")],
+                    csv,
+                )
             } else {
                 let json = serde_json::to_string(&*msgs).unwrap_or_default();
-                (StatusCode::OK, [(axum::http::header::CONTENT_TYPE, "application/json")], json)
+                (
+                    StatusCode::OK,
+                    [(axum::http::header::CONTENT_TYPE, "application/json")],
+                    json,
+                )
             }
-        }
+        },
     }
 }
 
@@ -716,9 +845,9 @@ async fn handle_ws(socket: WebSocket, state: AppState) {
             match msg {
                 Message::Text(text) => {
                     let _ = tx.send(text.to_string());
-                }
+                },
                 Message::Close(_) => break,
-                _ => {}
+                _ => {},
             }
         }
     });

@@ -22,7 +22,7 @@ export function VoiceNotes() {
   const [notes, setNotes] = useState<VoiceNote[]>([]);
   const [duration, setDuration] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentTranscriptRef = useRef('');
@@ -52,7 +52,7 @@ export function VoiceNotes() {
       mediaRecorderRef.current = mr;
 
       // Speech recognition for transcription
-      const SpeechRec = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (SpeechRec) {
         const rec = new SpeechRec();
         rec.continuous = true;

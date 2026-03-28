@@ -35,10 +35,10 @@ export function MeetingMinutesGenerator() {
   const [recording, setRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [minutes, setMinutes] = useState<MeetingMinutes | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const startRecording = useCallback(() => {
-    const SpeechRec = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRec) { toast.error('Speech recognition not supported'); return; }
 
     const rec = new SpeechRec();

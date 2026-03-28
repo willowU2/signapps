@@ -11,7 +11,7 @@ created_for: "Prochaine instance d'AgentIQ"
 ## Résumé Exécutif
 
 1. Session `946c0f12` démarrée le 2026-03-28T09:32:52.760Z
-2. Terminée proprement le 2026-03-28T09:35:32.034Z
+2. Terminée proprement le 2026-03-28T09:36:06.748Z
 3. Travail : (non renseigné)
 
 ---
@@ -77,7 +77,7 @@ Fichiers à lire en priorité :
 |----------|--------|
 | Session ID | 946c0f12-e929-41f1-bb0d-fc3d919efcf8 |
 | Démarrée | 2026-03-28T09:32:52.760Z |
-| Terminée | 2026-03-28T09:35:32.034Z |
+| Terminée | 2026-03-28T09:36:06.748Z |
 | Crashes enregistrés | 0 |
 | Checkpoints | 0 |
 

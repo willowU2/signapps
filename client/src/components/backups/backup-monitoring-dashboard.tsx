@@ -111,7 +111,7 @@ export function BackupMonitoringDashboard() {
               <BarChart data={chartData} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v: number) => [`${v} MB`, 'Size']} />
+                <Tooltip formatter={(v) => [`${v} MB`, 'Size']} />
                 <Bar dataKey="size" radius={[4, 4, 0, 0]}>
                   {chartData.map((entry, i) => (
                     <Cell

@@ -25,7 +25,7 @@ export function VoiceCommandsGlobal({ compact = false }: VoiceCommandsGlobalProp
   const router = useRouter();
   const [active, setActive] = useState(false);
   const [lastCommand, setLastCommand] = useState('');
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const processCommand = useCallback((text: string) => {
     const lower = text.toLowerCase().trim();
@@ -40,7 +40,7 @@ export function VoiceCommandsGlobal({ compact = false }: VoiceCommandsGlobalProp
   }, [router]);
 
   const start = useCallback(() => {
-    const SpeechRec = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRec) { toast.error('Speech recognition not supported'); return; }
 
     const rec = new SpeechRec();

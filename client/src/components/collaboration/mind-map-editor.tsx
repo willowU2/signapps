@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,7 +88,7 @@ export function MindMapEditor() {
   };
 
   const renderEdges = () => {
-    const edges: JSX.Element[] = [];
+    const edges: React.ReactElement[] = [];
     Object.values(nodes).forEach(node => {
       node.children.forEach(childId => {
         const child = nodes[childId];
