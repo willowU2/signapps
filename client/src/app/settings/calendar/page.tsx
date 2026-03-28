@@ -224,7 +224,7 @@ export default function CalendarSettingsPage() {
       )}
 
       <Tabs defaultValue="connections" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7">
           <TabsTrigger value="connections" className="flex gap-2">
             <Link2 className="h-4 w-4" />
             <span className="hidden sm:inline">Connexions</span>

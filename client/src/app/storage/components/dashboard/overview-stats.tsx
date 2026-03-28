@@ -101,7 +101,7 @@ export function OverviewStats({ stats, raidHealth, loading }: OverviewStatsProps
                   <p className="text-lg font-semibold capitalize">{raidHealth.status}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-8 text-center">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
                 <div>
                   <p className="text-2xl font-bold">{raidHealth.arrays_total || 0}</p>
                   <p className="text-sm text-muted-foreground">Arrays</p>

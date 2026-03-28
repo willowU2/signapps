@@ -60,7 +60,7 @@ export default function EntityHubAdminPage() {
       </div>
 
       <Tabs defaultValue="workspaces" className="w-full">
-        <TabsList className="grid grid-cols-6 w-full lg:w-[800px]">
+        <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full lg:w-[800px]">
           <TabsTrigger value="workspaces"><Building2 className="w-4 h-4 mr-2" /> Workspaces</TabsTrigger>
           <TabsTrigger value="calendars"><CalendarIcon className="w-4 h-4 mr-2" /> Calendars</TabsTrigger>
           <TabsTrigger value="resources"><Server className="w-4 h-4 mr-2" /> Resources</TabsTrigger>

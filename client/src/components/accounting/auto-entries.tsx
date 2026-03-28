@@ -180,7 +180,7 @@ export function AutoEntries() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border bg-amber-50 p-4">
           <p className="text-sm text-gray-600 font-medium">Pending Review</p>
           <p className="text-2xl font-bold text-amber-900">{pendingCount}</p>

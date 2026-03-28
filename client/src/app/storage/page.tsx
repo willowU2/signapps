@@ -743,7 +743,7 @@ export default function StoragePage() {
                       )}
                     </div>
                   ) : driveView === 'home' ? (
-                    <div className="flex-1 p-6 max-w-6xl mx-auto w-full space-y-8">
+                    <div className="flex-1 p-6 w-full space-y-8">
                       <h2 className="text-2xl text-[#202124] dark:text-[#e8eaed]">Accueil</h2>
                       
                       {/* Suggérés */}
@@ -895,7 +895,7 @@ export default function StoragePage() {
             </div>
             
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-6 mb-6">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 mb-6">
                 {TABS.filter(t => t.id !== 'files').map((tab) => (
                   <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
                     <tab.icon className="h-4 w-4" />

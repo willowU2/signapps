@@ -24,7 +24,7 @@ export default function GamificationPage() {
         <FeatureDiscoveryChecklist />
 
         <Tabs defaultValue="xp">
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full">
             <TabsTrigger value="xp">XP & Niveau</TabsTrigger>
             <TabsTrigger value="badges">Badges</TabsTrigger>
             <TabsTrigger value="streak">Streak</TabsTrigger>

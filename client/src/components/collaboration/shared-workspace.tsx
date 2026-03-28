@@ -187,7 +187,7 @@ export function SharedWorkspace() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border p-4">
           <p className="text-sm text-gray-600 font-medium">Total Workspaces</p>
           <p className="text-2xl font-bold text-gray-900">{workspaces.length}</p>

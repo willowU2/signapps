@@ -134,7 +134,7 @@ export function RaidOverview({
                   <p className="text-xl font-bold capitalize">{health.status}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-4 gap-8 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
                 <div>
                   <p className="text-2xl font-bold">{health.arrays_total}</p>
                   <p className="text-sm text-muted-foreground">Arrays</p>

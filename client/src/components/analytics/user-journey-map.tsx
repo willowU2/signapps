@@ -97,7 +97,7 @@ export function UserJourneyMap() {
             })}
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-4 pt-4 border-t">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t">
             <div>
               <p className="text-xs text-muted-foreground">Entry Users</p>
               <p className="text-2xl font-bold">{path.steps[0].visits.toLocaleString()}</p>

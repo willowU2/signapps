@@ -119,7 +119,7 @@ export function DataRoom() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
           <p className="text-sm text-blue-700 font-medium">Documents</p>
           <p className="text-2xl font-bold text-blue-900">{documents.length}</p>

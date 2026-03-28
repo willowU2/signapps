@@ -103,7 +103,7 @@ export function WarRoom() {
         <p className="text-gray-600">Coordinate incident response in real-time</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-gray-600">Checklist Progress</p>
           <p className="text-2xl font-bold text-blue-600">

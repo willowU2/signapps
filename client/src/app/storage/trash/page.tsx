@@ -266,8 +266,8 @@ export default function TrashPage() {
         </div>
 
         {/* Trash List */}
-        <Card>
-          <CardHeader className="py-3">
+        <Card className="overflow-x-auto">
+          <CardHeader className="py-3 min-w-[600px]">
             <div className="grid grid-cols-12 text-xs font-medium text-muted-foreground items-center">
               <div className="col-span-1">
                 <Checkbox

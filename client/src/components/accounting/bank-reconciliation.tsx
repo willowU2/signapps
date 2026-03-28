@@ -181,7 +181,7 @@ export function BankReconciliation() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
           <p className="text-sm text-gray-600 font-medium">Bank Balance</p>
           <p className="text-2xl font-bold text-blue-900">

@@ -117,7 +117,7 @@ export function EmailSummarizer() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Summary Stats */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-xs text-blue-600 font-medium">Unread</p>
               <p className="text-2xl font-bold text-blue-900">{unreadCount}</p>

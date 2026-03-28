@@ -291,7 +291,7 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
       {selectedFile && (
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
           <CardContent className="pt-6">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {totalItems}

@@ -158,7 +158,7 @@ export function CompanyRelations({ contacts, onContactUpdate }: CompanyRelations
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: "Entreprises", value: companies.length },
           { label: "Contacts liés", value: contacts.filter((c) => !!c.companyId).length },

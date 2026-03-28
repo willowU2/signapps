@@ -98,7 +98,7 @@ export function ClientInvoiceManagement() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border bg-green-50 p-4">
           <p className="text-xs text-green-700 font-medium">Encaissé</p>
           <p className="text-2xl font-bold text-green-900">{fmt(totals.paid)}</p>

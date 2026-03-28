@@ -292,7 +292,7 @@ const ScheduledReports: React.FC<ScheduledReportsProps> = ({
 
       {/* Footer stats */}
       {reports.length > 0 && (
-        <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-3 gap-4">
+        <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <p className="text-xs text-gray-600">Total Reports</p>
             <p className="text-lg font-bold text-gray-900">{reports.length}</p>

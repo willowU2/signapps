@@ -780,7 +780,7 @@ export default function OfficeContent() {
 
         {/* Tabs */}
         <Tabs defaultValue="converter" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="converter" className="flex items-center gap-1.5">
               <FileType className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Converter</span>

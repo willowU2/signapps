@@ -30,7 +30,7 @@ export type StorageTabId = typeof STORAGE_TABS[number]['id'];
 export function StorageTabs({ activeTab, onTabChange, children }: StorageTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
+      <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 lg:w-auto lg:inline-flex">
         {STORAGE_TABS.map((tab) => (
           <TabsTrigger
             key={tab.id}

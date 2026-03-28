@@ -57,7 +57,7 @@ export function WidgetProxyStatus() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
           <Link href="/routes" className="rounded-lg border p-2 hover:border-primary/50 transition-colors">
             <p className="text-lg font-bold">{activeRoutes}</p>
             <p className="text-[10px] text-muted-foreground">Routes</p>

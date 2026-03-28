@@ -32,7 +32,7 @@ export function AiCostTracker() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card>
           <CardContent className="pt-3 text-center">
             <Zap className="h-5 w-5 mx-auto text-yellow-500 mb-1" />

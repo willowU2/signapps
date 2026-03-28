@@ -84,7 +84,7 @@ export function CashFlowDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="rounded-lg border bg-blue-50 p-4">
           <div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-blue-600" /><span className="text-xs text-blue-700 font-medium">Solde actuel</span></div>
           <p className="text-2xl font-bold text-blue-900">{fmt(currentBalance)}</p>

@@ -51,7 +51,7 @@ export function ContactMap({ contacts }: ContactMapProps) {
   return (
     <div className="space-y-4">
       {/* Stats banner */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: "Total contacts", value: contacts.length },
           { label: "Géolocalisés", value: withLocation.length },

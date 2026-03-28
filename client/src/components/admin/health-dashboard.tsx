@@ -119,7 +119,7 @@ export function HealthDashboard() {
 
       {/* Summary row */}
       {statuses.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-center">
             <p className="text-2xl font-bold text-green-700">{healthyCount}</p>
             <p className="text-xs text-green-600">Healthy</p>
