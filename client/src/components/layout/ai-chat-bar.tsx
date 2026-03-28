@@ -231,9 +231,56 @@ export function AiChatBar() {
   }, []);
 
   // ── Send message (enhanced) ──
+  // Navigation commands — intercept before sending to AI
+  const tryNavigate = useCallback((input: string): boolean => {
+    const q = input.toLowerCase().trim();
+    const NAV_COMMANDS: Record<string, string> = {
+      // Direct slash commands
+      '/docs': '/docs', '/sheets': '/sheets', '/slides': '/slides', '/mail': '/mail',
+      '/calendar': '/cal', '/cal': '/cal', '/chat': '/chat', '/meet': '/meet',
+      '/tasks': '/tasks', '/drive': '/storage', '/storage': '/storage',
+      '/social': '/social', '/design': '/design', '/keep': '/keep', '/forms': '/forms',
+      '/crm': '/crm', '/billing': '/billing', '/accounting': '/accounting',
+      '/analytics': '/analytics', '/projects': '/projects', '/contacts': '/contacts',
+      '/resources': '/resources', '/settings': '/settings', '/admin': '/admin/users',
+      '/vpn': '/vpn', '/monitoring': '/monitoring', '/backups': '/backups',
+      '/scheduler': '/scheduler', '/media': '/media', '/workforce': '/workforce/hr',
+      '/compliance': '/compliance', '/lms': '/lms/catalog', '/dashboard': '/dashboard',
+      // Natural language FR
+      'ouvrir mail': '/mail', 'ouvrir email': '/mail', 'aller au mail': '/mail',
+      'ouvrir docs': '/docs', 'ouvrir documents': '/docs', 'ouvrir le calendrier': '/cal',
+      'ouvrir agenda': '/cal', 'ouvrir chat': '/chat', 'ouvrir social': '/social',
+      'ouvrir design': '/design', 'ouvrir crm': '/crm', 'ouvrir meet': '/meet',
+      'aller au dashboard': '/dashboard', 'accueil': '/dashboard', 'ouvrir tâches': '/tasks',
+      'ouvrir contacts': '/contacts', 'ouvrir drive': '/storage', 'ouvrir notes': '/keep',
+      'ouvrir formulaires': '/forms', 'ouvrir slides': '/slides', 'ouvrir sheets': '/sheets',
+      'ouvrir facturation': '/billing', 'ouvrir comptabilité': '/accounting',
+      'ouvrir projets': '/projects', 'ouvrir analytics': '/analytics',
+      'ouvrir paramètres': '/settings', 'ouvrir réglages': '/settings',
+      'nouveau document': '/docs', 'nouveau mail': '/mail', 'nouvelle réunion': '/meet',
+      // English
+      'open mail': '/mail', 'open docs': '/docs', 'open calendar': '/cal',
+      'go to dashboard': '/dashboard', 'open chat': '/chat', 'open tasks': '/tasks',
+      'open drive': '/storage', 'open settings': '/settings',
+    };
+    // Check exact match first
+    if (NAV_COMMANDS[q]) { router.push(NAV_COMMANDS[q]); return true; }
+    // Check partial match (starts with "ouvrir " or "open " or "/")
+    for (const [cmd, path] of Object.entries(NAV_COMMANDS)) {
+      if (q === cmd || q.startsWith(cmd + ' ')) { router.push(path); return true; }
+    }
+    return false;
+  }, [router]);
+
   const handleSend = useCallback(async (text?: string) => {
     const question = (text || value).trim();
     if (!question || isStreaming) return;
+
+    // Try navigation first
+    if (tryNavigate(question)) {
+      setValue('');
+      return;
+    }
 
     const currentAttachments = [...attachments];
 
@@ -795,7 +842,7 @@ export function AiChatBar() {
         <input
           ref={inputRef}
           type="text"
-          placeholder="Demander à SignApps AI..."
+          placeholder="Rechercher, naviguer (/docs, /mail...) ou poser une question IA..."
           value={displayValue}
           onChange={(e) => {
             setValue(e.target.value);
