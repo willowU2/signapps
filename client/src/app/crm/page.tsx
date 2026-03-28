@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,7 @@ import { dealsApi, type Deal, type DealStage, STAGE_OPTIONS, STAGE_LABELS } from
 import { toast } from "sonner"
 
 export default function CRMPage() {
+  usePageTitle('CRM')
   const [deals, setDeals] = useState<Deal[]>(() => dealsApi.list())
   const [isOpen, setIsOpen] = useState(false)
   const [form, setForm] = useState<Partial<Deal>>({ stage: "prospect", probability: 20, value: 0 })

@@ -3,6 +3,7 @@
 import { SpinnerInfinity } from 'spinners-react';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Search, Menu, Settings, Grid, List, RefreshCw, Lightbulb, Bell, Pencil, Archive, Trash2, Image, Palette, MoreVertical, Pin, CheckSquare, Check, X, Plus, Tag, Share2, ScanText, Presentation } from 'lucide-react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ShareNote } from "@/components/keep/share-note";
@@ -70,6 +71,7 @@ const sidebarItems = [
 ];
 
 export default function KeepPage() {
+  usePageTitle('Notes');
   // React Query hooks
   const { data: keepData, isLoading, error, refetch } = useKeepData();
   const createNoteMutation = useCreateNote();

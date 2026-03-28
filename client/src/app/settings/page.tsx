@@ -3,6 +3,7 @@
 import { SpinnerInfinity } from 'spinners-react';
 
 import { useEffect, useState, useCallback } from 'react';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/app-layout';
 import Link from 'next/link';
@@ -189,6 +190,7 @@ function LanguageSettingsTab() {
 }
 
 export default function SettingsPage() {
+  usePageTitle('Paramètres');
   // Support ?tab= query param for deep-linking (e.g. from /settings/webhooks redirect)
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'users';

@@ -3,6 +3,7 @@ import DesignDashboard from '@/components/design/design-dashboard';
 import { AppLayout } from '@/components/layout/app-layout';
 
 export const metadata: Metadata = {
+    title: 'Design — SignApps',
     description: 'Design tool - Create stunning visuals',
 };
 

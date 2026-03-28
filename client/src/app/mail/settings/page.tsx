@@ -12,7 +12,6 @@ import {
   Server,
   TestTube,
 } from "lucide-react";
-import { AppLayout } from "@/components/layout/app-layout";
 import {
   accountApi,
   type MailAccount,
@@ -797,7 +796,6 @@ export default function MailSettingsPage() {
   const selectedAccount = accounts.find((a) => a.id === selectedId);
 
   return (
-    <AppLayout>
       <div className="p-6 max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -904,6 +902,5 @@ export default function MailSettingsPage() {
           <EmailAutomationRules />
         </div>
       </div>
-    </AppLayout>
   );
 }

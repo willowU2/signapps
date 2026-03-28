@@ -3,6 +3,7 @@ import DocsDashboard from '@/components/docs/dashboard';
 import { AppLayout } from '@/components/layout/app-layout';
 
 export const metadata: Metadata = {
+    title: 'Documents — SignApps',
     description: 'Collaborative documents, sheets, slides, and boards',
 };
 

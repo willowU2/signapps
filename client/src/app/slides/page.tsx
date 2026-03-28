@@ -3,6 +3,7 @@ import SlidesDashboard from '@/components/slides/dashboard';
 import { AppLayout } from '@/components/layout/app-layout';
 
 export const metadata: Metadata = {
+    title: 'Présentations — SignApps',
     description: 'Présentations collaboratives',
 };
 

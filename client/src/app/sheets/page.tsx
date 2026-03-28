@@ -3,6 +3,7 @@ import SheetsDashboard from '@/components/sheets/dashboard';
 import { AppLayout } from '@/components/layout/app-layout';
 
 export const metadata: Metadata = {
+    title: 'Classeurs — SignApps',
     description: 'Feuilles de calcul collaboratives',
 };
 

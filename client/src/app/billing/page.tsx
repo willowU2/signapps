@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { AppLayout } from "@/components/layout/app-layout";
 import { billingApi, type BillingUsage, type Invoice, type InvoiceStatus } from "@/lib/api/billing";
 
