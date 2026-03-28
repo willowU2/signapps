@@ -60,7 +60,7 @@ export function getShortcutsList(pathname: string = "/"): KeyboardShortcut[] {
       { keys: "R", description: "Répondre", category: "module" },
       { keys: "F", description: "Transférer", category: "module" },
     );
-  } else if (pathname.startsWith("/docs") || pathname.startsWith("/sheets") || pathname.startsWith("/slides")) {
+  } else if (pathname.startsWith("/docs") || pathname.startsWith("/sheets") || pathname.startsWith("/slides") || pathname.startsWith("/design")) {
     shortcuts.push(
       { keys: "Ctrl+S", description: "Sauvegarder", category: "module" },
     );
@@ -134,6 +134,18 @@ export function useKeyboardShortcuts() {
           e.preventDefault();
           document.dispatchEvent(new CustomEvent("toggle-sidebar"));
           return;
+        }
+        if (key === "s" && !e.shiftKey) {
+          if (
+            pathname.startsWith("/docs") ||
+            pathname.startsWith("/sheets") ||
+            pathname.startsWith("/slides") ||
+            pathname.startsWith("/design")
+          ) {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent("app:save-to-drive"));
+            return;
+          }
         }
       }
 

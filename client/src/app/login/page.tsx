@@ -18,8 +18,8 @@ import { LdapLoginDialog } from '@/components/auth/ldap-login-dialog';
 import { parseApiError } from '@/lib/errors';
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+  username: z.string().min(1, "Le nom d'utilisateur est requis"),
+  password: z.string().min(1, 'Le mot de passe est requis'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -127,8 +127,8 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
             <span className="text-2xl font-bold text-primary-foreground">S</span>
           </div>
-          <CardTitle className="text-2xl">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your SignApps account</CardDescription>
+          <CardTitle className="text-2xl">Bon retour</CardTitle>
+          <CardDescription>Connectez-vous à votre compte SignApps</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" suppressHydrationWarning>
@@ -139,10 +139,10 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Nom d&apos;utilisateur</Label>
               <Input
                 id="username"
-                placeholder="Enter your username"
+                placeholder="Entrez votre nom d'utilisateur"
                 {...register('username')}
               />
               {errors.username && (
@@ -151,12 +151,12 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mot de passe</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  placeholder="Entrez votre mot de passe"
                   {...register('password')}
                 />
                 <Button
@@ -186,7 +186,7 @@ export default function LoginPage() {
                   onCheckedChange={(checked) => setRememberMe(checked === true)}
                 />
                 <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                  Remember me
+                  Se souvenir de moi
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
