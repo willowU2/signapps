@@ -25,21 +25,12 @@ impl ServiceEndpoints {
     pub fn from_env() -> Self {
         Self {
             identity: Self::env_or("IDENTITY_URL", "http://localhost:3001/api/v1"),
-            containers: Self::env_or(
-                "CONTAINERS_URL",
-                "http://localhost:3002/api/v1",
-            ),
+            containers: Self::env_or("CONTAINERS_URL", "http://localhost:3002/api/v1"),
             proxy: Self::env_or("PROXY_URL", "http://localhost:3003/api/v1"),
             storage: Self::env_or("STORAGE_URL", "http://localhost:3004/api/v1"),
             ai: Self::env_or("AI_URL", "http://localhost:3005/api/v1"),
-            securelink: Self::env_or(
-                "SECURELINK_URL",
-                "http://localhost:3006/api/v1",
-            ),
-            scheduler: Self::env_or(
-                "SCHEDULER_URL",
-                "http://localhost:3007/api/v1",
-            ),
+            securelink: Self::env_or("SECURELINK_URL", "http://localhost:3006/api/v1"),
+            scheduler: Self::env_or("SCHEDULER_URL", "http://localhost:3007/api/v1"),
             metrics: Self::env_or("METRICS_URL", "http://localhost:3008/api/v1"),
             media: Self::env_or("MEDIA_URL", "http://localhost:3009/api/v1"),
         }

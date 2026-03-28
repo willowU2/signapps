@@ -41,10 +41,7 @@ pub struct ToolResult {
 #[serde(tag = "type")]
 pub enum ToolCallEvent {
     #[serde(rename = "tool_call")]
-    ToolCall {
-        tool: String,
-        parameters: Value,
-    },
+    ToolCall { tool: String, parameters: Value },
     #[serde(rename = "tool_result")]
     ToolResult {
         tool: String,
@@ -124,12 +121,9 @@ impl ToolExecutor {
 
         for block in extract_json_blocks(text) {
             if let Ok(parsed) = serde_json::from_str::<Value>(&block) {
-                if let Some(arr) = parsed.get("tool_calls").and_then(|v| v.as_array())
-                {
+                if let Some(arr) = parsed.get("tool_calls").and_then(|v| v.as_array()) {
                     for item in arr {
-                        if let Ok(tc) =
-                            serde_json::from_value::<ToolCall>(item.clone())
-                        {
+                        if let Ok(tc) = serde_json::from_value::<ToolCall>(item.clone()) {
                             calls.push(tc);
                         }
                     }
@@ -147,19 +141,10 @@ impl ToolExecutor {
         if calls.is_empty() {
             if let Some(start) = text.find("{\"tool_calls\"") {
                 if let Some(json_str) = extract_balanced_json(text, start) {
-                    if let Ok(parsed) =
-                        serde_json::from_str::<Value>(&json_str)
-                    {
-                        if let Some(arr) = parsed
-                            .get("tool_calls")
-                            .and_then(|v| v.as_array())
-                        {
+                    if let Ok(parsed) = serde_json::from_str::<Value>(&json_str) {
+                        if let Some(arr) = parsed.get("tool_calls").and_then(|v| v.as_array()) {
                             for item in arr {
-                                if let Ok(tc) = serde_json::from_value::<
-                                    ToolCall,
-                                >(
-                                    item.clone()
-                                ) {
+                                if let Ok(tc) = serde_json::from_value::<ToolCall>(item.clone()) {
                                     calls.push(tc);
                                 }
                             }
@@ -173,12 +158,7 @@ impl ToolExecutor {
     }
 
     /// Execute a single tool call.
-    pub async fn execute_tool(
-        &self,
-        call: &ToolCall,
-        jwt: &str,
-        role: i16,
-    ) -> ToolResult {
+    pub async fn execute_tool(&self, call: &ToolCall, jwt: &str, role: i16) -> ToolResult {
         let tool = match self.registry.get(&call.tool) {
             Some(t) => t,
             None => {
@@ -186,12 +166,9 @@ impl ToolExecutor {
                     tool: call.tool.clone(),
                     success: false,
                     result: None,
-                    error: Some(format!(
-                        "Unknown tool: {}",
-                        call.tool
-                    )),
+                    error: Some(format!("Unknown tool: {}", call.tool)),
                 };
-            }
+            },
         };
 
         // Permission check
@@ -200,9 +177,7 @@ impl ToolExecutor {
                 tool: call.tool.clone(),
                 success: false,
                 result: None,
-                error: Some(
-                    "Permission denied: admin role required".to_string(),
-                ),
+                error: Some("Permission denied: admin role required".to_string()),
             };
         }
 
@@ -235,7 +210,7 @@ impl ToolExecutor {
                     result: Some(truncated),
                     error: None,
                 }
-            }
+            },
             Err(e) => ToolResult {
                 tool: call.tool.clone(),
                 success: false,
@@ -321,13 +296,9 @@ impl ToolExecutor {
                     let data = result
                         .result
                         .as_ref()
-                        .map(|v| serde_json::to_string_pretty(v)
-                            .unwrap_or_else(|_| v.to_string()))
+                        .map(|v| serde_json::to_string_pretty(v).unwrap_or_else(|_| v.to_string()))
                         .unwrap_or_else(|| "ok".to_string());
-                    results_text.push_str(&format!(
-                        "[Tool {} result]:\n{}\n\n",
-                        tc.tool, data
-                    ));
+                    results_text.push_str(&format!("[Tool {} result]:\n{}\n\n", tc.tool, data));
                 } else {
                     results_text.push_str(&format!(
                         "[Tool {} error]: {}\n\n",
@@ -390,8 +361,8 @@ fn extract_balanced_json(text: &str, start: usize) -> Option<String> {
                 if depth == 0 {
                     return Some(text[start..=i].to_string());
                 }
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 
@@ -421,9 +392,7 @@ fn filter_path_params(params: &Value, template: &str) -> Value {
     if let Some(obj) = params.as_object() {
         let filtered: serde_json::Map<String, Value> = obj
             .iter()
-            .filter(|(key, _)| {
-                !template.contains(&format!("{{{}}}", key))
-            })
+            .filter(|(key, _)| !template.contains(&format!("{{{}}}", key)))
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect();
         Value::Object(filtered)
@@ -442,7 +411,7 @@ fn truncate_result(value: Value) -> Value {
                 .map(truncate_result)
                 .collect();
             Value::Array(truncated)
-        }
+        },
         Value::String(s) => {
             if s.len() > MAX_RESULT_LEN {
                 // Find a valid UTF-8 boundary to avoid panic on multi-byte characters
@@ -454,14 +423,14 @@ fn truncate_result(value: Value) -> Value {
             } else {
                 Value::String(s)
             }
-        }
+        },
         Value::Object(obj) => {
             let truncated: serde_json::Map<String, Value> = obj
                 .into_iter()
                 .map(|(k, v)| (k, truncate_result(v)))
                 .collect();
             Value::Object(truncated)
-        }
+        },
         other => other,
     }
 }
@@ -479,8 +448,7 @@ mod tests {
 "#;
         let blocks = extract_json_blocks(text);
         assert_eq!(blocks.len(), 1);
-        let parsed: Value =
-            serde_json::from_str(&blocks[0]).unwrap();
+        let parsed: Value = serde_json::from_str(&blocks[0]).unwrap();
         assert!(parsed.get("tool_calls").is_some());
     }
 
@@ -493,10 +461,8 @@ mod tests {
 
     #[test]
     fn test_filter_path_params() {
-        let params =
-            serde_json::json!({"id": "abc", "name": "test"});
-        let filtered =
-            filter_path_params(&params, "/containers/{id}");
+        let params = serde_json::json!({"id": "abc", "name": "test"});
+        let filtered = filter_path_params(&params, "/containers/{id}");
         assert!(filtered.get("id").is_none());
         assert!(filtered.get("name").is_some());
     }

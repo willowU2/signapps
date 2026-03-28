@@ -4,37 +4,34 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, Pencil, Plus, RotateCcw } from 'lucide-react';
-import { DashboardPdfExportButton } from '@/components/dashboard/dashboard-pdf-export';
+import { RefreshCw, Pencil, Plus, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDashboardData } from '@/hooks/use-dashboard';
-import { useDashboardEditMode, useDashboardEditActions } from '@/stores/dashboard-store';
+import { useDashboardStore } from '@/stores/dashboard-store';
 import { WidgetGrid } from '@/components/dashboard/widget-grid';
-import { AddWidgetSheet } from '@/components/dashboard/add-widget-sheet';
-import { CardGridSkeleton } from '@/components/ui/skeleton-loader';
-import { GlobalActivityFeed } from '@/components/crosslinks/GlobalActivityFeed';
-import { FeatureDiscoveryChecklist } from '@/components/onboarding/FeatureDiscoveryChecklist';
-import { ActivityHeatmap } from '@/components/activity-heatmap';
+import { AddWidgetDialog } from '@/components/dashboard/add-widget-dialog';
+import { AiDailyBrief } from '@/components/dashboard/ai-daily-brief';
+import { UnifiedStats } from '@/components/dashboard/unified-stats';
+import { RecentFiles } from '@/components/dashboard/recent-files';
+import { ActivityFeed } from '@/components/dashboard/activity-feed';
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
-  const { isLoading: loading, isFetching: refreshing } = useDashboardData();
-
-  // Silently handle dashboard data errors - services may not all be running
-  // No toast needed: individual widgets handle their own error states
-  // Granular selectors for optimized re-renders
-  const editMode = useDashboardEditMode();
-  const { setEditMode, resetLayout } = useDashboardEditActions();
+  const { data, isLoading: loading, isFetching: refreshing } = useDashboardData();
+  const { editMode, setEditMode, resetLayout } = useDashboardStore();
   const [addWidgetOpen, setAddWidgetOpen] = useState(false);
 
   if (loading) {
     return (
       <AppLayout>
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold tracking-tight mb-2 text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mb-8">Welcome back. Here's an overview of your systems.</p>
-          <CardGridSkeleton count={4} />
-          <Skeleton className="h-48 w-full rounded-2xl mt-4" />
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-40 rounded-2xl" />
+          <div className="grid gap-6 md:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-36 rounded-xl" />
+            ))}
+          </div>
         </div>
       </AppLayout>
     );
@@ -42,13 +39,16 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 mb-8 pb-4 border-b border-border/50">
+      <div className="space-y-8">
+        {/* Header */}
+        <header className="flex items-end justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">Welcome back. Here's an overview of your systems.</p>
+            <h2 className="text-2xl font-semibold">Unified Dashboard</h2>
+            <p className="text-sm text-muted-foreground">
+              Bienvenue, voici l&apos;état actuel de votre workspace.
+            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             {editMode && (
               <>
                 <Button
@@ -77,8 +77,6 @@ export default function DashboardPage() {
               <Pencil className="mr-2 h-4 w-4" />
               {editMode ? 'Done' : 'Edit'}
             </Button>
-            {/* IDEA-125: Dashboard PDF export */}
-            <DashboardPdfExportButton />
             <Button
               variant="outline"
               size="sm"
@@ -91,25 +89,34 @@ export default function DashboardPage() {
               <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
+            <Button variant="outline" size="sm">
+              <SlidersHorizontal className="mr-2 h-4 w-4" />
+              Personnaliser
+            </Button>
           </div>
-        </div>
+        </header>
 
-        <WidgetGrid />
+        {/* Unified view (default) */}
+        {!editMode && (
+          <>
+            {/* AI Daily Brief */}
+            <AiDailyBrief data={data} />
 
-        <FeatureDiscoveryChecklist />
+            {/* 3 Stat Cards */}
+            <UnifiedStats data={data} />
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-6">
-          <div className="xl:col-span-2 border rounded-xl p-4 bg-card">
-            <h2 className="text-base font-semibold mb-3">Activité globale</h2>
-            <GlobalActivityFeed limit={20} />
-          </div>
-          <div className="border rounded-xl p-4 bg-card">
-            <h2 className="text-base font-semibold mb-3">Heatmap d'activité</h2>
-            <ActivityHeatmap data={[]} label="Cette semaine" />
-          </div>
-        </div>
+            {/* 2 columns: Recent Files + Activity Feed */}
+            <div className="grid grid-cols-1 gap-8 pb-12 lg:grid-cols-2">
+              <RecentFiles />
+              <ActivityFeed />
+            </div>
+          </>
+        )}
 
-        <AddWidgetSheet open={addWidgetOpen} onOpenChange={setAddWidgetOpen} />
+        {/* Widget grid (edit mode) */}
+        {editMode && <WidgetGrid />}
+
+        <AddWidgetDialog open={addWidgetOpen} onOpenChange={setAddWidgetOpen} />
       </div>
     </AppLayout>
   );

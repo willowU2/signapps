@@ -37,7 +37,6 @@ export const useAuthStore = create<AuthState>()(
         });
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        localStorage.removeItem('remember_me');
         // Clear cookie immediately so middleware sees unauthenticated state
         if (typeof document !== 'undefined') {
           document.cookie = 'auth-storage=; path=/; max-age=0';
@@ -52,35 +51,28 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
         redirectAfterLogin: state.redirectAfterLogin,
       }),
+      // Sync to cookie for middleware access
+      onRehydrateStorage: () => (state) => {
+        if (typeof document !== 'undefined' && state) {
+          const value = JSON.stringify({ state: { isAuthenticated: state.isAuthenticated } });
+          document.cookie = `auth-storage=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+        }
+      },
     }
   )
 );
 
 // UI State
-export type RightWidgetType = 'chat' | 'calendar' | 'tasks' | 'notes' | 'details' | null;
-
 interface UIState {
   sidebarOpen: boolean;
   sidebarCollapsed: boolean;
-  theme: 'light' | 'dark' | 'system';
   rightSidebarOpen: boolean;
-  activeRightWidget: RightWidgetType;
-
-  // Global Modals State
-  createWorkspaceModalOpen: boolean;
-  createProjectModalOpen: boolean;
-  createTaskModalOpen: boolean;
-
+  theme: 'light' | 'dark' | 'system';
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
   toggleRightSidebar: () => void;
-  setRightSidebarOpen: (isOpen: boolean) => void;
-  setActiveRightWidget: (widget: RightWidgetType) => void;
-
-  setCreateWorkspaceModalOpen: (isOpen: boolean) => void;
-  setCreateProjectModalOpen: (isOpen: boolean) => void;
-  setCreateTaskModalOpen: (isOpen: boolean) => void;
+  setRightSidebarOpen: (open: boolean) => void;
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -88,24 +80,13 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       sidebarOpen: true,
       sidebarCollapsed: false,
-      theme: 'system',
       rightSidebarOpen: true,
-      activeRightWidget: 'chat',
-
-      createWorkspaceModalOpen: false,
-      createProjectModalOpen: false,
-      createTaskModalOpen: false,
-
-      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      theme: 'system',
+      toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-      setTheme: (theme) => set({ theme }),
       toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
-      setRightSidebarOpen: (isOpen) => set({ rightSidebarOpen: isOpen }),
-      setActiveRightWidget: (widget) => set({ activeRightWidget: widget, rightSidebarOpen: true }),
-
-      setCreateWorkspaceModalOpen: (isOpen) => set({ createWorkspaceModalOpen: isOpen }),
-      setCreateProjectModalOpen: (isOpen) => set({ createProjectModalOpen: isOpen }),
-      setCreateTaskModalOpen: (isOpen) => set({ createTaskModalOpen: isOpen }),
+      setRightSidebarOpen: (open) => set({ rightSidebarOpen: open }),
+      setTheme: (theme) => set({ theme }),
     }),
     {
       name: 'ui-storage',
@@ -113,11 +94,50 @@ export const useUIStore = create<UIState>()(
   )
 );
 
-// Notes State (Right Sidebar)
-interface Note {
+// Labels State
+export interface Label {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface LabelsState {
+  labels: Label[];
+  addLabel: (name: string, color: string) => void;
+  removeLabel: (id: string) => void;
+  updateLabel: (id: string, name: string, color: string) => void;
+}
+
+export const useLabelsStore = create<LabelsState>()(
+  persist(
+    (set) => ({
+      labels: [
+        { id: '1', name: 'Important', color: '#ef4444' },
+        { id: '2', name: 'Production', color: '#22c55e' },
+        { id: '3', name: 'Review', color: '#8b5cf6' },
+      ],
+      addLabel: (name, color) =>
+        set((state) => ({
+          labels: [...state.labels, { id: Date.now().toString(), name, color }],
+        })),
+      removeLabel: (id) =>
+        set((state) => ({
+          labels: state.labels.filter((l) => l.id !== id),
+        })),
+      updateLabel: (id, name, color) =>
+        set((state) => ({
+          labels: state.labels.map((l) => (l.id === id ? { ...l, name, color } : l)),
+        })),
+    }),
+    { name: 'labels-storage' }
+  )
+);
+
+// Notes State
+export interface Note {
   id: string;
   content: string;
-  createdAt: string;
+  createdAt: number;
 }
 
 interface NotesState {
@@ -133,10 +153,7 @@ export const useNotesStore = create<NotesState>()(
       notes: [],
       addNote: (content) =>
         set((state) => ({
-          notes: [
-            { id: crypto.randomUUID(), content, createdAt: new Date().toISOString() },
-            ...state.notes,
-          ],
+          notes: [{ id: Date.now().toString(), content, createdAt: Date.now() }, ...state.notes],
         })),
       updateNote: (id, content) =>
         set((state) => ({
@@ -149,81 +166,31 @@ export const useNotesStore = create<NotesState>()(
   )
 );
 
-// Quick Tasks State (Right Sidebar) - Google Tasks Style
-export interface TaskAssignee {
-  id: string;
-  name: string;
-  avatar?: string;
-}
-
-export interface TaskList {
-  id: string;
-  name: string;
-  color?: string;
-}
-
-export interface AttachedFile {
-  id: string;
-  name: string;
-  path: string;
-  size?: number;
-  type?: string;
-  attachedAt: string;
-}
-
+// Quick Tasks State
 export interface QuickTask {
   id: string;
   label: string;
   done: boolean;
-  dueDate?: string; // ISO date string
-  assignee?: TaskAssignee;
-  listId?: string;
-  attachedFiles?: AttachedFile[];  // Files linked to this task
-  linkedEventId?: string;  // Calendar event linked to this task
-  createdAt: string;
 }
 
 interface QuickTasksState {
   tasks: QuickTask[];
-  lists: TaskList[];
-  selectedListId: string | null;
-  addTask: (label: string, dueDate?: string, assignee?: TaskAssignee) => void;
+  addTask: (label: string) => void;
   toggleTask: (id: string) => void;
   removeTask: (id: string) => void;
-  updateTask: (id: string, updates: Partial<QuickTask>) => void;
-  addList: (name: string) => void;
-  removeList: (id: string) => void;
-  setSelectedList: (id: string | null) => void;
-  // DnD Integration
-  attachFileToTask: (taskId: string, file: AttachedFile) => void;
-  removeFileFromTask: (taskId: string, fileId: string) => void;
-  linkEventToTask: (taskId: string, eventId: string) => void;
-  unlinkEventFromTask: (taskId: string) => void;
 }
-
-const defaultLists: TaskList[] = [
-  { id: 'default', name: 'My Tasks', color: '#4285f4' },
-  { id: 'work', name: 'Work', color: '#ea4335' },
-  { id: 'personal', name: 'Personal', color: '#34a853' },
-];
 
 export const useQuickTasksStore = create<QuickTasksState>()(
   persist(
     (set) => ({
-      tasks: [],
-      lists: defaultLists,
-      selectedListId: 'default',
-      addTask: (label, dueDate, assignee) =>
+      tasks: [
+        { id: '1', label: 'Vérifier les logs containers', done: false },
+        { id: '2', label: 'Mettre à jour les certificats SSL', done: false },
+        { id: '3', label: 'Valider les backups', done: true },
+      ],
+      addTask: (label) =>
         set((state) => ({
-          tasks: [...state.tasks, {
-            id: crypto.randomUUID(),
-            label,
-            done: false,
-            dueDate,
-            assignee,
-            listId: state.selectedListId || 'default',
-            createdAt: new Date().toISOString(),
-          }],
+          tasks: [...state.tasks, { id: Date.now().toString(), label, done: false }],
         })),
       toggleTask: (id) =>
         set((state) => ({
@@ -231,50 +198,6 @@ export const useQuickTasksStore = create<QuickTasksState>()(
         })),
       removeTask: (id) =>
         set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
-      updateTask: (id, updates) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
-        })),
-      addList: (name) =>
-        set((state) => ({
-          lists: [...state.lists, { id: crypto.randomUUID(), name }],
-        })),
-      removeList: (id) =>
-        set((state) => ({
-          lists: state.lists.filter((l) => l.id !== id),
-          tasks: state.tasks.filter((t) => t.listId !== id),
-        })),
-      setSelectedList: (id) =>
-        set({ selectedListId: id }),
-      // DnD Integration methods
-      attachFileToTask: (taskId, file) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === taskId
-              ? { ...t, attachedFiles: [...(t.attachedFiles || []), file] }
-              : t
-          ),
-        })),
-      removeFileFromTask: (taskId, fileId) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === taskId
-              ? { ...t, attachedFiles: (t.attachedFiles || []).filter((f) => f.id !== fileId) }
-              : t
-          ),
-        })),
-      linkEventToTask: (taskId, eventId) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === taskId ? { ...t, linkedEventId: eventId } : t
-          ),
-        })),
-      unlinkEventFromTask: (taskId) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === taskId ? { ...t, linkedEventId: undefined } : t
-          ),
-        })),
     }),
     { name: 'quick-tasks-storage' }
   )

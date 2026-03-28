@@ -35,14 +35,14 @@ impl fmt::Display for ToolError {
             Self::HttpError(msg) => write!(f, "HTTP error: {}", msg),
             Self::ServiceError(code, msg) => {
                 write!(f, "Service error ({}): {}", code, msg)
-            }
+            },
             Self::ParseError(msg) => write!(f, "Parse error: {}", msg),
             Self::MaxIterations(n) => {
                 write!(f, "Max tool iterations reached ({})", n)
-            }
+            },
             Self::PermissionDenied(tool) => {
                 write!(f, "Permission denied for tool: {}", tool)
-            }
+            },
         }
     }
 }

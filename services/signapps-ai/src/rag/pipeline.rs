@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::embeddings::EmbeddingsClient;
 use crate::llm::{ChatMessage, ProviderRegistry};
+use crate::tools::ToolExecutor;
 use crate::vectors::{DocumentChunk, SearchResult, VectorService};
 
 use super::chunker::TextChunker;
@@ -382,6 +383,48 @@ impl RagPipeline {
         };
 
         vec![ChatMessage::user(user_content)]
+    }
+
+    /// Build messages with tool calling system prompt.
+    pub fn build_messages_with_tools(
+        &self,
+        search_results: &[SearchResult],
+        question: &str,
+        language: Option<&str>,
+        custom_system_prompt: Option<&str>,
+        tool_executor: &ToolExecutor,
+        role: i16,
+    ) -> Vec<ChatMessage> {
+        let base_prompt = custom_system_prompt.unwrap_or(&self.config.system_prompt);
+
+        // Build tool-aware system prompt
+        let system = tool_executor.build_system_prompt(role, base_prompt, language);
+
+        // Build context from search results
+        let context = self.build_context(search_results);
+
+        let user_content = if !context.is_empty() {
+            format!(
+                "Voici le contexte pertinent:\n\n{}\n\n---\n\nQuestion: {}",
+                context, question
+            )
+        } else {
+            format!("Question: {}", question)
+        };
+
+        vec![ChatMessage::user(format!("{}\n\n{}", system, user_content))]
+    }
+
+    /// Build simple messages without tools (for non-tool mode).
+    pub fn build_messages_simple(
+        &self,
+        search_results: &[SearchResult],
+        question: &str,
+        language: Option<&str>,
+        custom_system_prompt: Option<&str>,
+    ) -> Vec<ChatMessage> {
+        let context = self.build_context(search_results);
+        self.build_messages(&context, question, language, custom_system_prompt)
     }
 }
 
