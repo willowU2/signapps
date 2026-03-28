@@ -3,6 +3,7 @@
 import { SpinnerInfinity } from 'spinners-react';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -10,8 +11,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bell, Container, Shield, HardDrive, User, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
+import { Bell, Container, Shield, HardDrive, User, AlertTriangle, CheckCircle, Info, X, Trash2, Check } from 'lucide-react';
 import { notificationsApi, type NotificationRecord } from '@/lib/api/calendar';
+import { playNotificationSound } from '@/components/notifications/notification-sounds';
 
 interface Notification {
   id: string;
@@ -21,6 +23,22 @@ interface Notification {
   status: 'info' | 'success' | 'warning' | 'error';
   timestamp: Date;
   read: boolean;
+}
+
+/** Map notification types to their target page */
+function getNotificationHref(notification: Notification): string | null {
+  switch (notification.type) {
+    case 'container':
+      return '/containers';
+    case 'security':
+      return '/security';
+    case 'storage':
+      return '/storage';
+    case 'user':
+      return '/identity';
+    default:
+      return null;
+  }
 }
 
 function mapApiToNotification(record: NotificationRecord): Notification {
@@ -50,7 +68,7 @@ function mapApiToNotification(record: NotificationRecord): Notification {
     id: record.id,
     type: typeMap[record.notification_type] || 'system',
     title: record.notification_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-    message: record.recipient_address ? `Envoyé à ${record.recipient_address}` : `Via ${record.channel}`,
+    message: record.recipient_address ? `Envoye a ${record.recipient_address}` : `Via ${record.channel}`,
     status: statusMap[record.status] || 'info',
     timestamp: new Date(record.created_at),
     read: record.status === 'sent' || record.status === 'delivered',
@@ -109,9 +127,11 @@ function getLocalActivityNotifications(): Notification[] {
 }
 
 export function NotificationPopover() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [prevUnreadCount, setPrevUnreadCount] = useState(0);
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -161,19 +181,24 @@ export function NotificationPopover() {
 
   // Listen for real-time SSE notifications
   useEffect(() => {
-    const handleNewNotification = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      // We can either push the new notification directly or reload from API
-      // Since SSE gives us the title and message, we reload to get the full formatted Notifications
-      // Or we can just increment the counter and reload when opened
+    const handleNewNotification = () => {
       loadNotifications();
+      // Play notification sound
+      playNotificationSound('alert');
     };
 
     window.addEventListener('new-notification', handleNewNotification);
     return () => window.removeEventListener('new-notification', handleNewNotification);
   }, [loadNotifications]);
 
+  // Play sound when new unread notifications arrive
   const unreadCount = notifications.filter((n) => !n.read).length;
+  useEffect(() => {
+    if (unreadCount > prevUnreadCount && prevUnreadCount >= 0) {
+      playNotificationSound('alert');
+    }
+    setPrevUnreadCount(unreadCount);
+  }, [unreadCount, prevUnreadCount]);
 
   const getIcon = (type: Notification['type']) => {
     switch (type) {
@@ -210,10 +235,10 @@ export function NotificationPopover() {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
+    if (minutes < 1) return "A l'instant";
+    if (minutes < 60) return `il y a ${minutes} min`;
+    if (hours < 24) return `il y a ${hours} h`;
+    return `il y a ${days} j`;
   };
 
   const markAsRead = (id: string) => {
@@ -232,6 +257,16 @@ export function NotificationPopover() {
 
   const clearAll = () => {
     setNotifications([]);
+    try { localStorage.removeItem('signapps-notifications-cache'); } catch {}
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    markAsRead(notification.id);
+    const href = getNotificationHref(notification);
+    if (href) {
+      setOpen(false);
+      router.push(href);
+    }
   };
 
   return (
@@ -240,7 +275,7 @@ export function NotificationPopover() {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground animate-pulse ring-2 ring-background">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -248,11 +283,29 @@ export function NotificationPopover() {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between border-b p-3">
-          <h4 className="font-semibold">Notifications</h4>
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold">Notifications</h4>
+            {unreadCount > 0 && (
+              <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
+                {unreadCount}
+              </span>
+            )}
+          </div>
           <div className="flex gap-1">
             {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={markAllAsRead}>
-                Mark all read
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={markAllAsRead}>
+                Tout lu
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+                onClick={clearAll}
+                title="Tout effacer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
@@ -273,13 +326,14 @@ export function NotificationPopover() {
             <div className="divide-y">
               {notifications.map((notification) => {
                 const Icon = getIcon(notification.type);
+                const href = getNotificationHref(notification);
                 return (
                   <div
                     key={notification.id}
-                    className={`relative flex gap-3 p-3 hover:bg-muted/50 cursor-pointer ${
+                    className={`relative flex gap-3 p-3 hover:bg-muted/50 cursor-pointer group/item transition-colors ${
                       !notification.read ? 'bg-muted/30' : ''
                     }`}
-                    onClick={() => markAsRead(notification.id)}
+                    onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
                       <Icon className="h-4 w-4" />
@@ -292,24 +346,47 @@ export function NotificationPopover() {
                             {notification.title}
                           </p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 shrink-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeNotification(notification.id);
-                          }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+                        <div className="flex gap-0.5 shrink-0 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                          {!notification.read && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5"
+                              title="Marquer comme lu"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsRead(notification.id);
+                              }}
+                            >
+                              <Check className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeNotification(notification.id);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {notification.message}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatTime(notification.timestamp)}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          {formatTime(notification.timestamp)}
+                        </p>
+                        {href && (
+                          <span className="text-[10px] text-primary/70">
+                            Cliquer pour voir
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {!notification.read && (
                       <div className="absolute left-1 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-primary" />
@@ -329,7 +406,7 @@ export function NotificationPopover() {
               className="w-full text-muted-foreground"
               onClick={clearAll}
             >
-              Clear all notifications
+              Tout effacer
             </Button>
           </div>
         )}

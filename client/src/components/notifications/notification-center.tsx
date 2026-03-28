@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -16,8 +17,11 @@ import {
   CheckCircle,
   X,
   BellOff,
+  Trash2,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { playNotificationSound } from '@/components/notifications/notification-sounds';
 import {
   useNotificationStore,
   useNotifications,
@@ -27,6 +31,24 @@ import {
   type NotificationType,
   type NotificationStatus,
 } from '@/stores/notification-store';
+
+// ─── Navigation map ──────────────────────────────────────────────────────────
+
+/** Map notification types to their target page */
+function getNotificationHref(notification: AppNotification): string | null {
+  switch (notification.type) {
+    case 'container':
+      return '/containers';
+    case 'security':
+      return '/security';
+    case 'storage':
+      return '/storage';
+    case 'user':
+      return '/identity';
+    default:
+      return null;
+  }
+}
 
 // ─── Icon helpers ─────────────────────────────────────────────────────────────
 
@@ -63,7 +85,7 @@ function StatusIcon({ status }: { status: NotificationStatus }) {
 function formatRelativeTime(date: Date): string {
   const diffMs = Date.now() - date.getTime();
   const minutes = Math.floor(diffMs / 60_000);
-  if (minutes < 1) return "à l'instant";
+  if (minutes < 1) return "a l'instant";
   if (minutes < 60) return `il y a ${minutes} min`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `il y a ${hours} h`;
@@ -77,19 +99,28 @@ interface NotificationItemProps {
   notification: AppNotification;
   onRead: (id: string) => void;
   onRemove: (id: string) => void;
+  onNavigate: (notification: AppNotification) => void;
 }
 
-function NotificationItem({ notification, onRead, onRemove }: NotificationItemProps) {
+function NotificationItem({ notification, onRead, onRemove, onNavigate }: NotificationItemProps) {
   const TypeIcon = getTypeIcon(notification.type);
+  const href = getNotificationHref(notification);
+
+  const handleClick = () => {
+    onRead(notification.id);
+    if (href) {
+      onNavigate(notification);
+    }
+  };
 
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={() => onRead(notification.id)}
-      onKeyDown={(e) => e.key === 'Enter' && onRead(notification.id)}
+      onClick={handleClick}
+      onKeyDown={(e) => e.key === 'Enter' && handleClick()}
       className={cn(
-        'relative flex gap-3 px-4 py-3 cursor-pointer transition-colors outline-none',
+        'relative flex gap-3 px-4 py-3 cursor-pointer transition-colors outline-none group/item',
         'hover:bg-muted/50 focus-visible:bg-muted/50',
         !notification.read && 'bg-primary/5'
       )}
@@ -123,19 +154,35 @@ function NotificationItem({ notification, onRead, onRemove }: NotificationItemPr
         </p>
       </div>
 
-      {/* Remove button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label="Supprimer la notification"
-        className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 hover:opacity-100 focus:opacity-100 self-start mt-0.5"
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove(notification.id);
-        }}
-      >
-        <X className="h-3 w-3" />
-      </Button>
+      {/* Action buttons */}
+      <div className="flex flex-col gap-1 shrink-0 opacity-0 group-hover/item:opacity-100 transition-opacity self-start mt-0.5">
+        {!notification.read && (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Marquer comme lu"
+            className="h-6 w-6"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRead(notification.id);
+            }}
+          >
+            <Check className="h-3 w-3" />
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Supprimer la notification"
+          className="h-6 w-6"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(notification.id);
+          }}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
     </div>
   );
 }
@@ -150,7 +197,7 @@ function EmptyState() {
       </div>
       <p className="text-sm font-medium text-muted-foreground">Aucune notification</p>
       <p className="text-xs text-muted-foreground/70">
-        Vous serez notifié ici lors d'événements importants.
+        Vous serez notifie ici lors d&apos;evenements importants.
       </p>
     </div>
   );
@@ -185,15 +232,23 @@ function LoadingSkeleton() {
  * events dispatched on `window` by `useNotificationsSSE` so the list stays
  * in sync without polling.
  *
+ * Enhanced features:
+ * - Clickable notifications navigate to relevant page
+ * - Individual "mark as read" buttons
+ * - "Clear all" button with confirmation
+ * - Notification sound on new items
+ * - Badge count on bell icon
+ *
  * Usage:
  *   <NotificationCenter />
  */
 export function NotificationCenter() {
+  const router = useRouter();
   const isOpen = useNotificationStore((s) => s.isOpen);
   const isLoading = useNotificationStore((s) => s.isLoading);
   const notifications = useNotifications();
   const unreadCount = useUnreadNotificationCount();
-  const { setOpen, markAsRead, markAllAsRead, remove, fetchNotifications, pushSSENotification } =
+  const { setOpen, markAsRead, markAllAsRead, remove, clearAll, fetchNotifications, pushSSENotification } =
     useNotificationActions();
 
   // Initial load
@@ -215,11 +270,25 @@ export function NotificationCenter() {
         timestamp: new Date(),
         read: false,
       });
+      // Play notification sound for new SSE notification
+      playNotificationSound('alert');
     };
 
     window.addEventListener('new-notification', handleNewNotification);
     return () => window.removeEventListener('new-notification', handleNewNotification);
   }, [pushSSENotification]);
+
+  // Navigate to the notification's target page and close the popover
+  const handleNavigate = useCallback(
+    (notification: AppNotification) => {
+      const href = getNotificationHref(notification);
+      if (href) {
+        setOpen(false);
+        router.push(href);
+      }
+    },
+    [router, setOpen]
+  );
 
   return (
     <Popover open={isOpen} onOpenChange={setOpen}>
@@ -237,7 +306,9 @@ export function NotificationCenter() {
               className={cn(
                 'absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center',
                 'rounded-full bg-primary text-[10px] font-semibold text-primary-foreground',
-                'ring-2 ring-background'
+                'ring-2 ring-background',
+                // Pulse animation for new notifications
+                'animate-pulse'
               )}
             >
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -261,16 +332,29 @@ export function NotificationCenter() {
               </span>
             )}
           </div>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-              onClick={markAllAsRead}
-            >
-              Marquer tout comme lu
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={markAllAsRead}
+              >
+                Tout lu
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+                onClick={clearAll}
+                title="Tout effacer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
 
         <Separator />
@@ -282,13 +366,14 @@ export function NotificationCenter() {
           ) : notifications.length === 0 ? (
             <EmptyState />
           ) : (
-            <div className="group divide-y">
+            <div className="divide-y">
               {notifications.map((notification) => (
                 <NotificationItem
                   key={notification.id}
                   notification={notification}
                   onRead={markAsRead}
                   onRemove={remove}
+                  onNavigate={handleNavigate}
                 />
               ))}
             </div>

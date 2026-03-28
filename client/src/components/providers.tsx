@@ -27,6 +27,8 @@ import { PasswordExpiryBanner } from '@/components/auth/password-expiry-banner';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { PwaInstallPrompt } from '@/components/pwa/pwa-install-prompt';
 import { useServiceWorker } from '@/hooks/use-service-worker';
+import { DragDropOverlay } from '@/components/drag-drop-overlay';
+import { GlobalPolling } from '@/components/global-polling';
 
 function LoadingFallback() {
   return (
@@ -105,6 +107,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       )}
                       <GlobalModals />
                       <GlobalHooks />
+                      <GlobalPolling />
+                      <DragDropOverlay />
                       <OnboardingWizard />
                     </PermissionsProvider>
                   </AccessibilityProvider>

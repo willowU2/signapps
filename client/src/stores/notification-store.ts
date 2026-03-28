@@ -21,6 +21,8 @@ export interface AppNotification {
   description: string;
   timestamp: Date;
   read: boolean;
+  /** Optional link — clicking the notification navigates here */
+  link?: string;
 }
 
 // ─── Mappers ──────────────────────────────────────────────────────────────────
