@@ -53,7 +53,7 @@ import { InlineAudioPlayer } from '@/components/storage/inline-audio-player';
 import { ContentSearchDialog } from '@/components/storage/content-search-dialog';
 
 // Import storage components
-import { OverviewStats, AlertsPanel, HealthGauge, QuotaCard } from './components/dashboard';
+import { OverviewStats, AlertsPanel, HealthGauge, QuotaCard, RecentUploads, LargestFiles } from './components/dashboard';
 import { DiskList } from './components/disks';
 import { MountList } from './components/mounts';
 import { ExternalList } from './components/external';
@@ -916,6 +916,10 @@ export default function StoragePage() {
                   />
                   <QuotaCard />
                   <AlertsPanel events={raidData.events || []} loading={raidData.loading} />
+                </div>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <RecentUploads />
+                  <LargestFiles />
                 </div>
               </TabsContent>
 

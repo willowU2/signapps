@@ -1,8 +1,10 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { HardDrive, Database, FileText, Activity, AlertTriangle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { HardDrive, Database, FileText, Activity, AlertTriangle, FolderOpen } from 'lucide-react';
 import type { StorageStats, RaidHealth } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 interface OverviewStatsProps {
   stats: StorageStats | null;
@@ -18,7 +20,25 @@ function formatBytes(bytes?: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
+function getUsageColor(percentage: number): string {
+  if (percentage >= 90) return 'bg-red-500';
+  if (percentage >= 75) return 'bg-orange-500';
+  if (percentage >= 50) return 'bg-yellow-500';
+  return 'bg-green-500';
+}
+
+function getUsageTextColor(percentage: number): string {
+  if (percentage >= 90) return 'text-red-500';
+  if (percentage >= 75) return 'text-orange-500';
+  if (percentage >= 50) return 'text-yellow-500';
+  return 'text-green-500';
+}
+
 export function OverviewStats({ stats, raidHealth, loading }: OverviewStatsProps) {
+  const usagePercent = stats && stats.total_bytes > 0
+    ? Math.round((stats.used_bytes / stats.total_bytes) * 100)
+    : 0;
+
   const statCards = [
     {
       title: 'Espace Total',
@@ -28,14 +48,12 @@ export function OverviewStats({ stats, raidHealth, loading }: OverviewStatsProps
       bgColor: 'bg-blue-500/10',
     },
     {
-      title: 'Espace Utilisé',
+      title: 'Espace Utilise',
       value: stats ? formatBytes(stats.used_bytes) : '-',
       icon: Database,
       color: 'text-orange-500',
       bgColor: 'bg-orange-500/10',
-      subtitle: stats && stats.total_bytes > 0
-        ? `${Math.round((stats.used_bytes / stats.total_bytes) * 100)}%`
-        : undefined,
+      subtitle: usagePercent > 0 ? `${usagePercent}%` : undefined,
     },
     {
       title: 'Espace Libre',
@@ -55,6 +73,7 @@ export function OverviewStats({ stats, raidHealth, loading }: OverviewStatsProps
 
   return (
     <div className="space-y-6">
+      {/* Stat Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card) => (
           <Card key={card.title}>
@@ -78,6 +97,57 @@ export function OverviewStats({ stats, raidHealth, loading }: OverviewStatsProps
         ))}
       </div>
 
+      {/* Storage Quota Progress Bar */}
+      {stats && stats.total_bytes > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FolderOpen className="h-5 w-5" />
+              Utilisation du Stockage
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {formatBytes(stats.used_bytes)} utilises sur {formatBytes(stats.total_bytes)}
+                </span>
+                <span className={cn('font-semibold', getUsageTextColor(usagePercent))}>
+                  {usagePercent}%
+                </span>
+              </div>
+              <div className="relative h-4 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    'absolute inset-y-0 left-0 rounded-full transition-all duration-500',
+                    getUsageColor(usagePercent)
+                  )}
+                  style={{ width: `${Math.min(usagePercent, 100)}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{formatBytes(stats.free_bytes)} disponible</span>
+                <span>
+                  {stats.buckets_count} bucket{stats.buckets_count !== 1 ? 's' : ''} - {stats.files_count?.toLocaleString() ?? 0} fichier{(stats.files_count ?? 0) !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+
+            {/* Usage breakdown tiers */}
+            {usagePercent >= 75 && (
+              <div className="flex items-center gap-2 rounded-md bg-orange-500/10 p-3 text-sm text-orange-600">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                <span>
+                  {usagePercent >= 90
+                    ? 'Stockage critique ! Liberez de l\'espace ou augmentez votre quota.'
+                    : 'L\'espace de stockage commence a etre limite. Pensez a faire du menage.'}
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* RAID Health Summary */}
       {raidHealth && (
         <Card>
@@ -97,7 +167,7 @@ export function OverviewStats({ stats, raidHealth, loading }: OverviewStatsProps
                   )}
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Santé RAID</p>
+                  <p className="text-sm text-muted-foreground">Sante RAID</p>
                   <p className="text-lg font-semibold capitalize">{raidHealth.status}</p>
                 </div>
               </div>
