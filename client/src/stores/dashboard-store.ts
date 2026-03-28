@@ -36,7 +36,11 @@ export type WidgetType =
   // IDEA-122: Extended widget library
   | 'weather'
   | 'rss-feed'
-  | 'quick-notes';
+  | 'quick-notes'
+  // Dashboard customization: extended widgets
+  | 'activity-heatmap'
+  | 'favorites'
+  | 'calendar-preview';
 
 export interface WidgetConfig {
   id: string;
@@ -95,6 +99,10 @@ export const WIDGET_CATALOG: { type: WidgetType; label: string; description: str
   { type: 'weather', label: 'Météo', description: 'Météo locale en temps réel', defaultW: 4, defaultH: 3, category: 'productivity' },
   { type: 'rss-feed', label: 'RSS Feed', description: 'Flux RSS personnalisé', defaultW: 4, defaultH: 4, category: 'content' },
   { type: 'quick-notes', label: 'Notes rapides', description: 'Bloc-notes personnel', defaultW: 4, defaultH: 3, category: 'productivity' },
+  // Dashboard customization: extended widgets
+  { type: 'activity-heatmap', label: 'Heatmap d\'activité', description: 'Carte de chaleur de l\'activité sur les 12 dernières semaines', defaultW: 8, defaultH: 3, category: 'analytics' },
+  { type: 'favorites', label: 'Favoris', description: 'Accès rapide à vos éléments épinglés', defaultW: 4, defaultH: 3, category: 'productivity' },
+  { type: 'calendar-preview', label: 'Aperçu calendrier', description: 'Mini-calendrier avec événements de la semaine', defaultW: 4, defaultH: 4, category: 'productivity' },
 ];
 
 interface DashboardStore {

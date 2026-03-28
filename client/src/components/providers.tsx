@@ -15,8 +15,6 @@ import { PreferencesProvider } from '@/lib/preferences';
 
 import { NotificationPermissionDialog } from '@/components/notifications/notification-permission-dialog';
 import { CommandBar } from '@/components/layout/command-bar';
-import { Sidebar } from '@/components/layout/sidebar';
-import { RightSidebar } from '@/components/layout/right-sidebar';
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GlobalModals } from '@/components/global-modals';
@@ -95,8 +93,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     {!pathname?.startsWith('/login') && (
                       <>
                         <CommandBar />
-                        <Sidebar />
-                        <RightSidebar />
                         <MobileBottomNav />
                       </>
                     )}

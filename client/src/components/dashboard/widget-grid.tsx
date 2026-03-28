@@ -27,6 +27,10 @@ import { WidgetActiveTasks } from './widgets/widget-active-tasks';
 import { WidgetWeather } from './widgets/widget-weather';
 import { WidgetRssFeed } from './widgets/widget-rss-feed';
 import { WidgetQuickNotes } from './widgets/widget-quick-notes';
+// Dashboard customization: extended widgets
+import { WidgetActivityHeatmap } from './widgets/widget-activity-heatmap';
+import { WidgetFavorites } from './widgets/widget-favorites';
+import { WidgetCalendarPreview } from './widgets/widget-calendar-preview';
 
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -78,6 +82,13 @@ function WidgetRenderer({ widget }: { widget: WidgetConfig }) {
       return <WidgetRssFeed {...renderProps} />;
     case 'quick-notes':
       return <WidgetQuickNotes {...renderProps} />;
+    // Dashboard customization: extended widgets
+    case 'activity-heatmap':
+      return <WidgetActivityHeatmap {...renderProps} />;
+    case 'favorites':
+      return <WidgetFavorites {...renderProps} />;
+    case 'calendar-preview':
+      return <WidgetCalendarPreview {...renderProps} />;
     default:
       return <div className="p-4 text-muted-foreground text-center">Widget inconnu: {widget.type}</div>;
   }
