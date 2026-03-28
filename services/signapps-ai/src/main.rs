@@ -1,4 +1,5 @@
 //! SignApps AI Service - RAG and LLM integration
+#![allow(dead_code, unused_imports, clippy::incompatible_msrv)]
 
 use axum::{
     middleware,
