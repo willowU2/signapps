@@ -553,8 +553,23 @@ export default function ContactsPage() {
                   <TableBody>
                     {sortedFiltered.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
-                          Aucun contact trouvé.
+                        <TableCell colSpan={7} className="py-16 text-center">
+                          <div className="flex flex-col items-center gap-3">
+                            <Users className="h-10 w-10 text-muted-foreground/30" />
+                            <div>
+                              <p className="font-medium text-muted-foreground">
+                                {search ? 'Aucun contact trouvé' : tab === 'favorites' ? 'Aucun favori' : 'Ajoutez votre premier contact'}
+                              </p>
+                              <p className="mt-0.5 text-sm text-muted-foreground/60">
+                                {search ? 'Essayez un autre terme de recherche' : 'Cliquez sur "Nouveau Contact" pour commencer'}
+                              </p>
+                            </div>
+                            {!search && tab === 'all' && (
+                              <Button size="sm" onClick={() => { resetForm(); setIsCreating(true); }}>
+                                <Plus className="mr-2 h-4 w-4" /> Nouveau contact
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}

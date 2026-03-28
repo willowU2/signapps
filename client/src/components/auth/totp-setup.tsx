@@ -43,7 +43,7 @@ export function TotpSetup() {
 
   const verifyCode = async () => {
     if (code.length !== 6) {
-      toast.error("Enter the 6-digit code from your authenticator app");
+      toast.error("Saisissez le code à 6 chiffres de votre application d'authentification");
       return;
     }
     setIsLoading(true);
@@ -58,7 +58,7 @@ export function TotpSetup() {
         toast.error(res.data.message || "Invalid code, please retry");
       }
     } catch {
-      toast.error("Verification failed. Please try again.");
+      toast.error("Vérification échouée. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
     }

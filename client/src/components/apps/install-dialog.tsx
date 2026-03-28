@@ -262,9 +262,9 @@ export function InstallDialog({
                 mode: 'proxy',
                 enabled: true,
               });
-              toast.success(`Route created: ${firstFormWithHostname.hostname.trim()}`);
+              toast.success(`Route créée : ${firstFormWithHostname.hostname.trim()}`);
             } catch {
-              toast.error('Container installed but route creation failed');
+              toast.error('Conteneur installé mais la création de la route a échoué');
             }
           }
         }
@@ -320,9 +320,9 @@ export function InstallDialog({
                 mode: 'proxy',
                 enabled: true,
               });
-              toast.success(`Route created: ${form.hostname.trim()}`);
+              toast.success(`Route créée : ${form.hostname.trim()}`);
             } catch {
-              toast.error('Container installed but route creation failed');
+              toast.error('Conteneur installé mais la création de la route a échoué');
             }
           }
         }

@@ -6,7 +6,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, Pencil, Plus, RotateCcw, SlidersHorizontal, Search, ChevronDown, ChevronUp, Pin } from 'lucide-react';
+import { RefreshCw, Pencil, Plus, RotateCcw, SlidersHorizontal, Search, ChevronDown, ChevronUp, Pin, FileText, Mail, CalendarDays } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDashboardData } from '@/hooks/use-dashboard';
 import { useDashboardStore } from '@/stores/dashboard-store';
@@ -102,7 +102,7 @@ export default function DashboardPage() {
   const { data, isLoading: loading, isFetching: refreshing } = useDashboardData();
   const { editMode, setEditMode, resetLayout } = useDashboardStore();
   const [addWidgetOpen, setAddWidgetOpen] = useState(false);
-  const [showApps, setShowApps] = useState(false);
+  const [showApps, setShowApps] = useState(true);
   const [search, setSearch] = useState('');
 
   const handleDragStart = (e: React.DragEvent, app: AppEntry) => {
@@ -175,6 +175,19 @@ export default function DashboardPage() {
         {/* Unified view (default) */}
         {!editMode && (
           <>
+            {/* Quick actions */}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => router.push('/docs')}>
+                <FileText className="mr-2 h-4 w-4 text-blue-500" /> Nouveau document
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => router.push('/mail')}>
+                <Mail className="mr-2 h-4 w-4 text-amber-500" /> Nouveau mail
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => router.push('/cal')}>
+                <CalendarDays className="mr-2 h-4 w-4 text-green-500" /> Nouvelle réunion
+              </Button>
+            </div>
+
             <AiDailyBrief data={data} />
             <UnifiedStats data={data} />
 

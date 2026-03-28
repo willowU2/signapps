@@ -273,7 +273,11 @@ export function Sidebar() {
         )}
 
         {/* Branding */}
-        <div className={cn('mb-4 flex items-center gap-2', sidebarCollapsed ? 'justify-center px-2' : 'px-4')}>
+        <div
+          className={cn('mb-4 flex cursor-pointer items-center gap-2', sidebarCollapsed ? 'justify-center px-2' : 'px-4')}
+          onClick={() => router.push('/dashboard')}
+          title="Tableau de bord"
+        >
           {instanceLogo ? (
             <img src={instanceLogo} alt={instanceName ?? 'Logo'} className="h-8 w-8 rounded-lg object-cover shrink-0" />
           ) : (

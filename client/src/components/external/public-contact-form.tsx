@@ -79,7 +79,7 @@ export function PublicContactForm({
       setIsSuccess(true);
       setFormData({ name: "", email: "", subject: "", message: "" });
       onSuccess?.(formData);
-      toast.success("Message sent successfully!");
+      toast.success("Message envoyé avec succès !");
 
       setTimeout(() => setIsSuccess(false), 4000);
     } catch (error) {

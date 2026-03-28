@@ -59,7 +59,7 @@ export function AnnouncementBoard({
   const handleAddAnnouncement = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.content.trim()) {
-      toast.error("Please fill in all fields");
+      toast.error("Veuillez remplir tous les champs");
       return;
     }
 
@@ -87,7 +87,7 @@ export function AnnouncementBoard({
 
     setFormData({ title: "", content: "", category: "General" });
     setFormOpen(false);
-    toast.success("Announcement posted successfully");
+    toast.success("Annonce publiée avec succès");
   };
 
   const togglePin = (id: string) => {

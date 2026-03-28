@@ -156,7 +156,7 @@ function MonitoringTab() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (metricsError) toast.error('Failed to load system metrics');
+    if (metricsError) toast.error('Impossible de charger les métriques système');
   }, [metricsError]);
 
   const cpu = metrics?.cpu_usage_percent ?? metrics?.cpu ?? 0;

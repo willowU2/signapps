@@ -109,7 +109,7 @@ export function InstallProgress({
                       break;
                     case 'Complete':
                       setComplete(true);
-                      toast.success('Installation complete');
+                      toast.success('Installation terminée');
                       onComplete?.();
                       break;
                   }

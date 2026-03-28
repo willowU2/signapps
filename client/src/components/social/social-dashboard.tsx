@@ -69,26 +69,26 @@ export function SocialDashboard() {
 
   const statsCards = [
     {
-      title: 'Total Followers',
+      title: 'Abonnés total',
       value: analytics?.totalFollowers?.toLocaleString() ?? '\u2014',
       change: analytics?.followersGrowth != null ? `+${analytics.followersGrowth}%` : null,
       icon: Users,
       color: 'text-blue-500',
     },
     {
-      title: 'Posts This Week',
+      title: 'Posts cette semaine',
       value: analytics?.postsThisWeek?.toString() ?? '\u2014',
       icon: FileText,
       color: 'text-green-500',
     },
     {
-      title: 'Engagement Rate',
+      title: 'Taux d\'engagement',
       value: analytics?.engagementRate != null ? `${analytics.engagementRate.toFixed(1)}%` : '\u2014',
       icon: TrendingUp,
       color: 'text-purple-500',
     },
     {
-      title: 'Pending Inbox',
+      title: 'Messages en attente',
       value: analytics?.pendingInbox?.toString() ?? unreadCount.toString(),
       icon: Inbox,
       color: 'text-orange-500',
@@ -109,7 +109,8 @@ export function SocialDashboard() {
             <div>
               <h1 className="text-2xl font-bold">SignSocial</h1>
               <p className="text-muted-foreground text-sm">
-                {accounts.filter((a) => a.status === 'connected').length} connected account
+                {accounts.filter((a) => a.status === 'connected').length} compte
+                {accounts.filter((a) => a.status === 'connected').length !== 1 ? 's' : ''} connecté
                 {accounts.filter((a) => a.status === 'connected').length !== 1 ? 's' : ''}
               </p>
             </div>
@@ -118,7 +119,7 @@ export function SocialDashboard() {
           <Button asChild>
             <Link href="/social/compose">
               <Plus className="h-4 w-4 mr-2" />
-              New Post
+              Nouveau post
             </Link>
           </Button>
         </div>
@@ -137,7 +138,7 @@ export function SocialDashboard() {
                         {isLoadingAnalytics ? <span className="animate-pulse">{'\u2026'}</span> : stat.value}
                       </p>
                       {stat.change && (
-                        <p className="text-xs text-green-500 mt-1">{stat.change} this month</p>
+                        <p className="text-xs text-green-500 mt-1">{stat.change} ce mois</p>
                       )}
                     </div>
                     <div className={`p-2 bg-muted rounded-lg ${stat.color}`}>
@@ -154,14 +155,14 @@ export function SocialDashboard() {
           {/* Recent Published Posts */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base font-semibold">Recent Posts</CardTitle>
+              <CardTitle className="text-base font-semibold">Posts récents</CardTitle>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/social/calendar">View all</Link>
+                <Link href="/social/calendar">Voir tout</Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {recentPublished.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No published posts yet</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Aucun post publié</p>
               ) : (
                 recentPublished.map((post) => {
                   const platform = accounts.find((a) => post.accounts.includes(a.id))?.platform;
@@ -189,14 +190,14 @@ export function SocialDashboard() {
           {/* Upcoming Scheduled */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base font-semibold">Upcoming Scheduled</CardTitle>
+              <CardTitle className="text-base font-semibold">Prochains programmés</CardTitle>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/social/calendar">Calendar</Link>
+                <Link href="/social/calendar">Calendrier</Link>
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {upcomingScheduled.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No scheduled posts</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Aucun post programmé</p>
               ) : (
                 upcomingScheduled.map((post) => {
                   const platform = accounts.find((a) => post.accounts.includes(a.id))?.platform;
@@ -223,10 +224,23 @@ export function SocialDashboard() {
         </div>
 
         {/* Connected Accounts Overview */}
-        {accounts.length > 0 && (
+        {accounts.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground">Connectez votre premier compte social</h3>
+              <p className="mt-1 text-sm text-muted-foreground/70">Publiez sur toutes vos plateformes depuis un seul endroit</p>
+              <Button className="mt-4" asChild>
+                <Link href="/social/accounts">
+                  <Plus className="mr-2 h-4 w-4" /> Connecter un compte
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">Connected Accounts</CardTitle>
+              <CardTitle className="text-base font-semibold">Comptes connectés</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-3">
@@ -254,7 +268,7 @@ export function SocialDashboard() {
                 <Button variant="outline" size="sm" asChild>
                   <Link href="/social/accounts">
                     <Plus className="h-3.5 w-3.5 mr-1" />
-                    Add Account
+                    Ajouter un compte
                   </Link>
                 </Button>
               </div>

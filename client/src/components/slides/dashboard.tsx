@@ -159,7 +159,17 @@ export default function SlidesDashboard() {
                 {filteredDocs.length === 0 ? (
                      <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl bg-transparent">
                         <Presentation className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                        <h3 className="text-lg font-medium text-muted-foreground">Aucune présentation récente</h3>
+                        <h3 className="text-lg font-medium text-muted-foreground">
+                          {searchQuery ? 'Aucune présentation trouvée' : 'Créez votre première présentation'}
+                        </h3>
+                        <p className="mt-1 text-sm text-muted-foreground/70">
+                          {searchQuery ? 'Essayez un autre terme de recherche' : 'Cliquez sur "Présentation vierge" ci-dessus pour commencer'}
+                        </p>
+                        {!searchQuery && (
+                          <Button className="mt-4" onClick={openCreateModal}>
+                            <Plus className="mr-2 h-4 w-4" /> Nouvelle présentation
+                          </Button>
+                        )}
                      </div>
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 w-full">

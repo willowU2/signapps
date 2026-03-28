@@ -84,19 +84,19 @@ export default function BackupsPage() {
   const runBackup = useMutation({
     mutationFn: (id: string) => backupsApi.run(id),
     onSuccess: () => {
-      toast.success('Backup started');
+      toast.success('Sauvegarde démarrée');
       queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
     },
-    onError: () => toast.error('Failed to start backup'),
+    onError: () => toast.error('Impossible de démarrer la sauvegarde'),
   });
 
   const deleteProfile = useMutation({
     mutationFn: (id: string) => backupsApi.remove(id),
     onSuccess: () => {
-      toast.success('Backup profile deleted');
+      toast.success('Profil de sauvegarde supprimé');
       queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
     },
-    onError: () => toast.error('Failed to delete profile'),
+    onError: () => toast.error('Impossible de supprimer le profil'),
   });
 
   const toggleEnabled = useMutation({
@@ -105,7 +105,7 @@ export default function BackupsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
     },
-    onError: () => toast.error('Failed to toggle profile'),
+    onError: () => toast.error('Impossible de modifier le profil'),
   });
 
   if (isLoading && !isError) {

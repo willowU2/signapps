@@ -52,7 +52,7 @@ export function AutoTranslator() {
     }
 
     if (sourceLang === targetLang) {
-      toast.error('Source and target languages must be different');
+      toast.error('Les langues source et cible doivent être différentes');
       return;
     }
 
@@ -89,17 +89,17 @@ Provide only the translated content without any explanations.`;
           setTimeout(() => {
             setProgress(null);
             setIsLoading(false);
-            toast.success('Translation completed');
+            toast.success('Traduction terminée');
           }, 500);
         } catch (error) {
           setIsLoading(false);
-          toast.error('Failed to translate content');
+          toast.error('Impossible de traduire le contenu');
         }
       };
 
       reader.onerror = () => {
         setIsLoading(false);
-        toast.error('Failed to read file');
+        toast.error('Impossible de lire le fichier');
       };
 
       reader.readAsText(file);

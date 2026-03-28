@@ -47,7 +47,7 @@ export function CustomKPIDashboard() {
   const openEdit = (kpi: CustomKPI) => { setEditKpi(kpi); setForm({ title: kpi.title, value: kpi.value, unit: kpi.unit, target: kpi.target, trend: String(kpi.trend), color: kpi.color, period: kpi.period }); setDialogOpen(true); };
 
   const save = () => {
-    if (!form.title.trim()) { toast.error('Title required'); return; }
+    if (!form.title.trim()) { toast.error('Titre requis'); return; }
     if (editKpi) {
       setKpis(ks => ks.map(k => k.id === editKpi.id ? { ...k, ...form, trend: parseFloat(form.trend) } : k));
     } else {

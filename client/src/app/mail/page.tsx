@@ -199,9 +199,9 @@ export default function MailPage() {
         try {
             await mailApi.update(id, { snoozed_until: snoozeDate.toISOString() })
             removeMail(id)
-            toast.success(`Conversation snoozed until ${time}.`)
+            toast.success(`Conversation snoozée jusqu'au ${time}.`)
         } catch {
-            toast.error("Failed to snooze conversation.")
+            toast.error("Impossible de snoozer la conversation.")
         }
     }
 
@@ -209,9 +209,9 @@ export default function MailPage() {
         try {
             await mailApi.update(id, { is_archived: true })
             removeMail(id)
-            toast.success("Conversation archived.")
+            toast.success("Conversation archivée.")
         } catch {
-            toast.error("Failed to archive conversation.")
+            toast.error("Impossible d'archiver la conversation.")
         }
     }
 
@@ -219,9 +219,9 @@ export default function MailPage() {
         try {
             await mailApi.update(id, { is_deleted: true })
             removeMail(id)
-            toast.success("Conversation moved to trash.")
+            toast.success("Conversation déplacée vers la corbeille.")
         } catch {
-            toast.error("Failed to delete conversation.")
+            toast.error("Impossible de supprimer la conversation.")
         }
     }
 

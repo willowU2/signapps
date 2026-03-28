@@ -78,7 +78,7 @@ export function MeetingNotesTemplate() {
       ...note.actions.map(a => `- [ ] **${a.task}** — ${a.owner} (due: ${a.due})`),
     ].join('\n');
     navigator.clipboard.writeText(md);
-    toast.success('Markdown copied to clipboard');
+    toast.success('Markdown copié dans le presse-papier');
   };
 
   return (
@@ -93,8 +93,8 @@ export function MeetingNotesTemplate() {
             <Button size="sm" variant="outline" onClick={exportMarkdown} className="gap-1.5">
               <Copy className="h-3.5 w-3.5" />Export MD
             </Button>
-            <Button size="sm" onClick={() => { toast.success('Notes saved'); }} className="gap-1.5">
-              <Save className="h-3.5 w-3.5" />Save
+            <Button size="sm" onClick={() => { toast.success('Notes enregistrées'); }} className="gap-1.5">
+              <Save className="h-3.5 w-3.5" />Enregistrer
             </Button>
           </div>
         </div>

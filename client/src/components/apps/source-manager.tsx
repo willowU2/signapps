@@ -44,7 +44,7 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
       const res = await storeApi.listSources();
       setSources(res.data);
     } catch {
-      toast.error('Failed to load sources');
+      toast.error('Impossible de charger les sources');
     } finally {
       setLoading(false);
     }
@@ -88,11 +88,11 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
       setNewName('');
       setNewUrl('');
       setValidation(null);
-      toast.success('Source added');
+      toast.success('Source ajoutée');
       fetchSources();
       onSourcesChanged?.();
     } catch {
-      toast.error('Failed to add source');
+      toast.error('Impossible d\'ajouter la source');
     } finally {
       setAdding(false);
     }
@@ -105,7 +105,7 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
       fetchSources();
       onSourcesChanged?.();
     } catch {
-      toast.error('Failed to delete source');
+      toast.error('Impossible de supprimer la source');
     }
   };
 
@@ -113,11 +113,11 @@ export function SourceManager({ open, onOpenChange, onSourcesChanged }: SourceMa
     setRefreshingId(id);
     try {
       await storeApi.refreshSource(id);
-      toast.success('Source refreshed');
+      toast.success('Source actualisée');
       fetchSources();
       onSourcesChanged?.();
     } catch {
-      toast.error('Failed to refresh source');
+      toast.error('Impossible d\'actualiser la source');
     } finally {
       setRefreshingId(null);
     }

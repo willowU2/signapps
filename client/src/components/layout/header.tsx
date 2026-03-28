@@ -66,7 +66,11 @@ export function Header() {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <div className="flex items-center gap-2">
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="flex items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-muted"
+          title="Tableau de bord"
+        >
           {instanceLogo ? (
             <img
               src={instanceLogo}
@@ -81,7 +85,7 @@ export function Header() {
           <h1 className="text-xl font-medium text-foreground/80 tracking-tight">
             {instanceName ?? 'SignApps'}
           </h1>
-        </div>
+        </button>
       </div>
 
       {/* Center spacer */}

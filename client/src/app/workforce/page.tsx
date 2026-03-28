@@ -85,11 +85,11 @@ export default function WorkforcePage() {
   });
 
   React.useEffect(() => {
-    if (isTreeError) toast.error('Failed to load organization tree');
+    if (isTreeError) toast.error('Impossible de charger l\'organigramme');
   }, [isTreeError]);
 
   React.useEffect(() => {
-    if (isEmployeesError) toast.error('Failed to load employees');
+    if (isEmployeesError) toast.error('Impossible de charger les employés');
   }, [isEmployeesError]);
 
   // Stats for header cards

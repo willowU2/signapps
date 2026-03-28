@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useUIStore, RightWidgetType } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Bot, CalendarDays, CheckSquare, StickyNote,
-  X, ChevronRight, Pin,
+  X, ChevronRight, Pin, Search,
 } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -37,6 +38,7 @@ export function RightSidebar() {
   const { rightSidebarOpen, activeRightWidget, setRightSidebarOpen, setActiveRightWidget } = useUIStore();
   const [mounted, setMounted] = useState(false);
   const [panelMode, setPanelMode] = useState<"widget" | "apps">("widget");
+  const [appSearch, setAppSearch] = useState("");
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -69,6 +71,14 @@ export function RightSidebar() {
     panelMode === "apps"
       ? "Applications"
       : (widgetItems.find((i) => i.id === activeRightWidget)?.label ?? "Panel");
+
+  const filteredApps = useMemo(() => {
+    if (!appSearch.trim()) return null;
+    const q = appSearch.toLowerCase();
+    return APP_REGISTRY.filter(
+      (a) => a.label.toLowerCase().includes(q) || a.category.toLowerCase().includes(q)
+    );
+  }, [appSearch]);
 
   const handleDragStart = (e: React.DragEvent, app: typeof APP_REGISTRY[0]) => {
     e.dataTransfer.setData("application/json", JSON.stringify({
@@ -112,42 +122,79 @@ export function RightSidebar() {
 
           {/* App launcher mode */}
           {panelMode === "apps" && (
-            <div className="p-4 space-y-1">
-              {/* Drag hint */}
-              <div className="mb-4 flex items-center gap-1.5 rounded-lg bg-muted/60 px-3 py-2 text-[11px] text-muted-foreground">
-                <Pin className="h-3 w-3 shrink-0" />
-                Glisser une app sur la barre latérale gauche pour l&apos;épingler
+            <div className="p-3 space-y-1">
+              {/* Search */}
+              <div className="relative mb-3">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher..."
+                  value={appSearch}
+                  onChange={(e) => setAppSearch(e.target.value)}
+                  className="h-8 pl-8 text-xs"
+                />
               </div>
 
-              {APP_CATEGORIES.map((cat) => {
-                const apps = APP_REGISTRY.filter((a) => a.category === cat);
-                return (
-                  <div key={cat} className="mb-4">
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      {cat}
-                    </p>
-                    <div className="grid grid-cols-3 gap-1">
-                      {apps.map((app) => (
-                        <div
-                          key={app.href}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, app)}
-                          onClick={() => router.push(app.href)}
-                          className="flex cursor-pointer flex-col items-center gap-1.5 rounded-lg p-2 text-center transition-colors hover:bg-muted active:scale-95"
-                          title="Glisser pour épingler"
-                        >
-                          <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl bg-muted", app.color)}>
-                            <DynIcon name={app.icon} className="h-4 w-4" />
-                          </div>
-                          <span className="text-[10px] leading-tight text-muted-foreground">
-                            {app.label}
-                          </span>
+              {/* Drag hint */}
+              <div className="mb-3 flex items-center gap-1.5 rounded-lg bg-muted/60 px-2.5 py-1.5 text-[10px] text-muted-foreground">
+                <Pin className="h-3 w-3 shrink-0" />
+                Glisser une app pour l&apos;épingler dans la barre
+              </div>
+
+              {filteredApps ? (
+                filteredApps.length === 0 ? (
+                  <p className="py-6 text-center text-xs text-muted-foreground">Aucune application</p>
+                ) : (
+                  <div className="grid grid-cols-4 gap-1">
+                    {filteredApps.map((app) => (
+                      <div
+                        key={app.href}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, app)}
+                        onClick={() => router.push(app.href)}
+                        className="flex cursor-pointer flex-col items-center gap-1 rounded-lg p-1.5 text-center transition-colors hover:bg-muted active:scale-95"
+                        title={app.label}
+                      >
+                        <div className={cn("flex h-7 w-7 items-center justify-center rounded-lg bg-muted", app.color)}>
+                          <DynIcon name={app.icon} className="h-3.5 w-3.5" />
                         </div>
-                      ))}
-                    </div>
+                        <span className="text-[9px] leading-tight text-muted-foreground line-clamp-1 w-full text-center">
+                          {app.label}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                );
-              })}
+                )
+              ) : (
+                APP_CATEGORIES.map((cat) => {
+                  const apps = APP_REGISTRY.filter((a) => a.category === cat);
+                  return (
+                    <div key={cat} className="mb-3">
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {cat}
+                      </p>
+                      <div className="grid grid-cols-4 gap-1">
+                        {apps.map((app) => (
+                          <div
+                            key={app.href}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, app)}
+                            onClick={() => router.push(app.href)}
+                            className="flex cursor-pointer flex-col items-center gap-1 rounded-lg p-1.5 text-center transition-colors hover:bg-muted active:scale-95"
+                            title={app.label}
+                          >
+                            <div className={cn("flex h-7 w-7 items-center justify-center rounded-lg bg-muted", app.color)}>
+                              <DynIcon name={app.icon} className="h-3.5 w-3.5" />
+                            </div>
+                            <span className="text-[9px] leading-tight text-muted-foreground line-clamp-1 w-full text-center">
+                              {app.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           )}
         </ScrollArea>
