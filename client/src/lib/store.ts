@@ -63,15 +63,19 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // UI State
+export type RightWidgetType = 'chat' | 'calendar' | 'tasks' | 'notes' | 'details';
+
 interface UIState {
   sidebarOpen: boolean;
   sidebarCollapsed: boolean;
   rightSidebarOpen: boolean;
+  activeRightWidget: RightWidgetType;
   theme: 'light' | 'dark' | 'system';
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleRightSidebar: () => void;
   setRightSidebarOpen: (open: boolean) => void;
+  setActiveRightWidget: (widget: RightWidgetType) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
 }
 
@@ -80,12 +84,14 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       sidebarOpen: true,
       sidebarCollapsed: false,
-      rightSidebarOpen: true,
+      rightSidebarOpen: false,
+      activeRightWidget: 'chat',
       theme: 'system',
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
       toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
       setRightSidebarOpen: (open) => set({ rightSidebarOpen: open }),
+      setActiveRightWidget: (widget) => set({ activeRightWidget: widget, rightSidebarOpen: true }),
       setTheme: (theme) => set({ theme }),
     }),
     {

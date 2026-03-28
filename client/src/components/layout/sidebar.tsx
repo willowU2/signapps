@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useUIStore, useLabelsStore } from '@/lib/store';
 import { useSidebarBadges } from '@/hooks/use-sidebar-badges';
@@ -91,6 +91,14 @@ export function Sidebar() {
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState('#3b82f6');
 
+  // Branding from localStorage (set by InstanceBranding settings)
+  const [instanceLogo, setInstanceLogo] = useState<string | null>(null);
+  const [instanceName, setInstanceName] = useState<string | null>(null);
+  useEffect(() => {
+    setInstanceLogo(localStorage.getItem('signapps_instance_logo'));
+    setInstanceName(localStorage.getItem('signapps_instance_name'));
+  }, []);
+
   const handleAddLabel = () => {
     if (!newLabelName.trim()) return;
     addLabel(newLabelName.trim(), newLabelColor);
@@ -120,6 +128,26 @@ export function Sidebar() {
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
+        {/* ── Branding / Logo ── */}
+        <div className={cn('mb-4 flex items-center gap-2', sidebarCollapsed ? 'justify-center px-2' : 'px-4')}>
+          {instanceLogo ? (
+            <img
+              src={instanceLogo}
+              alt={instanceName ?? 'Logo'}
+              className="h-8 w-8 rounded-lg object-cover shrink-0"
+            />
+          ) : (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
+              S
+            </div>
+          )}
+          {!sidebarCollapsed && (
+            <span className="text-sm font-semibold truncate text-foreground/80">
+              {instanceName ?? 'SignApps'}
+            </span>
+          )}
+        </div>
+
         {/* ── Nouveau Button ── */}
         <div className={cn('mb-4', sidebarCollapsed ? 'px-2' : 'px-4')}>
           {sidebarCollapsed ? (

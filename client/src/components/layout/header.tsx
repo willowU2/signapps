@@ -11,7 +11,6 @@ import {
   HelpCircle,
   Settings,
   LayoutGrid,
-  Rocket,
   FileText,
   Loader2,
   WifiOff,
@@ -36,6 +35,14 @@ export function Header() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Branding from localStorage (set by InstanceBranding settings)
+  const [instanceLogo, setInstanceLogo] = useState<string | null>(null);
+  const [instanceName, setInstanceName] = useState<string | null>(null);
+  useEffect(() => {
+    setInstanceLogo(localStorage.getItem('signapps_instance_logo'));
+    setInstanceName(localStorage.getItem('signapps_instance_name'));
+  }, []);
 
   useEffect(() => {
     if (!mounted) return;
@@ -99,11 +106,19 @@ export function Header() {
           <Menu className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Rocket className="h-4 w-4 text-white" />
-          </div>
+          {instanceLogo ? (
+            <img
+              src={instanceLogo}
+              alt={instanceName ?? 'Logo'}
+              className="h-8 w-8 rounded-lg object-cover shrink-0"
+            />
+          ) : (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
+              S
+            </div>
+          )}
           <h1 className="text-xl font-medium text-foreground/80 tracking-tight">
-            SignApps
+            {instanceName ?? 'SignApps'}
           </h1>
         </div>
       </div>
