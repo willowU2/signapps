@@ -232,3 +232,38 @@
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
+
+/* ───────────── Custom Accessibility Enhancements ───────────── */
+:root {
+  --a11y-line-height: normal;
+  --a11y-letter-spacing: normal;
+  --a11y-word-spacing: normal;
+}
+
+body {
+  line-height: var(--a11y-line-height);
+  letter-spacing: var(--a11y-letter-spacing);
+  word-spacing: var(--a11y-word-spacing);
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.enhanced-cursor {
+  cursor: url('data:image/svg+xml;utf8,<svg width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M12 4l20 20-8 2-6 10z" fill="%23fbbf24" stroke="black" stroke-width="2"/></svg>') 12 4, auto !important;
+}
+.enhanced-cursor * {
+  cursor: url('data:image/svg+xml;utf8,<svg width="48" height="48" xmlns="http://www.w3.org/2000/svg"><path d="M12 4l20 20-8 2-6 10z" fill="%23fbbf24" stroke="black" stroke-width="2"/></svg>') 12 4, auto !important;
+}
+
+.high-contrast-focus *:focus-visible {
+  outline: 4px solid #FFFF00 !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 6px #000000 !important;
+}

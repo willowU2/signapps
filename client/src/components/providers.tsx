@@ -12,6 +12,7 @@ import { AuthProvider } from '@/components/auth/auth-provider';
 import { PermissionsProvider } from '@/lib/permissions';
 import { TenantProvider } from '@/lib/tenant';
 import { PreferencesProvider } from '@/lib/preferences';
+import { AccessibilityProvider } from '@/components/accessibility/a11y-provider';
 
 import { NotificationPermissionDialog } from '@/components/notifications/notification-permission-dialog';
 import { CommandBar } from '@/components/layout/command-bar';
@@ -85,20 +86,22 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <AuthProvider>
               <TenantProvider>
                 <PreferencesProvider>
-                  <PermissionsProvider>
-                    <RouteProgressBar />
-                    {!pathname?.startsWith('/login') && <PasswordExpiryBanner />}
-                    {children}
-                    {!pathname?.startsWith('/login') && (
-                      <>
-                        <CommandBar />
-                        <MobileBottomNav />
-                      </>
-                    )}
-                    <GlobalModals />
-                    <GlobalHooks />
-                    <OnboardingWizard />
-                  </PermissionsProvider>
+                  <AccessibilityProvider>
+                    <PermissionsProvider>
+                      <RouteProgressBar />
+                      {!pathname?.startsWith('/login') && <PasswordExpiryBanner />}
+                      {children}
+                      {!pathname?.startsWith('/login') && (
+                        <>
+                          <CommandBar />
+                          <MobileBottomNav />
+                        </>
+                      )}
+                      <GlobalModals />
+                      <GlobalHooks />
+                      <OnboardingWizard />
+                    </PermissionsProvider>
+                  </AccessibilityProvider>
                 </PreferencesProvider>
               </TenantProvider>
             </AuthProvider>

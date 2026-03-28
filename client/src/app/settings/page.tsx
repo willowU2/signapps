@@ -94,6 +94,12 @@ import { TextToSpeech } from '@/components/accessibility/text-to-speech';
 import { ScreenMagnifier } from '@/components/accessibility/screen-magnifier';
 import { FocusOrderValidator } from '@/components/accessibility/focus-order-validator';
 import { VoiceNavigation } from '@/components/accessibility/voice-navigation';
+import { ColorBlindnessFilters } from '@/components/accessibility/color-blindness';
+import { ReduceMotionToggle } from '@/components/accessibility/reduce-motion';
+import { ReadingGuideToggle } from '@/components/accessibility/reading-guide';
+import { EnhancedCursorToggle } from '@/components/accessibility/enhanced-cursor';
+import { ComfortableReadingConfig } from '@/components/accessibility/comfortable-reading';
+import { HighContrastFocusToggle } from '@/components/accessibility/high-contrast-focus';
 import { CustomCssEditor } from '@/components/settings/CustomCssEditor';
 import { BrandColorSettings } from '@/components/settings/BrandColorSettings';
 import { ThemePresetsLibrary } from '@/components/settings/ThemePresetsLibrary';
@@ -863,26 +869,67 @@ export default function SettingsPage() {
                 <CardTitle>Accessibility</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Typography</p>
-                  <DyslexiaFontToggle />
+                
+                {/* 1. Visuel et Mouvement */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg text-primary flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-base">👁️</span>
+                    Visuel & Mouvement
+                  </h3>
+                  <div className="grid gap-6 pl-3 border-l-2 border-primary/10 ml-4 py-2">
+                    <ColorBlindnessFilters />
+                    <ReduceMotionToggle />
+                    <ScreenMagnifier />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Screen Magnifier</p>
-                  <ScreenMagnifier />
+
+                {/* 2. Confort de Lecture */}
+                <div className="space-y-4 pt-6 border-t">
+                  <h3 className="font-semibold text-lg text-primary flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-base">📚</span>
+                    Confort de Lecture
+                  </h3>
+                  <div className="grid gap-6 pl-3 border-l-2 border-primary/10 ml-4 py-2">
+                    <DyslexiaFontToggle />
+                    <ComfortableReadingConfig />
+                    <ReadingGuideToggle />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Text-to-Speech</p>
-                  <TextToSpeech />
+
+                {/* 3. Navigation & Saisie */}
+                <div className="space-y-4 pt-6 border-t">
+                  <h3 className="font-semibold text-lg text-primary flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-base">⌨️</span>
+                    Navigation & Saisie
+                  </h3>
+                  <div className="grid gap-6 pl-3 border-l-2 border-primary/10 ml-4 py-2">
+                    <EnhancedCursorToggle />
+                    <HighContrastFocusToggle />
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Navigation Vocale</p>
+                      <VoiceNavigation />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Synthèse Vocale (Text-to-Speech)</p>
+                      <TextToSpeech />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Voice Navigation</p>
-                  <VoiceNavigation />
+
+                {/* Outils Développeur */}
+                <div className="space-y-4 pt-6 border-t">
+                  <h3 className="font-semibold text-lg text-muted-foreground flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-muted-foreground text-base">🛠️</span>
+                    Outils Développeur
+                  </h3>
+                  <div className="grid gap-6 pl-3 border-l-2 border-muted ml-4 py-2">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Aperçu de la Séquence de Focus (Focus Order Validator)</p>
+                      <FocusOrderValidator />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Focus Order Validator</p>
-                  <FocusOrderValidator />
-                </div>
+
               </CardContent>
             </Card>
           </TabsContent>
