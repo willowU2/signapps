@@ -63,6 +63,7 @@ export default function MailPage() {
     const [, startRefreshTransition] = useTransition()
 
     const [activeAccountId, setActiveAccountId] = useState<string | undefined>(undefined)
+    const [loadError, setLoadError] = useState<string | null>(null)
 
     const [labels, setLabels] = useState<MailLabel[]>([])
     const [labelsLoading, setLabelsLoading] = useState(false)
@@ -138,46 +139,47 @@ export default function MailPage() {
         loadLabels()
     }, [])
 
-    useEffect(() => {
-        // Fetch accounts and emails from the real backend
-        const loadData = async () => {
-            try {
-                // Fetch accounts
-                const accounts = await accountApi.list()
-                const uiAccounts = accounts.map(a => ({
-                    id: a.id,
-                    name: a.email_address.split('@')[0],
-                    email: a.email_address,
-                    icon: a.provider,
-                    provider: a.provider
-                }))
-                if (uiAccounts.length > 0) {
-                    setActiveAccountId(uiAccounts[0].id)
-                }
-
-                // Fetch emails from inbox — initial batch; MailList handles
-                // virtual pagination via IntersectionObserver infinite scroll.
-                const emails = await mailApi.list({ folder_type: 'inbox', limit: 50 })
-                const uiMails: Mail[] = emails.map(email => ({
-                    id: email.id,
-                    name: email.sender_name || email.sender.split('@')[0],
-                    email: email.sender,
-                    subject: email.subject || '(Sans objet)',
-                    text: email.body_text || email.snippet || '',
-                    date: email.received_at || email.created_at || new Date().toISOString(),
-                    read: email.is_read ?? false,
-                    labels: email.labels || [],
-                    folder: 'inbox' as const
-                }))
-                setMailList(uiMails)
-            } catch (err) {
-                console.debug('Failed to fetch mail data:', err)
-                // Keep empty list on error - database is source of truth
-                setMailList([])
+    const loadData = React.useCallback(async () => {
+        setLoadError(null)
+        try {
+            // Fetch accounts
+            const accounts = await accountApi.list()
+            const uiAccounts = accounts.map(a => ({
+                id: a.id,
+                name: a.email_address.split('@')[0],
+                email: a.email_address,
+                icon: a.provider,
+                provider: a.provider
+            }))
+            if (uiAccounts.length > 0) {
+                setActiveAccountId(uiAccounts[0].id)
             }
+
+            // Fetch emails from inbox — initial batch; MailList handles
+            // virtual pagination via IntersectionObserver infinite scroll.
+            const emails = await mailApi.list({ folder_type: 'inbox', limit: 50 })
+            const uiMails: Mail[] = emails.map(email => ({
+                id: email.id,
+                name: email.sender_name || email.sender.split('@')[0],
+                email: email.sender,
+                subject: email.subject || '(Sans objet)',
+                text: email.body_text || email.snippet || '',
+                date: email.received_at || email.created_at || new Date().toISOString(),
+                read: email.is_read ?? false,
+                labels: email.labels || [],
+                folder: 'inbox' as const
+            }))
+            setMailList(uiMails)
+        } catch (err) {
+            console.debug('Failed to fetch mail data:', err)
+            setLoadError("Le service mail est inaccessible. Vérifiez que le serveur est démarré.")
+            setMailList([])
         }
-        loadData()
     }, [setMailList])
+
+    useEffect(() => {
+        loadData()
+    }, [loadData])
 
     const handleSnooze = async (id: string, time: string) => {
         let snoozeDate = new Date()
@@ -370,7 +372,14 @@ export default function MailPage() {
                             )}
                         </div>
                     </div>
-                    {!selectedId ? (
+                    {loadError ? (
+                        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                            <Inbox className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                            <h3 className="text-base font-medium text-muted-foreground mb-1">Service mail indisponible</h3>
+                            <p className="text-sm text-muted-foreground/70 max-w-sm mb-4">{loadError}</p>
+                            <Button variant="outline" size="sm" onClick={loadData}>Réessayer</Button>
+                        </div>
+                    ) : !selectedId ? (
                         <MailList
                             items={mailList}
                             selectedId={selectedId}

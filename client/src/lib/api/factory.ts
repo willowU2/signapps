@@ -44,6 +44,7 @@ export enum ServiceName {
   CONTACTS = 'contacts',
   FORMS = 'forms',
   CHAT = 'chat',
+  SOCIAL = 'social',
   NOTIFICATIONS = 'notifications',
   BILLING = 'billing',
 }
@@ -73,10 +74,11 @@ const SERVICE_CONFIG: Record<ServiceName, ServiceConfig> = {
   [ServiceName.PXE]: { port: 3016, envVar: 'NEXT_PUBLIC_PXE_URL', healthPath: '/health' },
   [ServiceName.REMOTE]: { port: 3017, envVar: 'NEXT_PUBLIC_REMOTE_URL', healthPath: '/health' },
   [ServiceName.OFFICE]: { port: 3018, envVar: 'NEXT_PUBLIC_OFFICE_URL', healthPath: '/health' },
-  [ServiceName.WORKFORCE]: { port: 3023, envVar: 'NEXT_PUBLIC_WORKFORCE_URL', healthPath: '/health' },
+  [ServiceName.WORKFORCE]: { port: 3019, envVar: 'NEXT_PUBLIC_WORKFORCE_URL', healthPath: '/health' },
   [ServiceName.CONTACTS]: { port: 3021, envVar: 'NEXT_PUBLIC_CONTACTS_URL', healthPath: '/health' },
   [ServiceName.FORMS]: { port: 3015, envVar: 'NEXT_PUBLIC_FORMS_URL', healthPath: '/health' },
   [ServiceName.CHAT]: { port: 3020, envVar: 'NEXT_PUBLIC_CHAT_URL', healthPath: '/health' },
+  [ServiceName.SOCIAL]: { port: 3019, envVar: 'NEXT_PUBLIC_SOCIAL_URL', healthPath: '/health' },
   [ServiceName.NOTIFICATIONS]: { port: 8095, envVar: 'NEXT_PUBLIC_NOTIFICATIONS_URL', healthPath: '/health' },
   [ServiceName.BILLING]: { port: 8096, envVar: 'NEXT_PUBLIC_BILLING_URL', healthPath: '/health' },
 };

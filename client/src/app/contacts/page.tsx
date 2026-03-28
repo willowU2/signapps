@@ -86,13 +86,14 @@ export default function ContactsPage() {
   const [showBulkTag, setShowBulkTag] = useState(false)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
 
-  const { data: contacts = SEED_CONTACTS, isLoading } = useQuery<Contact[]>({
+  const { data: contacts = SEED_CONTACTS, isLoading, isError, refetch } = useQuery<Contact[]>({
     queryKey: ['contacts'],
     queryFn: async () => {
       const client = getClient(ServiceName.CONTACTS)
       const res = await client.get<Contact[]>("/contacts")
       return res.data ?? SEED_CONTACTS
     },
+    retry: 1,
   })
 
   const loadContacts = useCallback(() => {

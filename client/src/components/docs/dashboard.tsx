@@ -19,9 +19,10 @@ export default function DocsDashboard() {
     const router = useRouter();
     const [docs, setDocs] = useState<DriveNode[]>([]);
     const [loading, setLoading] = useState(true);
+    const [apiError, setApiError] = useState<string | null>(null);
     const [previews, setPreviews] = useState<Record<string, string>>({});
     const [searchQuery, setSearchQuery] = useState('');
-    
+
     // Modal State
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [newDocName, setNewDocName] = useState('');
@@ -29,52 +30,54 @@ export default function DocsDashboard() {
 
     const { selectedWorkspaceId } = useEntityStore();
 
-    useEffect(() => {
-        const fetchDocs = async () => {
-            setLoading(true);
-            try {
-                const nodes = await driveApi.listNodes(null);
-                const textDocs = nodes.filter(n => 
-                    n.node_type === 'document' || 
-                    (n.mime_type && n.mime_type.includes('word')) || 
-                    n.name.endsWith('.docx')
-                );
-                textDocs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-                setDocs(textDocs);
+    const fetchDocs = async () => {
+        setLoading(true);
+        setApiError(null);
+        try {
+            const nodes = await driveApi.listNodes(null);
+            const textDocs = nodes.filter(n =>
+                n.node_type === 'document' ||
+                (n.mime_type && n.mime_type.includes('word')) ||
+                n.name.endsWith('.docx')
+            );
+            textDocs.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+            setDocs(textDocs);
 
-                // Fetch previews lazily for the first few documents
-                textDocs.slice(0, 15).forEach(async (doc) => {
+            // Fetch previews lazily for the first few documents
+            textDocs.slice(0, 15).forEach(async (doc) => {
+                try {
+                    let parsed: any;
+                    const targetKey = `${doc.target_id || doc.id}.html`;
                     try {
-                        let parsed: any;
-                        const targetKey = `${doc.target_id || doc.id}.html`;
-                        try {
-                            parsed = await fetchAndParseDocument('drive', targetKey, targetKey);
-                        } catch (err) {
-                            // Fallback to older format or manually uploaded files
-                            parsed = await fetchAndParseDocument('drive', doc.name, doc.name);
-                        }
-                        
-                        if (parsed && (parsed.text || parsed.html)) {
-                            // Nettoyer les balises HTML rudimentaires pour la preview
-                            const rawText = (parsed.text || parsed.html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-                            if (rawText) {
-                                setPreviews(prev => ({ ...prev, [doc.id]: rawText.substring(0, 300) }));
-                            }
-                        }
-                    } catch (e) {
-                        // Silently ignore if no document content found on server yet
+                        parsed = await fetchAndParseDocument('drive', targetKey, targetKey);
+                    } catch (err) {
+                        // Fallback to older format or manually uploaded files
+                        parsed = await fetchAndParseDocument('drive', doc.name, doc.name);
                     }
-                });
 
-            } catch (error) {
-                console.error("Failed to fetch documents", error);
-                toast.error("Erreur lors du chargement des documents");
-            } finally {
-                setLoading(false);
-            }
-        };
+                    if (parsed && (parsed.text || parsed.html)) {
+                        // Nettoyer les balises HTML rudimentaires pour la preview
+                        const rawText = (parsed.text || parsed.html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+                        if (rawText) {
+                            setPreviews(prev => ({ ...prev, [doc.id]: rawText.substring(0, 300) }));
+                        }
+                    }
+                } catch (e) {
+                    // Silently ignore if no document content found on server yet
+                }
+            });
 
+        } catch (error) {
+            console.error("Failed to fetch documents", error);
+            setApiError("Le service de documents est inaccessible. Vérifiez que le serveur est démarré.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchDocs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedWorkspaceId]);
 
     const handleCreateNew = async (e?: React.FormEvent) => {
@@ -116,6 +119,19 @@ export default function DocsDashboard() {
             <div className="flex-1 flex flex-col items-center justify-center p-8 h-full bg-background/50 backdrop-blur-sm">
                 <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-8 w-8  text-primary mb-4" />
                 <p className="text-muted-foreground animate-pulse">Chargement de vos documents...</p>
+            </div>
+        );
+    }
+
+    if (apiError) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 h-full">
+                <FileText className="h-12 w-12 text-destructive/40 mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Service indisponible</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">{apiError}</p>
+                <Button onClick={fetchDocs} variant="outline">
+                    Réessayer
+                </Button>
             </div>
         );
     }
