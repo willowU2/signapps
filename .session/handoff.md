@@ -11,7 +11,7 @@ created_for: "Prochaine instance d'AgentIQ"
 ## Résumé Exécutif
 
 1. Session `01130694` démarrée le 2026-03-28T09:36:18.385Z
-2. Terminée proprement le 2026-03-28T09:50:33.672Z
+2. Terminée proprement le 2026-03-28T10:06:15.448Z
 3. Travail : (non renseigné)
 
 ---
@@ -77,7 +77,7 @@ Fichiers à lire en priorité :
 |----------|--------|
 | Session ID | 01130694-090b-46c7-baf9-e2bea14f6b44 |
 | Démarrée | 2026-03-28T09:36:18.385Z |
-| Terminée | 2026-03-28T09:50:33.672Z |
+| Terminée | 2026-03-28T10:06:15.448Z |
 | Crashes enregistrés | 0 |
 | Checkpoints | 0 |
 
