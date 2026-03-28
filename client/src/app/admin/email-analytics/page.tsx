@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { getClient, ServiceName } from '@/lib/api/factory';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface EmailAnalyticsPoint {
   date: string;
@@ -46,6 +47,7 @@ function StatCard({ label, value, sub, trend }: { label: string; value: string; 
 }
 
 export default function EmailAnalyticsPage() {
+  usePageTitle('Analytique email');
   const [data, setData] = useState<EmailAnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

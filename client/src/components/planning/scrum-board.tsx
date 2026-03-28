@@ -40,8 +40,8 @@ export default function ScrumBoard() {
   const displayNames: Record<string, string> = {
     Backlog: "Backlog",
     Sprint: "Sprint",
-    InProgress: "In Progress",
-    Done: "Done",
+    InProgress: "En cours",
+    Done: "Terminé",
   };
 
   const moveStory = (fromColumn: string, storyId: string, toColumn: string) => {

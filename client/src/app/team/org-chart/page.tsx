@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AtSign, Briefcase, Calendar } from 'lucide-react'
 import { useState } from 'react'
 import type { BackendOrgTreeNode } from '@/lib/scheduling/api/team'
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const nodeTypes = {
     talentCard: TalentCardNode
@@ -29,6 +30,7 @@ function flattenOrgTree(nodes: BackendOrgTreeNode[], parentId: string | null = n
 }
 
 export default function OrgChartPage() {
+  usePageTitle('Organigramme');
     const { data: members = [], isLoading: loadingMembers } = useTeamMembers()
     const { data: orgTree = [], isLoading: loadingTree } = useOrgTree()
     

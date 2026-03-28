@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Shield, Download, Search, RefreshCw, Trash2, Filter } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -219,6 +220,7 @@ function saveEntries(entries: AuditEntry[]) {
 // ---------------------------------------------------------------------------
 
 export default function AuditLogPage() {
+  usePageTitle('Audit');
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');

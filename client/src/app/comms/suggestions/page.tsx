@@ -13,6 +13,7 @@ import { Lightbulb, ThumbsUp, ThumbsDown, Plus, TrendingUp, CheckCircle, Clock }
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Suggestion {
   id: string;
@@ -41,6 +42,7 @@ const statusConfig = {
 };
 
 export default function SuggestionsPage() {
+  usePageTitle('Suggestions');
   const [suggestions, setSuggestions] = useState<Suggestion[]>(INITIAL);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', category: 'General' });

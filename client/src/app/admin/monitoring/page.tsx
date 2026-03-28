@@ -5,8 +5,10 @@ import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getSystemMetrics, type SystemMetrics } from "@/lib/api-admin"
 import { Activity, HardDrive, Cpu, Network } from "lucide-react"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function MonitoringPage() {
+  usePageTitle('Supervision');
     const [metrics, setMetrics] = useState<SystemMetrics | null>(null)
     const [prevMetrics, setPrevMetrics] = useState<SystemMetrics | null>(null)
     const [netSpeed, setNetSpeed] = useState({ rx: 0, tx: 0 })

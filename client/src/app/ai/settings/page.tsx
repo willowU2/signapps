@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Cpu, HardDrive, Monitor, RefreshCw } from 'lucide-react';
 import { getClient, ServiceName } from '@/lib/api/factory';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface GpuProfile {
   name: string;
@@ -41,6 +42,7 @@ function formatVram(mb: number): string {
 }
 
 export default function AiSettingsPage() {
+  usePageTitle('Parametres IA');
   const [gpuStatus, setGpuStatus] = useState<GpuStatusData | null>(null);
   const [profiles, setProfiles] = useState<GpuProfile[]>([]);
   const [selectedIdx, setSelectedIdx] = useState(0);

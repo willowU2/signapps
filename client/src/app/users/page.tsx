@@ -71,6 +71,7 @@ import { useUsers } from '@/hooks/use-users';
 import { DataTable } from '@/components/ui/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { UserSheet } from '@/components/admin/user-sheet';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 
 
@@ -862,6 +863,7 @@ function AuditLogTable({ users }: AuditLogTableProps) {
 }
 
 export default function UsersPage() {
+  usePageTitle('Utilisateurs');
   const queryClient = useQueryClient();
   const { data: users = [], isLoading: loading } = useUsers();
   const [search, setSearch] = useState('');

@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Supplier {
   id: string;
@@ -77,6 +78,7 @@ function StarRating({ value }: { value: number }) {
 }
 
 export default function SupplierPortalPage() {
+  usePageTitle('Portail fournisseurs');
   const [suppliers, setSuppliers] = useState<Supplier[]>(SUPPLIERS);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);

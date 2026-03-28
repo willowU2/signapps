@@ -20,8 +20,10 @@ import { RevenueAnalytics } from '@/components/analytics/revenue-analytics';
 import { CustomKPIDashboard } from '@/components/analytics/custom-kpi-dashboard';
 import ScheduledReports from '@/components/analytics/scheduled-reports';
 import { useSearchParams } from 'next/navigation';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function AnalyticsPage() {
+  usePageTitle('Analytique');
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab') || 'overview';
 

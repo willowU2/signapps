@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { identityApiClient as identityApi } from "@/lib/api"
 import { Server, RefreshCw, Users, Shield, CheckCircle2, XCircle, FolderTree, Play, Settings, Lock, Eye, EyeOff } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface LdapConfig {
     id: string
@@ -65,6 +66,7 @@ interface SyncResult {
 }
 
 export default function LdapPage() {
+  usePageTitle('LDAP');
     const [config, setConfig] = useState<LdapConfig | null>(null)
     const [groups, setGroups] = useState<LdapGroup[]>([])
     const [loading, setLoading] = useState(true)

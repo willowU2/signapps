@@ -6,8 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StorageRulesSettings } from "@/components/admin/storage-rules-settings";
 import { AiIndexingSettings } from "@/components/admin/ai-indexing-settings";
 import { ShieldAlert, HardDrive, BrainCircuit } from "lucide-react";
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function AdminStorageSettingsPage() {
+  usePageTitle('Stockage');
   const [activeTab, setActiveTab] = useState("storage-rules");
 
   return (

@@ -9,6 +9,7 @@ import {
   type NotificationType,
   type NotificationPriority,
 } from "@/lib/api/notifications";
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Metadata maps ────────────────────────────────────────────────────────────
 
@@ -119,6 +120,7 @@ type FilterMode = "all" | "unread" | NotificationType;
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function NotificationsPage() {
+  usePageTitle('Notifications');
   const [all, setAll] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<FilterMode>("all");

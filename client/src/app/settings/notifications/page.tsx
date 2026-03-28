@@ -27,6 +27,7 @@ import { SendNotificationAdmin } from '@/components/notifications/send-notificat
 import { NotificationGranularPrefs } from '@/components/notifications/notification-granular-prefs';
 import { NotificationSounds } from '@/components/notifications/notification-sounds';
 import { NotificationDndSchedule } from '@/components/notifications/notification-dnd-schedule';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface NotificationPreferences {
   id: string;
@@ -43,6 +44,7 @@ interface NotificationPreferences {
 }
 
 export default function NotificationSettingsPage() {
+  usePageTitle('Preferences notifications');
   const { user } = useAuth();
   const [prefs, setPrefs] = useState<NotificationPreferences | null>(null);
   const [loading, setLoading] = useState(true);

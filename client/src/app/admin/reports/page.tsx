@@ -27,6 +27,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Mock data generators ───────────────────────────────────────────────────
 
@@ -719,6 +720,7 @@ function PerformanceReportTab() {
 // ─── Main Page ──────────────────────────────────────────────────────────────
 
 export default function ReportsPage() {
+  usePageTitle('Rapports');
   return (
     <AppLayout>
       <div className="space-y-6 p-6">

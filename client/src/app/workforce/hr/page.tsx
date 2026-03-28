@@ -16,6 +16,7 @@ import { BirthdayAnniversaryAlerts } from "@/components/hr/birthday-anniversary-
 import { TrainingCertificationManagement } from "@/components/hr/training-certification-management";
 import { PayrollSimulationReport } from "@/components/hr/payroll-simulation-report";
 import { RemoteWorkPolicy } from "@/components/hr/remote-work-policy";
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const TABS = [
   { id: "leave", label: "Congés", icon: Calendar, desc: "Demandes & soldes" },
@@ -33,6 +34,7 @@ const TABS = [
 type TabId = typeof TABS[number]["id"];
 
 export default function HRPage() {
+  usePageTitle('Ressources humaines');
   const [activeTab, setActiveTab] = useState<TabId>("leave");
 
   const renderContent = () => {

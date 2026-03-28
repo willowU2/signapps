@@ -12,6 +12,7 @@ import { MessageSquare, ThumbsUp, Reply, Pin, Search, Plus, ChevronDown, Chevron
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Comment {
   id: string;
@@ -50,6 +51,7 @@ const INITIAL_THREADS: LessonThread[] = [
 ];
 
 export default function LMSDiscussionsPage() {
+  usePageTitle('Discussions');
   const [threads, setThreads] = useState<LessonThread[]>(INITIAL_THREADS);
   const [search, setSearch] = useState('');
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});

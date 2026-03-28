@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // --------------------------------------------------------------------------
 // Types
@@ -98,6 +99,7 @@ const STATUS_COLORS: Record<string, string> = {
 // --------------------------------------------------------------------------
 
 export default function GdprDashboardPage() {
+  usePageTitle('RGPD');
   const [policies, setPolicies] = useState<RetentionPolicy[]>(DEFAULT_POLICIES);
   const [deletionRequests, setDeletionRequests] = useState<DeletionRequest[]>([]);
   const [consents, setConsents] = useState<ConsentRecord[]>([]);

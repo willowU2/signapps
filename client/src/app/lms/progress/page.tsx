@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { TrendingUp, Trophy, Clock, BookOpen, Target, Award, Users, Star } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const WEEKLY_DATA = [
   { week: 'W10', hours: 2.5, courses: 1 },
@@ -32,6 +33,7 @@ const COURSE_STATS = [
 ];
 
 export default function LMSProgressPage() {
+  usePageTitle('Progression');
   return (
     <AppLayout>
       <div className="space-y-6">

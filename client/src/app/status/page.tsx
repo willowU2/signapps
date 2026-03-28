@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { CheckCircle, AlertTriangle, XCircle, RefreshCw, Activity, Clock, Wifi, WifiOff } from "lucide-react"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Service definitions ────────────────────────────────────────────────────
 
@@ -110,6 +111,7 @@ async function checkServiceHealth(service: ServiceDef): Promise<ServiceHealth> {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function StatusPage() {
+  usePageTitle('Statut');
   const [services, setServices] = useState<ServiceHealth[]>(
     SERVICES.map((s) => ({
       name: s.name,

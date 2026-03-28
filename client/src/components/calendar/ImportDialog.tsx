@@ -207,7 +207,7 @@ export function ImportDialog({
                   onClick={handleClose}
                   className="flex-1"
                 >
-                  {result.success ? "Done" : "Cancel"}
+                  {result.success ? "Terminé" : "Annuler"}
                 </Button>
               </div>
             </div>

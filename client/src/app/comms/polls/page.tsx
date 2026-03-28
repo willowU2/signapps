@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, Plus, Trash2, Check, X, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface PollOption {
   id: string;
@@ -49,6 +50,7 @@ const INITIAL_POLLS: Poll[] = [
 ];
 
 export default function PollsPage() {
+  usePageTitle('Sondages');
   const [polls, setPolls] = useState<Poll[]>(INITIAL_POLLS);
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');

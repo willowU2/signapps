@@ -33,6 +33,7 @@ import {
   type ExportFormat,
 } from '@/lib/api/office';
 import { getServiceBaseUrl, ServiceName } from '@/lib/api/factory';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -651,6 +652,7 @@ function PresentationsTab() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ToolsPage() {
+  usePageTitle('Outils');
   return (
     <AppLayout>
       <div className="space-y-6">

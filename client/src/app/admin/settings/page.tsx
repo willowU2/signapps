@@ -31,6 +31,7 @@ import {
   Download,
   Upload,
 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── General Settings ───────────────────────────────────────────────
 interface GeneralSettings {
@@ -192,6 +193,7 @@ function PasswordInput({ value, onChange, placeholder, id }: {
 
 // ─── Main Component ─────────────────────────────────────────────────
 export default function AdminSettingsPage() {
+  usePageTitle('Parametres admin');
   const [general, setGeneral] = useState<GeneralSettings>(defaultGeneral);
   const [security, setSecurity] = useState<SecuritySettings>(defaultSecurity);
   const [email, setEmail] = useState<EmailSettings>(defaultEmail);

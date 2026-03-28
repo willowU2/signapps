@@ -7,8 +7,10 @@ import { WorkspaceManager } from '@/components/social/workspace-manager';
 import { TimeSlotManager } from '@/components/social/time-slot-manager';
 import { ContentSetManager } from '@/components/social/content-set-manager';
 import { Webhook, Key, Building2, Clock, Package } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function SocialSettingsPage() {
+  usePageTitle('Parametres Social');
   return (
     <div className="w-full py-6 space-y-6">
       <div>

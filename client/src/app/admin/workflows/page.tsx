@@ -39,6 +39,7 @@ import {
     Clock, Filter, Activity
 } from "lucide-react"
 import { toast } from "sonner"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -195,6 +196,7 @@ function TriggerIcon({ name, className }: { name: string; className?: string }) 
 // ── Page Component ───────────────────────────────────────────────────────────
 
 export default function WorkflowsPage() {
+  usePageTitle('Workflows');
     const [rules, setRules] = useState<WorkflowRule[]>([])
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRule, setEditingRule] = useState<WorkflowRule | null>(null)

@@ -76,6 +76,7 @@ import {
   DnsRecord,
   DnsStats,
 } from '@/lib/api/securelink';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -1426,6 +1427,7 @@ function DnsTab() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SecureLinkPage() {
+  usePageTitle('SecureLink');
   return (
     <AppLayout>
       <div className="space-y-6">

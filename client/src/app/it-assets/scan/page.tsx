@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { QrCode, Search, CheckCircle, XCircle, Loader2, Package } from "lucide-react"
 import { itAssetsApi, HardwareAsset } from "@/lib/api/it-assets"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function QRScanPage() {
+  usePageTitle('Scan reseau');
   const [manualInput, setManualInput] = useState("")
   const [scanning, setScanning] = useState(false)
   const [result, setResult] = useState<HardwareAsset | null>(null)

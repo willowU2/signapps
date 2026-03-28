@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getUsers, getSystemMetrics, type User, type SystemMetrics, isAdmin } from "@/lib/api-admin"
 import { useServiceHealth } from "@/hooks/use-service-health"
 import { Users, Activity, HardDrive, Cpu, ShieldCheck } from "lucide-react"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function AdminDashboard() {
+  usePageTitle('Administration');
     const [users, setUsers] = useState<User[]>([])
     const [metrics, setMetrics] = useState<SystemMetrics | null>(null)
     const { data: healthData } = useServiceHealth()

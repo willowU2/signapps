@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Settings, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getClient, ServiceName } from '@/lib/api/factory';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface EnvVar {
   key: string;
@@ -34,6 +35,7 @@ const SERVICES = [
 const SHARED_KEYS = ['DATABASE_URL', 'REDIS_URL', 'JWT_SECRET', 'RUST_LOG', 'CORS_ORIGIN'];
 
 export default function EnvConfigPage() {
+  usePageTitle('Configuration');
   const [data, setData] = useState<ServiceEnv[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -7,8 +7,10 @@ import { GdprDeletionWorkflow } from '@/components/data/gdpr-deletion-workflow';
 import { PiiDetector } from '@/components/data/pii-detector';
 import { DataAnonymization } from '@/components/data/data-anonymization';
 import { EyeOff, Shield, ShieldAlert, Wand2 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function DataManagementPage() {
+  usePageTitle('Gestion des donnees');
   return (
     <AppLayout>
       <div className="w-full space-y-4">

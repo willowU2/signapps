@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ClipboardCheck, Plus, Trash2, CheckCircle, XCircle, ToggleLeft, AlignLeft, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 type QuestionType = 'multiple-choice' | 'true-false' | 'open';
 
@@ -48,6 +49,7 @@ const makeQuestion = (type: QuestionType): QuizQuestion => ({
 });
 
 export default function QuizBuilderPage() {
+  usePageTitle('Createur de quiz');
   const [quiz, setQuiz] = useState<Quiz>({ id: '1', title: '', description: '', questions: [], passingScore: 70, timeLimit: 30 });
   const [saved, setSaved] = useState(false);
 

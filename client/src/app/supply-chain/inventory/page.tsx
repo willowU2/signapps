@@ -14,6 +14,7 @@ import { Package, Search, Plus, TrendingUp, TrendingDown, ArrowRight, ArrowLeft,
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface StockItem {
   id: string;
@@ -72,6 +73,7 @@ const statusConfig = {
 };
 
 export default function InventoryPage() {
+  usePageTitle('Inventaire');
   const [items, setItems] = useState<StockItem[]>(ITEMS);
   const [movements, setMovements] = useState<Movement[]>(MOVEMENTS);
   const [search, setSearch] = useState('');

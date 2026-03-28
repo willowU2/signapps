@@ -9,6 +9,7 @@ import { Truck, CheckCircle2, Circle, Package, MapPin, Clock, Search, AlertTrian
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface TrackingEvent {
   id: string;
@@ -74,6 +75,7 @@ const statusConfig = {
 const STEPS = ['Processing', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
 
 export default function DeliveryTrackingPage() {
+  usePageTitle('Suivi livraisons');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Shipment>(SHIPMENTS[0]);
 

@@ -18,10 +18,12 @@ import { useExternalSyncStore } from '@/stores/external-sync-store';
 import type { CalendarProvider } from '@/lib/calendar/external-sync/types';
 import { PROVIDER_LABELS } from '@/lib/calendar/external-sync/types';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 type CallbackStatus = 'processing' | 'success' | 'error';
 
 export default function OAuthCallbackPage() {
+  usePageTitle('Synchronisation calendrier');
   const searchParams = useSearchParams();
   const router = useRouter();
   const { handleOAuthCallback, error } = useExternalSyncStore();

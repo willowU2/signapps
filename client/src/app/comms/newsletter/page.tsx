@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mail, Plus, Trash2, Send, Eye, Calendar, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow, format } from 'date-fns';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface NewsletterSection {
   id: string;
@@ -49,6 +50,7 @@ const SECTION_TYPES = [
 ];
 
 export default function NewsletterPage() {
+  usePageTitle('Newsletter');
   const [newsletters, setNewsletters] = useState<Newsletter[]>(INITIAL);
   const [editing, setEditing] = useState<Newsletter | null>(null);
   const [subject, setSubject] = useState('');

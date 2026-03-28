@@ -42,8 +42,10 @@ import { RenameSheet } from '@/components/storage/rename-sheet';
 import { EntityContextMenu } from '@/components/context-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { EntityLinks } from '@/components/crosslinks/EntityLinks';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function GlobalDrivePage() {
+  usePageTitle('Drive');
   const router = useRouter();
   const queryClient = useQueryClient();
   const [currentFolder, setCurrentFolder] = useState<DriveNode | null>(null);

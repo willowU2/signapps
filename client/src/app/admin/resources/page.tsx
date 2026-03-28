@@ -63,6 +63,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const resourceTypeOptions: { value: ResourceTypeCategory; label: string; icon: string }[] = [
     { value: "room", label: "Salle", icon: "🚪" },
@@ -72,6 +73,7 @@ const resourceTypeOptions: { value: ResourceTypeCategory; label: string; icon: s
 ]
 
 export default function ResourcesPage() {
+  usePageTitle('Ressources');
     const {
         resources,
         resourcesLoading,

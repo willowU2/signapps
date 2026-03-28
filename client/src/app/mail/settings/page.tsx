@@ -21,6 +21,7 @@ import { mailApi } from "@/lib/api/mail";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { EmailAutomationRules } from "@/components/workflow/email-automation-rules";
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Provider presets ────────────────────────────────────────────────────────
 
@@ -770,6 +771,7 @@ function SignatureBuilder({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MailSettingsPage() {
+  usePageTitle('Parametres mail');
   const [accounts, setAccounts] = useState<MailAccount[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

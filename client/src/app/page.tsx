@@ -5,8 +5,10 @@ import { SpinnerInfinity } from 'spinners-react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function Home() {
+  usePageTitle('Accueil');
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
 

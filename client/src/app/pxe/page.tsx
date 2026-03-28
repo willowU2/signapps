@@ -29,8 +29,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function PXEDashboard() {
+  usePageTitle('Deploiement PXE');
     const [profiles, setProfiles] = useState<PxeProfile[]>([])
     const [assets, setAssets] = useState<PxeAsset[]>([])
     const [loading, setLoading] = useState(true)

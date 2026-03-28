@@ -6,12 +6,14 @@ import { ImageGenPanel } from '@/components/ai/image-gen-panel';
 import { VideoGenPanel } from '@/components/ai/video-gen-panel';
 import { AudioGenPanel } from '@/components/ai/audio-gen-panel';
 import { VisionAnalyzer } from '@/components/ai/vision-analyzer';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // STUDIO PAGE
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function StudioPage() {
+  usePageTitle('Studio IA');
   return (
     <div className="w-full py-6 space-y-6">
       {/* Header */}

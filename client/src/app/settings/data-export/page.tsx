@@ -28,6 +28,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ---------------------------------------------------------------------------
 // Data categories for export
@@ -96,6 +97,7 @@ const DATA_CATEGORIES: DataCategory[] = [
 // ---------------------------------------------------------------------------
 
 export default function DataExportPage() {
+  usePageTitle('Export de donnees');
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
     new Set(DATA_CATEGORIES.map((c) => c.id)),
   );

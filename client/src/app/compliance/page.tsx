@@ -13,8 +13,10 @@ import { PrivacyPolicyGenerator } from "@/components/compliance/privacy-policy-g
 import { DsarWorkflow } from "@/components/compliance/dsar-workflow"
 import { ComplianceAuditTrail } from "@/components/compliance/compliance-audit-trail"
 import { RegulatoryCalendar } from "@/components/compliance/regulatory-calendar"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function CompliancePage() {
+  usePageTitle('Conformite');
   return (
     <AppLayout>
       <div className="w-full space-y-6 p-6">

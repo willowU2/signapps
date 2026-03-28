@@ -70,6 +70,7 @@ import {
   useToggleAlertConfig,
   useDeleteAlertConfig,
 } from '@/hooks/use-monitoring';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface MetricPoint {
   time: string;
@@ -98,6 +99,7 @@ const maxPointsByPeriod: Record<TimePeriod, number> = {
 };
 
 export default function MonitoringPage() {
+  usePageTitle('Supervision');
   const [refreshInterval, setRefreshInterval] = useState(5000);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('5m');

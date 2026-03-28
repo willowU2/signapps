@@ -75,6 +75,7 @@ import { useVoiceChat } from '@/hooks/use-voice-chat';
 import { ModelManagement } from '@/components/ai/model-management';
 import { ToolCallDisplay, ToolCallInfo } from '@/components/ai/tool-call-display';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // Types for conversations
 interface Message {
@@ -184,6 +185,7 @@ function formatDate(date: Date): string {
 }
 
 export default function AIPage() {
+  usePageTitle('Assistant IA');
   // Conversations state
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);

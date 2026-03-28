@@ -74,7 +74,7 @@ export function CommandPalette() {
   };
 
   const getBlockTitle = (block: any) => {
-    return block.data.name || block.data.title || block.data.displayName || block.data.username || "Unknown Item";
+    return block.data.name || block.data.title || block.data.displayName || block.data.username || "Element inconnu";
   };
 
   const handleTranscription = useCallback((text: string, isFinal: boolean) => {
@@ -114,7 +114,7 @@ export function CommandPalette() {
       onOpenChange={setOpen}
     >
       <CommandInput
-        placeholder="Type a command or search..."
+        placeholder="Tapez une commande ou recherchez..."
         value={search + (interimSearch ? (search && !search.endsWith(' ') ? ' ' : '') + interimSearch : '')}
         onValueChange={(v) => {
           setSearch(v);
@@ -130,14 +130,14 @@ export function CommandPalette() {
       <CommandList className="custom-scrollbar">
         <CommandEmpty className="py-6 text-center text-sm">
           <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
-            <p>Aucun résultat trouvé for "{search}".</p>
+            <p>Aucun résultat trouvé pour « {search} ».</p>
             {search && (
               <button
                 className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors mt-1 bg-indigo-50 dark:bg-indigo-950/30 px-4 py-2 rounded-full font-medium shadow-sm hover:shadow"
                 onClick={() => runCommand(() => router.push(`/ai?q=${encodeURIComponent(search)}`))}
               >
                 <Sparkles className="h-4 w-4" />
-                Ask Universal AI to find "{search}"
+                Demander à l&apos;IA de chercher « {search} »
               </button>
             )}
           </div>
@@ -145,20 +145,20 @@ export function CommandPalette() {
 
         {/* --- Contextual App Actions (Intelligent Sensing) --- */}
         {!search && (
-          <CommandGroup heading="Current Context (AI Actions)">
+          <CommandGroup heading="Contexte actuel (Actions IA)">
             {pathname.includes('/docs') && (
               <>
                 <CommandItem onSelect={() => dispatchAppEvent('app:ai-action', { action: 'summarize' })}>
                   <AlignLeft className="mr-2 h-4 w-4 text-purple-500" />
-                  <span>Summarize this document</span>
+                  <span>Résumer ce document</span>
                 </CommandItem>
                 <CommandItem onSelect={() => dispatchAppEvent('app:ai-action', { action: 'draft' })}>
                   <Wand2 className="mr-2 h-4 w-4 text-indigo-500" />
-                  <span>Help me write...</span>
+                  <span>Aidez-moi à rédiger...</span>
                 </CommandItem>
                 <CommandItem onSelect={() => dispatchAppEvent('app:editor-action', { action: 'format-fix' })}>
                   <Sparkles className="mr-2 h-4 w-4 text-amber-500" />
-                  <span>Fix formatting and spelling</span>
+                  <span>Corriger la mise en forme et l&apos;orthographe</span>
                 </CommandItem>
               </>
             )}
@@ -166,11 +166,11 @@ export function CommandPalette() {
               <>
                 <CommandItem onSelect={() => dispatchAppEvent('app:ai-action', { action: 'draft-reply' })}>
                   <Mail className="mr-2 h-4 w-4 text-blue-500" />
-                  <span>Draft smart reply</span>
+                  <span>Rédiger une réponse intelligente</span>
                 </CommandItem>
                 <CommandItem onSelect={() => dispatchAppEvent('app:ai-action', { action: 'summarize-thread' })}>
                   <ListTodo className="mr-2 h-4 w-4 text-emerald-500" />
-                  <span>Extract Task List from thread</span>
+                  <span>Extraire la liste de tâches du fil</span>
                 </CommandItem>
               </>
             )}
@@ -178,18 +178,18 @@ export function CommandPalette() {
               <>
                 <CommandItem onSelect={() => dispatchAppEvent('app:ai-action', { action: 'generate-layout' })}>
                   <Presentation className="mr-2 h-4 w-4 text-rose-500" />
-                  <span>Generate slide layout from text</span>
+                  <span>Générer une mise en page à partir du texte</span>
                 </CommandItem>
                 <CommandItem onSelect={() => dispatchAppEvent('app:ai-action', { action: 'simplify-text' })}>
                   <AlignLeft className="mr-2 h-4 w-4 text-indigo-500" />
-                  <span>Simplify text for presentation</span>
+                  <span>Simplifier le texte pour la présentation</span>
                 </CommandItem>
               </>
             )}
             {!pathname.includes('/docs') && !pathname.includes('/mail') && !pathname.includes('/slides') && (
               <CommandItem onSelect={() => runCommand(() => router.push('/ai'))}>
                 <MessageSquare className="mr-2 h-4 w-4 text-indigo-500" />
-                <span>Chat with Workspace AI Assistant</span>
+                <span>Discuter avec l&apos;assistant IA</span>
               </CommandItem>
             )}
           </CommandGroup>
@@ -207,7 +207,7 @@ export function CommandPalette() {
         
         {search && blocks.length > 0 && (
           <>
-            <CommandGroup heading="Federated Search Results (Files, Users, Tasks, Events)">
+            <CommandGroup heading="Résultats de recherche (Fichiers, Utilisateurs, Tâches, Événements)">
               {blocks.map((block: any, idx: number) => (
                 <CommandItem 
                   key={`${block.type}-${block.data.id || idx}`}
@@ -232,49 +232,49 @@ export function CommandPalette() {
           </>
         )}
 
-        <CommandGroup heading="System">
+        <CommandGroup heading="Système">
           <CommandItem onSelect={() => runCommand(() => router.push('/dashboard'))}>
             <LayoutDashboard className="mr-2 h-4 w-4" />
-            <span>Dashboard</span>
+            <span>Tableau de bord</span>
             <CommandShortcut>⌘D</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push('/containers'))}>
             <Container className="mr-2 h-4 w-4" />
-            <span>Containers</span>
+            <span>Conteneurs</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push('/monitoring'))}>
             <Activity className="mr-2 h-4 w-4" />
-            <span>Monitoring</span>
+            <span>Supervision</span>
           </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
 
-        <CommandGroup heading="Features">
+        <CommandGroup heading="Fonctionnalités">
           <CommandItem onSelect={() => runCommand(() => router.push('/storage'))}>
             <HardDrive className="mr-2 h-4 w-4" />
-            <span>Storage & Files</span>
+            <span>Stockage et fichiers</span>
             <CommandShortcut>⌘S</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push('/storage/trash'))}>
             <Trash2 className="mr-2 h-4 w-4" />
-            <span>Trash</span>
+            <span>Corbeille</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push('/storage/shares'))}>
             <Share2 className="mr-2 h-4 w-4" />
-            <span>Shared Links</span>
+            <span>Liens partagés</span>
           </CommandItem>
 
           <CommandItem onSelect={() => runCommand(() => router.push('/ai'))}>
             <MessageSquare className="mr-2 h-4 w-4" />
-            <span>AI Assistant</span>
+            <span>Assistant IA</span>
             <CommandShortcut>⌘A</CommandShortcut>
           </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
 
-        <CommandGroup heading="Networking & Infrastructure">
+        <CommandGroup heading="Réseau et infrastructure">
           <CommandItem onSelect={() => runCommand(() => router.push('/routes'))}>
             <Network className="mr-2 h-4 w-4" />
             <span>Routes</span>
@@ -285,25 +285,25 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push('/scheduler'))}>
             <Clock className="mr-2 h-4 w-4" />
-            <span>Scheduler</span>
+            <span>Planificateur</span>
           </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
 
-        <CommandGroup heading="Settings">
+        <CommandGroup heading="Paramètres">
           <CommandItem onSelect={() => runCommand(() => router.push('/users'))}>
             <Users className="mr-2 h-4 w-4" />
-            <span>Users</span>
+            <span>Utilisateurs</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push('/settings/profile'))}>
             <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+            <span>Profil</span>
             <CommandShortcut>⌘P</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => router.push('/settings'))}>
             <Settings className="mr-2 h-4 w-4" />
-            <span>Settings</span>
+            <span>Paramètres</span>
             <CommandShortcut>⌘,</CommandShortcut>
           </CommandItem>
           <CommandItem
@@ -315,7 +315,7 @@ export function CommandPalette() {
             }}
           >
             <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
+            <span>Se déconnecter</span>
             <CommandShortcut>⇧⌘Q</CommandShortcut>
           </CommandItem>
         </CommandGroup>

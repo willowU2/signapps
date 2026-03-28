@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { BookOpen, Search, Clock, Star, Users, Play, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Course {
   id: string;
@@ -42,6 +43,7 @@ const LEVELS = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 const levelColors = { Beginner: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', Intermediate: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', Advanced: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' };
 
 export default function CourseCatalogPage() {
+  usePageTitle('Catalogue formations');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [level, setLevel] = useState('All');

@@ -36,6 +36,7 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FileUploadProgressBar } from '@/components/application/file-upload/file-upload-progress-bar';
 import { PasswordStrength } from '@/components/auth/password-strength';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const roleLabels: Record<number, string> = {
   0: 'Administrator',
@@ -44,6 +45,7 @@ const roleLabels: Record<number, string> = {
 };
 
 export default function ProfilePage() {
+  usePageTitle('Profil');
   const { user, setUser } = useAuthStore();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');

@@ -146,76 +146,76 @@ export function GlobalHeader() {
         headerTitle = "Drive";
         HeaderIcon = <HardDrive className="h-5 w-5 text-indigo-500" />;
     } else if (pathname.startsWith('/storage')) {
-        headerTitle = "Storage (Infra)";
+        headerTitle = "Stockage (Infra)";
         HeaderIcon = <HardDrive className="h-5 w-5 text-gray-500" />;
     } else if (pathname.startsWith('/tasks')) {
-        headerTitle = "Tasks";
+        headerTitle = "Tâches";
         HeaderIcon = <CheckSquare className="h-5 w-5 text-green-500" />;
     } else if (pathname.startsWith('/meet')) {
-        headerTitle = "Meet";
+        headerTitle = "Réunions";
         HeaderIcon = <Video className="h-5 w-5 text-teal-500" />;
     } else if (pathname.startsWith('/settings')) {
-        headerTitle = "Settings";
+        headerTitle = "Paramètres";
         HeaderIcon = <Settings className="h-5 w-5 text-gray-500" />;
     } else if (pathname.startsWith('/monitoring')) {
-        headerTitle = "Monitoring";
+        headerTitle = "Supervision";
         HeaderIcon = <Activity className="h-5 w-5 text-orange-500" />;
     } else if (pathname.startsWith('/routes')) {
         headerTitle = "Routes";
         HeaderIcon = <Route className="h-5 w-5 text-purple-500" />;
     } else if (pathname.startsWith('/scheduler')) {
-        headerTitle = "Scheduler";
+        headerTitle = "Planificateur";
         HeaderIcon = <Calendar className="h-5 w-5 text-rose-500" />;
     } else if (pathname.startsWith('/vpn')) {
         headerTitle = "VPN";
         HeaderIcon = <Shield className="h-5 w-5 text-red-500" />;
     } else if (pathname.startsWith('/users')) {
-        headerTitle = "Directory";
+        headerTitle = "Annuaire";
         HeaderIcon = <Users className="h-5 w-5 text-cyan-500" />;
     } else if (pathname.startsWith('/dashboard')) {
-        headerTitle = "Dashboard";
+        headerTitle = "Tableau de bord";
     } else if (pathname.startsWith('/calendar')) {
-        headerTitle = "Calendar";
+        headerTitle = "Calendrier";
         HeaderIcon = <Calendar className="h-5 w-5 text-blue-500" />;
     } else if (pathname.startsWith('/keep')) {
-        headerTitle = "Keep";
+        headerTitle = "Notes";
     } else if (pathname.startsWith('/design')) {
         headerTitle = "Design";
     } else if (pathname.startsWith('/social')) {
         headerTitle = "Social";
         HeaderIcon = <Share2 className="h-5 w-5 text-pink-500" />;
     } else if (pathname.startsWith('/containers')) {
-        headerTitle = "Containers";
+        headerTitle = "Conteneurs";
     } else if (pathname.startsWith('/backups')) {
-        headerTitle = "Backups";
+        headerTitle = "Sauvegardes";
     } else if (pathname.startsWith('/apps')) {
         headerTitle = "App Store";
     } else if (pathname.startsWith('/it-assets')) {
-        headerTitle = "IT Assets";
+        headerTitle = "Parc informatique";
     } else if (pathname.startsWith('/resources')) {
-        headerTitle = "Resources";
+        headerTitle = "Ressources";
     } else if (pathname.startsWith('/ai')) {
-        headerTitle = "AI";
+        headerTitle = "IA";
         HeaderIcon = <MessageSquare className="h-5 w-5 text-violet-500" />;
     } else if (pathname.startsWith('/billing')) {
-        headerTitle = "Billing";
+        headerTitle = "Facturation";
     } else if (pathname.startsWith('/analytics')) {
-        headerTitle = "Analytics";
+        headerTitle = "Analytique";
     } else if (pathname.startsWith('/workforce')) {
-        headerTitle = "Workforce";
+        headerTitle = "Effectifs";
     } else if (pathname.startsWith('/admin')) {
         headerTitle = "Administration";
         HeaderIcon = <Shield className="h-5 w-5 text-amber-500" />;
     } else if (pathname.startsWith('/media')) {
-        headerTitle = "Media";
+        headerTitle = "Média";
     } else if (pathname.startsWith('/contacts')) {
         headerTitle = "Contacts";
     } else if (pathname.startsWith('/forms')) {
-        headerTitle = "Forms";
+        headerTitle = "Formulaires";
     } else if (pathname.startsWith('/pxe')) {
-        headerTitle = "PXE Deploy";
+        headerTitle = "Déploiement PXE";
     } else if (pathname.startsWith('/remote')) {
-        headerTitle = "Remote Access";
+        headerTitle = "Accès distant";
     } else if (pathname.startsWith('/help')) {
         headerTitle = "Aide";
         HeaderIcon = <HelpCircle className="h-5 w-5 text-blue-500" />;
@@ -227,7 +227,7 @@ export function GlobalHeader() {
     // Generate Contextual Breadcrumbs
     const labelMap: Record<string, string> = {
         cal: 'Calendrier',
-        dashboard: 'Dashboard',
+        dashboard: 'Tableau de bord',
         docs: 'Documents',
         sheets: 'Tableurs',
         slides: 'Présentations',
@@ -240,28 +240,28 @@ export function GlobalHeader() {
         mail: 'Mail',
         meet: 'Meet',
         social: 'Social',
-        containers: 'Containers',
+        containers: 'Conteneurs',
         drive: 'Drive',
         routes: 'Routes',
         vpn: 'VPN',
         backups: 'Sauvegardes',
         apps: 'App Store',
-        'it-assets': 'IT Assets',
-        ai: 'AI',
+        'it-assets': 'Parc informatique',
+        ai: 'IA',
         scheduler: 'Planificateur',
-        monitoring: 'Monitoring',
+        monitoring: 'Supervision',
         billing: 'Facturation',
         analytics: 'Analytique',
-        workforce: 'Workforce',
+        workforce: 'Effectifs',
         admin: 'Administration',
         users: 'Utilisateurs',
-        workspaces: 'Workspaces',
+        workspaces: 'Espaces de travail',
         resources: 'Ressources',
         storage: 'Stockage',
         media: 'Média',
         contacts: 'Contacts',
         forms: 'Formulaires',
-        pxe: 'PXE Deploy',
+        pxe: 'Déploiement PXE',
         remote: 'Accès distant',
         help: 'Aide',
         bookmarks: 'Favoris',
@@ -443,10 +443,10 @@ export function GlobalHeader() {
                             <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground font-medium">
                                 <span className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors">
                                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                                    Saved to cloud
+                                    Enregistré dans le cloud
                                 </span>
                                 <span>•</span>
-                                <span className="cursor-pointer hover:text-foreground transition-colors">My Drive</span>
+                                <span className="cursor-pointer hover:text-foreground transition-colors">Mon Drive</span>
                                 <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -600,7 +600,7 @@ export function GlobalHeader() {
                                 {user?.last_login && (
                                     <span className="text-xs font-normal text-muted-foreground flex items-center gap-1 mt-1">
                                         <Clock className="h-3 w-3" />
-                                        Derniere connexion : {formatDistanceToNow(new Date(user.last_login), { addSuffix: true, locale: fr })}
+                                        Dernière connexion : {formatDistanceToNow(new Date(user.last_login), { addSuffix: true, locale: fr })}
                                     </span>
                                 )}
                             </div>
@@ -608,16 +608,16 @@ export function GlobalHeader() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => router.push('/settings/profile')}>
                             <UserIcon className="mr-2 h-4 w-4" />
-                            Profile
+                            Profil
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => router.push('/settings')}>
                             <Settings className="mr-2 h-4 w-4" />
-                            Settings
+                            Paramètres
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                             <LogOut className="mr-2 h-4 w-4" />
-                            Logout
+                            Déconnexion
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

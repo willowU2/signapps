@@ -12,6 +12,7 @@ import {
   Play, Copy, Plus, Trash2, Key, Star, StarOff, Download, ChevronDown, ChevronRight, Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ── Service catalog ──────────────────────────────────────────────────────────
 
@@ -172,6 +173,7 @@ function saveFavorites(favs: SavedRequest[]) {
 }
 
 export default function ApiPlaygroundPage() {
+  usePageTitle('Playground API');
   const [service, setService] = useState(SERVICES[0]);
   const [method, setMethod] = useState<Method>('GET');
   const [path, setPath] = useState('/health');

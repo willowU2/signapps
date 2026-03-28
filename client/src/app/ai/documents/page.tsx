@@ -1,12 +1,14 @@
 "use client"
 
 import dynamic from 'next/dynamic';
+import { usePageTitle } from '@/hooks/use-page-title';
 const CollaborativeEditor = dynamic(
     () => import('@/components/ai/collaborative-editor').then(mod => mod.CollaborativeEditor),
     { ssr: false, loading: () => <div className="animate-pulse h-64 bg-muted rounded-lg" /> }
 );
 
 export default function DocumentsPage() {
+  usePageTitle('Documents IA');
     // In a real app, this would come from URL params or state
     const docId = 'doc-demo-001';
 

@@ -13,6 +13,7 @@ import { Star, ThumbsUp, BookOpen, Plus, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Review {
   id: string;
@@ -53,6 +54,7 @@ function StarRating({ value, onChange, size = 'md' }: { value: number; onChange?
 }
 
 export default function ReviewsPage() {
+  usePageTitle('Evaluations');
   const [reviews, setReviews] = useState<Review[]>(REVIEWS);
   const [courseFilter, setCourseFilter] = useState('All');
   const [ratingFilter, setRatingFilter] = useState(0);

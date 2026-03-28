@@ -13,6 +13,7 @@ import { Bell, AtSign, Check, CheckCheck, Trash2, Settings, Megaphone, FileText,
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 type NotifSource = 'announcement' | 'document' | 'poll' | 'news';
 
@@ -41,6 +42,7 @@ const INITIAL: MentionNotification[] = [
 ];
 
 export default function MentionNotificationsPage() {
+  usePageTitle('Mentions');
   const [notifs, setNotifs] = useState<MentionNotification[]>(INITIAL);
   const [settings, setSettings] = useState({ announcements: true, documents: true, polls: true, news: true, email: false, push: true });
   const [tab, setTab] = useState('all');

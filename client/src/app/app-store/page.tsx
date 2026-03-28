@@ -30,6 +30,7 @@ import {
   Blocks,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // --- Types ---
 
@@ -304,6 +305,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 // --- Component ---
 
 export default function AppStorePage() {
+  usePageTitle('App Store');
   const [apps, setApps] = useState<MarketplaceApp[]>(INITIAL_APPS);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');

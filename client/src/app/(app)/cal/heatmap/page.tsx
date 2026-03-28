@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,7 @@ function buildDateRange(endDate: Date, days: number): DayData[] {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CalHeatmapPage() {
+  usePageTitle('Carte thermique');
   const DAYS = 90;
   const today = startOfDay(new Date());
 

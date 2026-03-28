@@ -37,6 +37,7 @@ import {
   Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // --- Types ---
 
@@ -176,6 +177,7 @@ const RESOURCE_COLORS: Record<string, string> = {
 // --- Component ---
 
 export default function SchedulingPage() {
+  usePageTitle('Planification');
   const [reservations, setReservations] = useState<Reservation[]>(INITIAL_RESERVATIONS);
   const [weekStart, setWeekStart] = useState<Date>(() => getMonday(new Date()));
   const [dialogOpen, setDialogOpen] = useState(false);

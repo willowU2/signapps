@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { ActiveSessions } from '@/components/settings/active-sessions';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ---------------------------------------------------------------------------
 // Mock recovery codes
@@ -53,6 +54,7 @@ const MOCK_RECOVERY_CODES = [
 // ---------------------------------------------------------------------------
 
 export default function SecuritySettingsPage() {
+  usePageTitle('Securite');
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');

@@ -41,6 +41,7 @@ import { EmployeeSheet } from '@/components/workforce/employee-sheet';
 import { CoverageEditor } from '@/components/workforce/coverage-editor';
 import { orgNodesApi, employeesApi, validationApi } from '@/lib/api/workforce';
 import type { OrgNodeWithStats, EmployeeWithDetails, ValidateCoverageResponse, WeeklyPattern } from '@/types/workforce';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // Empty pattern for coverage editor
 const EMPTY_COVERAGE_PATTERN: WeeklyPattern = {
@@ -56,6 +57,7 @@ const EMPTY_COVERAGE_PATTERN: WeeklyPattern = {
 type ActiveTab = 'org-tree' | 'employees' | 'validation' | 'coverage';
 
 export default function WorkforcePage() {
+  usePageTitle('Effectifs');
   const [activeTab, setActiveTab] = React.useState<ActiveTab>('org-tree');
   const [selectedNode, setSelectedNode] = React.useState<OrgNodeWithStats | null>(null);
   const [selectedEmployee, setSelectedEmployee] = React.useState<EmployeeWithDetails | null>(null);

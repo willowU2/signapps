@@ -3,8 +3,10 @@
 import { AppLayout } from '@/components/layout/app-layout';
 import { CveDashboard } from '@/components/admin/cve-dashboard';
 import { ShieldAlert } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function CvePage() {
+  usePageTitle('Vulnerabilites');
   return (
     <AppLayout>
       <div className="space-y-6 p-6">

@@ -53,6 +53,7 @@ import {
   ChevronDown,
   EyeIcon,
 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface FileItem {
@@ -188,6 +189,7 @@ function parseSizeMB(size?: string): number {
 
 // ─── Main Component ─────────────────────────────────────────────────
 export default function GlobalDrivePage() {
+  usePageTitle('Drive global');
   const [files, setFiles] = useState<FileItem[]>(INITIAL_FILES);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');

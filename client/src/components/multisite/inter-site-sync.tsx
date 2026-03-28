@@ -14,12 +14,12 @@ interface SyncConfig {
 export function InterSiteSync() {
   const [config, setConfig] = useState<SyncConfig>({
     sourceSite: "New York HQ",
-    targetSite: "San Francisco Office",
+    targetSite: "Bureau San Francisco",
     dataTypes: [
       { name: "Contacts", enabled: true },
       { name: "Documents", enabled: true },
-      { name: "Calendar Events", enabled: false },
-      { name: "Settings", enabled: true },
+      { name: "Événements", enabled: false },
+      { name: "Paramètres", enabled: true },
     ],
     lastSyncTime: new Date(Date.now() - 2 * 3600000),
   });

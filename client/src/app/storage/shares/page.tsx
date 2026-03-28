@@ -35,8 +35,10 @@ import { Share2, Link, Copy, MoreVertical, Trash2, Edit, Eye, Download, FileEdit
 import { sharesApi, ShareLink, UpdateShareRequest } from '@/lib/api';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function SharesPage() {
+  usePageTitle('Liens partages');
   const [shares, setShares] = useState<ShareLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);

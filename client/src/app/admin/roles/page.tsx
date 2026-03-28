@@ -19,8 +19,10 @@ import {
   type RoleEntity,
   type ActionConfig,
 } from '@/lib/data-table';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function RolesPage() {
+  usePageTitle('Roles');
   const { data: roles, isLoading, error } = useRoleList();
 
   const [sheetOpen, setSheetOpen] = useState(false);

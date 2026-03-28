@@ -9,8 +9,10 @@ import { PodcastPlayer } from '@/components/voice/podcast-player';
 import { VoiceNotes } from '@/components/voice/voice-notes';
 import { DictationMode } from '@/components/voice/dictation-mode';
 import { FileText, Mic, Zap, Rss, FileAudio, Edit3 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function VoicePage() {
+  usePageTitle('Voix');
   return (
     <AppLayout>
       <div className="w-full space-y-4">

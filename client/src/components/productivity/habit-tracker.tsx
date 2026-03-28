@@ -177,7 +177,7 @@ export function HabitTracker() {
                               ? "bg-emerald-500 shadow-sm"
                               : "bg-gray-100"
                           )}
-                          title={`${DAYS[idx]}: ${completed ? "Done" : "Missed"}`}
+                          title={`${DAYS[idx]}: ${completed ? "Fait" : "Manque"}`}
                         />
                       ))}
                     </div>

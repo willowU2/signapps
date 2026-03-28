@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Network, ArrowRight, Database, Globe, MessageSquare, Mail, Calendar, FileText, Shield, HardDrive, Container, Cpu, Video, Users } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface ServiceNode {
   id: string;
@@ -46,6 +47,7 @@ const CATEGORY_LABELS = {
 };
 
 export default function ServiceGraphPage() {
+  usePageTitle('Services');
   const categories = ['core', 'productivity', 'communication', 'infra'] as const;
 
   return (

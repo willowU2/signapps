@@ -3,8 +3,10 @@
 import { AppLayout } from '@/components/layout/app-layout';
 import { AiCostTracker } from '@/components/admin/ai-cost-tracker';
 import { Brain } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function AiCostPage() {
+  usePageTitle('Couts IA');
   return (
     <AppLayout>
       <div className="space-y-6 p-6">

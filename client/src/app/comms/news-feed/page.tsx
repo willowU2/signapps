@@ -14,6 +14,7 @@ import { Newspaper, ThumbsUp, MessageSquare, Share2, Plus, Heart, Smile, Star } 
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const REACTIONS = [
   { emoji: '👍', label: 'Like', icon: ThumbsUp },
@@ -83,6 +84,7 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function NewsFeedPage() {
+  usePageTitle("Fil d'actualite");
   const [news, setNews] = useState<NewsItem[]>(INITIAL_NEWS);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', content: '', category: 'General' });

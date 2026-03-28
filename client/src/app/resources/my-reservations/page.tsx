@@ -29,8 +29,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarX, Clock, Check, X, AlertTriangle } from "lucide-react"
 import { reservationsApi, Reservation, getReservationStatusColor, getReservationStatusLabel } from "@/lib/api/resources"
 import { toast } from "sonner"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function MyReservationsPage() {
+  usePageTitle('Mes reservations');
     const queryClient = useQueryClient()
 
     const { data: reservations = [], isLoading: loading } = useQuery<Reservation[]>({

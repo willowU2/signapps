@@ -17,6 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { LdapLoginDialog } from '@/components/auth/ldap-login-dialog';
 import { parseApiError } from '@/lib/errors';
 import { logActivity } from '@/hooks/use-activity-tracker';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const loginSchema = z.object({
   username: z.string().min(1, "Le nom d'utilisateur est requis"),
@@ -29,6 +30,7 @@ const MAX_ATTEMPTS = 3;
 const LOCKOUT_SECONDS = 30;
 
 export default function LoginPage() {
+  usePageTitle('Connexion');
   const router = useRouter();
   const { setUser, setMfaSessionToken, redirectAfterLogin, setRedirectAfterLogin } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);

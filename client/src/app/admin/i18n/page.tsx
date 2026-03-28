@@ -9,6 +9,7 @@ import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 import { Languages } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const SUPPORTED_LOCALES = [
   { code: 'fr', label: 'Français', dir: 'ltr', status: 'complete' },
@@ -26,6 +27,7 @@ const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'outline'> = {
 };
 
 export default function I18nAdminPage() {
+  usePageTitle('Internationalisation');
   return (
     <AppLayout>
       <div className="space-y-6">

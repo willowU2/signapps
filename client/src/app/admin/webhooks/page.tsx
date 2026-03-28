@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Filter,
 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Mock delivery log ──────────────────────────────────────────────────────
 
@@ -185,6 +186,7 @@ function DeliveryLog() {
 // ─── Main Page ──────────────────────────────────────────────────────────────
 
 export default function WebhooksPage() {
+  usePageTitle('Webhooks');
   return (
     <AppLayout>
       <div className="space-y-6 p-6">

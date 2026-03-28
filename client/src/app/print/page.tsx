@@ -9,8 +9,10 @@ import { BadgePrinting } from '@/components/print/badge-printing';
 import { LetterheadTemplate } from '@/components/print/letterhead-template';
 import { EnvelopeAddressing } from '@/components/print/envelope-addressing';
 import { CreditCard, Award, Tag, Shield, FileText, Mail } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function PrintPage() {
+  usePageTitle('Impression');
   return (
     <AppLayout>
       <div className="w-full space-y-4">

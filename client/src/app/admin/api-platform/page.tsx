@@ -8,8 +8,10 @@ import { ApiChangelog } from '@/components/api-platform/api-changelog';
 import { WebhookEventCatalog } from '@/components/api-platform/webhook-event-catalog';
 import { SdkGeneration } from '@/components/api-platform/sdk-generation';
 import { ShoppingBag, Activity, GitCommit, Webhook, Code } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function ApiPlatformPage() {
+  usePageTitle('Plateforme API');
   return (
     <AppLayout>
       <div className="w-full space-y-4">

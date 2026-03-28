@@ -58,8 +58,10 @@ import {
   useRequestCertificate,
   useRenewCertificate,
 } from '@/hooks/use-routes';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function RoutesPage() {
+  usePageTitle('Routes');
   const queryClient = useQueryClient();
   const { data: routes = [], isLoading: loading, isError: routesError } = useRoutes();
   const { data: certificates = [] } = useCertificates();

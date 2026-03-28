@@ -58,8 +58,10 @@ import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { CronBuilder } from '@/components/scheduler/cron-builder';
 import { ExportButton } from '@/components/ui/export-button';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function SchedulerPage() {
+  usePageTitle('Planificateur');
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<ScheduledJob | null>(null);

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Users, Search, Hash, Lock, Globe, MessageSquare, Settings } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface TeamChannel {
   id: string;
@@ -39,6 +40,7 @@ const TEAMS: TeamChannel[] = [
 const CATEGORIES = ['All', 'Technical', 'Product', 'Business', 'Operations'];
 
 export default function TeamsDirectoryPage() {
+  usePageTitle('Annuaire equipes');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [typeFilter, setTypeFilter] = useState<'all' | 'public' | 'private'>('all');

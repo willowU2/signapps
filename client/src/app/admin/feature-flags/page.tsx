@@ -9,8 +9,10 @@ import { useFeatureFlags } from '@/lib/feature-flags';
 import { FEATURES } from '@/lib/features';
 import { toast } from 'sonner';
 import { TenantFeatureFlags } from '@/components/admin/tenant-feature-flags';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function FeatureFlagsPage() {
+  usePageTitle('Feature flags');
   const { isEnabled, setOverride, clearOverride, clearAll, getAll } = useFeatureFlags();
   const all = getAll();
 

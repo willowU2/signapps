@@ -8,8 +8,10 @@ import { MockServer } from '@/components/admin/mock-server';
 import { DbQueryExplorer } from '@/components/admin/db-query-explorer';
 import { ServiceRestartPanel } from '@/components/admin/service-restart-panel';
 import { Code, Activity, Wifi, Server, Database, RefreshCw } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function DeveloperToolsPage() {
+  usePageTitle('Outils developpeur');
   return (
     <AppLayout>
       <div className="w-full space-y-4">

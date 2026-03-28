@@ -43,8 +43,10 @@ import { RouteDialog } from '@/components/routes/route-dialog';
 import { useContainers, useContainerAction, Container } from '@/hooks/use-containers';
 import { usePageContext } from '@/lib/store/page-context';
 import { Globe } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function ContainersPage() {
+  usePageTitle('Conteneurs');
   const queryClient = useQueryClient();
   const { data: containers = [], isLoading, isError } = useContainers();
 

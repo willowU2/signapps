@@ -14,6 +14,7 @@ import { HardDrive, RefreshCw, AlertTriangle, AlertCircle, Search, Settings2 } f
 import { quotasApi, type QuotaUsage, type SetQuotaRequest } from '@/lib/api/storage';
 import { getUsers, type User } from '@/lib/api-admin';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface UserQuota {
   user: User;
@@ -118,6 +119,7 @@ function EditQuotaDialog({
 // ── Page ──────────────────────────────────────────────────────────────────
 
 export default function QuotaPage() {
+  usePageTitle('Quotas');
   const [userQuotas, setUserQuotas] = useState<UserQuota[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

@@ -87,6 +87,7 @@ import {
   useRenewCertificate,
 } from '@/hooks/use-routes';
 import { useProxyStatus } from '@/hooks/use-proxy-status';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -119,6 +120,7 @@ function formatDate(dateString: string) {
 // ── component ──────────────────────────────────────────────────────────────
 
 export default function ProxyPage() {
+  usePageTitle('Proxy');
   const queryClient = useQueryClient();
 
   // data

@@ -3,8 +3,10 @@
 import { AppLayout } from '@/components/layout/app-layout';
 import { ContainerResources } from '@/components/admin/container-resources';
 import { Box } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function ContainerResourcesPage() {
+  usePageTitle('Ressources conteneurs');
   return (
     <AppLayout>
       <div className="space-y-6 p-6">

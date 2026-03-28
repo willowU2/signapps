@@ -8,8 +8,10 @@ import { ProductivityStreaks } from '@/components/gamification/ProductivityStrea
 import { TeamLeaderboardFull } from '@/components/gamification/TeamLeaderboardFull';
 import { FeatureDiscoveryChecklist } from '@/components/onboarding/FeatureDiscoveryChecklist';
 import { Zap } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function GamificationPage() {
+  usePageTitle('Gamification');
   return (
     <AppLayout>
       <div className="w-full py-6 space-y-6">

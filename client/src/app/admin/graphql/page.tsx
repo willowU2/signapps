@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Play, Copy, GitMerge, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const GRAPHQL_URL = 'http://localhost:3001/api/v1/graphql';
 
@@ -49,6 +50,7 @@ const SAMPLE_QUERIES = [
 ];
 
 export default function GraphQLPage() {
+  usePageTitle('GraphQL');
   const [query, setQuery] = useState(SAMPLE_QUERIES[0].query);
   const [variables, setVariables] = useState('{}');
   const [token, setToken] = useState('');

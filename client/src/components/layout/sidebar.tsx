@@ -42,7 +42,7 @@ const essentialNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord', color: '', badgeKey: null },
   { href: '/all-apps',  icon: Grid,            label: 'Applications',    color: 'text-indigo-500', badgeKey: null },
   { href: '/mail',      icon: Mail,            label: 'Mail',            color: 'text-blue-500', badgeKey: 'mail' as const },
-  { href: '/cal',       icon: Calendar,        label: 'Calendar',        color: 'text-blue-400', badgeKey: null },
+  { href: '/cal',       icon: Calendar,        label: 'Calendrier',      color: 'text-blue-400', badgeKey: null },
   { href: '/tasks',     icon: CheckSquare,     label: 'Tâches',          color: 'text-green-500', badgeKey: 'tasks' as const },
   { href: '/storage',   icon: HardDrive,       label: 'Drive',           color: 'text-muted-foreground', badgeKey: 'storage' as const },
 ];

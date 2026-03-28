@@ -12,8 +12,10 @@ import { CertificateManagement } from '@/components/security/certificate-managem
 import { SecurityScorecard } from '@/components/security/security-scorecard';
 import { Shield } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function SecurityPage() {
+  usePageTitle('Securite');
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab') || 'scorecard';
 

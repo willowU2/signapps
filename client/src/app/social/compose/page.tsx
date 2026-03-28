@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { PostComposer } from '@/components/social/post-composer';
 import { Suspense } from 'react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 function ComposeContent() {
   const searchParams = useSearchParams();
@@ -24,6 +25,7 @@ function ComposeContent() {
 }
 
 export default function ComposePage() {
+  usePageTitle('Composer');
   return (
     <Suspense>
       <ComposeContent />

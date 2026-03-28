@@ -248,14 +248,14 @@ export function WebhookManager() {
                   <Button variant="ghost" size="sm" onClick={() => handleTest(hook.id)} title="Test delivery">
                     <RotateCw className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => openEdit(hook)} title="Edit">
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(hook)} title="Modifier">
                     <Edit2 className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDelete(hook.id)}
-                    title="Delete"
+                    title="Supprimer"
                     className="text-red-600 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />

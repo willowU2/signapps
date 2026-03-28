@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { LiveAudienceView, type ReactionType } from "@/components/slides/live-presentation"
 import { type SlideTransition } from "@/components/slides/slide-animations"
 import { MonitorPlay, Loader2 } from "lucide-react"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 function AudienceSlideRenderer({ index }: { index: number }) {
     return (
@@ -84,6 +85,7 @@ function LivePageContent() {
 }
 
 export default function LivePresentationPage() {
+  usePageTitle('Presentation en direct');
     return (
         <Suspense fallback={
             <div className="min-h-screen bg-gray-900 flex items-center justify-center">

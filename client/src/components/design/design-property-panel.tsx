@@ -189,17 +189,17 @@ export default function DesignPropertyPanel({ fabricCanvasRef }: DesignPropertyP
     <div className="w-64 border-l bg-background/95 p-3 overflow-y-auto space-y-4 text-sm">
       {/* Quick actions */}
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDuplicate} title="Duplicate">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDuplicate} title="Dupliquer">
           <Copy className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDelete} title="Delete">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDelete} title="Supprimer">
           <Trash2 className="h-3.5 w-3.5 text-destructive" />
         </Button>
         <div className="flex-1" />
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleBringForward} title="Bring Forward">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleBringForward} title="Avancer">
           <MoveUp className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleSendBackward} title="Send Backward">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleSendBackward} title="Reculer">
           <MoveDown className="h-3.5 w-3.5" />
         </Button>
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFlipH} title="Flip Horizontal">

@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Map, BookOpen, Clock, ChevronRight, CheckCircle2, Lock, Play, Trophy, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface PathCourse {
   id: string;
@@ -69,6 +70,7 @@ const statusConfig = {
 };
 
 export default function LearningPathsPage() {
+  usePageTitle('Parcours');
   const [expanded, setExpanded] = useState<string | null>('1');
 
   const getProgress = (path: LearningPath) => {

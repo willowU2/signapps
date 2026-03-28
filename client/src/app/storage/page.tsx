@@ -68,6 +68,7 @@ import {
 } from './hooks/use-storage-data';
 
 import { FileItem } from '@/components/storage/types';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Bucket {
   name: string;
@@ -85,6 +86,7 @@ const TABS = [
 ];
 
 export default function StoragePage() {
+  usePageTitle('Stockage');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'files');

@@ -26,6 +26,7 @@ import { useExternalSyncStore, selectHasUnresolvedConflicts } from '@/stores/ext
 import { CategoryManager } from '@/components/calendar/category-colors';
 import { PublicCalendarLink } from '@/components/calendar/public-calendar-link';
 import { Palette, Globe } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ============================================================================
 // Sync Logs Tab
@@ -192,6 +193,7 @@ function ConflictsTab() {
 // ============================================================================
 
 export default function CalendarSettingsPage() {
+  usePageTitle('Parametres calendrier');
   const { error, clearError, loadConnections } = useExternalSyncStore();
   const hasUnresolvedConflicts = useExternalSyncStore(selectHasUnresolvedConflicts);
 

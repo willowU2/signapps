@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Map, Plus, Edit, Package, AlertTriangle, CheckCircle, Warehouse, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Zone {
   id: string;
@@ -52,6 +53,7 @@ const typeConfig = {
 const getOccupancy = (zone: Zone) => zone.capacity > 0 ? Math.round((zone.used / zone.capacity) * 100) : 0;
 
 export default function WarehouseMapPage() {
+  usePageTitle('Plan entrepot');
   const [zones, setZones] = useState<Zone[]>(INITIAL_ZONES);
   const [selected, setSelected] = useState<Zone | null>(null);
   const [search, setSearch] = useState('');

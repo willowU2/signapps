@@ -11,8 +11,10 @@ import { TeamsConnector } from '@/components/integrations/teams-connector';
 import { DiscordConnector } from '@/components/integrations/discord-connector';
 import { RestApiConnector } from '@/components/integrations/rest-api-connector';
 import { Plug } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function IntegrationsPage() {
+  usePageTitle('Integrations');
   return (
     <AppLayout>
       <div className="space-y-6">

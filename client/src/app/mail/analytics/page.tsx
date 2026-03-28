@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Send, CheckCheck, AlertTriangle, XCircle, TrendingUp, BarChart3 } from 'lucide-react';
 import { getClient, ServiceName } from '@/lib/api/factory';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface MailStats {
   total_sent: number;
@@ -15,6 +16,7 @@ interface MailStats {
 }
 
 export default function MailAnalyticsPage() {
+  usePageTitle('Analytique mail');
   const [stats, setStats] = useState<MailStats>({
     total_sent: 0, delivered: 0, bounced: 0, failed: 0, open_rate: 0, daily: [],
   });

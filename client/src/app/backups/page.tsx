@@ -46,6 +46,7 @@ import { BackupMonitoringDashboard } from '@/components/backups/backup-monitorin
 import { CrossRegionBackup } from '@/components/backups/cross-region-backup';
 import { IncrementalBackupSettings } from '@/components/backups/incremental-backup-settings';
 import { DRTestDialog } from '@/components/backups/dr-test-dialog';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return '-';
@@ -61,6 +62,7 @@ function formatBytes(bytes?: number) {
 }
 
 export default function BackupsPage() {
+  usePageTitle('Sauvegardes');
   const queryClient = useQueryClient();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editProfile, setEditProfile] = useState<BackupProfile | null>(null);

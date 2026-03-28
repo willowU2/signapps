@@ -8,7 +8,9 @@
  * it is excluded from the initial JS payload.
  */
 import { MediaContent } from './media-wrapper';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function MediaPage() {
+  usePageTitle('Media');
   return <MediaContent />;
 }

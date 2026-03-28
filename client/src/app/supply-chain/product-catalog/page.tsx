@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ShoppingBag, Search, Plus, Edit, Trash2, Tag, Package, ImageIcon, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Product {
   id: string;
@@ -48,6 +49,7 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function ProductCatalogPage() {
+  usePageTitle('Catalogue produits');
   const [products, setProducts] = useState<Product[]>(PRODUCTS);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');

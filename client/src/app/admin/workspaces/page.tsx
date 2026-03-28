@@ -40,9 +40,11 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 
 export default function WorkspacesPage() {
+  usePageTitle('Espaces de travail');
     const { workspaces, workspacesLoading, fetchWorkspaces, createWorkspace, updateWorkspace, deleteWorkspace } = useTenantStore()
     const [isSheetOpen, setIsSheetOpen] = useState(false)
     const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null)

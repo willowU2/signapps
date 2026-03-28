@@ -45,9 +45,9 @@ interface RetentionPolicy {
 }
 
 const ACTION_LABELS: Record<PurgeAction, string> = {
-  delete: "Permanently delete",
-  anonymize: "Anonymize",
-  archive: "Archive",
+  delete: "Supprimer definitivement",
+  anonymize: "Anonymiser",
+  archive: "Archiver",
 }
 
 const ACTION_VARIANTS: Record<PurgeAction, "destructive" | "secondary" | "outline"> = {
@@ -264,7 +264,7 @@ export function DataRetentionPolicies() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

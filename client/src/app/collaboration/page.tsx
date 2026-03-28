@@ -7,8 +7,10 @@ import { KanbanSwimlanes } from '@/components/collaboration/kanban-swimlanes';
 import { DecisionLog } from '@/components/collaboration/decision-log';
 import { MeetingNotesTemplate } from '@/components/collaboration/meeting-notes-template';
 import { GitBranch, Layers, BookOpen, FileText } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function CollaborationPage() {
+  usePageTitle('Collaboration');
   return (
     <AppLayout>
       <div className="w-full space-y-4">

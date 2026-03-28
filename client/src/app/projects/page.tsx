@@ -14,6 +14,7 @@ import { RiskRegister } from "@/components/projects/risk-register";
 import { SprintBoard } from "@/components/projects/sprint-board";
 import { ProjectTemplates } from "@/components/projects/project-templates";
 import { FolderKanban } from "lucide-react";
+import { usePageTitle } from '@/hooks/use-page-title';
 
 type ProjectTab =
   | "gantt" | "milestones" | "time" | "resources" | "spreadsheet"
@@ -33,6 +34,7 @@ const TABS: { id: ProjectTab; label: string }[] = [
 ];
 
 export default function ProjectsPage() {
+  usePageTitle('Projets');
   const [activeTab, setActiveTab] = useState<ProjectTab>("gantt");
 
   return (

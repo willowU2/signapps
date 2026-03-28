@@ -186,7 +186,7 @@ export default function DesignLayersPanel({ fabricCanvasRef }: DesignLayersPanel
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDelete(obj.id); }}
                         className="p-0.5 rounded hover:bg-destructive/10"
-                        title="Delete"
+                        title="Supprimer"
                       >
                         <Trash2 className="h-3 w-3 text-destructive" />
                       </button>

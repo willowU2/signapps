@@ -12,6 +12,7 @@ import {
 import { storageStatsApi } from '@/lib/api/storage';
 import { getClient, ServiceName } from '@/lib/api/factory';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface FileTypeEntry {
   type: string;
@@ -29,6 +30,7 @@ function fmtBytes(b: number) {
 }
 
 export default function FileTypesPage() {
+  usePageTitle('Types de fichiers');
   const [types, setTypes] = useState<FileTypeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalFiles, setTotalFiles] = useState(0);

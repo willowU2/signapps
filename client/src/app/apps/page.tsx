@@ -18,6 +18,7 @@ import { AppDetailDialog } from '@/components/apps/app-detail-dialog';
 import { SourceManager } from '@/components/apps/source-manager';
 import { CustomAppDialog } from '@/components/apps/custom-app-dialog';
 import { Plus } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const PAGE_SIZE = 24;
 
@@ -30,6 +31,7 @@ interface InstalledContainer {
 }
 
 export default function AppsPage() {
+  usePageTitle('Applications');
   const [apps, setApps] = useState<StoreApp[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

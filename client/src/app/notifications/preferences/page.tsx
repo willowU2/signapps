@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { NotificationGranularPrefs } from "@/components/notifications/notification-granular-prefs";
 import { NotificationDndSchedule } from "@/components/notifications/notification-dnd-schedule";
 import { NotificationSounds } from "@/components/notifications/notification-sounds";
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Known services ───────────────────────────────────────────────────────────
 
@@ -116,6 +117,7 @@ function PrefsRow({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function NotificationPreferencesPage() {
+  usePageTitle('Preferences notifications');
   const [prefs, setPrefs] = useState<NotificationPreferences>(DEFAULT_PREFS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

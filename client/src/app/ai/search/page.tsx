@@ -1,8 +1,10 @@
 'use client';
 
 import { MultimodalSearch } from '@/components/ai/multimodal-search';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function AiSearchPage() {
+  usePageTitle('Recherche IA');
   return (
     <div className="w-full py-6 space-y-6">
       {/* Header */}

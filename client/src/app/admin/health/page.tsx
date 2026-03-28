@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, CheckCircle2, XCircle, Activity } from 'lucide-react';
 import { ServiceName } from '@/lib/api/factory';
 import { HealthThresholdsPanel } from '@/components/admin/health-thresholds-panel';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Service registry ─────────────────────────────────────────────────────────
 
@@ -135,6 +136,7 @@ function ServiceCard({ result }: { result: ServiceHealthResult }) {
 const REFRESH_INTERVAL_MS = 30_000;
 
 export default function HealthPage() {
+  usePageTitle('Sante systeme');
   const [results, setResults] = useState<ServiceHealthResult[]>(() =>
     ALL_SERVICES.map((svc) => ({ ...svc, status: 'pending' as HealthStatus }))
   );

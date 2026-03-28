@@ -9,6 +9,7 @@ import { Award, Download, Eye, Calendar, CheckCircle2, Star, Printer } from 'luc
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Certificate {
   id: string;
@@ -56,6 +57,7 @@ function CertificatePreview({ cert }: { cert: Certificate }) {
 }
 
 export default function CertificatesPage() {
+  usePageTitle('Certificats');
   const [preview, setPreview] = useState<Certificate | null>(null);
 
   const handleDownload = (cert: Certificate) => {

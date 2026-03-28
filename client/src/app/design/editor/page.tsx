@@ -7,6 +7,7 @@ import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { useDesignStore } from "@/stores/design-store"
 import { toast } from "sonner"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const DesignEditor = dynamic(
     () => import("@/components/design/design-editor"),
@@ -58,6 +59,7 @@ function DesignEditorContent() {
 }
 
 export default function DesignEditorPage() {
+  usePageTitle('Editeur design');
     return (
         <Suspense fallback={
             <div className="flex items-center justify-center h-screen">

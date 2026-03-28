@@ -40,6 +40,7 @@ import {
   Star,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ============================================================================
 // FAQ Data
@@ -202,6 +203,7 @@ const SERVICES: ServiceInfo[] = [
 // ============================================================================
 
 export default function HelpPage() {
+  usePageTitle('Aide');
   const [searchQuery, setSearchQuery] = useState('');
   const [openFaqItems, setOpenFaqItems] = useState<Set<number>>(new Set());
   const [contactForm, setContactForm] = useState({ subject: '', message: '' });

@@ -2,8 +2,10 @@
 
 import { TenantSettingsPage } from "@/lib/tenant";
 import { AdminOnly } from "@/lib/permissions";
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function AdminTenantPage() {
+  usePageTitle('Tenant');
   return (
     <AdminOnly fallback={
       <div className="container py-6">

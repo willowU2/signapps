@@ -41,6 +41,7 @@ import {
   useToggleAlertConfig,
   useDeleteAlertConfig,
 } from '@/hooks/use-monitoring';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -585,6 +586,7 @@ function AlertsTab() {
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function MetricsPage() {
+  usePageTitle('Metriques');
   return (
     <AppLayout>
       <div className="space-y-6">

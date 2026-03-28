@@ -36,6 +36,7 @@ import {
 import { calendarApi } from "@/lib/api/calendar"
 import { EntityLinks } from "@/components/crosslinks/EntityLinks"
 import { toast } from "sonner"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const resourceTypeOptions: { value: ResourceTypeCategory; label: string; icon: string }[] = [
     { value: "room", label: "Salle", icon: "🚪" },
@@ -45,6 +46,7 @@ const resourceTypeOptions: { value: ResourceTypeCategory; label: string; icon: s
 ]
 
 export default function ResourcesPublicPage() {
+  usePageTitle('Ressources');
     const {
         createReservation,
     } = useResourcesStore()

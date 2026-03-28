@@ -25,8 +25,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function RemoteAccessDashboard() {
+  usePageTitle('Acces distant');
     const [connections, setConnections] = useState<RemoteConnection[]>([])
     const [loading, setLoading] = useState(true)
     const [createDialogOpen, setCreateDialogOpen] = useState(false)

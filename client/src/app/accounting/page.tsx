@@ -16,6 +16,7 @@ import { BudgetForecast } from "@/components/accounting/budget-forecast";
 import { CashFlowDashboard } from "@/components/accounting/cash-flow-dashboard";
 import { VatDeclaration } from "@/components/accounting/vat-declaration";
 import { CsvFecImport } from "@/components/accounting/csv-fec-import";
+import { usePageTitle } from '@/hooks/use-page-title';
 
 const TABS = [
   { id: "chart-of-accounts", label: "Plan comptable", icon: BookOpen, desc: "Arbre CRUD comptes" },
@@ -33,6 +34,7 @@ const TABS = [
 type TabId = typeof TABS[number]["id"];
 
 export default function AccountingPage() {
+  usePageTitle('Comptabilite');
   const [activeTab, setActiveTab] = useState<TabId>("chart-of-accounts");
 
   const renderContent = () => {

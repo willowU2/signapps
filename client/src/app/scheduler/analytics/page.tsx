@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Clock, CheckCircle2, XCircle, Activity } from 'lucide-react';
 import { getClient, ServiceName } from '@/lib/api/factory';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface JobStats {
   total: number;
@@ -15,6 +16,7 @@ interface JobStats {
 }
 
 export default function JobVelocityPage() {
+  usePageTitle('Analytique planificateur');
   const [stats, setStats] = useState<JobStats>({ total: 0, completed: 0, failed: 0, avg_duration_ms: 0, daily: [] });
 
   useEffect(() => {

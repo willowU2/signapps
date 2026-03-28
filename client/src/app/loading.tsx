@@ -1,6 +1,3 @@
-import { SpinnerInfinity } from 'spinners-react';
-
-
 export default function Loading() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -9,7 +6,11 @@ export default function Loading() {
           <span className="text-3xl font-bold text-primary-foreground">S</span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
-          <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-5 w-5 " />
+          <div
+            className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent"
+            role="status"
+            aria-label="Chargement"
+          />
           <span>Chargement...</span>
         </div>
       </div>

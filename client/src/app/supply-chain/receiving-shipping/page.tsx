@@ -15,6 +15,7 @@ import { ArrowDownToLine, ArrowUpFromLine, Plus, Package, CheckCircle, Clock, Tr
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 type LogType = 'receiving' | 'shipping';
 type LogStatus = 'pending' | 'in-progress' | 'completed' | 'issue';
@@ -52,6 +53,7 @@ const statusConfig: Record<LogStatus, { label: string; color: string; icon: Reac
 };
 
 export default function ReceivingShippingPage() {
+  usePageTitle('Reception et expedition');
   const [logs, setLogs] = useState<GoodsLog[]>(LOGS);
   const [activeTab, setActiveTab] = useState<'all' | LogType>('all');
   const [open, setOpen] = useState(false);

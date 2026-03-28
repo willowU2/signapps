@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Database, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getClient, ServiceName } from '@/lib/api/factory';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Migration {
   version: string;
@@ -37,6 +38,7 @@ const STATUS_CONFIG = {
 };
 
 export default function MigrationStatusPage() {
+  usePageTitle('Migrations');
   const [data, setData] = useState<ServiceMigrations[]>([]);
   const [loading, setLoading] = useState(true);
 

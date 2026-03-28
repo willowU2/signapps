@@ -23,8 +23,10 @@ import {
 import { Trash2, RotateCcw, Search, File, FileText, FileImage, FileArchive, Folder, Clock, HardDrive, AlertTriangle } from 'lucide-react';
 import { trashApi, TrashItem, TrashStats } from '@/lib/api';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function TrashPage() {
+  usePageTitle('Corbeille');
   const [items, setItems] = useState<TrashItem[]>([]);
   const [stats, setStats] = useState<TrashStats | null>(null);
   const [loading, setLoading] = useState(true);

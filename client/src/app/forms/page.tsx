@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
     FileText, Plus, Edit, Trash, Eye, Globe, Link as LinkIcon, Send, FileX, BarChart3, Calendar
 } from "lucide-react"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface Form {
     id: string
@@ -51,6 +52,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export default function FormsPage() {
+  usePageTitle('Formulaires');
     const router = useRouter()
     const queryClient = useQueryClient()
     const [responses] = useState<FormResponse[]>([])

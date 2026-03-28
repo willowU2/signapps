@@ -115,10 +115,10 @@ export function CookieBannerConfig() {
         </h2>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setPreviewOpen(p => !p)}>
-            <Eye className="h-3.5 w-3.5 mr-1" /> Preview
+            <Eye className="h-3.5 w-3.5 mr-1" /> Aperçu
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving}>
-            <Save className="h-3.5 w-3.5 mr-1" /> {saving ? "Saving…" : "Save"}
+            <Save className="h-3.5 w-3.5 mr-1" /> {saving ? "Enregistrement…" : "Enregistrer"}
           </Button>
         </div>
       </div>

@@ -15,6 +15,7 @@ import { FileText, Plus, Trash2, CheckCircle, XCircle, Clock, Send, Eye } from '
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface POItem { id: string; description: string; quantity: number; unitPrice: number; }
 interface PO {
@@ -39,6 +40,7 @@ const statusConfig = {
 const nextPONumber = (pos: PO[]) => `PO-2026-0${(43 + pos.filter(p => !['PO-2026-041', 'PO-2026-042', 'PO-2026-040'].includes(p.number)).length).toString().padStart(2, '0')}`;
 
 export default function PurchaseOrdersPage() {
+  usePageTitle('Bons de commande');
   const [pos, setPos] = useState<PO[]>(INITIAL_POS);
   const [open, setOpen] = useState(false);
   const [viewing, setViewing] = useState<PO | null>(null);

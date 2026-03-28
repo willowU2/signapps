@@ -3,8 +3,10 @@
 import { AppLayout } from '@/components/layout/app-layout';
 import { ReportBuilder } from '@/components/reports/ReportBuilder';
 import { BarChart2 } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function ReportsPage() {
+  usePageTitle('Rapports');
   return (
     <AppLayout>
       <div className="w-full py-6 space-y-6">

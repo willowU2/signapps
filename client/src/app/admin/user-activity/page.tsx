@@ -3,8 +3,10 @@
 import { AppLayout } from '@/components/layout/app-layout';
 import { UserActivity } from '@/components/admin/user-activity';
 import { Users } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function UserActivityPage() {
+  usePageTitle('Activite utilisateurs');
   return (
     <AppLayout>
       <div className="space-y-6 p-6">

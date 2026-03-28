@@ -30,6 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Template types ─────────────────────────────────────────────────────────
 
@@ -285,6 +286,7 @@ function HtmlPreview({ html }: { html: string }) {
 // ─── Main Page ──────────────────────────────────────────────────────────────
 
 export default function EmailTemplatesPage() {
+  usePageTitle('Modeles email');
   const [templates, setTemplates] = useState<EmailTemplate[]>(DEFAULT_TEMPLATES);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);

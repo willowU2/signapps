@@ -34,6 +34,7 @@ import { AssetCategories } from "@/components/it-assets/asset-categories"
 import { AssetIncidentTickets } from "@/components/it-assets/asset-incident-ticket"
 import { AssetNbvReport } from "@/components/it-assets/asset-nbv-report"
 import Link from "next/link"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -94,6 +95,7 @@ function AssetDetailPanel({ asset }: { asset: HardwareAsset }) {
 // ─── Page Component ───────────────────────────────────────────────────────────
 
 export default function ITAssetsPage() {
+  usePageTitle('Parc informatique');
   const queryClient = useQueryClient()
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -314,13 +316,13 @@ export default function ITAssetsPage() {
                             <TableCell className="text-sm">{asset.assigned_user_id ?? <span className="text-muted-foreground">Unassigned</span>}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" title="QR Label" onClick={() => setQrAsset(asset)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" title="Étiquette QR" onClick={() => setQrAsset(asset)}>
                                   <QrCode className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" title="Edit" onClick={() => openEdit(asset)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" title="Modifier" onClick={() => openEdit(asset)}>
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" title="Delete" onClick={() => setDeleteAsset(asset)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" title="Supprimer" onClick={() => setDeleteAsset(asset)}>
                                   <Trash className="h-4 w-4" />
                                 </Button>
                               </div>

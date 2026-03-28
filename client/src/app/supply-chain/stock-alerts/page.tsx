@@ -14,6 +14,7 @@ import { AlertTriangle, TrendingDown, TrendingUp, Bell, BellOff, Plus, Settings,
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface AlertRule {
   id: string;
@@ -70,6 +71,7 @@ const alertTypeConfig = {
 };
 
 export default function StockAlertsPage() {
+  usePageTitle('Alertes stock');
   const [rules, setRules] = useState<AlertRule[]>(RULES);
   const [alerts, setAlerts] = useState<StockAlert[]>(ACTIVE_ALERTS);
   const [open, setOpen] = useState(false);

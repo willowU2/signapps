@@ -14,8 +14,10 @@ import { DigitalStampConfig } from "@/components/documents/digital-stamp"
 import { DocNumberingSchemes } from "@/components/documents/doc-numbering"
 import { DocExpiryAlerts } from "@/components/documents/doc-expiry-alerts"
 import { toast } from "sonner"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function DocumentAutomationPage() {
+  usePageTitle('Automatisation documents');
   return (
     <AppLayout>
       <div className="w-full space-y-6 p-6">

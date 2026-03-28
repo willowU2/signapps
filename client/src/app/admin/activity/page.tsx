@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Users, Search, Download, Activity, Clock, FileText, Mail, Calendar } from 'lucide-react';
 import { getClient, ServiceName } from '@/lib/api/factory';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface UserActivity {
   user_id: string;
@@ -26,6 +27,7 @@ const MODULE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function UserActivityPage() {
+  usePageTitle('Activite');
   const [users, setUsers] = useState<UserActivity[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);

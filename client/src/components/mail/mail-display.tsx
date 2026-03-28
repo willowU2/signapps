@@ -209,7 +209,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
             <div className="sticky top-0 z-20 shadow-sm border-b border-gray-200 dark:border-[#5f6368]">
                 <Toolbar className="border-b-0 bg-background/50 backdrop-blur-md">
                     <ToolbarGroup>
-                        <ToolbarButton disabled={!mail} title="Archive" onClick={() => mail && onArchive?.(mail.id)}>
+                        <ToolbarButton disabled={!mail} title="Archiver" onClick={() => mail && onArchive?.(mail.id)}>
                             <Archive className="h-4 w-4" />
                         </ToolbarButton>
                         <ToolbarButton disabled={!mail} title="Move to junk">

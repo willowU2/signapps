@@ -211,7 +211,7 @@ export function Header() {
           size="icon"
           className="hidden md:inline-flex rounded-full text-muted-foreground"
           onClick={() => router.push('/settings')}
-          title="Settings"
+          title="Paramètres"
         >
           <Settings className="h-5 w-5" />
         </Button>

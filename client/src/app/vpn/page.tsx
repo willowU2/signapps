@@ -68,6 +68,7 @@ import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { VpnDashboardTab } from '@/components/vpn/vpn-dashboard-tab';
 import { VpnDnsTab } from '@/components/vpn/vpn-dns-tab';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // Utility function to format bytes
 function formatBytes(bytes: number): string {
@@ -84,6 +85,7 @@ function formatNumber(num: number): string {
 }
 
 export default function VpnPage() {
+  usePageTitle('VPN');
   // Dashboard state
   const [dashboardStats, setDashboardStats] = useState<TunnelDashboardStats | null>(null);
   const [trafficData, setTrafficData] = useState<TrafficDataPoint[]>([]);

@@ -15,8 +15,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function GroupsPage() {
+  usePageTitle('Groupes');
   const { data: groups, isLoading, error } = useGroupList();
   
   const [sheetOpen, setSheetOpen] = useState(false);

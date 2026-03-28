@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RefreshCw, Activity, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 interface ApiQuotaEntry {
   user_id: string;
@@ -33,6 +34,7 @@ function usageBadgeClass(pct: number): string {
 }
 
 export default function ApiQuotaDashboardPage() {
+  usePageTitle('Quotas API');
   const [entries, setEntries] = useState<ApiQuotaEntry[]>([]);
   const [loading, setLoading] = useState(true);
 

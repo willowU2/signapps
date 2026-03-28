@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Monitor, Plus, Trash2, MoveUp, MoveDown, Play, Pause, Eye, Image, Type, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 type SlideType = 'text' | 'announcement' | 'image' | 'metrics';
 
@@ -37,6 +38,7 @@ const INITIAL_SLIDES: Slide[] = [
 ];
 
 export default function DigitalSignagePage() {
+  usePageTitle('Affichage dynamique');
   const [slides, setSlides] = useState<Slide[]>(INITIAL_SLIDES);
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<Slide | null>(null);

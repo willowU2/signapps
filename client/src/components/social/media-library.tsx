@@ -425,7 +425,7 @@ export function MediaLibrary() {
                             e.stopPropagation();
                             handleDelete(item.id);
                           }}
-                          title="Delete"
+                          title="Supprimer"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

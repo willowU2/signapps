@@ -6,8 +6,10 @@ import { AnnouncementBoard } from '@/components/announcements/announcement-board
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Megaphone, Bell } from 'lucide-react';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function AnnouncementsPage() {
+  usePageTitle('Annonces');
   return (
     <AppLayout>
       <div className="space-y-6">

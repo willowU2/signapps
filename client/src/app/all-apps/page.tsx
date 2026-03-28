@@ -11,6 +11,7 @@ import { APP_REGISTRY, APP_CATEGORIES, AppEntry } from '@/lib/app-registry';
 import { cn } from '@/lib/utils';
 import * as LucideIcons from 'lucide-react';
 import SpotlightCard from '@/components/ui/spotlight-card';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 function DynIcon({ name, className }: { name: string; className?: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,6 +50,7 @@ function LocalAppCard({ app }: { app: AppEntry }) {
 }
 
 export default function AllAppsPage() {
+  usePageTitle('Toutes les applications');
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
 

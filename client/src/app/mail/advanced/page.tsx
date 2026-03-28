@@ -14,8 +14,10 @@ import { AiCategorizerPanel } from "@/components/mail/ai-categorizer"
 import { CrmTemplateVariables } from "@/components/mail/crm-template-variables"
 import { UndoSendSettings } from "@/components/mail/undo-send"
 import { toast } from "sonner"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function MailAdvancedPage() {
+  usePageTitle('Mail avance');
   const [undoEnabled, setUndoEnabled] = useState(true)
   const [undoDelay, setUndoDelay] = useState(30)
   const [crmBody, setCrmBody] = useState("")

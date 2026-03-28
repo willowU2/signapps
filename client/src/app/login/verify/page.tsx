@@ -11,8 +11,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldCheck, ArrowLeft } from 'lucide-react';
 import { parseApiError } from '@/lib/errors';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function VerifyPage() {
+  usePageTitle('Verification');
   const router = useRouter();
   const { mfaSessionToken, setUser, setMfaSessionToken, redirectAfterLogin } = useAuthStore();
   const [code, setCode] = useState(['', '', '', '', '', '']);

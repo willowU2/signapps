@@ -17,8 +17,10 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { usePageTitle } from '@/hooks/use-page-title';
 
 export default function AdminFloorPlans() {
+  usePageTitle('Plans');
     const { data: floorPlans = [], isLoading } = useFloorPlans()
     const deletePlan = useDeleteFloorPlan()
     const router = useRouter()

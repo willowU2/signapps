@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Search, ChevronDown, ChevronRight, Copy, Check, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePageTitle } from '@/hooks/use-page-title';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -218,6 +219,7 @@ const METHOD_COLORS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export default function ApiDocsPage() {
+  usePageTitle('Documentation API');
   const [search, setSearch] = useState('');
   const [expandedServices, setExpandedServices] = useState<Set<string>>(
     new Set(API_SERVICES.map((s) => s.name)),
