@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { driveApi, DriveNode } from '@/lib/api';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
 import { useEntityStore } from '@/stores/entity-hub-store';
-import { FileText, Plus, MoreVertical, Search, Pencil, Trash2, BookTemplate, User } from 'lucide-react';
+import { FileText, Plus, MoreVertical, Search, Pencil, Trash2, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';

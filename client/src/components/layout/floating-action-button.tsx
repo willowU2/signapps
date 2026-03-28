@@ -3,12 +3,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Plus, X, FileText, Mail, CheckSquare, Search,
+  Plus, X, FileText, Mail, CheckSquare, Search, StickyNote,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCommandBarStore } from '@/stores/command-bar-store';
 import { logActivity } from '@/hooks/use-activity-tracker';
 import { QuickComposeDialog } from '@/components/mail/quick-compose-dialog';
+import { QuickNoteDialog } from '@/components/keep/quick-note-dialog';
 
 interface FabAction {
   label: string;
@@ -19,6 +20,12 @@ interface FabAction {
 }
 
 const ACTIONS: FabAction[] = [
+  {
+    label: 'Note rapide',
+    icon: StickyNote,
+    action: 'openQuickNote',
+    color: 'bg-yellow-500 hover:bg-yellow-600',
+  },
   {
     label: 'Nouveau document',
     icon: FileText,
@@ -48,6 +55,7 @@ const ACTIONS: FabAction[] = [
 export function FloatingActionButton() {
   const [expanded, setExpanded] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [quickNoteOpen, setQuickNoteOpen] = useState(false);
   const router = useRouter();
   const { setOpen: openCommandBar } = useCommandBarStore();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,6 +89,9 @@ export function FloatingActionButton() {
     } else if (action.action === 'openCompose') {
       logActivity('created', action.label, 'Via quick action');
       setComposeOpen(true);
+    } else if (action.action === 'openQuickNote') {
+      logActivity('created', action.label, 'Via quick action');
+      setQuickNoteOpen(true);
     } else if (action.href) {
       logActivity('created', action.label, 'Via quick action');
       router.push(action.href);
@@ -147,6 +158,9 @@ export function FloatingActionButton() {
 
       {/* Quick compose dialog - rendered outside the FAB container */}
       <QuickComposeDialog open={composeOpen} onOpenChange={setComposeOpen} />
+
+      {/* Quick note dialog */}
+      <QuickNoteDialog open={quickNoteOpen} onOpenChange={setQuickNoteOpen} />
     </>
   );
 }

@@ -54,7 +54,8 @@ export const APP_REGISTRY: AppEntry[] = [
   { id: 'users',       href: '/users',      icon: 'Users',       label: 'Users',       description: 'Gestion des utilisateurs',           category: 'Administration',  color: 'text-orange-500' },
   { id: 'settings',    href: '/settings',   icon: 'Settings',    label: 'Settings',    description: 'Configuration de l\'instance',       category: 'Administration',  color: 'text-slate-500' },
   { id: 'backups',     href: '/backups',    icon: 'Archive',     label: 'Backups',     description: 'Sauvegardes automatiques',           category: 'Administration',  color: 'text-slate-400' },
-  { id: 'scheduler',   href: '/scheduler',  icon: 'Clock',       label: 'Scheduler',   description: 'Tâches planifiées et cron jobs',     category: 'Administration',  color: 'text-amber-500' },
+  { id: 'scheduler',   href: '/scheduler',  icon: 'Clock',       label: 'Scheduler',   description: 'T\u00e2ches planifi\u00e9es et cron jobs',     category: 'Administration',  color: 'text-amber-500' },
+  { id: 'workflows',   href: '/admin/workflows', icon: 'Zap',    label: 'Workflows',   description: 'R\u00e8gles d\'automatisation',        category: 'Administration',  color: 'text-amber-400' },
 
   // Avancé
   { id: 'office',      href: '/office',     icon: 'FileBox',     label: 'Office',      description: 'Conversion de documents Office',     category: 'Avancé',          color: 'text-blue-600' },
