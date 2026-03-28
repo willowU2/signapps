@@ -1,6 +1,8 @@
 import { ReactNode } from "react"
 import { useUIStore } from "@/lib/store"
 import { cn } from "@/lib/utils"
+import { Sidebar } from "./sidebar"
+import { AiChatBar } from "./ai-chat-bar"
 
 interface WorkspaceShellProps {
     /** The top horizontal header area */
@@ -28,10 +30,12 @@ export function WorkspaceShell({
         // AQ-MOBI: no left padding on mobile (sidebar is hidden), lg+ uses sidebar width
         <div className={cn(
             "h-screen w-full flex flex-col overflow-hidden transition-all duration-300",
-            sidebarCollapsed ? 'md:pl-16' : 'md:pl-60',
+            sidebarCollapsed ? 'md:pl-16' : 'md:pl-64',
             rightSidebarOpen ? 'md:pr-[24rem]' : 'md:pr-16',
             className
         )}>
+            <Sidebar />
+            
             {/* Global Workspace Header Area */}
             {header}
 
@@ -46,6 +50,8 @@ export function WorkspaceShell({
 
                 {rightRail}
             </div>
+
+            <AiChatBar />
         </div>
     )
 }
