@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import { EditorLayout } from '@/components/layout/editor-layout';
@@ -10,6 +10,7 @@ import { EntityLinks } from '@/components/crosslinks/EntityLinks';
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { trackDocVisit } from '@/components/ui/quick-switcher';
 
 function EditorSkeleton() {
     return (
@@ -46,6 +47,13 @@ function EditorContent() {
     usePageTitle(name || 'Document sans titre');
     const { user } = useAuthStore();
     const userName = user ? user.display_name || user.username || user.email : undefined;
+
+    // Track recent file visit
+    useEffect(() => {
+        if (id && id !== 'new') {
+            trackDocVisit({ id, name: name || 'Document sans titre', kind: 'text', href: `/docs/editor?id=${id}&name=${encodeURIComponent(name)}` });
+        }
+    }, [id, name]);
 
     return (
         <EditorLayout documentId={id} documentName={name || 'Sans titre'} icon={<FileText className="w-5 h-5 text-blue-600" />}>

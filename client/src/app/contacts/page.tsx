@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown, Upload, GitMerge, Gift, Settings2, MapPin, Clock, Building2, History, Tag, X, FileDown, Mail } from "lucide-react"
+import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown, Upload, GitMerge, Gift, Settings2, MapPin, Clock, Building2, History, Tag, X, FileDown, Mail, Printer } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
@@ -332,6 +332,36 @@ export default function ContactsPage() {
     setSelectedIds(new Set())
   }
 
+  // ── Print handler ──────────────────────────────────────────────────────────
+  const handlePrintContacts = useCallback(() => {
+    const header = `<div class="print-header"><h1>SignApps Platform — Contacts</h1><p>${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p></div>`
+    const rows = sortedFiltered.map(c =>
+      `<tr><td>${c.name}</td><td>${c.email}</td><td>${c.phone ?? '—'}</td><td>${c.company ?? '—'}</td></tr>`
+    ).join('')
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Contacts — SignApps</title>
+<style>
+@media print { @page { margin: 1.5cm; size: A4 portrait; } body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
+body { font-family: Arial, sans-serif; color: #1f1f1f; background: #fff; margin: 0; padding: 20px; }
+.print-header { text-align: center; margin-bottom: 1cm; padding-bottom: 0.5cm; border-bottom: 2px solid #1a73e8; }
+.print-header h1 { font-size: 18pt; color: #1a73e8; margin: 0 0 4px; }
+.print-header p { font-size: 10pt; color: #666; margin: 0; }
+table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+th { background: #f5f5f5; font-size: 11px; font-weight: 700; text-align: left; padding: 8px 10px; border-bottom: 2px solid #ddd; }
+td { font-size: 11px; padding: 6px 10px; border-bottom: 1px solid #eee; }
+tr:nth-child(even) { background: #fafafa; }
+.footer { margin-top: 24px; font-size: 9px; color: #999; border-top: 1px solid #e0e0e0; padding-top: 8px; }
+</style></head><body>
+${header}
+<table><thead><tr><th>Nom</th><th>Email</th><th>Telephone</th><th>Entreprise</th></tr></thead><tbody>${rows}</tbody></table>
+<div class="footer">Genere le ${new Date().toLocaleDateString('fr-FR')} a ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} — SignApps Contacts (${sortedFiltered.length} contacts)</div>
+</body></html>`
+    const win = window.open('', '_blank', 'width=800,height=600')
+    if (!win) { toast.error('Veuillez autoriser les popups pour imprimer.'); return }
+    win.document.write(html)
+    win.document.close()
+    win.onload = () => { win.focus(); win.print() }
+  }, [sortedFiltered])
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   if (isLoading) {
@@ -410,6 +440,10 @@ export default function ContactsPage() {
                 group: 'Groupe',
               }}
             />
+            <Button variant="outline" onClick={handlePrintContacts} className="no-print">
+              <Printer className="h-4 w-4 mr-2" />
+              Imprimer
+            </Button>
             <Button variant="outline" onClick={handleExportVcf}>
               <Download className="h-4 w-4 mr-2" />
               Export VCF

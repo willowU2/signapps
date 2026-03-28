@@ -24,6 +24,9 @@ import { PushSubscriptionManager } from '@/components/notifications/push-subscri
 import { NotificationPreferencesForm } from '@/components/notifications/notification-preferences-form';
 import { NotificationHistory } from '@/components/notifications/notification-history';
 import { SendNotificationAdmin } from '@/components/notifications/send-notification-admin';
+import { NotificationGranularPrefs } from '@/components/notifications/notification-granular-prefs';
+import { NotificationSounds } from '@/components/notifications/notification-sounds';
+import { NotificationDndSchedule } from '@/components/notifications/notification-dnd-schedule';
 
 interface NotificationPreferences {
   id: string;
@@ -347,6 +350,8 @@ export default function NotificationSettingsPage() {
         {/* PREFERENCES TAB */}
         <TabsContent value="preferences" className="space-y-6">
           <NotificationPreferencesForm />
+          <NotificationGranularPrefs />
+          <NotificationSounds />
         </TabsContent>
 
         {/* HISTORY TAB */}
@@ -362,11 +367,11 @@ export default function NotificationSettingsPage() {
         </TabsContent>
 
         {/* QUIET HOURS TAB */}
-        <TabsContent value="quiet">
+        <TabsContent value="quiet" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Quiet Hours</CardTitle>
-              <CardDescription>Don't receive notifications during these hours</CardDescription>
+              <CardDescription>Don&apos;t receive notifications during these hours</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
@@ -412,6 +417,7 @@ export default function NotificationSettingsPage() {
               )}
             </CardContent>
           </Card>
+          <NotificationDndSchedule />
         </TabsContent>
       </Tabs>
 

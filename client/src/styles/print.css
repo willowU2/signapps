@@ -1,14 +1,22 @@
 @media print {
-  /* Hide non-content elements */
+  /* ──────────── Global: Hide non-content elements ──────────── */
   nav, .sidebar, header, footer,
-  button, .toast, .dialog-overlay,
+  .toast, .dialog-overlay,
   .mobile-bottom-nav, .feedback-widget,
   .command-palette, .omni-search,
-  [data-no-print] { display: none !important; }
+  [data-no-print],
+  .no-print { display: none !important; }
 
-  /* Reset layout */
+  /* Keep print buttons hidden but don't hide ALL buttons */
+  button.no-print,
+  [data-no-print] button { display: none !important; }
+
+  /* Reset layout — remove sidebar offsets */
   body { font-size: 12pt; color: black !important; background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   main { margin: 0 !important; padding: 1cm !important; width: 100% !important; max-width: none !important; }
+
+  /* Remove parent flex offsets from AppLayout sidebar padding */
+  .flex.h-screen { padding-left: 0 !important; padding-right: 0 !important; }
 
   /* Remove shadows and borders for cleaner print */
   .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl,
@@ -20,7 +28,7 @@
   a[href^="#"]::after, a[href^="javascript"]::after { content: ""; }
 
   /* Tables */
-  table { border-collapse: collapse; }
+  table { border-collapse: collapse; width: 100%; }
   th, td { border: 1px solid #ddd !important; padding: 6px 8px; }
   thead { display: table-header-group; }
 
@@ -30,6 +38,37 @@
   .page-break { page-break-before: always; }
 
   /* Cards in print */
-  .rounded-xl, .rounded-lg { border-radius: 0 !important; }
+  .rounded-xl, .rounded-lg, .rounded-2xl { border-radius: 0 !important; }
   .bg-card { background: white !important; border: 1px solid #eee !important; }
+
+  /* ──────────── Print header (injected by print buttons) ──────────── */
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 1cm;
+    padding-bottom: 0.5cm;
+    border-bottom: 2px solid #1a73e8;
+  }
+  .print-header h1 { font-size: 18pt; color: #1a73e8; margin: 0 0 4px; }
+  .print-header p { font-size: 10pt; color: #666; margin: 0; }
+
+  /* ──────────── Dashboard print ──────────── */
+  .dashboard-print-content .grid { display: block !important; }
+  .dashboard-print-content .grid > * { margin-bottom: 1em; page-break-inside: avoid; }
+
+  /* ──────────── Contacts print ──────────── */
+  .contacts-print-table {
+    width: 100%;
+    font-size: 10pt;
+  }
+  .contacts-print-table th {
+    background: #f0f0f0 !important;
+    font-weight: 700;
+    text-align: left;
+  }
+  /* Hide action columns and checkboxes in contacts print */
+  .contacts-print-hide { display: none !important; }
+
+  /* ──────────── Calendar print ──────────── */
+  @page { size: A4 portrait; margin: 1.5cm; }
 }

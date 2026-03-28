@@ -32,12 +32,20 @@ import { useSearchParams } from "next/navigation"
 import { usePageTitle } from "@/hooks/use-page-title"
 import { fetchAndParseDocument } from "@/lib/file-parsers"
 import { toast } from "sonner"
+import { trackDocVisit } from "@/components/ui/quick-switcher"
 
 function SlidesEditorContent() {
     const searchParams = useSearchParams()
     const id = searchParams.get('id') || 'new-presentation'
     const name = searchParams.get('name') || ''
     usePageTitle(name || 'Présentation sans titre')
+
+    // Track recent file visit
+    useEffect(() => {
+        if (id && id !== 'new-presentation') {
+            trackDocVisit({ id, name: name || 'Présentation sans titre', kind: 'slide', href: `/slides/editor?id=${id}&name=${encodeURIComponent(name)}` });
+        }
+    }, [id, name]);
 
     const [initialData, setInitialData] = useState<any>(undefined)
     const [loading, setLoading] = useState(id !== 'new-presentation' && name !== '')

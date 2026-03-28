@@ -7,7 +7,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { RefreshCw, Pencil, Plus, RotateCcw, SlidersHorizontal, Search, ChevronDown, ChevronUp, Pin, FileText, Mail, CalendarDays } from 'lucide-react';
+import { RefreshCw, Pencil, Plus, RotateCcw, SlidersHorizontal, Search, ChevronDown, ChevronUp, Pin, FileText, Mail, CalendarDays, Printer } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { logActivity } from '@/hooks/use-activity-tracker';
 import { useDashboardData } from '@/hooks/use-dashboard';
@@ -111,6 +111,22 @@ export default function DashboardPage() {
   const [showApps, setShowApps] = useState(true);
   const [search, setSearch] = useState('');
 
+  const handlePrint = () => {
+    // Inject print header for dashboard
+    const header = document.createElement('div');
+    header.className = 'print-header';
+    header.id = 'dashboard-print-header';
+    header.innerHTML = `<h1>SignApps Platform — Tableau de bord</h1><p>${new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>`;
+    header.style.display = 'none';
+    const main = document.getElementById('main-content');
+    if (main) main.prepend(header);
+    window.print();
+    // Cleanup after print
+    setTimeout(() => {
+      document.getElementById('dashboard-print-header')?.remove();
+    }, 500);
+  };
+
   const handleDragStart = (e: React.DragEvent, app: AppEntry) => {
     e.dataTransfer.setData('application/json', JSON.stringify({
       href: app.href, icon: app.icon, label: app.label, color: app.color,
@@ -174,6 +190,9 @@ export default function DashboardPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => { setEditMode(true); setAddWidgetOpen(true); }}>
               <SlidersHorizontal className="mr-2 h-4 w-4" /> Personnaliser
+            </Button>
+            <Button variant="outline" size="sm" onClick={handlePrint} className="no-print">
+              <Printer className="mr-2 h-4 w-4" /> Imprimer
             </Button>
           </div>
         </header>

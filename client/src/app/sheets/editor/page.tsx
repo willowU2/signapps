@@ -35,12 +35,20 @@ import { usePageTitle } from "@/hooks/use-page-title"
 import { fetchAndParseDocument } from "@/lib/file-parsers"
 import type { SpreadsheetParseResult } from "@/lib/file-parsers"
 import { toast } from "sonner"
+import { trackDocVisit } from "@/components/ui/quick-switcher"
 
 function SheetsContent() {
     const searchParams = useSearchParams()
     const id = searchParams.get('id') || 'new-spreadsheet'
     const name = searchParams.get('name') || ''
     usePageTitle(name || 'Classeur sans titre')
+
+    // Track recent file visit
+    useEffect(() => {
+        if (id && id !== 'new-spreadsheet') {
+            trackDocVisit({ id, name: name || 'Classeur sans titre', kind: 'sheet', href: `/sheets/editor?id=${id}&name=${encodeURIComponent(name)}` });
+        }
+    }, [id, name]);
 
     const [initialData, setInitialData] = useState<any>(undefined)
     const [initialColWidths, setInitialColWidths] = useState<Record<number, number> | undefined>(undefined)
