@@ -197,7 +197,7 @@ export default function AdminSettingsPage() {
   const [integrations, setIntegrations] = useState<IntegrationSettings>(defaultIntegrations);
 
   const handleSave = (section: string) => {
-    toast.success(`${section} sauvegard\u00e9 avec succ\u00e8s`);
+    toast.success(`${section} sauvegardé avec succès`);
   };
 
   const addApiKey = () => {
@@ -254,10 +254,10 @@ export default function AdminSettingsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
           <Settings className="size-8" />
-          Param\u00e8tres de la plateforme
+          Paramètres de la plateforme
         </h1>
         <p className="text-muted-foreground mt-1">
-          Configuration g\u00e9n\u00e9rale, s\u00e9curit\u00e9, messagerie, stockage et int\u00e9grations.
+          Configuration générale, sécurité, messagerie, stockage et intégrations.
         </p>
       </div>
 
@@ -265,11 +265,11 @@ export default function AdminSettingsPage() {
         <TabsList className="w-full justify-start">
           <TabsTrigger value="general" className="gap-2">
             <Globe className="size-4" />
-            G\u00e9n\u00e9ral
+            Général
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-2">
             <Shield className="size-4" />
-            S\u00e9curit\u00e9
+            Sécurité
           </TabsTrigger>
           <TabsTrigger value="email" className="gap-2">
             <Mail className="size-4" />
@@ -281,20 +281,20 @@ export default function AdminSettingsPage() {
           </TabsTrigger>
           <TabsTrigger value="integrations" className="gap-2">
             <Puzzle className="size-4" />
-            Int\u00e9grations
+            Intégrations
           </TabsTrigger>
         </TabsList>
 
-        {/* ── G\u00e9n\u00e9ral ────────────────────────────────────────────── */}
+        {/* ── Général ────────────────────────────────────────────── */}
         <TabsContent value="general">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="size-5" />
-                Param\u00e8tres g\u00e9n\u00e9raux
+                Paramètres généraux
               </CardTitle>
               <CardDescription>
-                Informations de base de la plateforme et pr\u00e9f\u00e9rences r\u00e9gionales.
+                Informations de base de la plateforme et préférences régionales.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -317,7 +317,7 @@ export default function AdminSettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="language">Langue par d\u00e9faut</Label>
+                  <Label htmlFor="language">Langue par défaut</Label>
                   <Select
                     value={general.defaultLanguage}
                     onValueChange={(v) => setGeneral({ ...general, defaultLanguage: v })}
@@ -326,10 +326,10 @@ export default function AdminSettingsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="fr">Fran\u00e7ais</SelectItem>
+                      <SelectItem value="fr">Français</SelectItem>
                       <SelectItem value="en">English</SelectItem>
                       <SelectItem value="de">Deutsch</SelectItem>
-                      <SelectItem value="es">Espa\u00f1ol</SelectItem>
+                      <SelectItem value="es">Español</SelectItem>
                       <SelectItem value="nl">Nederlands</SelectItem>
                     </SelectContent>
                   </Select>
@@ -372,7 +372,7 @@ export default function AdminSettingsPage() {
                 <div className="space-y-0.5">
                   <Label>Mode maintenance</Label>
                   <p className="text-sm text-muted-foreground">
-                    Restreindre l&apos;acc\u00e8s \u00e0 la plateforme aux administrateurs uniquement.
+                    Restreindre l&apos;accès à la plateforme aux administrateurs uniquement.
                   </p>
                 </div>
                 <Switch
@@ -382,7 +382,7 @@ export default function AdminSettingsPage() {
               </div>
 
               <div className="flex justify-end">
-                <Button onClick={() => handleSave('Param\u00e8tres g\u00e9n\u00e9raux')} className="gap-2">
+                <Button onClick={() => handleSave('Paramètres généraux')} className="gap-2">
                   <Save className="size-4" />
                   Sauvegarder
                 </Button>
@@ -391,7 +391,7 @@ export default function AdminSettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* ── S\u00e9curit\u00e9 ──────────────────────────────────────────── */}
+        {/* ── Sécurité ──────────────────────────────────────────── */}
         <TabsContent value="security">
           <div className="space-y-6">
             <Card>
@@ -401,7 +401,7 @@ export default function AdminSettingsPage() {
                   Politique de mot de passe
                 </CardTitle>
                 <CardDescription>
-                  D\u00e9finissez les exigences de complexit\u00e9 et d&apos;expiration des mots de passe.
+                  Définissez les exigences de complexité et d&apos;expiration des mots de passe.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -448,7 +448,7 @@ export default function AdminSettingsPage() {
                     />
                   </div>
                   <div className="flex items-center justify-between rounded-lg border p-3">
-                    <Label htmlFor="requireSpecial" className="cursor-pointer">Caract\u00e8res sp\u00e9ciaux</Label>
+                    <Label htmlFor="requireSpecial" className="cursor-pointer">Caractères spéciaux</Label>
                     <Switch
                       id="requireSpecial"
                       checked={security.requireSpecialChars}
@@ -471,7 +471,7 @@ export default function AdminSettingsPage() {
                   <div className="space-y-0.5">
                     <Label>2FA obligatoire</Label>
                     <p className="text-sm text-muted-foreground">
-                      Forcer l&apos;authentification \u00e0 deux facteurs pour tous les utilisateurs.
+                      Forcer l&apos;authentification à deux facteurs pour tous les utilisateurs.
                     </p>
                   </div>
                   <Switch
@@ -513,7 +513,7 @@ export default function AdminSettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lockoutDuration">Dur\u00e9e de verrouillage (minutes)</Label>
+                    <Label htmlFor="lockoutDuration">Durée de verrouillage (minutes)</Label>
                     <Input
                       id="lockoutDuration"
                       type="number"
@@ -525,7 +525,7 @@ export default function AdminSettingsPage() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={() => handleSave('S\u00e9curit\u00e9')} className="gap-2">
+                  <Button onClick={() => handleSave('Sécurité')} className="gap-2">
                     <Save className="size-4" />
                     Sauvegarder
                   </Button>
@@ -544,13 +544,13 @@ export default function AdminSettingsPage() {
                 Configuration SMTP
               </CardTitle>
               <CardDescription>
-                Param\u00e8tres du serveur de messagerie pour l&apos;envoi d&apos;emails transactionnels.
+                Paramètres du serveur de messagerie pour l&apos;envoi d&apos;emails transactionnels.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="smtpHost">H\u00f4te SMTP</Label>
+                  <Label htmlFor="smtpHost">Hôte SMTP</Label>
                   <Input
                     id="smtpHost"
                     value={email.smtpHost}
@@ -591,7 +591,7 @@ export default function AdminSettingsPage() {
 
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="senderEmail">Email exp\u00e9diteur</Label>
+                  <Label htmlFor="senderEmail">Email expéditeur</Label>
                   <Input
                     id="senderEmail"
                     type="email"
@@ -600,7 +600,7 @@ export default function AdminSettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="senderName">Nom exp\u00e9diteur</Label>
+                  <Label htmlFor="senderName">Nom expéditeur</Label>
                   <Input
                     id="senderName"
                     value={email.senderName}
@@ -655,7 +655,7 @@ export default function AdminSettingsPage() {
                 Configuration du stockage
               </CardTitle>
               <CardDescription>
-                Mode de stockage des fichiers, quotas et types de fichiers autoris\u00e9s.
+                Mode de stockage des fichiers, quotas et types de fichiers autorisés.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -674,7 +674,7 @@ export default function AdminSettingsPage() {
                     <Server className="size-8 shrink-0 text-muted-foreground" />
                     <div>
                       <p className="font-medium">Stockage local</p>
-                      <p className="text-sm text-muted-foreground">Fichiers sur le syst\u00e8me de fichiers du serveur</p>
+                      <p className="text-sm text-muted-foreground">Fichiers sur le système de fichiers du serveur</p>
                     </div>
                   </button>
                   <button
@@ -728,7 +728,7 @@ export default function AdminSettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="s3Region">R\u00e9gion</Label>
+                    <Label htmlFor="s3Region">Région</Label>
                     <Input
                       id="s3Region"
                       value={storage.s3Region}
@@ -750,7 +750,7 @@ export default function AdminSettingsPage() {
                       id="s3SecretKey"
                       value={storage.s3SecretKey}
                       onChange={(v) => setStorage({ ...storage, s3SecretKey: v })}
-                      placeholder="Cl\u00e9 secr\u00e8te S3"
+                      placeholder="Clé secrète S3"
                     />
                   </div>
                 </div>
@@ -778,12 +778,12 @@ export default function AdminSettingsPage() {
                     value={storage.quotaPerUser}
                     onChange={(e) => setStorage({ ...storage, quotaPerUser: parseInt(e.target.value) || 0 })}
                   />
-                  <p className="text-xs text-muted-foreground">0 = illimit\u00e9</p>
+                  <p className="text-xs text-muted-foreground">0 = illimité</p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="allowedTypes">Types de fichiers autoris\u00e9s</Label>
+                <Label htmlFor="allowedTypes">Types de fichiers autorisés</Label>
                 <Textarea
                   id="allowedTypes"
                   value={storage.allowedTypes}
@@ -791,7 +791,7 @@ export default function AdminSettingsPage() {
                   placeholder="pdf,docx,xlsx,png,jpg..."
                   rows={2}
                 />
-                <p className="text-xs text-muted-foreground">Extensions s\u00e9par\u00e9es par des virgules</p>
+                <p className="text-xs text-muted-foreground">Extensions séparées par des virgules</p>
               </div>
 
               <div className="flex justify-end">
@@ -804,7 +804,7 @@ export default function AdminSettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* ── Int\u00e9grations ───────────────────────────────────────── */}
+        {/* ── Intégrations ───────────────────────────────────────── */}
         <TabsContent value="integrations">
           <div className="space-y-6">
             {/* API Keys */}
@@ -814,10 +814,10 @@ export default function AdminSettingsPage() {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <Key className="size-5" />
-                      Cl\u00e9s API
+                      Clés API
                     </CardTitle>
                     <CardDescription>
-                      G\u00e9rez les cl\u00e9s d&apos;acc\u00e8s aux services externes (LLM, etc.).
+                      Gérez les clés d&apos;accès aux services externes (LLM, etc.).
                     </CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={addApiKey} className="gap-2">
@@ -829,7 +829,7 @@ export default function AdminSettingsPage() {
               <CardContent className="space-y-4">
                 {integrations.apiKeys.length === 0 && (
                   <p className="text-center text-sm text-muted-foreground py-8">
-                    Aucune cl\u00e9 API configur\u00e9e.
+                    Aucune clé API configurée.
                   </p>
                 )}
                 {integrations.apiKeys.map((apiKey) => (
@@ -847,7 +847,7 @@ export default function AdminSettingsPage() {
                         <PasswordInput
                           value={apiKey.key}
                           onChange={(v) => updateApiKey(apiKey.id, 'key', v)}
-                          placeholder="Cl\u00e9 API"
+                          placeholder="Clé API"
                         />
                       </div>
                     </div>
@@ -883,7 +883,7 @@ export default function AdminSettingsPage() {
                       Webhooks
                     </CardTitle>
                     <CardDescription>
-                      Envoyez des notifications vers des services externes lors d&apos;\u00e9v\u00e9nements.
+                      Envoyez des notifications vers des services externes lors d&apos;événements.
                     </CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={addWebhook} className="gap-2">
@@ -895,7 +895,7 @@ export default function AdminSettingsPage() {
               <CardContent className="space-y-4">
                 {integrations.webhooks.length === 0 && (
                   <p className="text-center text-sm text-muted-foreground py-8">
-                    Aucun webhook configur\u00e9.
+                    Aucun webhook configuré.
                   </p>
                 )}
                 {integrations.webhooks.map((webhook) => (
@@ -912,7 +912,7 @@ export default function AdminSettingsPage() {
                       <Input
                         value={webhook.events}
                         onChange={(e) => updateWebhook(webhook.id, 'events', e.target.value)}
-                        placeholder="\u00c9v\u00e9nements (user.created, file.uploaded...)"
+                        placeholder="Événements (user.created, file.uploaded...)"
                       />
                     </div>
                     <div className="flex items-center gap-2">
@@ -936,7 +936,7 @@ export default function AdminSettingsPage() {
                 ))}
 
                 <div className="flex justify-end pt-2">
-                  <Button onClick={() => handleSave('Int\u00e9grations')} className="gap-2">
+                  <Button onClick={() => handleSave('Intégrations')} className="gap-2">
                     <Save className="size-4" />
                     Sauvegarder
                   </Button>

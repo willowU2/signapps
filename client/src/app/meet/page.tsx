@@ -167,17 +167,24 @@ export default function MeetPage() {
     // Load initial data
     // ─────────────────────────────────────────────────────────────────────────
 
+    // Track whether this is the first load — suppress errors on initial mount
+    // but show them on manual refresh so users get feedback
+    const initialLoadDone = useState(() => ({ current: false }))[0]
+
     const loadRooms = useCallback(async () => {
         setLoadingRooms(true)
         try {
             const res = await meetApi.listRooms()
             setRooms(res.data)
         } catch {
-            toast.error("Impossible de charger les salles")
+            // Only show error toast on manual refresh, not initial load
+            if (initialLoadDone.current) {
+                toast.error("Impossible de charger les salles")
+            }
         } finally {
             setLoadingRooms(false)
         }
-    }, [])
+    }, [initialLoadDone])
 
     const loadHistory = useCallback(async () => {
         setLoadingHistory(true)
@@ -185,11 +192,13 @@ export default function MeetPage() {
             const res = await meetApi.listHistory()
             setHistory(res.data)
         } catch {
-            toast.error("Impossible de charger l'historique")
+            if (initialLoadDone.current) {
+                toast.error("Impossible de charger l'historique")
+            }
         } finally {
             setLoadingHistory(false)
         }
-    }, [])
+    }, [initialLoadDone])
 
     const loadConfig = useCallback(async () => {
         try {
@@ -203,10 +212,10 @@ export default function MeetPage() {
     useEffect(() => {
         const roomQuery = searchParams.get("room")
         if (roomQuery) setJoinCode(roomQuery)
-        loadRooms()
-        loadHistory()
-        loadConfig()
-    }, [searchParams, loadRooms, loadHistory, loadConfig])
+        Promise.all([loadRooms(), loadHistory(), loadConfig()]).finally(() => {
+            initialLoadDone.current = true
+        })
+    }, [searchParams, loadRooms, loadHistory, loadConfig, initialLoadDone])
 
     // ─────────────────────────────────────────────────────────────────────────
     // Room detail loader
