@@ -29,6 +29,7 @@ import { WorkspaceShell } from "@/components/layout/workspace-shell";
 import {
   useKeepData,
   useCreateNote,
+  useUpdateNote,
   useTogglePin,
   useToggleArchive,
   useMoveToTrash,
@@ -86,6 +87,29 @@ export default function KeepPage() {
   const [isGridView, setIsGridView] = useState(true);
   const [activeSidebarView, setActiveSidebarView] = useState<SidebarView>("notes");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
+  // Note editing state
+  const updateNoteMutation = useUpdateNote();
+  const [editingNote, setEditingNote] = useState<KeepNote | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+
+  const handleOpenEdit = useCallback((note: KeepNote) => {
+    if (activeSidebarView === 'trash') return; // no edit in trash
+    setEditingNote(note);
+    setEditTitle(note.title);
+    setEditContent(note.content);
+  }, [activeSidebarView]);
+
+  const handleSaveEdit = useCallback(() => {
+    if (!editingNote) return;
+    const title = editTitle.trim();
+    const content = editContent.trim();
+    if (title !== editingNote.title || content !== editingNote.content) {
+      updateNoteMutation.mutate({ id: editingNote.id, updates: { title, content } });
+    }
+    setEditingNote(null);
+  }, [editingNote, editTitle, editContent, updateNoteMutation]);
 
   // New feature states
   const [shareNoteId, setShareNoteId] = useState<string | null>(null);
@@ -713,6 +737,7 @@ export default function KeepPage() {
                       key={note.id}
                       note={note}
                       isGridView={isGridView}
+                      onEdit={() => handleOpenEdit(note)}
                       onTogglePin={() => handleTogglePin(note)}
                       onToggleArchive={() => handleToggleArchive(note)}
                       onMoveToTrash={() => handleMoveToTrash(note)}
@@ -753,6 +778,7 @@ export default function KeepPage() {
                       key={note.id}
                       note={note}
                       isGridView={isGridView}
+                      onEdit={() => handleOpenEdit(note)}
                       onTogglePin={() => handleTogglePin(note)}
                       onToggleArchive={() => handleToggleArchive(note)}
                       onMoveToTrash={() => handleMoveToTrash(note)}
@@ -855,6 +881,39 @@ export default function KeepPage() {
           }} />
         </DialogContent>
       </Dialog>
+
+      {/* Note Edit Dialog */}
+      <Dialog open={!!editingNote} onOpenChange={(o) => { if (!o) handleSaveEdit(); }}>
+        <DialogContent
+          className="max-w-lg border-0 p-0 overflow-hidden"
+          style={{ backgroundColor: editingNote?.color || '#202124' }}
+        >
+          <div className="p-4 space-y-3">
+            <input
+              className="w-full bg-transparent text-[15px] font-medium text-[#e8eaed] placeholder:text-[#9aa0a6] outline-none border-none resize-none"
+              placeholder="Titre"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              autoFocus
+            />
+            <textarea
+              className="w-full bg-transparent text-[13px] text-[#e8eaed] placeholder:text-[#9aa0a6] outline-none border-none resize-none min-h-[120px]"
+              placeholder="Note..."
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              rows={6}
+            />
+          </div>
+          <div className="flex justify-end px-4 pb-3">
+            <button
+              onClick={handleSaveEdit}
+              className="text-sm font-medium text-[#e8eaed] hover:text-white px-3 py-1.5 rounded hover:bg-[#3c4043] transition-colors"
+            >
+              Fermer
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
@@ -862,6 +921,7 @@ export default function KeepPage() {
 interface NoteCardProps {
   note: KeepNote;
   isGridView: boolean;
+  onEdit: () => void;
   onTogglePin: () => void;
   onToggleArchive: () => void;
   onMoveToTrash: () => void;
@@ -879,6 +939,7 @@ interface NoteCardProps {
 function NoteCard({
   note,
   isGridView,
+  onEdit,
   onTogglePin,
   onToggleArchive,
   onMoveToTrash,
@@ -900,6 +961,7 @@ function NoteCard({
 
   return (
     <div
+      onClick={onEdit}
       className={cn(
         "group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200",
         // Masonry layout: break-inside-avoid prevents card splitting across columns

@@ -200,8 +200,8 @@ export function GlobalActivityFeed({ compact = false, limit = 50 }: Props) {
                   {ACTION_LABELS[a.action] || a.action}{' '}
                   {a.entity_title && <span className="font-medium truncate">{a.entity_title}</span>}
                 </p>
-                {a.metadata?.details && (
-                  <p className="text-xs text-muted-foreground mt-0.5">{String(a.metadata.details)}</p>
+                {a.metadata?.details != null && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{String(a.metadata.details as unknown)}</p>
                 )}
               </div>
               <time className="text-xs text-muted-foreground shrink-0">{timeAgo(a.created_at)}</time>

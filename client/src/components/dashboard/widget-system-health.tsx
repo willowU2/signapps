@@ -42,7 +42,7 @@ function MiniSparkline({ data, color, label }: { data: SparklinePoint[]; color: 
               fontSize: '11px',
               padding: '4px 8px',
             }}
-            formatter={(value: number) => [`${value}%`, label]}
+            formatter={(value) => [`${value}%`, label]}
             labelFormatter={(l) => l}
           />
           <Area
