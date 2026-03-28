@@ -172,8 +172,15 @@ export async function syncPreferences(request: SyncRequest): Promise<SyncRespons
     device_id: request.deviceId,
     force_overwrite: request.forceOverwrite,
   };
-  const response = await client.post<any>("/users/me/preferences/sync", payload);
-  return mapSyncResponse(response.data);
+  try {
+    const response = await client.post<any>("/users/me/preferences/sync", payload);
+    return mapSyncResponse(response.data);
+  } catch (err: any) {
+    if (err.response && err.response.data) {
+      console.error("AXUM BACKEND ERROR DETAILS:", err.response.data);
+    }
+    throw err;
+  }
 }
 
 /**
