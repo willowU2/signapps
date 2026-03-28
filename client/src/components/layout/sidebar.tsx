@@ -152,13 +152,14 @@ export function Sidebar() {
   const mobileOpen = !sidebarCollapsed;
 
   const renderNavLink = (item: { href: string; icon: React.ComponentType<{ className?: string }>; label: string; color: string; badgeKey: string | null }) => {
-    const isActive = pathname.startsWith(item.href);
+    const safeHref = item.href || '#';
+    const isActive = pathname.startsWith(safeHref !== '#' ? safeHref : '/___invalid___');
     const Icon = item.icon;
     const badgeValue = item.badgeKey && badges ? (badges as Record<string, number>)[item.badgeKey] : undefined;
 
     const linkContent = (
       <Link
-        href={item.href}
+        href={safeHref}
         className={cn(
           'flex items-center gap-4 py-2.5 text-sm font-medium transition-colors',
           sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6',
@@ -191,10 +192,11 @@ export function Sidebar() {
   };
 
   const renderPinnedItem = (app: AppPin, index: number) => {
-    const isActive = pathname.startsWith(app.href);
+    const safeHref = app.href || '#';
+    const isActive = pathname.startsWith(safeHref !== '#' ? safeHref : '/___invalid___');
     const linkContent = (
       <div
-        key={app.href}
+        key={app.href || index}
         className="group relative flex items-center"
         draggable
         onDragStart={(e) => handlePinDragStart(e, index)}
@@ -202,7 +204,7 @@ export function Sidebar() {
         onDrop={(e) => handlePinDrop(e, index)}
         onContextMenu={(e) => {
           e.preventDefault();
-          setContextMenu({ href: app.href, x: e.clientX, y: e.clientY });
+          setContextMenu({ href: safeHref, x: e.clientX, y: e.clientY });
         }}
       >
         {!sidebarCollapsed && (
@@ -211,7 +213,7 @@ export function Sidebar() {
           </span>
         )}
         <Link
-          href={app.href}
+          href={safeHref}
           className={cn(
             'flex flex-1 items-center gap-4 py-2.5 text-sm font-medium transition-colors',
             sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6 pl-5',

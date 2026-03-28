@@ -65,6 +65,7 @@ tokenizers = { version = "0.22", optional = true }
 
 # Random number generation (for seed generation in native pipelines)
 rand = { workspace = true, optional = true }
+regex = "1.12.3"
 
 [features]
 default = []

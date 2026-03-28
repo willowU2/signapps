@@ -44,9 +44,9 @@ export function RecentFiles() {
             {docs.map((doc) => {
               const Icon = TYPE_ICONS[doc.kind] || FileText;
               return (
-                <li key={doc.id}>
+                <li key={doc.id || Math.random().toString()}>
                   <Link
-                    href={doc.href}
+                    href={doc.href || '#'}
                     className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted transition-colors"
                   >
                     <Icon className="h-4 w-4 text-muted-foreground shrink-0" />

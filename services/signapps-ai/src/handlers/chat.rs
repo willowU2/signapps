@@ -124,7 +124,8 @@ pub async fn chat(
             payload.model.as_deref(),
             payload.language.as_deref(),
             payload.system_prompt.as_deref(),
-            payload.collection.as_deref(),
+            payload.collection.as_ref().map(|c| vec![c.clone()]).as_deref(),
+            None,
         )
         .await?;
 
@@ -172,7 +173,8 @@ pub async fn chat_stream(
         let search_results = match state.rag.search(
             &payload.question,
             None,
-            collection.as_deref(),
+            collection.as_ref().map(|c| vec![c.clone()]).as_deref(),
+            None,
         ).await {
             Ok(results) => results,
             Err(e) => {

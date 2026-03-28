@@ -17,15 +17,20 @@ use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
 mod embeddings;
+mod gateway;
 mod handlers;
 mod indexer;
+mod injection_guard;
 mod llm;
+mod memory;
+mod models;
 mod rag;
 mod tools;
 mod vectors;
+mod workers;
 
 use embeddings::EmbeddingsClient;
-use handlers::{chat, collections, health, index, model_management, models, providers, search};
+use handlers::{chat, collections, health, index, model_management, providers, search};
 use indexer::IndexPipeline;
 use llm::{create_provider, LlmProviderType, ProviderConfig, ProviderRegistry};
 use rag::RagPipeline;
@@ -45,6 +50,8 @@ pub struct AppState {
     pub model_manager: Option<Arc<ModelManager>>,
     pub hardware: Option<HardwareProfile>,
     pub tool_executor: ToolExecutor,
+    pub gateway: Option<Arc<crate::gateway::GatewayRouter>>,
+    pub storage: opendal::Operator,
 }
 
 impl AuthState for AppState {
@@ -290,6 +297,10 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
+    let storage_root = std::env::var("STORAGE_ROOT").unwrap_or_else(|_| "./data/storage".into());
+    let builder = opendal::services::Fs::default().root(&storage_root);
+    let storage = opendal::Operator::new(builder).unwrap().finish();
+
     // Initialize tool calling system
     let service_endpoints = ServiceEndpoints::from_env();
     let service_clients = ServiceClients::new(service_endpoints);
@@ -312,6 +323,8 @@ async fn main() -> anyhow::Result<()> {
         model_manager: Some(model_manager),
         hardware: Some(hardware),
         tool_executor,
+        gateway: None,
+        storage,
     };
 
     // Build router
@@ -364,7 +377,7 @@ fn create_router(state: AppState) -> Router {
             get(collections::get_collection_stats),
         )
         // Models & Providers
-        .route("/models", get(models::list_models))
+        .route("/models", get(handlers::models::list_models))
         .route("/providers", get(providers::list_providers))
         // Model management
         .route("/models/local", get(model_management::list_local_models))

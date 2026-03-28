@@ -73,7 +73,7 @@ export function RecentHistory() {
         <div className="absolute right-0 top-full mt-1 w-64 bg-popover border rounded-lg shadow-xl z-50 py-1">
           <p className="px-3 py-1 text-xs font-medium text-muted-foreground">Recemment consulte</p>
           {entries.slice(0, MAX_ENTRIES).map((e, i) => (
-            <Link key={i} href={e.path} onClick={() => setOpen(false)} className="block px-3 py-1.5 text-sm hover:bg-accent transition-colors truncate">
+            <Link key={i} href={e.path || '#'} onClick={() => setOpen(false)} className="block px-3 py-1.5 text-sm hover:bg-accent transition-colors truncate">
               {e.title || e.path}
             </Link>
           ))}

@@ -105,10 +105,9 @@ pub async fn suggest_meeting_times(
         (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
     })?;
 
-    // Build a per-user busy set: (start, end, user_id)
     let busy: Vec<(DateTime<Utc>, DateTime<Utc>, Uuid)> = rows
         .into_iter()
-        .map(|r| (r.start_time, r.end_time, r.user_id))
+        .filter_map(|r| r.user_id.map(|uid| (r.start_time, r.end_time, uid)))
         .collect();
 
     // Enumerate candidate slots (step = duration / 2, clamped to 15 min min)

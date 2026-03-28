@@ -382,7 +382,7 @@ export function GlobalHeader() {
                                                 <BreadcrumbPage className="text-xs font-semibold">{item.label}</BreadcrumbPage>
                                             ) : (
                                                 <BreadcrumbLink asChild>
-                                                    <Link href={item.url} className="text-xs">{item.label}</Link>
+                                                    <Link href={item.url || '#'} className="text-xs">{item.label}</Link>
                                                 </BreadcrumbLink>
                                             )}
                                         </BreadcrumbItem>
