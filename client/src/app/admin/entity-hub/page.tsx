@@ -44,7 +44,7 @@ export default function EntityHubAdminPage() {
           fetchEvents(),
         ]);
       } catch {
-        toast.error('Failed to load entity hub data');
+        toast.error('Impossible de charger les données Entity Hub');
       }
     };
     load();

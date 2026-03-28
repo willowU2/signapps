@@ -42,12 +42,12 @@ Return JSON format: { tags: [{ name: string, confidence: number }] }`;
           }))
         );
         setHasGenerated(true);
-        toast.success('Tags generated');
+        toast.success('Tags générés');
       } catch {
-        toast.error('Failed to parse tags format');
+        toast.error('Format des tags invalide');
       }
     } catch (error) {
-      toast.error('Failed to generate tags');
+      toast.error('Impossible de générer les tags');
     } finally {
       setIsLoading(false);
     }

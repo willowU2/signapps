@@ -203,7 +203,7 @@ export default function ApiPlaygroundPage() {
                     }`}>{status || 'ERR'}</span>
                     {timing !== null && <span className="text-xs text-muted-foreground">{timing}ms</span>}
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(response || ''); toast.success('Copied'); }} className="gap-1.5">
+                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(response || ''); toast.success('Copié'); }} className="gap-1.5">
                     <Copy className="h-3.5 w-3.5" />Copy
                   </Button>
                 </CardHeader>

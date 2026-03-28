@@ -232,7 +232,7 @@ export default function VpnPage() {
       setTunnelDialogOpen(false);
       fetchData();
     } catch {
-      toast.error('Failed to save tunnel');
+      toast.error('Impossible d\'enregistrer le tunnel');
     } finally {
       setSubmitting(false);
     }
@@ -241,10 +241,10 @@ export default function VpnPage() {
   const handleReconnectTunnel = async (tunnel: Tunnel) => {
     try {
       await tunnelApi.reconnectTunnel(tunnel.id);
-      toast.success('Reconnecting tunnel...');
+      toast.success('Reconnexion du tunnel en cours...');
       setTimeout(fetchData, 2000);
     } catch {
-      toast.error('Failed to reconnect tunnel');
+      toast.error('Impossible de reconnecter le tunnel');
     }
   };
 

@@ -44,7 +44,7 @@ export function SmartEmailArchiver({ emails = [], onArchive }: SmartEmailArchive
 
   const undoArchive = () => {
     if (undoStack.length === 0) {
-      toast.error('Nothing to undo');
+      toast.error('Rien à annuler');
       return;
     }
     const prevState = undoStack[undoStack.length - 1];

@@ -54,9 +54,9 @@ export function DocSummarizer() {
         return;
       }
       setSummary(answer);
-      toast.success('Summary generated');
+      toast.success('Résumé généré');
     } catch {
-      toast.error('Failed to generate summary');
+      toast.error('Impossible de générer le résumé');
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +65,7 @@ export function DocSummarizer() {
   const handleCopy = () => {
     navigator.clipboard.writeText(summary);
     setIsCopied(true);
-    toast.success('Copied to clipboard');
+    toast.success('Copié dans le presse-papier');
     setTimeout(() => setIsCopied(false), 2000);
   };
 

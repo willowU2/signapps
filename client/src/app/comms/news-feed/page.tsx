@@ -109,7 +109,7 @@ export default function NewsFeedPage() {
     setNews([item, ...news]);
     setForm({ title: '', content: '', category: 'General' });
     setOpen(false);
-    toast.success('News posted!');
+    toast.success('Actualité publiée !');
   };
 
   return (
