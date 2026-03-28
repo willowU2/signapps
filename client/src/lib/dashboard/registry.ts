@@ -446,7 +446,7 @@ export const dashboardPresets: DashboardPreset[] = [
 ];
 
 // IDEA-122: Register extended widgets
-import { Cloud, StickyNote, Rss } from 'lucide-react';
+import { Cloud, StickyNote, Rss, Flame, Star, CalendarDays } from 'lucide-react';
 
 widgetRegistry.set('weather', {
   type: 'weather',
@@ -477,6 +477,37 @@ widgetRegistry.set('rss-feed', {
   size: { minW: 3, minH: 3, defaultW: 4, defaultH: 4 },
   isPublic: true,
   defaultConfig: { feedUrl: 'https://news.ycombinator.com/rss', title: 'Hacker News' },
+});
+
+// Dashboard customization: extended widgets
+widgetRegistry.set('activity-heatmap', {
+  type: 'activity-heatmap',
+  name: 'Heatmap d\'activité',
+  description: 'Carte de chaleur de l\'activité sur les 12 dernières semaines',
+  category: 'analytics',
+  icon: Flame,
+  size: { minW: 6, minH: 2, defaultW: 8, defaultH: 3 },
+  isPublic: true,
+});
+
+widgetRegistry.set('favorites', {
+  type: 'favorites',
+  name: 'Favoris',
+  description: 'Accès rapide à vos éléments épinglés',
+  category: 'productivity',
+  icon: Star,
+  size: { minW: 3, minH: 2, defaultW: 4, defaultH: 3 },
+  isPublic: true,
+});
+
+widgetRegistry.set('calendar-preview', {
+  type: 'calendar-preview',
+  name: 'Aperçu calendrier',
+  description: 'Mini-calendrier avec événements de la semaine',
+  category: 'productivity',
+  icon: CalendarDays,
+  size: { minW: 3, minH: 3, defaultW: 4, defaultH: 4 },
+  isPublic: true,
 });
 
 export function getPreset(id: string): DashboardPreset | undefined {

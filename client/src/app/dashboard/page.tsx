@@ -166,7 +166,7 @@ export default function DashboardPage() {
             >
               <RefreshCw className={cn('mr-2 h-4 w-4', refreshing && 'animate-spin')} /> Refresh
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => { setEditMode(true); setAddWidgetOpen(true); }}>
               <SlidersHorizontal className="mr-2 h-4 w-4" /> Personnaliser
             </Button>
           </div>

@@ -22,3 +22,8 @@ export { WidgetTodayCalendar } from "./widget-today-calendar";
 export { WidgetTasksSummary } from "./widget-tasks-summary";
 export { WidgetUnreadEmails } from "./widget-unread-emails";
 export { WidgetActiveTasks } from "./widget-active-tasks";
+
+// Dashboard customization: extended widgets
+export { WidgetActivityHeatmap } from "./widget-activity-heatmap";
+export { WidgetFavorites } from "./widget-favorites";
+export { WidgetCalendarPreview } from "./widget-calendar-preview";
