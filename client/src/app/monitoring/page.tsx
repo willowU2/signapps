@@ -248,6 +248,33 @@ export default function MonitoringPage() {
     );
   }
 
+  if (metricsError && !metrics) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">System Monitoring</h1>
+            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['metrics'] })}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Réessayer
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 mb-4">
+                <Activity className="h-8 w-8 text-destructive" />
+              </div>
+              <h3 className="text-lg font-semibold">Impossible de charger les métriques système</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Le service de monitoring est peut-être indisponible. Vérifiez votre connexion et réessayez.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
+
   const cpuUsage = metrics?.cpu_usage_percent || metrics?.cpu || 0;
   const memoryUsage = metrics?.memory_usage_percent || metrics?.memory || 0;
   const diskUsage = metrics?.disk_usage_percent || metrics?.disk || 0;
@@ -792,26 +819,26 @@ export default function MonitoringPage() {
                     {disks.map((disk, i) => (
                       <div key={i} className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium font-mono text-sm">{disk.mount_point}</span>
+                          <span className="font-medium font-mono text-sm">{disk.mount_point ?? '/'}</span>
                           <span className="text-sm text-muted-foreground">
-                            {formatBytes(disk.used)} / {formatBytes(disk.total)}
+                            {formatBytes(disk.used ?? 0)} / {formatBytes(disk.total ?? 0)}
                           </span>
                         </div>
                         <div className="relative h-2 overflow-hidden rounded-full bg-muted">
                           <div
                             className={`absolute inset-y-0 left-0 rounded-full transition-all ${
-                              disk.percent < 50
+                              (disk.percent ?? 0) < 50
                                 ? 'bg-green-500'
-                                : disk.percent < 80
+                                : (disk.percent ?? 0) < 80
                                 ? 'bg-yellow-500'
                                 : 'bg-red-500'
                             }`}
-                            style={{ width: `${disk.percent}%` }}
+                            style={{ width: `${disk.percent ?? 0}%` }}
                           />
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>{disk.percent.toFixed(1)}% used</span>
-                          <span>{formatBytes(disk.available)} available</span>
+                          <span>{(disk.percent ?? 0).toFixed(1)}% used</span>
+                          <span>{formatBytes(disk.available ?? 0)} available</span>
                         </div>
                       </div>
                     ))}

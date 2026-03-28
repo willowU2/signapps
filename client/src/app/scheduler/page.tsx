@@ -94,18 +94,18 @@ export default function SchedulerPage() {
 
   type SchedulerData = { jobs: ScheduledJob[]; stats: JobStats | null; runningJobs: RunningJob[] };
 
-  const { data: schedulerData, isLoading: loading } = useQuery<SchedulerData>({
+  const { data: schedulerData, isLoading: loading, isError: schedulerError } = useQuery<SchedulerData>({
     queryKey: ['scheduler-jobs'],
     queryFn: async () => {
       const [jobsRes, statsRes, runningRes] = await Promise.all([
-        schedulerApi.listJobs(),
+        schedulerApi.listJobs().catch(() => ({ data: [] as ScheduledJob[] })),
         schedulerApi.getStats().catch(() => null),
-        schedulerApi.getRunning().catch(() => ({ data: [] })),
+        schedulerApi.getRunning().catch(() => ({ data: [] as RunningJob[] })),
       ]);
       return {
-        jobs: jobsRes.data || [],
+        jobs: (jobsRes?.data as ScheduledJob[]) || [],
         stats: statsRes?.data ?? null,
-        runningJobs: runningRes?.data || [],
+        runningJobs: (runningRes?.data as RunningJob[]) || [],
       };
     },
   });
@@ -259,6 +259,33 @@ export default function SchedulerPage() {
           <h1 className="text-3xl font-bold">Scheduler</h1>
           <CardGridSkeleton count={3} className="md:grid-cols-3" />
           <DataTableSkeleton count={5} />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (schedulerError && jobs.length === 0) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Planificateur</h1>
+            <Button variant="outline" onClick={fetchJobs}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Réessayer
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 mb-4">
+                <Clock className="h-8 w-8 text-destructive" />
+              </div>
+              <h3 className="text-lg font-semibold">Impossible de charger les tâches planifiées</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Le service de planification est peut-être indisponible. Vérifiez votre connexion et réessayez.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </AppLayout>
     );

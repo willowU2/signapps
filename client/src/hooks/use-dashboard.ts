@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { containersApi, metricsApi, storageApi, routesApi } from '@/lib/api';
-import { getBreaker } from '@/lib/circuit-breaker';
+import { getServiceBreaker } from '@/lib/circuit-breaker';
+import { ServiceName } from '@/lib/api/factory';
 
 export interface DashboardData {
   containers: number;
@@ -18,9 +19,11 @@ export interface DashboardData {
 /**
  * Wrap an API call with a circuit breaker so that when a service is down
  * we stop hammering it and immediately return a settled rejection instead.
+ * Uses `getServiceBreaker` which automatically configures the health URL
+ * for auto-reconnect probing.
  */
-async function guarded<T>(service: string, fn: () => Promise<T>): Promise<T> {
-  return getBreaker(service).call(fn);
+async function guarded<T>(service: ServiceName, fn: () => Promise<T>): Promise<T> {
+  return getServiceBreaker(service).call(fn);
 }
 
 export function useDashboardData() {
@@ -31,10 +34,10 @@ export function useDashboardData() {
       // for 3+ consecutive checks the breaker opens and stops retrying
       // for 30 seconds, eliminating console error spam.
       const [containersRes, metricsRes, bucketsRes, routesRes] = await Promise.allSettled([
-        guarded('containers', () => containersApi.list()),
-        guarded('metrics', () => metricsApi.system()),
-        guarded('storage', () => storageApi.listBuckets()),
-        guarded('proxy', () => routesApi.list()),
+        guarded(ServiceName.CONTAINERS, () => containersApi.list()),
+        guarded(ServiceName.METRICS, () => metricsApi.system()),
+        guarded(ServiceName.STORAGE, () => storageApi.listBuckets()),
+        guarded(ServiceName.PROXY, () => routesApi.list()),
       ]);
 
       let containerCount = 0;

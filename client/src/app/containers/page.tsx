@@ -186,6 +186,33 @@ export default function ContainersPage() {
     );
   }
 
+  if (isError && containers.length === 0) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Containers</h1>
+            <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['containers'] })}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Réessayer
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 mb-4">
+                <RefreshCw className="h-8 w-8 text-destructive" />
+              </div>
+              <h3 className="text-lg font-semibold">Impossible de charger les conteneurs</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Le service de conteneurs est peut-être indisponible. Vérifiez votre connexion et réessayez.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -314,9 +341,9 @@ export default function ContainersPage() {
                           </div>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
                             <span>{container.image}</span>
-                            <span>CPU {container.cpu}</span>
-                            <span>RAM {container.memory}</span>
-                            {container.ports.length > 0 && (
+                            <span>CPU {container.cpu ?? '-'}</span>
+                            <span>RAM {container.memory ?? '-'}</span>
+                            {(container.ports?.length ?? 0) > 0 && (
                               <span>Ports: {container.ports.join(', ')}</span>
                             )}
                           </div>

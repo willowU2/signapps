@@ -152,6 +152,63 @@ function isSilentAuthPath(url?: string): boolean {
   return SILENT_AUTH_PATHS.some(path => url.includes(path));
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// USER-FRIENDLY ERROR MESSAGES
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Maps HTTP status codes and network errors to user-facing French messages.
+ * These replace the generic "Une erreur est survenue" with actionable text.
+ */
+export function getHumanErrorMessage(error: AxiosError): string {
+  // Network-level errors (no response at all)
+  if (!error.response) {
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      return 'Le serveur met trop de temps à répondre. Réessayez dans quelques instants.';
+    }
+    if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+      return 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+    }
+    return 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+  }
+
+  const status = error.response.status;
+
+  switch (status) {
+    case 400:
+      return 'Requête invalide. Vérifiez les données saisies.';
+    case 401:
+      return 'Votre session a expiré. Veuillez vous reconnecter.';
+    case 403:
+      return 'Vous n\'avez pas les permissions nécessaires.';
+    case 404:
+      return 'La ressource demandée n\'existe pas.';
+    case 408:
+      return 'Le serveur met trop de temps à répondre. Réessayez dans quelques instants.';
+    case 409:
+      return 'Conflit : cette ressource a été modifiée par un autre utilisateur.';
+    case 413:
+      return 'Le fichier envoyé est trop volumineux.';
+    case 422:
+      return 'Les données envoyées sont invalides. Vérifiez le formulaire.';
+    case 429:
+      return 'Trop de requêtes. Veuillez patienter avant de réessayer.';
+    case 500:
+      return 'Erreur interne du serveur. Réessayez dans quelques instants.';
+    case 502:
+      return 'Le serveur est temporairement indisponible. Réessayez dans quelques instants.';
+    case 503:
+      return 'Service en maintenance. Réessayez dans quelques instants.';
+    case 504:
+      return 'Le serveur ne répond pas. Réessayez dans quelques instants.';
+    default:
+      if (status >= 500) {
+        return 'Erreur interne du serveur. Réessayez dans quelques instants.';
+      }
+      return `Erreur inattendue (${status}). Réessayez dans quelques instants.`;
+  }
+}
+
 function addAuthHeader(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
   // Cookies are automatically sent via withCredentials: true
   // Add workspace context header
@@ -248,10 +305,17 @@ export function getClient(service: ServiceName): AxiosInstance {
   // Request interceptor
   client.interceptors.request.use(addAuthHeader);
 
-  // Response interceptor
+  // Response interceptor — attach human-readable message then handle auth errors
   client.interceptors.response.use(
     (response) => response,
-    (error) => handleAuthError(error, client)
+    (error: AxiosError) => {
+      // Attach a user-friendly message to every error so callers can use it
+      if (error && !isSilentAuthPath(error.config?.url)) {
+        (error as AxiosError & { humanMessage?: string }).humanMessage =
+          getHumanErrorMessage(error);
+      }
+      return handleAuthError(error, client);
+    }
   );
 
   // Cache the client
