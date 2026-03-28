@@ -230,6 +230,12 @@ export default function DesignCanvas({ fabricCanvasRef }: DesignCanvasProps) {
         }
       }
 
+      // Ctrl+S save
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        useDesignStore.getState().saveDesign();
+      }
+
       // Ctrl+Z undo
       if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
         e.preventDefault();

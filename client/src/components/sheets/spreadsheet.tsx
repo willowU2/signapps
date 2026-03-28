@@ -1689,7 +1689,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             if (e.key === 'v') { e.preventDefault(); doPaste(); return }
             if (e.key === 'f') { e.preventDefault(); setShowFind(true); setShowReplaceToggle(false); return }
             if (e.key === 'h') { e.preventDefault(); setShowFind(true); setShowReplaceToggle(true); return }
-            if (e.key === 's') { e.preventDefault(); toast.success('Enregistré automatiquement'); return }
+            if (e.key === 's') { e.preventDefault(); if (documentName) { saveToDrive(); } else { toast.success('Enregistré automatiquement'); } return }
             if (e.key === 'n') { e.preventDefault(); window.open('/sheets', '_blank'); return }
             if (e.key === 'o') { e.preventDefault(); toast.info("Rendez-vous sur l'accueil Drive pour ouvrir un fichier."); return }
             if (e.key === 'q') { e.preventDefault(); toast.info("Fermez l'onglet du navigateur pour quitter la session."); return }

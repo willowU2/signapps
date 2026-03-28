@@ -196,7 +196,7 @@ export default function LoginPage() {
                   onCheckedChange={(checked) => setTrustDevice(checked === true)}
                 />
                 <Label htmlFor="trust-device" className="text-sm font-normal cursor-pointer">
-                  Trust this device for 30 days
+                  Faire confiance à cet appareil pendant 30 jours
                 </Label>
               </div>
             </div>
@@ -210,10 +210,10 @@ export default function LoginPage() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  Connexion en cours...
                 </>
               ) : (
-                'Sign In'
+                'Se connecter'
               )}
             </Button>
           </form>
@@ -222,7 +222,7 @@ export default function LoginPage() {
             <div className="relative">
               <Separator />
               <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-                Or continue with
+                Ou continuer avec
               </span>
             </div>
 

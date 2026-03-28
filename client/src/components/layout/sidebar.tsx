@@ -82,7 +82,7 @@ const labelColors = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { sidebarCollapsed } = useUIStore();
+  const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { labels, addLabel, removeLabel } = useLabelsStore();
   const { data: badges } = useSidebarBadges();
 
@@ -99,12 +99,25 @@ export function Sidebar() {
     setAddLabelOpen(false);
   };
 
+  // On mobile the sidebar is a drawer: open when NOT collapsed.
+  const mobileOpen = !sidebarCollapsed;
+
   return (
     <TooltipProvider delayDuration={0}>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={toggleSidebar}
+          aria-hidden="true"
+        />
+      )}
+
       <aside
         className={cn(
-          'flex h-full flex-col bg-sidebar py-4 transition-all duration-200',
-          sidebarCollapsed ? 'w-16' : 'w-64 pr-4'
+          'fixed top-0 left-0 bottom-0 z-50 flex h-full flex-col bg-sidebar py-4 transition-all duration-200 border-r border-sidebar-border',
+          sidebarCollapsed ? 'w-16' : 'w-64 pr-4',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
         {/* ── Nouveau Button ── */}
@@ -273,6 +286,14 @@ export function Sidebar() {
             </div>
           )}
         </nav>
+
+        {/* Version footer */}
+        <div className={cn(
+          'mt-auto pt-2 border-t border-sidebar-border text-[10px] text-muted-foreground/60',
+          sidebarCollapsed ? 'text-center px-1' : 'px-6'
+        )}>
+          {sidebarCollapsed ? 'v0.1' : 'SignApps v0.1.0'}
+        </div>
       </aside>
     </TooltipProvider>
   );
