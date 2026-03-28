@@ -23,7 +23,21 @@ $processNames = @(
     "signapps_media",
     "signapps_docs",
     "signapps_calendar",
-    "signapps_collab"
+    "signapps_mail",
+    "signapps_collab",
+    "signapps_meet",
+    "signapps_forms",
+    "signapps_pxe",
+    "signapps_remote",
+    "signapps_office",
+    "signapps_social",
+    "signapps_chat",
+    "signapps_workforce",
+    "signapps_it_assets",
+    "signapps_contacts",
+    "signapps_notifications",
+    "signapps_billing",
+    "signapps_gateway"
 )
 
 $stopped = 0

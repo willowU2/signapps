@@ -77,16 +77,34 @@ crates/
   signapps-cache/     → In-process TTL cache (moka) — replaces Redis
   signapps-runtime/   → PostgreSQL lifecycle, hardware detection, model manager
 services/
-  signapps-identity/    → Port 3001 – Auth, LDAP/AD, MFA, RBAC, groups
-  signapps-containers/  → Port 3002 – Docker container lifecycle (bollard)
-  signapps-proxy/       → Port 3003 – Reverse proxy, TLS/ACME, SmartShield
-  signapps-storage/     → Port 3004 – File storage (OpenDAL: local FS or S3)
-  signapps-ai/          → Port 3005 – AI Gateway: RAG multimodal, LLM, Vision, ImageGen, VideoGen, AudioGen, Reranking
-  signapps-securelink/  → Port 3006 – Web tunnels, DNS with ad-blocking
-  signapps-scheduler/   → Port 3007 – CRON job management
-  signapps-metrics/     → Port 3008 – System monitoring, Prometheus, alerts
-  signapps-media/       → Port 3009 – Native STT/TTS/OCR, voice WebSocket pipeline
-client/               → Next.js 16 frontend (App Router)
+  signapps-identity/      → Port 3001 – Auth, LDAP/AD, MFA, RBAC, groups
+  signapps-containers/    → Port 3002 – Docker container lifecycle (bollard)
+  signapps-proxy/         → Port 3003 – Reverse proxy, TLS/ACME, SmartShield
+  signapps-storage/       → Port 3004 – File storage (OpenDAL: local FS or S3)
+  signapps-ai/            → Port 3005 – AI Gateway: RAG, LLM, Vision, ImageGen, VideoGen, AudioGen, Reranking
+  signapps-securelink/    → Port 3006 – Web tunnels, DNS with ad-blocking
+  signapps-scheduler/     → Port 3007 – CRON job management
+  signapps-metrics/       → Port 3008 – System monitoring, Prometheus, alerts
+  signapps-media/         → Port 3009 – Native STT/TTS/OCR, voice WebSocket pipeline
+  signapps-docs/          → Port 3010 – Document editing (Tiptap collaborative)
+  signapps-calendar/      → Port 3011 – Calendar & scheduling
+  signapps-mail/          → Port 3012 – Email service
+  signapps-collab/        → Port 3013 – Real-time collaboration (CRDT)
+  signapps-meet/          → Port 3014 – Video conferencing
+  signapps-forms/         → Port 3015 – Form builder & submissions
+  signapps-pxe/           → Port 3016 – PXE network boot
+  signapps-remote/        → Port 3017 – Remote desktop access
+  signapps-office/        → Port 3018 – Office suite (import/export/reports)
+  signapps-social/        → Port 3019 – Social media management
+  signapps-chat/          → Port 3020 – Team messaging & channels
+  signapps-workforce/     → Port 3019 – HR & workforce management (shares port with social via SERVER_PORT)
+  signapps-it-assets/     → Port 3015 – IT asset management (shares port with forms via SERVER_PORT)
+  signapps-contacts/      → Port 3014 – Contact management
+  signapps-notifications/ → Port 8095 – Push notifications
+  signapps-billing/       → Port 8096 – Billing & invoicing
+  signapps-gateway/       → Port 3099 – API gateway (aggregator proxy)
+scripts/              → start-all.ps1/sh, stop, pg-backup, log rotation
+client/               → Next.js 16 frontend (App Router), port 3000
 migrations/           → PostgreSQL schema migrations (including pgvector)
 ```
 
@@ -194,7 +212,38 @@ gpu-rocm / gpu-cuda / gpu-metal / gpu-vulkan
 
 ### API URL Convention
 
-All services expose REST APIs at `/api/v1/...`. The frontend connects directly to each service port in dev mode. Service ports: identity=3001, containers=3002, proxy=3003, storage=3004, ai=3005, securelink=3006, scheduler=3007, metrics=3008, media=3009.
+All services expose REST APIs at `/api/v1/...`. The frontend connects directly to each service port in dev mode.
+
+**Service ports (complete):**
+
+| Port | Service | Description |
+|------|---------|-------------|
+| 3000 | frontend | Next.js dev server |
+| 3001 | identity | Auth, LDAP/AD, MFA, RBAC |
+| 3002 | containers | Docker container lifecycle |
+| 3003 | proxy | Reverse proxy, TLS/ACME |
+| 3004 | storage | File storage (OpenDAL) |
+| 3005 | ai | AI Gateway (RAG, LLM, Vision, ImageGen) |
+| 3006 | securelink | Web tunnels, DNS |
+| 3007 | scheduler | CRON job management |
+| 3008 | metrics | System monitoring, Prometheus |
+| 3009 | media | STT/TTS/OCR processing |
+| 3010 | docs | Document editing (Tiptap) |
+| 3011 | calendar | Calendar & scheduling |
+| 3012 | mail | Email service |
+| 3013 | collab | Real-time collaboration |
+| 3014 | meet | Video conferencing |
+| 3015 | forms | Form builder & submissions |
+| 3016 | pxe | PXE network boot |
+| 3017 | remote | Remote desktop access |
+| 3018 | office | Office suite (import/export) |
+| 3019 | social | Social media management |
+| 3020 | chat | Team messaging & channels |
+| 3099 | gateway | API gateway (aggregator) |
+| 8095 | notifications | Push notifications |
+| 8096 | billing | Billing & invoicing |
+
+Note: `workforce` (3019), `it-assets` (3015), and `contacts` (3014) share ports with other services. Use `SERVER_PORT` env var to run them simultaneously on different ports.
 
 ## Code Style
 
