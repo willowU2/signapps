@@ -862,6 +862,7 @@ export default function AIPage() {
   });
 
   return (
+    <>
       <div className="flex h-[calc(100vh-8rem)]">
         {/* Sidebar - Conversation History */}
         <div className={cn(
@@ -1558,5 +1559,6 @@ export default function AIPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </>
   );
 }
