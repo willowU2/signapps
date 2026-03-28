@@ -23,6 +23,7 @@ export const REMOTE_URL = process.env.NEXT_PUBLIC_REMOTE_URL || 'http://localhos
 export function createApiClient(baseURL: string): AxiosInstance {
     const client = axios.create({
         baseURL,
+        timeout: 10_000, // 10s timeout — prevents hanging when services are down
         headers: {
             'Content-Type': 'application/json',
         },

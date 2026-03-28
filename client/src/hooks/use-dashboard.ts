@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { containersApi, metricsApi, storageApi, routesApi } from '@/lib/api';
+import { getBreaker } from '@/lib/circuit-breaker';
 
 export interface DashboardData {
   containers: number;
@@ -14,15 +15,26 @@ export interface DashboardData {
   networkTx: number;
 }
 
+/**
+ * Wrap an API call with a circuit breaker so that when a service is down
+ * we stop hammering it and immediately return a settled rejection instead.
+ */
+async function guarded<T>(service: string, fn: () => Promise<T>): Promise<T> {
+  return getBreaker(service).call(fn);
+}
+
 export function useDashboardData() {
   return useQuery<DashboardData>({
     queryKey: ['dashboard'],
     queryFn: async () => {
+      // All four calls go through circuit breakers — if a service is down
+      // for 3+ consecutive checks the breaker opens and stops retrying
+      // for 30 seconds, eliminating console error spam.
       const [containersRes, metricsRes, bucketsRes, routesRes] = await Promise.allSettled([
-        containersApi.list(),
-        metricsApi.system(),
-        storageApi.listBuckets(),
-        routesApi.list(),
+        guarded('containers', () => containersApi.list()),
+        guarded('metrics', () => metricsApi.system()),
+        guarded('storage', () => storageApi.listBuckets()),
+        guarded('proxy', () => routesApi.list()),
       ]);
 
       let containerCount = 0;
@@ -70,6 +82,11 @@ export function useDashboardData() {
         networkTx,
       };
     },
-    refetchInterval: 30000,
+    // Increase staleTime so we don't re-fetch on every tab switch
+    staleTime: 30_000,
+    // Slow down the polling interval — 30s is fine for a dashboard overview
+    refetchInterval: 30_000,
+    // Don't refetch automatically when the window regains focus if data is fresh
+    refetchOnWindowFocus: false,
   });
 }

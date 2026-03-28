@@ -18,6 +18,7 @@ import { RecentFiles } from '@/components/dashboard/recent-files';
 import { GlobalActivityFeed as ActivityFeed } from '@/components/crosslinks/GlobalActivityFeed';
 import { APP_REGISTRY, APP_CATEGORIES, type AppEntry } from '@/lib/app-registry';
 import { usePinnedAppsStore } from '@/lib/store';
+import { resetAllBreakers } from '@/lib/circuit-breaker';
 import { cn } from '@/lib/utils';
 import * as LucideIcons from 'lucide-react';
 
@@ -162,7 +163,7 @@ export default function DashboardPage() {
             </Button>
             <Button
               variant="outline" size="sm"
-              onClick={() => { queryClient.invalidateQueries({ queryKey: ['dashboard'] }); queryClient.invalidateQueries({ queryKey: ['service-health'] }); }}
+              onClick={() => { resetAllBreakers(); queryClient.invalidateQueries({ queryKey: ['dashboard'] }); queryClient.invalidateQueries({ queryKey: ['service-health'] }); }}
               disabled={refreshing}
             >
               <RefreshCw className={cn('mr-2 h-4 w-4', refreshing && 'animate-spin')} /> Refresh
