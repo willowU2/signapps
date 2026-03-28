@@ -876,6 +876,5 @@ export default function MediaContent() {
           <TabsContent value="albums"><SharedAlbums /></TabsContent>
         </Tabs>
       </div>
-    </div>
   );
 }

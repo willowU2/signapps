@@ -37,6 +37,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { AutoSaveIndicator, type SaveStatus } from '@/components/ui/auto-save-indicator'
 
 const ALIGN_CYCLE: ('left' | 'center' | 'right')[] = ['left', 'center', 'right']
 const VALIGN_CYCLE: ('top' | 'middle' | 'bottom')[] = ['top', 'middle', 'bottom']
@@ -544,6 +545,10 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
 
     // Autosave: persists sheet data snapshot to localStorage every 30s
     useAutosave(`sheet:${documentId}`, { data, sheets, activeSheetIndex })
+
+    // Save status indicator
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
+    const lastSavedDataRef = useRef<string>('')
 
     const hasFetchedRef = useRef(false)
     const hasSanitizedRef = useRef(false)
@@ -1574,6 +1579,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             return;
         }
 
+        setSaveStatus('saving');
         const tId = toast.loading("Enregistrement dans le Drive...");
 
         try {
@@ -1587,12 +1593,23 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
             const targetKey = `${documentId}.xlsx`;
             await storageApi.uploadWithKey('drive', targetKey, blob);
 
+            lastSavedDataRef.current = JSON.stringify(data);
+            setSaveStatus('saved');
             toast.success("Enregistré avec succès !", { id: tId });
         } catch(err: any) {
             console.error("Erreur enregistrement spreadsheet", err);
+            setSaveStatus('unsaved');
             toast.error("Erreur d'enregistrement: " + err.message, { id: tId });
         }
-    }, [buildFullWorkbook, documentName, documentId]);
+    }, [buildFullWorkbook, documentName, documentId, data]);
+
+    // Track data changes for unsaved indicator
+    useEffect(() => {
+        const snapshot = JSON.stringify(data);
+        if (lastSavedDataRef.current && snapshot !== lastSavedDataRef.current) {
+            setSaveStatus('unsaved');
+        }
+    }, [data, globalGridVersion]);
 
     // ---- Cell interactions ----
     const commitEdit = () => {
@@ -2902,6 +2919,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                 ))}
                 {/* Status bar */}
                 <div className="ml-auto px-4 flex items-center gap-4 text-[12px] text-[#5f6368] dark:text-[#9aa0a6]">
+                    <AutoSaveIndicator status={saveStatus} />
                     {selectionStats && (
                         <>
                             {selectionStats.sum !== undefined && (

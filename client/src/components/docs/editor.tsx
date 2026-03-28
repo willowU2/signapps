@@ -3204,7 +3204,10 @@ ${html}
 
             {/* Global Character/Word Count Status Bar — IDEA-002 + IDEA-003 */}
             <div className="flex-none flex items-center justify-between px-4 py-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-[#202124] border-t border-gray-200 dark:border-gray-800 shadow-[0_-1px_3px_rgba(0,0,0,0.02)] z-10 w-full relative">
-                <OfflineIndicator />
+                <div className="flex items-center gap-3">
+                    <OfflineIndicator />
+                    <AutoSaveIndicator status={saveStatus} />
+                </div>
                 <div className="flex items-center gap-4">
                     {/* Word count + goal */}
                     <button

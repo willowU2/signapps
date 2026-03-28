@@ -493,7 +493,7 @@ export default function SchedulerPage() {
 
       {/* Job Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingJob ? 'Modifier la Tâche' : 'Nouvelle Tâche'}</DialogTitle>
           </DialogHeader>
