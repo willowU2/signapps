@@ -65,19 +65,12 @@ export function Sidebar() {
   const [addLabelOpen, setAddLabelOpen] = useState(false);
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState('#3b82f6');
-  const [instanceLogo, setInstanceLogo] = useState<string | null>(null);
-  const [instanceName, setInstanceName] = useState<string | null>(null);
 
   // Drop zone state
   const [isDragOver, setIsDragOver] = useState(false);
   // Pinned reorder drag state
   const dragPinIndex = useRef<number | null>(null);
   const [contextMenu, setContextMenu] = useState<{ href: string; x: number; y: number } | null>(null);
-
-  useEffect(() => {
-    setInstanceLogo(localStorage.getItem('signapps_instance_logo'));
-    setInstanceName(localStorage.getItem('signapps_instance_name'));
-  }, []);
 
   // Dismiss context menu on click elsewhere
   useEffect(() => {
@@ -277,22 +270,6 @@ export function Sidebar() {
             Déposer pour épingler
           </div>
         )}
-
-        {/* Branding */}
-        <div
-          className={cn('mb-4 flex cursor-pointer items-center gap-2', sidebarCollapsed ? 'justify-center px-2' : 'px-4')}
-          onClick={() => router.push('/dashboard')}
-          title="Tableau de bord"
-        >
-          {instanceLogo ? (
-            <img src={instanceLogo} alt={instanceName ?? 'Logo'} className="h-8 w-8 rounded-lg object-cover shrink-0" />
-          ) : (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">S</div>
-          )}
-          {!sidebarCollapsed && (
-            <span className="text-sm font-semibold truncate text-foreground/80">{instanceName ?? 'SignApps'}</span>
-          )}
-        </div>
 
         {/* Nouveau Button */}
         <div className={cn('mb-4', sidebarCollapsed ? 'px-2' : 'px-4')}>
