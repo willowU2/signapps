@@ -141,20 +141,20 @@ export default function GdprDashboardPage() {
   const handleApproveDelete = async (req: DeletionRequest) => {
     try {
       await api.post(`/gdpr/deletion-requests/${req.id}/approve`);
-      toast.success('Deletion request approved');
+      toast.success('Demande de suppression approuvée');
       fetchData();
     } catch {
-      toast.error('Failed to approve deletion request');
+      toast.error('Échec de l\'approbation de la demande');
     }
   };
 
   const handleRejectDelete = async (req: DeletionRequest) => {
     try {
       await api.post(`/gdpr/deletion-requests/${req.id}/reject`);
-      toast.success('Deletion request rejected');
+      toast.success('Demande de suppression rejetée');
       fetchData();
     } catch {
-      toast.error('Failed to reject deletion request');
+      toast.error('Échec du rejet de la demande');
     }
   };
 

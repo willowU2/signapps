@@ -16,17 +16,17 @@ export default function FeatureFlagsPage() {
 
   const handleToggle = (key: string, current: boolean) => {
     setOverride(key as keyof typeof FEATURES, !current);
-    toast.success(`${key} set to ${!current ? 'enabled' : 'disabled'}`);
+    toast.success(`${key} ${!current ? 'activé' : 'désactivé'}`);
   };
 
   const handleClearOverride = (key: string) => {
     clearOverride(key as keyof typeof FEATURES);
-    toast.info(`${key} reset to default`);
+    toast.info(`${key} réinitialisé par défaut`);
   };
 
   const handleClearAll = () => {
     clearAll();
-    toast.info('All overrides cleared');
+    toast.info('Tous les remplacements effacés');
   };
 
   const keys = Object.keys(all);

@@ -59,22 +59,22 @@ export default function PollsPage() {
       if (p.id !== pollId || p.voted || p.status === 'closed') return p;
       return { ...p, voted: optionId, totalVotes: p.totalVotes + 1, options: p.options.map(o => o.id === optionId ? { ...o, votes: o.votes + 1 } : o) };
     }));
-    toast.success('Vote recorded!');
+    toast.success('Vote enregistré !');
   };
 
-  const closePoll = (id: string) => { setPolls(prev => prev.map(p => p.id === id ? { ...p, status: 'closed', closedAt: new Date() } : p)); toast.success('Poll closed'); };
+  const closePoll = (id: string) => { setPolls(prev => prev.map(p => p.id === id ? { ...p, status: 'closed', closedAt: new Date() } : p)); toast.success('Sondage fermé'); };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     const validOptions = options.filter(o => o.trim());
-    if (!question.trim() || validOptions.length < 2) { toast.error('Question and at least 2 options required'); return; }
+    if (!question.trim() || validOptions.length < 2) { toast.error('Question et au moins 2 options requises'); return; }
     const poll: Poll = {
       id: Date.now().toString(), question, status: 'active', totalVotes: 0, voted: null, createdAt: new Date(),
       options: validOptions.map((text, i) => ({ id: String(i), text, votes: 0 })),
     };
     setPolls([poll, ...polls]);
     setQuestion(''); setOptions(['', '', '']); setOpen(false);
-    toast.success('Poll created!');
+    toast.success('Sondage créé !');
   };
 
   const active = polls.filter(p => p.status === 'active');
@@ -96,7 +96,7 @@ export default function PollsPage() {
               </p>
             </div>
             {poll.status === 'active' && !poll.voted && (
-              <Button variant="outline" size="sm" onClick={() => closePoll(poll.id)} className="shrink-0"><X className="h-3 w-3 mr-1" />Close</Button>
+              <Button variant="outline" size="sm" onClick={() => closePoll(poll.id)} className="shrink-0"><X className="h-3 w-3 mr-1" />Fermer</Button>
             )}
           </div>
           <div className="space-y-2">
@@ -156,7 +156,7 @@ export default function PollsPage() {
                   <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => setOptions([...options, ''])}><Plus className="h-3 w-3 mr-1" />Add Option</Button>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
                   <Button type="submit">Create Poll</Button>
                 </div>
               </form>

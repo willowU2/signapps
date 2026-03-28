@@ -49,9 +49,9 @@ export default function MentionNotificationsPage() {
   const filtered = tab === 'unread' ? notifs.filter(n => !n.read) : notifs;
 
   const markRead = (id: string) => setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  const markAllRead = () => { setNotifs(prev => prev.map(n => ({ ...n, read: true }))); toast.success('All marked as read'); };
+  const markAllRead = () => { setNotifs(prev => prev.map(n => ({ ...n, read: true }))); toast.success('Tout marqué comme lu'); };
   const remove = (id: string) => setNotifs(prev => prev.filter(n => n.id !== id));
-  const clearAll = () => { setNotifs([]); toast.success('All notifications cleared'); };
+  const clearAll = () => { setNotifs([]); toast.success('Toutes les notifications effacées'); };
 
   return (
     <AppLayout>
@@ -143,7 +143,7 @@ export default function MentionNotificationsPage() {
                   {[{ key: 'push', label: 'Push notifications' }, { key: 'email', label: 'Email digest' }].map(({ key, label }) => (
                     <div key={key} className="flex items-center justify-between">
                       <Label className="cursor-pointer">{label}</Label>
-                      <Switch checked={settings[key as keyof typeof settings] as boolean} onCheckedChange={v => { setSettings({ ...settings, [key]: v }); toast.success(`${label} ${v ? 'enabled' : 'disabled'}`); }} />
+                      <Switch checked={settings[key as keyof typeof settings] as boolean} onCheckedChange={v => { setSettings({ ...settings, [key]: v }); toast.success(`${label} ${v ? 'activé' : 'désactivé'}`); }} />
                     </div>
                   ))}
                 </div>

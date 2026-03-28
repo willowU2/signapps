@@ -45,12 +45,12 @@ export default function DigitalSignagePage() {
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.content.trim()) { toast.error('Please fill all fields'); return; }
+    if (!form.title.trim() || !form.content.trim()) { toast.error('Veuillez remplir tous les champs'); return; }
     const slide: Slide = { id: Date.now().toString(), ...form, active: true, order: slides.length };
     setSlides([...slides, slide]);
     setForm({ type: 'text', title: '', content: '', duration: 10, bgColor: '#1e40af', textColor: '#ffffff' });
     setOpen(false);
-    toast.success('Slide added');
+    toast.success('Slide ajouté');
   };
 
   const move = (id: string, dir: 'up' | 'down') => {
@@ -63,7 +63,7 @@ export default function DigitalSignagePage() {
   };
 
   const toggleActive = (id: string) => setSlides(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
-  const remove = (id: string) => { setSlides(prev => prev.filter(s => s.id !== id)); toast.success('Slide removed'); };
+  const remove = (id: string) => { setSlides(prev => prev.filter(s => s.id !== id)); toast.success('Slide supprimé'); };
 
   const typeIcon = (t: SlideType) => t === 'text' ? Type : t === 'announcement' ? Monitor : t === 'image' ? Image : Clock;
 
@@ -112,7 +112,7 @@ export default function DigitalSignagePage() {
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                    <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
                     <Button type="submit">Add Slide</Button>
                   </div>
                 </form>

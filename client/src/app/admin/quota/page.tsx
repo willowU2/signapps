@@ -66,10 +66,10 @@ function EditQuotaDialog({
       const f = parseInt(maxFiles, 10);
       if (!isNaN(f) && f > 0) req.max_files = f;
       await quotasApi.setUserQuota(user.id, req);
-      toast.success(`Quota updated for ${user.username}`);
+      toast.success(`Quota mis à jour pour ${user.username}`);
       onSaved();
       onOpenChange(false);
-    } catch { toast.error('Failed to update quota'); }
+    } catch { toast.error('Échec de la mise à jour du quota'); }
     finally { setSaving(false); }
   };
 
@@ -107,8 +107,8 @@ function EditQuotaDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving}>Save</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
+          <Button onClick={handleSave} disabled={saving}>Enregistrer</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -139,7 +139,7 @@ export default function QuotaPage() {
       );
       setUserQuotas(quotas);
     } catch {
-      toast.error('Failed to load quota data');
+      toast.error('Impossible de charger les données de quota');
     } finally {
       setLoading(false);
     }
@@ -150,9 +150,9 @@ export default function QuotaPage() {
   const handleRecalculate = async (userId: string) => {
     try {
       await quotasApi.recalculate(userId);
-      toast.success('Quota recalculated');
+      toast.success('Quota recalculé');
       fetchData();
-    } catch { toast.error('Recalculation failed'); }
+    } catch { toast.error('Échec du recalcul'); }
   };
 
   const filtered = userQuotas.filter(uq =>

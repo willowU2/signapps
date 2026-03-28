@@ -74,10 +74,10 @@ export default function WorkspacesPage() {
                     description: values.description || undefined,
                     color: values.color
                 })
-                toast.success("Workspace updated successfully")
+                toast.success("Espace de travail mis à jour")
             } else {
                 await createWorkspace(values.name, values.description || undefined, values.color)
-                toast.success("Workspace created successfully")
+                toast.success("Espace de travail créé")
             }
             setIsSheetOpen(false)
             setEditingWorkspace(null)
@@ -91,7 +91,7 @@ export default function WorkspacesPage() {
 
     const handleDelete = (workspace: Workspace) => {
         if (workspace.is_default) {
-            toast.error("Cannot delete the default workspace")
+            toast.error("Impossible de supprimer l'espace de travail par défaut")
             return
         }
         setDeleteWorkspaceTarget(workspace)
@@ -158,7 +158,7 @@ export default function WorkspacesPage() {
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => {
                                 navigator.clipboard.writeText(workspace.id)
-                                toast.success("ID copied to clipboard")
+                                toast.success("ID copié dans le presse-papiers")
                             }}>
                                 Copy ID
                             </DropdownMenuItem>
@@ -236,8 +236,8 @@ export default function WorkspacesPage() {
                             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteConfirm}>Supprimer</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>

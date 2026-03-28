@@ -161,7 +161,7 @@ export default function GraphQLPage() {
                   )}
                 </div>
                 {response && (
-                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(response); toast.success('Copied'); }} className="gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(response); toast.success('Copié'); }} className="gap-1">
                     <Copy className="h-3 w-3" />Copy
                   </Button>
                 )}

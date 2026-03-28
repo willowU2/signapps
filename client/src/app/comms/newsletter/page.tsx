@@ -72,19 +72,19 @@ export default function NewsletterPage() {
   const removeSection = (id: string) => setSections(prev => prev.filter(s => s.id !== id));
 
   const saveDraft = () => {
-    if (!subject.trim()) { toast.error('Subject required'); return; }
+    if (!subject.trim()) { toast.error('Objet requis'); return; }
     const n: Newsletter = { id: editing?.id || Date.now().toString(), subject, sections, status: 'draft', createdAt: editing?.createdAt || new Date(), recipients: 0 };
     setNewsletters(prev => editing ? prev.map(x => x.id === editing.id ? n : x) : [n, ...prev]);
     setEditing(n);
-    toast.success('Draft saved');
+    toast.success('Brouillon enregistré');
   };
 
   const sendNow = () => {
-    if (!subject.trim() || sections.every(s => !s.content.trim())) { toast.error('Add content before sending'); return; }
+    if (!subject.trim() || sections.every(s => !s.content.trim())) { toast.error('Ajoutez du contenu avant d\'envoyer'); return; }
     const n: Newsletter = { id: editing?.id || Date.now().toString(), subject, sections, status: 'sent', createdAt: editing?.createdAt || new Date(), sentAt: new Date(), recipients: 147 };
     setNewsletters(prev => editing ? prev.map(x => x.id === editing.id ? n : x) : [n, ...prev]);
     setEditing(null);
-    toast.success('Newsletter sent to 147 subscribers!');
+    toast.success('Newsletter envoyée à 147 abonnés !');
   };
 
   const sectionBg = (type: string) => type === 'highlight' ? 'bg-primary/5 border-l-4 border-primary' : type === 'heading' ? '' : '';

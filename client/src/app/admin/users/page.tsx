@@ -82,11 +82,11 @@ export default function UsersPage() {
         setDeleteUserId(null)
         try {
             await usersApi.delete(id)
-            toast.success("User deleted")
+            toast.success("Utilisateur supprimé")
             loadUsers()
         } catch (error: unknown) {
             const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
-            toast.error(msg || "Failed to delete user")
+            toast.error(msg || "Échec de la suppression de l'utilisateur")
         }
     }
 
@@ -95,16 +95,16 @@ export default function UsersPage() {
         try {
             if (selectedUser) {
                 await usersApi.update(selectedUser.id, data as UpdateUserRequest)
-                toast.success("User updated successfully")
+                toast.success("Utilisateur mis à jour")
             } else {
                 await usersApi.create(data as CreateUserRequest)
-                toast.success("User created successfully")
+                toast.success("Utilisateur créé avec succès")
             }
             setIsSheetOpen(false)
             loadUsers()
         } catch (error: unknown) {
             const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
-            toast.error(msg || "Failed to save user")
+            toast.error(msg || "Échec de l'enregistrement de l'utilisateur")
         } finally {
             setIsLoading(false)
         }
@@ -204,12 +204,12 @@ export default function UsersPage() {
                                                     Copy ID
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={() => handleOpenEdit(user)}>Edit</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenEdit(user)}>Modifier</DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => setImpersonateUser(user)}>
                                                     <UserCog className="h-3.5 w-3.5 mr-2" />
                                                     View as user
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem className="text-red-600" onClick={() => setDeleteUserId(user.id)}>Delete</DropdownMenuItem>
+                                                <DropdownMenuItem className="text-red-600" onClick={() => setDeleteUserId(user.id)}>Supprimer</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

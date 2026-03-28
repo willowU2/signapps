@@ -259,7 +259,7 @@ export default function AuditLogPage() {
 
   const refresh = () => {
     setEntries(loadEntries());
-    toast.success('Audit log reloaded');
+    toast.success('Journal d\'audit rechargé');
   };
 
   const clearFilters = () => {
@@ -311,7 +311,7 @@ export default function AuditLogPage() {
     const fresh = generateSampleEntries();
     saveEntries(fresh);
     setEntries(fresh);
-    toast.success('Audit log reset to sample data');
+    toast.success('Journal d\'audit réinitialisé');
   };
 
   const hasFilters = search || actionFilter !== 'all' || dateFrom || dateTo;

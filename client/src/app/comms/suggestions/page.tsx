@@ -61,12 +61,12 @@ export default function SuggestionsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.description.trim()) { toast.error('Please fill all fields'); return; }
+    if (!form.title.trim() || !form.description.trim()) { toast.error('Veuillez remplir tous les champs'); return; }
     const s: Suggestion = { id: Date.now().toString(), title: form.title, description: form.description, category: form.category, upvotes: 0, downvotes: 0, userVote: null, date: new Date(), status: 'pending' };
     setSuggestions([s, ...suggestions]);
     setForm({ title: '', description: '', category: 'General' });
     setOpen(false);
-    toast.success('Suggestion submitted anonymously!');
+    toast.success('Suggestion soumise anonymement !');
   };
 
   const filtered = activeTab === 'all' ? suggestions : suggestions.filter(s => s.status === activeTab);
@@ -97,7 +97,7 @@ export default function SuggestionsPage() {
                   {['General', 'UX', 'Facilities', 'Culture', 'Technology', 'Process'].map(c => <option key={c}>{c}</option>)}
                 </select>
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
                   <Button type="submit">Submit Anonymously</Button>
                 </div>
               </form>

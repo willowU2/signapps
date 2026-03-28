@@ -100,7 +100,7 @@ export default function NewsFeedPage() {
 
   const handlePost = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.content.trim()) { toast.error('Please fill all fields'); return; }
+    if (!form.title.trim() || !form.content.trim()) { toast.error('Veuillez remplir tous les champs'); return; }
     const item: NewsItem = {
       id: Date.now().toString(), title: form.title, content: form.content,
       author: 'You', authorInitials: 'ME', date: new Date(), category: form.category,
@@ -136,7 +136,7 @@ export default function NewsFeedPage() {
                   <option>General</option><option>Business</option><option>HR</option><option>Tech</option>
                 </select>
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
                   <Button type="submit">Publish</Button>
                 </div>
               </form>
