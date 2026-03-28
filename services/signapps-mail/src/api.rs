@@ -238,12 +238,16 @@ async fn create_account(
         ),
     };
 
+    let imap_use_tls = payload.imap_use_tls.unwrap_or(true);
+    let smtp_use_tls = payload.smtp_use_tls.unwrap_or(true);
+
     let account = sqlx::query_as::<_, MailAccount>(
         r#"
         INSERT INTO mail.accounts (
             user_id, email_address, display_name, provider,
-            imap_server, imap_port, smtp_server, smtp_port, app_password, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active')
+            imap_server, imap_port, imap_use_tls, smtp_server, smtp_port, smtp_use_tls,
+            app_password, status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active')
         RETURNING *
         "#,
     )
@@ -253,8 +257,10 @@ async fn create_account(
     .bind(&payload.provider)
     .bind(&imap_server)
     .bind(imap_port)
+    .bind(imap_use_tls)
     .bind(&smtp_server)
     .bind(smtp_port)
+    .bind(smtp_use_tls)
     .bind(&payload.app_password)
     .fetch_one(&state.pool)
     .await;
@@ -284,23 +290,27 @@ async fn update_account(
             display_name = COALESCE($1, display_name),
             imap_server = COALESCE($2, imap_server),
             imap_port = COALESCE($3, imap_port),
-            smtp_server = COALESCE($4, smtp_server),
-            smtp_port = COALESCE($5, smtp_port),
-            app_password = COALESCE($6, app_password),
-            signature_html = COALESCE($7, signature_html),
-            signature_text = COALESCE($8, signature_text),
-            sync_interval_minutes = COALESCE($9, sync_interval_minutes),
-            status = COALESCE($10, status),
+            imap_use_tls = COALESCE($4, imap_use_tls),
+            smtp_server = COALESCE($5, smtp_server),
+            smtp_port = COALESCE($6, smtp_port),
+            smtp_use_tls = COALESCE($7, smtp_use_tls),
+            app_password = COALESCE($8, app_password),
+            signature_html = COALESCE($9, signature_html),
+            signature_text = COALESCE($10, signature_text),
+            sync_interval_minutes = COALESCE($11, sync_interval_minutes),
+            status = COALESCE($12, status),
             updated_at = NOW()
-        WHERE id = $11 AND user_id = $12
+        WHERE id = $13 AND user_id = $14
         RETURNING *
         "#,
     )
     .bind(&payload.display_name)
     .bind(&payload.imap_server)
     .bind(payload.imap_port)
+    .bind(payload.imap_use_tls)
     .bind(&payload.smtp_server)
     .bind(payload.smtp_port)
+    .bind(payload.smtp_use_tls)
     .bind(&payload.app_password)
     .bind(&payload.signature_html)
     .bind(&payload.signature_text)
