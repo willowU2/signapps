@@ -341,7 +341,7 @@ function TunnelsTab() {
         </div>
       </div>
 
-      <Card>
+      <Card className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

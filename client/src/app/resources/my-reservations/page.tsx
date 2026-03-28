@@ -72,7 +72,7 @@ export default function MyReservationsPage() {
     }
 
     const ReservationTable = ({ items, showActions = false }: { items: Reservation[], showActions?: boolean }) => (
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-x-auto">
             <Table>
                 <TableHeader>
                     <TableRow>

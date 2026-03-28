@@ -362,7 +362,7 @@ export default function ResourcesPage() {
                                 <div className="text-muted-foreground">Chargement...</div>
                             </div>
                         ) : (
-                            <div className="rounded-md border">
+                            <div className="rounded-md border overflow-x-auto">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>

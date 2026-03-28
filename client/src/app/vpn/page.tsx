@@ -617,7 +617,7 @@ export default function VpnPage() {
                   Les tunnels exposent vos services locaux via une URL publique
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>

@@ -340,7 +340,7 @@ export default function PXEDashboard() {
                                         <p className="text-muted-foreground mt-2">Crez votre premier profil de boot iPXE.</p>
                                     </div>
                                 ) : (
-                                    <div className="rounded-md border">
+                                    <div className="rounded-md border overflow-x-auto">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
@@ -410,7 +410,7 @@ export default function PXEDashboard() {
                                         <p className="text-muted-foreground mt-2">Les machines qui bootent via PXE apparatront automatiquement ici.</p>
                                     </div>
                                 ) : (
-                                    <div className="rounded-md border">
+                                    <div className="rounded-md border overflow-x-auto">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>

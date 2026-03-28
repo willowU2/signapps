@@ -505,7 +505,7 @@ function ImportUsersDialog({
 
             {/* Preview Table */}
             {parsedUsers.length > 0 && !importResult && (
-              <div className="flex-1 overflow-auto border rounded-lg">
+              <div className="flex-1 overflow-auto overflow-x-auto border rounded-lg">
                 <Table>
                   <TableHeader>
                     <TableRow>

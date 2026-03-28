@@ -356,7 +356,7 @@ export default function SchedulerPage() {
           <CardHeader>
             <CardTitle>Tâches Planifiées</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

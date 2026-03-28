@@ -272,7 +272,7 @@ export default function ITAssetsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="rounded-b-md border-t">
+                <div className="rounded-b-md border-t overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>

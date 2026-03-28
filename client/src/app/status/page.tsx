@@ -204,7 +204,7 @@ export default function StatusPage() {
         </div>
 
         {/* Summary cards */}
-        <div className="grid gap-4 grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <Card className="border-emerald-500/20">
             <CardContent className="pt-4 pb-3 text-center">
               <div className="flex items-center justify-center gap-2 mb-1">

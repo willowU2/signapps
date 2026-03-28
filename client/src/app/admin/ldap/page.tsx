@@ -484,6 +484,7 @@ export default function LdapPage() {
                                         <p className="text-sm">Testez la connexion pour charger les groupes.</p>
                                     </div>
                                 ) : (
+                                    <div className="overflow-x-auto">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
@@ -512,6 +513,7 @@ export default function LdapPage() {
                                             })}
                                         </TableBody>
                                     </Table>
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>

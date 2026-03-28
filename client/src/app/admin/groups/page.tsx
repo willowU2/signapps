@@ -59,7 +59,7 @@ export default function GroupsPage() {
         </Button>
       </div>
 
-      <div className="border rounded-md bg-card">
+      <div className="border rounded-md bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
