@@ -6,13 +6,30 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { driveApi, DriveNode } from '@/lib/api';
 import { useEntityStore } from '@/stores/entity-hub-store';
-import { Presentation, Plus, MoreVertical, Search } from 'lucide-react';
+import { Presentation, Plus, MoreVertical, Search, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function SlidesDashboard() {
     const router = useRouter();
@@ -24,6 +41,11 @@ export default function SlidesDashboard() {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [newDocName, setNewDocName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+
+    // Rename/Delete state
+    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+    const [renameTarget, setRenameTarget] = useState<DriveNode | null>(null);
+    const [renameValue, setRenameValue] = useState('');
 
     const { selectedWorkspaceId } = useEntityStore();
 
@@ -52,6 +74,35 @@ export default function SlidesDashboard() {
 
         fetchDocs();
     }, [selectedWorkspaceId]);
+
+    const handleDelete = async () => {
+        if (!deleteTargetId) return;
+        const id = deleteTargetId;
+        setDeleteTargetId(null);
+        try {
+            await driveApi.deleteNode(id);
+            setDocs(prev => prev.filter(d => d.id !== id));
+            toast.success('Présentation supprimée');
+        } catch (error) {
+            console.error('Failed to delete presentation', error);
+            toast.error('Erreur lors de la suppression');
+        }
+    };
+
+    const handleRename = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!renameTarget || !renameValue.trim()) return;
+        const target = renameTarget;
+        setRenameTarget(null);
+        try {
+            await driveApi.updateNode(target.id, { name: renameValue.trim() });
+            setDocs(prev => prev.map(d => d.id === target.id ? { ...d, name: renameValue.trim() } : d));
+            toast.success('Présentation renommée');
+        } catch (error) {
+            console.error('Failed to rename presentation', error);
+            toast.error('Erreur lors du renommage');
+        }
+    };
 
     const handleCreateNew = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -197,9 +248,22 @@ export default function SlidesDashboard() {
                                                 {doc.name}
                                             </span>
                                         </div>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenuItem onClick={() => { setRenameValue(doc.name); setRenameTarget(doc); }}>
+                                                    <Pencil className="h-3.5 w-3.5 mr-2" /> Renommer
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTargetId(doc.id)}>
+                                                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Supprimer
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                     <div className="flex items-center gap-2 pl-8">
                                         <span className="text-[11px] font-medium text-muted-foreground/70 truncate uppercase tracking-wider">
@@ -212,6 +276,50 @@ export default function SlidesDashboard() {
                     </div>
                 )}
             </section>
+
+            {/* Delete Confirmation */}
+            <AlertDialog open={!!deleteTargetId} onOpenChange={(v) => !v && setDeleteTargetId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer cette présentation ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Cette action est irréversible. La présentation sera supprimée définitivement.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Supprimer
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Rename Dialog */}
+            <Dialog open={!!renameTarget} onOpenChange={(v) => !v && setRenameTarget(null)}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <form onSubmit={handleRename}>
+                        <DialogHeader>
+                            <DialogTitle>Renommer la présentation</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="rename-name">Nouveau titre</Label>
+                                <Input
+                                    id="rename-name"
+                                    value={renameValue}
+                                    onChange={(e) => setRenameValue(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={() => setRenameTarget(null)}>Annuler</Button>
+                            <Button type="submit" disabled={!renameValue.trim()} className="bg-yellow-600 hover:bg-yellow-700 text-white">Renommer</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             {/* Create Dialog */}
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

@@ -29,6 +29,16 @@ import { CreateUserRequest, UpdateUserRequest } from "@/lib/api"
 import { toast } from "sonner"
 import { BulkUserImportDialog } from "@/components/admin/bulk-user-import-dialog"
 import { ImpersonateDialog } from "@/components/admin/impersonate-dialog"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 
 export default function UsersPage() {
@@ -39,6 +49,7 @@ export default function UsersPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [importOpen, setImportOpen] = useState(false)
     const [impersonateUser, setImpersonateUser] = useState<User | null>(null)
+    const [deleteUserId, setDeleteUserId] = useState<string | null>(null)
 
     const { data: users = [] } = useQuery<User[]>({
         queryKey: ['admin-users'],
@@ -60,6 +71,20 @@ export default function UsersPage() {
     const handleOpenEdit = (user: User) => {
         setSelectedUser(user)
         setIsSheetOpen(true)
+    }
+
+    const handleDeleteUser = async () => {
+        if (!deleteUserId) return
+        const id = deleteUserId
+        setDeleteUserId(null)
+        try {
+            await usersApi.delete(id)
+            toast.success("User deleted")
+            loadUsers()
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+            toast.error(msg || "Failed to delete user")
+        }
     }
 
     const handleSubmit = async (data: CreateUserRequest | UpdateUserRequest) => {
@@ -162,7 +187,7 @@ export default function UsersPage() {
                                                     <UserCog className="h-3.5 w-3.5 mr-2" />
                                                     View as user
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                                                <DropdownMenuItem className="text-red-600" onClick={() => setDeleteUserId(user.id)}>Delete</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -192,6 +217,22 @@ export default function UsersPage() {
                     onOpenChange={(v) => !v && setImpersonateUser(null)}
                 />
             )}
+            <AlertDialog open={!!deleteUserId} onOpenChange={(v) => !v && setDeleteUserId(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer cet utilisateur ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Cette action est irréversible. L'utilisateur sera supprimé définitivement.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Supprimer
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
     )
 }
