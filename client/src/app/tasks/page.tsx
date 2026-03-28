@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Plus, Download, Upload, MoreVertical, ExternalLink, X, Settings } from "lucide-react";
+import { Plus, Download, Upload, MoreVertical, ExternalLink, X, Settings, FolderPlus, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TaskTree } from "@/components/tasks/TaskTree";
@@ -68,8 +68,8 @@ export default function TasksPage() {
 
   return (
     <AppLayout>
-      <div className="flex h-[calc(100vh-8rem)] w-full bg-background p-4 pl-0">
-        <div className="w-full glass-panel border border-border/50 rounded-2xl shadow-premium flex flex-col overflow-hidden relative">
+      <div className="flex h-[calc(100vh-8rem)] w-full p-4 md:p-6 lg:p-8">
+        <div className="w-full bg-card/40 backdrop-blur-3xl border border-border/50 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] flex flex-col overflow-hidden relative ring-1 ring-white/10">
           
           <TasksHeader 
             projects={projects}
@@ -83,17 +83,36 @@ export default function TasksPage() {
           />
 
           {/* Content Line Items */}
-          <div className="flex-1 overflow-y-auto w-full">
+          <div className="flex-1 overflow-y-auto w-full relative group">
+            {/* Subtle background glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-primary/5 blur-[100px] rounded-full pointer-events-none transition-opacity duration-1000 opacity-50 group-hover:opacity-100" />
+
             {isLoading && projects.length === 0 ? (
-              <div className="text-center text-muted-foreground py-12 text-sm">
-                Chargement...
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <p className="text-sm font-medium animate-pulse">Chargement de votre espace de travail...</p>
               </div>
             ) : projects.length === 0 ? (
-              <div className="text-center text-muted-foreground py-12 text-sm">
-                Aucun projet trouvé. Veuillez d'abord créer un projet dans le Hub.
+              <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto text-center px-4 space-y-6">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+                  <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 shadow-inner">
+                    <FolderPlus className="h-10 w-10 text-primary" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-semibold tracking-tight">Où est passé votre projet ?</h3>
+                  <p className="text-muted-foreground text-[15px] leading-relaxed">
+                    Il semble que vous n'ayez encore aucun projet. Créez-en un dans le Hub pour débloquer toute la puissance de la gestion des tâches intelligente.
+                  </p>
+                </div>
+                <Button onClick={() => window.location.href='/projects'} size="lg" className="rounded-full shadow-lg hover:shadow-xl bg-primary text-primary-foreground font-medium h-12 px-8 transition-all hover:-translate-y-1 mt-2">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Aller dans le Hub
+                </Button>
               </div>
             ) : selectedProjectId && (
-                <div className="pb-20 h-full">
+                <div className="pb-32 h-full z-10 relative">
                     {viewMode === 'list' ? (
                       <TaskTree
                           key={treeKey}
@@ -115,11 +134,6 @@ export default function TasksPage() {
                 </div>
             )}
           </div>
-
-          {/* New Task Check FAB Button Optional Placeholder */}
-           <div className="absolute right-6 bottom-6 hidden shadow-lg rounded-full flex items-center justify-center cursor-pointer hover:shadow-xl transition-shadow bg-blue-600 text-white w-14 h-14">
-               <Plus className="h-8 w-8" />
-           </div>
         </div>
 
         {/* Dialogs */}
