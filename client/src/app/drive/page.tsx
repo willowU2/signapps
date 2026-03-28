@@ -314,7 +314,7 @@ export default function GlobalDrivePage() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] -m-4 overflow-hidden bg-background dark:bg-[#1a1a1a]">
+      <div className="flex flex-col md:flex-row min-h-0 flex-1 -m-4 overflow-hidden bg-background dark:bg-[#1a1a1a]">
         
         {/* Sidebar */}
         <div className="w-full md:w-[256px] flex flex-col h-full bg-background dark:bg-[#1a1a1a] pb-4 gap-2 border-r border-[#dadce0] dark:border-[#3c4043]">

@@ -31,6 +31,7 @@ const Spreadsheet = dynamic(
 
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { fetchAndParseDocument } from "@/lib/file-parsers"
 import type { SpreadsheetParseResult } from "@/lib/file-parsers"
 import { toast } from "sonner"
@@ -39,6 +40,7 @@ function SheetsContent() {
     const searchParams = useSearchParams()
     const id = searchParams.get('id') || 'new-spreadsheet'
     const name = searchParams.get('name') || ''
+    usePageTitle(name || 'Classeur sans titre')
 
     const [initialData, setInitialData] = useState<any>(undefined)
     const [initialColWidths, setInitialColWidths] = useState<Record<number, number> | undefined>(undefined)

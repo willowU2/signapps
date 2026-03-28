@@ -117,6 +117,7 @@ function CheckIcon() {
 type Tab = "invoices" | "quotes";
 
 export default function BillingPage() {
+  usePageTitle('Facturation');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [usage, setUsage] = useState<BillingUsage | null>(null);
   const [loading, setLoading] = useState(true);

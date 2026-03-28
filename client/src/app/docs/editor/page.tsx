@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/store';
 import { EntityLinks } from '@/components/crosslinks/EntityLinks';
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 function EditorSkeleton() {
     return (
@@ -42,6 +43,7 @@ function EditorContent() {
     const searchParams = useSearchParams();
     const id = searchParams.get('id') || 'new';
     const name = searchParams.get('name') || '';
+    usePageTitle(name || 'Document sans titre');
     const { user } = useAuthStore();
     const userName = user ? user.display_name || user.username || user.email : undefined;
 

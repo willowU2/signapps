@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Mail, Calendar, MessageSquare, LayoutGrid } from 'lucide-react';
+import { Home, Mail, Calendar, CheckSquare, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// 5-tab bottom navigation: Home, Mail, Calendar, Chat, More
+// 5-tab bottom navigation: Home, Mail, Calendar, Tasks, More
 const NAV_ITEMS = [
   {
     label: 'Home',
@@ -21,21 +21,22 @@ const NAV_ITEMS = [
   },
   {
     label: 'Calendar',
-    href: '/calendar',
+    href: '/cal',
     icon: Calendar,
-    match: (p: string) => p.startsWith('/calendar'),
+    match: (p: string) => p.startsWith('/cal'),
   },
   {
-    label: 'Chat',
-    href: '/chat',
-    icon: MessageSquare,
-    match: (p: string) => p.startsWith('/chat'),
+    label: 'Tasks',
+    href: '/tasks',
+    icon: CheckSquare,
+    match: (p: string) => p.startsWith('/tasks'),
   },
   {
     label: 'More',
-    href: '/apps',
+    href: '/all-apps',
     icon: LayoutGrid,
     match: (p: string) =>
+      p.startsWith('/all-apps') ||
       p.startsWith('/apps') ||
       p.startsWith('/settings') ||
       p.startsWith('/admin') ||

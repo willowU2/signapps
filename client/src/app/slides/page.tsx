@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function SlidesPage() {
     return (
         <AppLayout>
-            <div className="flex-1 flex flex-col h-[calc(100vh-8rem)] overflow-hidden glass-panel rounded-2xl shadow-premium border border-border/50">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden glass-panel rounded-2xl shadow-premium border border-border/50">
                 <SlidesDashboard />
             </div>
         </AppLayout>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Plus, Download, Upload, MoreVertical, ExternalLink, X, Settings, FolderPlus, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function TasksPage() {
+  usePageTitle('Tâches');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);

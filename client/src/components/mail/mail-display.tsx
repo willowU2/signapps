@@ -1,11 +1,12 @@
 import { SpinnerInfinity } from 'spinners-react';
 import { format } from "date-fns"
-import { Archive, ArchiveX, Clock, Forward, MoreVertical, Reply, ReplyAll, Trash2, Sparkles, Bot, X, Send, FileText, Link2 } from 'lucide-react';
+import { Archive, ArchiveX, Clock, Forward, MoreVertical, Reply, ReplyAll, Trash2, Sparkles, Bot, X, Send, FileText, Link2, CheckSquare, CalendarPlus } from 'lucide-react';
 import { AttachmentPreviewBar, type Attachment } from "./attachment-preview"
 import { ScheduleSendPopup } from "./schedule-send-popup"
 import { SnoozeDatePicker } from "./snooze-picker"
 import { EntityLinks } from '@/components/crosslinks/EntityLinks';
 import { PgpStatusBadges, DecryptButton } from './pgp-indicator';
+import { EmailToTaskDialog } from './email-to-task-dialog';
 
 import {
     DropdownMenu,
@@ -49,6 +50,9 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
     const [showSummary, setShowSummary] = useState(false)
     const [summaryLoading, setSummaryLoading] = useState(false)
     const [interimReplyText, setInterimReplyText] = useState("")
+
+    // Email-to-task dialog
+    const [showTaskDialog, setShowTaskDialog] = useState(false)
 
     // PGP decryption
     const [decryptedBody, setDecryptedBody] = useState<string | null>(null)
@@ -236,6 +240,17 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
                     </ToolbarGroup>
 
                     <ToolbarGroup className="ml-auto">
+                        {mail && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mr-2 h-7 text-emerald-600 dark:text-emerald-400 border-emerald-200/60 dark:border-emerald-800/60 bg-emerald-50/60 dark:bg-emerald-900/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 transition-all font-semibold"
+                                onClick={() => setShowTaskDialog(true)}
+                            >
+                                <CheckSquare className="h-3.5 w-3.5 mr-2 text-emerald-500" />
+                                Creer une tache
+                            </Button>
+                        )}
                         {mail && (
                             <Button
                                 variant="outline"

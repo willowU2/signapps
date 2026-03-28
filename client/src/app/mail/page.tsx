@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useEffect, useRef, useState, useCallback, useTransition } from "react"
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh"
+import { usePageTitle } from "@/hooks/use-page-title"
 import {
     Inbox,
     File,
@@ -46,6 +47,7 @@ import { cn } from "@/lib/utils"
 import { WorkspaceShell } from "@/components/layout/workspace-shell"
 
 export default function MailPage() {
+    usePageTitle('Mail')
     // Zustand store hooks
     const storeMailList = useMailList()
     const selectedId = useSelectedMailId()

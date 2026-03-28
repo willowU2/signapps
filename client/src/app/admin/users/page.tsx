@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Button } from "@/components/ui/button"
@@ -43,6 +44,7 @@ import {
 
 
 export default function UsersPage() {
+    usePageTitle('Utilisateurs — Administration')
     const queryClient = useQueryClient()
     const [search, setSearch] = useState("")
     const [isSheetOpen, setIsSheetOpen] = useState(false)

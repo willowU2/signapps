@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo, useCallback } from "react"
+import React, { useEffect, useState, useMemo, useCallback } from "react"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { cn } from "@/lib/utils"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -22,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown, Upload, GitMerge, Gift, Settings2, MapPin, Clock, Building2, History, Tag, X, FileDown } from "lucide-react"
+import { Users, Plus, Search, Pencil, Trash2, Star, StarOff, UsersRound, Download, ArrowUpDown, Upload, GitMerge, Gift, Settings2, MapPin, Clock, Building2, History, Tag, X, FileDown, Mail } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
@@ -36,6 +37,7 @@ import { CustomFieldsAdmin, CustomFieldForm, DEFAULT_FIELDS, type CustomFieldDef
 import { ContactMap } from "@/components/contacts/contact-map"
 import { ContactHistory, type ContactActivity } from "@/components/contacts/contact-history"
 import { CompanyRelations } from "@/components/contacts/company-relations"
+import { ContactEmailPanel } from "@/components/contacts/contact-email-panel"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -68,6 +70,7 @@ const SEED_CONTACTS: Contact[] = [
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function ContactsPage() {
+  usePageTitle('Contacts')
   const queryClient = useQueryClient()
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState<ActiveTab>("all")
@@ -87,6 +90,7 @@ export default function ContactsPage() {
   const [bulkTagInput, setBulkTagInput] = useState("")
   const [showBulkTag, setShowBulkTag] = useState(false)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [emailPanelContactId, setEmailPanelContactId] = useState<string | null>(null)
 
   const { data: contacts = SEED_CONTACTS, isLoading, isError, refetch } = useQuery<Contact[]>({
     queryKey: ['contacts'],
@@ -613,37 +617,61 @@ export default function ContactsPage() {
                       </TableRow>
                     )}
                     {sortedFiltered.map(c => (
-                      <TableRow key={c.id} className={cn("transition-colors hover:bg-muted/50 cursor-pointer", selectedIds.has(c.id) ? "bg-primary/5" : "")}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedIds.has(c.id)}
-                            onCheckedChange={() => toggleSelect(c.id)}
-                            aria-label={`Selectionner ${c.name}`}
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium">{c.name}</TableCell>
-                        <TableCell className="text-muted-foreground">{c.email}</TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground">{c.phone ?? "—"}</TableCell>
-                        <TableCell className="hidden lg:table-cell text-muted-foreground">{c.company ?? "—"}</TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <div className="flex gap-1 flex-wrap">
-                            {c.tags.map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex gap-1 justify-end">
-                            <Button size="icon" variant="ghost" title="Favori" onClick={() => toggleFavorite(c)}>
-                              {c.favorite ? <Star className="h-4 w-4 text-amber-500" /> : <StarOff className="h-4 w-4" />}
-                            </Button>
-                            <Button size="icon" variant="ghost" title="Modifier" onClick={() => handleEdit(c)}>
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" title="Supprimer" onClick={() => setDeleteTarget(c.id)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      <React.Fragment key={c.id}>
+                        <TableRow className={cn("transition-colors hover:bg-muted/50 cursor-pointer", selectedIds.has(c.id) ? "bg-primary/5" : "", emailPanelContactId === c.id ? "border-b-0 bg-primary/5" : "")}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedIds.has(c.id)}
+                              onCheckedChange={() => toggleSelect(c.id)}
+                              aria-label={`Selectionner ${c.name}`}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">{c.name}</TableCell>
+                          <TableCell className="text-muted-foreground">{c.email}</TableCell>
+                          <TableCell className="hidden md:table-cell text-muted-foreground">{c.phone ?? "—"}</TableCell>
+                          <TableCell className="hidden lg:table-cell text-muted-foreground">{c.company ?? "—"}</TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            <div className="flex gap-1 flex-wrap">
+                              {c.tags.map(t => <Badge key={t} variant="secondary">{t}</Badge>)}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-1 justify-end">
+                              {c.email && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  title="Voir les emails"
+                                  onClick={(e) => { e.stopPropagation(); setEmailPanelContactId(emailPanelContactId === c.id ? null : c.id) }}
+                                  className={emailPanelContactId === c.id ? "text-primary bg-primary/10" : ""}
+                                >
+                                  <Mail className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <Button size="icon" variant="ghost" title="Favori" onClick={() => toggleFavorite(c)}>
+                                {c.favorite ? <Star className="h-4 w-4 text-amber-500" /> : <StarOff className="h-4 w-4" />}
+                              </Button>
+                              <Button size="icon" variant="ghost" title="Modifier" onClick={() => handleEdit(c)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button size="icon" variant="ghost" title="Supprimer" onClick={() => setDeleteTarget(c.id)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        {emailPanelContactId === c.id && c.email && (
+                          <TableRow className="bg-primary/5 hover:bg-primary/5">
+                            <TableCell colSpan={7} className="p-4">
+                              <ContactEmailPanel
+                                contactEmail={c.email}
+                                contactName={c.name}
+                                onClose={() => setEmailPanelContactId(null)}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>

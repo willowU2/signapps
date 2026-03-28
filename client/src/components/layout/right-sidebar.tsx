@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUIStore, RightWidgetType } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -39,8 +39,26 @@ export function RightSidebar() {
   const [mounted, setMounted] = useState(false);
   const [panelMode, setPanelMode] = useState<"widget" | "apps">("widget");
   const [appSearch, setAppSearch] = useState("");
+  const panelRef = useRef<HTMLDivElement>(null);
+  const iconBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Close panel when clicking outside (not on icon bar or panel itself)
+  useEffect(() => {
+    if (!rightSidebarOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        panelRef.current && !panelRef.current.contains(target) &&
+        iconBarRef.current && !iconBarRef.current.contains(target)
+      ) {
+        setRightSidebarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [rightSidebarOpen, setRightSidebarOpen]);
 
   // Force panel closed on first mount to reset any stale localStorage state
   useEffect(() => {
@@ -91,6 +109,7 @@ export function RightSidebar() {
     <>
       {/* Expanded Panel */}
       <div
+        ref={panelRef}
         className={cn(
           "hidden md:flex fixed top-0 right-16 bottom-0 w-80 bg-background border-l border-border",
           "transition-all duration-300 ease-in-out z-30 flex-col shadow-xl",
@@ -201,7 +220,7 @@ export function RightSidebar() {
       </div>
 
       {/* Icon Bar (always visible, fixed on far right) */}
-      <div className="hidden md:flex fixed top-0 right-0 bottom-0 w-16 bg-background border-l border-border z-40 flex-col items-center py-4 gap-1">
+      <div ref={iconBarRef} className="hidden md:flex fixed top-0 right-0 bottom-0 w-16 bg-background border-l border-border z-40 flex-col items-center py-4 gap-1">
         <TooltipProvider delayDuration={0}>
           {widgetItems.map((item) => {
             const isActive = isOpen && activeRightWidget === item.id && panelMode === "widget";

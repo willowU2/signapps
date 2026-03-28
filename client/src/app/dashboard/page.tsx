@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePageTitle } from '@/hooks/use-page-title';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,6 +101,7 @@ function CategorySection({ category, apps, onDragStart }: {
 }
 
 export default function DashboardPage() {
+  usePageTitle('Tableau de bord');
   const queryClient = useQueryClient();
   const router = useRouter();
   const { data, isLoading: loading, isFetching: refreshing } = useDashboardData();
