@@ -24,7 +24,7 @@ export function UnifiedStats({ data }: Props) {
         <Card
           key={c.label}
           onClick={() => router.push(c.href)}
-          className="cursor-pointer transition-all hover:border-primary/40 hover:shadow-md"
+          className="cursor-pointer transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
         >
           <CardContent className="flex items-center gap-4 p-4">
             <div className={cn("rounded-lg bg-muted p-2", c.color)}>

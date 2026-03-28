@@ -85,7 +85,7 @@ export function FileListItem({
             {...attributes}
             {...listeners}
             className={cn(
-                "group flex items-center gap-4 p-2 rounded-lg transition-colors hover:bg-muted/50 cursor-grab active:cursor-grabbing border border-transparent",
+                "group flex items-center gap-4 p-2 rounded-lg transition-all duration-150 hover:bg-muted/60 hover:shadow-sm cursor-grab active:cursor-grabbing border border-transparent",
                 selected && "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800",
                 isDragging && "opacity-50 ring-2 ring-blue-500 bg-blue-50"
             )}

@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Enterprise microservices management platform',
     start_url: '/',
     display: 'standalone',
-    background_color: '#ffffff',
-    theme_color: '#000000',
+    background_color: '#f6f6f8',
+    theme_color: '#135bec',
     icons: [
       {
         src: '/icon-192.png',

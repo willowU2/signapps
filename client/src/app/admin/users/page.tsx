@@ -129,7 +129,7 @@ export default function UsersPage() {
                         </TableHeader>
                         <TableBody>
                             {filteredUsers.map((user) => (
-                                <TableRow key={user.id}>
+                                <TableRow key={user.id} className="transition-colors hover:bg-muted/50">
                                     <TableCell className="font-medium">{user.display_name || user.username}</TableCell>
                                     <TableCell>{user.email || '-'}</TableCell>
                                     <TableCell>

@@ -103,8 +103,8 @@
   --accent: rgba(19, 91, 236, 0.15);
   --accent-foreground: #60a5fa;
   --destructive: #ef4444;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.12);
   --ring: #135bec;
   --chart-1: #3b82f6;
   --chart-2: #10b981;
@@ -117,7 +117,7 @@
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: rgba(19, 91, 236, 0.15);
   --sidebar-accent-foreground: #60a5fa;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-border: rgba(255, 255, 255, 0.10);
   --sidebar-ring: #135bec;
 }
 
@@ -211,6 +211,30 @@
 
   .ai-glow {
     box-shadow: 0 0 15px rgba(19, 91, 236, 0.15);
+  }
+
+  /* ── Micro-interactions ── */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:-translate-y-0.5;
+  }
+
+  .press-feedback {
+    @apply active:scale-[0.97] transition-transform;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.2s ease-in;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in {
+    animation: none;
   }
 }
 

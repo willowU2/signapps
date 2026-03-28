@@ -39,7 +39,7 @@ function AppCard({ app, onDragStart }: { app: AppEntry; onDragStart: (e: React.D
       draggable
       onDragStart={(e) => onDragStart(e, app)}
       onClick={() => router.push(app.href)}
-      className="group relative flex cursor-pointer flex-col items-start gap-2 rounded-xl border border-border bg-card p-3 transition-all hover:border-primary/40 hover:shadow-md active:scale-95"
+      className="group relative flex cursor-pointer flex-col items-start gap-2 rounded-xl border border-border bg-card p-3 transition-all duration-200 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] active:translate-y-0"
       title={`Glisser pour épingler dans la barre latérale`}
     >
       <div className="flex w-full items-start justify-between gap-2">
