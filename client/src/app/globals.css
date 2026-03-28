@@ -788,3 +788,20 @@
     color: black !important;
   }
 }
+
+/* =========================================
+   IDEA-250: Density Mode
+   Applied by DensityModeToggle via data-density attribute
+   ========================================= */
+[data-density="compact"] {
+  --density-space: 0.75rem;
+  --density-font: 0.875rem;
+}
+[data-density="comfortable"] {
+  --density-space: 1rem;
+  --density-font: 1rem;
+}
+[data-density="spacious"] {
+  --density-space: 1.25rem;
+  --density-font: 1.0625rem;
+}

@@ -3,7 +3,12 @@
 import { SpinnerInfinity } from 'spinners-react';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { Search, Menu, Settings, Grid, List, RefreshCw, Lightbulb, Bell, Pencil, Archive, Trash2, Image, Palette, MoreVertical, Pin, CheckSquare, Check, X, Plus, Tag } from 'lucide-react';
+import { Search, Menu, Settings, Grid, List, RefreshCw, Lightbulb, Bell, Pencil, Archive, Trash2, Image, Palette, MoreVertical, Pin, CheckSquare, Check, X, Plus, Tag, Share2, ScanText, Presentation } from 'lucide-react';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ShareNote } from "@/components/keep/share-note";
+import { NoteReminder, type NoteReminder as NoteReminderType } from "@/components/keep/note-reminder";
+import { OcrImage } from "@/components/keep/ocr-image";
+import { NotePresentation } from "@/components/keep/note-presentation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -81,6 +86,16 @@ export default function KeepPage() {
   const [isGridView, setIsGridView] = useState(true);
   const [activeSidebarView, setActiveSidebarView] = useState<SidebarView>("notes");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
+  // New feature states
+  const [shareNoteId, setShareNoteId] = useState<string | null>(null);
+  const [reminderNoteId, setReminderNoteId] = useState<string | null>(null);
+  const [ocrNoteId, setOcrNoteId] = useState<string | null>(null);
+  const [presentationMode, setPresentationMode] = useState(false);
+  const [reminders, setReminders] = useState<NoteReminderType[]>([]);
+
+  const shareNote = shareNoteId ? keepData?.notes.find(n => n.id === shareNoteId) : null;
+  const reminderNote = reminderNoteId ? keepData?.notes.find(n => n.id === reminderNoteId) : null;
 
   const { sidebarCollapsed, rightSidebarOpen } = useUIStore();
 
@@ -348,6 +363,22 @@ export default function KeepPage() {
               </TooltipTrigger>
               <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
                 {isGridView ? "Affichage liste" : "Affichage grille"}
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                  onClick={() => setPresentationMode(true)}
+                >
+                  <Presentation className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
+                Mode présentation
               </TooltipContent>
             </Tooltip>
 
@@ -693,6 +724,9 @@ export default function KeepPage() {
                       }
                       showTrashActions={showTrashActions}
                       showArchiveActions={showArchiveActions}
+                      onShare={() => setShareNoteId(note.id)}
+                      onReminder={() => setReminderNoteId(note.id)}
+                      onOcr={() => setOcrNoteId(note.id)}
                     />
                   ))}
                 </div>
@@ -730,6 +764,9 @@ export default function KeepPage() {
                       }
                       showTrashActions={showTrashActions}
                       showArchiveActions={showArchiveActions}
+                      onShare={() => setShareNoteId(note.id)}
+                      onReminder={() => setReminderNoteId(note.id)}
+                      onOcr={() => setOcrNoteId(note.id)}
                     />
                   ))}
                 </div>
@@ -775,6 +812,49 @@ export default function KeepPage() {
             )}
           </main>
       </WorkspaceShell>
+
+      {/* Presentation mode */}
+      {presentationMode && (
+        <NotePresentation
+          notes={filteredNotes}
+          onClose={() => setPresentationMode(false)}
+        />
+      )}
+
+      {/* Share dialog */}
+      <Dialog open={!!shareNoteId} onOpenChange={(o) => { if (!o) setShareNoteId(null); }}>
+        <DialogContent className="max-w-md">
+          {shareNote && (
+            <ShareNote noteId={shareNote.id} noteTitle={shareNote.title} onClose={() => setShareNoteId(null)} />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reminder dialog */}
+      <Dialog open={!!reminderNoteId} onOpenChange={(o) => { if (!o) setReminderNoteId(null); }}>
+        <DialogContent className="max-w-md">
+          {reminderNote && (
+            <NoteReminder
+              noteId={reminderNote.id}
+              noteTitle={reminderNote.title}
+              reminders={reminders}
+              onAdd={(r) => setReminders((p) => [...p, r])}
+              onDelete={(id) => setReminders((p) => p.filter((r) => r.id !== id))}
+              onClose={() => setReminderNoteId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* OCR dialog */}
+      <Dialog open={!!ocrNoteId} onOpenChange={(o) => { if (!o) setOcrNoteId(null); }}>
+        <DialogContent className="max-w-md">
+          <OcrImage onTextExtracted={(text) => {
+            // The text is extracted — user can copy/insert it
+            setOcrNoteId(null);
+          }} />
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
@@ -791,6 +871,9 @@ interface NoteCardProps {
   onToggleChecklistItem: (itemId: string) => void;
   showTrashActions: boolean;
   showArchiveActions: boolean;
+  onShare?: () => void;
+  onReminder?: () => void;
+  onOcr?: () => void;
 }
 
 function NoteCard({
@@ -805,6 +888,9 @@ function NoteCard({
   onToggleChecklistItem,
   showTrashActions,
   showArchiveActions,
+  onShare,
+  onReminder,
+  onOcr,
 }: NoteCardProps) {
   const uncheckedItems = note.checklistItems.filter((item) => !item.checked);
   const checkedItems = note.checklistItems.filter((item) => item.checked);
@@ -1029,6 +1115,7 @@ function NoteCard({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                  onClick={(e) => { e.stopPropagation(); onReminder?.(); }}
                   aria-label="Me rappeler"
                 >
                   <Bell className="h-[18px] w-[18px]" />
@@ -1136,6 +1223,40 @@ function NoteCard({
               </TooltipTrigger>
               <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
                 Supprimer
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                  onClick={(e) => { e.stopPropagation(); onShare?.(); }}
+                  aria-label="Partager"
+                >
+                  <Share2 className="h-[18px] w-[18px]" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
+                Partager
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full text-[#9aa0a6] hover:bg-[#3c4043]"
+                  onClick={(e) => { e.stopPropagation(); onOcr?.(); }}
+                  aria-label="OCR image"
+                >
+                  <ScanText className="h-[18px] w-[18px]" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="bg-[#3c4043] text-[#e8eaed] border-[#5f6368]">
+                Extraire texte (OCR)
               </TooltipContent>
             </Tooltip>
 

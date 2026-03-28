@@ -13,16 +13,16 @@
     "signapps-storage":  3004,
     "signapps-contacts":  3021,
     "signapps-identity":  3025,
-    "signapps-calendar":  3011,
+    "signapps-chat":  3020,
     "signapps-mail":  3012,
     "signapps-metrics":  3008,
-    "signapps-securelink":  3006,
+    "signapps-remote":  3017,
     "signapps-pxe":  3016,
     "signapps-ai":  3005,
     "signapps-scheduler":  3007,
     "signapps-social":  3027,
     "signapps-it-assets":  3022,
-    "signapps-chat":  3020,
+    "signapps-securelink":  3006,
     "signapps-workforce":  3019,
-    "signapps-remote":  3017
+    "signapps-calendar":  3011
 }

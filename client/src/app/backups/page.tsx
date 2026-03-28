@@ -41,6 +41,11 @@ import { BackupDialog } from '@/components/backups/backup-dialog';
 import { RestoreDialog } from '@/components/backups/restore-dialog';
 import { RunsDialog } from '@/components/backups/runs-dialog';
 import { BackupVerificationStatus } from '@/components/backups/backup-verification-status';
+import { PointInTimeRecoveryDialog } from '@/components/backups/point-in-time-recovery';
+import { BackupMonitoringDashboard } from '@/components/backups/backup-monitoring-dashboard';
+import { CrossRegionBackup } from '@/components/backups/cross-region-backup';
+import { IncrementalBackupSettings } from '@/components/backups/incremental-backup-settings';
+import { DRTestDialog } from '@/components/backups/dr-test-dialog';
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return '-';
@@ -61,6 +66,9 @@ export default function BackupsPage() {
   const [editProfile, setEditProfile] = useState<BackupProfile | null>(null);
   const [restoreProfileId, setRestoreProfileId] = useState<string | null>(null);
   const [runsProfileId, setRunsProfileId] = useState<string | null>(null);
+  const [pitrProfileId, setPitrProfileId] = useState<string | null>(null);
+  const [drTestProfile, setDrTestProfile] = useState<BackupProfile | null>(null);
+  const [activeTab, setActiveTab] = useState<'profiles' | 'monitoring' | 'cross-region' | 'incremental'>('profiles');
 
   const { data: profilesData, isLoading, isError } = useQuery({
     queryKey: ['backup-profiles'],
@@ -127,6 +135,27 @@ export default function BackupsPage() {
           </Button>
         </div>
 
+        {/* Tab navigation for new backup features */}
+        <div className="flex gap-2 border-b pb-2">
+          {(['profiles', 'monitoring', 'cross-region', 'incremental'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-3 py-1.5 text-sm rounded-lg transition-colors capitalize ${
+                activeTab === tab ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
+              }`}
+            >
+              {tab.replace('-', ' ')}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'monitoring' && <BackupMonitoringDashboard />}
+        {activeTab === 'cross-region' && <CrossRegionBackup />}
+        {activeTab === 'incremental' && <IncrementalBackupSettings />}
+
+        {activeTab === 'profiles' && (
+        <>
         {/* AQ-BKPVER: Backup verification status */}
         <BackupVerificationStatus />
 
@@ -223,6 +252,14 @@ export default function BackupsPage() {
                               <History className="mr-2 h-4 w-4" />
                               Run History
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setPitrProfileId(profile.id)}>
+                              <Clock className="mr-2 h-4 w-4" />
+                              Point-in-Time Recovery
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDrTestProfile(profile)}>
+                              <Power className="mr-2 h-4 w-4" />
+                              DR Test
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() =>
@@ -293,6 +330,25 @@ export default function BackupsPage() {
             onOpenChange={(open) => !open && setRunsProfileId(null)}
             profileId={runsProfileId}
           />
+        )}
+
+        {pitrProfileId && (
+          <PointInTimeRecoveryDialog
+            open={!!pitrProfileId}
+            onOpenChange={(open) => !open && setPitrProfileId(null)}
+            profileId={pitrProfileId}
+          />
+        )}
+
+        {drTestProfile && (
+          <DRTestDialog
+            open={!!drTestProfile}
+            onOpenChange={(open) => !open && setDrTestProfile(null)}
+            profileId={drTestProfile.id}
+            profileName={drTestProfile.name}
+          />
+        )}
+        </>
         )}
       </div>
     </AppLayout>

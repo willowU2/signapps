@@ -173,6 +173,46 @@ export const accountApi = {
         const res = await mailClient.post(`/accounts/${id}/test`)
         return res.data
     },
+
+    // IDEA-261: Email aliases
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    listAliases: async (accountId: string): Promise<any[]> => {
+        const res = await mailClient.get(`/accounts/${accountId}/aliases`)
+        return res.data
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    createAlias: async (accountId: string, data: { alias_email: string; display_name: string }): Promise<any> => {
+        const res = await mailClient.post(`/accounts/${accountId}/aliases`, data)
+        return res.data
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    updateAlias: async (accountId: string, aliasId: string, data: Partial<{ alias_email: string; display_name: string }>): Promise<any> => {
+        const res = await mailClient.patch(`/accounts/${accountId}/aliases/${aliasId}`, data)
+        return res.data
+    },
+    deleteAlias: async (accountId: string, aliasId: string): Promise<void> => {
+        await mailClient.delete(`/accounts/${accountId}/aliases/${aliasId}`)
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setDefaultAlias: async (accountId: string, aliasId: string): Promise<any> => {
+        const res = await mailClient.post(`/accounts/${accountId}/aliases/${aliasId}/set-default`)
+        return res.data
+    },
+
+    // IDEA-264: Delegation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    listDelegations: async (accountId: string): Promise<any[]> => {
+        const res = await mailClient.get(`/accounts/${accountId}/delegations`)
+        return res.data
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    createDelegation: async (accountId: string, data: object): Promise<any> => {
+        const res = await mailClient.post(`/accounts/${accountId}/delegations`, data)
+        return res.data
+    },
+    revokeDelegation: async (accountId: string, delegationId: string): Promise<void> => {
+        await mailClient.delete(`/accounts/${accountId}/delegations/${delegationId}`)
+    },
 }
 
 // ============================================================================
@@ -262,6 +302,45 @@ export const mailApi = {
 
     getAttachments: async (id: string): Promise<Attachment[]> => {
         const res = await mailClient.get(`/emails/${id}/attachments`)
+        return res.data
+    },
+
+    // IDEA-263: Recurring emails
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    createRecurring: async (data: object): Promise<any> => {
+        const res = await mailClient.post('/emails/recurring', data)
+        return res.data
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    updateRecurring: async (id: string, data: object): Promise<any> => {
+        const res = await mailClient.patch(`/emails/recurring/${id}`, data)
+        return res.data
+    },
+    deleteRecurring: async (id: string): Promise<void> => {
+        await mailClient.delete(`/emails/recurring/${id}`)
+    },
+
+    // IDEA-265: Read tracking
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getTrackingRecords: async (params: object): Promise<any[]> => {
+        const res = await mailClient.get('/emails/tracking', { params })
+        return res.data
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getTrackingStats: async (params: object): Promise<any> => {
+        const res = await mailClient.get('/emails/tracking/stats', { params })
+        return res.data
+    },
+
+    // IDEA-266: AI categorization
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    categorizeInbox: async (data: object): Promise<any> => {
+        const res = await mailClient.post('/emails/categorize', data)
+        return res.data
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    saveCategorizeSettings: async (data: object): Promise<any> => {
+        const res = await mailClient.put('/emails/categorize/settings', data)
         return res.data
     },
 }
@@ -434,3 +513,4 @@ export function emailToUIMail(email: Email): UIMail {
         folder: 'inbox', // Will be determined by folder_type
     }
 }
+

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MessageSquare, Smile, MoreHorizontal, Forward, Edit2, Trash2, CheckCircle2 } from "lucide-react";
+import { MessageSquare, Smile, MoreHorizontal, Forward, Edit2, Trash2, Pin, PinOff } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,6 +12,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useUsersMap } from "@/lib/store/chat-store";
+import { ChatAttachment as Attachment } from "@/lib/api/chat";
+import { ChatMarkdown } from "./chat-markdown";
+import { AttachmentPreview } from "./file-attachment";
+import { VoiceMessagePlayer } from "./voice-message";
 
 export interface ChatMessage {
     id: string;
@@ -20,8 +24,10 @@ export interface ChatMessage {
     senderName: string;
     timestamp: number;
     avatar?: string;
-    reactions?: Record<string, number>; // emoji -> count
+    reactions?: Record<string, number>;
     isEdited?: boolean;
+    isPinned?: boolean;
+    attachment?: Attachment;
 }
 
 interface MessageItemProps {
@@ -30,71 +36,50 @@ interface MessageItemProps {
     showAvatar: boolean;
     onReplyInThread?: (msgId: string) => void;
     onAddReaction?: (msgId: string, emoji: string) => void;
+    onPin?: (msgId: string) => void;
+    onUnpin?: (msgId: string) => void;
+    canPin?: boolean;
 }
 
-export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddReaction }: MessageItemProps) {
+const QUICK_REACTIONS = ["👍", "❤️", "😂", "🎉"];
+
+export function MessageItem({
+    message,
+    isMe,
+    showAvatar,
+    onReplyInThread,
+    onAddReaction,
+    onPin,
+    onUnpin,
+    canPin = true,
+}: MessageItemProps) {
     const usersMap = useUsersMap();
     const [isHovered, setIsHovered] = useState(false);
-    const date = new Date(message.timestamp);
-    const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Resolve user avatar
+    const date = new Date(message.timestamp);
+    const timeString = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
     const targetUser = usersMap[message.senderId] || Object.values(usersMap).find(u => u.username === message.senderName);
     const resolvedAvatar = message.avatar || targetUser?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${message.senderId}`;
 
-    // Quick reaction picker options
-    const quickReactions = ["👍", "❤️", "😂", "🎉"];
-
-    const renderContent = (content: string) => {
-        // Simple regex to match ![alt](url)
-        const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-        if (!imgRegex.test(content)) return content;
-        
-        const parts = [];
-        let lastIndex = 0;
-        let match;
-        
-        imgRegex.lastIndex = 0;
-        
-        while ((match = imgRegex.exec(content)) !== null) {
-            if (match.index > lastIndex) {
-                parts.push(content.substring(lastIndex, match.index));
-            }
-            const alt = match[1];
-            const url = match[2];
-            parts.push(
-                <img 
-                    key={match.index} 
-                    src={url} 
-                    alt={alt || "image"} 
-                    className="max-w-full max-h-[300px] rounded-md my-2 object-contain bg-muted/20" 
-                    loading="lazy"
-                />
-            );
-            lastIndex = imgRegex.lastIndex;
-        }
-        if (lastIndex < content.length) {
-            parts.push(content.substring(lastIndex));
-        }
-        
-        return <>{parts}</>;
-    };
+    const isVoice = message.attachment?.content_type?.startsWith("audio/");
 
     return (
         <div
             className={cn(
                 "group relative flex gap-3 px-2 py-1.5 transition-colors hover:bg-muted/30 rounded-lg",
                 !showAvatar && "mt-0.5",
-                showAvatar && "mt-4"
+                showAvatar && "mt-4",
+                message.isPinned && "border-l-2 border-primary/40 bg-primary/5 hover:bg-primary/10"
             )}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             {/* Hover Toolbar */}
             {isHovered && (
-                <div className="absolute -top-4 right-4 z-10 flex items-center gap-0.5 rounded-md border bg-background p-1 shadow-sm transition-opacity animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute -top-4 right-4 z-10 flex items-center gap-0.5 rounded-md border bg-background p-1 shadow-sm animate-in fade-in zoom-in-95 duration-200">
                     <TooltipProvider delayDuration={300}>
-                        {quickReactions.map(emoji => (
+                        {QUICK_REACTIONS.map(emoji => (
                             <Tooltip key={emoji}>
                                 <TooltipTrigger asChild>
                                     <Button
@@ -125,6 +110,24 @@ export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddR
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs">Reply in thread</TooltipContent>
                         </Tooltip>
+
+                        {canPin && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                        onClick={() => message.isPinned ? onUnpin?.(message.id) : onPin?.(message.id)}
+                                    >
+                                        {message.isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                    {message.isPinned ? "Unpin" : "Pin message"}
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -179,20 +182,37 @@ export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddR
                 {showAvatar && (
                     <div className="flex items-baseline gap-2 mb-0.5">
                         <span className="text-sm font-semibold hover:underline cursor-pointer">{message.senderName}</span>
-                        <span className="text-[11px] text-muted-foreground/70 font-medium">
-                            {timeString}
-                        </span>
+                        <span className="text-[11px] text-muted-foreground/70 font-medium">{timeString}</span>
+                        {message.isPinned && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-primary/70 font-medium">
+                                <Pin className="h-2.5 w-2.5" />
+                                pinned
+                            </span>
+                        )}
                     </div>
                 )}
 
-                <div className="text-[15px] text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">
-                    {renderContent(message.content)}
-                    {message.isEdited && (
-                        <span className="text-[10px] text-muted-foreground ml-2 select-none">(edited)</span>
-                    )}
-                </div>
+                {/* Content — IDEA-143: render markdown */}
+                {!isVoice && message.content && (
+                    <div className="text-[15px] text-foreground/90 leading-relaxed break-words">
+                        <ChatMarkdown content={message.content} />
+                        {message.isEdited && (
+                            <span className="text-[10px] text-muted-foreground ml-2 select-none">(edited)</span>
+                        )}
+                    </div>
+                )}
 
-                {/* Reactions (Mock Display) */}
+                {/* File attachment (IDEA-134) */}
+                {message.attachment && !isVoice && (
+                    <AttachmentPreview attachment={message.attachment} />
+                )}
+
+                {/* Voice message (IDEA-135) */}
+                {isVoice && message.attachment && (
+                    <VoiceMessagePlayer src={message.attachment.url} />
+                )}
+
+                {/* Reactions (IDEA-131) */}
                 {message.reactions && Object.keys(message.reactions).length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
                         {Object.entries(message.reactions).map(([emoji, count]) => (
@@ -205,6 +225,12 @@ export function MessageItem({ message, isMe, showAvatar, onReplyInThread, onAddR
                                 <span className="text-muted-foreground">{count}</span>
                             </button>
                         ))}
+                        <button
+                            className="inline-flex items-center gap-1 rounded-full bg-muted/30 hover:bg-muted border border-transparent hover:border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors"
+                            onClick={() => {/* open full emoji picker */}}
+                        >
+                            <Smile className="h-3 w-3" />
+                        </button>
                     </div>
                 )}
             </div>

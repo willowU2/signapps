@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, ChevronDown } from "lucide-react";
@@ -148,57 +148,66 @@ interface TaskRowProps {
   zoom: ZoomLevel;
   hasDependency: boolean;
   onTaskClick?: (taskId: string) => void;
+  onTaskDrag?: (taskId: string, newStartDate: string, newEndDate: string) => void;
 }
 
-function TaskRow({ task, minDate, zoom, hasDependency, onTaskClick }: TaskRowProps) {
+function TaskRow({ task, minDate, zoom, hasDependency, onTaskClick, onTaskDrag }: TaskRowProps) {
   const pixelsPerDay = ZOOM_CONFIG[zoom].pixelsPerDay;
   const taskStart = daysFromStart(new Date(task.startDate), minDate);
   const taskDuration = daysBetween(new Date(task.startDate), new Date(task.endDate)) + 1;
   const barWidth = taskDuration * pixelsPerDay;
   const barLeft = taskStart * pixelsPerDay;
 
+  const dragRef = React.useRef<{ startX: number; origLeft: number } | null>(null);
+  const barRef = React.useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    dragRef.current = { startX: e.clientX, origLeft: barLeft };
+    const onMove = (ev: MouseEvent) => {
+      if (!dragRef.current || !barRef.current) return;
+      const dx = ev.clientX - dragRef.current.startX;
+      const newLeft = Math.max(0, dragRef.current.origLeft + dx);
+      barRef.current.style.left = `${newLeft}px`;
+    };
+    const onUp = (ev: MouseEvent) => {
+      if (!dragRef.current) return;
+      const dx = ev.clientX - dragRef.current.startX;
+      const dayShift = Math.round(dx / pixelsPerDay);
+      if (dayShift !== 0 && onTaskDrag) {
+        const s = new Date(task.startDate);
+        const end = new Date(task.endDate);
+        s.setDate(s.getDate() + dayShift);
+        end.setDate(end.getDate() + dayShift);
+        onTaskDrag(task.id, s.toISOString().split("T")[0], end.toISOString().split("T")[0]);
+      }
+      dragRef.current = null;
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  };
+
   return (
     <div className="flex border-b hover:bg-muted/30 transition-colors">
-      {/* Task label */}
       <div className="w-48 border-r p-3 text-sm font-medium truncate flex items-center gap-2">
         {hasDependency && <ChevronDown className="size-3 text-muted-foreground shrink-0" />}
         <span className="truncate">{task.title}</span>
       </div>
-
-      {/* Timeline area */}
       <div className="flex-1 relative overflow-x-auto h-16 flex items-center">
-        {/* Dependency arrow indicator */}
-        {task.dependsOn && (
-          <div className="absolute left-0 top-1 text-xs text-amber-600 ml-2">→</div>
-        )}
-
-        {/* Progress bar */}
+        {task.dependsOn && <div className="absolute left-0 top-1 text-xs text-amber-600 ml-2">→</div>}
         <div
-          style={{
-            left: barLeft,
-            width: barWidth,
-            minWidth: "2px",
-          }}
-          className={cn(
-            "absolute h-8 rounded cursor-pointer transition-all hover:shadow-lg",
-            task.color || "bg-blue-500",
-            "opacity-80 hover:opacity-100"
-          )}
+          ref={barRef}
+          style={{ left: barLeft, width: barWidth, minWidth: "2px" }}
+          className={cn("absolute h-8 rounded cursor-grab active:cursor-grabbing transition-shadow hover:shadow-lg select-none opacity-80 hover:opacity-100", task.color || "bg-blue-500")}
+          onMouseDown={handleMouseDown}
           onClick={() => onTaskClick?.(task.id)}
-          role="button"
-          tabIndex={0}
+          role="button" tabIndex={0}
         >
-          {/* Progress fill */}
-          <div
-            className="h-full rounded bg-black/20 transition-all"
-            style={{ width: `${task.progress}%` }}
-          />
-
-          {/* Label if bar is wide enough */}
+          <div className="h-full rounded bg-black/20 transition-all" style={{ width: `${task.progress}%` }} />
           {barWidth > 80 && (
-            <div className="absolute inset-0 flex items-center px-2 text-[10px] font-bold text-white truncate">
-              {task.progress}%
-            </div>
+            <div className="absolute inset-0 flex items-center px-2 text-[10px] font-bold text-white truncate">{task.progress}%</div>
           )}
         </div>
       </div>
@@ -208,9 +217,14 @@ function TaskRow({ task, minDate, zoom, hasDependency, onTaskClick }: TaskRowPro
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export function GanttChart({ tasks = SAMPLE_TASKS, onTaskClick }: GanttChartProps) {
+export function GanttChart({ tasks: initialTasks = SAMPLE_TASKS, onTaskClick }: GanttChartProps) {
   const [zoom, setZoom] = useState<ZoomLevel>("week");
+  const [tasks, setTasks] = useState(initialTasks.length > 0 ? initialTasks : SAMPLE_TASKS);
   const { minDate, maxDate } = useMemo(() => getDateRange(tasks), [tasks]);
+
+  const handleTaskDrag = useCallback((id: string, newStart: string, newEnd: string) => {
+    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, startDate: newStart, endDate: newEnd } : t));
+  }, []);
 
   const dependencyMap = useMemo(() => {
     return tasks.reduce((acc, task) => {
@@ -269,6 +283,7 @@ export function GanttChart({ tasks = SAMPLE_TASKS, onTaskClick }: GanttChartProp
               zoom={zoom}
               hasDependency={dependencyMap[task.id] > 0}
               onTaskClick={onTaskClick}
+              onTaskDrag={handleTaskDrag}
             />
           ))}
         </div>

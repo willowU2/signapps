@@ -89,6 +89,44 @@ import { Textarea } from '@/components/ui/textarea';
 import { AiRoutingSettings } from '@/components/settings/ai-routing-settings';
 import { ProfileSettings } from '@/components/settings/profile-settings';
 import { AppearanceSettings } from '@/components/settings/appearance-settings';
+import { DyslexiaFontToggle } from '@/components/accessibility/dyslexia-font';
+import { TextToSpeech } from '@/components/accessibility/text-to-speech';
+import { ScreenMagnifier } from '@/components/accessibility/screen-magnifier';
+import { FocusOrderValidator } from '@/components/accessibility/focus-order-validator';
+import { VoiceNavigation } from '@/components/accessibility/voice-navigation';
+import { CustomCssEditor } from '@/components/settings/CustomCssEditor';
+import { BrandColorSettings } from '@/components/settings/BrandColorSettings';
+import { ThemePresetsLibrary } from '@/components/settings/ThemePresetsLibrary';
+import { ModuleDarkModeSettings } from '@/components/settings/ModuleDarkMode';
+import { InstanceBranding } from '@/components/settings/InstanceBranding';
+import { DensityModeToggle } from '@/components/settings/DensityModeToggle';
+import { LanguageSwitcher, SUPPORTED_LANGUAGES } from '@/components/i18n/language-switcher';
+import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
+
+function LanguageSettingsTab() {
+  return (
+    <div className="space-y-4">
+      <_Card>
+        <_CardHeader>
+          <_CardTitle>Interface Language</_CardTitle>
+        </_CardHeader>
+        <_CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">Select your preferred display language. RTL languages (Arabic, Hebrew) automatically flip the layout direction.</p>
+          <LanguageSwitcher />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pt-2">
+            {SUPPORTED_LANGUAGES.map(l => (
+              <div key={l.code} className="flex items-center gap-2 border rounded p-2 text-sm">
+                <span>{l.flag}</span>
+                <span>{l.label}</span>
+                {l.dir === 'rtl' && <span className="text-xs text-orange-500 ml-auto">RTL</span>}
+              </div>
+            ))}
+          </div>
+        </_CardContent>
+      </_Card>
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   // Support ?tab= query param for deep-linking (e.g. from /settings/webhooks redirect)
@@ -530,9 +568,10 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold">Settings</h1>
 
         <Tabs defaultValue={defaultTab}>
-          <TabsList className="mb-4">
+          <TabsList className="mb-4 flex-wrap h-auto gap-1">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="language">Language</TabsTrigger>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="groups">Groups</TabsTrigger>
@@ -540,14 +579,25 @@ export default function SettingsPage() {
             <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
             <TabsTrigger value="ai-routing">AI Routing</TabsTrigger>
             <TabsTrigger value="email-signature">Signature</TabsTrigger>
+            <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
             <ProfileSettings />
           </TabsContent>
 
+          <TabsContent value="language" className="space-y-6">
+            <LanguageSettingsTab />
+          </TabsContent>
+
           <TabsContent value="appearance" className="space-y-6">
             <AppearanceSettings />
+            <InstanceBranding />
+            <ThemePresetsLibrary />
+            <BrandColorSettings />
+            <DensityModeToggle />
+            <ModuleDarkModeSettings />
+            <CustomCssEditor />
           </TabsContent>
 
           <TabsContent value="general" className="space-y-6">
@@ -784,6 +834,36 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <EmailSignatureEditor />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="accessibility" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Accessibility</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Typography</p>
+                  <DyslexiaFontToggle />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Screen Magnifier</p>
+                  <ScreenMagnifier />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Text-to-Speech</p>
+                  <TextToSpeech />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Voice Navigation</p>
+                  <VoiceNavigation />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Focus Order Validator</p>
+                  <FocusOrderValidator />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

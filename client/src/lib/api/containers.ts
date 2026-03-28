@@ -334,6 +334,10 @@ export interface BackupProfile {
     destination_config: Record<string, unknown>;
     retention_policy?: { keep_last?: number; keep_daily?: number; keep_weekly?: number };
     last_run_at?: string;
+    // Extended monitoring fields
+    last_status?: 'success' | 'failed' | 'running';
+    last_size_bytes?: number;
+    last_duration_ms?: number;
 }
 
 export interface BackupTarget {

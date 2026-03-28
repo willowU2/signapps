@@ -2,12 +2,12 @@
  * Chat API Module
  *
  * Uses the signapps-chat service (port 3020).
- * REST endpoints for channels, messages and reactions.
+ * REST endpoints for channels, messages, reactions, pins, DMs, presence,
+ * search, unread counts and export.
  * WebSocket endpoint for real-time updates.
  */
 import { getClient, getServiceBaseUrl, ServiceName } from './factory';
 
-// Get the chat service client
 const chatClient = getClient(ServiceName.CHAT);
 
 // ============================================================================
@@ -47,6 +47,13 @@ export interface AddMemberRequest {
     role?: 'owner' | 'admin' | 'member';
 }
 
+export interface ChatAttachment {
+    url: string;
+    filename: string;
+    content_type: string;
+    size: number;
+}
+
 export interface DirectMessage {
     id: string;
     participants: DmParticipant[];
@@ -70,6 +77,12 @@ export interface ChannelReadStatus {
     last_read_at: string;
 }
 
+export interface PresenceEntry {
+    user_id: string;
+    status: 'online' | 'away' | 'busy' | 'offline';
+    updated_at: string;
+}
+
 export interface ChatMessage {
     id: string;
     channel_id: string;
@@ -79,7 +92,9 @@ export interface ChatMessage {
     created_at: string;
     updated_at?: string;
     parent_id?: string;
-    reactions?: Record<string, number>; // emoji -> count
+    reactions?: Record<string, number>;
+    attachment?: ChatAttachment;
+    is_pinned?: boolean;
 }
 
 export interface SendMessageRequest {
@@ -92,7 +107,7 @@ export interface AddReactionRequest {
 }
 
 // ============================================================================
-// Chat API - Channels
+// Chat API
 // ============================================================================
 
 export const chatApi = {
@@ -100,23 +115,18 @@ export const chatApi = {
     // Channels
     // ========================================================================
 
-    // List all channels
     getChannels: () =>
         chatClient.get<Channel[]>('/channels'),
 
-    // Get a single channel
     getChannel: (id: string) =>
         chatClient.get<Channel>(`/channels/${id}`),
 
-    // Create a new channel
     createChannel: (data: CreateChannelRequest) =>
         chatClient.post<Channel>('/channels', data),
 
-    // Update a channel
     updateChannel: (id: string, data: UpdateChannelRequest) =>
         chatClient.put<Channel>(`/channels/${id}`, data),
 
-    // Delete a channel
     deleteChannel: (id: string) =>
         chatClient.delete(`/channels/${id}`),
 
@@ -124,75 +134,122 @@ export const chatApi = {
     // Channel Members
     // ========================================================================
 
-    // Get channel members
     getMembers: (channelId: string) =>
         chatClient.get<ChannelMember[]>(`/channels/${channelId}/members`),
 
-    // Add a member to a channel
     addMember: (channelId: string, data: AddMemberRequest) =>
         chatClient.post<ChannelMember>(`/channels/${channelId}/members`, data),
 
-    // Remove a member from a channel
     removeMember: (channelId: string, userId: string) =>
         chatClient.delete(`/channels/${channelId}/members/${userId}`),
 
     // ========================================================================
-    // Messages
+    // Messages (IDEA-133 threads via parent_id)
     // ========================================================================
 
-    // List messages in a channel
     getMessages: (channelId: string) =>
         chatClient.get<ChatMessage[]>(`/channels/${channelId}/messages`),
 
-    // Send a message to a channel
     sendMessage: (channelId: string, data: SendMessageRequest) =>
         chatClient.post<ChatMessage>(`/channels/${channelId}/messages`, data),
 
     // ========================================================================
-    // Reactions
+    // File sharing (IDEA-134)
     // ========================================================================
 
-    // Add a reaction to a message
+    uploadFile: (channelId: string, file: File, onProgress?: (pct: number) => void) => {
+        const form = new FormData();
+        form.append('file', file);
+        return chatClient.post<ChatAttachment>(`/channels/${channelId}/upload`, form, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (e: { loaded: number; total?: number }) => {
+                if (onProgress && e.total) onProgress(Math.round((e.loaded * 100) / e.total));
+            },
+        });
+    },
+
+    // ========================================================================
+    // Reactions (IDEA-131)
+    // ========================================================================
+
     addReaction: (messageId: string, data: AddReactionRequest) =>
         chatClient.post(`/messages/${messageId}/reactions`, data),
 
     // ========================================================================
-    // Direct Messages
+    // Pinned messages (IDEA-132)
     // ========================================================================
 
-    // Get direct messages for current user
+    getPinnedMessages: (channelId: string) =>
+        chatClient.get<ChatMessage[]>(`/channels/${channelId}/pins`),
+
+    pinMessage: (channelId: string, messageId: string) =>
+        chatClient.post(`/channels/${channelId}/messages/${messageId}/pin`, {}),
+
+    unpinMessage: (channelId: string, messageId: string) =>
+        chatClient.delete(`/channels/${channelId}/messages/${messageId}/pin`),
+
+    // ========================================================================
+    // Direct Messages (IDEA-137)
+    // ========================================================================
+
     getDirectMessages: () =>
         chatClient.get<DirectMessage[]>('/dms'),
 
-    // Create a direct message conversation
     createDirectMessage: (data: CreateDmRequest) =>
         chatClient.post<DirectMessage>('/dms', data),
 
-    // Delete a direct message
     deleteDirectMessage: (id: string) =>
         chatClient.delete(`/dms/${id}`),
 
+    getDmMessages: (roomId: string) =>
+        chatClient.get<ChatMessage[]>(`/dms/${roomId}/messages`),
+
+    sendDmMessage: (roomId: string, data: SendMessageRequest) =>
+        chatClient.post<ChatMessage>(`/dms/${roomId}/messages`, data),
+
     // ========================================================================
-    // Read Status (Unread Counts)
+    // Presence (IDEA-136)
     // ========================================================================
 
-    // Get read status for a channel (unread count)
+    getPresence: () =>
+        chatClient.get<PresenceEntry[]>('/presence'),
+
+    setPresence: (status: 'online' | 'away' | 'busy' | 'offline') =>
+        chatClient.post<PresenceEntry>('/presence', { status }),
+
+    // ========================================================================
+    // Full-text search (IDEA-138)
+    // ========================================================================
+
+    searchMessages: (channelId: string, query: string) =>
+        chatClient.get<ChatMessage[]>(`/channels/${channelId}/search`, { params: { q: query } }),
+
+    // ========================================================================
+    // Read Status / Unread Counts (IDEA-140)
+    // ========================================================================
+
     getChannelReadStatus: (channelId: string) =>
         chatClient.get<ChannelReadStatus>(`/channels/${channelId}/read-status`),
 
-    // Mark channel as read (reset unread count)
     markChannelRead: (channelId: string) =>
-        chatClient.post<ChannelReadStatus>(`/channels/${channelId}/read-status`),
+        chatClient.post<ChannelReadStatus>(`/channels/${channelId}/read-status`, {}),
 
-    // Get all unread counts for current user
     getAllUnreadCounts: () =>
         chatClient.get<ChannelReadStatus[]>('/unread-counts'),
+
+    // ========================================================================
+    // Export (IDEA-142)
+    // ========================================================================
+
+    getExportUrl: (channelId: string, format: 'json' | 'csv' = 'json') => {
+        const base = process.env.NEXT_PUBLIC_CHAT_URL || 'http://localhost:3020/api/v1';
+        return `${base}/channels/${channelId}/export?format=${format}`;
+    },
 
     // ========================================================================
     // WebSocket URL helper
     // ========================================================================
 
-    // Get WebSocket URL for real-time updates
     getWebSocketUrl: () => {
         const baseUrl = process.env.NEXT_PUBLIC_CHAT_URL || 'http://localhost:3020/api/v1';
         const wsBaseUrl = baseUrl.replace(/^http/, 'ws');

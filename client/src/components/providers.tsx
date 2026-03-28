@@ -22,6 +22,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { GlobalModals } from '@/components/global-modals';
 import { GlobalHooks } from '@/components/global-hooks';
 import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
+import { ChangelogDialog } from '@/components/onboarding/ChangelogDialog';
 
 function LoadingFallback() {
   return (
@@ -96,6 +97,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <GlobalModals />
                     <GlobalHooks />
                     <OnboardingWizard />
+                    <ChangelogDialog />
                   </PermissionsProvider>
                 </PreferencesProvider>
               </TenantProvider>

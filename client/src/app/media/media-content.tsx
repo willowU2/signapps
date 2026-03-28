@@ -31,7 +31,21 @@ import {
   RefreshCw,
   FileAudio,
   Languages,
+  BookOpen,
+  ImageIcon,
+  Layers,
+  Grid3X3,
+  Camera,
+  Film,
+  FolderOpen,
 } from 'lucide-react';
+import { VideoPlayerWithChapters } from '@/components/media/video-player-chapters';
+import { ImageEditor } from '@/components/media/image-editor';
+import { BatchMediaProcessor } from '@/components/media/batch-media-processor';
+import { PhotoGalleryLightbox } from '@/components/media/photo-gallery-lightbox';
+import { ExifViewer } from '@/components/media/exif-viewer';
+import { VideoThumbnailGenerator } from '@/components/media/video-thumbnail';
+import { SharedAlbums } from '@/components/media/shared-albums';
 import {
   ocrApi,
   ttsApi,
@@ -813,38 +827,55 @@ export default function MediaContent() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Media Tools</h1>
           <p className="text-muted-foreground mt-1">
-            OCR text extraction, text-to-speech synthesis, and speech-to-text transcription
+            OCR, TTS, STT, video/image editing, gallery, EXIF metadata and more
           </p>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="ocr" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="ocr" className="gap-1.5">
-              <ScanText className="h-4 w-4" />
-              OCR
+              <ScanText className="h-4 w-4" />OCR
             </TabsTrigger>
             <TabsTrigger value="tts" className="gap-1.5">
-              <Volume2 className="h-4 w-4" />
-              Text-to-Speech
+              <Volume2 className="h-4 w-4" />TTS
             </TabsTrigger>
             <TabsTrigger value="stt" className="gap-1.5">
-              <Mic className="h-4 w-4" />
-              Speech-to-Text
+              <Mic className="h-4 w-4" />STT
+            </TabsTrigger>
+            <TabsTrigger value="video" className="gap-1.5">
+              <BookOpen className="h-4 w-4" />Video Chapters
+            </TabsTrigger>
+            <TabsTrigger value="editor" className="gap-1.5">
+              <ImageIcon className="h-4 w-4" />Image Editor
+            </TabsTrigger>
+            <TabsTrigger value="batch" className="gap-1.5">
+              <Layers className="h-4 w-4" />Batch
+            </TabsTrigger>
+            <TabsTrigger value="gallery" className="gap-1.5">
+              <Grid3X3 className="h-4 w-4" />Gallery
+            </TabsTrigger>
+            <TabsTrigger value="exif" className="gap-1.5">
+              <Camera className="h-4 w-4" />EXIF
+            </TabsTrigger>
+            <TabsTrigger value="thumbnail" className="gap-1.5">
+              <Film className="h-4 w-4" />Thumbnail
+            </TabsTrigger>
+            <TabsTrigger value="albums" className="gap-1.5">
+              <FolderOpen className="h-4 w-4" />Albums
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="ocr">
-            <OcrTab />
-          </TabsContent>
-
-          <TabsContent value="tts">
-            <TtsTab />
-          </TabsContent>
-
-          <TabsContent value="stt">
-            <SttTab />
-          </TabsContent>
+          <TabsContent value="ocr"><OcrTab /></TabsContent>
+          <TabsContent value="tts"><TtsTab /></TabsContent>
+          <TabsContent value="stt"><SttTab /></TabsContent>
+          <TabsContent value="video"><VideoPlayerWithChapters /></TabsContent>
+          <TabsContent value="editor"><ImageEditor /></TabsContent>
+          <TabsContent value="batch"><BatchMediaProcessor /></TabsContent>
+          <TabsContent value="gallery"><PhotoGalleryLightbox /></TabsContent>
+          <TabsContent value="exif"><ExifViewer /></TabsContent>
+          <TabsContent value="thumbnail"><VideoThumbnailGenerator /></TabsContent>
+          <TabsContent value="albums"><SharedAlbums /></TabsContent>
         </Tabs>
       </div>
     </AppLayout>

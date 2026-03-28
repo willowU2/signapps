@@ -10,6 +10,7 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { FeedbackWidget } from "@/components/feedback-widget";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { RTLProvider } from "@/components/i18n/rtl-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,11 +61,13 @@ export default function RootLayout({
         </a>
         <ClickSpark sparkColor="var(--primary)" sparkSize={6} sparkRadius={20} sparkCount={8} duration={400}>
           <Providers>
-            <ErrorBoundary>
-              <main id="main-content" tabIndex={-1}>
-                {children}
-              </main>
-            </ErrorBoundary>
+            <RTLProvider>
+              <ErrorBoundary>
+                <main id="main-content" tabIndex={-1}>
+                  {children}
+                </main>
+              </ErrorBoundary>
+            </RTLProvider>
           </Providers>
           <ContextAssistant />
           <PwaRegister />

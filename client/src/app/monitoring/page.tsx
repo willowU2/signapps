@@ -53,6 +53,12 @@ import { AnomalyAlertPanel } from '@/components/monitoring/anomaly-alert-panel';
 import { AlertConfig, AlertSeverity } from '@/lib/api';
 import { AlertConfigDialog } from '@/components/monitoring/alert-config-dialog';
 import { ConfirmDialog } from '@/components/confirm-dialog';
+import { CustomMetricDashboard } from '@/components/monitoring/custom-dashboard';
+import { SloTracker } from '@/components/monitoring/slo-tracker';
+import { TrendAnalysis } from '@/components/monitoring/trend-analysis';
+import { MultiMetricCorrelation } from '@/components/monitoring/multi-metric-correlation';
+import { WeeklyMetricsReport } from '@/components/monitoring/weekly-report';
+import { RequestHeatmap } from '@/components/monitoring/request-heatmap';
 import {
   useMetricsSummary,
   useMetricsStream,
@@ -815,6 +821,24 @@ export default function MonitoringPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Advanced monitoring features */}
+      <CustomMetricDashboard />
+      <SloTracker />
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <TrendAnalysis metric="CPU Usage" data={history.map(h => ({ time: h.time, value: h.cpu }))} color="#3b82f6" />
+        <MultiMetricCorrelation />
+      </div>
+
+      <RequestHeatmap />
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <TrendAnalysis metric="Memory Usage" data={history.map(h => ({ time: h.time, value: h.memory }))} color="#a855f7" />
+        </div>
+        <WeeklyMetricsReport />
       </div>
 
       {/* Alert Config Dialog */}

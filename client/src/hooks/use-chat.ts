@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { chatApi } from '@/lib/api/chat'
+import { chatApi, ChatAttachment as Attachment } from '@/lib/api/chat'
 
 export interface Message {
     id: string
@@ -11,9 +11,10 @@ export interface Message {
     timestamp: string
     parentId?: string
     reactions?: Record<string, number>
+    attachment?: Attachment
+    isPinned?: boolean
 }
 
-// Map backend ChatMessage shape to local Message shape
 function mapApiMessage(m: {
     id: string
     user_id: string
@@ -22,6 +23,8 @@ function mapApiMessage(m: {
     created_at: string
     parent_id?: string
     reactions?: Record<string, number>
+    attachment?: Attachment
+    is_pinned?: boolean
 }): Message {
     return {
         id: m.id,
@@ -31,12 +34,13 @@ function mapApiMessage(m: {
         timestamp: m.created_at,
         parentId: m.parent_id,
         reactions: m.reactions,
+        attachment: m.attachment,
+        isPinned: m.is_pinned,
     }
 }
 
-// Shape of real-time WebSocket event from signapps-chat
 interface WsEvent {
-    type: 'new_message' | 'reaction_added' | 'message_deleted'
+    type: 'new_message' | 'reaction_added' | 'message_deleted' | 'message_pinned' | 'presence_updated'
     channel_id?: string
     message?: {
         id: string
@@ -46,15 +50,24 @@ interface WsEvent {
         created_at: string
         parent_id?: string
         reactions?: Record<string, number>
+        attachment?: Attachment
+        is_pinned?: boolean
     }
     message_id?: string
     emoji?: string
     count?: number
+    payload?: {
+        message_id?: string
+        channel_id?: string
+        user_id?: string
+        status?: string
+    }
 }
 
 export function useChat(channelId: string, userId: string, userName: string) {
     const [messages, setMessages] = useState<Message[]>([])
     const [isConnected, setIsConnected] = useState(false)
+    const [unreadCount, setUnreadCount] = useState(0)
     const wsRef = useRef<WebSocket | null>(null)
     const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -69,8 +82,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
             try {
                 const res = await chatApi.getMessages(channelId)
                 if (!cancelled) {
-                    const loaded = (res.data || []).map(mapApiMessage)
-                    setMessages(loaded)
+                    setMessages((res.data || []).map(mapApiMessage))
                 }
             } catch (e) {
                 console.debug('Failed to load messages for channel', channelId, e)
@@ -78,6 +90,10 @@ export function useChat(channelId: string, userId: string, userName: string) {
         }
 
         loadMessages()
+
+        // Mark channel read on entry
+        chatApi.markChannelRead(channelId).catch(() => {})
+
         return () => { cancelled = true }
     }, [channelId])
 
@@ -91,9 +107,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
             wsRef.current = ws
 
             ws.onopen = () => {
-                console.debug('Connected to chat WebSocket')
                 setIsConnected(true)
-                // Subscribe to the channel
                 ws.send(JSON.stringify({ type: 'subscribe', channel_id: channelId }))
             }
 
@@ -104,10 +118,13 @@ export function useChat(channelId: string, userId: string, userName: string) {
                     if (evt.type === 'new_message' && evt.message) {
                         const msg = mapApiMessage(evt.message)
                         setMessages(prev => {
-                            // Avoid duplicates (optimistic update already added it)
                             if (prev.find(m => m.id === msg.id)) return prev
                             return [...prev, msg]
                         })
+                        // Increment unread if the message is from someone else
+                        if (evt.message.user_id !== userId) {
+                            setUnreadCount(c => c + 1)
+                        }
                     } else if (evt.type === 'reaction_added' && evt.message_id && evt.emoji) {
                         setMessages(prev => prev.map(m => {
                             if (m.id !== evt.message_id) return m
@@ -117,6 +134,10 @@ export function useChat(channelId: string, userId: string, userName: string) {
                         }))
                     } else if (evt.type === 'message_deleted' && evt.message_id) {
                         setMessages(prev => prev.filter(m => m.id !== evt.message_id))
+                    } else if (evt.type === 'message_pinned' && evt.payload?.message_id) {
+                        setMessages(prev => prev.map(m =>
+                            m.id === evt.payload?.message_id ? { ...m, isPinned: true } : m
+                        ))
                     }
                 } catch (e) {
                     console.debug('Failed to parse WS event', e)
@@ -124,14 +145,11 @@ export function useChat(channelId: string, userId: string, userName: string) {
             }
 
             ws.onclose = () => {
-                console.debug('Chat WebSocket closed, reconnecting in 3s...')
                 setIsConnected(false)
-                // Auto-reconnect
                 reconnectTimeoutRef.current = setTimeout(connect, 3000)
             }
 
             ws.onerror = () => {
-                console.debug('Chat WebSocket error')
                 ws.close()
             }
         }
@@ -144,12 +162,11 @@ export function useChat(channelId: string, userId: string, userName: string) {
             wsRef.current = null
             setIsConnected(false)
         }
-    }, [channelId])
+    }, [channelId, userId])
 
-    const sendMessage = useCallback(async (content: string, parentId?: string) => {
+    const sendMessage = useCallback(async (content: string, parentId?: string, attachment?: Attachment) => {
         if (!channelId || channelId === 'accueil') return
 
-        // Optimistic insert
         const optimisticId = `opt-${Date.now()}-${Math.random()}`
         const optimistic: Message = {
             id: optimisticId,
@@ -158,26 +175,23 @@ export function useChat(channelId: string, userId: string, userName: string) {
             content,
             timestamp: new Date().toISOString(),
             parentId,
+            attachment,
         }
         setMessages(prev => [...prev, optimistic])
 
         try {
-            const res = await chatApi.sendMessage(channelId, {
-                content,
-                parent_id: parentId,
-            })
+            const res = await chatApi.sendMessage(channelId, { content, parent_id: parentId })
             const confirmed = mapApiMessage(res.data)
-            // Replace optimistic with confirmed
+            // Preserve attachment in confirmed message if backend doesn't return it
+            if (attachment && !confirmed.attachment) confirmed.attachment = attachment
             setMessages(prev => prev.map(m => m.id === optimisticId ? confirmed : m))
         } catch (e) {
             console.error('Failed to send message', e)
-            // Remove optimistic on error
             setMessages(prev => prev.filter(m => m.id !== optimisticId))
         }
     }, [channelId, userId, userName])
 
     const addReaction = useCallback(async (msgId: string, emoji: string) => {
-        // Optimistic update
         setMessages(prev => prev.map(m => {
             if (m.id !== msgId) return m
             const reactions = { ...(m.reactions || {}) }
@@ -189,7 +203,6 @@ export function useChat(channelId: string, userId: string, userName: string) {
             await chatApi.addReaction(msgId, { emoji })
         } catch (e) {
             console.debug('Failed to add reaction', e)
-            // Rollback optimistic
             setMessages(prev => prev.map(m => {
                 if (m.id !== msgId) return m
                 const reactions = { ...(m.reactions || {}) }
@@ -202,10 +215,37 @@ export function useChat(channelId: string, userId: string, userName: string) {
         }
     }, [])
 
+    const pinMessage = useCallback(async (msgId: string) => {
+        setMessages(prev => prev.map(m => m.id === msgId ? { ...m, isPinned: true } : m))
+        try {
+            await chatApi.pinMessage(channelId, msgId)
+        } catch {
+            setMessages(prev => prev.map(m => m.id === msgId ? { ...m, isPinned: false } : m))
+        }
+    }, [channelId])
+
+    const unpinMessage = useCallback(async (msgId: string) => {
+        setMessages(prev => prev.map(m => m.id === msgId ? { ...m, isPinned: false } : m))
+        try {
+            await chatApi.unpinMessage(channelId, msgId)
+        } catch {
+            setMessages(prev => prev.map(m => m.id === msgId ? { ...m, isPinned: true } : m))
+        }
+    }, [channelId])
+
+    const markRead = useCallback(() => {
+        setUnreadCount(0)
+        chatApi.markChannelRead(channelId).catch(() => {})
+    }, [channelId])
+
     return {
         messages,
         sendMessage,
         addReaction,
+        pinMessage,
+        unpinMessage,
+        markRead,
         isConnected,
+        unreadCount,
     }
 }

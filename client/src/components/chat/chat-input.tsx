@@ -1,16 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Send, Paperclip, Smile, Type, Sparkles, Video, CheckCircle, Bot } from "lucide-react";
+import { Send, Smile, Sparkles, Video, CheckCircle, Bot, Bold, Italic, Code } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { VoiceInput } from "@/components/ui/voice-input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import EmojiPicker from 'emoji-picker-react';
-import GifPicker from 'gif-picker-react';
-import { Image as ImageIcon } from "lucide-react";
+import { FileAttachButton, PendingAttachment } from "./file-attachment";
+import { VoiceMessageRecorder } from "./voice-message";
+import { ChatAttachment as Attachment } from "@/lib/api/chat";
 
 interface ChatInputProps {
-    onSend: (content: string) => void;
+    onSend: (content: string, attachment?: Attachment) => void;
+    onSendVoice?: (blob: Blob, durationSec: number) => void;
+    channelId?: string;
     placeholder?: string;
     disabled?: boolean;
     compact?: boolean;
@@ -23,64 +26,56 @@ const SLASH_COMMANDS = [
     { command: "ask", description: "Ask AI a question", icon: Bot, color: "text-orange-500" },
 ];
 
-export function ChatInput({ onSend, placeholder = "Message...", disabled, compact = false }: ChatInputProps) {
+export function ChatInput({ onSend, onSendVoice, channelId, placeholder = "Message...", disabled, compact = false }: ChatInputProps) {
     const [inputValue, setInputValue] = useState("");
     const [isFocused, setIsFocused] = useState(false);
     const [showCommands, setShowCommands] = useState(false);
     const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
     const [interimValue, setInterimValue] = useState("");
+    const [pendingAttachment, setPendingAttachment] = useState<Attachment | null>(null);
+    const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // Formatted value including speech-to-text interim
-    const displayValue = inputValue + (interimValue ? (inputValue && !inputValue.endsWith(' ') ? ' ' : '') + interimValue : '');
+    const displayValue = inputValue + (interimValue ? (inputValue && !inputValue.endsWith(" ") ? " " : "") + interimValue : "");
 
-    // Auto-resize textarea
     useEffect(() => {
         if (textareaRef.current) {
-            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = "auto";
             textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
         }
     }, [displayValue]);
 
-    // Detect slash commands
     useEffect(() => {
-        if (inputValue.startsWith("/")) {
-            setShowCommands(true);
-        } else {
-            setShowCommands(false);
-        }
+        setShowCommands(inputValue.startsWith("/"));
     }, [inputValue]);
+
+    const insertFormatting = (prefix: string, suffix: string) => {
+        const el = textareaRef.current;
+        if (!el) return;
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const selected = inputValue.slice(start, end) || "text";
+        const before = inputValue.slice(0, start);
+        const after = inputValue.slice(end);
+        const newVal = `${before}${prefix}${selected}${suffix}${after}`;
+        setInputValue(newVal);
+        setTimeout(() => {
+            el.focus();
+            el.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
+        }, 0);
+    };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (showCommands) {
-            if (e.key === "ArrowDown") {
-                e.preventDefault();
-                setSelectedCommandIndex(prev => (prev + 1) % SLASH_COMMANDS.length);
-                return;
-            }
-            if (e.key === "ArrowUp") {
-                e.preventDefault();
-                setSelectedCommandIndex(prev => (prev - 1 + SLASH_COMMANDS.length) % SLASH_COMMANDS.length);
-                return;
-            }
-            if (e.key === "Enter" || e.key === "Tab") {
-                e.preventDefault();
-                handleCommandSelect(SLASH_COMMANDS[selectedCommandIndex].command);
-                return;
-            }
-            if (e.key === "Escape") {
-                e.preventDefault();
-                setShowCommands(false);
-                return;
-            }
+            if (e.key === "ArrowDown") { e.preventDefault(); setSelectedCommandIndex(p => (p + 1) % SLASH_COMMANDS.length); return; }
+            if (e.key === "ArrowUp") { e.preventDefault(); setSelectedCommandIndex(p => (p - 1 + SLASH_COMMANDS.length) % SLASH_COMMANDS.length); return; }
+            if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); handleCommandSelect(SLASH_COMMANDS[selectedCommandIndex].command); return; }
+            if (e.key === "Escape") { e.preventDefault(); setShowCommands(false); return; }
         }
 
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            if (inputValue.trim() && !disabled) {
-                onSend(inputValue.trim());
-                setInputValue("");
-            }
+            handleSend();
         }
     };
 
@@ -89,6 +84,22 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
         setShowCommands(false);
         textareaRef.current?.focus();
     };
+
+    const handleSend = () => {
+        const final = displayValue.trim();
+        if ((!final && !pendingAttachment) || disabled) return;
+        onSend(final, pendingAttachment || undefined);
+        setInputValue("");
+        setInterimValue("");
+        setPendingAttachment(null);
+    };
+
+    const handleVoiceSend = (blob: Blob, durationSec: number) => {
+        onSendVoice?.(blob, durationSec);
+        setShowVoiceRecorder(false);
+    };
+
+    const canSend = (displayValue.trim() || pendingAttachment) && !disabled;
 
     return (
         <div className="w-full flex flex-col gap-2 relative">
@@ -119,9 +130,7 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
                                         <span className="text-xs text-muted-foreground">{cmd.description}</span>
                                     </div>
                                     {idx === selectedCommandIndex && (
-                                        <span className="ml-auto text-[10px] text-muted-foreground font-medium bg-background px-1.5 py-0.5 rounded border">
-                                            Enter
-                                        </span>
+                                        <span className="ml-auto text-[10px] text-muted-foreground font-medium bg-background px-1.5 py-0.5 rounded border">Enter</span>
                                     )}
                                 </button>
                             );
@@ -130,11 +139,18 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
                 </div>
             )}
 
-            {/* Contextual Smart Tips */}
+            {/* Smart tip */}
             {isFocused && !inputValue && !compact && !showCommands && (
                 <div className="absolute -top-7 left-2 flex items-center gap-1.5 text-xs text-muted-foreground bg-background border px-2 py-1 rounded-md shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-200">
                     <Sparkles className="h-3 w-3 text-primary" />
-                    <span>Type <strong className="text-foreground">/</strong> for commands or ask AI</span>
+                    <span>Type <strong className="text-foreground">/</strong> for commands</span>
+                </div>
+            )}
+
+            {/* Pending attachment chip */}
+            {pendingAttachment && (
+                <div className="flex items-center gap-2 px-2">
+                    <PendingAttachment attachment={pendingAttachment} onRemove={() => setPendingAttachment(null)} />
                 </div>
             )}
 
@@ -145,47 +161,56 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
                     showCommands ? "ring-1 ring-primary border-primary rounded-t-sm" : ""
                 )}
             >
-                {/* Formatting Toolbar - Only shows when focused or has content on non-compact */}
-                {(!compact && (isFocused || inputValue) && !showCommands) && (
+                {/* Formatting Toolbar — IDEA-143 */}
+                {!compact && (isFocused || inputValue) && !showCommands && (
                     <div className="flex items-center gap-0.5 px-2 py-1.5 border-b bg-muted/20 animate-in fade-in slide-in-from-top-1 duration-200">
-                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground w-7 h-7">
-                            <Type className="h-4 w-4" />
-                        </Button>
-                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground w-7 h-7">
-                            <span className="font-bold font-serif text-sm">B</span>
-                        </Button>
-                        <Button type="button" variant="ghost" size="icon" className="text-muted-foreground w-7 h-7">
-                            <span className="italic font-serif text-sm">I</span>
-                        </Button>
+                        <TooltipProvider delayDuration={300}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground w-7 h-7" onClick={() => insertFormatting("**", "**")}>
+                                        <Bold className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">Bold (**text**)</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground w-7 h-7" onClick={() => insertFormatting("*", "*")}>
+                                        <Italic className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">Italic (*text*)</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button type="button" variant="ghost" size="icon" className="text-muted-foreground w-7 h-7" onClick={() => insertFormatting("`", "`")}>
+                                        <Code className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">Inline code</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 )}
 
                 {/* Main Input Area */}
                 <div className="flex items-end gap-2 p-2 relative bg-background rounded-xl">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground">
-                                    <Paperclip className="h-5 w-5" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">Attach file</TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                    {/* File attach — IDEA-134 */}
+                    {channelId && (
+                        <FileAttachButton
+                            channelId={channelId}
+                            onAttach={(att) => setPendingAttachment(att)}
+                            disabled={disabled}
+                        />
+                    )}
 
                     <textarea
                         ref={textareaRef}
                         value={displayValue}
-                        onChange={(e) => {
-                            setInputValue(e.target.value);
-                            setInterimValue("");
-                        }}
+                        onChange={(e) => { setInputValue(e.target.value); setInterimValue(""); }}
                         onKeyDown={handleKeyDown}
                         onFocus={() => setIsFocused(true)}
-                        onBlur={() => {
-                            // Delay blur slightly so click on menu registers
-                            setTimeout(() => setIsFocused(false), 200);
-                        }}
+                        onBlur={() => setTimeout(() => setIsFocused(false), 200)}
                         placeholder={placeholder}
                         disabled={disabled}
                         rows={1}
@@ -193,17 +218,26 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
                     />
 
                     <div className="flex items-center gap-1 shrink-0 pb-0.5">
-                        <VoiceInput 
+                        {/* Voice message — IDEA-135 */}
+                        {!showVoiceRecorder && onSendVoice && (
+                            <VoiceMessageRecorder
+                                onSend={handleVoiceSend}
+                                onCancel={() => setShowVoiceRecorder(false)}
+                            />
+                        )}
+
+                        <VoiceInput
                             onTranscription={(text, isFinal) => {
                                 if (isFinal) {
-                                    setInputValue((prev) => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + text + ' ');
-                                    setInterimValue('');
+                                    setInputValue(prev => prev + (prev && !prev.endsWith(" ") ? " " : "") + text + " ");
+                                    setInterimValue("");
                                 } else {
                                     setInterimValue(text);
                                 }
                             }}
                             className="hidden sm:flex"
                         />
+
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hidden sm:flex">
@@ -213,59 +247,21 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
                             <PopoverContent side="top" align="end" className="w-auto p-0 border-none shadow-none mb-2" sideOffset={10}>
                                 <EmojiPicker
                                     onEmojiClick={(emojiData) => {
-                                        setInputValue((prev) => prev + (prev && !prev.endsWith(' ') ? ' ' : '') + emojiData.emoji);
+                                        setInputValue(prev => prev + (prev && !prev.endsWith(" ") ? " " : "") + emojiData.emoji);
                                     }}
                                 />
                             </PopoverContent>
                         </Popover>
-                        
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hidden sm:flex">
-                                    <ImageIcon className="h-5 w-5" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent side="top" align="end" className="w-[300px] p-0 border-none shadow-none mb-2" sideOffset={10}>
-                                <div className="bg-background border rounded-lg shadow-lg overflow-hidden">
-                                    {process.env.NEXT_PUBLIC_TENOR_API_KEY ? (
-                                        <GifPicker
-                                            tenorApiKey={process.env.NEXT_PUBLIC_TENOR_API_KEY}
-                                            onGifClick={(gif) => {
-                                                const finalValue = `![GIF](${gif.url})`;
-                                                if (!disabled) {
-                                                    onSend(finalValue);
-                                                }
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="p-4 text-center flex flex-col items-center gap-2">
-                                            <ImageIcon className="h-8 w-8 text-muted-foreground/50" />
-                                            <p className="text-sm font-medium text-foreground">Configuration requise</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Ajoutez votre clé API Tenor dans <code className="bg-muted px-1 rounded text-[10px]">NEXT_PUBLIC_TENOR_API_KEY</code> pour activer les GIFs.
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-                        
+
                         <Button
                             type="button"
                             size="icon"
-                            onClick={() => {
-                                const finalValue = displayValue.trim();
-                                if (finalValue && !disabled) {
-                                    onSend(finalValue);
-                                    setInputValue("");
-                                    setInterimValue("");
-                                }
-                            }}
+                            onClick={handleSend}
                             className={cn(
                                 "h-8 w-8 shrink-0 transition-all rounded-lg",
-                                displayValue.trim() ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90" : "bg-muted text-muted-foreground"
+                                canSend ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90" : "bg-muted text-muted-foreground"
                             )}
-                            disabled={!displayValue.trim() || disabled}
+                            disabled={!canSend}
                         >
                             <Send className="h-4 w-4" />
                         </Button>
@@ -275,9 +271,7 @@ export function ChatInput({ onSend, placeholder = "Message...", disabled, compac
 
             {!compact && !showCommands && (
                 <div className="flex justify-between px-2 text-[10px] text-muted-foreground/60 font-medium tracking-wide">
-                    <span>
-                        <strong>Return</strong> to send · <strong>Shift + Return</strong> to add a new line
-                    </span>
+                    <span><strong>Return</strong> to send · <strong>Shift + Return</strong> for new line · **bold** *italic* `code`</span>
                 </div>
             )}
         </div>

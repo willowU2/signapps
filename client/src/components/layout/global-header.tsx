@@ -1,5 +1,8 @@
 'use client';
 
+import { LanguageSwitcher } from '@/components/i18n/language-switcher';
+function LanguageSwitcherCompact() { return <LanguageSwitcher compact />; }
+
 import { useAuthStore, useUIStore } from '@/lib/store';
 import { useTenantStore } from '@/stores/tenant-store';
 import { usePresenceStore } from '@/stores/presence-store';
@@ -465,6 +468,9 @@ export function GlobalHeader() {
                         </AvatarGroup>
                     </TooltipProvider>
                 </div>
+
+                {/* Language Switcher */}
+                <LanguageSwitcherCompact />
 
                 {/* Theme Toggle — Light / Dark / System */}
                 <ThemeToggle />
