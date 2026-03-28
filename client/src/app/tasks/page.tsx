@@ -29,20 +29,23 @@ export default function TasksPage() {
   const [parentTaskId, setParentTaskId] = useState<string | undefined>();
   const [treeKey, setTreeKey] = useState(0);
   const [viewMode, setViewMode] = useState<'list' | 'board' | 'custom-board'>('list');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Unified Entity Hub sync
   const { projects, fetchTasks, fetchProjects, isLoading } = useEntityStore();
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        await Promise.all([fetchTasks(), fetchProjects()]);
-      } catch {
-        toast.error('Failed to load tasks');
-      }
-    };
-    load();
+  const load = React.useCallback(async () => {
+    setLoadError(null);
+    try {
+      await Promise.all([fetchTasks(), fetchProjects()]);
+    } catch {
+      setLoadError('Impossible de charger les tâches. Vérifiez que le serveur est démarré.');
+    }
   }, [fetchTasks, fetchProjects]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // Load projects on mount
   useEffect(() => {
@@ -87,7 +90,13 @@ export default function TasksPage() {
             {/* Subtle background glow */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-primary/5 blur-[100px] rounded-full pointer-events-none transition-opacity duration-1000 opacity-50 group-hover:opacity-100" />
 
-            {isLoading && projects.length === 0 ? (
+            {loadError ? (
+              <div className="flex flex-col items-center justify-center h-full text-center px-4 space-y-4">
+                <X className="w-10 h-10 text-destructive/40" />
+                <p className="text-base font-medium text-muted-foreground">{loadError}</p>
+                <Button variant="outline" size="sm" onClick={load}>Réessayer</Button>
+              </div>
+            ) : isLoading && projects.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
                 <p className="text-sm font-medium animate-pulse">Chargement de votre espace de travail...</p>

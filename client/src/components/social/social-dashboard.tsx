@@ -31,6 +31,7 @@ export function SocialDashboard() {
     posts,
     inboxItems,
     analytics,
+    error: socialError,
     fetchAccounts,
     fetchPosts,
     fetchInbox,
@@ -39,6 +40,13 @@ export function SocialDashboard() {
   } = useSocialStore();
 
   const [selectedChannelIds, setSelectedChannelIds] = useState<string[]>([]);
+
+  const reload = () => {
+    fetchAccounts();
+    fetchPosts();
+    fetchInbox({ unreadOnly: true });
+    fetchAnalytics();
+  };
 
   useEffect(() => {
     fetchAccounts();
@@ -103,6 +111,17 @@ export function SocialDashboard() {
       />
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* API Error Banner */}
+        {socialError && (
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+              <p className="text-sm text-destructive">Service social indisponible : {socialError}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={reload}>Réessayer</Button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">

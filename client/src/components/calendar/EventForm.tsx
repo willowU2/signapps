@@ -21,6 +21,7 @@ import { ResourceSelector } from "./ResourceSelector";
 import { AttendeeList } from "./AttendeeList";
 import { Users, Package } from "lucide-react";
 import { EntityLinks } from "@/components/crosslinks/EntityLinks";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 interface EventFormProps {
   open: boolean;
@@ -78,6 +79,7 @@ export function EventForm({
   const [resourceSelectorOpen, setResourceSelectorOpen] = useState(false);
   const [attendeeListOpen, setAttendeeListOpen] = useState(false);
   const [attendees, setAttendees] = useState<any[]>([]);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -101,10 +103,10 @@ export function EventForm({
           is_all_day: formData.is_all_day,
         };
         await updateEvent(initialEvent.id, updateData);
-        toast.success("Event updated successfully");
+        toast.success("Événement mis à jour");
       } else {
         const createData: CreateEvent = {
-          title: formData.title || "Untitled Event",
+          title: formData.title || "Événement sans titre",
           description: formData.description,
           location: formData.location,
           start_time: formData.start_time || new Date().toISOString(),
@@ -113,28 +115,26 @@ export function EventForm({
           timezone: formData.timezone,
         };
         await createEvent(createData);
-        toast.success("Event created successfully");
+        toast.success("Événement créé");
       }
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "An error occurred");
+      toast.error(error instanceof Error ? error.message : "Une erreur est survenue");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteConfirmed = async () => {
     if (!initialEvent) return;
-
-    if (!confirm("Are you sure you want to delete this event?")) return;
 
     setIsSubmitting(true);
     try {
       await deleteEvent(initialEvent.id);
-      toast.success("Event deleted successfully");
+      toast.success("Événement supprimé");
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "An error occurred");
+      toast.error(error instanceof Error ? error.message : "Une erreur est survenue");
     } finally {
       setIsSubmitting(false);
     }
@@ -146,21 +146,21 @@ export function EventForm({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {initialEvent ? "Edit Event" : "Create Event"}
+            {initialEvent ? "Modifier l'événement" : "Créer un événement"}
           </DialogTitle>
           <DialogDescription>
-            {initialEvent ? "Update event details" : "Add a new event to your calendar"}
+            {initialEvent ? "Modifier les détails de l'événement" : "Ajouter un nouvel événement au calendrier"}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
+            <Label htmlFor="title">Titre *</Label>
             <Input
               id="title"
               name="title"
-              placeholder="Event title"
+              placeholder="Titre de l'événement"
               value={formData.title}
               onChange={handleInputChange}
               required
@@ -173,7 +173,7 @@ export function EventForm({
             <Textarea
               id="description"
               name="description"
-              placeholder="Add notes..."
+              placeholder="Ajouter des notes..."
               rows={3}
               value={formData.description || ""}
               onChange={handleInputChange}
@@ -182,11 +182,11 @@ export function EventForm({
 
           {/* Location */}
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="location">Lieu</Label>
             <Input
               id="location"
               name="location"
-              placeholder="Room or address"
+              placeholder="Salle ou adresse"
               value={formData.location || ""}
               onChange={handleInputChange}
             />
@@ -194,7 +194,7 @@ export function EventForm({
 
           {/* Start time */}
           <div className="space-y-2">
-            <Label htmlFor="start_time">Start Date/Time</Label>
+            <Label htmlFor="start_time">Date/Heure de début</Label>
             <Input
               id="start_time"
               name="start_time"
@@ -212,7 +212,7 @@ export function EventForm({
 
           {/* End time */}
           <div className="space-y-2">
-            <Label htmlFor="end_time">End Date/Time</Label>
+            <Label htmlFor="end_time">Date/Heure de fin</Label>
             <Input
               id="end_time"
               name="end_time"
@@ -242,7 +242,7 @@ export function EventForm({
               }
             />
             <Label htmlFor="is_all_day" className="font-normal cursor-pointer">
-              All day event
+              Toute la journée
             </Label>
           </div>
 
@@ -251,7 +251,7 @@ export function EventForm({
             <div className="flex items-center justify-between">
               <Label className="flex items-center gap-2">
                 <Package className="h-4 w-4" />
-                Resources
+                Ressources
               </Label>
               <Button
                 type="button"
@@ -260,13 +260,13 @@ export function EventForm({
                 onClick={() => setResourceSelectorOpen(true)}
               >
                 {selectedResourceIds.length > 0
-                  ? `${selectedResourceIds.length} selected`
-                  : "Add Resources"}
+                  ? `${selectedResourceIds.length} sélectionnée(s)`
+                  : "Ajouter des ressources"}
               </Button>
             </div>
             {selectedResourceIds.length > 0 && (
               <div className="text-sm text-muted-foreground">
-                {selectedResourceIds.length} resource(s) will be booked for this event
+                {selectedResourceIds.length} ressource(s) seront réservées pour cet événement
               </div>
             )}
           </div>
@@ -276,7 +276,7 @@ export function EventForm({
             <div className="flex items-center justify-between">
               <Label className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Attendees
+                Participants
               </Label>
               <Button
                 type="button"
@@ -285,8 +285,8 @@ export function EventForm({
                 onClick={() => setAttendeeListOpen(true)}
               >
                 {attendees.length > 0
-                  ? `${attendees.length} invited`
-                  : "Add Attendees"}
+                  ? `${attendees.length} invité(s)`
+                  : "Ajouter des participants"}
               </Button>
             </div>
           </div>
@@ -302,10 +302,10 @@ export function EventForm({
               <Button
                 type="button"
                 variant="destructive"
-                onClick={handleDelete}
+                onClick={() => setDeleteConfirmOpen(true)}
                 disabled={isSubmitting}
               >
-                Delete
+                Supprimer
               </Button>
             )}
             <Button
@@ -314,10 +314,10 @@ export function EventForm({
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
-              Cancel
+              Annuler
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : initialEvent ? "Update" : "Create"}
+              {isSubmitting ? "Enregistrement..." : initialEvent ? "Mettre à jour" : "Créer"}
             </Button>
           </DialogFooter>
         </form>

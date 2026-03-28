@@ -161,6 +161,7 @@ export function Sidebar() {
     const linkContent = (
       <Link
         href={safeHref}
+        title={item.label}
         className={cn(
           'flex items-center gap-4 py-2.5 text-sm font-medium transition-colors',
           sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6',
@@ -215,6 +216,7 @@ export function Sidebar() {
         )}
         <Link
           href={safeHref}
+          title={app.label}
           className={cn(
             'flex flex-1 items-center gap-4 py-2.5 text-sm font-medium transition-colors',
             sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6 pl-5',
@@ -293,7 +295,7 @@ export function Sidebar() {
           {sidebarCollapsed ? (
             <Popover open={nouveauOpen} onOpenChange={setNouveauOpen}>
               <PopoverTrigger asChild>
-                <button className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-card google-shadow google-shadow-hover transition-all">
+                <button className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-card google-shadow google-shadow-hover transition-all" title="Nouveau">
                   <Plus className="h-6 w-6 text-primary" />
                 </button>
               </PopoverTrigger>
@@ -362,7 +364,7 @@ export function Sidebar() {
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Labels</h3>
                 <Popover open={addLabelOpen} onOpenChange={setAddLabelOpen}>
                   <PopoverTrigger asChild>
-                    <button className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                    <button className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" title="Ajouter un label">
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </PopoverTrigger>

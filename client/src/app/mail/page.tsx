@@ -139,7 +139,7 @@ export default function MailPage() {
         loadLabels()
     }, [])
 
-    const loadData = React.useCallback(async () => {
+    const loadData = useCallback(async () => {
         setLoadError(null)
         try {
             // Fetch accounts
