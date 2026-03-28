@@ -10,6 +10,7 @@ import { Search, ArrowRight, Grid } from 'lucide-react';
 import { APP_REGISTRY, APP_CATEGORIES, AppEntry } from '@/lib/app-registry';
 import { cn } from '@/lib/utils';
 import * as LucideIcons from 'lucide-react';
+import SpotlightCard from '@/components/ui/spotlight-card';
 
 function DynIcon({ name, className }: { name: string; className?: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,26 +23,28 @@ function LocalAppCard({ app }: { app: AppEntry }) {
   const router = useRouter();
   
   return (
-    <div 
-      className="group flex cursor-pointer flex-col justify-between rounded-xl border bg-card p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md h-full"
+    <SpotlightCard 
+      className="group cursor-pointer p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md h-full"
       onClick={() => router.push(app.href)}
     >
-      <div className="flex items-start gap-4">
-        <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted/60", app.color)}>
-           <DynIcon name={app.icon} className="h-6 w-6 shrink-0" />
+      <div className="flex flex-col h-full justify-between">
+        <div className="flex items-start gap-4">
+          <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted/60", app.color)}>
+             <DynIcon name={app.icon} className="h-6 w-6 shrink-0" />
+          </div>
+          <div className="flex-1 space-y-1.5 pt-1">
+            <h3 className="font-semibold leading-none tracking-tight">{app.label}</h3>
+            <p className="text-xs text-muted-foreground line-clamp-2">{app.description}</p>
+          </div>
         </div>
-        <div className="flex-1 space-y-1.5 pt-1">
-          <h3 className="font-semibold leading-none tracking-tight">{app.label}</h3>
-          <p className="text-xs text-muted-foreground line-clamp-2">{app.description}</p>
+        <div className="mt-4 flex items-center justify-between">
+          <Badge variant="secondary" className="text-[10px] font-normal">{app.category}</Badge>
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary opacity-0 transition-all group-hover:opacity-100">
+            <ArrowRight className="h-3 w-3 shrink-0" />
+          </div>
         </div>
       </div>
-      <div className="mt-4 flex items-center justify-between">
-        <Badge variant="secondary" className="text-[10px] font-normal">{app.category}</Badge>
-        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary opacity-0 transition-all group-hover:opacity-100">
-          <ArrowRight className="h-3 w-3 shrink-0" />
-        </div>
-      </div>
-    </div>
+    </SpotlightCard>
   );
 }
 

@@ -2,6 +2,7 @@
 
 import { SpinnerInfinity } from 'spinners-react';
 
+
 import { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import { Download, Package, ArrowUpCircle, CheckCircle2, Layers, ExternalLink } 
 import type { StoreApp } from '@/lib/api';
 import { containersApi } from '@/lib/api';
 import { toast } from 'sonner';
+import SpotlightCard from '@/components/ui/spotlight-card';
 
 interface AppCardProps {
   app: StoreApp;
@@ -40,7 +42,7 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, contai
   };
 
   return (
-    <Card className="group flex flex-col overflow-hidden transition-shadow hover:shadow-md">
+    <SpotlightCard className="group flex flex-col overflow-hidden transition-shadow hover:shadow-md h-full">
       <CardContent
         className="flex flex-1 cursor-pointer flex-col gap-3 p-4"
         onClick={() => onDetail(app)}
@@ -139,6 +141,6 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, contai
           </div>
         </div>
       </CardContent>
-    </Card>
+    </SpotlightCard>
   );
 }
