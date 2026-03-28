@@ -3,7 +3,6 @@
 // Mail Advanced Features page — 261–268
 
 import { useState } from "react"
-import { AppLayout } from "@/components/layout/app-layout"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AtSign, Inbox, RepeatIcon, ShieldCheck, Eye, Sparkles, Database, Undo2 } from "lucide-react"
 import { EmailAliases } from "@/components/mail/email-aliases"
@@ -35,8 +34,7 @@ export default function MailAdvancedPage() {
   }
 
   return (
-    <AppLayout>
-      <div className="w-full space-y-6 p-6">
+    <div className="w-full space-y-6 p-6">
         <div>
           <h1 className="text-2xl font-bold">Advanced Mail</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -127,6 +125,6 @@ export default function MailAdvancedPage() {
           </div>
         </Tabs>
       </div>
-    </AppLayout>
+    </div>
   )
 }

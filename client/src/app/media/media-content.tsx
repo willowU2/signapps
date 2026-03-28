@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -821,8 +820,7 @@ function SttTab() {
 
 export default function MediaContent() {
   return (
-    <AppLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Media Tools</h1>
@@ -878,6 +876,6 @@ export default function MediaContent() {
           <TabsContent value="albums"><SharedAlbums /></TabsContent>
         </Tabs>
       </div>
-    </AppLayout>
+    </div>
   );
 }

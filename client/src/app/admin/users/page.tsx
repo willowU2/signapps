@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table"
 import { type User, isAdmin, isActive } from "@/lib/api-admin"
 import { Plus, Search, MoreHorizontal, UserCog, Upload } from "lucide-react"
+import { ExportButton } from "@/components/ui/export-button"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -119,6 +120,25 @@ export default function UsersPage() {
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold tracking-tight">Users</h1>
                     <div className="flex gap-2">
+                        <ExportButton
+                            data={filteredUsers.map(u => ({
+                                username: u.username,
+                                email: u.email || '',
+                                display_name: u.display_name || '',
+                                role: u.role >= 2 ? 'Admin' : u.role === 1 ? 'User' : 'Guest',
+                                status: isActive(u) ? 'Active' : 'Inactive',
+                                created_at: new Date(u.created_at).toLocaleDateString(),
+                            }))}
+                            filename={`users-${new Date().toISOString().slice(0, 10)}`}
+                            columns={{
+                                username: 'Username',
+                                email: 'Email',
+                                display_name: 'Display Name',
+                                role: 'Role',
+                                status: 'Status',
+                                created_at: 'Joined',
+                            }}
+                        />
                         <Button variant="outline" onClick={() => setImportOpen(true)}>
                             <Upload className="mr-2 h-4 w-4" /> Import CSV
                         </Button>

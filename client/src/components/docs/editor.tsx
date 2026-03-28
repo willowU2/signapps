@@ -105,6 +105,7 @@ import { MailMerge } from './mail-merge';
 import { VoiceDictation } from './voice-dictation';
 import { SpellCheck } from './spell-check';
 import { OfflineIndicator } from './offline-indicator';
+import { AutoSaveIndicator, type SaveStatus } from '@/components/ui/auto-save-indicator';
 
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -423,6 +424,9 @@ const Editor = ({
     // Autosave: persists editor HTML to localStorage every 30s
     const [editorHtml, setEditorHtml] = useState('');
     useAutosave(`doc:${documentId}`, editorHtml);
+
+    // Save status indicator
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
 
     // Comments state
     const { setActiveComment, sidebarOpen, setSidebarOpen } = useCommentsStore();
@@ -1056,22 +1060,36 @@ const Editor = ({
             const htmlString = editor.getHTML();
             if (htmlString === lastSavedHtmlRef.current) return;
 
+            setSaveStatus('unsaved');
             const textContent = editor.getText().trim();
             // Check that we actually have content to save
             if (textContent.length > 0 || htmlString.includes('<img')) {
                 try {
+                    setSaveStatus('saving');
                     const blob = new Blob([htmlString], { type: 'text/html' });
                     await storageApi.uploadWithKey('drive', `${documentId}.html`, blob);
                     lastSavedHtmlRef.current = htmlString;
+                    setSaveStatus('saved');
                 } catch (err) {
                     console.debug("Auto-save preview failed:", err);
+                    setSaveStatus('unsaved');
                 }
             }
         };
 
+        // Track content changes for unsaved indicator
+        const handleUpdate = () => {
+            const htmlString = editor.getHTML();
+            if (htmlString !== lastSavedHtmlRef.current) {
+                setSaveStatus('unsaved');
+            }
+        };
+        editor.on('update', handleUpdate);
+
         const autoSaveInterval = setInterval(performSave, 1500); // Sauvegarde très rapide
 
         return () => {
+            editor.off('update', handleUpdate);
             clearInterval(autoSaveInterval);
             // Toujours sauvegarder une dernière fois quand on quitte la page
             performSave();

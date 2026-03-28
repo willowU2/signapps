@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -863,8 +862,7 @@ export default function AIPage() {
   });
 
   return (
-    <AppLayout>
-      <div className="flex h-[calc(100vh-8rem)]">
+    <div className="flex h-[calc(100vh-8rem)]">
         {/* Sidebar - Conversation History */}
         <div className={cn(
           "flex flex-col border-r bg-muted/30 transition-all duration-300",
@@ -1560,6 +1558,6 @@ export default function AIPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </AppLayout>
+    </div>
   );
 }

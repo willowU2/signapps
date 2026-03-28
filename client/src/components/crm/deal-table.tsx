@@ -6,10 +6,21 @@ import {
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ArrowUpDown, Search } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { ArrowUpDown, Search, Trash2 } from "lucide-react"
 import Link from "next/link"
 import type { Deal, DealStage } from "@/lib/api/crm"
 import { computeLeadScore, STAGE_LABELS } from "@/lib/api/crm"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const STAGE_BADGE_VARIANTS: Record<DealStage, "default" | "secondary" | "outline" | "destructive"> = {
   prospect: "outline",
@@ -22,6 +33,7 @@ const STAGE_BADGE_VARIANTS: Record<DealStage, "default" | "secondary" | "outline
 
 interface Props {
   deals: Deal[]
+  onDelete?: (id: string) => void
 }
 
 type SortKey = "title" | "company" | "value" | "probability" | "stage" | "closeDate" | "assignedTo" | "createdAt"
@@ -37,11 +49,12 @@ const COLUMN_LABELS: Record<SortKey, string> = {
   createdAt: "Créé le",
 }
 
-export function DealTable({ deals }: Props) {
+export function DealTable({ deals, onDelete }: Props) {
   const [search, setSearch] = useState("")
   const [stageFilter, setStageFilter] = useState("all")
   const [sortKey, setSortKey] = useState<SortKey>("createdAt")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
@@ -118,6 +131,7 @@ export function DealTable({ deals }: Props) {
                 </TableHead>
               ))}
               <TableHead>Score</TableHead>
+              {onDelete && <TableHead className="w-10"></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -157,6 +171,18 @@ export function DealTable({ deals }: Props) {
                     {computeLeadScore(d)}
                   </Badge>
                 </TableCell>
+                {onDelete && (
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => setDeleteTargetId(d.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -168,6 +194,28 @@ export function DealTable({ deals }: Props) {
           {filtered.length} deal{filtered.length > 1 ? "s" : ""} affiché{filtered.length > 1 ? "s" : ""}
         </p>
       )}
+
+      <AlertDialog open={!!deleteTargetId} onOpenChange={(v) => !v && setDeleteTargetId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce deal ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTargetId) { onDelete?.(deleteTargetId); setDeleteTargetId(null); }
+              }}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

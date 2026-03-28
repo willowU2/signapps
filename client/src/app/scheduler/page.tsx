@@ -56,6 +56,8 @@ import { Plus, Clock, Play, MoreVertical, Pencil, Trash2, Terminal, Container, S
 import { schedulerApi, ScheduledJob, JobRun, JobStats, RunningJob } from '@/lib/api';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
+import { CronBuilder } from '@/components/scheduler/cron-builder';
+import { ExportButton } from '@/components/ui/export-button';
 
 export default function SchedulerPage() {
   const queryClient = useQueryClient();
@@ -250,15 +252,6 @@ export default function SchedulerPage() {
     }
   };
 
-  const cronPresets = [
-    { label: 'Chaque minute', value: '* * * * *' },
-    { label: 'Toutes les 5 min', value: '*/5 * * * *' },
-    { label: 'Chaque heure', value: '0 * * * *' },
-    { label: 'Chaque jour minuit', value: '0 0 * * *' },
-    { label: 'Chaque semaine (dim)', value: '0 0 * * 0' },
-    { label: 'Chaque mois (1er)', value: '0 0 1 * *' },
-  ];
-
   if (loading) {
     return (
       <AppLayout>
@@ -288,6 +281,31 @@ export default function SchedulerPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Planificateur</h1>
           <div className="flex gap-2">
+            <ExportButton
+              data={jobs.map(j => ({
+                name: j.name,
+                description: j.description || '',
+                cron_expression: j.cron_expression,
+                command: j.command,
+                target_type: j.target_type,
+                target_id: j.target_id || '',
+                enabled: j.enabled ? 'Oui' : 'Non',
+                last_run: j.last_run || 'Jamais',
+                last_status: j.last_status || '-',
+              }))}
+              filename={`scheduler-jobs-${new Date().toISOString().slice(0, 10)}`}
+              columns={{
+                name: 'Nom',
+                description: 'Description',
+                cron_expression: 'Planification',
+                command: 'Commande',
+                target_type: 'Type Cible',
+                target_id: 'ID Cible',
+                enabled: 'Active',
+                last_run: 'Derniere Execution',
+                last_status: 'Dernier Statut',
+              }}
+            />
             <Button variant="outline" onClick={fetchJobs}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Actualiser
@@ -501,27 +519,11 @@ export default function SchedulerPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cron">Expression CRON *</Label>
-              <Input
-                id="cron"
-                placeholder="0 0 * * *"
+              <Label>Planification *</Label>
+              <CronBuilder
                 value={formData.cron_expression}
-                onChange={(e) => setFormData({ ...formData, cron_expression: e.target.value })}
+                onChange={(cron) => setFormData({ ...formData, cron_expression: cron })}
               />
-              <div className="flex flex-wrap gap-1">
-                {cronPresets.map((preset) => (
-                  <Button
-                    key={preset.value}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-6"
-                    onClick={() => setFormData({ ...formData, cron_expression: preset.value })}
-                  >
-                    {preset.label}
-                  </Button>
-                ))}
-              </div>
             </div>
 
             <div className="space-y-2">

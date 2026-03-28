@@ -48,6 +48,11 @@ export default function CRMPage() {
     reload()
   }, [reload])
 
+  const deleteDeal = useCallback((id: string) => {
+    dealsApi.delete(id)
+    reload()
+  }, [reload])
+
   const activeDeals = deals.filter(d => d.stage !== "lost")
   const wonDeals = deals.filter(d => d.stage === "won")
   const totalPipeline = activeDeals.reduce((s, d) => s + (d.value * d.probability) / 100, 0)
@@ -118,7 +123,7 @@ export default function CRMPage() {
           </TabsContent>
 
           <TabsContent value="table" className="mt-4">
-            <DealTable deals={deals} />
+            <DealTable deals={deals} onDelete={deleteDeal} />
           </TabsContent>
 
           <TabsContent value="forecast" className="mt-4">

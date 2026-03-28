@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { getClient, ServiceName } from "@/lib/api/factory"
 import { contactsApi } from "@/lib/api/contacts"
+import { ExportButton } from "@/components/ui/export-button"
 import { EntityLinks } from "@/components/crosslinks/EntityLinks"
 import { ContactGroups, type Group } from "@/components/contacts/contact-groups"
 import { MergeContacts, type MergeableContact } from "@/components/contacts/merge-contacts"
@@ -384,6 +385,27 @@ export default function ContactsPage() {
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <ExportButton
+              data={sortedFiltered.map(c => ({
+                name: c.name,
+                email: c.email,
+                phone: c.phone || '',
+                company: c.company || '',
+                tags: c.tags.join('; '),
+                favorite: c.favorite ? 'Oui' : 'Non',
+                group: c.group || '',
+              }))}
+              filename={`contacts-${new Date().toISOString().slice(0, 10)}`}
+              columns={{
+                name: 'Nom',
+                email: 'Email',
+                phone: 'Telephone',
+                company: 'Entreprise',
+                tags: 'Tags',
+                favorite: 'Favori',
+                group: 'Groupe',
+              }}
+            />
             <Button variant="outline" onClick={handleExportVcf}>
               <Download className="h-4 w-4 mr-2" />
               Export VCF

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Send, CheckCheck, AlertTriangle, XCircle, TrendingUp, BarChart3 } from 'lucide-react';
 import { getClient, ServiceName } from '@/lib/api/factory';
@@ -38,8 +37,7 @@ export default function MailAnalyticsPage() {
   const maxDaily = Math.max(...stats.daily.map(d => d.sent), 1);
 
   return (
-    <AppLayout>
-      <div className="w-full space-y-6">
+    <div className="w-full space-y-6">
         <div className="flex items-center gap-3">
           <BarChart3 className="h-8 w-8 text-primary" />
           <div>
@@ -114,6 +112,6 @@ export default function MailAnalyticsPage() {
           </Card>
         )}
       </div>
-    </AppLayout>
+    </div>
   );
 }
