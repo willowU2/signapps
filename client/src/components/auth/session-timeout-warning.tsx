@@ -11,13 +11,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Clock, BellOff } from 'lucide-react';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { toast } from 'sonner';
 
 const WARN_BEFORE_MS = 5 * 60 * 1000; // 5 minutes
 const CHECK_INTERVAL_MS = 30 * 1000;   // check every 30 seconds
+const SNOOZE_KEY = 'session_warning_snoozed_until';
+const SNOOZE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /** Decode JWT expiry from access_token without verifying signature */
 function getTokenExpiry(token: string): number | null {
@@ -26,6 +29,17 @@ function getTokenExpiry(token: string): number | null {
     return payload.exp ? payload.exp * 1000 : null;
   } catch {
     return null;
+  }
+}
+
+/** Check if warning is snoozed */
+function isSnoozed(): boolean {
+  try {
+    const until = localStorage.getItem(SNOOZE_KEY);
+    if (!until) return false;
+    return Date.now() < parseInt(until, 10);
+  } catch {
+    return false;
   }
 }
 
@@ -51,7 +65,7 @@ export function SessionTimeoutWarning() {
         stopCountdown();
         setShowWarning(false);
         logout();
-        toast.error('Session expired. Please sign in again.');
+        toast.error('Votre session a expiré. Veuillez vous reconnecter.');
       }
     }, 1000);
   };
@@ -60,12 +74,11 @@ export function SessionTimeoutWarning() {
     try {
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) { logout(); return; }
-      // Call a token refresh endpoint — gracefully handle if not available
-      const res = await authApi.me(); // bump session via /me
+      const res = await authApi.me();
       void res;
       stopCountdown();
       setShowWarning(false);
-      toast.success('Session extended');
+      toast.success('Session prolongée');
     } catch {
       logout();
     }
@@ -77,10 +90,29 @@ export function SessionTimeoutWarning() {
     logout();
   }, [logout]);
 
+  const handleSnooze = useCallback(() => {
+    // Snooze for 24 hours
+    const until = Date.now() + SNOOZE_DURATION_MS;
+    localStorage.setItem(SNOOZE_KEY, String(until));
+    stopCountdown();
+    setShowWarning(false);
+    toast.info('Rappel désactivé pour 24h. La session sera prolongée automatiquement.');
+
+    // Also try to extend the session silently
+    authApi.me().catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (!isAuthenticated) { setShowWarning(false); stopCountdown(); return; }
 
     const check = () => {
+      // Skip if snoozed
+      if (isSnoozed()) {
+        // Silently extend session if possible
+        authApi.me().catch(() => {});
+        return;
+      }
+
       const token = localStorage.getItem('access_token');
       if (!token) return;
       const expiry = getTokenExpiry(token);
@@ -117,21 +149,32 @@ export function SessionTimeoutWarning() {
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-amber-500" />
-            Session expiring soon
+            Session bientôt expirée
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Your session will expire in{' '}
+            Votre session expire dans{' '}
             <span className="font-semibold text-amber-600">
               {mins}:{secs}
             </span>
-            . Do you want to stay signed in?
+            . Voulez-vous rester connecté ?
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleLogout}>Sign out</AlertDialogCancel>
-          <AlertDialogAction onClick={handleExtend}>
-            Extend session
-          </AlertDialogAction>
+        <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={handleSnooze}
+          >
+            <BellOff className="h-4 w-4 mr-1" />
+            Ne plus afficher (24h)
+          </Button>
+          <div className="flex gap-2 ml-auto">
+            <AlertDialogCancel onClick={handleLogout}>Se déconnecter</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExtend}>
+              Prolonger la session
+            </AlertDialogAction>
+          </div>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
