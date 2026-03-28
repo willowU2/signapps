@@ -14,9 +14,14 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const rightSidebarOpen = useUIStore((s) => s.rightSidebarOpen);
+  const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
+    <div className={cn(
+      "flex h-screen flex-col overflow-hidden bg-background transition-all duration-200",
+      sidebarCollapsed ? "md:pl-16" : "md:pl-64",
+      rightSidebarOpen ? "md:pr-[24rem]" : "md:pr-16"
+    )}>
       <SkipLink />
       <Header />
 
@@ -24,15 +29,11 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Left sidebar — includes its own mobile drawer + backdrop logic */}
         <Sidebar />
 
-        {/* Main content — right margin accounts for fixed right sidebar */}
+        {/* Main content */}
         <main
           id="main-content"
           className={cn(
-            'flex-1 min-w-0 overflow-y-auto rounded-tl-2xl border-l border-t border-border bg-card dark:bg-[#0b0e14] p-4 md:p-6 pb-28 transition-all duration-200',
-            // Icon bar is always 64px wide on desktop
-            'md:mr-16',
-            // When panel is open, add 320px for the panel
-            rightSidebarOpen && 'md:mr-[24rem]',
+            'flex-1 min-w-0 overflow-y-auto rounded-tl-2xl border-l border-t border-border bg-card dark:bg-[#0b0e14] p-4 md:p-6 pb-28 transition-all duration-200'
           )}
         >
           <div className="mx-auto max-w-[1600px]">
