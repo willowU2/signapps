@@ -59,7 +59,7 @@ export default function CertificatesPage() {
   const [preview, setPreview] = useState<Certificate | null>(null);
 
   const handleDownload = (cert: Certificate) => {
-    toast.success(`Downloading ${cert.certNumber}.pdf`);
+    toast.success(`Téléchargement de ${cert.certNumber}.pdf`);
   };
 
   return (
@@ -135,7 +135,7 @@ export default function CertificatesPage() {
               <div className="space-y-4">
                 <CertificatePreview cert={preview} />
                 <div className="flex gap-2 justify-center">
-                  <Button variant="outline" onClick={() => toast.success('Print dialog opened')}><Printer className="h-4 w-4 mr-2" />Print</Button>
+                  <Button variant="outline" onClick={() => toast.success('Impression lancée')}><Printer className="h-4 w-4 mr-2" />Imprimer</Button>
                   <Button onClick={() => handleDownload(preview)}><Download className="h-4 w-4 mr-2" />Download PDF</Button>
                 </div>
               </div>

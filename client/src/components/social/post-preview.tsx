@@ -496,6 +496,151 @@ function InstagramPreview({ content, accountName, accountAvatar, mediaUrls }: Om
   );
 }
 
+/* ---------- TikTok Preview ---------- */
+function TikTokPreview({ content, accountName, accountAvatar, mediaUrls }: Omit<PostPreviewProps, 'platform'>) {
+  const handle = accountName?.toLowerCase().replace(/\s+/g, '') ?? 'user';
+  return (
+    <div className="rounded-2xl border bg-zinc-950 text-white p-4 space-y-3 font-[system-ui]">
+      <div className="flex items-start gap-3">
+        <AvatarCircle src={accountAvatar} fallback={accountName ?? 'T'} bgColor="#010101" size={40} />
+        <div className="flex-1 min-w-0">
+          <span className="font-bold text-sm">@{handle}</span>
+        </div>
+        <button className="text-xs px-3 py-1 rounded-sm border border-[#FE2C55] text-[#FE2C55] font-semibold shrink-0">Follow</button>
+      </div>
+
+      {mediaUrls && mediaUrls.length > 0 ? (
+        <div className="aspect-[9/16] max-h-48 bg-zinc-900 rounded-lg overflow-hidden">
+          <img src={mediaUrls[0]} alt="Video thumbnail" className="w-full h-full object-cover" />
+        </div>
+      ) : (
+        <div className="aspect-[9/16] max-h-48 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-600 text-xs">Video</div>
+      )}
+
+      {content ? (
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+      ) : (
+        <p className="text-sm text-zinc-600 italic">Video description...</p>
+      )}
+
+      <div className="flex items-center gap-4 text-zinc-400">
+        <button className="flex items-center gap-1 hover:text-[#FE2C55] transition-colors">
+          <Heart className="h-5 w-5" /><span className="text-xs">0</span>
+        </button>
+        <button className="flex items-center gap-1 hover:text-white transition-colors">
+          <MessageCircle className="h-5 w-5" /><span className="text-xs">0</span>
+        </button>
+        <button className="flex items-center gap-1 hover:text-white transition-colors">
+          <Share className="h-5 w-5" /><span className="text-xs">0</span>
+        </button>
+      </div>
+      <CharCount content={content} platform="tiktok" />
+    </div>
+  );
+}
+
+/* ---------- YouTube Preview ---------- */
+function YouTubePreview({ content, accountName, accountAvatar, mediaUrls }: Omit<PostPreviewProps, 'platform'>) {
+  const title = content.length > 100 ? content.slice(0, 97) + '...' : content;
+  return (
+    <div className="rounded-2xl border bg-zinc-950 text-white p-4 space-y-3 font-[system-ui]">
+      {mediaUrls && mediaUrls.length > 0 ? (
+        <div className="aspect-video bg-zinc-900 rounded-lg overflow-hidden">
+          <img src={mediaUrls[0]} alt="Video thumbnail" className="w-full h-full object-cover" />
+        </div>
+      ) : (
+        <div className="aspect-video bg-zinc-900 rounded-lg flex items-center justify-center">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+        </div>
+      )}
+      {content ? (
+        <p className="text-sm font-semibold leading-tight">{title}</p>
+      ) : (
+        <p className="text-sm text-zinc-500 italic">Video title / description...</p>
+      )}
+      <div className="flex items-center gap-2.5">
+        <AvatarCircle src={accountAvatar} fallback={accountName ?? 'Y'} bgColor="#FF0000" size={32} />
+        <span className="text-xs text-zinc-400">{accountName ?? 'Channel'}</span>
+      </div>
+      <div className="flex items-center gap-4 text-zinc-400">
+        <button className="flex items-center gap-1 hover:text-white transition-colors">
+          <ThumbsUp className="h-4 w-4" /><span className="text-xs">0</span>
+        </button>
+        <button className="flex items-center gap-1 hover:text-white transition-colors">
+          <Share className="h-4 w-4" /><span className="text-xs">Share</span>
+        </button>
+        <button className="flex items-center gap-1 hover:text-white transition-colors">
+          <Bookmark className="h-4 w-4" /><span className="text-xs">Save</span>
+        </button>
+      </div>
+      <CharCount content={content} platform="youtube" />
+    </div>
+  );
+}
+
+/* ---------- Pinterest Preview ---------- */
+function PinterestPreview({ content, accountName, accountAvatar, mediaUrls }: Omit<PostPreviewProps, 'platform'>) {
+  return (
+    <div className="rounded-2xl border bg-white dark:bg-zinc-50 text-zinc-900 font-[system-ui] overflow-hidden">
+      {mediaUrls && mediaUrls.length > 0 ? (
+        <div className="aspect-[2/3] bg-zinc-100 overflow-hidden">
+          <img src={mediaUrls[0]} alt="Pin image" className="w-full h-full object-cover" />
+        </div>
+      ) : (
+        <div className="aspect-[2/3] bg-gradient-to-b from-[#E60023]/10 to-[#E60023]/5 flex items-center justify-center text-[#E60023] text-xs">Pin image</div>
+      )}
+      <div className="p-3 space-y-2">
+        {content ? (
+          <p className="text-sm font-semibold leading-tight">{content.slice(0, 100)}{content.length > 100 ? '…' : ''}</p>
+        ) : (
+          <p className="text-sm text-zinc-400 italic">Pin description...</p>
+        )}
+        <div className="flex items-center gap-2">
+          <AvatarCircle src={accountAvatar} fallback={accountName ?? 'P'} bgColor="#E60023" size={24} />
+          <span className="text-xs text-zinc-500">{accountName ?? 'Creator'}</span>
+        </div>
+      </div>
+      <div className="px-3 pb-3">
+        <CharCount content={content} platform="pinterest" />
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Threads Preview ---------- */
+function ThreadsPreview({ content, accountName, accountAvatar, mediaUrls }: Omit<PostPreviewProps, 'platform'>) {
+  const handle = accountName?.toLowerCase().replace(/\s+/g, '') ?? 'user';
+  return (
+    <div className="rounded-2xl border bg-zinc-950 text-white p-4 space-y-3 font-[system-ui]">
+      <div className="flex items-start gap-3">
+        <AvatarCircle src={accountAvatar} fallback={accountName ?? 'T'} bgColor="#1a1a1a" size={40} />
+        <div className="flex-1 min-w-0">
+          <span className="font-bold text-sm">@{handle}</span>
+          <span className="text-zinc-500 text-xs ml-1.5">Just now</span>
+        </div>
+        <MoreHorizontal className="h-4 w-4 text-zinc-500 shrink-0" />
+      </div>
+
+      {content ? (
+        <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{content}</p>
+      ) : (
+        <p className="text-sm text-zinc-600 italic">Start a thread...</p>
+      )}
+
+      {mediaUrls && mediaUrls.length > 0 && <MediaGrid mediaUrls={mediaUrls} />}
+
+      <div className="flex items-center gap-5 text-zinc-400">
+        <button className="hover:text-white transition-colors"><Heart className="h-[18px] w-[18px]" /></button>
+        <button className="hover:text-white transition-colors"><MessageCircle className="h-[18px] w-[18px]" /></button>
+        <button className="hover:text-white transition-colors"><Repeat2 className="h-[18px] w-[18px]" /></button>
+        <button className="hover:text-white transition-colors"><Share className="h-[18px] w-[18px]" /></button>
+      </div>
+
+      <CharCount content={content} platform="threads" />
+    </div>
+  );
+}
+
 /* ---------- Main Export ---------- */
 export function PostPreview({ platform, content, accountName, accountAvatar, mediaUrls }: PostPreviewProps) {
   const props = { content, accountName, accountAvatar, mediaUrls };
@@ -513,6 +658,14 @@ export function PostPreview({ platform, content, accountName, accountAvatar, med
       return <FacebookPreview {...props} />;
     case 'instagram':
       return <InstagramPreview {...props} />;
+    case 'tiktok':
+      return <TikTokPreview {...props} />;
+    case 'youtube':
+      return <YouTubePreview {...props} />;
+    case 'pinterest':
+      return <PinterestPreview {...props} />;
+    case 'threads':
+      return <ThreadsPreview {...props} />;
     default:
       return <TwitterPreview {...props} />;
   }

@@ -43,14 +43,27 @@ function SlidesEditorContent() {
     const [loading, setLoading] = useState(id !== 'new-presentation' && name !== '')
 
     useEffect(() => {
+        // Check for template content first
+        const templateKey = `slide-template:${id}`
+        const templateContent = typeof window !== 'undefined' ? localStorage.getItem(templateKey) : null
+        if (templateContent) {
+            try {
+                const data = JSON.parse(templateContent)
+                setInitialData(data)
+                localStorage.removeItem(templateKey)
+            } catch (e) {
+                console.error('Failed to parse slide template', e)
+            }
+            setLoading(false)
+            return
+        }
+
         if (id !== 'new-presentation' && name) {
             const targetKey = `${id}.signslides`
             fetchAndParseDocument('drive', targetKey, targetKey)
                 .catch(() => fetchAndParseDocument('drive', name, name))
                 .then(res => {
-                    // For raw json (like .signslides), our parser might return { type: 'json', data: {...} } or 'slides' depending on implementation
                     if (res && 'data' in res && res.data) {
-                        // Pass along the parsed JSON data directly to SlidesContent
                         setInitialData(res.data)
                     }
                     setLoading(false)

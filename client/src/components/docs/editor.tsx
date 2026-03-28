@@ -59,6 +59,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
 import { GenericFeatureModal } from '@/components/editor/generic-feature-modal';
 import { driveApi } from '@/lib/api';
+import { saveUserTemplate } from '@/lib/document-templates';
 
 // Utility to dynamically load Google Fonts without freezing the browser
 export const loadGoogleFont = (fontFamily: string) => {
@@ -1050,6 +1051,20 @@ const Editor = ({
         }
     }, [editor, initialParsedContent]);
 
+    // Inject template content from localStorage (when created from template)
+    useEffect(() => {
+        if (!editor || !documentId || documentId === 'new') return;
+        const templateKey = `doc-template:${documentId}`;
+        const templateContent = localStorage.getItem(templateKey);
+        if (templateContent) {
+            // Small delay to let the editor initialize
+            setTimeout(() => {
+                editor.commands.setContent(templateContent);
+                localStorage.removeItem(templateKey);
+            }, 300);
+        }
+    }, [editor, documentId]);
+
     // ---- Auto-Save HTML for Previews ----
     const lastSavedHtmlRef = useRef('');
 
@@ -1601,8 +1616,12 @@ ${html}
                 shortcut: 'Ctrl+O'
             },
             {
-                label: 'Créer une copie',
+                label: 'Cr\u00e9er une copie',
                 action: 'copy_file'
+            },
+            {
+                label: 'Sauvegarder comme mod\u00e8le',
+                action: 'saveAsTemplate'
             },
             {
                 sep: true
@@ -1947,7 +1966,7 @@ ${html}
         }]
     }];
 
-    const NATIVE_ACTIONS = ['rename', 'trash', 'open', 'print', 'fullScreen', 'wordCount', 'undo', 'redo', 'selectAll', 'delete', 'newDoc', 'downloadPdf', 'downloadPdfEnhanced', 'downloadEpub', 'downloadMarkdown', 'cut', 'copy', 'paste', 'pasteText', 'toggleBold', 'toggleItalic', 'toggleUnderline', 'toggleStrike', 'toggleSuperscript', 'toggleSubscript', 'clearFormat', 'toggleH1', 'toggleH2', 'toggleH3', 'setParagraph', 'toggleOrderedList', 'toggleBulletList', 'toggleTaskList', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'insertHorizontalRule', 'insertHardBreak', 'insertImage', 'insertLink', 'insertTable', 'insertCode', 'tableAddRowBefore', 'tableAddRowAfter', 'tableAddColBefore', 'tableAddColAfter', 'tableDeleteRow', 'tableDeleteCol', 'tableDeleteTable', 'tableMergeCells', 'aiGenerate', 'aiSummarize', 'translateEn', 'findReplace', 'comment', 'fontSize_smaller', 'fontSize_larger', 'lineHeight_1', 'lineHeight_1.15', 'lineHeight_1.5', 'lineHeight_2', 'page_setup', 'saveToDrive', 'download_docx', 'mailMerge', 'focusMode', 'splitView', 'wordGoal', 'suggestionMode', 'insert2Columns', 'insert3Columns'];
+    const NATIVE_ACTIONS = ['rename', 'trash', 'open', 'print', 'fullScreen', 'wordCount', 'undo', 'redo', 'selectAll', 'delete', 'newDoc', 'downloadPdf', 'downloadPdfEnhanced', 'downloadEpub', 'downloadMarkdown', 'cut', 'copy', 'paste', 'pasteText', 'toggleBold', 'toggleItalic', 'toggleUnderline', 'toggleStrike', 'toggleSuperscript', 'toggleSubscript', 'clearFormat', 'toggleH1', 'toggleH2', 'toggleH3', 'setParagraph', 'toggleOrderedList', 'toggleBulletList', 'toggleTaskList', 'alignLeft', 'alignCenter', 'alignRight', 'alignJustify', 'insertHorizontalRule', 'insertHardBreak', 'insertImage', 'insertLink', 'insertTable', 'insertCode', 'tableAddRowBefore', 'tableAddRowAfter', 'tableAddColBefore', 'tableAddColAfter', 'tableDeleteRow', 'tableDeleteCol', 'tableDeleteTable', 'tableMergeCells', 'aiGenerate', 'aiSummarize', 'translateEn', 'findReplace', 'comment', 'fontSize_smaller', 'fontSize_larger', 'lineHeight_1', 'lineHeight_1.15', 'lineHeight_1.5', 'lineHeight_2', 'page_setup', 'saveToDrive', 'download_docx', 'mailMerge', 'focusMode', 'splitView', 'wordGoal', 'suggestionMode', 'insert2Columns', 'insert3Columns', 'saveAsTemplate'];
 
     // Handle Menu Actions
     const handleMenuAction = useCallback(async (action: string, label?: string) => {
@@ -2013,6 +2032,18 @@ ${html}
         }
         if (action === 'saveToDrive') {
             await saveToDrive();
+            return;
+        }
+        if (action === 'saveAsTemplate') {
+            const html = editor.getHTML();
+            const name = documentName || 'Mon mod\u00e8le';
+            saveUserTemplate({
+                title: name,
+                description: `Mod\u00e8le cr\u00e9\u00e9 depuis "${name}"`,
+                type: 'document',
+                content: html,
+            });
+            toast.success('Document sauvegard\u00e9 comme mod\u00e8le');
             return;
         }
 

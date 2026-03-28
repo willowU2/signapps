@@ -74,12 +74,12 @@ export default function ReviewsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.rating || !form.title.trim() || !form.content.trim()) { toast.error('Please fill all fields'); return; }
+    if (!form.rating || !form.title.trim() || !form.content.trim()) { toast.error('Veuillez remplir tous les champs'); return; }
     const rev: Review = { id: Date.now().toString(), courseId: form.courseId, courseName: form.courseName, author: 'You', initials: 'ME', rating: form.rating, title: form.title, content: form.content, helpful: 0, markedHelpful: false, createdAt: new Date() };
     setReviews([rev, ...reviews]);
     setForm({ courseId: '1', courseName: 'Intro to SignApps', rating: 0, title: '', content: '' });
     setOpen(false);
-    toast.success('Review submitted!');
+    toast.success('Avis soumis !');
   };
 
   return (
@@ -110,7 +110,7 @@ export default function ReviewsPage() {
                 <div><label className="text-sm font-medium">Review Title</label><input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Sum up your experience..." className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></div>
                 <div><label className="text-sm font-medium">Detailed Review</label><Textarea value={form.content} onChange={e => setForm({ ...form, content: e.target.value })} placeholder="Share your experience..." rows={4} className="mt-1" /></div>
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
                   <Button type="submit">Submit Review</Button>
                 </div>
               </form>

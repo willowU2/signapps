@@ -1007,19 +1007,19 @@ export default function SettingsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Group</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer le groupe</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the group "{deleteGroupDialog.group?.name}"?
-              This will remove all member associations. This action cannot be undone.
+              Êtes-vous sûr de vouloir supprimer le groupe "{deleteGroupDialog.group?.name}" ?
+              Cela supprimera toutes les associations de membres. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteGroup}
               className="bg-destructive text-destructive-foreground"
             >
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1041,19 +1041,19 @@ export default function SettingsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Webhook</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer le webhook</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the webhook "{deleteWebhookDialog.webhook?.name}"?
-              This action cannot be undone.
+              Êtes-vous sûr de vouloir supprimer le webhook "{deleteWebhookDialog.webhook?.name}" ?
+              Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteWebhook}
               className="bg-destructive text-destructive-foreground"
             >
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

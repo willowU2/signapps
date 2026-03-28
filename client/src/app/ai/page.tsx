@@ -450,7 +450,7 @@ export default function AIPage() {
     setRenameDialogOpen(false);
     setConversationToRename(null);
     setNewConversationTitle('');
-    toast.success('Conversation renommee');
+    toast.success('Conversation renommée');
   }, [conversationToRename, newConversationTitle]);
 
   const handleDeleteConversation = useCallback(() => {
@@ -481,10 +481,10 @@ export default function AIPage() {
       setCreateKbDialogOpen(false);
       setNewKbName('');
       setNewKbDescription('');
-      toast.success('Knowledge base creee');
+      toast.success('Base de connaissances créée');
     } catch (error) {
       console.error('Failed to create knowledge base:', error);
-      toast.error('Erreur lors de la creation');
+      toast.error('Erreur lors de la création');
     }
   }, [newKbName, newKbDescription, fetchKnowledgeBases]);
 
@@ -501,7 +501,7 @@ export default function AIPage() {
 
       setDeleteKbDialogOpen(false);
       setKbToDelete(null);
-      toast.success('Knowledge base supprimee');
+      toast.success('Base de connaissances supprimée');
     } catch (error) {
       console.error('Failed to delete knowledge base:', error);
       toast.error('Erreur lors de la suppression');
@@ -1405,7 +1405,7 @@ export default function AIPage() {
                     setSelectedProvider(llmProvider.id);
                   }
                   setActiveTab('chat');
-                  toast.success(`Modele ${modelId} selectionne`);
+                  toast.success(`Modèle ${modelId} sélectionné`);
                 }}
               />
             </TabsContent>

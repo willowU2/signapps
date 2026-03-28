@@ -137,7 +137,7 @@ function CreateTemplateDialog({
             <Button className="flex-1" onClick={handleCreate} disabled={isSaving || !name || !content}>
               {isSaving ? 'Creating…' : 'Create Template'}
             </Button>
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button variant="outline" onClick={onClose}>Annuler</Button>
           </div>
         </div>
       </DialogContent>

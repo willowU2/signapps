@@ -44,7 +44,7 @@ export default function ApiQuotaDashboardPage() {
       setEntries(await resp.json());
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      toast.error(`Failed to load API quota data: ${msg}`);
+      toast.error(`Impossible de charger les données de quota API : ${msg}`);
     } finally {
       setLoading(false);
     }

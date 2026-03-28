@@ -25,7 +25,7 @@ function DesignEditorContent() {
                 try {
                     await loadDesign(id)
                 } catch {
-                    toast.error('Failed to load design')
+                    toast.error('Impossible de charger le design')
                 }
             }
         }

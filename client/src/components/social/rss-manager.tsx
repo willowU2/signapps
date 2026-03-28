@@ -111,7 +111,7 @@ function AddFeedDialog({
             <Button className="flex-1" onClick={handleCreate} disabled={isSaving || !name || !url}>
               {isSaving ? 'Creating…' : 'Create Feed'}
             </Button>
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button variant="outline" onClick={onClose}>Annuler</Button>
           </div>
         </div>
       </DialogContent>

@@ -102,7 +102,7 @@ function TunnelStatusBadge({ status }: { status: Tunnel['status'] }) {
   if (status === 'connected')
     return <Badge className="bg-green-500/10 text-green-600">Connected</Badge>;
   if (status === 'error')
-    return <Badge variant="destructive">Error</Badge>;
+    return <Badge variant="destructive">Erreur</Badge>;
   return <Badge variant="secondary">Disconnected</Badge>;
 }
 
@@ -128,7 +128,7 @@ function DashboardTab() {
       setStats(s.data);
       setTraffic(t.data);
     } catch {
-      toast.error('Failed to load dashboard stats');
+      toast.error('Impossible de charger les statistiques');
     } finally {
       setLoading(false);
     }
@@ -256,7 +256,7 @@ function TunnelsTab() {
 
   const handleCreate = async () => {
     if (!form.name || !form.target_host || !form.target_port) {
-      toast.error('Name, host and port are required');
+      toast.error('Nom, hôte et port requis');
       return;
     }
     setSaving(true);
@@ -268,12 +268,12 @@ function TunnelsTab() {
         local_port: form.local_port ? parseInt(form.local_port) : undefined,
         protocol: form.protocol,
       });
-      toast.success('Tunnel created');
+      toast.success('Tunnel créé');
       setCreateOpen(false);
       setForm({ name: '', target_host: '', target_port: '', local_port: '', protocol: 'tcp' });
       load();
     } catch {
-      toast.error('Failed to create tunnel');
+      toast.error('Échec de la création du tunnel');
     } finally {
       setSaving(false);
     }
@@ -281,7 +281,7 @@ function TunnelsTab() {
 
   const handleQuickConnect = async () => {
     if (!quickForm.target_host || !quickForm.target_port) {
-      toast.error('Host and port are required');
+      toast.error('Hôte et port requis');
       return;
     }
     setSaving(true);
@@ -290,12 +290,12 @@ function TunnelsTab() {
         target_host: quickForm.target_host,
         target_port: parseInt(quickForm.target_port),
       });
-      toast.success('Quick connect initiated');
+      toast.success('Connexion rapide initiée');
       setQuickOpen(false);
       setQuickForm({ target_host: '', target_port: '' });
       load();
     } catch {
-      toast.error('Quick connect failed');
+      toast.error('Échec de la connexion rapide');
     } finally {
       setSaving(false);
     }
@@ -304,20 +304,20 @@ function TunnelsTab() {
   const handleReconnect = async (id: string) => {
     try {
       await securelinkApi.tunnels.reconnect(id);
-      toast.success('Reconnecting tunnel…');
+      toast.success('Reconnexion en cours…');
       load();
     } catch {
-      toast.error('Reconnect failed');
+      toast.error('Échec de la reconnexion');
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await securelinkApi.tunnels.delete(id);
-      toast.success('Tunnel deleted');
+      toast.success('Tunnel supprimé');
       load();
     } catch {
-      toast.error('Delete failed');
+      toast.error('Échec de la suppression');
     }
     setDeleteId(null);
   };
@@ -474,9 +474,9 @@ function TunnelsTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
             <Button onClick={handleCreate} disabled={saving}>
-              {saving ? 'Creating…' : 'Create Tunnel'}
+              {saving ? 'Création…' : 'Créer le tunnel'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -509,10 +509,10 @@ function TunnelsTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setQuickOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setQuickOpen(false)}>Annuler</Button>
             <Button onClick={handleQuickConnect} disabled={saving}>
               <Zap className="mr-2 h-4 w-4" />
-              {saving ? 'Connecting…' : 'Connect'}
+              {saving ? 'Connexion…' : 'Connecter'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -522,18 +522,18 @@ function TunnelsTab() {
       <AlertDialog open={deleteId !== null} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Tunnel</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer le tunnel</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the tunnel. This action cannot be undone.
+              Ce tunnel sera supprimé définitivement. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => deleteId && handleDelete(deleteId)}
             >
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -559,7 +559,7 @@ function RelaysTab() {
       const res = await securelinkApi.relays.list();
       setRelays(res.data);
     } catch {
-      toast.error('Failed to load relays');
+      toast.error('Impossible de charger les relais');
     } finally {
       setLoading(false);
     }
@@ -569,7 +569,7 @@ function RelaysTab() {
 
   const handleCreate = async () => {
     if (!form.name || !form.host || !form.port) {
-      toast.error('Name, host and port are required');
+      toast.error('Nom, hôte et port requis');
       return;
     }
     setSaving(true);
@@ -579,12 +579,12 @@ function RelaysTab() {
         host: form.host,
         port: parseInt(form.port),
       });
-      toast.success('Relay created');
+      toast.success('Relais créé');
       setCreateOpen(false);
       setForm({ name: '', host: '', port: '' });
       load();
     } catch {
-      toast.error('Failed to create relay');
+      toast.error('Échec de la création du relais');
     } finally {
       setSaving(false);
     }
@@ -593,29 +593,29 @@ function RelaysTab() {
   const handleConnect = async (id: string) => {
     try {
       await securelinkApi.relays.connect(id);
-      toast.success('Relay connecting…');
+      toast.success('Relais en cours de connexion…');
       load();
     } catch {
-      toast.error('Connect failed');
+      toast.error('Échec de la connexion');
     }
   };
 
   const handleDisconnect = async (id: string) => {
     try {
       await securelinkApi.relays.disconnect(id);
-      toast.success('Relay disconnected');
+      toast.success('Relais déconnecté');
       load();
     } catch {
-      toast.error('Disconnect failed');
+      toast.error('Échec de la déconnexion');
     }
   };
 
   const handleTest = async (id: string) => {
     try {
       await securelinkApi.relays.test(id);
-      toast.success('Relay test sent');
+      toast.success('Test du relais envoyé');
     } catch {
-      toast.error('Test failed');
+      toast.error('Échec du test');
     }
   };
 
@@ -624,17 +624,17 @@ function RelaysTab() {
       const res = await securelinkApi.relays.stats(id);
       setStatsRelay({ id, stats: res.data });
     } catch {
-      toast.error('Failed to load relay stats');
+      toast.error('Impossible de charger les stats du relais');
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await securelinkApi.relays.delete(id);
-      toast.success('Relay deleted');
+      toast.success('Relais supprimé');
       load();
     } catch {
-      toast.error('Delete failed');
+      toast.error('Échec de la suppression');
     }
     setDeleteId(null);
   };
@@ -782,9 +782,9 @@ function RelaysTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
             <Button onClick={handleCreate} disabled={saving}>
-              {saving ? 'Creating…' : 'Create Relay'}
+              {saving ? 'Création…' : 'Créer le relais'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -827,7 +827,7 @@ function RelaysTab() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setStatsRelay(null)}>Close</Button>
+            <Button variant="outline" onClick={() => setStatsRelay(null)}>Fermer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -836,18 +836,18 @@ function RelaysTab() {
       <AlertDialog open={deleteId !== null} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Relay</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer le relais</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the relay. This action cannot be undone.
+              Ce relais sera supprimé définitivement. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => deleteId && handleDelete(deleteId)}
             >
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -898,7 +898,7 @@ function DnsTab() {
       setRecords(rec.data);
       setDnsStats(st.data);
     } catch {
-      toast.error('Failed to load DNS configuration');
+      toast.error('Impossible de charger la configuration DNS');
     } finally {
       setLoading(false);
     }
@@ -914,11 +914,11 @@ function DnsTab() {
         cache_size: parseInt(configForm.cache_size) || 1000,
         blocking_enabled: configForm.blocking,
       });
-      toast.success('DNS config updated');
+      toast.success('Configuration DNS mise à jour');
       setEditConfig(false);
       load();
     } catch {
-      toast.error('Failed to update DNS config');
+      toast.error('Échec de la mise à jour DNS');
     } finally {
       setSaving(false);
     }
@@ -926,18 +926,18 @@ function DnsTab() {
 
   const handleAddBlocklist = async () => {
     if (!blocklistForm.name || !blocklistForm.url) {
-      toast.error('Name and URL are required');
+      toast.error('Nom et URL requis');
       return;
     }
     setSaving(true);
     try {
       await securelinkApi.dns.addBlocklist(blocklistForm);
-      toast.success('Blocklist added');
+      toast.success('Liste de blocage ajoutée');
       setAddBlocklistOpen(false);
       setBlocklistForm({ name: '', url: '' });
       load();
     } catch {
-      toast.error('Failed to add blocklist');
+      toast.error('Échec de l\'ajout de la liste');
     } finally {
       setSaving(false);
     }
@@ -946,27 +946,27 @@ function DnsTab() {
   const handleRefreshBlocklist = async (id: string) => {
     try {
       await securelinkApi.dns.refreshBlocklist(id);
-      toast.success('Blocklist refresh initiated');
+      toast.success('Actualisation de la liste initiée');
       load();
     } catch {
-      toast.error('Refresh failed');
+      toast.error('Échec de l\'actualisation');
     }
   };
 
   const handleDeleteBlocklist = async (id: string) => {
     try {
       await securelinkApi.dns.deleteBlocklist(id);
-      toast.success('Blocklist deleted');
+      toast.success('Liste de blocage supprimée');
       load();
     } catch {
-      toast.error('Delete failed');
+      toast.error('Échec de la suppression');
     }
     setDeleteBlocklistId(null);
   };
 
   const handleAddRecord = async () => {
     if (!recordForm.name || !recordForm.value) {
-      toast.error('Name and value are required');
+      toast.error('Nom et valeur requis');
       return;
     }
     setSaving(true);
@@ -976,12 +976,12 @@ function DnsTab() {
         record_type: recordForm.record_type,
         value: recordForm.value,
       });
-      toast.success('DNS record added');
+      toast.success('Enregistrement DNS ajouté');
       setAddRecordOpen(false);
       setRecordForm({ name: '', record_type: 'A', value: '' });
       load();
     } catch {
-      toast.error('Failed to add record');
+      toast.error('Échec de l\'ajout de l\'enregistrement');
     } finally {
       setSaving(false);
     }
@@ -990,10 +990,10 @@ function DnsTab() {
   const handleDeleteRecord = async (record: DnsRecord) => {
     try {
       await securelinkApi.dns.deleteRecord({ name: record.name, record_type: record.record_type });
-      toast.success('DNS record deleted');
+      toast.success('Enregistrement DNS supprimé');
       load();
     } catch {
-      toast.error('Delete failed');
+      toast.error('Échec de la suppression');
     }
     setDeleteRecord(null);
   };
@@ -1001,20 +1001,20 @@ function DnsTab() {
   const handleFlushCache = async () => {
     try {
       await securelinkApi.dns.flushCache();
-      toast.success('DNS cache flushed');
+      toast.success('Cache DNS vidé');
       load();
     } catch {
-      toast.error('Cache flush failed');
+      toast.error('Échec du vidage du cache');
     }
   };
 
   const handleResetStats = async () => {
     try {
       await securelinkApi.dns.resetStats();
-      toast.success('DNS stats reset');
+      toast.success('Statistiques DNS réinitialisées');
       load();
     } catch {
-      toast.error('Reset failed');
+      toast.error('Échec de la réinitialisation');
     }
   };
 
@@ -1325,9 +1325,9 @@ function DnsTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddBlocklistOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setAddBlocklistOpen(false)}>Annuler</Button>
             <Button onClick={handleAddBlocklist} disabled={saving}>
-              {saving ? 'Adding…' : 'Add Blocklist'}
+              {saving ? 'Ajout…' : 'Ajouter la liste'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1369,9 +1369,9 @@ function DnsTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddRecordOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setAddRecordOpen(false)}>Annuler</Button>
             <Button onClick={handleAddRecord} disabled={saving}>
-              {saving ? 'Adding…' : 'Add Record'}
+              {saving ? 'Ajout…' : 'Ajouter l\'enregistrement'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1381,18 +1381,18 @@ function DnsTab() {
       <AlertDialog open={deleteBlocklistId !== null} onOpenChange={(o) => { if (!o) setDeleteBlocklistId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Blocklist</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer la liste de blocage</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the blocklist. This action cannot be undone.
+              Cette liste sera supprimée définitivement. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => deleteBlocklistId && handleDeleteBlocklist(deleteBlocklistId)}
             >
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1402,19 +1402,19 @@ function DnsTab() {
       <AlertDialog open={deleteRecord !== null} onOpenChange={(o) => { if (!o) setDeleteRecord(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete DNS Record</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer l'enregistrement DNS</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete record <span className="font-mono font-medium">{deleteRecord?.name}</span>?
-              This action cannot be undone.
+              Supprimer l'enregistrement <span className="font-mono font-medium">{deleteRecord?.name}</span> ?
+              Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => deleteRecord && handleDeleteRecord(deleteRecord)}
             >
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -82,7 +82,7 @@ export function BulkActionToolbar({
           title="Delete selected"
         >
           <Trash2 className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Delete</span>
+          <span className="hidden sm:inline">Supprimer</span>
         </Button>
         <Button
           variant="ghost"

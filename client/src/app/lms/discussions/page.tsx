@@ -84,7 +84,7 @@ export default function LMSDiscussionsPage() {
     }));
     setReplyText('');
     setReplyingTo(null);
-    toast.success('Reply posted!');
+    toast.success('Réponse publiée !');
   };
 
   const handlePost = () => {
@@ -94,7 +94,7 @@ export default function LMSDiscussionsPage() {
       return { ...t, comments: [{ id: Date.now().toString(), author: 'You', initials: 'ME', content: newComment, likes: 0, liked: false, createdAt: new Date(), isPinned: false, replies: [] }, ...t.comments] };
     }));
     setNewComment('');
-    toast.success('Comment posted!');
+    toast.success('Commentaire publié !');
   };
 
   const CommentItem = ({ comment, depth = 0 }: { comment: Comment; depth?: number }) => (
@@ -123,7 +123,7 @@ export default function LMSDiscussionsPage() {
           <Textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Write a reply..." rows={2} className="text-sm" />
           <div className="flex flex-col gap-1">
             <Button size="sm" onClick={() => handleReply(comment.id)}>Post</Button>
-            <Button size="sm" variant="ghost" onClick={() => setReplyingTo(null)}>Cancel</Button>
+            <Button size="sm" variant="ghost" onClick={() => setReplyingTo(null)}>Annuler</Button>
           </div>
         </div>
       )}

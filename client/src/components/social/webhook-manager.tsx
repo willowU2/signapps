@@ -167,7 +167,7 @@ function WebhookDialog({
               {initial ? 'Save Changes' : 'Create Webhook'}
             </Button>
             <Button variant="outline" onClick={onClose} disabled={saving}>
-              Cancel
+              Annuler
             </Button>
           </div>
         </div>
@@ -409,7 +409,7 @@ export function WebhookManager() {
                               <Edit className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Edit</TooltipContent>
+                          <TooltipContent>Modifier</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -422,7 +422,7 @@ export function WebhookManager() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Delete</TooltipContent>
+                          <TooltipContent>Supprimer</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -447,15 +447,15 @@ export function WebhookManager() {
         <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Webhook</AlertDialogTitle>
+              <AlertDialogTitle>Supprimer le webhook</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently remove this webhook. You will no longer receive notifications for its events.
+                Ce webhook sera supprimé définitivement. Vous ne recevrez plus de notifications pour ses événements.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete
+                Supprimer
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

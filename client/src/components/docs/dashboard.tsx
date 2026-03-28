@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { driveApi, DriveNode } from '@/lib/api';
 import { fetchAndParseDocument } from '@/lib/file-parsers';
 import { useEntityStore } from '@/stores/entity-hub-store';
-import { FileText, Plus, MoreVertical, Search, Pencil, Trash2 } from 'lucide-react';
+import { FileText, Plus, MoreVertical, Search, Pencil, Trash2, BookTemplate, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -31,6 +31,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { BUILTIN_DOC_TEMPLATES, getUserTemplates, deleteUserTemplate, type DocTemplate } from '@/lib/document-templates';
 
 export default function DocsDashboard() {
     const router = useRouter();
@@ -50,7 +51,15 @@ export default function DocsDashboard() {
     const [renameTarget, setRenameTarget] = useState<DriveNode | null>(null);
     const [renameValue, setRenameValue] = useState('');
 
+    // Template state
+    const [pendingTemplateContent, setPendingTemplateContent] = useState<string | null>(null);
+    const [userTemplates, setUserTemplates] = useState<DocTemplate[]>([]);
+
     const { selectedWorkspaceId } = useEntityStore();
+
+    useEffect(() => {
+        setUserTemplates(getUserTemplates().filter(t => t.type === 'document'));
+    }, []);
 
     const fetchDocs = async () => {
         setLoading(true);
@@ -131,26 +140,45 @@ export default function DocsDashboard() {
         }
     };
 
-    const handleCreateNew = async (e?: React.FormEvent) => {
+    const handleCreateNew = async (e?: React.FormEvent, templateContent?: string) => {
         if (e) e.preventDefault();
         if (!newDocName.trim()) return;
 
         setIsCreating(true);
         try {
+            const targetId = crypto.randomUUID();
             const newNode = await driveApi.createNode({
                 name: newDocName.trim(),
                 node_type: 'document',
                 parent_id: null,
-                target_id: crypto.randomUUID(),
+                target_id: targetId,
             });
-            const targetId = newNode.target_id || newNode.id;
+            const finalTargetId = newNode.target_id || newNode.id;
+            // If there's template content, store it in localStorage for the editor to pick up
+            const contentToStore = templateContent || pendingTemplateContent;
+            if (contentToStore) {
+                localStorage.setItem(`doc-template:${finalTargetId}`, contentToStore);
+            }
             setIsCreateOpen(false);
-            router.push(`/docs/editor?id=${targetId}&name=${encodeURIComponent(newNode.name)}`);
+            setPendingTemplateContent(null);
+            router.push(`/docs/editor?id=${finalTargetId}&name=${encodeURIComponent(newNode.name)}`);
         } catch (error: any) {
             console.error("Failed to create document", error);
             toast.error(error.response?.data?.message || "Erreur serveur lors de la création du document");
             setIsCreating(false);
         }
+    };
+
+    const handleUseTemplate = (template: DocTemplate) => {
+        setNewDocName(template.title);
+        setPendingTemplateContent(template.content);
+        setIsCreateOpen(true);
+    };
+
+    const handleDeleteUserTemplate = (id: string) => {
+        deleteUserTemplate(id);
+        setUserTemplates(getUserTemplates().filter(t => t.type === 'document'));
+        toast.success('Modèle supprimé');
     };
 
     const filteredDocs = docs.filter(d => !searchQuery.trim() || d.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -187,14 +215,7 @@ export default function DocsDashboard() {
         );
     }
 
-    const templates = [
-        { id: 'blank', title: 'Document vierge', isAdd: true },
-        { id: 'cv1', title: 'Mon CV', desc: 'Serif' },
-        { id: 'cv2', title: 'CV', desc: 'Corail' },
-        { id: 'letter', title: 'Lettre', desc: 'Vert menthe' },
-        { id: 'proposal', title: 'Proposition de projet', desc: 'Tropiques' },
-        { id: 'brochure', title: 'Brochure', desc: 'Géométrique' },
-    ];
+    const builtinTemplates = BUILTIN_DOC_TEMPLATES;
 
     return (
         <div className="flex-1 flex flex-col h-full bg-background overflow-y-auto w-full">
@@ -202,43 +223,84 @@ export default function DocsDashboard() {
             <section className="bg-muted/30 py-8 px-6 md:px-12 w-full border-b border-border/40 shrink-0">
                 <div className="max-w-6xl mx-auto w-full flex flex-col gap-6">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-medium text-foreground tracking-tight">Créer un document</h2>
-                        <span className="text-sm font-medium text-muted-foreground hover:bg-muted/50 px-3 py-1.5 rounded cursor-pointer transition-colors hidden sm:block">
-                            Galerie de modèles
-                        </span>
+                        <h2 className="text-lg font-medium text-foreground tracking-tight">Cr\u00e9er un document</h2>
                     </div>
-                    
+
                     <div className="flex gap-4 sm:gap-6 overflow-x-auto pt-2 pb-4 snap-x smooth-scroll no-scrollbar -mt-2">
-                        {templates.map(tpl => (
+                        {/* Blank document */}
+                        <div className="flex flex-col gap-3 group shrink-0 snap-start">
+                            <Card
+                                onClick={openCreateModal}
+                                className="h-[185px] w-[140px] rounded border border-border/50 bg-background cursor-pointer flex items-center justify-center transition-all duration-300 relative overflow-hidden group-hover:border-muted-foreground/30 group-hover:shadow-md group-hover:-translate-y-1 shadow-sm"
+                            >
+                                <div className="rounded-full bg-primary/10 p-4 transition-transform group-hover:scale-105 duration-300">
+                                    <Plus className="w-10 h-10 text-primary" strokeWidth={2.5} />
+                                </div>
+                            </Card>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium text-foreground tracking-tight">Document vierge</span>
+                            </div>
+                        </div>
+
+                        {/* Built-in templates */}
+                        {builtinTemplates.map(tpl => (
                             <div key={tpl.id} className="flex flex-col gap-3 group shrink-0 snap-start">
-                                <Card 
-                                    onClick={tpl.isAdd ? openCreateModal : () => toast.info('Modèle à venir !')}
-                                    className={`h-[185px] w-[140px] rounded border border-border/50 bg-background cursor-pointer flex items-center justify-center transition-all duration-300 relative overflow-hidden group-hover:border-muted-foreground/30 group-hover:shadow-md group-hover:-translate-y-1 ${tpl.isAdd ? 'shadow-sm' : 'shadow-none'}`}
+                                <Card
+                                    onClick={() => handleUseTemplate(tpl)}
+                                    className="h-[185px] w-[140px] rounded border border-border/50 bg-background cursor-pointer flex items-center justify-center transition-all duration-300 relative overflow-hidden group-hover:border-primary/40 group-hover:shadow-md group-hover:-translate-y-1 shadow-none"
                                 >
-                                    {tpl.isAdd ? (
-                                        <div className="rounded-full bg-primary/10 p-4 transition-transform group-hover:scale-105 duration-300">
-                                            <Plus className="w-10 h-10 text-primary" strokeWidth={2.5} />
-                                        </div>
-                                    ) : (
-                                        <div className="absolute inset-x-0 inset-y-0 p-4 pt-6 flex flex-col gap-2.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <div className="w-[85%] h-[6px] bg-muted-foreground/30 rounded-full" />
-                                            <div className="w-[40%] h-[6px] bg-muted-foreground/30 rounded-full" />
-                                            <div className="w-full h-[6px] bg-muted-foreground/20 rounded-full mt-2" />
-                                            <div className="w-full h-[6px] bg-muted-foreground/20 rounded-full" />
-                                            <div className="w-[90%] h-[6px] bg-muted-foreground/20 rounded-full" />
-                                            <div className="w-full h-[6px] bg-muted-foreground/20 rounded-full" />
-                                            <div className="w-[85%] h-[6px] bg-muted-foreground/20 rounded-full" />
-                                            <div className="w-[70%] h-[6px] bg-muted-foreground/20 rounded-full mt-2" />
-                                        </div>
-                                    )}
+                                    <div className="absolute inset-x-0 inset-y-0 p-4 pt-6 flex flex-col gap-2.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                                        <div className="w-[85%] h-[6px] bg-primary/30 rounded-full" />
+                                        <div className="w-[40%] h-[6px] bg-primary/30 rounded-full" />
+                                        <div className="w-full h-[6px] bg-muted-foreground/20 rounded-full mt-2" />
+                                        <div className="w-full h-[6px] bg-muted-foreground/20 rounded-full" />
+                                        <div className="w-[90%] h-[6px] bg-muted-foreground/20 rounded-full" />
+                                        <div className="w-full h-[6px] bg-muted-foreground/20 rounded-full" />
+                                        <div className="w-[85%] h-[6px] bg-muted-foreground/20 rounded-full" />
+                                        <div className="w-[70%] h-[6px] bg-muted-foreground/20 rounded-full mt-2" />
+                                    </div>
                                 </Card>
                                 <div className="flex flex-col">
                                     <span className="text-sm font-medium text-foreground tracking-tight">{tpl.title}</span>
-                                    {tpl.desc && <span className="text-xs text-muted-foreground">{tpl.desc}</span>}
+                                    <span className="text-xs text-muted-foreground">{tpl.description}</span>
                                 </div>
                             </div>
                         ))}
                     </div>
+
+                    {/* User templates section */}
+                    {userTemplates.length > 0 && (
+                        <div className="mt-2">
+                            <div className="flex items-center gap-2 mb-3">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <h3 className="text-sm font-medium text-muted-foreground">Mes mod\u00e8les</h3>
+                            </div>
+                            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-2 snap-x smooth-scroll no-scrollbar">
+                                {userTemplates.map(tpl => (
+                                    <div key={tpl.id} className="flex flex-col gap-3 group shrink-0 snap-start">
+                                        <Card
+                                            onClick={() => handleUseTemplate(tpl)}
+                                            className="h-[140px] w-[140px] rounded border border-dashed border-border/60 bg-background cursor-pointer flex items-center justify-center transition-all duration-300 relative overflow-hidden group-hover:border-primary/40 group-hover:shadow-md group-hover:-translate-y-1"
+                                        >
+                                            <div className="absolute inset-x-0 inset-y-0 p-3 pt-4 flex flex-col gap-2 opacity-50 group-hover:opacity-80 transition-opacity">
+                                                <div className="w-[70%] h-[5px] bg-violet-400/30 rounded-full" />
+                                                <div className="w-[50%] h-[5px] bg-violet-400/20 rounded-full" />
+                                                <div className="w-full h-[5px] bg-muted-foreground/15 rounded-full mt-1" />
+                                                <div className="w-[90%] h-[5px] bg-muted-foreground/15 rounded-full" />
+                                            </div>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteUserTemplate(tpl.id); }}
+                                                className="absolute top-1 right-1 p-1 rounded-sm bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
+                                            >
+                                                <Trash2 className="h-3 w-3 text-destructive" />
+                                            </button>
+                                        </Card>
+                                        <span className="text-xs font-medium text-foreground truncate max-w-[140px]">{tpl.title}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </section>
 

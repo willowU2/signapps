@@ -477,15 +477,15 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
       <AlertDialog open={!!removeMemberId} onOpenChange={(o) => !o && setRemoveMemberId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Member</AlertDialogTitle>
+            <AlertDialogTitle>Retirer le membre</AlertDialogTitle>
             <AlertDialogDescription>
-              This member will lose access to this workspace and all its resources. They can be re-invited later.
+              Ce membre perdra l'accès à cet espace de travail. Il pourra être réinvité ultérieurement.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleRemoveMember} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remove
+              Retirer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -494,15 +494,15 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
       <AlertDialog open={!!deleteWsId} onOpenChange={(o) => !o && setDeleteWsId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer l'espace de travail</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this workspace and remove all members. This action cannot be undone.
+              Cet espace de travail sera supprimé définitivement et tous les membres seront retirés. Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteWorkspace} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+              Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

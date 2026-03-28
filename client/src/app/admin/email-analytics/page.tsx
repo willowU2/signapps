@@ -58,7 +58,7 @@ export default function EmailAnalyticsPage() {
       const res = await client.get<EmailAnalyticsSummary>('/mail/analytics');
       setData(res.data);
     } catch (err) {
-      const msg = 'Mail analytics endpoint unavailable';
+      const msg = 'Endpoint d\'analyse des e-mails indisponible';
       setError(msg);
       toast.error(msg);
     } finally {

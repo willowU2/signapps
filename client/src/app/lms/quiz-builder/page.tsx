@@ -82,10 +82,10 @@ export default function QuizBuilderPage() {
     setQuiz(prev => ({ ...prev, questions: prev.questions.map(q => q.id === qid ? { ...q, options: q.options.filter(o => o.id !== oid) } : q) }));
 
   const handleSave = () => {
-    if (!quiz.title.trim()) { toast.error('Quiz title required'); return; }
-    if (quiz.questions.length === 0) { toast.error('Add at least one question'); return; }
+    if (!quiz.title.trim()) { toast.error('Titre du quiz requis'); return; }
+    if (quiz.questions.length === 0) { toast.error('Ajoutez au moins une question'); return; }
     setSaved(true);
-    toast.success(`Quiz "${quiz.title}" saved with ${quiz.questions.length} questions`);
+    toast.success(`Quiz "${quiz.title}" enregistré avec ${quiz.questions.length} question(s)`);
   };
 
   const totalPoints = quiz.questions.reduce((a, q) => a + q.points, 0);

@@ -117,7 +117,7 @@ export default function MonitoringPage() {
   const { data: disks = [] } = useDiskMetrics(autoRefresh ? refreshInterval : undefined);
 
   useEffect(() => {
-    if (metricsError) toast.error('Failed to load system metrics');
+    if (metricsError) toast.error('Impossible de charger les métriques système');
   }, [metricsError]);
 
   // Use SSE metrics when real-time is enabled, otherwise use polling data

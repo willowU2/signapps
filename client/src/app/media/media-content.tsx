@@ -88,9 +88,9 @@ function OcrTab() {
       const fn = mode === 'document' ? ocrApi.processDocument : ocrApi.extractText;
       const res = await fn(file, { detect_layout: true, detect_tables: true });
       setResult(res.data);
-      toast.success('Text extracted successfully');
+      toast.success('Texte extrait avec succès');
     } catch {
-      toast.error('OCR failed — check the file format and try again');
+      toast.error('Échec OCR — vérifiez le format du fichier');
     } finally {
       setLoading(false);
     }
@@ -99,7 +99,7 @@ function OcrTab() {
   const copyText = () => {
     if (!result?.text) return;
     navigator.clipboard.writeText(result.text);
-    toast.success('Copied to clipboard');
+    toast.success('Copié dans le presse-papiers');
   };
 
   return (
@@ -308,7 +308,7 @@ function TtsTab() {
         setVoices(res.data);
         if (res.data.length > 0) setSelectedVoice(res.data[0].id);
       })
-      .catch(() => toast.error('Could not load voices'))
+      .catch(() => toast.error('Impossible de charger les voix'))
       .finally(() => setLoadingVoices(false));
   }, []);
 
@@ -334,9 +334,9 @@ function TtsTab() {
       const blob = res.data as Blob;
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
-      toast.success('Audio synthesized');
+      toast.success('Audio synthétisé');
     } catch {
-      toast.error('Synthesis failed');
+      toast.error('Échec de la synthèse');
     } finally {
       setLoading(false);
     }
@@ -534,7 +534,7 @@ function SttTab() {
         setModels(res.data);
         if (res.data.length > 0) setSelectedModel(res.data[0].id);
       })
-      .catch(() => toast.error('Could not load STT models'))
+      .catch(() => toast.error('Impossible de charger les modèles STT'))
       .finally(() => setLoadingModels(false));
   }, []);
 
@@ -563,9 +563,9 @@ function SttTab() {
         word_timestamps: true,
       });
       setResult(res.data);
-      toast.success('Transcription complete');
+      toast.success('Transcription terminée');
     } catch {
-      toast.error('Transcription failed');
+      toast.error('Échec de la transcription');
     } finally {
       setLoading(false);
     }
@@ -574,7 +574,7 @@ function SttTab() {
   const copyText = () => {
     if (!result?.text) return;
     navigator.clipboard.writeText(result.text);
-    toast.success('Copied to clipboard');
+    toast.success('Copié dans le presse-papiers');
   };
 
   const formatTime = (seconds: number) => {

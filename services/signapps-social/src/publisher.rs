@@ -106,6 +106,61 @@ async fn publish_due_posts(pool: &Pool<Postgres>) -> anyhow::Result<()> {
                 };
                 client.publish(&publish_content, &media).await
             },
+            ("instagram", Some(token)) => {
+                let user_id = platform_config["user_id"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string();
+                let client = crate::platforms::instagram::InstagramClient {
+                    access_token: token,
+                    user_id,
+                };
+                client.publish(&publish_content, &media).await
+            },
+            ("tiktok", Some(token)) => {
+                let open_id = platform_config["open_id"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string();
+                let client = crate::platforms::tiktok::TikTokClient {
+                    access_token: token,
+                    open_id,
+                };
+                client.publish(&publish_content, &media).await
+            },
+            ("youtube", Some(token)) => {
+                let channel_id = platform_config["channel_id"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string();
+                let client = crate::platforms::youtube::YouTubeClient {
+                    access_token: token,
+                    channel_id,
+                };
+                client.publish(&publish_content, &media).await
+            },
+            ("pinterest", Some(token)) => {
+                let board_id = platform_config["board_id"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string();
+                let client = crate::platforms::pinterest::PinterestClient {
+                    access_token: token,
+                    board_id,
+                };
+                client.publish(&publish_content, &media).await
+            },
+            ("threads", Some(token)) => {
+                let user_id = platform_config["user_id"]
+                    .as_str()
+                    .unwrap_or("")
+                    .to_string();
+                let client = crate::platforms::threads::ThreadsClient {
+                    access_token: token,
+                    user_id,
+                };
+                client.publish(&publish_content, &media).await
+            },
             (p, _) => {
                 tracing::warn!("publisher: platform '{}' not supported or missing token", p);
                 // Mark as failed

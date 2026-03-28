@@ -230,7 +230,7 @@ export function OmniboxMenu({ x, y, isOpen, onClose, onInsertText, onInsertShape
                     }}
                 />
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowImageDialog(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => setShowImageDialog(false)}>Annuler</Button>
                     <Button onClick={() => { if (imageUrl) { onInsertImage(imageUrl); onClose(); } setShowImageDialog(false); }}>Insert</Button>
                 </DialogFooter>
             </DialogContent>

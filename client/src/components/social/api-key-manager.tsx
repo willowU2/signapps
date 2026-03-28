@@ -427,9 +427,9 @@ export function ApiKeyManager() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleRevoke} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Revoke Key
+                Révoquer
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

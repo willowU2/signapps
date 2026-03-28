@@ -321,7 +321,7 @@ export default function EmailTemplatesPage() {
       );
       setSaving(false);
       closeEdit();
-      toast.success(`Template "${editingTemplate.name}" sauvegarde`);
+      toast.success(`Template "${editingTemplate.name}" sauvegardé`);
     }, 500);
   };
 

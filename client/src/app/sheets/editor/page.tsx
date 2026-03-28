@@ -48,6 +48,21 @@ function SheetsContent() {
     const [loading, setLoading] = useState(id !== 'new-spreadsheet' && name !== '')
 
     useEffect(() => {
+        // Check for template content first
+        const templateKey = `sheet-template:${id}`
+        const templateContent = typeof window !== 'undefined' ? localStorage.getItem(templateKey) : null
+        if (templateContent) {
+            try {
+                const data = JSON.parse(templateContent)
+                setInitialData(data)
+                localStorage.removeItem(templateKey)
+            } catch (e) {
+                console.error('Failed to parse sheet template', e)
+            }
+            setLoading(false)
+            return
+        }
+
         if (id !== 'new-spreadsheet' && name) {
             const targetKey = `${id}.xlsx`
             fetchAndParseDocument('drive', targetKey, targetKey)

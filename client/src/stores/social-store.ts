@@ -63,7 +63,7 @@ interface SocialState {
   markInboxRead: (id: string) => Promise<void>;
   replyToInbox: (id: string, content: string) => Promise<void>;
 
-  addAccount: (data: { platform: string; instanceUrl?: string; handle?: string; appPassword?: string }) => Promise<void>;
+  addAccount: (data: Record<string, string>) => Promise<void>;
   updateAccount: (id: string, data: Partial<SocialAccount>) => Promise<void>;
   removeAccount: (id: string) => Promise<void>;
 

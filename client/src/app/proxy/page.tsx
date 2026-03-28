@@ -128,7 +128,7 @@ export default function ProxyPage() {
   const { data: proxyStatus } = useProxyStatus();
 
   useEffect(() => {
-    if (routesError) toast.error('Failed to load proxy routes');
+    if (routesError) toast.error('Impossible de charger les routes proxy');
   }, [routesError]);
 
   // ui state

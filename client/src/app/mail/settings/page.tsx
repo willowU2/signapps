@@ -244,11 +244,11 @@ function AddAccountWizard({
         app_password: appPassword.trim() || undefined,
       };
       await accountApi.create(payload);
-      toast.success("Compte ajouté avec succes !");
+      toast.success("Compte ajouté avec succès !");
       onCreated();
     } catch (err) {
       console.error("Failed to create account:", err);
-      toast.error("Impossible de creer le compte");
+      toast.error("Impossible de créer le compte");
     } finally {
       setCreating(false);
     }
@@ -483,10 +483,10 @@ function AccountCard({
     setSyncing(true);
     try {
       await accountApi.sync(account.id);
-      toast.success("Synchronisation lancee");
+      toast.success("Synchronisation lancée");
       onSynced();
     } catch {
-      toast.error("Echec de la synchronisation");
+      toast.error("Échec de la synchronisation");
     } finally {
       setSyncing(false);
     }
@@ -499,9 +499,9 @@ function AccountCard({
       const result = await accountApi.test(account.id);
       setTestResult(result);
       if (result.imap_ok && result.smtp_ok) {
-        toast.success("Connexion reussie !");
+        toast.success("Connexion réussie !");
       } else {
-        toast.error("Certains tests ont echoue");
+        toast.error("Certains tests ont échoué");
       }
     } catch {
       toast.error("Impossible de tester la connexion");

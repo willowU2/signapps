@@ -1025,9 +1025,9 @@ export function SocialCalendar() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={confirmReschedule}>
-              Reschedule
+              Replanifier
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

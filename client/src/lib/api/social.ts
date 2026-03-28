@@ -6,7 +6,7 @@ export const socialApiClient = createApiClient(SOCIAL_URL);
 
 export interface SocialAccount {
   id: string;
-  platform: 'twitter' | 'facebook' | 'instagram' | 'linkedin' | 'mastodon' | 'bluesky';
+  platform: 'twitter' | 'facebook' | 'instagram' | 'linkedin' | 'tiktok' | 'youtube' | 'pinterest' | 'threads' | 'mastodon' | 'bluesky';
   username: string;
   displayName: string;
   avatar?: string;
@@ -212,7 +212,7 @@ export interface ApiKeyInfo {
 export const socialApi = {
   accounts: {
     list: () => socialApiClient.get<SocialAccount[]>('/accounts'),
-    create: (data: { platform: string; instanceUrl?: string; handle?: string; appPassword?: string }) =>
+    create: (data: Record<string, string>) =>
       socialApiClient.post<SocialAccount>('/accounts', data),
     update: (id: string, data: Partial<SocialAccount>) =>
       socialApiClient.patch<SocialAccount>(`/accounts/${id}`, data),

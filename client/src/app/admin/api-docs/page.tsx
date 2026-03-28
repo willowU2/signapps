@@ -261,7 +261,7 @@ export default function ApiDocsPage() {
     navigator.clipboard.writeText(path);
     setCopiedPath(path);
     setTimeout(() => setCopiedPath(null), 2000);
-    toast.success('Chemin copie');
+    toast.success('Chemin copié');
   };
 
   return (

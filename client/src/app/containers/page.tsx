@@ -49,7 +49,7 @@ export default function ContainersPage() {
   const { data: containers = [], isLoading, isError } = useContainers();
 
   useEffect(() => {
-    if (isError) toast.error('Failed to load containers');
+    if (isError) toast.error('Impossible de charger les conteneurs');
   }, [isError]);
   const containerAction = useContainerAction();
   const pageContext = usePageContext();

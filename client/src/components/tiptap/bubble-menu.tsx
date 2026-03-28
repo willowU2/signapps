@@ -107,7 +107,7 @@ export function BubbleMenu({ editor, className }: BubbleMenuProps) {
                         onKeyDown={e => { if (e.key === 'Enter') handleLinkConfirm(); }}
                     />
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowLinkDialog(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => setShowLinkDialog(false)}>Annuler</Button>
                         <Button onClick={handleLinkConfirm}>OK</Button>
                     </DialogFooter>
                 </DialogContent>

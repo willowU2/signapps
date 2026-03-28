@@ -21,36 +21,132 @@ import { socialApi } from '@/lib/api/social';
 
 type Platform = SocialAccount['platform'];
 
-const SUPPORTED_PLATFORMS: { platform: Platform; description: string; comingSoon?: boolean }[] = [
-  { platform: 'mastodon', description: 'Enter your instance URL and authorize via OAuth' },
-  { platform: 'bluesky', description: 'Enter your handle and app password' },
-  { platform: 'twitter', description: 'Connect via OAuth', comingSoon: true },
-  { platform: 'facebook', description: 'Connect via Meta for Developers', comingSoon: true },
-  { platform: 'instagram', description: 'Connect via Meta for Developers', comingSoon: true },
-  { platform: 'linkedin', description: 'Connect via LinkedIn API', comingSoon: true },
+interface FieldDef {
+  key: string;
+  label: string;
+  placeholder: string;
+  type?: 'text' | 'password';
+  hint?: string;
+}
+
+interface PlatformConfig {
+  platform: Platform;
+  description: string;
+  fields: FieldDef[];
+}
+
+const SUPPORTED_PLATFORMS: PlatformConfig[] = [
+  {
+    platform: 'mastodon',
+    description: 'Enter your instance URL and authorize via OAuth',
+    fields: [
+      { key: 'instanceUrl', label: 'Instance URL', placeholder: 'https://mastodon.social' },
+    ],
+  },
+  {
+    platform: 'bluesky',
+    description: 'Enter your handle and app-specific password',
+    fields: [
+      { key: 'handle', label: 'Handle', placeholder: 'yourhandle.bsky.social' },
+      {
+        key: 'appPassword',
+        label: 'App Password',
+        placeholder: 'xxxx-xxxx-xxxx-xxxx',
+        type: 'password',
+        hint: 'Generate at Settings → Privacy and Security → App Passwords',
+      },
+    ],
+  },
+  {
+    platform: 'twitter',
+    description: 'Connect with your Twitter / X OAuth2 access token',
+    fields: [
+      { key: 'accessToken', label: 'Access Token', placeholder: 'Your OAuth2 access token', type: 'password' },
+      { key: 'username', label: 'Username', placeholder: '@handle' },
+    ],
+  },
+  {
+    platform: 'facebook',
+    description: 'Connect with your Facebook Page access token',
+    fields: [
+      { key: 'accessToken', label: 'Page Access Token', placeholder: 'EAAxxxxxx...', type: 'password' },
+      { key: 'pageId', label: 'Page ID', placeholder: '123456789012345' },
+      { key: 'username', label: 'Page Name', placeholder: 'My Page Name' },
+    ],
+  },
+  {
+    platform: 'instagram',
+    description: 'Connect via Instagram Graph API (Business / Creator account)',
+    fields: [
+      { key: 'accessToken', label: 'Page Access Token', placeholder: 'EAAxxxxxx...', type: 'password' },
+      { key: 'userId', label: 'Instagram Account ID', placeholder: '17841400000000000' },
+      { key: 'username', label: 'Username', placeholder: '@yourhandle' },
+    ],
+  },
+  {
+    platform: 'linkedin',
+    description: 'Connect with your LinkedIn OAuth2 access token',
+    fields: [
+      { key: 'accessToken', label: 'Access Token', placeholder: 'AQxxxxxx...', type: 'password' },
+      { key: 'authorUrn', label: 'Author URN', placeholder: 'urn:li:person:ABC123' },
+      { key: 'username', label: 'Display Name', placeholder: 'Your Name' },
+    ],
+  },
+  {
+    platform: 'tiktok',
+    description: 'Connect with your TikTok Content API credentials',
+    fields: [
+      { key: 'accessToken', label: 'Access Token', placeholder: 'act.xxxxxx...', type: 'password' },
+      { key: 'openId', label: 'Open ID', placeholder: 'Your TikTok open_id' },
+      { key: 'username', label: 'Username', placeholder: '@yourhandle' },
+    ],
+  },
+  {
+    platform: 'youtube',
+    description: 'Connect via Google OAuth2 (YouTube Data API v3)',
+    fields: [
+      { key: 'accessToken', label: 'Access Token', placeholder: 'ya29.xxxxxx...', type: 'password' },
+      { key: 'channelId', label: 'Channel ID', placeholder: 'UCxxxxxxxxxxxxxxxxxxxxxxxx' },
+      { key: 'username', label: 'Channel Name', placeholder: 'My Channel' },
+    ],
+  },
+  {
+    platform: 'pinterest',
+    description: 'Connect with your Pinterest API v5 credentials',
+    fields: [
+      { key: 'accessToken', label: 'Access Token', placeholder: 'Your Pinterest OAuth token', type: 'password' },
+      { key: 'boardId', label: 'Default Board ID', placeholder: '123456789012345678' },
+      { key: 'username', label: 'Username', placeholder: 'yourpinterest' },
+    ],
+  },
+  {
+    platform: 'threads',
+    description: 'Connect via Threads API (Meta)',
+    fields: [
+      { key: 'accessToken', label: 'Access Token', placeholder: 'THxxxxxx...', type: 'password' },
+      { key: 'userId', label: 'Threads User ID', placeholder: '17841400000000000' },
+      { key: 'username', label: 'Username', placeholder: '@yourhandle' },
+    ],
+  },
 ];
 
 interface ConnectDialogProps {
-  platform: Platform;
+  config: PlatformConfig;
   onClose: () => void;
-  onConnect: (data: { platform: string; instanceUrl?: string; handle?: string; appPassword?: string }) => Promise<void>;
+  onConnect: (data: Record<string, string>) => Promise<void>;
 }
 
-function ConnectDialog({ platform, onClose, onConnect }: ConnectDialogProps) {
-  const [instanceUrl, setInstanceUrl] = useState('');
-  const [handle, setHandle] = useState('');
-  const [appPassword, setAppPassword] = useState('');
+function ConnectDialog({ config, onClose, onConnect }: ConnectDialogProps) {
+  const [values, setValues] = useState<Record<string, string>>({});
   const [isConnecting, setIsConnecting] = useState(false);
+
+  const setValue = (key: string, val: string) =>
+    setValues((prev) => ({ ...prev, [key]: val }));
 
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      await onConnect({
-        platform,
-        instanceUrl: platform === 'mastodon' ? instanceUrl : undefined,
-        handle: platform === 'bluesky' ? handle : undefined,
-        appPassword: platform === 'bluesky' ? appPassword : undefined,
-      });
+      await onConnect({ platform: config.platform, ...values });
       onClose();
     } finally {
       setIsConnecting(false);
@@ -60,47 +156,24 @@ function ConnectDialog({ platform, onClose, onConnect }: ConnectDialogProps) {
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Connect {PLATFORM_LABELS[platform]}</DialogTitle>
-        <DialogDescription>
-          {platform === 'mastodon' && 'Authorize SignApps on your Mastodon instance.'}
-          {platform === 'bluesky' && 'Use your Bluesky handle and an app-specific password.'}
-        </DialogDescription>
+        <DialogTitle>Connect {PLATFORM_LABELS[config.platform]}</DialogTitle>
+        <DialogDescription>{config.description}</DialogDescription>
       </DialogHeader>
       <div className="space-y-4 pt-2">
-        {platform === 'mastodon' && (
-          <div className="space-y-1">
-            <Label>Instance URL</Label>
+        {config.fields.map((field) => (
+          <div key={field.key} className="space-y-1">
+            <Label>{field.label}</Label>
             <Input
-              placeholder="https://mastodon.social"
-              value={instanceUrl}
-              onChange={(e) => setInstanceUrl(e.target.value)}
+              type={field.type ?? 'text'}
+              placeholder={field.placeholder}
+              value={values[field.key] ?? ''}
+              onChange={(e) => setValue(field.key, e.target.value)}
             />
+            {field.hint && (
+              <p className="text-xs text-muted-foreground">{field.hint}</p>
+            )}
           </div>
-        )}
-        {platform === 'bluesky' && (
-          <>
-            <div className="space-y-1">
-              <Label>Handle</Label>
-              <Input
-                placeholder="yourhandle.bsky.social"
-                value={handle}
-                onChange={(e) => setHandle(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>App Password</Label>
-              <Input
-                type="password"
-                placeholder="xxxx-xxxx-xxxx-xxxx"
-                value={appPassword}
-                onChange={(e) => setAppPassword(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Generate an app password at Settings → Privacy and Security → App Passwords
-              </p>
-            </div>
-          </>
-        )}
+        ))}
         <div className="flex gap-2 pt-2">
           <Button className="flex-1" onClick={handleConnect} disabled={isConnecting}>
             {isConnecting ? 'Connecting…' : 'Connect'}
@@ -113,8 +186,8 @@ function ConnectDialog({ platform, onClose, onConnect }: ConnectDialogProps) {
 }
 
 export function AccountConnector() {
-  const { accounts, fetchAccounts, addAccount, removeAccount, isLoadingAccounts } = useSocialStore();
-  const [connectingPlatform, setConnectingPlatform] = useState<Platform | null>(null);
+  const { accounts, fetchAccounts, addAccount, removeAccount } = useSocialStore();
+  const [connectingConfig, setConnectingConfig] = useState<PlatformConfig | null>(null);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -157,7 +230,7 @@ export function AccountConnector() {
                     ) : (
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                        style={{ backgroundColor: PLATFORM_COLORS[account.platform] }}
+                        style={{ backgroundColor: PLATFORM_COLORS[account.platform] ?? '#6b7280' }}
                       >
                         {account.platform.charAt(0).toUpperCase()}
                       </div>
@@ -169,9 +242,9 @@ export function AccountConnector() {
                         <Badge
                           variant="outline"
                           className="text-xs capitalize"
-                          style={{ borderColor: PLATFORM_COLORS[account.platform] }}
+                          style={{ borderColor: PLATFORM_COLORS[account.platform] ?? '#6b7280' }}
                         >
-                          {account.platform}
+                          {PLATFORM_LABELS[account.platform] ?? account.platform}
                         </Badge>
                         {account.status === 'connected' ? (
                           <CheckCircle className="h-3.5 w-3.5 text-green-500" />
@@ -221,38 +294,33 @@ export function AccountConnector() {
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Add Account</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-          {connectedByPlatform.map(({ platform, description, comingSoon, connected }) => (
-            <Card key={platform} className={comingSoon ? 'opacity-60' : ''}>
+          {connectedByPlatform.map(({ platform, description, fields, connected }) => (
+            <Card key={platform}>
               <CardContent className="py-4 px-4">
                 <div className="flex items-start gap-3">
                   <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold shrink-0"
-                    style={{ backgroundColor: PLATFORM_COLORS[platform] }}
+                    style={{ backgroundColor: PLATFORM_COLORS[platform] ?? '#6b7280' }}
                   >
                     {platform.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{PLATFORM_LABELS[platform]}</span>
-                      {comingSoon && <Badge variant="secondary" className="text-xs">Coming Soon</Badge>}
-                    </div>
+                    <span className="font-medium">{PLATFORM_LABELS[platform]}</span>
                     <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
                     {connected.length > 0 && (
                       <p className="text-xs text-green-500 mt-1">{connected.length} account{connected.length !== 1 ? 's' : ''} connected</p>
                     )}
                   </div>
                 </div>
-                {!comingSoon && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-3"
-                    onClick={() => setConnectingPlatform(platform)}
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1" />
-                    Connect {PLATFORM_LABELS[platform]}
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-3"
+                  onClick={() => setConnectingConfig({ platform, description, fields })}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Connect {PLATFORM_LABELS[platform]}
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -260,11 +328,11 @@ export function AccountConnector() {
       </div>
 
       {/* Connect Dialog */}
-      <Dialog open={!!connectingPlatform} onOpenChange={(open) => !open && setConnectingPlatform(null)}>
-        {connectingPlatform && (
+      <Dialog open={!!connectingConfig} onOpenChange={(open) => !open && setConnectingConfig(null)}>
+        {connectingConfig && (
           <ConnectDialog
-            platform={connectingPlatform}
-            onClose={() => setConnectingPlatform(null)}
+            config={connectingConfig}
+            onClose={() => setConnectingConfig(null)}
             onConnect={addAccount}
           />
         )}

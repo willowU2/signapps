@@ -50,7 +50,7 @@ export default function FileTypesPage() {
         setTotalFiles(facets.reduce((s, f) => s + f.count, 0));
       } catch {
         setTypes([]);
-        toast.error('File type stats endpoint unavailable');
+        toast.error('Endpoint de statistiques de types de fichiers indisponible');
       }
     } finally {
       setLoading(false);

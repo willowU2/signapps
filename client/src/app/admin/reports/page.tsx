@@ -240,7 +240,7 @@ function UsageReportTab() {
     setTimeout(() => {
       setReport(generateUsageReport(from, to));
       setGenerating(false);
-      toast.success('Rapport d\'utilisation genere');
+      toast.success('Rapport d\'utilisation généré');
     }, 800);
   };
 

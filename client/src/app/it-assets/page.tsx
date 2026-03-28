@@ -339,7 +339,7 @@ export default function ITAssetsPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-sm">{detailAsset.name} — Details</h3>
-                  <Button size="sm" variant="ghost" onClick={() => setDetailAsset(null)}>Close</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setDetailAsset(null)}>Fermer</Button>
                 </div>
                 <AssetDetailPanel asset={detailAsset} />
               </div>
@@ -406,7 +406,7 @@ export default function ITAssetsPage() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleSave} disabled={!formData.name?.trim() || isSaving}>
               {isSaving ? "Saving…" : editingAsset ? "Save Changes" : "Create Asset"}
             </Button>
@@ -421,8 +421,8 @@ export default function ITAssetsPage() {
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>Supprimer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -60,7 +60,7 @@ export default function DocumentAutomationPage() {
                 <p className="text-sm text-muted-foreground">
                   Insert DB-backed variables into document templates. Click a field to insert its token.
                 </p>
-                <DocMergeFields onInsert={token => toast.info(`Token copied: ${token}`)} />
+                <DocMergeFields onInsert={token => toast.info(`Token copié : ${token}`)} />
               </div>
             </TabsContent>
 

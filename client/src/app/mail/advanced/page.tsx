@@ -27,9 +27,9 @@ export default function MailAdvancedPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled, delay_seconds: delay }),
       })
-      toast.success("Undo send settings saved")
+      toast.success("Paramètres d'annulation enregistrés")
     } catch {
-      toast.error("Failed to save settings")
+      toast.error("Échec de l'enregistrement des paramètres")
     }
   }
 
