@@ -93,8 +93,8 @@ export function RightSidebar() {
       <div
         className={cn(
           "hidden md:flex fixed top-0 right-16 bottom-0 w-80 bg-background border-l border-border",
-          "transition-transform duration-300 ease-in-out z-30 flex-col shadow-xl",
-          isOpen ? "translate-x-0" : "translate-x-full"
+          "transition-all duration-300 ease-in-out z-30 flex-col shadow-xl",
+          isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"
         )}
       >
         {/* Panel header */}
