@@ -102,9 +102,9 @@ export function useUndoSend() {
       setState(s => ({ ...s, active: false }))
       try {
         await sendFn()
-        toast.success("Email sent")
+        toast.success("Email envoyé")
       } catch {
-        toast.error("Failed to send email")
+        toast.error("Impossible d'envoyer l'email")
       }
     }, UNDO_WINDOW_MS)
 

@@ -151,7 +151,7 @@ export function TenantProvider({
             : prev
         );
       } catch (err) {
-        console.error("Failed to update tenant config:", err);
+        console.error("Impossible de mettre à jour tenant config:", err);
         throw err;
       }
     },

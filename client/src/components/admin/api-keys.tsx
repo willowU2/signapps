@@ -62,7 +62,7 @@ export function ApiKeys() {
       const res = await axios.get(`${IDENTITY_URL}/api-keys`, { withCredentials: true });
       setKeys(res.data);
     } catch {
-      toast.error("Failed to load API keys");
+      toast.error("Impossible de charger les clés API");
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +74,7 @@ export function ApiKeys() {
 
   const createKey = async () => {
     if (!newKeyName.trim()) {
-      toast.error("Enter a name for the API key");
+      toast.error("Saisissez un nom pour la clé API");
       return;
     }
     setIsCreating(true);
@@ -91,9 +91,9 @@ export function ApiKeys() {
       setNewKeyResult(res.data);
       setShowForm(false);
       await fetchKeys();
-      toast.success("API key created — copy it now, it won't be shown again");
+      toast.success("Clé API créée — copiez-la maintenant, elle ne sera plus affichée");
     } catch {
-      toast.error("Failed to create API key");
+      toast.error("Impossible de créer la clé API");
     } finally {
       setIsCreating(false);
     }
@@ -104,9 +104,9 @@ export function ApiKeys() {
     try {
       await axios.delete(`${IDENTITY_URL}/api-keys/${id}`, { withCredentials: true });
       setKeys((prev) => prev.filter((k) => k.id !== id));
-      toast.success("API key revoked");
+      toast.success("Clé API révoquée");
     } catch {
-      toast.error("Failed to revoke key");
+      toast.error("Impossible de révoquer la clé");
     } finally {
       setRevoking((prev) => {
         const next = new Set(prev);
@@ -217,7 +217,7 @@ export function ApiKeys() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowForm(false)} className="flex-1">Cancel</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)} className="flex-1">Annuler</Button>
             <Button onClick={createKey} disabled={isCreating} className="flex-1 gap-2">
               {isCreating && <Loader2 className="h-4 w-4 animate-spin" />}
               Create Key

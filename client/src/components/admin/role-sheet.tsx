@@ -100,7 +100,7 @@ export function RoleSheet({ open, onOpenChange, initialData }: RoleSheetProps) {
             }
             onOpenChange(false)
         } catch (error) {
-            console.error("Failed to save role:", error)
+            console.error("Impossible d'enregistrer role:", error)
             toast.error(isEditing ? "Échec de la mise à jour" : "Échec de la création")
         }
     }

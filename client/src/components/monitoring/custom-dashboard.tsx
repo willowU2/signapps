@@ -211,7 +211,7 @@ export function CustomMetricDashboard() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={addWidget} disabled={!form.title.trim()}>Add Widget</Button>
           </DialogFooter>
         </DialogContent>

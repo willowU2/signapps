@@ -125,7 +125,7 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
 
   const handleCopy = (r: GeneratedContent) => {
     navigator.clipboard.writeText(getText(r));
-    toast.success("Copied to clipboard");
+    toast.success("Copié dans le presse-papiers");
   };
 
   return (

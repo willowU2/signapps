@@ -110,7 +110,7 @@ export function ComplianceAuditTrail() {
       a.href = url
       a.download = `audit_trail_${format(new Date(), "yyyy-MM-dd")}.csv`
       a.click()
-      toast.success("Audit log exported")
+      toast.success("Journal d'audit exporté")
     } catch {
       toast.error("Export failed")
     }

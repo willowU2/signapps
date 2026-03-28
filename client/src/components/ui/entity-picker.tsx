@@ -328,7 +328,7 @@ export function EntityPicker({
         const results = await onSearch(debouncedQuery);
         setSearchResults(results);
       } catch (error) {
-        console.error("Search failed:", error);
+        console.error("Échec de la recherche:", error);
         setSearchResults([]);
       } finally {
         setIsSearching(false);
@@ -383,7 +383,7 @@ export function EntityPicker({
         setSearchQuery("");
       }
     } catch (error) {
-      console.error("Failed to create entity:", error);
+      console.error("Impossible de créer entity:", error);
     } finally {
       setIsCreating(false);
     }

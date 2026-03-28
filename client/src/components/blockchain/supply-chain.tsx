@@ -135,14 +135,14 @@ export function SupplyChain({ products = [] }: SupplyChainProps) {
                           ['ordered', 'shipped', 'in-transit', 'delivered'].indexOf(
                             product.currentStatus
                           );
-                        const isConnected = idx < nextStepIndex;
+                        const isConnecté = idx < nextStepIndex;
 
                         return (
                           <div
                             key={idx}
                             className={cn(
                               'h-1 flex-1 rounded-full transition',
-                              isConnected ? 'bg-slate-400' : 'bg-slate-200'
+                              isConnecté ? 'bg-slate-400' : 'bg-slate-200'
                             )}
                           />
                         );

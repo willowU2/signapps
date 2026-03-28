@@ -160,7 +160,7 @@ export function DataTable<TData, TValue>({
                   <TableCell colSpan={columns.length} className="h-64 align-middle p-0">
                     <EmptyState 
                       icon={Inbox}
-                      title="No results found"
+                      title="Aucun résultat trouvé"
                       description="Try adjusting your search or filters to find what you're looking for."
                       className="border-none bg-transparent h-full"
                     />

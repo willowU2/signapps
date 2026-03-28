@@ -71,7 +71,7 @@ export function PurchaseOrder() {
   const total = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
   const handleGeneratePDF = () => {
-    toast.success("PDF generated successfully");
+    toast.success("PDF généré successfully");
   };
 
   const onSubmit = (values: POFormValues) => {

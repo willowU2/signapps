@@ -35,7 +35,7 @@ export function AppCard({ app, onInstall, onDetail, installedContainerId, contai
       toast.success(`${app.name} updated`);
       onUpdated?.();
     } catch {
-      toast.error(`Failed to update ${app.name}`);
+      toast.error(`Impossible de mettre à jour ${app.name}`);
     } finally {
       setUpdating(false);
     }

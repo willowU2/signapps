@@ -61,7 +61,7 @@ export const CommandList = forwardRef((props: CommandListProps, ref) => {
                     </button>
                 ))
             ) : (
-                <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">No results found</div>
+                <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">Aucun résultat trouvé</div>
             )}
         </div>
     );

@@ -49,7 +49,7 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
 
   const handleStart = async () => {
     if (!selectedFile) {
-      toast.error("Please select a file first");
+      toast.error("Veuillez sélectionner un fichier d'abord");
       return;
     }
 
@@ -81,7 +81,7 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
         clearInterval(interval);
         setIsProcessing(false);
         setProgress(100);
-        toast.success("Batch processing completed!");
+        toast.success("Traitement par lots terminé !");
       }
     }, 500);
   };
@@ -98,7 +98,7 @@ export function BatchProcessor({ onProcess }: BatchProcessorProps) {
     setProcessedItems(0);
     setSelectedFile(null);
     setErrors([]);
-    toast.info("Batch processing cancelled");
+    toast.info("Traitement par lots annulé");
   };
 
   const handleClearErrors = () => {

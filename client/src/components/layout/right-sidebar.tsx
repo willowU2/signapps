@@ -133,7 +133,7 @@ export function RightSidebar() {
               {activeRightWidget === "tasks"    && <TasksWidget />}
               {activeRightWidget === "notes"    && (
                 <div className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
-                  <StickyNote className="h-4 w-4" /> Notes Widget Loading...
+                  <StickyNote className="h-4 w-4" /> Notes Widget Chargement...
                 </div>
               )}
             </div>

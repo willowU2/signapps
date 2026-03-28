@@ -148,9 +148,9 @@ export default function ProfilePage() {
         avatar_url: avatarUrl,
       });
 
-      toast.success('Profile updated successfully');
+      toast.success('Profil mis à jour successfully');
     } catch {
-      toast.error('Failed to update profile');
+      toast.error('Impossible de mettre à jour profile');
     } finally {
       setSaving(false);
     }
@@ -176,7 +176,7 @@ export default function ProfilePage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      toast.success('Password changed successfully');
+      toast.success('Mot de passe modifié successfully');
     } catch {
       toast.error('Failed to change password');
     } finally {
@@ -212,7 +212,7 @@ export default function ProfilePage() {
       setMfaDialogOpen(false);
       setMfaSetupData(null);
       setMfaCode('');
-      toast.success('Two-factor authentication enabled');
+      toast.success('Authentification à deux facteurs activée');
     } catch {
       toast.error('Invalid verification code');
     } finally {
@@ -605,7 +605,7 @@ export default function ProfilePage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDisableMfa}
               className="bg-destructive text-destructive-foreground"

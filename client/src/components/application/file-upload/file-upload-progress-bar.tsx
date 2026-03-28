@@ -84,14 +84,14 @@ export const FileUploadProgressBar = ({
                     onSuccess();
                     toast.success(`Uploaded: ${file.name}`);
                 } else {
-                    onError(`Upload failed (${xhr.status})`);
+                    onError(`Échec du téléversement (${xhr.status})`);
                     toast.error(`Failed to upload: ${file.name}`);
                 }
             });
 
             xhr.addEventListener('error', () => {
-                onError('Network error');
-                toast.error(`Network error uploading: ${file.name}`);
+                onError('Erreur réseau');
+                toast.error(`Erreur réseau uploading: ${file.name}`);
             });
 
             xhr.addEventListener('abort', () => {

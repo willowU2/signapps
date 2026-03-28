@@ -909,7 +909,7 @@ export default function UsersPage() {
       setSheetOpen(false);
       refreshUsers();
     } catch {
-      toast.error(editingUser ? 'Failed to update user' : 'Failed to create user');
+      toast.error(editingUser ? 'Impossible de mettre à jour user' : 'Impossible de créer user');
     } finally {
       setSaving(false);
     }
@@ -923,7 +923,7 @@ export default function UsersPage() {
       toast.success('User deleted successfully');
       refreshUsers();
     } catch {
-      toast.error('Failed to delete user');
+      toast.error('Impossible de supprimer user');
     } finally {
       setDeleteDialog({ open: false, user: null });
     }

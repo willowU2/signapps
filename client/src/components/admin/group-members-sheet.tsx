@@ -101,7 +101,7 @@ export function GroupMembersSheet({ open, onOpenChange, group, onMembersChange }
             loadMembers()
             onMembersChange?.()
         } catch (error) {
-            console.error("Failed to add member:", error)
+            console.error("Impossible d'ajouter le membre:", error)
             toast.error("Échec de l'ajout du membre")
         } finally {
             setIsAdding(false)
@@ -117,7 +117,7 @@ export function GroupMembersSheet({ open, onOpenChange, group, onMembersChange }
             loadMembers()
             onMembersChange?.()
         } catch (error) {
-            console.error("Failed to remove member:", error)
+            console.error("Impossible de retirer le membre:", error)
             toast.error("Échec du retrait du membre")
         }
     }

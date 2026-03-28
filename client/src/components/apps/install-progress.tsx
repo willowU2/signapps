@@ -66,7 +66,7 @@ export function InstallProgress({
         });
 
         if (!response.ok) {
-          throw new Error(`Connection failed: ${response.statusText}`);
+          throw new Error(`Échec de la connexion: ${response.statusText}`);
         }
 
         if (!response.body) {

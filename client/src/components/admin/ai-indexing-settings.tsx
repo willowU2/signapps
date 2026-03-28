@@ -54,10 +54,10 @@ export function AiIndexingSettings() {
     try {
       setGlobalDefault(checked);
       await storageSettingsApi.updateSystemSetting("ai_index_all_default", checked ? "true" : "false");
-      toast.success("Global setting updated");
+      toast.success("Paramètre global mis à jour");
     } catch (error) {
       setGlobalDefault(!checked); // Revert on fail
-      toast.error("Failed to update global setting");
+      toast.error("Impossible de mettre à jour le paramètre global");
       console.debug(error);
     }
   };
@@ -68,7 +68,7 @@ export function AiIndexingSettings() {
       const data = await storageSettingsApi.getIndexingRules();
       setRules(data);
     } catch (error) {
-      toast.error("Failed to load AI indexing rules");
+      toast.error("Impossible de charger les règles d'indexation IA");
       console.debug(error);
     } finally {
       setIsLoading(false);
@@ -102,7 +102,7 @@ export function AiIndexingSettings() {
   const handleSave = async () => {
     try {
       if (!editForm.folder_path || !editForm.bucket) {
-        toast.error("Folder path and Bucket are required");
+        toast.error("Le chemin du dossier et le bucket sont requis");
         return;
       }
 
@@ -120,16 +120,16 @@ export function AiIndexingSettings() {
 
       if (editingId === "new") {
         await storageSettingsApi.createIndexingRule(payload);
-        toast.success("Indexing rule created");
+        toast.success("Règle d'indexation créée");
       } else if (editingId) {
         await storageSettingsApi.updateIndexingRule(editingId, payload);
-        toast.success("Indexing rule updated");
+        toast.success("Règle d'indexation mise à jour");
       }
       
       setEditingId(null);
       fetchRules();
     } catch (error) {
-      toast.error("Failed to save indexing rule");
+      toast.error("Impossible d'enregistrer la règle d'indexation");
       console.debug(error);
     }
   };
@@ -139,10 +139,10 @@ export function AiIndexingSettings() {
     
     try {
       await storageSettingsApi.deleteIndexingRule(id);
-      toast.success("Rule deleted");
+      toast.success("Règle supprimée");
       fetchRules();
     } catch (error) {
-      toast.error("Failed to delete rule");
+      toast.error("Impossible de supprimer la règle");
       console.debug(error);
     }
   };
@@ -159,7 +159,7 @@ export function AiIndexingSettings() {
       });
       fetchRules();
     } catch (error) {
-      toast.error("Failed to toggle rule state");
+      toast.error("Impossible de modifier l'état de la règle");
       console.debug(error);
     }
   };

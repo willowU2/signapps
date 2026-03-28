@@ -129,7 +129,7 @@ export function ContainerTerminal({
 
       ws.onopen = () => {
         setStatus('connected');
-        terminal.writeln('\x1b[32mConnected!\x1b[0m');
+        terminal.writeln('\x1b[32mConnecté!\x1b[0m');
         terminal.writeln('');
         terminal.focus();
       };
@@ -147,7 +147,7 @@ export function ContainerTerminal({
       ws.onclose = (event) => {
         setStatus('disconnected');
         terminal.writeln('');
-        terminal.writeln(`\x1b[33mDisconnected (code: ${event.code})\x1b[0m`);
+        terminal.writeln(`\x1b[33mDéconnecté (code: ${event.code})\x1b[0m`);
         if (event.reason) {
           terminal.writeln(`\x1b[90mReason: ${event.reason}\x1b[0m`);
         }
@@ -263,13 +263,13 @@ export function ContainerTerminal({
   const getStatusText = (s: ConnectionStatus) => {
     switch (s) {
       case 'connected':
-        return 'Connected';
+        return 'Connecté';
       case 'connecting':
         return 'Connecting...';
       case 'error':
         return 'Error';
       default:
-        return 'Disconnected';
+        return 'Déconnecté';
     }
   };
 

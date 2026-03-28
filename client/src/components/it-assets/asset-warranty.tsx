@@ -144,7 +144,7 @@ export function AssetWarranty({ assetId, assetName }: Props) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleAdd} disabled={!form.vendor.trim() || !form.end_date}>Add</Button>
           </DialogFooter>
         </DialogContent>

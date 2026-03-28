@@ -159,10 +159,10 @@ export default function LdapPage() {
             const res = await identityApi.post<LdapTestResult>("/api/v1/auth/ldap/test")
             setTestResult(res.data)
             if (res.data.success) {
-                toast.success("Connexion LDAP reussie!")
+                toast.success("Connexion LDAP réussie !")
                 loadGroups()
             } else {
-                toast.error("Echec: " + res.data.message)
+                toast.error("Échec : " + res.data.message)
             }
         } catch (err: any) {
             toast.error("Erreur test: " + (err.response?.data?.message || err.message))

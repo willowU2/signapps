@@ -143,7 +143,7 @@ export function DropZone({
                 ? {
                   ...u,
                   status: 'error',
-                  error: `Upload failed (${xhr.status})`,
+                  error: `Échec du téléversement (${xhr.status})`,
                 }
                 : u
             )
@@ -156,11 +156,11 @@ export function DropZone({
         setUploads((prev) =>
           prev.map((u) =>
             u.id === upload.id
-              ? { ...u, status: 'error', error: 'Network error' }
+              ? { ...u, status: 'error', error: 'Erreur réseau' }
               : u
           )
         );
-        toast.error(`Network error uploading: ${upload.file.name}`);
+        toast.error(`Erreur réseau uploading: ${upload.file.name}`);
       });
 
       xhr.addEventListener('abort', () => {

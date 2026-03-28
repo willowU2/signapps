@@ -128,7 +128,7 @@ export default function MonitoringPage() {
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">System Uptime</p>
                                 <div className="text-2xl font-bold">
-                                    {metrics?.uptime ? `${Math.floor(metrics.uptime / 3600)}h ${Math.floor((metrics.uptime % 3600) / 60)}m` : 'Loading...'}
+                                    {metrics?.uptime ? `${Math.floor(metrics.uptime / 3600)}h ${Math.floor((metrics.uptime % 3600) / 60)}m` : 'Chargement...'}
                                 </div>
                             </div>
                             <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />

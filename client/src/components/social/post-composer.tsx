@@ -407,7 +407,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
       toast.success('Draft saved');
       onSaved?.();
     } catch {
-      toast.error('Failed to save draft');
+      toast.error('Impossible d'enregistrer draft');
     } finally {
       setIsSaving(false);
     }
@@ -715,7 +715,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
               disabled={isHashtagLoading || !hasContent}
             >
               <Hash className="h-3 w-3 mr-1" />
-              {isHashtagLoading ? 'Loading...' : 'Suggest'}
+              {isHashtagLoading ? 'Chargement...' : 'Suggest'}
             </Button>
           </div>
           {hashtags.length > 0 && (

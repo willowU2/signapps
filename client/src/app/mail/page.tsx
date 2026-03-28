@@ -118,7 +118,7 @@ export default function MailPage() {
                 }))
                 setSearchResults(uiMails)
             } catch (err) {
-                console.debug('Search failed:', err)
+                console.debug('Échec de la recherche:', err)
                 setSearchResults([])
             } finally {
                 setIsSearching(false)

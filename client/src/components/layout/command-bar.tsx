@@ -136,7 +136,7 @@ export function CommandBar() {
 
                     <Command.List className="max-h-[420px] overflow-y-auto overflow-x-hidden p-2">
                         <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
-                            No results found.
+                            Aucun résultat trouvé.
                         </Command.Empty>
 
                         {/* Live search results (federated) */}

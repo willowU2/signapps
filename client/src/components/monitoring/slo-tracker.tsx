@@ -160,7 +160,7 @@ export function SloTracker() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleAdd} disabled={!form.name.trim()}>Add SLO</Button>
           </DialogFooter>
         </DialogContent>

@@ -16,7 +16,7 @@ async function main() {
 
   try {
     await client.connect();
-    console.log('Connected to database');
+    console.log('Connecté to database');
 
     // Update the admin user's tenant_id
     const result = await client.query(

@@ -247,7 +247,7 @@ export function UserActivity() {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                      {loading ? 'Loading...' : 'No users found'}
+                      {loading ? 'Chargement...' : 'No users found'}
                     </td>
                   </tr>
                 )}

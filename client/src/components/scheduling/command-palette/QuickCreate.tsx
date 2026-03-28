@@ -409,7 +409,7 @@ export function QuickCreate({
 
       onClose();
     } catch (error) {
-      console.error('Failed to create item:', error);
+      console.error('Impossible de créer item:', error);
     } finally {
       setIsCreating(false);
     }

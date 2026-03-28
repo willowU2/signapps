@@ -144,7 +144,7 @@ export function AssetAssignment({ asset }: Props) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleAssign} disabled={!form.user.trim() || saving}>
               {saving ? "Saving…" : "Assign"}
             </Button>

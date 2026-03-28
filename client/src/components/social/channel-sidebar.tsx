@@ -77,7 +77,7 @@ function getStatusColor(status: SocialAccount['status']): string {
 function getStatusLabel(status: SocialAccount['status']): string {
   switch (status) {
     case 'connected':
-      return 'Connected';
+      return 'Connecté';
     case 'error':
       return 'Error - reconnect needed';
     case 'expired':

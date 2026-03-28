@@ -109,14 +109,14 @@ export function useDeleteAlertConfig() {
       queryClient.invalidateQueries({ queryKey: ['alerts'] });
     },
     onError: () => {
-      toast.error('Failed to delete alert config');
+      toast.error('Impossible de supprimer alert config');
     },
   });
 }
 
 export function useMetricsStream(enabled: boolean) {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
-  const [sseConnected, setSseConnected] = useState(false);
+  const [sseConnecté, setSseConnecté] = useState(false);
 
   useEffect(() => {
     if (!enabled) {
@@ -128,7 +128,7 @@ export function useMetricsStream(enabled: boolean) {
     const eventSource = new EventSource(`${METRICS_URL}/metrics/stream`);
 
     eventSource.onopen = () => {
-      if (active) setSseConnected(true);
+      if (active) setSseConnecté(true);
     };
 
     eventSource.onmessage = (event) => {
@@ -142,7 +142,7 @@ export function useMetricsStream(enabled: boolean) {
     };
 
     eventSource.onerror = () => {
-      if (active) setSseConnected(false);
+      if (active) setSseConnecté(false);
     };
 
     return () => {
@@ -151,7 +151,7 @@ export function useMetricsStream(enabled: boolean) {
     };
   }, [enabled]);
 
-  const connected = enabled && sseConnected;
+  const connected = enabled && sseConnecté;
 
   return { metrics, connected };
 }

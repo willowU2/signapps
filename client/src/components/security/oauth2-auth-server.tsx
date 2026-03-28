@@ -47,7 +47,7 @@ export function OAuth2AuthServer() {
   const copy = (text: string) => { navigator.clipboard.writeText(text); toast.success('Copied'); };
 
   const addClient = () => {
-    if (!newName.trim()) { toast.error('Name required'); return; }
+    if (!newName.trim()) { toast.error('Nom requis'); return; }
     const c: OAuthClient = {
       id: Date.now().toString(), name: newName,
       client_id: 'app_' + generateId(),
@@ -159,7 +159,7 @@ export function OAuth2AuthServer() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={addClient}>Create Client</Button>
           </DialogFooter>
         </DialogContent>

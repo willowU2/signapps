@@ -153,7 +153,7 @@ export function ContentSetManager() {
       setEditingSet(undefined);
       await fetchContentSets();
     } catch {
-      toast.error('Failed to create content set');
+      toast.error('Impossible de créer content set');
     } finally {
       setSaving(false);
     }
@@ -171,7 +171,7 @@ export function ContentSetManager() {
       setEditingSet(undefined);
       await fetchContentSets();
     } catch {
-      toast.error('Failed to update content set');
+      toast.error('Impossible de mettre à jour content set');
     } finally {
       setSaving(false);
     }
@@ -185,7 +185,7 @@ export function ContentSetManager() {
       setDeleteId(null);
       await fetchContentSets();
     } catch {
-      toast.error('Failed to delete content set');
+      toast.error('Impossible de supprimer content set');
     }
   };
 

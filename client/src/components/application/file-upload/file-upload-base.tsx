@@ -342,7 +342,7 @@ export const FileListItemProgressFill = ({ name, size, progress, failed, type, f
                         <p className="truncate text-sm font-medium text-foreground">{name}</p>
 
                         <div className="mt-0.5 flex items-center gap-2">
-                            <p className="text-sm text-muted-foreground">{failed ? "Upload failed, please try again" : getReadableFileSize(size)}</p>
+                            <p className="text-sm text-muted-foreground">{failed ? "Échec du téléversement, please try again" : getReadableFileSize(size)}</p>
 
                             {!failed && (
                                 <>

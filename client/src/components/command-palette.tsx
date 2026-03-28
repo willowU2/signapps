@@ -130,7 +130,7 @@ export function CommandPalette() {
       <CommandList className="custom-scrollbar">
         <CommandEmpty className="py-6 text-center text-sm">
           <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
-            <p>No results found for "{search}".</p>
+            <p>Aucun résultat trouvé for "{search}".</p>
             {search && (
               <button
                 className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors mt-1 bg-indigo-50 dark:bg-indigo-950/30 px-4 py-2 rounded-full font-medium shadow-sm hover:shadow"

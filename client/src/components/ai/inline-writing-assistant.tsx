@@ -72,7 +72,7 @@ export function InlineWritingAssistant({
   const runAction = async (action: Action) => {
     const text = value.trim();
     if (!text) {
-      toast.error("Write some text first.");
+      toast.error("Rédigez du texte d'abord.");
       return;
     }
     originalRef.current = value;

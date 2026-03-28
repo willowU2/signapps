@@ -20,7 +20,7 @@ function AudienceSlideRenderer({ index }: { index: number }) {
 function LivePageContent() {
     const searchParams = useSearchParams()
     const presentationId = searchParams.get('id')
-    const [isConnected, setIsConnected] = useState(false)
+    const [isConnecté, setIsConnecté] = useState(false)
     const [slideCount, setSlideCount] = useState(20) // Default placeholder count
 
     useEffect(() => {
@@ -28,7 +28,7 @@ function LivePageContent() {
         // from the server using the presentationId. For BroadcastChannel
         // mode (same machine), the slides are synced automatically.
         if (presentationId) {
-            setIsConnected(true)
+            setIsConnecté(true)
         }
     }, [presentationId])
 
@@ -47,7 +47,7 @@ function LivePageContent() {
         )
     }
 
-    if (!isConnected) {
+    if (!isConnecté) {
         return (
             <div className="min-h-screen bg-gray-900 flex items-center justify-center">
                 <div className="text-center space-y-4">

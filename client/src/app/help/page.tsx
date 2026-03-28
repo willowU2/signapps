@@ -261,7 +261,7 @@ export default function HelpPage() {
     setSending(true);
     // Simulate sending
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    toast.success('Message envoye. Nous vous repondrons dans les plus brefs delais.');
+    toast.success('Message envoyé. Nous vous répondrons dans les plus brefs délais.');
     setContactForm({ subject: '', message: '' });
     setSending(false);
   };

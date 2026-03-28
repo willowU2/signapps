@@ -10,7 +10,7 @@ export default function Loading() {
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-5 w-5 " />
-          <span>Loading...</span>
+          <span>Chargement...</span>
         </div>
       </div>
     </div>

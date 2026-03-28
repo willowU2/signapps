@@ -61,7 +61,7 @@ export function AutoArchivePolicy() {
                 <label className="block text-sm font-medium mb-1">Action</label>
                 <select className="w-full border rounded px-3 py-2">
                   <option>Archive</option>
-                  <option>Delete</option>
+                  <option>Supprimer</option>
                 </select>
               </div>
             </div>

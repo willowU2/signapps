@@ -77,7 +77,7 @@ export function FAQManager({ onSave }: FAQManagerProps) {
 
   const handleSave = () => {
     if (!formData.category.trim() || !formData.question.trim() || !formData.answer.trim()) {
-      toast.error("All fields are required");
+      toast.error("Tous les champs sont obligatoires");
       return;
     }
 

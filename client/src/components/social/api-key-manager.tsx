@@ -164,7 +164,7 @@ function KeyRevealDialog({
   const handleCopy = async () => {
     await navigator.clipboard.writeText(fullKey);
     setCopied(true);
-    toast.success('API key copied to clipboard');
+    toast.success('Clé API copiée dans le presse-papiers');
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -230,7 +230,7 @@ export function ApiKeyManager() {
       const res = await socialApi.apiKeys.list();
       setApiKeys(res.data);
     } catch {
-      toast.error('Failed to load API keys');
+      toast.error('Impossible de charger les clés API');
     } finally {
       setLoading(false);
     }
@@ -250,7 +250,7 @@ export function ApiKeyManager() {
       setRevealedKey(rawKey);
       await fetchApiKeys();
     } catch {
-      toast.error('Failed to create API key');
+      toast.error('Impossible de créer la clé API');
     } finally {
       setSaving(false);
     }
@@ -260,7 +260,7 @@ export function ApiKeyManager() {
     if (!revokeId) return;
     try {
       await socialApi.apiKeys.revoke(revokeId);
-      toast.success('API key revoked');
+      toast.success('Clé API révoquée');
       setRevokeId(null);
       await fetchApiKeys();
     } catch {

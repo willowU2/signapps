@@ -127,7 +127,7 @@ export default function InventoryPage() {
                 </div>
                 <div><Label>Reason</Label><Input value={moveForm.reason} onChange={e => setMoveForm({ ...moveForm, reason: e.target.value })} placeholder="e.g. PO-001, Deployment, Disposal..." className="mt-1" /></div>
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setMoveOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setMoveOpen(false)}>Annuler</Button>
                   <Button type="submit">Record Movement</Button>
                 </div>
               </form>

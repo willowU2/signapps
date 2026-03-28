@@ -145,7 +145,7 @@ export function WebhookManager() {
       resetForm();
       fetchHooks();
     } catch (e: any) {
-      toast.error(e.message || 'Failed to save webhook');
+      toast.error(e.message || 'Impossible d'enregistrer webhook');
     }
   };
 
@@ -155,7 +155,7 @@ export function WebhookManager() {
       toast.success('Webhook deleted');
       fetchHooks();
     } catch {
-      toast.error('Failed to delete webhook');
+      toast.error('Impossible de supprimer webhook');
     }
   };
 

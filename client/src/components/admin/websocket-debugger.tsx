@@ -24,7 +24,7 @@ const PRESET_URLS = [
 
 export function WebSocketDebugger() {
   const [url, setUrl] = useState(PRESET_URLS[0]);
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnecté] = useState(false);
   const [messages, setMessages] = useState<WsMessage[]>([]);
   const [message, setMessage] = useState('{"type":"ping"}');
   const [error, setError] = useState('');
@@ -36,11 +36,11 @@ export function WebSocketDebugger() {
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
-      ws.onopen = () => setConnected(true);
-      ws.onclose = () => { setConnected(false); };
+      ws.onopen = () => setConnecté(true);
+      ws.onclose = () => { setConnecté(false); };
       ws.onerror = () => {
-        setError('Connection failed');
-        setConnected(false);
+        setError('Échec de la connexion');
+        setConnecté(false);
       };
       ws.onmessage = (e) => {
         setMessages(prev => [...prev, {
@@ -58,7 +58,7 @@ export function WebSocketDebugger() {
   const disconnect = useCallback(() => {
     wsRef.current?.close();
     wsRef.current = null;
-    setConnected(false);
+    setConnecté(false);
   }, []);
 
   const sendMessage = useCallback(() => {
@@ -80,7 +80,7 @@ export function WebSocketDebugger() {
             <Wifi className="h-5 w-5 text-primary" />
             WebSocket Debugger
             <Badge variant={connected ? 'default' : 'secondary'} className={connected ? 'bg-green-500' : ''}>
-              {connected ? 'Connected' : 'Disconnected'}
+              {connected ? 'Connecté' : 'Déconnecté'}
             </Badge>
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={() => setMessages([])} className="gap-1.5">

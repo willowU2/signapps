@@ -128,7 +128,7 @@ export function SelectiveRestore() {
           <RotateCcw className="w-4 h-4" />
           Restore {selectedCount > 0 ? `(${selectedCount})` : ""}
         </Button>
-        <Button variant="outline">Cancel</Button>
+        <Button variant="outline">Annuler</Button>
       </div>
     </div>
   );

@@ -102,7 +102,7 @@ export default function SharesPage() {
       setEditDialogOpen(false);
       fetchShares();
     } catch {
-      toast.error('Failed to update share');
+      toast.error('Impossible de mettre à jour share');
     } finally {
       setSaving(false);
     }
@@ -315,9 +315,9 @@ export default function SharesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="view">View Only</SelectItem>
-                    <SelectItem value="download">Download</SelectItem>
-                    <SelectItem value="edit">Edit</SelectItem>
+                    <SelectItem value="view">Lecture seule</SelectItem>
+                    <SelectItem value="download">Téléchargement</SelectItem>
+                    <SelectItem value="edit">Modifier</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

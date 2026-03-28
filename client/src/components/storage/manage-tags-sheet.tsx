@@ -102,7 +102,7 @@ export function ManageTagsSheet({
       loadTags();
       onTagsUpdated?.();
     } catch (error) {
-      toast.error("Failed to create tag");
+      toast.error("Impossible de créer tag");
     }
   };
 
@@ -119,7 +119,7 @@ export function ManageTagsSheet({
       loadTags();
       onTagsUpdated?.();
     } catch (error) {
-      toast.error("Failed to update tag");
+      toast.error("Impossible de mettre à jour tag");
     }
   };
 
@@ -130,7 +130,7 @@ export function ManageTagsSheet({
       loadTags();
       onTagsUpdated?.();
     } catch (error) {
-      toast.error("Failed to delete tag");
+      toast.error("Impossible de supprimer tag");
     }
   };
 

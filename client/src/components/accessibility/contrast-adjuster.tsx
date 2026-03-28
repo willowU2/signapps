@@ -39,7 +39,7 @@ export default function ContrastAdjuster() {
 
   const autoFix = () => {
     // In production, this would analyze the page and adjust colors
-    toast.info("Auto-fixing contrast issues. Checking all text elements...");
+    toast.info("Correction automatique des contrastes en cours...");
   };
 
   return (

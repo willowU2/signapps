@@ -96,7 +96,7 @@ export function DocExpiryAlerts() {
       setDialogOpen(false)
       toast.success("Expiry tracking added")
     } catch {
-      toast.error("Failed to save")
+      toast.error("Impossible d'enregistrer")
     } finally {
       setSaving(false)
     }
@@ -108,7 +108,7 @@ export function DocExpiryAlerts() {
       setRecords(prev => prev.filter(r => r.id !== id))
       toast.success("Removed")
     } catch {
-      toast.error("Failed to delete")
+      toast.error("Impossible de supprimer")
     }
   }
 
@@ -212,7 +212,7 @@ export function DocExpiryAlerts() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleCreate} disabled={saving}>{saving ? "Saving…" : "Add"}</Button>
           </DialogFooter>
         </DialogContent>

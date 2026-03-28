@@ -140,7 +140,7 @@ export function CustomKPIDashboard() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={save}>{editKpi ? 'Update' : 'Add'} KPI</Button>
           </DialogFooter>
         </DialogContent>

@@ -72,7 +72,7 @@ export function ImpersonateDialog({ user, open, onOpenChange }: ImpersonateDialo
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
           <AlertDialogAction onClick={handleConfirm}>
             View as {user.username}
           </AlertDialogAction>

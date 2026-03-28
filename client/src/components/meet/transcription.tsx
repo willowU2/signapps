@@ -344,7 +344,7 @@ ${transcript}`,
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast.success('Copied to clipboard');
+    toast.success('Copié dans le presse-papiers');
   };
 
   const handleExport = () => {

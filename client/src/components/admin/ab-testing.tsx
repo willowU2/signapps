@@ -180,8 +180,8 @@ export function ABTesting() {
               onKeyDown={(e) => e.key === "Enter" && handleNewExperiment()}
               autoFocus
             />
-            <Button onClick={handleNewExperiment} size="sm" className="bg-blue-600 hover:bg-blue-700">Create</Button>
-            <Button onClick={() => { setShowForm(false); setNewName(""); }} size="sm" variant="ghost">Cancel</Button>
+            <Button onClick={handleNewExperiment} size="sm" className="bg-blue-600 hover:bg-blue-700">Créer</Button>
+            <Button onClick={() => { setShowForm(false); setNewName(""); }} size="sm" variant="ghost">Annuler</Button>
           </div>
         ) : (
           <Button onClick={() => setShowForm(true)} className="bg-blue-600 hover:bg-blue-700">

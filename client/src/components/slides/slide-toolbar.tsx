@@ -17,7 +17,7 @@ import type { SlideLayout } from "./use-slides"
 import type { SlideTransition } from "./slide-animations"
 
 interface SlideToolbarProps {
-    isConnected: boolean
+    isConnecté: boolean
     onAddMagicLayout: () => void
     onAddText: () => void
     onAddShape: () => void
@@ -68,7 +68,7 @@ interface SlideToolbarProps {
 }
 
 export function SlideToolbar({
-    isConnected,
+    isConnecté,
     onAddMagicLayout,
     onAddText,
     onAddShape,
@@ -111,8 +111,8 @@ export function SlideToolbar({
 
             <ToolbarGroup>
                 <div
-                    className={cn("h-2 w-2 rounded-full", isConnected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-red-500")}
-                    title={isConnected ? "Connected" : "Disconnected"}
+                    className={cn("h-2 w-2 rounded-full", isConnecté ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-red-500")}
+                    title={isConnecté ? "Connecté" : "Déconnecté"}
                 />
             </ToolbarGroup>
 

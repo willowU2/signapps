@@ -302,7 +302,7 @@ export default function SettingsPage() {
       await authApi.ldapUpdateConfig(ldapConfig);
       toast.success('LDAP configuration saved');
     } catch {
-      toast.error('Failed to save LDAP configuration');
+      toast.error('Impossible d'enregistrer LDAP configuration');
     } finally {
       setLdapSaving(false);
     }
@@ -338,7 +338,7 @@ export default function SettingsPage() {
       setTenant(response.data);
       toast.success('General settings saved successfully');
     } catch {
-      toast.error('Failed to save general settings');
+      toast.error('Impossible d'enregistrer general settings');
     } finally {
       setGeneralSaving(false);
     }
@@ -362,7 +362,7 @@ export default function SettingsPage() {
       setGroupSheetOpen(false);
       fetchGroups();
     } catch {
-      toast.error('Failed to save group');
+      toast.error('Impossible d'enregistrer group');
     } finally {
       setGroupSaving(false);
     }
@@ -449,7 +449,7 @@ export default function SettingsPage() {
       setDeleteGroupDialog({ open: false, group: null });
       fetchGroups();
     } catch {
-      toast.error('Failed to delete group');
+      toast.error('Impossible de supprimer group');
     }
   };
 
@@ -472,7 +472,7 @@ export default function SettingsPage() {
       setWebhookSheetOpen(false);
       fetchWebhooks();
     } catch {
-      toast.error('Failed to save webhook');
+      toast.error('Impossible d'enregistrer webhook');
     } finally {
       setWebhookSaving(false);
     }
@@ -484,7 +484,7 @@ export default function SettingsPage() {
       toast.success(`Webhook ${webhook.enabled ? 'disabled' : 'enabled'}`);
       fetchWebhooks();
     } catch {
-      toast.error('Failed to update webhook');
+      toast.error('Impossible de mettre à jour webhook');
     }
   };
 
@@ -507,7 +507,7 @@ export default function SettingsPage() {
       setDeleteWebhookDialog({ open: false, webhook: null });
       fetchWebhooks();
     } catch {
-      toast.error('Failed to delete webhook');
+      toast.error('Impossible de supprimer webhook');
     }
   };
 

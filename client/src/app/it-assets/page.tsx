@@ -170,7 +170,7 @@ export default function ITAssetsPage() {
       }
       setDialogOpen(false)
       loadAssets()
-    } catch { console.debug("Failed to save asset") }
+    } catch { console.debug("Impossible d'enregistrer asset") }
     finally { setIsSaving(false) }
   }
 

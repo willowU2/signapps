@@ -64,7 +64,7 @@ export function RateLimitConfig() {
   const handleSave = async () => {
     try {
       if (!editForm.endpointPattern || !editForm.maxRequestsPerMin || !editForm.burstSize) {
-        toast.error("All fields are required");
+        toast.error("Tous les champs sont obligatoires");
         return;
       }
 
@@ -72,7 +72,7 @@ export function RateLimitConfig() {
       const burst = parseInt(editForm.burstSize, 10);
 
       if (isNaN(maxReq) || isNaN(burst) || maxReq <= 0 || burst <= 0) {
-        toast.error("Numeric fields must be positive integers");
+        toast.error("Les champs numériques doivent être des entiers positifs");
         return;
       }
 
@@ -86,15 +86,15 @@ export function RateLimitConfig() {
 
       if (editingId === "new") {
         setRules([...rules, newRule]);
-        toast.success("Rate limit rule created");
+        toast.success("Règle de limitation créée");
       } else {
         setRules(rules.map((r) => (r.id === editingId ? newRule : r)));
-        toast.success("Rate limit rule updated");
+        toast.success("Règle de limitation mise à jour");
       }
 
       setEditingId(null);
     } catch (error) {
-      toast.error("Failed to save rate limit rule");
+      toast.error("Impossible d'enregistrer la règle de limitation");
       console.debug(error);
     }
   };
@@ -104,9 +104,9 @@ export function RateLimitConfig() {
 
     try {
       setRules(rules.filter((r) => r.id !== id));
-      toast.success("Rule deleted");
+      toast.success("Règle supprimée");
     } catch (error) {
-      toast.error("Failed to delete rule");
+      toast.error("Impossible de supprimer la règle");
       console.debug(error);
     }
   };
@@ -115,7 +115,7 @@ export function RateLimitConfig() {
     try {
       setRules(rules.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r)));
     } catch (error) {
-      toast.error("Failed to toggle rule state");
+      toast.error("Impossible de modifier l'état de la règle");
       console.debug(error);
     }
   };

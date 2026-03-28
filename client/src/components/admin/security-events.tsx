@@ -79,7 +79,7 @@ export function SecurityEvents() {
       setEvents(eventsRes.data);
       setSummary(summaryRes.data);
     } catch {
-      toast.error("Failed to load security events");
+      toast.error("Impossible de charger les événements de sécurité");
     } finally {
       setIsLoading(false);
     }

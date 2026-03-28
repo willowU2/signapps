@@ -51,7 +51,7 @@ function formatNanoCpus(nano: number | undefined | null): string {
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
-  toast.success('Copied to clipboard');
+  toast.success('Copié dans le presse-papiers');
 }
 
 export function ContainerDetailsSheet({
@@ -113,7 +113,7 @@ export function ContainerDetailsSheet({
             )}
           </SheetTitle>
           <SheetDescription>
-            {details?.image || 'Loading...'}
+            {details?.image || 'Chargement...'}
           </SheetDescription>
         </SheetHeader>
 

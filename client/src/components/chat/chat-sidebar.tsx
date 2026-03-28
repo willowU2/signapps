@@ -145,7 +145,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
             setNewChannelTopic("")
             setNewChannelPrivate(false)
             toast.success("Channel created")
-        } catch { toast.error("Failed to create channel") }
+        } catch { toast.error("Impossible de créer channel") }
         finally { setIsCreating(false) }
     }
 

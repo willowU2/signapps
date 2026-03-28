@@ -87,7 +87,7 @@ export const useGoogleStore = create<GoogleState>()(
     (set, get) => ({
       // Initial state
       auth: {
-        isConnected: false,
+        isConnecté: false,
         scopes: [],
       },
       isAuthLoading: false,
@@ -118,12 +118,12 @@ export const useGoogleStore = create<GoogleState>()(
           set({ auth, isAuthLoading: false });
 
           // Load synced documents if connected
-          if (auth.isConnected) {
+          if (auth.isConnecté) {
             get().loadSyncedDocuments();
           }
         } catch (error) {
           set({
-            auth: { isConnected: false, scopes: [] },
+            auth: { isConnecté: false, scopes: [] },
             isAuthLoading: false,
             authError: error instanceof Error ? error.message : 'Erreur d\'authentification',
           });
@@ -152,7 +152,7 @@ export const useGoogleStore = create<GoogleState>()(
         try {
           await googleApi.disconnectGoogle();
           set({
-            auth: { isConnected: false, scopes: [] },
+            auth: { isConnecté: false, scopes: [] },
             driveFiles: [],
             recentFiles: [],
             syncedDocuments: [],
@@ -170,7 +170,7 @@ export const useGoogleStore = create<GoogleState>()(
       // Drive Actions
       listFiles: async (folderId?: string, reset = true) => {
         const { auth } = get();
-        if (!auth.isConnected) return;
+        if (!auth.isConnecté) return;
 
         set({
           isLoadingFiles: true,
@@ -232,7 +232,7 @@ export const useGoogleStore = create<GoogleState>()(
 
       loadRecentFiles: async () => {
         const { auth } = get();
-        if (!auth.isConnected) return;
+        if (!auth.isConnecté) return;
 
         try {
           const files = await googleApi.getRecentDriveFiles(10);
@@ -244,7 +244,7 @@ export const useGoogleStore = create<GoogleState>()(
 
       searchFiles: async (query: string) => {
         const { auth } = get();
-        if (!auth.isConnected) return;
+        if (!auth.isConnecté) return;
 
         set({ isLoadingFiles: true, error: null });
 
@@ -438,7 +438,7 @@ export const useGoogleStore = create<GoogleState>()(
 
       reset: () => {
         set({
-          auth: { isConnected: false, scopes: [] },
+          auth: { isConnecté: false, scopes: [] },
           driveFiles: [],
           recentFiles: [],
           syncedDocuments: [],
@@ -462,7 +462,7 @@ export const useGoogleStore = create<GoogleState>()(
 // Selectors
 // ============================================================================
 
-export const selectIsConnected = (state: GoogleState) => state.auth.isConnected;
+export const selectIsConnecté = (state: GoogleState) => state.auth.isConnecté;
 export const selectDriveFiles = (state: GoogleState) => state.driveFiles;
 export const selectSyncedDocuments = (state: GoogleState) => state.syncedDocuments;
 export const selectSyncConflicts = (state: GoogleState) => state.syncConflicts;

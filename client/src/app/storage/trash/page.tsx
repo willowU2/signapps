@@ -88,7 +88,7 @@ export default function TrashPage() {
       setSelectedItems(new Set());
       fetchTrash();
     } catch {
-      toast.error('Failed to delete items');
+      toast.error('Impossible de supprimer items');
     } finally {
       setDeleting(false);
     }
@@ -348,7 +348,7 @@ export default function TrashPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={handleEmptyTrash}

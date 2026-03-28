@@ -72,7 +72,7 @@ export function useResources() {
         setError(null);
         return response.data;
       } catch (err) {
-        setError("Failed to create resource");
+        setError("Impossible de créer resource");
         throw err;
       }
     },
@@ -95,7 +95,7 @@ export function useResources() {
         setError(null);
         return response.data;
       } catch (err) {
-        setError("Failed to update resource");
+        setError("Impossible de mettre à jour resource");
         throw err;
       }
     },
@@ -109,7 +109,7 @@ export function useResources() {
         setResources((prev) => prev.filter((r) => r.id !== resourceId));
         setError(null);
       } catch (err) {
-        setError("Failed to delete resource");
+        setError("Impossible de supprimer resource");
         throw err;
       }
     },

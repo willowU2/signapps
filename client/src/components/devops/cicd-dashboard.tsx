@@ -187,7 +187,7 @@ export function CICDDashboard() {
               <Input value={formRepo} onChange={(e) => setFormRepo(e.target.value)} placeholder="Repository name" className="h-8 text-sm w-40" autoFocus />
               <Input value={formBranch} onChange={(e) => setFormBranch(e.target.value)} placeholder="branch" className="h-8 text-sm w-24" />
               <Button size="sm" onClick={handleAddPipeline}>Start</Button>
-              <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Annuler</Button>
             </div>
           ) : (
             <Button size="sm" onClick={() => setShowForm(true)}>

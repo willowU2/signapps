@@ -86,7 +86,7 @@ export function LoginAnomalyDetection() {
               <Input type="number" value={failureThreshold} onChange={e => setFailureThreshold(e.target.value)} min="1" max="20" />
             </div>
           </div>
-          <Button onClick={() => toast.success('Settings saved')}>Save Settings</Button>
+          <Button onClick={() => toast.success('Paramètres enregistrés')}>Save Settings</Button>
         </CardContent>
       </Card>
 

@@ -213,7 +213,7 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
       const res = await socialApi.workspaces.listMembers(wsId);
       setMembers(res.data);
     } catch {
-      toast.error('Failed to load workspace members');
+      toast.error('Impossible de charger les membres');
       setMembers([]);
     } finally {
       setLoadingMembers(false);
@@ -248,7 +248,7 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
       await fetchWorkspaces();
       setSelectedId(res.data.id);
     } catch {
-      toast.error('Failed to create workspace');
+      toast.error('Impossible de créer workspace');
     } finally {
       setSaving(false);
     }
@@ -265,7 +265,7 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
       }
       await fetchWorkspaces();
     } catch {
-      toast.error('Failed to delete workspace');
+      toast.error('Impossible de supprimer workspace');
     }
   };
 
@@ -292,7 +292,7 @@ export function WorkspaceManager({ currentUserId }: { currentUserId?: string }) 
       setRemoveMemberId(null);
       await fetchMembers(selectedId);
     } catch {
-      toast.error('Failed to remove member');
+      toast.error('Impossible de retirer le membre');
     }
   };
 

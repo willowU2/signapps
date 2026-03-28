@@ -365,8 +365,8 @@ export default function DesignDashboard() {
               />
             </div>
             <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setIsRenameOpen(false)}>Cancel</Button>
-              <Button type="submit">Save</Button>
+              <Button type="button" variant="ghost" onClick={() => setIsRenameOpen(false)}>Annuler</Button>
+              <Button type="submit">Enregistrer</Button>
             </DialogFooter>
           </form>
         </DialogContent>

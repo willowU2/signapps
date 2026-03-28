@@ -105,7 +105,7 @@ export function RestApiConnector() {
                 <Button size="sm" variant="outline" disabled={running} onClick={() => testCall(call)}>
                   <Play className="mr-1 h-3 w-3" /> Test
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => { setEditing(call.id); setForm(call); setTestResponse(null); }}>Edit</Button>
+                <Button size="sm" variant="outline" onClick={() => { setEditing(call.id); setForm(call); setTestResponse(null); }}>Modifier</Button>
                 <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={() => setCalls(cs => cs.filter(c => c.id !== call.id))}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
@@ -151,8 +151,8 @@ export function RestApiConnector() {
             )}
             {testResponse && <div className="rounded-lg bg-muted p-3"><pre className="text-xs font-mono whitespace-pre-wrap">{testResponse}</pre></div>}
             <div className="flex gap-2">
-              <Button onClick={save}>Save</Button>
-              <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+              <Button onClick={save}>Enregistrer</Button>
+              <Button variant="outline" onClick={() => setEditing(null)}>Annuler</Button>
             </div>
           </CardContent>
         </Card>

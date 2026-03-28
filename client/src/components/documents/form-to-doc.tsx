@@ -86,7 +86,7 @@ export function FormToDocMapper() {
       setTemplates(prev => prev.map(t => t.id === id ? { ...t, active } : t))
       toast.success(active ? "Automation enabled" : "Automation disabled")
     } catch {
-      toast.error("Failed to update")
+      toast.error("Impossible de mettre à jour")
     }
   }
 
@@ -96,7 +96,7 @@ export function FormToDocMapper() {
       const res = await fetch(`/api/docs/form-templates/${templateId}/generate`, { method: "POST" })
       const data = await res.json()
       setResults(prev => [data, ...prev])
-      toast.success("Document generated")
+      toast.success("Document généré")
     } catch {
       toast.error("Generation failed")
     } finally {

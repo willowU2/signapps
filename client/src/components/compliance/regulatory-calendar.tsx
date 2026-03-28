@@ -111,7 +111,7 @@ export function RegulatoryCalendar() {
       setDialogOpen(false)
       toast.success("Deadline added")
     } catch {
-      toast.error("Failed to save")
+      toast.error("Impossible d'enregistrer")
     } finally {
       setSaving(false)
     }
@@ -127,7 +127,7 @@ export function RegulatoryCalendar() {
       setDeadlines(prev => prev.map(d => d.id === id ? { ...d, completed } : d))
       if (completed) toast.success("Marked as complete")
     } catch {
-      toast.error("Failed to update")
+      toast.error("Impossible de mettre à jour")
     }
   }
 
@@ -137,7 +137,7 @@ export function RegulatoryCalendar() {
       setDeadlines(prev => prev.filter(d => d.id !== id))
       toast.success("Deleted")
     } catch {
-      toast.error("Failed to delete")
+      toast.error("Impossible de supprimer")
     }
   }
 
@@ -348,7 +348,7 @@ export function RegulatoryCalendar() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleCreate} disabled={saving}>{saving ? "Saving…" : "Add Deadline"}</Button>
           </DialogFooter>
         </DialogContent>

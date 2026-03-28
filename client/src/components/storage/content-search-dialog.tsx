@@ -49,7 +49,7 @@ export function ContentSearchDialog({
         toast.info('Full-text search is not yet enabled on the server');
         setResults([]);
       } else {
-        toast.error('Search failed');
+        toast.error('Échec de la recherche');
       }
     } finally {
       setLoading(false);
@@ -110,7 +110,7 @@ export function ContentSearchDialog({
           {!loading && searched && results.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
               <AlertCircle className="h-8 w-8" />
-              <p>No results found for "{query}"</p>
+              <p>Aucun résultat trouvé for "{query}"</p>
             </div>
           )}
 

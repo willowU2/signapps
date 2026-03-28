@@ -144,7 +144,7 @@ export function GlossaryManager() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
             <Button onClick={save}>Add Term</Button>
           </DialogFooter>
         </DialogContent>

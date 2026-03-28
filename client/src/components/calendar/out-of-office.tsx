@@ -177,12 +177,12 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
 
   const handleSave = useCallback(() => {
     if (enabled && (!startDate || !endDate)) {
-      toast.error("Please select start and end dates");
+      toast.error("Veuillez sélectionner les dates de début et de fin");
       return;
     }
 
     if (enabled && new Date(endDate) <= new Date(startDate)) {
-      toast.error("End date must be after start date");
+      toast.error("La date de fin doit être après la date de début");
       return;
     }
 
@@ -198,7 +198,7 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
     };
 
     saveOooSettings(settings);
-    toast.success(enabled ? "Out of Office enabled" : "Out of Office disabled");
+    toast.success(enabled ? "Out of Office enabled" : "Absence du bureau désactivée");
     onOpenChange(false);
   }, [
     enabled,
@@ -214,7 +214,7 @@ export function OutOfOfficeSheet({ open, onOpenChange }: OutOfOfficeSheetProps) 
   const handleDisable = () => {
     setEnabled(false);
     clearOooSettings();
-    toast.success("Out of Office disabled");
+    toast.success("Absence du bureau désactivée");
     onOpenChange(false);
   };
 

@@ -117,7 +117,7 @@ export function GlobalDndProvider({ children }: GlobalDndProviderProps) {
                 toast.success(`Tâche "${task.title || task.label}" planifiée pour le ${formattedDate}`);
               })
               .catch((err) => {
-                console.error('Failed to create event:', err);
+                console.error('Impossible de créer event:', err);
                 toast.error('Erreur lors de la création de l\'événement');
               });
           } else {

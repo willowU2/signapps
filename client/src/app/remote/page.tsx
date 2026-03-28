@@ -90,7 +90,7 @@ export default function RemoteAccessDashboard() {
             })
             toast.success('Connexion crée avec succs')
         } catch (err) {
-            console.debug('Failed to create connection:', err)
+            console.debug('Impossible de créer connection:', err)
             toast.error('chec de la cration')
         } finally {
             setCreating(false)
@@ -109,7 +109,7 @@ export default function RemoteAccessDashboard() {
             setEditConnection({})
             toast.success('Connexion mise  jour')
         } catch (err) {
-            console.debug('Failed to update connection:', err)
+            console.debug('Impossible de mettre à jour connection:', err)
             toast.error('chec de la mise  jour')
         } finally {
             setEditing(false)
@@ -128,7 +128,7 @@ export default function RemoteAccessDashboard() {
             setConnections(prev => prev.filter(c => c.id !== deleteConnectionId))
             toast.success('Connexion supprime')
         } catch (err) {
-            console.debug('Failed to delete connection:', err)
+            console.debug('Impossible de supprimer connection:', err)
             toast.error('chec de la suppression')
         }
     }

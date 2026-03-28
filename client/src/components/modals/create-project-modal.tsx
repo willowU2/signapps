@@ -71,7 +71,7 @@ export function CreateProjectModal({ open, onOpenChange }: CreateProjectModalPro
       form.reset();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create project');
+      toast.error(error.message || 'Impossible de créer project');
     } finally {
       setIsSubmitting(false);
     }

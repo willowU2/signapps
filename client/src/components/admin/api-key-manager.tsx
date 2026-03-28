@@ -89,7 +89,7 @@ export function ApiKeyManager() {
     const updated = [newKey, ...apiKeys];
     setApiKeys(updated);
     saveKeysToStorage(updated);
-    toast.success("New API key generated");
+    toast.success("Nouvelle clé API générée");
     try {
       await identityClient.post('/api-keys', {
         name: `Key ${new Date().toISOString()}`,
@@ -103,7 +103,7 @@ export function ApiKeyManager() {
   const handleCopy = (prefix: string, id: string) => {
     navigator.clipboard.writeText(prefix);
     setCopiedId(id);
-    toast.success("API key copied to clipboard");
+    toast.success("Clé API copiée dans le presse-papiers");
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -112,7 +112,7 @@ export function ApiKeyManager() {
     const updated = apiKeys.filter((k) => k.id !== id);
     setApiKeys(updated);
     saveKeysToStorage(updated);
-    toast.success("API key revoked");
+    toast.success("Clé API révoquée");
     try {
       await identityClient.delete(`/api-keys/${id}`);
     } catch {

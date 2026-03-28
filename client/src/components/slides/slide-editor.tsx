@@ -80,7 +80,7 @@ interface SlideEditorProps {
         removeObject: (id: string) => void;
         updateCursor: (x: number, y: number) => void;
         collaborators: Record<number, { user: { name: string; color: string }; cursor?: { x: number; y: number; slideId: string } }>;
-        isConnected: boolean;
+        isConnecté: boolean;
         activeSlideId: string | null;
         canUndo: boolean;
         canRedo: boolean;
@@ -110,7 +110,7 @@ interface SlideEditorProps {
 
 export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps) {
     const {
-        objects, updateObject, removeObject, updateCursor, collaborators, isConnected, activeSlideId,
+        objects, updateObject, removeObject, updateCursor, collaborators, isConnecté, activeSlideId,
         canUndo, canRedo, undo, redo, clearSlide, updateSlideNotes, getSlideNotes,
         updateSlideLayout, getSlideLayout, presentationTheme, updatePresentationTheme, addSlide,
         updateSlideTransition, getSlideTransition,
@@ -2219,7 +2219,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
 
             {!isReadOnly && (
                 <SlideToolbar
-                    isConnected={isConnected}
+                    isConnecté={isConnecté}
                     onAddMagicLayout={addMagicLayout}
                     onAddText={addText}
                     onAddShape={() => addShape('rect')}

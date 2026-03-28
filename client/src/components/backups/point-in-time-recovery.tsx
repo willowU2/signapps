@@ -106,7 +106,7 @@ export function PointInTimeRecoveryDialog({ open, onOpenChange, profileId }: PIT
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
           <Button
             onClick={() => restore.mutate()}
             disabled={!selected || restore.isPending}

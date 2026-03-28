@@ -148,8 +148,8 @@ export function DeployNotification() {
             <select value={formStatus} onChange={(e) => setFormStatus(e.target.value as Deploy["status"])} className="border rounded px-2 h-8 text-sm">
               {(["success","failed","rollback"] as const).map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <Button size="sm" onClick={handleAddDeploy}>Save</Button>
-            <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleAddDeploy}>Enregistrer</Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Annuler</Button>
           </div>
         ) : (
           <Button size="sm" onClick={() => setShowForm(true)}>

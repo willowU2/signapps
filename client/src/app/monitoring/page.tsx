@@ -102,7 +102,7 @@ export default function MonitoringPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('5m');
   const [realtimeEnabled, setRealtimeEnabled] = useState(false);
-  const { metrics: streamMetrics, connected: streamConnected } = useMetricsStream(realtimeEnabled);
+  const { metrics: streamMetrics, connected: streamConnecté } = useMetricsStream(realtimeEnabled);
 
   // Alerts local state
   const [alertDialogOpen, setAlertDialogOpen] = useState(false);
@@ -317,7 +317,7 @@ export default function MonitoringPage() {
                 checked={realtimeEnabled}
                 onCheckedChange={setRealtimeEnabled}
               />
-              {realtimeEnabled && streamConnected && (
+              {realtimeEnabled && streamConnecté && (
                 <Badge className="bg-green-500/10 text-green-600">Live</Badge>
               )}
             </div>

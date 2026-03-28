@@ -511,7 +511,7 @@ export function GlobalHeader() {
                     </TooltipProvider>
                 )}
 
-                {/* Connected Workspace Users */}
+                {/* Connecté Workspace Users */}
                 <div className="hidden sm:flex items-center mr-2">
                     <TooltipProvider>
                         <AvatarGroup>

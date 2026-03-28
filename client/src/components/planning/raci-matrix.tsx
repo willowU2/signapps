@@ -45,7 +45,7 @@ export default function RACIMatrix() {
 
   const exportPDF = () => {
     window.print();
-    toast.success("PDF generated");
+    toast.success("PDF généré");
   };
 
   const getCellColor = (value: RACIRole) => {

@@ -105,7 +105,7 @@ export function ConnectionStatus({ className }: ConnectionStatusProps) {
         },
         reconnecting: {
             color: 'bg-yellow-500',
-            text: 'Reconnecting...',
+            text: 'Reconnexion en cours...',
             pulse: true,
         },
     };

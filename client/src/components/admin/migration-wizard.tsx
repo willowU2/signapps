@@ -146,7 +146,7 @@ export function MigrationWizard() {
       }
       const data: MigrationJob = await res.json();
       setJob(data);
-      toast.success("Migration job started successfully");
+      toast.success("Migration démarrée avec succès");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {

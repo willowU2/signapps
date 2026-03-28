@@ -256,11 +256,11 @@ export function GoogleDriveBrowser({
 
   // Load files when connected
   useEffect(() => {
-    if (auth.isConnected && !currentFolderId) {
+    if (auth.isConnecté && !currentFolderId) {
       listFiles();
       loadRecentFiles();
     }
-  }, [auth.isConnected, listFiles, loadRecentFiles, currentFolderId]);
+  }, [auth.isConnecté, listFiles, loadRecentFiles, currentFolderId]);
 
   const handleConnect = async () => {
     const authUrl = await initiateAuth();
@@ -307,7 +307,7 @@ export function GoogleDriveBrowser({
     }
   };
 
-  if (!auth.isConnected) {
+  if (!auth.isConnecté) {
     return (
       <div className={className}>
         <ConnectionPrompt

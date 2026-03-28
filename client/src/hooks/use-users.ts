@@ -25,7 +25,7 @@ export function useCreateUser() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
     onError: () => {
-      toast.error('Failed to create user');
+      toast.error('Impossible de créer user');
     },
   });
 }
@@ -43,7 +43,7 @@ export function useUpdateUser() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
     onError: () => {
-      toast.error('Failed to update user');
+      toast.error('Impossible de mettre à jour user');
     },
   });
 }
@@ -60,7 +60,7 @@ export function useDeleteUser() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
     onError: () => {
-      toast.error('Failed to delete user');
+      toast.error('Impossible de supprimer user');
     },
   });
 }

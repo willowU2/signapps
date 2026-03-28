@@ -118,7 +118,7 @@ export default function ReceivingShippingPage() {
                 </div>
                 <div><Label>Notes</Label><Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} className="mt-1" /></div>
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
                   <Button type="submit">Create Entry</Button>
                 </div>
               </form>

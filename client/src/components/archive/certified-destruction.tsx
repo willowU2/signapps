@@ -135,7 +135,7 @@ export function CertifiedDestruction() {
             <Button onClick={handleDestroy} disabled={!confirmed} variant="destructive">
               Confirm Destruction
             </Button>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline">Annuler</Button>
           </div>
         </>
       )}

@@ -164,7 +164,7 @@ export function MediaLibrary() {
       setItems((prev) => prev.filter((item) => item.id !== id));
       toast.success('Media deleted');
     } catch {
-      toast.error('Failed to delete media');
+      toast.error('Impossible de supprimer media');
     }
   }, []);
 

@@ -73,7 +73,7 @@ export function AiCategorizerPanel() {
     try {
       await mailApi.saveCategorizeSettings(next)
     } catch {
-      toast.error("Failed to save settings")
+      toast.error("Impossible d'enregistrer settings")
     }
   }
 

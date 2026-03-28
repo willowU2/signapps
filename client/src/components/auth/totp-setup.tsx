@@ -53,7 +53,7 @@ export function TotpSetup() {
       });
       if (res.data.success) {
         setStep("done");
-        toast.success("Two-factor authentication enabled");
+        toast.success("Authentification à deux facteurs activée");
       } else {
         toast.error(res.data.message || "Invalid code, please retry");
       }

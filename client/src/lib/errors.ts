@@ -21,14 +21,14 @@ export function parseApiError(error: unknown): string {
     const response = error.response;
 
     if (!response) {
-      // Network error
+      // Erreur réseau
       if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
         return 'Unable to connect to the server. Please check your connection.';
       }
       if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
         return 'Request timed out. Please try again.';
       }
-      return 'Network error. Please check your connection and try again.';
+      return 'Erreur réseau. Please check your connection and try again.';
     }
 
     const data = response.data;
@@ -104,9 +104,9 @@ function getDefaultMessageForStatus(status: number): string {
     case 400:
       return 'Invalid request. Please check your input.';
     case 401:
-      return 'Invalid credentials. Please try again.';
+      return 'Identifiants invalides. Please try again.';
     case 403:
-      return 'Access denied. You do not have permission to perform this action.';
+      return 'Accès refusé. You do not have permission to perform this action.';
     case 404:
       return 'Resource not found.';
     case 409:
@@ -122,7 +122,7 @@ function getDefaultMessageForStatus(status: number): string {
     case 504:
       return 'Service temporarily unavailable. Please try again later.';
     default:
-      return 'An error occurred. Please try again.';
+      return 'Une erreur est survenue. Please try again.';
   }
 }
 

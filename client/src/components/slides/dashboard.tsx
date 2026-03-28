@@ -93,7 +93,7 @@ export default function SlidesDashboard() {
             setDocs(prev => prev.filter(d => d.id !== id));
             toast.success('Présentation supprimée');
         } catch (error) {
-            console.error('Failed to delete presentation', error);
+            console.error('Impossible de supprimer presentation', error);
             toast.error('Erreur lors de la suppression');
         }
     };
@@ -135,7 +135,7 @@ export default function SlidesDashboard() {
             setPendingTemplateContent(null);
             router.push(`/slides/editor?id=${finalTargetId}&name=${encodeURIComponent(newNode.name)}`);
         } catch (error: any) {
-            console.error("Failed to create presentation", error);
+            console.error("Impossible de créer presentation", error);
             toast.error(error.response?.data?.message || "Erreur serveur lors de la cr\u00e9ation");
             setIsCreating(false);
         }

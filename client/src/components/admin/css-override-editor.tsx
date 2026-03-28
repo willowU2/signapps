@@ -68,7 +68,7 @@ export function CSSOverrideEditor() {
   const handleSave = async () => {
     localStorage.setItem(`css-override-${tenant}`, css);
     setIsSaved(true);
-    toast.success("CSS saved successfully");
+    toast.success("CSS enregistré avec succès");
     try {
       await identityClient.put(`/admin/tenants/${TENANT_IDS[tenant]}/css`, { css });
     } catch {
@@ -79,7 +79,7 @@ export function CSSOverrideEditor() {
   const handleReset = () => {
     setCSS(DEFAULT_CSS);
     setIsSaved(false);
-    toast.info("CSS reset to defaults");
+    toast.info("CSS réinitialisé par défaut");
   };
 
   const handleChange = (newValue: string) => {

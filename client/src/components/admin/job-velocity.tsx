@@ -154,7 +154,7 @@ export function JobVelocity() {
         <CardContent>
           {buckets.length === 0 ? (
             <div className="flex items-center justify-center h-64 text-muted-foreground">
-              {loading ? 'Loading...' : 'No job data available'}
+              {loading ? 'Chargement...' : 'No job data available'}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>

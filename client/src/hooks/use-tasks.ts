@@ -57,10 +57,10 @@ export function useTasks(calendarId?: string) {
           body: JSON.stringify(data),
         });
 
-        if (!response.ok) throw new Error("Failed to create task");
+        if (!response.ok) throw new Error("Impossible de créer task");
         return await response.json();
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to create task";
+        const message = err instanceof Error ? err.message : "Impossible de créer task";
         setError(message);
         throw err;
       }
@@ -80,10 +80,10 @@ export function useTasks(calendarId?: string) {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) throw new Error("Failed to update task");
+      if (!response.ok) throw new Error("Impossible de mettre à jour task");
       return await response.json();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to update task";
+      const message = err instanceof Error ? err.message : "Impossible de mettre à jour task";
       setError(message);
       throw err;
     }
@@ -137,9 +137,9 @@ export function useTasks(calendarId?: string) {
         credentials: "include",
       });
 
-      if (!response.ok) throw new Error("Failed to delete task");
+      if (!response.ok) throw new Error("Impossible de supprimer task");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to delete task";
+      const message = err instanceof Error ? err.message : "Impossible de supprimer task";
       setError(message);
       throw err;
     }

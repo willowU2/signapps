@@ -242,7 +242,7 @@ export function SocialDashboard() {
           </Card>
         </div>
 
-        {/* Connected Accounts Overview */}
+        {/* Connecté Accounts Overview */}
         {accounts.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">

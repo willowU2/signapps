@@ -89,7 +89,7 @@ export function TaskForm({
       setFormData({ title: "", description: "", priority: "1", due_date: "", assignee_id: null, reminder_enabled: false });
       onTaskCreated?.();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "An error occurred");
+      toast.error(error instanceof Error ? error.message : "Une erreur est survenue");
     } finally {
       setIsSubmitting(false);
     }

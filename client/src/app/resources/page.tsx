@@ -141,7 +141,7 @@ export default function ResourcesPublicPage() {
                 toast.success("Ressource réservée avec succès !")
             }
         } catch (error) {
-            console.error("Failed to create reservation:", error)
+            console.error("Impossible de créer reservation:", error)
             toast.error("Erreur lors de la réservation. Veuillez réessayer.")
         } finally {
             setIsSubmitting(false)

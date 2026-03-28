@@ -157,7 +157,7 @@ export function AssetMaintenance({ assetId, assetName }: Props) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleAdd} disabled={!form.title.trim()}>Add Schedule</Button>
           </DialogFooter>
         </DialogContent>

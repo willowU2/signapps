@@ -237,7 +237,7 @@ function ConverterTab() {
 
           <div className="flex items-center justify-center gap-2 h-6">
             <StatusBadge status={status} />
-            {status === 'success' && <span className="text-xs text-green-600">Download started</span>}
+            {status === 'success' && <span className="text-xs text-green-600">Téléchargement démarré</span>}
             {status === 'error' && <span className="text-xs text-destructive">Conversion failed</span>}
           </div>
         </CardContent>

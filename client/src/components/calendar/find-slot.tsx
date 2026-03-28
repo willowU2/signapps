@@ -146,7 +146,7 @@ Return ONLY valid JSON array with exactly 3 suggestions:
       onOpenChange(false);
       resetForm();
     } catch (error) {
-      toast.error('Failed to create event');
+      toast.error('Impossible de créer event');
     } finally {
       setIsCreating(false);
       setSelectedSlot(null);

@@ -187,7 +187,7 @@ export const useSchedulingStore = create<SchedulingState>()(
           return item;
         } catch (error) {
           set((state) => {
-            state.error = error instanceof Error ? error.message : 'Failed to create item';
+            state.error = error instanceof Error ? error.message : 'Impossible de créer item';
             state.isSaving = false;
           });
           throw error;
@@ -221,7 +221,7 @@ export const useSchedulingStore = create<SchedulingState>()(
           // Rollback on error
           get().rollbackUpdate(id);
           set((state) => {
-            state.error = error instanceof Error ? error.message : 'Failed to update item';
+            state.error = error instanceof Error ? error.message : 'Impossible de mettre à jour item';
             state.isSaving = false;
           });
           throw error;
@@ -254,7 +254,7 @@ export const useSchedulingStore = create<SchedulingState>()(
             });
           }
           set((state) => {
-            state.error = error instanceof Error ? error.message : 'Failed to delete item';
+            state.error = error instanceof Error ? error.message : 'Impossible de supprimer item';
             state.isSaving = false;
           });
           throw error;

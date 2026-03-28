@@ -384,7 +384,7 @@ export function useColumnPreferences<TData>(
         try {
           localStorage.setItem(storageKey, JSON.stringify(newPrefs));
         } catch (e) {
-          console.warn("Failed to save column preferences:", e);
+          console.warn("Impossible d'enregistrer column preferences:", e);
         }
       }
     },

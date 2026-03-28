@@ -70,7 +70,7 @@ export function WorkspaceMembersSheet({ open, onOpenChange, workspace }: Workspa
             setMembers(response.data || [])
         } catch (error) {
             console.error("Failed to load members:", error)
-            toast.error("Failed to load workspace members")
+            toast.error("Impossible de charger les membres")
         } finally {
             setIsLoading(false)
         }
@@ -93,13 +93,13 @@ export function WorkspaceMembersSheet({ open, onOpenChange, workspace }: Workspa
                 user_id: selectedUserId,
                 role: selectedRole,
             })
-            toast.success("Member added successfully")
+            toast.success("Membre ajouté avec succès")
             setSelectedUserId("")
             setSelectedRole("member")
             loadMembers()
         } catch (error) {
-            console.error("Failed to add member:", error)
-            toast.error("Failed to add member")
+            console.error("Impossible d'ajouter le membre:", error)
+            toast.error("Impossible d'ajouter le membre")
         } finally {
             setIsAdding(false)
         }
@@ -109,11 +109,11 @@ export function WorkspaceMembersSheet({ open, onOpenChange, workspace }: Workspa
         if (!workspace) return
         try {
             await workspacesApi.updateMemberRole(workspace.id, userId, { role: newRole })
-            toast.success("Role updated successfully")
+            toast.success("Rôle mis à jour avec succès")
             loadMembers()
         } catch (error) {
-            console.error("Failed to update role:", error)
-            toast.error("Failed to update role")
+            console.error("Impossible de mettre à jour le rôle:", error)
+            toast.error("Impossible de mettre à jour le rôle")
         }
     }
 
@@ -122,11 +122,11 @@ export function WorkspaceMembersSheet({ open, onOpenChange, workspace }: Workspa
         if (!confirm(`Remove "${username}" from this workspace?`)) return
         try {
             await workspacesApi.removeMember(workspace.id, userId)
-            toast.success("Member removed successfully")
+            toast.success("Membre retiré avec succès")
             loadMembers()
         } catch (error) {
-            console.error("Failed to remove member:", error)
-            toast.error("Failed to remove member")
+            console.error("Impossible de retirer le membre:", error)
+            toast.error("Impossible de retirer le membre")
         }
     }
 

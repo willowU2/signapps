@@ -247,7 +247,7 @@ function AddAccountWizard({
       toast.success("Compte ajouté avec succès !");
       onCreated();
     } catch (err) {
-      console.error("Failed to create account:", err);
+      console.error("Impossible de créer account:", err);
       toast.error("Impossible de créer le compte");
     } finally {
       setCreating(false);

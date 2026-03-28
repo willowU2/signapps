@@ -20,7 +20,7 @@ interface N8nWorkflow {
 export function N8nConnector() {
   const [n8nUrl, setN8nUrl] = useState('http://localhost:5678');
   const [apiKey, setApiKey] = useState('');
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnecté] = useState(false);
   const [testing, setTesting] = useState(false);
   const [workflows, setWorkflows] = useState<N8nWorkflow[]>([]);
 
@@ -28,13 +28,13 @@ export function N8nConnector() {
     setTesting(true);
     await new Promise(r => setTimeout(r, 1000));
     setTesting(false);
-    setConnected(true);
+    setConnecté(true);
     setWorkflows([
       { id: 'wf1', name: 'SignApps → Notion Sync', active: true, webhook_url: `${n8nUrl}/webhook/signapps-notion` },
       { id: 'wf2', name: 'New User Onboarding', active: false, webhook_url: `${n8nUrl}/webhook/user-onboarding` },
       { id: 'wf3', name: 'Daily Report Generator', active: true, webhook_url: `${n8nUrl}/webhook/daily-report` },
     ]);
-    toast.success('Connected to n8n instance');
+    toast.success('Connecté to n8n instance');
   };
 
   const triggerWorkflow = async (wf: N8nWorkflow) => {
@@ -82,7 +82,7 @@ export function N8nConnector() {
 
           <div className="flex items-center gap-2">
             {connected ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-muted-foreground" />}
-            <span className="text-sm">{connected ? 'Connected' : 'Not connected'}</span>
+            <span className="text-sm">{connected ? 'Connecté' : 'Not connected'}</span>
             {connected && <Badge className="text-xs">{workflows.length} workflows found</Badge>}
           </div>
         </CardContent>

@@ -35,7 +35,7 @@ export function RoleDeleteDialog({ open, onOpenChange, role }: RoleDeleteDialogP
             toast.success("Rôle supprimé avec succès")
             onOpenChange(false)
         } catch (error) {
-            console.error("Failed to delete role:", error)
+            console.error("Impossible de supprimer role:", error)
             toast.error("Échec de la suppression du rôle")
         }
     }

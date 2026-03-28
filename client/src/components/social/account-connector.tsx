@@ -178,7 +178,7 @@ function ConnectDialog({ config, onClose, onConnect }: ConnectDialogProps) {
           <Button className="flex-1" onClick={handleConnect} disabled={isConnecting}>
             {isConnecting ? 'Connecting…' : 'Connect'}
           </Button>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
         </div>
       </div>
     </DialogContent>
@@ -212,11 +212,11 @@ export function AccountConnector() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Connected Accounts</h2>
+        <h2 className="text-xl font-semibold">Connecté Accounts</h2>
         <p className="text-sm text-muted-foreground">{accounts.length} account{accounts.length !== 1 ? 's' : ''}</p>
       </div>
 
-      {/* Connected accounts list */}
+      {/* Connecté accounts list */}
       {accounts.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Active</h3>

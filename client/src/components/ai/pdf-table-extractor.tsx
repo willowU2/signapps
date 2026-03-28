@@ -140,7 +140,7 @@ Respond with only the JSON object.`;
       ),
     };
     navigator.clipboard.writeText(JSON.stringify(jsonData, null, 2));
-    toast.success('Copied to clipboard');
+    toast.success('Copié dans le presse-papiers');
   };
 
   return (

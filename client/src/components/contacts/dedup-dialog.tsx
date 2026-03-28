@@ -140,7 +140,7 @@ If no duplicates found, return an empty array: []`;
       setMergedGroups((prev) => new Set([...prev, groupIndex]));
       toast.success(`Merged ${mergeIds.length} contact${mergeIds.length > 1 ? 's' : ''} into ${keepContact.first_name} ${keepContact.last_name}`);
     } catch {
-      toast.error('Failed to merge contacts');
+      toast.error('Impossible de fusionner les contacts');
     } finally {
       setMergingIndex(null);
     }

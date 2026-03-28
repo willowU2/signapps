@@ -11,7 +11,7 @@ export type { CellStyle, CellData, CellValidation, SheetInfo }
 export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Record<string, CellData>) {
     const [doc] = useState(() => new Y.Doc())
     const [data, setData] = useState<Record<string, CellData>>({})
-    const [isConnected, setIsConnected] = useState(false)
+    const [isConnecté, setIsConnecté] = useState(false)
     const undoManagerRef = useRef<Y.UndoManager | null>(null)
     const [canUndo, setCanUndo] = useState(false)
     const [canRedo, setCanRedo] = useState(false)
@@ -39,7 +39,7 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
         }
 
         wsProvider.on('status', (event: any) => {
-            setIsConnected(event.status === 'connected')
+            setIsConnecté(event.status === 'connected')
         })
 
         // Track global updates across all sheets to force cross-sheet recalculations
@@ -427,7 +427,7 @@ export function useSpreadsheet(docId: string = 'default-sheet', initialData?: Re
         deleteCell, deleteCellRange, getCellRange, setCellRange,
         insertRow, deleteRow, insertColumn, deleteColumn,
         sortColumn, mergeCells, unmergeCells,
-        isConnected, undo, redo, canUndo, canRedo,
+        isConnecté, undo, redo, canUndo, canRedo,
         sheets, activeSheetIndex, setActiveSheetIndex,
         addSheet, removeSheet, renameSheet, setSheetColor,
         getCrossSheetValue,

@@ -174,7 +174,7 @@ export function BulkUserImportDialog({ open, onOpenChange, onImported }: BulkUse
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
           <Button
             onClick={handleImport}
             disabled={validCount === 0 || importing}

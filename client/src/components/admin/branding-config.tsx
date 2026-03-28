@@ -45,7 +45,7 @@ export function BrandingConfig() {
       const reader = new FileReader();
       reader.onload = (event) => {
         setLogoUrl(event.target?.result as string);
-        toast.success("Logo uploaded");
+        toast.success("Logo téléversé");
       };
       reader.readAsDataURL(file);
     }
@@ -53,7 +53,7 @@ export function BrandingConfig() {
 
   const onSubmit = (values: BrandingValues) => {
     setPreview(values);
-    toast.success("Branding updated successfully");
+    toast.success("Identité visuelle mise à jour");
   };
 
   return (

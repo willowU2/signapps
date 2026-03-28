@@ -251,7 +251,7 @@ export function SharedClipboard({
                                                         <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
                                                     </Button>
                                                 </TooltipTrigger>
-                                                <TooltipContent>Delete</TooltipContent>
+                                                <TooltipContent>Supprimer</TooltipContent>
                                             </Tooltip>
                                         </div>
                                     </div>

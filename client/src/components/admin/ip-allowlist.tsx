@@ -38,7 +38,7 @@ export function IpAllowlist() {
       });
       setEntries((res.data as IpAllowlistEntry[]).map((e) => ({ ...e, _key: makeKey() })));
     } catch {
-      toast.error("Failed to load IP allowlist");
+      toast.error("Impossible de charger la liste d'autorisation IP");
     } finally {
       setIsLoading(false);
     }
@@ -55,9 +55,9 @@ export function IpAllowlist() {
       await axios.put(`${IDENTITY_URL}/admin/security/ip-allowlist`, payload, {
         withCredentials: true,
       });
-      toast.success("IP allowlist saved");
+      toast.success("Liste d'autorisation IP enregistrée");
     } catch {
-      toast.error("Failed to save IP allowlist");
+      toast.error("Impossible d'enregistrer la liste d'autorisation IP");
     } finally {
       setIsSaving(false);
     }
@@ -69,7 +69,7 @@ export function IpAllowlist() {
     const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(ip);
     const ipv6simple = ip.includes(":");
     if (!ipv4 && !ipv6simple) {
-      toast.error("Enter a valid IPv4 or IPv6 address");
+      toast.error("Saisissez une adresse IPv4 ou IPv6 valide");
       return;
     }
     setEntries((prev) => [

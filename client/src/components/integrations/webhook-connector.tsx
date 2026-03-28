@@ -35,7 +35,7 @@ export function WebhookConnector() {
   const copy = (text: string) => { navigator.clipboard.writeText(text); toast.success('Copied'); };
 
   const add = () => {
-    if (!newName.trim()) { toast.error('Name required'); return; }
+    if (!newName.trim()) { toast.error('Nom requis'); return; }
     setWebhooks(ws => [...ws, { id: Date.now().toString(), name: newName, slug: genSlug(), secret: 'sec_' + genSlug(), enabled: true, last_received: null }]);
     setNewName('');
     toast.success('Inbound webhook created');

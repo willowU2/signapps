@@ -59,7 +59,7 @@ export function PinnedMessages({ channelId, onClose, onUnpin, canManagePins }: P
             <ScrollArea className="flex-1">
                 {loading ? (
                     <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
-                        Loading...
+                        Chargement...
                     </div>
                 ) : pinned.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">

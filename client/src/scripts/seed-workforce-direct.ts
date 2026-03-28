@@ -152,7 +152,7 @@ async function main() {
 
   try {
     await client.connect();
-    console.log('🔌 Connected to database\n');
+    console.log('🔌 Connecté to database\n');
 
     // 1. Create org node types (use existing or add new)
     console.log('📁 Creating node types...');

@@ -174,7 +174,7 @@ export function VideoPlayerWithChapters() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={addChapter} disabled={!chapterForm.title.trim()}>Add</Button>
           </DialogFooter>
         </DialogContent>

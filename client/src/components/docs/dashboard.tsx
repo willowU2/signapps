@@ -120,7 +120,7 @@ export default function DocsDashboard() {
             setDocs(prev => prev.filter(d => d.id !== id));
             toast.success('Document supprimé');
         } catch (error) {
-            console.error('Failed to delete document', error);
+            console.error('Impossible de supprimer document', error);
             toast.error('Erreur lors de la suppression');
         }
     };
@@ -163,7 +163,7 @@ export default function DocsDashboard() {
             setPendingTemplateContent(null);
             router.push(`/docs/editor?id=${finalTargetId}&name=${encodeURIComponent(newNode.name)}`);
         } catch (error: any) {
-            console.error("Failed to create document", error);
+            console.error("Impossible de créer document", error);
             toast.error(error.response?.data?.message || "Erreur serveur lors de la création du document");
             setIsCreating(false);
         }

@@ -101,7 +101,7 @@ export function CookieBannerConfig() {
       })
       toast.success("Cookie banner configuration saved")
     } catch {
-      toast.error("Failed to save")
+      toast.error("Impossible d'enregistrer")
     } finally {
       setSaving(false)
     }

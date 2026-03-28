@@ -26,7 +26,7 @@ const ICE_SERVERS = {
 export function useMeet(roomId: string, userId: string, userName: string) {
     const [localStream, setLocalStream] = useState<MediaStream | null>(null)
     const [peers, setPeers] = useState<Peer[]>([])
-    const [isConnected, setIsConnected] = useState(false)
+    const [isConnecté, setIsConnecté] = useState(false)
 
     const wsRef = useRef<WebSocket | null>(null)
     const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map())
@@ -64,8 +64,8 @@ export function useMeet(roomId: string, userId: string, userName: string) {
         wsRef.current = ws
 
         ws.onopen = () => {
-            console.debug('Connected to signaling server')
-            setIsConnected(true)
+            console.debug('Connecté to signaling server')
+            setIsConnecté(true)
             // Send join message
             sendSignal({ type: 'join', senderId: userId })
         }
@@ -191,6 +191,6 @@ export function useMeet(roomId: string, userId: string, userName: string) {
     return {
         localStream,
         peers,
-        isConnected
+        isConnecté
     }
 }

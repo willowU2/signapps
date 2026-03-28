@@ -114,7 +114,7 @@ export function DocNumberingSchemes() {
       }
       setDialogOpen(false)
     } catch {
-      toast.error("Failed to save")
+      toast.error("Impossible d'enregistrer")
     } finally {
       setSaving(false)
     }
@@ -126,7 +126,7 @@ export function DocNumberingSchemes() {
       setSchemes(prev => prev.filter(s => s.id !== id))
       toast.success("Scheme deleted")
     } catch {
-      toast.error("Failed to delete")
+      toast.error("Impossible de supprimer")
     }
   }
 
@@ -215,7 +215,7 @@ export function DocNumberingSchemes() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
           </DialogFooter>
         </DialogContent>

@@ -129,8 +129,8 @@ export function useContainerAction() {
     },
     onSuccess: (_, { action }) => {
       const messages: Record<string, string> = {
-        start: 'Container started',
-        stop: 'Container stopped',
+        start: 'Conteneur démarré',
+        stop: 'Conteneur arrêté',
         restart: 'Container restarted',
         update: 'Container updated to latest image',
         remove: 'Container removed',

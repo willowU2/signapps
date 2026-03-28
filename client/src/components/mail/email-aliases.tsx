@@ -88,7 +88,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
       }
       setDialogOpen(false)
     } catch {
-      toast.error("Failed to save alias")
+      toast.error("Impossible d'enregistrer alias")
     } finally {
       setSaving(false)
     }
@@ -100,7 +100,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
       setAliases(prev => prev.filter(a => a.id !== aliasId))
       toast.success("Alias removed")
     } catch {
-      toast.error("Failed to delete alias")
+      toast.error("Impossible de supprimer alias")
     }
   }
 
@@ -110,7 +110,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
       setAliases(prev => prev.map(a => ({ ...a, is_default: a.id === aliasId })))
       toast.success("Default sender updated")
     } catch {
-      toast.error("Failed to update default")
+      toast.error("Impossible de mettre à jour default")
     }
   }
 
@@ -195,7 +195,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? "Saving…" : editAlias ? "Update" : "Add Alias"}
             </Button>

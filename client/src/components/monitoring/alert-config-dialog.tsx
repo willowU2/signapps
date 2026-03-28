@@ -140,7 +140,7 @@ export function AlertConfigDialog({
       onSuccess?.();
       onOpenChange(false);
     } catch {
-      setError('Failed to save alert configuration');
+      setError('Impossible d'enregistrer alert configuration');
     } finally {
       setLoading(false);
     }

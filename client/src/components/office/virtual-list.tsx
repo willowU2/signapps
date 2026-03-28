@@ -193,7 +193,7 @@ function VirtualListInner<T>(
     return (
       <div className={cn('flex h-full items-center justify-center', className)}>
         {loadingContent || (
-          <div className="text-sm text-muted-foreground">Loading...</div>
+          <div className="text-sm text-muted-foreground">Chargement...</div>
         )}
       </div>
     );

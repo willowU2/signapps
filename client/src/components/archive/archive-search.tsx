@@ -51,13 +51,13 @@ export function ArchiveSearch() {
               className="w-full pl-10 pr-3 py-2 border rounded"
             />
           </div>
-          <Button onClick={handleSearch}>Search</Button>
+          <Button onClick={handleSearch}>Rechercher</Button>
         </div>
       </div>
 
       {hasSearched && results.length === 0 && searchQuery && (
         <div className="border rounded-lg p-8 text-center bg-gray-50">
-          <p className="text-gray-600">No results found for "{searchQuery}"</p>
+          <p className="text-gray-600">Aucun résultat trouvé for "{searchQuery}"</p>
         </div>
       )}
 

@@ -96,7 +96,7 @@ export function PostSignatures() {
       setDialogOpen(false);
       resetForm();
     } catch {
-      toast.error(editingId ? 'Failed to update signature' : 'Failed to create signature');
+      toast.error(editingId ? 'Impossible de mettre à jour signature' : 'Impossible de créer signature');
     } finally {
       setSaving(false);
     }
@@ -108,7 +108,7 @@ export function PostSignatures() {
       setSignatures((prev) => prev.filter((s) => s.id !== id));
       toast.success('Signature deleted');
     } catch {
-      toast.error('Failed to delete signature');
+      toast.error('Impossible de supprimer signature');
     }
   };
 

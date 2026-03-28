@@ -347,7 +347,7 @@ export function SelfServicePortal() {
 
       {/* Save Button */}
       <div className="flex gap-2 justify-end">
-        <Button variant="outline">Cancel</Button>
+        <Button variant="outline">Annuler</Button>
         <Button onClick={handleSavePreferences}>
           <Save className="w-4 h-4 mr-2" />
           Save Changes

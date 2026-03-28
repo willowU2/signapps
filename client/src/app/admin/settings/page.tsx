@@ -273,7 +273,7 @@ export default function AdminSettingsPage() {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-    toast.success('Configuration exportee avec succes');
+    toast.success('Configuration exportée avec succès');
   };
 
   const handleImportConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,7 +288,7 @@ export default function AdminSettingsPage() {
         if (data.email) setEmail((prev) => ({ ...prev, ...data.email }));
         if (data.storage) setStorage((prev) => ({ ...prev, ...data.storage }));
         if (data.integrations) setIntegrations((prev) => ({ ...prev, ...data.integrations }));
-        toast.success('Configuration importee avec succes');
+        toast.success('Configuration importée avec succès');
       } catch {
         toast.error("Le fichier JSON est invalide ou corrompu.");
       }

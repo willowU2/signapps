@@ -112,7 +112,7 @@ export default function ProductCatalogPage() {
                 </div>
                 <div><Label>Tags (comma-separated)</Label><Input value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })} placeholder="chair, ergonomic, office" className="mt-1" /></div>
                 <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
                   <Button type="submit">Add Product</Button>
                 </div>
               </form>
@@ -158,7 +158,7 @@ export default function ProductCatalogPage() {
                   <div className="bg-muted/50 rounded p-2"><div className="text-muted-foreground">Stock</div><div className={cn('font-bold', product.stock === 0 ? 'text-red-600' : '')}>{product.stock} {product.unit}</div></div>
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="flex-1" onClick={() => toast.success('Edit mode (demo)')}><Edit className="h-3.5 w-3.5 mr-1" />Edit</Button>
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => toast.success('Edit mode (demo)')}><Edit className="h-3.5 w-3.5 mr-1" />Modifier</Button>
                   <Button size="sm" variant="ghost" onClick={() => toggleActive(product.id)} className="px-2" title={product.active ? 'Deactivate' : 'Activate'}>{product.active ? <Package className="h-3.5 w-3.5 text-green-500" /> : <Package className="h-3.5 w-3.5 text-muted-foreground" />}</Button>
                   <Button size="sm" variant="ghost" onClick={() => remove(product.id)} className="px-2 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
                 </div>

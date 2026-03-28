@@ -225,7 +225,7 @@ export function PrivacyPolicyGenerator() {
 
   function copyToClipboard() {
     navigator.clipboard.writeText(generated)
-    toast.success("Copied to clipboard")
+    toast.success("Copié dans le presse-papiers")
   }
 
   async function downloadPdf() {

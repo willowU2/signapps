@@ -24,7 +24,7 @@ interface SyncEvent {
 interface SyncConnection {
   connect: () => void;
   disconnect: () => void;
-  isConnected: () => boolean;
+  isConnecté: () => boolean;
 }
 
 // ============================================================================
@@ -58,7 +58,7 @@ export function createSyncConnection(
 
       eventSource.onopen = () => {
         reconnectAttempts = 0;
-        console.log("[Preferences Sync] Connected");
+        console.log("[Preferences Sync] Connecté");
       };
 
       eventSource.onmessage = (e) => {
@@ -87,7 +87,7 @@ export function createSyncConnection(
       };
     } catch (err) {
       console.error("[Preferences Sync] Failed to connect:", err);
-      onError?.(err instanceof Error ? err : new Error("Connection failed"));
+      onError?.(err instanceof Error ? err : new Error("Échec de la connexion"));
     }
   };
 
@@ -102,11 +102,11 @@ export function createSyncConnection(
     }
   };
 
-  const isConnected = () => {
+  const isConnecté = () => {
     return eventSource?.readyState === EventSource.OPEN;
   };
 
-  return { connect, disconnect, isConnected };
+  return { connect, disconnect, isConnecté };
 }
 
 // ============================================================================
@@ -184,7 +184,7 @@ export function useCrossDeviceSync(enabled = true) {
     // Listen for visibility changes (reconnect when tab becomes visible)
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
-        if (!connectionRef.current?.isConnected()) {
+        if (!connectionRef.current?.isConnecté()) {
           connectionRef.current?.connect();
         }
       }
@@ -201,7 +201,7 @@ export function useCrossDeviceSync(enabled = true) {
   }, [enabled, handleEvent, handleError]);
 
   return {
-    isConnected: () => connectionRef.current?.isConnected() ?? false,
+    isConnecté: () => connectionRef.current?.isConnecté() ?? false,
     reconnect: () => connectionRef.current?.connect(),
     disconnect: () => connectionRef.current?.disconnect(),
   };
@@ -349,7 +349,7 @@ export function usePreferencesSync(config: SyncConfig = {}) {
   }
 
   return {
-    isConnected: sseSync.isConnected,
+    isConnecté: sseSync.isConnecté,
     reconnect: sseSync.reconnect,
     disconnect: sseSync.disconnect,
   };

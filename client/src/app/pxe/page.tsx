@@ -127,7 +127,7 @@ export default function PXEDashboard() {
             }
             setProfileDialogOpen(false)
         } catch (err) {
-            console.debug('Failed to save profile:', err)
+            console.debug('Impossible d'enregistrer profile:', err)
             toast.error('chec de la sauvegarde')
         } finally {
             setSaving(false)
@@ -146,7 +146,7 @@ export default function PXEDashboard() {
             setProfiles(prev => prev.filter(p => p.id !== deleteProfileId))
             toast.success('Profil supprim')
         } catch (err) {
-            console.debug('Failed to delete profile:', err)
+            console.debug('Impossible de supprimer profile:', err)
             toast.error('chec de la suppression')
         }
     }
@@ -195,7 +195,7 @@ export default function PXEDashboard() {
             }
             setAssetDialogOpen(false)
         } catch (err) {
-            console.debug('Failed to save asset:', err)
+            console.debug('Impossible d'enregistrer asset:', err)
             toast.error('chec de la sauvegarde')
         } finally {
             setSaving(false)
@@ -214,7 +214,7 @@ export default function PXEDashboard() {
             setAssets(prev => prev.filter(a => a.id !== deleteAssetId))
             toast.success('Asset supprim')
         } catch (err) {
-            console.debug('Failed to delete asset:', err)
+            console.debug('Impossible de supprimer asset:', err)
             toast.error('chec de la suppression')
         }
     }

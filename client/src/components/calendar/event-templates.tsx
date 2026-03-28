@@ -75,7 +75,7 @@ export function EventTemplateSelector({ onSelect }: EventTemplateSelectorProps) 
         const updated = templates.filter((t) => t.id !== id)
         setTemplates(updated)
         saveTemplates(updated)
-        toast.success("Template deleted")
+        toast.success("Modèle supprimé")
     }
 
     const openCreate = () => {
@@ -85,7 +85,7 @@ export function EventTemplateSelector({ onSelect }: EventTemplateSelectorProps) 
 
     const handleSave = () => {
         if (!editing?.name?.trim() || !editing?.title?.trim()) {
-            toast.error("Name and title are required")
+            toast.error("Le nom et le titre sont requis")
             return
         }
         const template: EventTemplate = {
@@ -210,7 +210,7 @@ export function EventTemplateSelector({ onSelect }: EventTemplateSelectorProps) 
                     )}
 
                     <DialogFooter>
-                        <Button variant="outline" size="sm" onClick={() => setEditOpen(false)}>Cancel</Button>
+                        <Button variant="outline" size="sm" onClick={() => setEditOpen(false)}>Annuler</Button>
                         <Button size="sm" onClick={handleSave}>
                             <Save className="h-3.5 w-3.5 mr-1.5" />
                             Save Template

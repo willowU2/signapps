@@ -32,7 +32,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
     enabled = true,
   } = options;
 
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnecté, setIsConnecté] = useState(false);
   const [presence, setPresence] = useState<CalendarPresence[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,7 +85,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
 
       // Connection state handlers
       provider.on('status', ({ status }: { status: 'connected' | 'disconnected' }) => {
-        setIsConnected(status === 'connected');
+        setIsConnecté(status === 'connected');
         if (status === 'connected') {
           setError(null);
         }
@@ -250,7 +250,7 @@ export function useCalendarWebSocket(options: UseCalendarWebSocketOptions) {
   }, [calendar_id, enabled, connect, trackActivity]);
 
   return {
-    isConnected,
+    isConnecté,
     presence,
     error,
     doc: ydocRef.current,

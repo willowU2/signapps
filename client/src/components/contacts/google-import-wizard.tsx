@@ -113,7 +113,7 @@ export function GoogleImportWizard({
               </ul>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={handleClose}>Cancel</Button>
+              <Button variant="outline" onClick={handleClose}>Annuler</Button>
               <Button onClick={handleConnectGoogle}>
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Connect Google Account

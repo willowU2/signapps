@@ -213,7 +213,7 @@ export function WebhookManager() {
       setEditingWebhook(undefined);
       await fetchWebhooks();
     } catch {
-      toast.error('Failed to create webhook');
+      toast.error('Impossible de créer webhook');
     } finally {
       setSaving(false);
     }
@@ -229,7 +229,7 @@ export function WebhookManager() {
       setEditingWebhook(undefined);
       await fetchWebhooks();
     } catch {
-      toast.error('Failed to update webhook');
+      toast.error('Impossible de mettre à jour webhook');
     } finally {
       setSaving(false);
     }
@@ -252,7 +252,7 @@ export function WebhookManager() {
       setDeleteId(null);
       await fetchWebhooks();
     } catch {
-      toast.error('Failed to delete webhook');
+      toast.error('Impossible de supprimer webhook');
     }
   };
 

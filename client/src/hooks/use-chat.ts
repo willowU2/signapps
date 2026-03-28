@@ -92,7 +92,7 @@ interface WsEvent {
 
 export function useChat(channelId: string, userId: string, userName: string) {
     const [messages, setMessages] = useState<Message[]>([])
-    const [isConnected, setIsConnected] = useState(false)
+    const [isConnecté, setIsConnecté] = useState(false)
     const [unreadCount, setUnreadCount] = useState(0)
     const wsRef = useRef<WebSocket | null>(null)
     const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -149,7 +149,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
             wsRef.current = ws
 
             ws.onopen = () => {
-                setIsConnected(true)
+                setIsConnecté(true)
                 ws.send(JSON.stringify({ type: 'subscribe', channel_id: channelId }))
             }
 
@@ -187,7 +187,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
             }
 
             ws.onclose = () => {
-                setIsConnected(false)
+                setIsConnecté(false)
                 reconnectTimeoutRef.current = setTimeout(connect, 3000)
             }
 
@@ -202,7 +202,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
             if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current)
             wsRef.current?.close()
             wsRef.current = null
-            setIsConnected(false)
+            setIsConnecté(false)
         }
     }, [channelId, userId])
 
@@ -287,7 +287,7 @@ export function useChat(channelId: string, userId: string, userName: string) {
         pinMessage,
         unpinMessage,
         markRead,
-        isConnected,
+        isConnecté,
         unreadCount,
     }
 }

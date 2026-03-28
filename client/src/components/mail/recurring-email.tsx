@@ -78,7 +78,7 @@ export function RecurringEmailManager() {
       setDialogOpen(false)
       toast.success("Recurring email scheduled")
     } catch {
-      toast.error("Failed to create recurring email")
+      toast.error("Impossible de créer recurring email")
     } finally {
       setLoading(false)
     }
@@ -90,7 +90,7 @@ export function RecurringEmailManager() {
       setItems(prev => prev.map(i => i.id === id ? { ...i, active } : i))
       toast.success(active ? "Resumed" : "Paused")
     } catch {
-      toast.error("Failed to update")
+      toast.error("Impossible de mettre à jour")
     }
   }
 
@@ -100,7 +100,7 @@ export function RecurringEmailManager() {
       setItems(prev => prev.filter(i => i.id !== id))
       toast.success("Deleted")
     } catch {
-      toast.error("Failed to delete")
+      toast.error("Impossible de supprimer")
     }
   }
 
@@ -184,7 +184,7 @@ export function RecurringEmailManager() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleCreate} disabled={loading}>
               {loading ? "Scheduling…" : "Schedule"}
             </Button>

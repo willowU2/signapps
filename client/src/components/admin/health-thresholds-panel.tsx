@@ -156,7 +156,7 @@ export function HealthThresholdsPanel({ onThresholdsChange }: HealthThresholdsPa
             Reset to defaults
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Annuler</Button>
             <Button size="sm" onClick={handleSave}>
               <Save className="h-3.5 w-3.5 mr-1.5" />
               Save

@@ -100,16 +100,16 @@ function formatDate(dateStr?: string): string {
 
 function TunnelStatusBadge({ status }: { status: Tunnel['status'] }) {
   if (status === 'connected')
-    return <Badge className="bg-green-500/10 text-green-600">Connected</Badge>;
+    return <Badge className="bg-green-500/10 text-green-600">Connecté</Badge>;
   if (status === 'error')
     return <Badge variant="destructive">Erreur</Badge>;
-  return <Badge variant="secondary">Disconnected</Badge>;
+  return <Badge variant="secondary">Déconnecté</Badge>;
 }
 
 function RelayStatusBadge({ status }: { status: Relay['status'] }) {
   if (status === 'connected')
-    return <Badge className="bg-green-500/10 text-green-600">Connected</Badge>;
-  return <Badge variant="secondary">Disconnected</Badge>;
+    return <Badge className="bg-green-500/10 text-green-600">Connecté</Badge>;
+  return <Badge variant="secondary">Déconnecté</Badge>;
 }
 
 // ─── Dashboard Tab ────────────────────────────────────────────────────────────
@@ -820,7 +820,7 @@ function RelaysTab() {
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground">Connected At</p>
+                  <p className="text-xs text-muted-foreground">Connecté At</p>
                   <p className="text-sm font-medium">{formatDate(statsRelay.stats.connected_at)}</p>
                 </CardContent>
               </Card>

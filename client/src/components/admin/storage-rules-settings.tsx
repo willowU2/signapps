@@ -102,10 +102,10 @@ export function StorageRulesSettings() {
     
     try {
       await storageSettingsApi.deleteStorageRule(id);
-      toast.success("Rule deleted");
+      toast.success("Règle supprimée");
       fetchRules();
     } catch (error) {
-      toast.error("Failed to delete rule");
+      toast.error("Impossible de supprimer la règle");
       console.debug(error);
     }
   };
@@ -121,7 +121,7 @@ export function StorageRulesSettings() {
       });
       fetchRules();
     } catch (error) {
-      toast.error("Failed to toggle rule state");
+      toast.error("Impossible de modifier l'état de la règle");
       console.debug(error);
     }
   };

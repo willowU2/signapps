@@ -70,7 +70,7 @@ export function SpamFilterSettings({ accountId }: SpamFilterSettingsProps) {
             );
         } catch {
             setEnabled(!value);
-            toast.error("Failed to update spam filter settings");
+            toast.error("Impossible de mettre à jour spam filter settings");
         } finally {
             setSaving(false);
         }
@@ -87,7 +87,7 @@ export function SpamFilterSettings({ accountId }: SpamFilterSettingsProps) {
             await spamApi.updateSettings(accountId, { threshold });
             toast.success(`Sensitivity updated to ${Math.round(threshold * 100)}%`);
         } catch {
-            toast.error("Failed to update threshold");
+            toast.error("Impossible de mettre à jour threshold");
         } finally {
             setSaving(false);
         }

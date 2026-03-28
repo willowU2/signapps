@@ -124,8 +124,8 @@ export function TriggerBuilder() {
             <div className="space-y-1"><Label>Target (channel, URL, etc.)</Label><Input placeholder="#channel or https://..." value={form.action_target} onChange={e => setForm(f => ({ ...f, action_target: e.target.value }))} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={add}>Create</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+            <Button onClick={add}>Créer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

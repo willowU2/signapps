@@ -287,7 +287,7 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       return created;
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to create config',
+        error: error instanceof Error ? error.message : 'Impossible de créer config',
       });
       throw error;
     }
@@ -305,7 +305,7 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to update config',
+        error: error instanceof Error ? error.message : 'Impossible de mettre à jour config',
       });
     }
   },
@@ -320,7 +320,7 @@ export const useExternalSyncStore = create<ExternalSyncState>()((set, get) => ({
       }));
     } catch (error) {
       set({
-        error: error instanceof Error ? error.message : 'Failed to delete config',
+        error: error instanceof Error ? error.message : 'Impossible de supprimer config',
       });
     }
   },

@@ -125,7 +125,7 @@ export function VpnDashboardTab({
             {quickTunnel ? (
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-green-500/10 text-green-600">Connected</Badge>
+                  <Badge className="bg-green-500/10 text-green-600">Connecté</Badge>
                   <code className="text-xs bg-muted px-2 py-1 rounded">
                     {quickTunnel.subdomain}.relay
                   </code>

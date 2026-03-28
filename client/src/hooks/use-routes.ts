@@ -45,7 +45,7 @@ export function useDeleteRoute() {
       queryClient.invalidateQueries({ queryKey: ['routes'] });
     },
     onError: () => {
-      toast.error('Failed to delete route');
+      toast.error('Impossible de supprimer route');
     },
   });
 }

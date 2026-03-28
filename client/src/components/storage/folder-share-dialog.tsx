@@ -91,7 +91,7 @@ export function FolderShareDialog({
       toast.success('Folder permissions saved');
       onOpenChange(false);
     } catch {
-      toast.error('Failed to save permissions');
+      toast.error('Impossible d'enregistrer permissions');
     } finally {
       setSaving(false);
     }

@@ -909,7 +909,7 @@ export function AgentChat() {
     <TooltipProvider delayDuration={300}>
       <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
         {/* ================================================================ */}
-        {/* LEFT PANEL: Connected Channels                                   */}
+        {/* LEFT PANEL: Connecté Channels                                   */}
         {/* ================================================================ */}
         <div className="w-[240px] shrink-0 flex flex-col border-r bg-card">
           <div className="p-3 h-12 flex items-center">

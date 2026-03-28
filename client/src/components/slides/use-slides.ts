@@ -44,7 +44,7 @@ export function useSlides(docId: string = 'slides-demo') {
     const [slides, setSlides] = useState<SlideData[]>([])
     const [activeSlideId, setActiveSlideId] = useState<string | null>(null)
     const [activeObjects, setActiveObjects] = useState<Record<string, any>>({})
-    const [isConnected, setIsConnected] = useState(false)
+    const [isConnecté, setIsConnecté] = useState(false)
 
     // Presentation-level theme
     const [presentationTheme, setPresentationTheme] = useState<PresentationTheme>({
@@ -92,7 +92,7 @@ export function useSlides(docId: string = 'slides-demo') {
         setProvider(webrtcProvider)
 
         webrtcProvider.on('status', (event: any) => {
-            setIsConnected(event.status === 'connected')
+            setIsConnecté(event.status === 'connected')
         })
 
         // -- 0. Setup Awareness (User identity & tracking) --
@@ -416,7 +416,7 @@ export function useSlides(docId: string = 'slides-demo') {
 
     return {
         // App Level
-        isConnected,
+        isConnecté,
         collaborators,
         slides,
         activeSlideId,

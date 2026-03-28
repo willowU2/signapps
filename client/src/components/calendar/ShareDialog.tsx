@@ -163,7 +163,7 @@ export function ShareDialog({
               <Label className="text-sm font-medium">Shared With</Label>
               {loading ? (
                 <div className="text-center text-sm text-muted-foreground py-4">
-                  Loading...
+                  Chargement...
                 </div>
               ) : shares.length === 0 ? (
                 <div className="text-center text-sm text-muted-foreground py-4">
@@ -242,7 +242,7 @@ export function ShareDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3">
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveShare}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

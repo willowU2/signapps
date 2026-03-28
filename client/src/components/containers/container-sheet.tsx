@@ -151,11 +151,11 @@ export function ContainerSheet({
       }
 
       await containersApi.create(request);
-      toast.success("Container created successfully");
+      toast.success("Conteneur créé successfully");
       onSuccess();
       onOpenChange(false);
     } catch {
-      toast.error("Failed to create container");
+      toast.error("Impossible de créer le conteneur");
     } finally {
       setLoading(false);
     }

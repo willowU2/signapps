@@ -25,6 +25,6 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error('Error generating DOCX:', error);
-    return NextResponse.json({ error: 'Failed to generate document' }, { status: 500 });
+    return NextResponse.json({ error: 'Impossible de générer le document' }, { status: 500 });
   }
 }

@@ -193,7 +193,7 @@ export function CategoryManager() {
     }
 
     const handleSave = () => {
-        if (!editing?.name?.trim()) { toast.error("Name required"); return }
+        if (!editing?.name?.trim()) { toast.error("Nom requis"); return }
         const cat: EventCategory = {
             id: editing.id || `cat_${Date.now()}`,
             name: editing.name!,
@@ -211,7 +211,7 @@ export function CategoryManager() {
 
     const handleDelete = (id: string) => {
         update(categories.filter((c) => c.id !== id))
-        toast.success("Category deleted")
+        toast.success("Catégorie supprimée")
     }
 
     return (
@@ -299,7 +299,7 @@ export function CategoryManager() {
                     )}
 
                     <DialogFooter>
-                        <Button variant="outline" size="sm" onClick={() => setEditOpen(false)}>Cancel</Button>
+                        <Button variant="outline" size="sm" onClick={() => setEditOpen(false)}>Annuler</Button>
                         <Button size="sm" onClick={handleSave}>
                             Save
                         </Button>

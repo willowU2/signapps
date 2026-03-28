@@ -223,7 +223,7 @@ export function AiCostTracker() {
         <CardContent>
           {buckets.length === 0 ? (
             <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
-              {loading ? 'Loading...' : 'No inference data available'}
+              {loading ? 'Chargement...' : 'No inference data available'}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>

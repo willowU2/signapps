@@ -43,7 +43,7 @@ export function SsoSamlConfig() {
 
   const copy = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard');
+    toast.success('Copié dans le presse-papiers');
   };
 
   const handleSave = async () => {

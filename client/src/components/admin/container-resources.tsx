@@ -148,7 +148,7 @@ export function ContainerResources() {
           <CardContent>
             {resources.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
-                {loading ? 'Loading...' : 'No running containers'}
+                {loading ? 'Chargement...' : 'No running containers'}
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
@@ -175,7 +175,7 @@ export function ContainerResources() {
           <CardContent>
             {resources.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
-                {loading ? 'Loading...' : 'No running containers'}
+                {loading ? 'Chargement...' : 'No running containers'}
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>

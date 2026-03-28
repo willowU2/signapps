@@ -153,7 +153,7 @@ export function AssetIncidentTickets({ asset }: Props) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleCreate} disabled={!form.title.trim()}>Create Ticket</Button>
           </DialogFooter>
         </DialogContent>

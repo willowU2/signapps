@@ -141,7 +141,7 @@ export function MockServer() {
               <Textarea value={newRoute.body} onChange={e => setNewRoute(p => ({ ...p, body: e.target.value }))} rows={3} className="text-xs font-mono resize-none" />
             </div>
             <div className="flex gap-2 justify-end">
-              <Button size="sm" variant="outline" onClick={() => setAdding(false)}>Cancel</Button>
+              <Button size="sm" variant="outline" onClick={() => setAdding(false)}>Annuler</Button>
               <Button size="sm" onClick={addRoute}>Add Route</Button>
             </div>
           </div>

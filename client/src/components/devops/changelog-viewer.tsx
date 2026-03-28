@@ -96,7 +96,7 @@ export function ChangelogViewer() {
     setEntries(groupAndSort(updated));
     setShowForm(false);
     setFormDesc("");
-    toast.success("Changelog entry added");
+    toast.success("Entrée de changelog ajoutée");
     try {
       await schedulerClient.post('/devops/changelog', {
         version: newEntry.version,
@@ -147,8 +147,8 @@ export function ChangelogViewer() {
               {["feat","fix","chore","docs"].map(t => <option key={t} value={t}>{t}</option>)}
             </select>
             <Input value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="Description" className="w-48 h-8 text-sm" onKeyDown={(e) => e.key === "Enter" && handleAddEntry()} />
-            <Button size="sm" onClick={handleAddEntry}>Save</Button>
-            <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleAddEntry}>Enregistrer</Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Annuler</Button>
           </div>
         ) : (
           <Button size="sm" onClick={() => setShowForm(true)}>

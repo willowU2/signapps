@@ -89,7 +89,7 @@ export function useShares(calendarId: string | null) {
         );
         setError(null);
       } catch (err) {
-        setError("Failed to update permission");
+        setError("Impossible de mettre à jour permission");
         throw err;
       }
     },

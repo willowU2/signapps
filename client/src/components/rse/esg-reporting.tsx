@@ -127,7 +127,7 @@ export default function ESGReporting() {
 
   const handleExport = () => {
     window.print();
-    toast.success("PDF generated");
+    toast.success("PDF généré");
   };
 
   return (

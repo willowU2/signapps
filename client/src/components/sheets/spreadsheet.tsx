@@ -537,7 +537,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
         deleteCell, deleteCellRange, getCellRange, setCellRange,
         insertRow, deleteRow, insertColumn, deleteColumn,
         sortColumn, mergeCells, unmergeCells,
-        isConnected, undo, redo, canUndo, canRedo,
+        isConnecté, undo, redo, canUndo, canRedo,
         sheets, activeSheetIndex, setActiveSheetIndex,
         addSheet, removeSheet, renameSheet, setSheetColor,
         getCrossSheetValue, transact, globalGridVersion
@@ -2667,7 +2667,7 @@ export function Spreadsheet({ documentId = 'new-spreadsheet', documentName = 'do
                     {/* Column headers */}
                     <div className="flex sticky top-0 z-30 select-none" style={{ height: COL_HEADER_HEIGHT }}>
                         <div className="bg-[#f8f9fa] dark:bg-[#202124] border-r border-b border-[#c0c0c0] dark:border-[#5f6368] shrink-0 sticky left-0 z-40 relative cursor-pointer hover:bg-[#e8f0fe] dark:hover:bg-[#3c4043] transition-colors" style={{ width: ROW_HEADER_WIDTH, minWidth: ROW_HEADER_WIDTH, height: COL_HEADER_HEIGHT }} onClick={() => { setSelectedRange({ start: { r: 0, c: 0 }, end: { r: effectiveRows - 1, c: COLS - 1 } }); setActiveCell({ r: 0, c: 0 }) }} title="Tout sélectionner">
-                            <div className={cn("absolute top-1 left-1 h-1.5 w-1.5 rounded-full shadow-sm", isConnected ? "bg-[#1e8e3e]" : "bg-[#d93025] animate-pulse")} />
+                            <div className={cn("absolute top-1 left-1 h-1.5 w-1.5 rounded-full shadow-sm", isConnecté ? "bg-[#1e8e3e]" : "bg-[#d93025] animate-pulse")} />
                         </div>
                         {/* Spacer for cols before visible range */}
                         {startC > 0 && <div style={{ width: colOffsets[startC], minWidth: colOffsets[startC] }} />}

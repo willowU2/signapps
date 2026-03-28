@@ -81,7 +81,7 @@ export function EmailDelegation({ accountId }: EmailDelegationProps) {
       setDialogOpen(false)
       toast.success("Delegation created — invite sent")
     } catch {
-      toast.error("Failed to create delegation")
+      toast.error("Impossible de créer delegation")
     } finally {
       setSaving(false)
     }
@@ -101,7 +101,7 @@ export function EmailDelegation({ accountId }: EmailDelegationProps) {
     const badges = []
     if (d.can_read) badges.push(<Badge key="r" variant="secondary" className="text-xs gap-1"><Eye className="h-3 w-3" />Read</Badge>)
     if (d.can_send) badges.push(<Badge key="s" variant="secondary" className="text-xs gap-1"><Send className="h-3 w-3" />Send</Badge>)
-    if (d.can_delete) badges.push(<Badge key="d" variant="destructive" className="text-xs">Delete</Badge>)
+    if (d.can_delete) badges.push(<Badge key="d" variant="destructive" className="text-xs">Supprimer</Badge>)
     return badges
   }
 
@@ -184,7 +184,7 @@ export function EmailDelegation({ accountId }: EmailDelegationProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleCreate} disabled={saving}>
               {saving ? "Creating…" : "Create Delegation"}
             </Button>

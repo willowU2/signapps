@@ -67,7 +67,7 @@ export function DigitalStampConfig() {
       setConfig(p => ({ ...p, image_url: url }))
       toast.success("Stamp image uploaded")
     } catch {
-      toast.error("Upload failed")
+      toast.error("Échec du téléversement")
     } finally {
       setUploading(false)
     }
@@ -85,7 +85,7 @@ export function DigitalStampConfig() {
       setSavedStamps(prev => [...prev, saved])
       toast.success("Stamp saved")
     } catch {
-      toast.error("Failed to save stamp")
+      toast.error("Impossible d'enregistrer stamp")
     }
   }
 
@@ -98,9 +98,9 @@ export function DigitalStampConfig() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
       })
-      toast.success("Stamp applied to document")
+      toast.success("Tampon appliqué to document")
     } catch {
-      toast.error("Failed to apply stamp")
+      toast.error("Impossible d'appliquer le tampon")
     } finally {
       setApplying(false)
     }

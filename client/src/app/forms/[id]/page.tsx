@@ -311,7 +311,7 @@ export default function FormBuilderPage() {
             setFields(updatedFields)
             toast.success("Formulaire sauvegardé avec succès !")
         } catch (err) {
-            console.error("Failed to save form:", err)
+            console.error("Impossible d'enregistrer form:", err)
             setError("Erreur lors de la sauvegarde du formulaire.")
         } finally {
             setSaving(false)

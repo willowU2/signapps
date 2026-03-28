@@ -66,7 +66,7 @@ export function CreateTaskModal({ open, onOpenChange, defaultProjectId }: Create
       form.reset();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create task');
+      toast.error(error.message || 'Impossible de créer task');
     } finally {
       setIsSubmitting(false);
     }

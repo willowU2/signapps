@@ -58,7 +58,7 @@ export function CreateWorkspaceModal({ open, onOpenChange }: CreateWorkspaceModa
       form.reset();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create workspace');
+      toast.error(error.message || 'Impossible de créer workspace');
     } finally {
       setIsSubmitting(false);
     }

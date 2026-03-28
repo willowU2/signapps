@@ -10,7 +10,7 @@
 
 export interface GoogleAuthState {
   /** Whether the user is connected to Google */
-  isConnected: boolean;
+  isConnecté: boolean;
   /** User's Google email */
   email?: string;
   /** User's Google name */

@@ -53,7 +53,7 @@ export function NfcBadge() {
             <Smartphone className="w-5 h-5 text-green-600" />
             <span className="font-semibold">Reader Status</span>
           </div>
-          <p className="text-2xl font-bold text-green-700">Connected</p>
+          <p className="text-2xl font-bold text-green-700">Connecté</p>
           <p className="text-sm text-gray-600">Last seen: {status.lastSeen.toLocaleTimeString()}</p>
         </div>
 

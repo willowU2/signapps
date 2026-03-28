@@ -71,7 +71,7 @@ Provide the response in JSON format with keys: decisions (array), actions (array
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast.success('Copied to clipboard');
+    toast.success('Copié dans le presse-papiers');
   };
 
   const handleExport = async () => {

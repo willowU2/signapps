@@ -77,15 +77,15 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
 
     const { isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled, localParticipant } = useLocalParticipant()
     const connectionState = useConnectionState()
-        const isConnected = connectionState === ConnectionState.Connected
+        const isConnecté = connectionState === ConnectionState.Connecté
 
         const toggleMic = async () => {
-            if (!isConnected) return;
+            if (!isConnecté) return;
             try {
                 await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)
             } catch (err: any) {
                 console.debug("Mic toggle error:", err)
-                if (err.name === 'NotAllowedError' || err.message?.includes('Permission denied')) {
+                if (err.name === 'NotAllowedError' || err.message?.includes('Permission refusée')) {
                     toast.error("Accès au micro refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.")
                 } else {
                     toast.error("Impossible d'activer le micro. Erreur inattendue.")
@@ -94,12 +94,12 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
         }
 
         const toggleCamera = async () => {
-            if (!isConnected) return;
+            if (!isConnecté) return;
             try {
                 await localParticipant.setCameraEnabled(!isCameraEnabled)
             } catch (err: any) {
                 console.debug("Camera toggle error:", err)
-                if (err.name === 'NotAllowedError' || err.message?.includes('Permission denied')) {
+                if (err.name === 'NotAllowedError' || err.message?.includes('Permission refusée')) {
                     toast.error("Accès à la caméra refusé. Veuillez autoriser l'accès dans les paramètres de votre navigateur.")
                 } else {
                     toast.error("Impossible d'activer la caméra. Erreur inattendue.")
@@ -108,7 +108,7 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
         }
 
         const toggleScreenShare = async () => {
-            if (!isConnected) return;
+            if (!isConnecté) return;
             try {
                 await localParticipant.setScreenShareEnabled(!isScreenShareEnabled)
             } catch (err: any) {
@@ -148,9 +148,9 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
                         variant="secondary" 
                         size="icon" 
                         onClick={toggleMic}
-                        disabled={!isConnected}
+                        disabled={!isConnecté}
                         className={`h-[40px] w-[40px] rounded-full border-none transition-colors ${
-                            !isConnected ? "opacity-50 cursor-not-allowed " : ""
+                            !isConnecté ? "opacity-50 cursor-not-allowed " : ""
                         }${
                             isMicrophoneEnabled 
                                 ? "bg-[#3c4043] hover:bg-[#4d5156] text-white" 
@@ -163,9 +163,9 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
                         variant="secondary" 
                         size="icon" 
                         onClick={toggleCamera}
-                        disabled={!isConnected}
+                        disabled={!isConnecté}
                         className={`h-[40px] w-[40px] rounded-full border-none transition-colors ${
-                            !isConnected ? "opacity-50 cursor-not-allowed " : ""
+                            !isConnecté ? "opacity-50 cursor-not-allowed " : ""
                         }${
                             isCameraEnabled 
                                 ? "bg-[#3c4043] hover:bg-[#4d5156] text-white" 
@@ -184,9 +184,9 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
                         variant="secondary" 
                         size="icon" 
                         onClick={toggleScreenShare}
-                        disabled={!isConnected}
+                        disabled={!isConnecté}
                         className={`h-[40px] w-[40px] rounded-full border-none transition-colors ${
-                            !isConnected ? "opacity-50 cursor-not-allowed " : ""
+                            !isConnecté ? "opacity-50 cursor-not-allowed " : ""
                         }${
                             isScreenShareEnabled 
                                 ? "bg-[#8ab4f8] hover:bg-[#aecbfa] text-[#202124]" 
@@ -255,7 +255,7 @@ function VideoComponent() {
         )
     }
 
-    if (connectionState === ConnectionState.Disconnected) {
+    if (connectionState === ConnectionState.Déconnecté) {
         return (
             <div className="w-full h-full bg-[#3c4043] rounded-xl flex items-center justify-center flex-col gap-2">
                 <span className="text-[#ea4335] text-lg font-medium">Impossible de se connecter au serveur</span>

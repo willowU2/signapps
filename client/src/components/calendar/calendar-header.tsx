@@ -17,7 +17,7 @@ interface CalendarHeaderProps {
   onViewModeChange?: (mode: ViewMode) => void;
   presence?: PresenceUser[];
   currentUserId?: string;
-  isConnected?: boolean;
+  isConnecté?: boolean;
 }
 
 export function CalendarHeader({
@@ -25,7 +25,7 @@ export function CalendarHeader({
   onViewModeChange,
   presence = [],
   currentUserId,
-  isConnected = false,
+  isConnecté = false,
 }: CalendarHeaderProps) {
   return (
       <header className="h-16 shrink-0 flex items-center justify-between px-2 pr-6 border-b border-gray-100 dark:border-[#2b2d31]">
@@ -66,7 +66,7 @@ export function CalendarHeader({
             {/* Presence indicator */}
             {presence.length > 0 && (
               <div className="flex items-center gap-2 mr-4 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-100 dark:border-blue-900/50">
-                {isConnected && (
+                {isConnecté && (
                   <div className="flex items-center gap-1.5">
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                     <span className="text-xs font-medium text-green-700 dark:text-green-400">Live</span>

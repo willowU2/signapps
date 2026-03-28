@@ -293,7 +293,7 @@ export default function VpnPage() {
       setRelayDialogOpen(false);
       fetchData();
     } catch {
-      toast.error('Failed to save relay');
+      toast.error('Impossible d'enregistrer relay');
     } finally {
       setSubmitting(false);
     }
@@ -329,7 +329,7 @@ export default function VpnPage() {
       setDnsConfig(prev => prev ? { ...prev, enabled } : null);
       toast.success(enabled ? 'DNS enabled' : 'DNS disabled');
     } catch {
-      toast.error('Failed to update DNS settings');
+      toast.error('Impossible de mettre à jour DNS settings');
     }
   };
 
@@ -339,7 +339,7 @@ export default function VpnPage() {
       setDnsConfig(prev => prev ? { ...prev, adblock_enabled: enabled } : null);
       toast.success(enabled ? 'Ad blocking enabled' : 'Ad blocking disabled');
     } catch {
-      toast.error('Failed to update ad blocking settings');
+      toast.error('Impossible de mettre à jour ad blocking settings');
     }
   };
 
@@ -434,7 +434,7 @@ export default function VpnPage() {
       setDnsRecordDialogOpen(false);
       fetchData();
     } catch {
-      toast.error('Failed to save DNS record');
+      toast.error('Impossible d'enregistrer DNS record');
     } finally {
       setSubmitting(false);
     }
@@ -466,7 +466,7 @@ export default function VpnPage() {
       setDeleteDialog({ open: false, type: 'tunnel', item: null });
       fetchData();
     } catch {
-      toast.error('Failed to delete');
+      toast.error('Impossible de supprimer');
     }
   };
 
@@ -477,7 +477,7 @@ export default function VpnPage() {
         return (
           <Badge className="bg-green-500/10 text-green-600 border-green-600" variant="outline">
             <CircleDot className="mr-1 h-3 w-3" />
-            Connected
+            Connecté
           </Badge>
         );
       case 'connecting':
@@ -491,7 +491,7 @@ export default function VpnPage() {
         return (
           <Badge variant="secondary">
             <WifiOff className="mr-1 h-3 w-3" />
-            Disconnected
+            Déconnecté
           </Badge>
         );
       case 'error':

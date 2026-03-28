@@ -239,7 +239,7 @@ export function UrlShortenerPopover({ content, onContentChange }: UrlShortenerPo
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text).then(
-      () => toast.success('Copied to clipboard'),
+      () => toast.success('Copié dans le presse-papiers'),
       () => toast.error('Failed to copy'),
     );
   };

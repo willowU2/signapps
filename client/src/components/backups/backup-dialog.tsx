@@ -109,7 +109,7 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
       queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
       onOpenChange(false);
     },
-    onError: () => toast.error('Failed to create backup profile'),
+    onError: () => toast.error('Impossible de créer backup profile'),
   });
 
   const updateMutation = useMutation({
@@ -120,7 +120,7 @@ export function BackupDialog({ open, onOpenChange, profile }: BackupDialogProps)
       queryClient.invalidateQueries({ queryKey: ['backup-profiles'] });
       onOpenChange(false);
     },
-    onError: () => toast.error('Failed to update backup profile'),
+    onError: () => toast.error('Impossible de mettre à jour backup profile'),
   });
 
   const buildDestinationConfig = () => {

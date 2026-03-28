@@ -121,7 +121,7 @@ export default function SupplierPortalPage() {
                   <div className="col-span-2"><Label>Website</Label><Input value={form.website} onChange={e => setForm({ ...form, website: e.target.value })} className="mt-1" /></div>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
                   <Button type="submit">Add & Send Invite</Button>
                 </div>
               </form>
@@ -164,7 +164,7 @@ export default function SupplierPortalPage() {
                       </div>
                     )}
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => toast.success(`Email sent to ${s.name}`)}><Mail className="h-3.5 w-3.5 mr-1" />Contact</Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => toast.success(`Email envoyé to ${s.name}`)}><Mail className="h-3.5 w-3.5 mr-1" />Contact</Button>
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => toast.success('Portal link copied')}><Globe className="h-3.5 w-3.5 mr-1" />Portal</Button>
                     </div>
                   </CardContent>

@@ -84,7 +84,7 @@ export function FileTagsSheet({
       }
       onTagsUpdated?.();
     } catch (error) {
-      toast.error("Failed to update file tags");
+      toast.error("Impossible de mettre à jour file tags");
     } finally {
       setSavingId(null);
     }

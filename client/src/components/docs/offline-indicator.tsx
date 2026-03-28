@@ -13,7 +13,7 @@ import {
  * OfflineIndicator: displays connection/sync status in the editor header area.
  *
  * States:
- * - Connected (green dot) — WebSocket active, document synced
+ * - Connecté (green dot) — WebSocket active, document synced
  * - Syncing (yellow dot) — reconnecting or pending changes
  * - Offline (red dot) — no network or WebSocket disconnected
  *

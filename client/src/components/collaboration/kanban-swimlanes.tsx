@@ -104,7 +104,7 @@ export function KanbanSwimlanes() {
           <div className="flex gap-2 mt-2">
             <Input value={newLaneLabel} onChange={e => setNewLaneLabel(e.target.value)} placeholder="Swimlane name" className="h-8 text-sm" onKeyDown={e => e.key === 'Enter' && addLane()} />
             <Button size="sm" onClick={addLane}>Add</Button>
-            <Button size="sm" variant="ghost" onClick={() => setAddingLane(false)}>Cancel</Button>
+            <Button size="sm" variant="ghost" onClick={() => setAddingLane(false)}>Annuler</Button>
           </div>
         )}
       </CardHeader>

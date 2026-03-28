@@ -140,7 +140,7 @@ export function FolderTree({ bucket, currentPath, onSelectFolder }: FolderTreePr
       {rootLoading ? (
         <div className="flex items-center gap-2 px-2 py-4 text-muted-foreground text-xs">
           <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="h-3 w-3 " />
-          Loading...
+          Chargement...
         </div>
       ) : (
         roots.map(node => renderNode(node, 1))

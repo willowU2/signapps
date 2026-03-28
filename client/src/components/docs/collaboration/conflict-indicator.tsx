@@ -227,7 +227,7 @@ function StatusBadge({
 }) {
     const config = {
         connecting: { color: 'bg-yellow-500', label: 'Connecting' },
-        connected: { color: 'bg-green-500', label: 'Connected' },
+        connected: { color: 'bg-green-500', label: 'Connecté' },
         disconnected: { color: 'bg-red-500', label: 'Offline' },
         reconnecting: { color: 'bg-yellow-500', label: 'Reconnecting' },
     };

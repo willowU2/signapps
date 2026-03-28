@@ -27,7 +27,7 @@ export default function Error({
 
         {/* Title */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Something went wrong</h1>
+          <h1 className="text-3xl font-bold">Une erreur est survenue</h1>
           <p className="text-muted-foreground">
             An unexpected error occurred. Please try again or return to the dashboard.
           </p>

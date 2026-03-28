@@ -157,7 +157,7 @@ export function ComposeAiDialog({ open, onOpenChange, accountId }: ComposeAiDial
             return
         }
         if (!recipient.trim() || !subject.trim() || !body.trim()) {
-            toast.error("Please fill in all fields")
+            toast.error("Veuillez remplir tous les champs")
             return
         }
 
@@ -176,11 +176,11 @@ export function ComposeAiDialog({ open, onOpenChange, accountId }: ComposeAiDial
                     body_text: body.trim(),
                 })
             }
-            toast.success("Email sent!")
+            toast.success("Email envoyé!")
             handleReset()
             onOpenChange(false)
         } catch {
-            toast.error("Failed to send email")
+            toast.error("Impossible d'envoyer l'email")
         }
     }
 

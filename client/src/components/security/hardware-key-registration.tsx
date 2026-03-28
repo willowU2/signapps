@@ -96,7 +96,7 @@ export function HardwareKeyRegistration() {
                 <Button onClick={handleRegister} disabled={registering}>
                   {registering ? 'Waiting for key...' : 'Register Security Key'}
                 </Button>
-                <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setShowForm(false)}>Annuler</Button>
               </div>
               <p className="text-xs text-muted-foreground">When prompted, touch or tap your security key.</p>
             </div>

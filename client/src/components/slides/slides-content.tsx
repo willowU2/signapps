@@ -28,11 +28,11 @@ export function SlidesContent({ documentId, documentName, initialData }: SlidesC
 
     // Load initial data from S3 if provided
     useEffect(() => {
-        if (initialData && !isInitialized && slideState.isConnected) {
+        if (initialData && !isInitialized && slideState.isConnecté) {
             loadInitialData(initialData)
             setIsInitialized(true)
         }
-    }, [initialData, isInitialized, slideState.isConnected])
+    }, [initialData, isInitialized, slideState.isConnecté])
 
     const loadInitialData = async (data: SlidesFileFormat) => {
         // Clear existing slides first (except if there's only the default slide)

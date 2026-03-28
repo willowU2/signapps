@@ -97,7 +97,7 @@ export const useAiConversations = create<ConversationsState>()((set, get) => ({
       }));
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to delete conversation';
+        err instanceof Error ? err.message : 'Impossible de supprimer la conversation';
       set({ error: message });
     }
   },

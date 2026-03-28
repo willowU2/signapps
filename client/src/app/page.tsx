@@ -24,7 +24,7 @@ export default function Home() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="flex items-center gap-2">
         <SpinnerInfinity size={32} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} />
-        <span>Loading...</span>
+        <span>Chargement...</span>
       </div>
     </div>
   );

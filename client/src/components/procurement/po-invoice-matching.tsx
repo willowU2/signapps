@@ -99,7 +99,7 @@ export function PoInvoiceMatching() {
       toast.success('Invoice approved for payment');
     } catch (err) {
       console.error('Approval error:', err);
-      toast.error('Failed to update invoice status');
+      toast.error('Impossible de mettre à jour invoice status');
     } finally {
       setApprovingId(null);
     }
@@ -130,7 +130,7 @@ export function PoInvoiceMatching() {
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Loading...
+                  Chargement...
                 </>
               ) : (
                 'Load PO & Invoice Data'

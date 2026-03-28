@@ -144,7 +144,7 @@ export function DRTestDialog({ open, onOpenChange, profileId, profileName }: Pro
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
           <Button onClick={runTest} disabled={running} className="gap-2">
             <Play className="h-4 w-4" />
             {running ? 'Running test...' : 'Run DR Test'}

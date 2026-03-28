@@ -24,7 +24,7 @@ interface PresenceState {
     users: Map<string, UserPresence>;
 
     // Connection state
-    isConnected: boolean;
+    isConnecté: boolean;
     isSynced: boolean;
     connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
 
@@ -43,7 +43,7 @@ interface PresenceActions {
     clearInactiveUsers: (timeoutMs: number) => void;
 
     // Connection state
-    setConnected: (isConnected: boolean) => void;
+    setConnecté: (isConnecté: boolean) => void;
     setSynced: (isSynced: boolean) => void;
     setConnectionStatus: (status: PresenceState['connectionStatus']) => void;
 
@@ -79,7 +79,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
     currentUsername: null,
     currentColor: generateUserColor(),
     users: new Map(),
-    isConnected: false,
+    isConnecté: false,
     isSynced: false,
     connectionStatus: 'disconnected',
     pendingChanges: 0,
@@ -135,10 +135,10 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
     },
 
     // Connection state
-    setConnected: (isConnected) => {
+    setConnecté: (isConnecté) => {
         set({
-            isConnected,
-            connectionStatus: isConnected ? 'connected' : 'disconnected',
+            isConnecté,
+            connectionStatus: isConnecté ? 'connected' : 'disconnected',
         });
     },
 
@@ -149,7 +149,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
     setConnectionStatus: (status) => {
         set({
             connectionStatus: status,
-            isConnected: status === 'connected',
+            isConnecté: status === 'connected',
         });
     },
 

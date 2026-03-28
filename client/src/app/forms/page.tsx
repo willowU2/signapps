@@ -110,7 +110,7 @@ export default function FormsPage() {
                 toast.success("Formulaire mis à jour")
                 loadForms(); setIsDialogOpen(false); return
             } catch (e) {
-                console.error("Failed to update form", e)
+                console.error("Impossible de mettre à jour form", e)
                 toast.error("Échec de la mise à jour du formulaire")
             }
         } else {
@@ -124,7 +124,7 @@ export default function FormsPage() {
                     loadForms()
                 }
             } catch (e) {
-                console.error("Failed to create form", e)
+                console.error("Impossible de créer form", e)
                 toast.error("Échec de la création du formulaire")
             }
         }
@@ -162,7 +162,7 @@ export default function FormsPage() {
             toast.success("Formulaire supprimé")
             loadForms()
         } catch (e) {
-            console.error("Failed to delete form", e)
+            console.error("Impossible de supprimer form", e)
             toast.error("Échec de la suppression du formulaire")
         }
     }

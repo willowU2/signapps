@@ -245,7 +245,7 @@ export function ModelManagement({ onSelectLlmModel }: ModelManagementProps = {})
           toast.error(`Erreur: ${status.error.message}`);
         }
       } catch {
-        // Network error — keep polling
+        // Erreur réseau — keep polling
       }
     }, 2000);
 

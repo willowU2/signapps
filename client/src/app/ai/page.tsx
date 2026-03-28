@@ -465,7 +465,7 @@ export default function AIPage() {
 
     setDeleteDialogOpen(false);
     setConversationToDelete(null);
-    toast.success('Conversation supprimee');
+    toast.success('Conversation supprimée');
   }, [conversationToDelete, activeConversationId]);
 
   const handleCreateKnowledgeBase = useCallback(async () => {
@@ -483,7 +483,7 @@ export default function AIPage() {
       setNewKbDescription('');
       toast.success('Base de connaissances créée');
     } catch (error) {
-      console.error('Failed to create knowledge base:', error);
+      console.error('Impossible de créer knowledge base:', error);
       toast.error('Erreur lors de la création');
     }
   }, [newKbName, newKbDescription, fetchKnowledgeBases]);
@@ -503,7 +503,7 @@ export default function AIPage() {
       setKbToDelete(null);
       toast.success('Base de connaissances supprimée');
     } catch (error) {
-      console.error('Failed to delete knowledge base:', error);
+      console.error('Impossible de supprimer knowledge base:', error);
       toast.error('Erreur lors de la suppression');
     }
   }, [kbToDelete, selectedKnowledgeBase, fetchKnowledgeBases]);
@@ -551,7 +551,7 @@ export default function AIPage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast.success('Conversation exportee');
+    toast.success('Conversation exportée');
   }, [messages, conversations, activeConversationId, selectedKnowledgeBase]);
 
   const handleSend = async (textOverride?: string) => {

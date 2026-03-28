@@ -186,8 +186,8 @@ export function SharedAlbums() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={createAlbum} disabled={!form.name.trim()}>Create</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
+            <Button onClick={createAlbum} disabled={!form.name.trim()}>Créer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

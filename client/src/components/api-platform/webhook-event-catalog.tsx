@@ -23,8 +23,8 @@ const WEBHOOK_EVENTS: WebhookEvent[] = [
   { event: 'storage.upload', service: 'storage', description: 'File uploaded to storage', payloadExample: { event: 'storage.upload', file_id: 'f456', name: 'report.pdf', size: 102400, owner: 'u123' } },
   { event: 'storage.delete', service: 'storage', description: 'File deleted from storage', payloadExample: { event: 'storage.delete', file_id: 'f456', name: 'report.pdf' } },
   { event: 'mail.received', service: 'mail', description: 'New email received', payloadExample: { event: 'mail.received', message_id: 'm789', from: 'bob@example.com', subject: 'Hello' } },
-  { event: 'container.started', service: 'containers', description: 'Container started successfully', payloadExample: { event: 'container.started', container_id: 'c001', name: 'myapp', image: 'nginx:latest' } },
-  { event: 'container.stopped', service: 'containers', description: 'Container stopped', payloadExample: { event: 'container.stopped', container_id: 'c001', exit_code: 0 } },
+  { event: 'container.started', service: 'containers', description: 'Conteneur démarré successfully', payloadExample: { event: 'container.started', container_id: 'c001', name: 'myapp', image: 'nginx:latest' } },
+  { event: 'container.stopped', service: 'containers', description: 'Conteneur arrêté', payloadExample: { event: 'container.stopped', container_id: 'c001', exit_code: 0 } },
   { event: 'calendar.event.created', service: 'calendar', description: 'Calendar event created', payloadExample: { event: 'calendar.event.created', event_id: 'e321', title: 'Team meeting', start: '2025-03-25T09:00:00Z' } },
   { event: 'route.updated', service: 'proxy', description: 'Proxy route configuration updated', payloadExample: { event: 'route.updated', route_id: 'r555', domain: 'app.example.com', target: 'http://localhost:3000' } },
 ];

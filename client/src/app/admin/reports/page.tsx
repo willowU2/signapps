@@ -397,7 +397,7 @@ function SecurityReportTab() {
     setTimeout(() => {
       setReport(generateSecurityReport(from, to));
       setGenerating(false);
-      toast.success('Rapport de securite genere');
+      toast.success('Rapport de sécurité généré');
     }, 1000);
   };
 
@@ -559,7 +559,7 @@ function PerformanceReportTab() {
     setTimeout(() => {
       setReport(generatePerformanceReport(from, to));
       setGenerating(false);
-      toast.success('Rapport de performance genere');
+      toast.success('Rapport de performance généré');
     }, 600);
   };
 

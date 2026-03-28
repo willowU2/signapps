@@ -102,7 +102,7 @@ export function CrossRegionBackup() {
               <Input value={newPath} onChange={e => setNewPath(e.target.value)} placeholder="/mnt/backup2" className="h-8 text-sm" />
             </div>
             <div className="flex gap-2 justify-end">
-              <Button size="sm" variant="outline" onClick={() => setAdding(false)}>Cancel</Button>
+              <Button size="sm" variant="outline" onClick={() => setAdding(false)}>Annuler</Button>
               <Button size="sm" onClick={addLocation}>Add</Button>
             </div>
           </div>

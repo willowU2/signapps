@@ -42,7 +42,7 @@ export function useEvents(calendarId?: string) {
         setEvents([...events, response.data]);
         return response.data;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to create event";
+        const message = err instanceof Error ? err.message : "Impossible de créer event";
         setError(message);
         throw err;
       }
@@ -59,7 +59,7 @@ export function useEvents(calendarId?: string) {
         setEvents(events.map((e) => (e.id === id ? response.data : e)));
         return response.data;
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to update event";
+        const message = err instanceof Error ? err.message : "Impossible de mettre à jour event";
         setError(message);
         throw err;
       }
@@ -75,7 +75,7 @@ export function useEvents(calendarId?: string) {
         await calendarApi.deleteEvent(id);
         setEvents(events.filter((e) => e.id !== id));
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to delete event";
+        const message = err instanceof Error ? err.message : "Impossible de supprimer event";
         setError(message);
         throw err;
       }

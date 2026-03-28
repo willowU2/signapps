@@ -92,7 +92,7 @@ export function CronManager() {
   const handleSave = async () => {
     try {
       if (!editForm.name || !editForm.cronExpression || !editForm.command) {
-        toast.error("All fields are required");
+        toast.error("Tous les champs sont obligatoires");
         return;
       }
 
@@ -109,15 +109,15 @@ export function CronManager() {
 
       if (editingId === "new") {
         setJobs([...jobs, newJob]);
-        toast.success("Cron job created");
+        toast.success("Tâche cron créée");
       } else {
         setJobs(jobs.map((j) => (j.id === editingId ? newJob : j)));
-        toast.success("Cron job updated");
+        toast.success("Tâche cron mise à jour");
       }
 
       setEditingId(null);
     } catch (error) {
-      toast.error("Failed to save cron job");
+      toast.error("Impossible d'enregistrer la tâche cron");
       console.debug(error);
     }
   };
@@ -127,9 +127,9 @@ export function CronManager() {
 
     try {
       setJobs(jobs.filter((j) => j.id !== id));
-      toast.success("Cron job deleted");
+      toast.success("Tâche cron supprimée");
     } catch (error) {
-      toast.error("Failed to delete cron job");
+      toast.error("Impossible de supprimer la tâche cron");
       console.debug(error);
     }
   };
@@ -138,7 +138,7 @@ export function CronManager() {
     try {
       setJobs(jobs.map((j) => (j.id === id ? { ...j, isActive: !j.isActive } : j)));
     } catch (error) {
-      toast.error("Failed to toggle job state");
+      toast.error("Impossible de modifier l'état de la tâche");
       console.debug(error);
     }
   };

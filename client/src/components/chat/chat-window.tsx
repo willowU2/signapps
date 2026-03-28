@@ -46,7 +46,7 @@ export function ChatWindow({ channelId, channelName, isDm, isPrivate }: ChatWind
         return { id: `guest-${Date.now()}`, name: "Invité" }
     }, [authUser, isAuthenticated])
 
-    const { messages, sendMessage, addReaction, pinMessage, unpinMessage, markRead, isConnected, unreadCount }
+    const { messages, sendMessage, addReaction, pinMessage, unpinMessage, markRead, isConnecté, unreadCount }
         = useChat(channelId, user.id, user.name)
 
     const [activeThreadMsgId, setActiveThreadMsgId] = useState<string | null>(null)
@@ -236,8 +236,8 @@ export function ChatWindow({ channelId, channelName, isDm, isPrivate }: ChatWind
                                     )}
                                 </div>
                                 <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                                    <span className={cn("w-1.5 h-1.5 rounded-full", isConnected ? "bg-green-500" : "bg-yellow-500")} />
-                                    {isConnected ? (isDm ? "En ligne" : "Connected") : "Connecting..."}
+                                    <span className={cn("w-1.5 h-1.5 rounded-full", isConnecté ? "bg-green-500" : "bg-yellow-500")} />
+                                    {isConnecté ? (isDm ? "En ligne" : "Connecté") : "Connecting..."}
                                     {unreadCount > 0 && (
                                         <span className="ml-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1.5 py-0.5">
                                             {unreadCount} new
@@ -412,7 +412,7 @@ export function ChatWindow({ channelId, channelName, isDm, isPrivate }: ChatWind
                     {/* Messages List Area */}
                     <ScrollArea className="flex-1 min-h-0 px-4 relative" ref={scrollRef}>
                         <div className="flex flex-col min-h-full justify-end py-4">
-                            {formattedMessages.length === 0 && isConnected && (
+                            {formattedMessages.length === 0 && isConnecté && (
                                 <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-500">
                                     <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
                                         <Hash className="h-8 w-8" />
@@ -499,7 +499,7 @@ export function ChatWindow({ channelId, channelName, isDm, isPrivate }: ChatWind
                             onSendVoice={FEATURES.CHAT_VOICE ? handleSendVoice : undefined}
                             channelId={channelId}
                             placeholder={`Message ${isDm ? displayName : `#${displayName}`}`}
-                            disabled={!isConnected}
+                            disabled={!isConnecté}
                         />
                     </div>
                 </div>

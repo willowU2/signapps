@@ -93,7 +93,7 @@ export default function SheetsDashboard() {
             setDocs(prev => prev.filter(d => d.id !== id));
             toast.success('Feuille supprimée');
         } catch (error) {
-            console.error('Failed to delete spreadsheet', error);
+            console.error('Impossible de supprimer spreadsheet', error);
             toast.error('Erreur lors de la suppression');
         }
     };
@@ -135,7 +135,7 @@ export default function SheetsDashboard() {
             setPendingTemplateContent(null);
             router.push(`/sheets/editor?id=${finalTargetId}&name=${encodeURIComponent(newNode.name)}`);
         } catch (error: any) {
-            console.error("Failed to create spreadsheet", error);
+            console.error("Impossible de créer spreadsheet", error);
             toast.error(error.response?.data?.message || "Erreur serveur lors de la cr\u00e9ation");
             setIsCreating(false);
         }

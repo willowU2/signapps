@@ -102,7 +102,7 @@ function ProviderCard({
 }: ProviderCardProps) {
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const IconComponent = PROVIDER_ICON_COMPONENTS[provider];
-  const isConnected = connection?.is_connected ?? false;
+  const isConnecté = connection?.is_connected ?? false;
 
   const handleDisconnect = () => {
     onDisconnect();
@@ -111,7 +111,7 @@ function ProviderCard({
 
   return (
     <>
-      <Card className={isConnected ? 'border-green-200 dark:border-green-900' : ''}>
+      <Card className={isConnecté ? 'border-green-200 dark:border-green-900' : ''}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -130,7 +130,7 @@ function ProviderCard({
                 )}
               </div>
             </div>
-            {isConnected && (
+            {isConnecté && (
               <Badge
                 variant="outline"
                 className={SYNC_STATUS_COLORS[connection?.sync_status || 'idle']}
@@ -141,7 +141,7 @@ function ProviderCard({
           </div>
         </CardHeader>
         <CardContent>
-          {isConnected ? (
+          {isConnecté ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Check className="h-4 w-4 text-green-500" />

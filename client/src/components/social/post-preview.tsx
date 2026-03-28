@@ -570,7 +570,7 @@ function YouTubePreview({ content, accountName, accountAvatar, mediaUrls }: Omit
           <Share className="h-4 w-4" /><span className="text-xs">Share</span>
         </button>
         <button className="flex items-center gap-1 hover:text-white transition-colors">
-          <Bookmark className="h-4 w-4" /><span className="text-xs">Save</span>
+          <Bookmark className="h-4 w-4" /><span className="text-xs">Enregistrer</span>
         </button>
       </div>
       <CharCount content={content} platform="youtube" />

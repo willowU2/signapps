@@ -82,7 +82,7 @@ export default function WorkspacesPage() {
             setIsSheetOpen(false)
             setEditingWorkspace(null)
         } catch (error) {
-            console.error("Failed to save workspace:", error)
+            console.error("Impossible d'enregistrer workspace:", error)
             toast.error("Impossible d'enregistrer l'espace de travail")
         } finally {
             setIsSubmitting(false)
@@ -104,7 +104,7 @@ export default function WorkspacesPage() {
             await deleteWorkspace(deleteWorkspaceTarget.id)
             toast.success("Espace de travail supprimé")
         } catch (error) {
-            console.error("Failed to delete workspace:", error)
+            console.error("Impossible de supprimer workspace:", error)
             toast.error("Impossible de supprimer l'espace de travail")
         }
     }

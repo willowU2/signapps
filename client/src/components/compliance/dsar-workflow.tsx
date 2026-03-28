@@ -109,7 +109,7 @@ export function DsarWorkflow() {
       setCreateOpen(false)
       toast.success(`DSAR created · Ref: ${created.reference}`)
     } catch {
-      toast.error("Failed to create request")
+      toast.error("Impossible de créer request")
     } finally {
       setSaving(false)
     }
@@ -127,7 +127,7 @@ export function DsarWorkflow() {
       setSelectedReq(updated)
       toast.success(`Status updated: ${STATUS_CONFIG[status].label}`)
     } catch {
-      toast.error("Failed to update")
+      toast.error("Impossible de mettre à jour")
     }
   }
 
@@ -252,7 +252,7 @@ export function DsarWorkflow() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>Annuler</Button>
             <Button onClick={handleCreate} disabled={saving}>{saving ? "Creating…" : "Create Request"}</Button>
           </DialogFooter>
         </DialogContent>

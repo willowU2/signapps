@@ -125,7 +125,7 @@ export function DataRetentionPolicies() {
       }
       setDialogOpen(false)
     } catch {
-      toast.error("Failed to save")
+      toast.error("Impossible d'enregistrer")
     } finally {
       setSaving(false)
     }
@@ -151,7 +151,7 @@ export function DataRetentionPolicies() {
       setPolicies(prev => prev.filter(p => p.id !== id))
       toast.success("Policy deleted")
     } catch {
-      toast.error("Failed to delete")
+      toast.error("Impossible de supprimer")
     }
   }
 
@@ -263,7 +263,7 @@ export function DataRetentionPolicies() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
           </DialogFooter>
         </DialogContent>

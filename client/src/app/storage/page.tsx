@@ -472,7 +472,7 @@ export default function StoragePage() {
           }));
           setFiles(searchFiles);
         }).catch(err => {
-          console.debug("Search failed", err);
+          console.debug("Échec de la recherche", err);
           setFiles([]);
         });
       } else if (!search.trim() && activeTab === 'files') {

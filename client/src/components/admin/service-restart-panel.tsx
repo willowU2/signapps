@@ -132,7 +132,7 @@ export function ServiceRestartPanel() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => { if (confirmService) { restartService(confirmService); setConfirmService(null); } }}
             >
