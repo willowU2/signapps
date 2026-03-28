@@ -97,13 +97,13 @@ const actionLabels: Record<AuditAction, string> = {
   password_reset: 'Password Reset',
   user_created: 'User Created',
   user_updated: 'User Updated',
-  user_deleted: 'User Deleted',
+  user_deleted: 'User Supprimé',
   role_changed: 'Role Changed',
   group_created: 'Group Created',
   group_updated: 'Group Updated',
-  group_deleted: 'Group Deleted',
+  group_deleted: 'Group Supprimé',
   member_added: 'Member Added',
-  member_removed: 'Member Removed',
+  member_removed: 'Member Retiré',
   permission_changed: 'Permission Changed',
   api_key_created: 'API Key Created',
   api_key_revoked: 'API Key Revoked',
@@ -281,7 +281,7 @@ function ImportUsersDialog({
         if (!email) {
           errors.push({ row: i + 1, field: 'email', error: 'Email is required' });
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          errors.push({ row: i + 1, field: 'email', error: 'Invalid email format' });
+          errors.push({ row: i + 1, field: 'email', error: 'Email invalide format' });
         } else if (existingEmails.has(email.toLowerCase())) {
           errors.push({ row: i + 1, field: 'email', error: `Email "${email}" already exists` });
         } else if (seenEmails.has(email.toLowerCase())) {

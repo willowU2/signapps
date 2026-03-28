@@ -52,7 +52,7 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
 
   const handleSubmitOrder = () => {
     if (items.length === 0) {
-      toast.error("Cart is empty");
+      toast.error("Le panier est vide");
       return;
     }
     if (onSubmit) {
@@ -60,7 +60,7 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
     }
     setIsSubmitted(true);
     setCurrentStatus("Commande");
-    toast.success("Order submitted successfully");
+    toast.success("Commande soumise avec succès");
   };
 
   const advanceStatus = () => {
@@ -69,7 +69,7 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
       setCurrentStatus(STATUS_STEPS[currentIndex + 1]);
       toast.success(`Order moved to ${STATUS_STEPS[currentIndex + 1]}`);
     } else {
-      toast.info("Order completed");
+      toast.info("Commande terminée");
     }
   };
 
@@ -136,7 +136,7 @@ export function OrderSystem({ cartItems = [], onSubmit }: OrderSystemProps) {
 
         {items.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            Cart is empty. Add items from the product catalog.
+            Le panier est vide. Add items from the product catalog.
           </div>
         ) : (
           <>

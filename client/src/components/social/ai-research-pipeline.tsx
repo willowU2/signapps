@@ -257,7 +257,7 @@ export function AiResearchPipeline({
   // Run pipeline
   const runPipeline = useCallback(async () => {
     if (topic.trim().length < 10) {
-      toast.error("Please enter at least 10 characters for the topic");
+      toast.error("Veuillez saisir au moins 10 caractères pour le sujet");
       return;
     }
 
@@ -362,7 +362,7 @@ export function AiResearchPipeline({
   const handleUseInComposer = () => {
     const final = editedContent.join("\n\n---\n\n");
     onUseContent?.(final);
-    toast.success("Content sent to composer");
+    toast.success("Contenu envoyé au compositeur");
   };
 
   const handleEditPost = (idx: number, value: string) => {

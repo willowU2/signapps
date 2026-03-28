@@ -80,7 +80,7 @@ export function EnhancedMailMerge({ onSendAll }: EnhancedMailMergeProps) {
     const handleCsvLoad = useCallback(() => {
         if (!csvText.trim()) { toast.error("Paste CSV data first"); return }
         const { headers, rows } = parseCsv(csvText)
-        if (!headers.length) { toast.error("Could not parse CSV"); return }
+        if (!headers.length) { toast.error("Impossible d'analyser le CSV"); return }
         setCsvHeaders(headers)
         setCsvRows(rows)
 
@@ -118,8 +118,8 @@ export function EnhancedMailMerge({ onSendAll }: EnhancedMailMergeProps) {
     }, [csvRows, subject, body, mappings, recipientColumn])
 
     const handleSend = async () => {
-        if (!recipientColumn) { toast.error("Select recipient email column"); return }
-        if (!onSendAll) { toast.info("Connect a send handler to send emails"); return }
+        if (!recipientColumn) { toast.error("Sélectionnez la colonne d'email du destinataire"); return }
+        if (!onSendAll) { toast.info("Connectez un gestionnaire d'envoi pour envoyer des emails"); return }
         setSending(true)
         try {
             const emails = csvRows.map((row) => ({
@@ -130,7 +130,7 @@ export function EnhancedMailMerge({ onSendAll }: EnhancedMailMergeProps) {
             await onSendAll(emails)
             toast.success(`Sent ${emails.length} emails`)
         } catch (err) {
-            toast.error("Send failed")
+            toast.error("Échec de l'envoi")
         } finally {
             setSending(false)
         }

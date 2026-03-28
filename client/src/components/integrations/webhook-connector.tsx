@@ -42,7 +42,7 @@ export function WebhookConnector() {
   };
 
   const toggle = (id: string) => setWebhooks(ws => ws.map(w => w.id === id ? { ...w, enabled: !w.enabled } : w));
-  const remove = (id: string) => { setWebhooks(ws => ws.filter(w => w.id !== id)); toast.success('Removed'); };
+  const remove = (id: string) => { setWebhooks(ws => ws.filter(w => w.id !== id)); toast.success('Retiré'); };
 
   const sendTest = async () => {
     if (!selectedId) { toast.error('Select a webhook first'); return; }

@@ -66,7 +66,7 @@ export function GoogleImportWizard({
   const handleImport = async () => {
     const selected = resources.filter((r) => r.selected);
     if (selected.length === 0) {
-      toast.error("Select at least one item to import.");
+      toast.error("Sélectionnez au moins un élément à importer.");
       return;
     }
     setImporting(true);

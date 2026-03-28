@@ -79,7 +79,7 @@ export const SuggestionDeletion = Mark.create({
             mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
                 'data-suggestion': '',
                 class: 'suggestion-deletion bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 line-through decoration-red-500',
-                title: `Deleted by ${HTMLAttributes.author}`,
+                title: `Supprimé by ${HTMLAttributes.author}`,
             }),
             0,
         ];

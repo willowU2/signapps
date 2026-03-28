@@ -198,7 +198,7 @@ export function PrivacyPolicyGenerator() {
 
   async function generate() {
     if (!config.company_name || !config.contact_email) {
-      toast.error("Company name and contact email required")
+      toast.error("Le nom de l'entreprise et l'email de contact sont requis")
       return
     }
     setGenerating(true)
@@ -220,7 +220,7 @@ export function PrivacyPolicyGenerator() {
     }
     setShowPreview(true)
     setGenerating(false)
-    toast.success("Privacy policy generated")
+    toast.success("Politique de confidentialité générée")
   }
 
   function copyToClipboard() {

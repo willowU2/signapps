@@ -65,7 +65,7 @@ export function DigitalStampConfig() {
       if (!res.ok) throw new Error()
       const { url } = await res.json()
       setConfig(p => ({ ...p, image_url: url }))
-      toast.success("Stamp image uploaded")
+      toast.success("Image du tampon téléversée")
     } catch {
       toast.error("Échec du téléversement")
     } finally {
@@ -74,7 +74,7 @@ export function DigitalStampConfig() {
   }, [])
 
   async function saveStamp() {
-    if (!config.image_url) { toast.error("Upload a stamp image first"); return }
+    if (!config.image_url) { toast.error("Téléversez d'abord une image de tampon"); return }
     try {
       const res = await fetch("/api/docs/stamps", {
         method: "POST",
@@ -83,14 +83,14 @@ export function DigitalStampConfig() {
       })
       const saved = await res.json()
       setSavedStamps(prev => [...prev, saved])
-      toast.success("Stamp saved")
+      toast.success("Tampon enregistré")
     } catch {
       toast.error("Impossible d'enregistrer stamp")
     }
   }
 
   async function applyToDocument(documentId: string) {
-    if (!config.image_url) { toast.error("Configure stamp first"); return }
+    if (!config.image_url) { toast.error("Configurez le tampon d'abord"); return }
     setApplying(true)
     try {
       await fetch(`/api/docs/${documentId}/stamp`, {

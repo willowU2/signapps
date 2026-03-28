@@ -70,7 +70,7 @@ export function FormToDocMapper() {
       setTemplates(tmpls.data ?? [])
       setResults(gens.data ?? [])
     } catch {
-      toast.error("Failed to load form-to-doc configurations")
+      toast.error("Impossible de charger les configurations")
     } finally {
       setLoading(false)
     }
@@ -98,7 +98,7 @@ export function FormToDocMapper() {
       setResults(prev => [data, ...prev])
       toast.success("Document généré")
     } catch {
-      toast.error("Generation failed")
+      toast.error("Génération échouée")
     } finally {
       setGenerating(null)
     }

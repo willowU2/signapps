@@ -302,7 +302,7 @@ export default function SettingsPage() {
       await authApi.ldapUpdateConfig(ldapConfig);
       toast.success('LDAP configuration saved');
     } catch {
-      toast.error('Impossible d'enregistrer LDAP configuration');
+      toast.error("Impossible d'enregistrer LDAP configuration");
     } finally {
       setLdapSaving(false);
     }
@@ -338,7 +338,7 @@ export default function SettingsPage() {
       setTenant(response.data);
       toast.success('General settings saved successfully');
     } catch {
-      toast.error('Impossible d'enregistrer general settings');
+      toast.error("Impossible d'enregistrer general settings");
     } finally {
       setGeneralSaving(false);
     }
@@ -362,7 +362,7 @@ export default function SettingsPage() {
       setGroupSheetOpen(false);
       fetchGroups();
     } catch {
-      toast.error('Impossible d'enregistrer group');
+      toast.error("Impossible d'enregistrer group");
     } finally {
       setGroupSaving(false);
     }
@@ -472,7 +472,7 @@ export default function SettingsPage() {
       setWebhookSheetOpen(false);
       fetchWebhooks();
     } catch {
-      toast.error('Impossible d'enregistrer webhook');
+      toast.error("Impossible d'enregistrer webhook");
     } finally {
       setWebhookSaving(false);
     }

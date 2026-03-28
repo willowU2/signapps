@@ -65,7 +65,7 @@ export function useOfflineSync({
                 timestamp: Date.now(),
             });
         } catch (error) {
-            console.error('[useOfflineSync] Impossible d'enregistrer to storage:', error);
+            console.error("[useOfflineSync] Impossible d'enregistrer to storage:", error);
         }
     }, [ydoc, docId, enablePersistence]);
 
@@ -124,7 +124,7 @@ export function useOfflineSync({
 
             await saveToIndexedDB(QUEUE_KEY_PREFIX + docId, queueData);
         } catch (error) {
-            console.error('[useOfflineSync] Impossible d'enregistrer queue:', error);
+            console.error("[useOfflineSync] Impossible d'enregistrer queue:", error);
         }
     }, [docId]);
 

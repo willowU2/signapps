@@ -40,7 +40,7 @@ export function TimeTracker({ onEntryComplete }: TimeTrackerProps) {
 
   const handleStart = () => {
     if (!selectedProject || !selectedTask) {
-      toast.error("Please select a project and task");
+      toast.error("Veuillez sélectionner un projet et une tâche");
       return;
     }
     setIsRunning(true);

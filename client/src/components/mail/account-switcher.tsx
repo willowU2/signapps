@@ -67,11 +67,11 @@ export function AccountSwitcher({
                 imap_server: imap,
                 imap_port: 993,
             })
-            toast.success("Account connected successfully!")
+            toast.success("Compte connecté avec succès !")
             setOpen(false)
             setTimeout(() => window.location.reload(), 1000)
         } catch (error) {
-            toast.error("Failed to connect account.")
+            toast.error("Impossible de connecter le compte.")
         } finally {
             setLoading(false)
         }

@@ -117,7 +117,7 @@ export function RssAutoShare() {
       setItems(data.items ?? items);
       toast.success("RSS feeds refreshed");
     } catch {
-      toast.info("Using cached feed items (API unavailable)");
+      toast.info("Utilisation des éléments en cache (API indisponible)");
     } finally {
       setRefreshing(false);
     }
@@ -134,7 +134,7 @@ export function RssAutoShare() {
       if (!res.ok) throw new Error();
       toast.success(`Post created from "${item.title.slice(0, 40)}…"`);
     } catch {
-      toast.info("Post queued locally (API unavailable)");
+      toast.info("Publication mise en file localement (API indisponible)");
     }
     setItems((prev) =>
       prev.map((i) => (i.id === item.id ? { ...i, autoShareStatus: "shared" } : i))

@@ -72,7 +72,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
         if (sending && countdown > 0) {
             timer = setTimeout(() => setCountdown(c => c - 1), 1000)
         } else if (sending && countdown === 0) {
-            toast.success("Reply sent!")
+            toast.success("Réponse envoyée !")
             setSending(false)
             setReplyText("")
             setSmartReplies([])
@@ -173,7 +173,7 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
             )
         } catch (e) {
             setIsRepliesLoading(false)
-            toast.error("Failed to start generation")
+            toast.error("Impossible de démarrer la génération")
             console.debug(e)
         }
     }
@@ -184,13 +184,13 @@ export function MailDisplay({ mail, onSnooze, onArchive, onDelete }: MailDisplay
             const { action } = e.detail;
             if (action === 'summarize-thread') {
                 if (!mail) {
-                    toast.error("Please select an email thread first.");
+                    toast.error("Veuillez sélectionner un fil de discussion d'abord.");
                     return;
                 }
                 handleSummarize();
             } else if (action === 'draft-reply') {
                 if (!mail) {
-                    toast.error("Please select an email to reply to.");
+                    toast.error("Veuillez sélectionner un email auquel répondre.");
                     return;
                 }
                 generateSmartReplies();

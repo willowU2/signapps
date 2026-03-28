@@ -48,7 +48,7 @@ export function WatermarkConfig() {
       position: values.position,
       opacity: values.opacity,
     });
-    toast.success("Watermark settings updated");
+    toast.success("Paramètres du filigrane mis à jour");
   };
 
   const getPositionClass = () => {

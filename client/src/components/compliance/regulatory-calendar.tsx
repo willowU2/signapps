@@ -91,14 +91,14 @@ export function RegulatoryCalendar() {
       const data = await res.json()
       setDeadlines(data.data ?? [])
     } catch {
-      toast.error("Failed to load compliance calendar")
+      toast.error("Impossible de charger le calendrier de conformité")
     } finally {
       setLoading(false)
     }
   }
 
   async function handleCreate() {
-    if (!form.title || !form.due_date) { toast.error("Title and due date required"); return }
+    if (!form.title || !form.due_date) { toast.error("Le titre et la date d'échéance sont requis"); return }
     setSaving(true)
     try {
       const res = await fetch("/api/compliance/regulatory-calendar", {
@@ -109,7 +109,7 @@ export function RegulatoryCalendar() {
       const created = await res.json()
       setDeadlines(prev => [...prev, created])
       setDialogOpen(false)
-      toast.success("Deadline added")
+      toast.success("Échéance ajoutée")
     } catch {
       toast.error("Impossible d'enregistrer")
     } finally {
@@ -125,7 +125,7 @@ export function RegulatoryCalendar() {
         body: JSON.stringify({ completed }),
       })
       setDeadlines(prev => prev.map(d => d.id === id ? { ...d, completed } : d))
-      if (completed) toast.success("Marked as complete")
+      if (completed) toast.success("Marqué comme terminé")
     } catch {
       toast.error("Impossible de mettre à jour")
     }
@@ -135,7 +135,7 @@ export function RegulatoryCalendar() {
     try {
       await fetch(`/api/compliance/regulatory-calendar/${id}`, { method: "DELETE" })
       setDeadlines(prev => prev.filter(d => d.id !== id))
-      toast.success("Deleted")
+      toast.success("Supprimé")
     } catch {
       toast.error("Impossible de supprimer")
     }

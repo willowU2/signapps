@@ -193,7 +193,7 @@ export function VersionHistorySheet({
       const response = await storageApi.getFileVersions(fileId);
       setVersions(response.data);
     } catch (error) {
-      toast.error("Failed to load version history");
+      toast.error("Impossible de charger l'historique des versions");
     } finally {
       setLoading(false);
     }
@@ -221,7 +221,7 @@ export function VersionHistorySheet({
           { duration: 5000 }
         );
       } else {
-        toast.error("Failed to restore version");
+        toast.error("Impossible de restaurer la version");
       }
     } finally {
       setRestoringId(null);

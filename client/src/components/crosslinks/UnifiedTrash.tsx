@@ -15,7 +15,7 @@ import { getClient, ServiceName } from '@/lib/api/factory';
 
 const client = () => getClient(ServiceName.IDENTITY);
 
-interface DeletedItem {
+interface SuppriméItem {
   id: string;
   entity_type: string;
   entity_id: string;
@@ -44,14 +44,14 @@ function daysUntil(date?: string) {
 }
 
 export function UnifiedTrash() {
-  const [items, setItems] = useState<DeletedItem[]>([]);
+  const [items, setItems] = useState<SuppriméItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [confirmPurge, setConfirmPurge] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const { data } = await client().get<DeletedItem[]>('/trash');
+      const { data } = await client().get<SuppriméItem[]>('/trash');
       setItems(data);
     } catch {
       setItems([]);
@@ -62,7 +62,7 @@ export function UnifiedTrash() {
 
   useEffect(() => { load(); }, [load]);
 
-  const restore = async (item: DeletedItem) => {
+  const restore = async (item: SuppriméItem) => {
     try {
       await client().post(`/trash/${item.id}/restore`);
       setItems(prev => prev.filter(i => i.id !== item.id));
@@ -70,7 +70,7 @@ export function UnifiedTrash() {
     } catch { toast.error('Restauration échouée'); }
   };
 
-  const purge = async (item: DeletedItem) => {
+  const purge = async (item: SuppriméItem) => {
     try {
       await client().delete(`/trash/${item.id}`);
       setItems(prev => prev.filter(i => i.id !== item.id));

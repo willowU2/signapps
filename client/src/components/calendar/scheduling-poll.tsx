@@ -163,7 +163,7 @@ export function CreatePollDialog({ open, onOpenChange, onCreated }: CreatePollDi
       status: "open",
     };
     savePoll(poll);
-    toast.success("Poll created");
+    toast.success("Sondage créé");
     onCreated?.(poll);
     reset();
     onOpenChange(false);
@@ -429,7 +429,7 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
     const updated = { ...poll, confirmedSlotId: slotId, status: "confirmed" as const };
     savePoll(updated);
     setPoll(updated);
-    toast.success("Time slot confirmed");
+    toast.success("Créneau confirmé");
     try {
       await calendarApi.post(`/polls/${poll.id}/confirm`, { slot_id: slotId });
     } catch {
@@ -477,7 +477,7 @@ export function PollVoteView({ pollId }: PollVoteViewProps) {
 
   const copyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}/poll/${poll.id}`);
-    toast.success("Link copied");
+    toast.success("Lien copié");
   };
 
   const voteIcon = (val: VoteValue | undefined) => {

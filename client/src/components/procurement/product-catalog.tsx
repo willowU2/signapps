@@ -76,7 +76,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
       toast.success(`${product.name} added to cart`);
       setSelectedQuantities({ ...selectedQuantities, [product.id]: 1 });
     } else {
-      toast.error("Out of stock");
+      toast.error("Rupture de stock");
     }
   };
 
@@ -112,7 +112,7 @@ export function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
                     product.stock > 0 ? "text-green-600" : "text-red-600"
                   }`}
                 >
-                  {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
+                  {product.stock > 0 ? `${product.stock} in stock` : "Rupture de stock"}
                 </span>
               </div>
 

@@ -39,7 +39,7 @@ export function RexForm() {
   });
 
   const onSubmit = (values: RexFormValues) => {
-    toast.success("Return of Experience saved successfully");
+    toast.success("Retour d'expérience enregistré avec succès");
     form.reset();
   };
 

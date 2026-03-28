@@ -162,7 +162,7 @@ export function WorkflowBuilder() {
 
   const handleSave = async () => {
     if (!draft.name.trim()) {
-      toast.error("Please name the workflow");
+      toast.error("Veuillez nommer le workflow");
       return;
     }
     setSaving(true);

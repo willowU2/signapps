@@ -62,7 +62,7 @@ export default function PrinterManager() {
     // Simulate test print
     setTimeout(() => {
       setTestingPrinterId(null);
-      toast.success("Test page sent to printer");
+      toast.success("Page de test envoyée à l'imprimante");
     }, 2000);
   };
 

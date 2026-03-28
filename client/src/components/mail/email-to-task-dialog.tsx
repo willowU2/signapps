@@ -74,16 +74,16 @@ export function EmailToTaskDialog({
           priority,
           due_date: dueDate || undefined,
         })
-        toast.success("Tache creee avec succes")
+        toast.success("Tâche créée avec succès")
       } else {
         // Fallback: store in localStorage
         saveToLocalStorage()
-        toast.success("Tache enregistree localement")
+        toast.success("Tâche enregistrée localement")
       }
     } catch {
       // Fallback: store in localStorage
       saveToLocalStorage()
-      toast.success("Tache enregistree localement (service indisponible)")
+      toast.success("Tâche enregistrée localement (service indisponible)")
     } finally {
       setSaving(false)
       onOpenChange(false)

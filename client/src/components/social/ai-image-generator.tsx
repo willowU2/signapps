@@ -154,7 +154,7 @@ export function AiImageGenerator({ onUseInPost }: AiImageGeneratorProps) {
       return;
     }
     if (!selectedStyle || !selectedStyleObj) {
-      toast.error("Please select a style");
+      toast.error("Veuillez sélectionner un style");
       return;
     }
 
@@ -174,13 +174,13 @@ export function AiImageGenerator({ onUseInPost }: AiImageGeneratorProps) {
 
     setResult(image);
     setGenerating(false);
-    toast.success("Image generated successfully");
+    toast.success("Image générée avec succès");
   }, [description, selectedStyle, selectedStyleObj]);
 
   const handleUseInPost = () => {
     if (result) {
       onUseInPost?.(result);
-      toast.success("Image added to post");
+      toast.success("Image ajoutée à la publication");
     }
   };
 

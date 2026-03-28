@@ -57,7 +57,7 @@ export default function SharesPage() {
       const response = await sharesApi.list();
       setShares(response.data.shares);
     } catch {
-      toast.error('Failed to load shares');
+      toast.error('Impossible de charger les partages');
     } finally {
       setLoading(false);
     }
@@ -98,11 +98,11 @@ export default function SharesPage() {
       }
 
       await sharesApi.update(selectedShare.id, updates);
-      toast.success('Share updated');
+      toast.success('Partage mis à jour');
       setEditDialogOpen(false);
       fetchShares();
     } catch {
-      toast.error('Impossible de mettre à jour share');
+      toast.error('Impossible de mettre à jour le partage');
     } finally {
       setSaving(false);
     }
@@ -111,17 +111,17 @@ export default function SharesPage() {
   const handleDelete = async (id: string) => {
     try {
       await sharesApi.delete(id);
-      toast.success('Share link revoked');
+      toast.success('Lien de partage révoqué');
       fetchShares();
     } catch {
-      toast.error('Failed to revoke share');
+      toast.error('Impossible de révoquer le partage');
     }
   };
 
   const copyLink = (share: ShareLink) => {
     const url = `${window.location.origin}/share/${share.token}`;
     navigator.clipboard.writeText(url);
-    toast.success('Link copied to clipboard');
+    toast.success('Lien copié dans le presse-papiers');
   };
 
   const formatDate = (dateString: string) => {

@@ -148,7 +148,7 @@ export function SocialDashboard() {
           {statsCards.map((stat) => {
             const Icon = stat.icon;
             return (
-              <Card key={stat.title}>
+              <Card key={stat.title} className="hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
                     <div>

@@ -78,7 +78,7 @@ export function CompetitorMonitor() {
 
   const handleRemove = (id: string) => {
     setCompetitors((prev) => prev.filter((c) => c.id !== id));
-    toast.success("Competitor removed");
+    toast.success("Concurrent retiré");
   };
 
   const handleRefresh = async (id: string) => {
@@ -90,7 +90,7 @@ export function CompetitorMonitor() {
       if (!res.ok) throw new Error();
       const updated = await res.json();
       setCompetitors((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
-      toast.success("Stats refreshed");
+      toast.success("Statistiques actualisées");
     } catch {
       // Update with simulated fresh data
       setCompetitors((prev) =>
@@ -100,7 +100,7 @@ export function CompetitorMonitor() {
             : c
         )
       );
-      toast.info("Refreshed locally (API unavailable)");
+      toast.info("Actualisé localement (API indisponible)");
     } finally {
       setRefreshingId(null);
     }

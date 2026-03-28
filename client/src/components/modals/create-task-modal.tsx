@@ -62,7 +62,7 @@ export function CreateTaskModal({ open, onOpenChange, defaultProjectId }: Create
     setIsSubmitting(true);
     try {
       await createTask(data);
-      toast.success('Task created successfully');
+      toast.success('Tâche créée avec succès');
       form.reset();
       onOpenChange(false);
     } catch (error: any) {

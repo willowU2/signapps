@@ -103,17 +103,17 @@ export interface DiffStats {
   /** Lines added */
   linesAdded: number;
   /** Lines removed */
-  linesRemoved: number;
+  linesRetiré: number;
   /** Lines modified */
   linesModified: number;
   /** Words added */
   wordsAdded: number;
   /** Words removed */
-  wordsRemoved: number;
+  wordsRetiré: number;
   /** Characters added */
   charsAdded: number;
   /** Characters removed */
-  charsRemoved: number;
+  charsRetiré: number;
 }
 
 // ============================================================================

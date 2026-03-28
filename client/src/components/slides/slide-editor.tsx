@@ -588,7 +588,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             // Turning on: must have a text object selected to copy format from
             const active = canvas.getActiveObject();
             if (!active || (active.type !== 'i-text' && active.type !== 'textbox' && active.type !== 'text')) {
-                toast.error("Please select a text object first to copy its format");
+                toast.error("Veuillez d'abord sélectionner un objet texte pour copier son format");
                 return;
             }
 
@@ -612,7 +612,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
             canvas.defaultCursor = 'crosshair'; // A substitute for a paintbrush cursor
             canvas.hoverCursor = 'crosshair';
 
-            toast.success("Format copied. Click another text to apply.");
+            toast.success("Format copié. Cliquez sur un autre texte pour l'appliquer.");
         }
     }, [isFormatPainting]);
 
@@ -954,12 +954,12 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
                     isUpdatingRef.current = false;
                 });
 
-                toast.success("Magic Layout generated successfully!", { id: toastId });
+                toast.success("Mise en page magique générée avec succès !", { id: toastId });
             });
 
         } catch (error) {
             console.debug("Layout generation failed", error);
-            toast.error("Failed to generate layout. AI model may have returned invalid JSON or provider is unavailable.", { id: toastId });
+            toast.error("Impossible de générer la mise en page. Le modèle IA a peut-être retourné un JSON invalide.", { id: toastId });
         }
     };
 
@@ -1561,7 +1561,7 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
         const canvas = fabricCanvasRef.current
         const active = canvas?.getActiveObject()
         if (!active) {
-            toast.info("Selectionnez un objet pour previsualiser l'animation.")
+            toast.info("Sélectionnez un objet pour prévisualiser l'animation.")
             return
         }
         // Simple preview: hide then animate in
@@ -1656,13 +1656,13 @@ export function SlideEditor({ slideState, isReadOnly = false }: SlideEditorProps
     const handleMasterSelect = useCallback((masterId: string) => {
         if (activeSlideId && updateSlideMaster) {
             updateSlideMaster(activeSlideId, masterId)
-            toast.success("Modele applique a la diapositive.")
+            toast.success("Modèle appliqué à la diapositive.")
         }
     }, [activeSlideId, updateSlideMaster])
 
     const handleMasterUpdate = useCallback((master: MasterSlide) => {
         setMasterSlides(prev => prev.map(m => m.id === master.id ? master : m))
-        toast.success("Modele mis a jour.")
+        toast.success("Modèle mis à jour.")
     }, [])
 
     const handleMasterAdd = useCallback((master: MasterSlide) => {

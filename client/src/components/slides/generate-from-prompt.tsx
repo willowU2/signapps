@@ -58,7 +58,7 @@ export function GenerateFromPromptDialog({
 
   const handleGenerate = async () => {
     if (prompt.trim().length < 10) {
-      toast.error("Please describe your presentation in at least 10 characters.");
+      toast.error("Décrivez votre présentation en au moins 10 caractères.");
       return;
     }
     setLoading(true);
@@ -77,7 +77,7 @@ export function GenerateFromPromptDialog({
       setPrompt("");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      toast.error(`Generation failed: ${msg}`);
+      toast.error(`Génération échouée: ${msg}`);
     } finally {
       setLoading(false);
     }

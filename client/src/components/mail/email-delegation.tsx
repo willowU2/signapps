@@ -60,7 +60,7 @@ export function EmailDelegation({ accountId }: EmailDelegationProps) {
       const data = await accountApi.listDelegations(accountId)
       setDelegations(data)
     } catch {
-      toast.error("Failed to load delegations")
+      toast.error("Impossible de charger les délégations")
     } finally {
       setLoading(false)
     }
@@ -68,7 +68,7 @@ export function EmailDelegation({ accountId }: EmailDelegationProps) {
 
   async function handleCreate() {
     if (!form.delegate_email.includes("@")) {
-      toast.error("Invalid email")
+      toast.error("Email invalide")
       return
     }
     setSaving(true)
@@ -79,7 +79,7 @@ export function EmailDelegation({ accountId }: EmailDelegationProps) {
       })
       setDelegations(prev => [...prev, created])
       setDialogOpen(false)
-      toast.success("Delegation created — invite sent")
+      toast.success("Délégation créée — invitation envoyée")
     } catch {
       toast.error("Impossible de créer delegation")
     } finally {
@@ -91,9 +91,9 @@ export function EmailDelegation({ accountId }: EmailDelegationProps) {
     try {
       await accountApi.revokeDelegation(accountId, id)
       setDelegations(prev => prev.filter(d => d.id !== id))
-      toast.success("Delegation revoked")
+      toast.success("Délégation révoquée")
     } catch {
-      toast.error("Failed to revoke")
+      toast.error("Impossible de révoquer")
     }
   }
 

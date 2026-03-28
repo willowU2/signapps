@@ -80,14 +80,14 @@ export function DocMergeFields({ onInsert }: DocMergeFieldsProps) {
 
   function addCustomField() {
     if (!form.token.startsWith("{{") || !form.token.endsWith("}}")) {
-      toast.error("Token must be like {{field_name}}")
+      toast.error("Le token doit être de type {{nom_champ}}")
       return
     }
     const field: MergeField = { ...form, id: `custom_${Date.now()}` }
     setCustomFields(prev => [...prev, field])
     setForm({ token: "", label: "", source: "custom", default_value: "" })
     setAddOpen(false)
-    toast.success("Custom field added")
+    toast.success("Champ personnalisé ajouté")
   }
 
   function removeCustom(id: string) {

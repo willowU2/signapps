@@ -77,10 +77,10 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
 
     const { isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled, localParticipant } = useLocalParticipant()
     const connectionState = useConnectionState()
-        const isConnecté = connectionState === ConnectionState.Connecté
+        const isConnected = connectionState === ConnectionState.Connected
 
         const toggleMic = async () => {
-            if (!isConnecté) return;
+            if (!isConnected) return;
             try {
                 await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)
             } catch (err: any) {
@@ -94,7 +94,7 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
         }
 
         const toggleCamera = async () => {
-            if (!isConnecté) return;
+            if (!isConnected) return;
             try {
                 await localParticipant.setCameraEnabled(!isCameraEnabled)
             } catch (err: any) {
@@ -108,7 +108,7 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
         }
 
         const toggleScreenShare = async () => {
-            if (!isConnecté) return;
+            if (!isConnected) return;
             try {
                 await localParticipant.setScreenShareEnabled(!isScreenShareEnabled)
             } catch (err: any) {
@@ -148,9 +148,9 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
                         variant="secondary" 
                         size="icon" 
                         onClick={toggleMic}
-                        disabled={!isConnecté}
+                        disabled={!isConnected}
                         className={`h-[40px] w-[40px] rounded-full border-none transition-colors ${
-                            !isConnecté ? "opacity-50 cursor-not-allowed " : ""
+                            !isConnected ? "opacity-50 cursor-not-allowed " : ""
                         }${
                             isMicrophoneEnabled 
                                 ? "bg-[#3c4043] hover:bg-[#4d5156] text-white" 
@@ -163,9 +163,9 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
                         variant="secondary" 
                         size="icon" 
                         onClick={toggleCamera}
-                        disabled={!isConnecté}
+                        disabled={!isConnected}
                         className={`h-[40px] w-[40px] rounded-full border-none transition-colors ${
-                            !isConnecté ? "opacity-50 cursor-not-allowed " : ""
+                            !isConnected ? "opacity-50 cursor-not-allowed " : ""
                         }${
                             isCameraEnabled 
                                 ? "bg-[#3c4043] hover:bg-[#4d5156] text-white" 
@@ -184,9 +184,9 @@ function MeetUiContent({ onLeave, roomId }: { onLeave: () => void, roomId: strin
                         variant="secondary" 
                         size="icon" 
                         onClick={toggleScreenShare}
-                        disabled={!isConnecté}
+                        disabled={!isConnected}
                         className={`h-[40px] w-[40px] rounded-full border-none transition-colors ${
-                            !isConnecté ? "opacity-50 cursor-not-allowed " : ""
+                            !isConnected ? "opacity-50 cursor-not-allowed " : ""
                         }${
                             isScreenShareEnabled 
                                 ? "bg-[#8ab4f8] hover:bg-[#aecbfa] text-[#202124]" 
@@ -255,7 +255,7 @@ function VideoComponent() {
         )
     }
 
-    if (connectionState === ConnectionState.Déconnecté) {
+    if (connectionState === ConnectionState.Disconnected) {
         return (
             <div className="w-full h-full bg-[#3c4043] rounded-xl flex items-center justify-center flex-col gap-2">
                 <span className="text-[#ea4335] text-lg font-medium">Impossible de se connecter au serveur</span>

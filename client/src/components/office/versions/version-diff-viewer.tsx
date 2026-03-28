@@ -183,11 +183,11 @@ function DiffStats({ stats }: DiffStatsProps) {
           <TooltipTrigger asChild>
             <div className="flex items-center gap-1 text-red-600">
               <Minus className="h-4 w-4" />
-              <span>-{stats.linesRemoved}</span>
+              <span>-{stats.linesRetiré}</span>
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            {stats.linesRemoved} lignes supprimées ({stats.wordsRemoved} mots, {stats.charsRemoved} caractères)
+            {stats.linesRetiré} lignes supprimées ({stats.wordsRetiré} mots, {stats.charsRetiré} caractères)
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

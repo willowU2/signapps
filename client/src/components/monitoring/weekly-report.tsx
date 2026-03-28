@@ -42,7 +42,7 @@ export function WeeklyMetricsReport() {
   }
 
   const handleSendNow = async () => {
-    if (!config.recipients.trim()) { toast.error("Add at least one recipient"); return }
+    if (!config.recipients.trim()) { toast.error("Ajoutez au moins un destinataire"); return }
     setSending(true)
     // Simulate API call
     await new Promise(r => setTimeout(r, 1200))

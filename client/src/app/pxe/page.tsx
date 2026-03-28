@@ -127,7 +127,7 @@ export default function PXEDashboard() {
             }
             setProfileDialogOpen(false)
         } catch (err) {
-            console.debug('Impossible d'enregistrer profile:', err)
+            console.debug("Impossible d'enregistrer profile:", err)
             toast.error('chec de la sauvegarde')
         } finally {
             setSaving(false)
@@ -195,7 +195,7 @@ export default function PXEDashboard() {
             }
             setAssetDialogOpen(false)
         } catch (err) {
-            console.debug('Impossible d'enregistrer asset:', err)
+            console.debug("Impossible d'enregistrer asset:", err)
             toast.error('chec de la sauvegarde')
         } finally {
             setSaving(false)

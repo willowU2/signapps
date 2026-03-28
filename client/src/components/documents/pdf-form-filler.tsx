@@ -51,7 +51,7 @@ export function PdfFormFiller() {
       setFields(data.fields ?? [])
       toast.success(`${data.fields?.length ?? 0} fields detected`)
     } catch {
-      toast.error("Field detection failed — you can add fields manually")
+      toast.error("Détection des champs échouée — vous pouvez les ajouter manuellement")
     } finally {
       setDetecting(false)
     }
@@ -70,7 +70,7 @@ export function PdfFormFiller() {
   }
 
   async function fillPdf() {
-    if (!pdfFile) { toast.error("Upload a PDF first"); return }
+    if (!pdfFile) { toast.error("Téléversez un PDF d'abord"); return }
     const emptyRequired = fields.filter(f => f.required && !f.value)
     if (emptyRequired.length) {
       toast.error(`${emptyRequired.length} required field(s) missing`)

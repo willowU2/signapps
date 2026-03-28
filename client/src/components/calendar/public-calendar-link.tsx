@@ -74,7 +74,7 @@ export function PublicCalendarLink({ calendarId, calendarName }: PublicCalendarL
                 createdAt: new Date().toISOString(),
             })
             setIsPublic(true)
-            toast.success("Public link generated (demo)")
+            toast.success("Lien public généré")
         } finally {
             setLoading(false)
         }
@@ -86,9 +86,9 @@ export function PublicCalendarLink({ calendarId, calendarName }: PublicCalendarL
             await fetch(`/api/calendar/${calendarId}/public-link`, { method: "DELETE" })
             setPublicLink(null)
             setIsPublic(false)
-            toast.success("Public link revoked")
+            toast.success("Lien public révoqué")
         } catch {
-            toast.error("Failed to revoke link")
+            toast.error("Impossible de révoquer le lien")
         } finally {
             setLoading(false)
         }
@@ -97,7 +97,7 @@ export function PublicCalendarLink({ calendarId, calendarName }: PublicCalendarL
     const copyToClipboard = (text: string, label: string) => {
         navigator.clipboard.writeText(text)
             .then(() => toast.success(`${label} copied to clipboard`))
-            .catch(() => toast.error("Failed to copy"))
+            .catch(() => toast.error("Impossible de copier"))
     }
 
     const handleToggle = async (val: boolean) => {

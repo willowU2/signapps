@@ -339,7 +339,7 @@ export async function performAutoLayout(
         const toastId = toast.loading("Disposition IA en cours...")
         suggestions = await computeAiLayout(objects, canvasWidth, canvasHeight, options.routeConfig)
         if (suggestions) {
-            toast.success("Disposition IA appliquee !", { id: toastId })
+            toast.success("Disposition IA appliquée !", { id: toastId })
         } else {
             toast.info("IA indisponible, utilisation de la disposition automatique.", { id: toastId })
         }
@@ -349,7 +349,7 @@ export async function performAutoLayout(
     if (!suggestions) {
         suggestions = computeAutoLayout(objects, canvasWidth, canvasHeight)
         if (!options?.useAi) {
-            toast.success("Disposition automatique appliquee.")
+            toast.success("Disposition automatique appliquée.")
         }
     }
 

@@ -145,7 +145,7 @@ export function WebhookManager() {
       resetForm();
       fetchHooks();
     } catch (e: any) {
-      toast.error(e.message || 'Impossible d'enregistrer webhook');
+      toast.error(e.message || "Impossible d'enregistrer webhook");
     }
   };
 

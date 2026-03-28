@@ -58,7 +58,7 @@ export function TriggerBuilder() {
   };
 
   const toggle = (id: string) => setAutomations(as => as.map(a => a.id === id ? { ...a, enabled: !a.enabled } : a));
-  const remove = (id: string) => { setAutomations(as => as.filter(a => a.id !== id)); toast.success('Removed'); };
+  const remove = (id: string) => { setAutomations(as => as.filter(a => a.id !== id)); toast.success('Retiré'); };
 
   const testRun = (a: Automation) => toast.success(`Test triggered: ${a.trigger} → ${ACTION_LABELS[a.action]}`);
 

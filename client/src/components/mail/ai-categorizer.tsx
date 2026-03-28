@@ -60,7 +60,7 @@ export function AiCategorizerPanel() {
       setStats(result.stats)
       toast.success(`Categorized ${result.total} emails`)
     } catch {
-      toast.error("Categorization failed")
+      toast.error("Catégorisation échouée")
     } finally {
       setRunning(false)
       setTimeout(() => setProgress(0), 1000)

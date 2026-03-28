@@ -207,14 +207,14 @@ export default function DesignDashboard() {
         {filteredDesigns.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl bg-transparent">
             <Palette className="h-12 w-12 text-muted-foreground/30 mb-4" />
-            <h3 className="text-lg font-medium text-muted-foreground">No designs yet</h3>
-            <p className="text-sm text-muted-foreground/60 mt-1">Create your first design to get started</p>
+            <h3 className="text-lg font-medium text-muted-foreground">Aucun design</h3>
+            <p className="text-sm text-muted-foreground/60 mt-1">Créez votre premier design pour commencer</p>
             <Button
               onClick={() => setIsCreateOpen(true)}
               className="mt-4 gap-2 bg-violet-600 hover:bg-violet-700 text-white"
             >
               <Plus className="h-4 w-4" />
-              Create Design
+              Créer un design
             </Button>
           </div>
         ) : (

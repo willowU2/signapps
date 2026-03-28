@@ -46,7 +46,7 @@ export function ShareSheet({ open, onOpenChange, item }: ShareSheetProps) {
       }
       const response = await sharesApi.create(payload);
       setShareUrl(response.data.url);
-      toast.success("Share link created successfully");
+      toast.success("Lien de partage créé avec succès");
     } catch (error) {
       console.debug(error);
       toast.error("Impossible de créer share link");
@@ -57,7 +57,7 @@ export function ShareSheet({ open, onOpenChange, item }: ShareSheetProps) {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
-    toast.success("Link copied to clipboard");
+    toast.success("Lien copié to clipboard");
     onOpenChange(false);
     // Reset state for next time
     setTimeout(() => {

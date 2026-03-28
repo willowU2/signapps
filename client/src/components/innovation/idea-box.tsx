@@ -37,7 +37,7 @@ export function IdeaBox() {
 
   const submitIdea = () => {
     if (!newIdea.trim()) {
-      toast.error("Please enter an idea");
+      toast.error("Veuillez saisir une idée");
       return;
     }
 
@@ -53,7 +53,7 @@ export function IdeaBox() {
       ...ideas,
     ]);
     setNewIdea("");
-    toast.success("Idea submitted anonymously");
+    toast.success("Idée soumise anonymement");
   };
 
   const handleVote = (id: string, direction: "up" | "down") => {
@@ -84,7 +84,7 @@ export function IdeaBox() {
 
   const deleteIdea = (id: string) => {
     setIdeas(ideas.filter((idea) => idea.id !== id));
-    toast.success("Idea removed");
+    toast.success("Idée retirée");
   };
 
   const getStatusColor = (status: Idea["status"]) => {

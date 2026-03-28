@@ -107,7 +107,7 @@ export function InnovationChallenge() {
     );
 
     form.reset();
-    toast.success("Submission created successfully!");
+    toast.success("Soumission créée avec succès !");
   };
 
   const handleVote = (submissionId: string) => {

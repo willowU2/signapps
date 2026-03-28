@@ -100,7 +100,7 @@ export default function NotificationSettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
-      setError('Impossible d'enregistrer preferences');
+      setError("Impossible d'enregistrer preferences");
     } finally {
       setSaving(false);
     }

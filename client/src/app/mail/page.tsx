@@ -23,6 +23,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { MailDisplay } from "@/components/mail/mail-display"
 import { MailList } from "@/components/mail/mail-list"
@@ -66,6 +67,7 @@ export default function MailPage() {
 
     const [activeAccountId, setActiveAccountId] = useState<string | undefined>(undefined)
     const [loadError, setLoadError] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
 
     const [labels, setLabels] = useState<MailLabel[]>([])
     const [labelsLoading, setLabelsLoading] = useState(false)
@@ -143,6 +145,7 @@ export default function MailPage() {
 
     const loadData = useCallback(async () => {
         setLoadError(null)
+        setIsLoading(true)
         try {
             // Fetch accounts
             const accounts = await accountApi.list()
@@ -176,6 +179,8 @@ export default function MailPage() {
             console.debug('Failed to fetch mail data:', err)
             setLoadError("Le service mail est inaccessible. Vérifiez que le serveur est démarré.")
             setMailList([])
+        } finally {
+            setIsLoading(false)
         }
     }, [setMailList])
 
@@ -374,7 +379,21 @@ export default function MailPage() {
                             )}
                         </div>
                     </div>
-                    {loadError ? (
+                    {isLoading ? (
+                        <div className="flex-1 flex flex-col gap-2 p-3">
+                            {Array.from({ length: 8 }).map((_, i) => (
+                                <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border/40">
+                                    <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                                    <div className="flex-1 space-y-1.5">
+                                        <Skeleton className="h-3.5 w-1/3" />
+                                        <Skeleton className="h-3 w-2/3" />
+                                        <Skeleton className="h-3 w-full" />
+                                    </div>
+                                    <Skeleton className="h-3 w-10 shrink-0" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : loadError ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
                             <Inbox className="h-12 w-12 text-muted-foreground/30 mb-4" />
                             <h3 className="text-base font-medium text-muted-foreground mb-1">Service mail indisponible</h3>

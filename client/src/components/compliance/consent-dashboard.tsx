@@ -69,7 +69,7 @@ export function ConsentDashboard() {
       setStats(statsRes)
       setPurposes(purposesRes.purposes ?? [])
     } catch {
-      toast.error("Failed to load consent data")
+      toast.error("Impossible de charger les données de consentement")
     } finally {
       setLoading(false)
     }
@@ -90,7 +90,7 @@ export function ConsentDashboard() {
       a.href = url
       a.download = `consents_${format(new Date(), "yyyy-MM-dd")}.csv`
       a.click()
-      toast.success("Consents exported")
+      toast.success("Consentements exportés")
     } catch {
       toast.error("Export failed")
     }

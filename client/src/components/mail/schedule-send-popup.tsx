@@ -65,11 +65,11 @@ export function ScheduleSendPopup({ onSchedule, disabled }: ScheduleSendPopupPro
         const [h, min] = time.split(":").map(Number)
         const d = new Date(y, m - 1, dd, h, min, 0)
         if (isNaN(d.getTime())) {
-            toast.error("Invalid date/time")
+            toast.error("Date/heure invalide")
             return
         }
         if (isBefore(d, new Date())) {
-            toast.error("Schedule time must be in the future")
+            toast.error("L'heure planifiée doit être dans le futur")
             return
         }
         onSchedule(d)

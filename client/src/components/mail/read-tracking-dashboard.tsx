@@ -58,7 +58,7 @@ export function ReadTrackingDashboard() {
       setRecords(recs)
       setStats(agg)
     } catch {
-      toast.error("Failed to load tracking data")
+      toast.error("Impossible de charger les données de suivi")
     } finally {
       setLoading(false)
     }

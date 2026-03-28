@@ -49,7 +49,7 @@ export function ComposeRichDialog({
     const handleSave = useCallback(
         async (html: string, design: object) => {
             if (!accountId) {
-                toast.error("Select a mail account first");
+                toast.error("Sélectionnez d'abord un compte mail");
                 return;
             }
             try {
@@ -77,7 +77,7 @@ export function ComposeRichDialog({
             }
 
             if (!accountId) {
-                toast.error("Select a mail account first");
+                toast.error("Sélectionnez d'abord un compte mail");
                 return;
             }
             setIsSending(true);
@@ -89,12 +89,12 @@ export function ComposeRichDialog({
                     try {
                         bodyHtml = await encryptMessage(recipientPublicKey, html);
                     } catch {
-                        toast.error("Encryption failed. Check recipient's public key.");
+                        toast.error("Chiffrement échoué. Vérifiez la clé publique du destinataire.");
                         setIsSending(false);
                         return;
                     }
                 } else if (encryptEnabled && !recipientPublicKey.trim()) {
-                    toast.error("Please provide the recipient's public key to encrypt.");
+                    toast.error("Veuillez fournir la clé publique du destinataire pour chiffrer.");
                     setIsSending(false);
                     return;
                 }

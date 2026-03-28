@@ -38,7 +38,7 @@ function usePersistentList(storageKey: string, initial: string[]) {
     const add = (item: string) => {
         const trimmed = item.trim().toLowerCase()
         if (!trimmed) return false
-        if (items.includes(trimmed)) { toast.error("Already in list"); return false }
+        if (items.includes(trimmed)) { toast.error("Déjà dans la liste"); return false }
         const updated = [...items, trimmed]
         setItems(updated)
         if (typeof window !== "undefined") localStorage.setItem(storageKey, JSON.stringify(updated))
@@ -69,7 +69,7 @@ function FilterList({ items, onAdd, onRemove, placeholder, badgeColor, icon }: F
     const handleAdd = () => {
         if (onAdd(input)) {
             setInput("")
-            toast.success("Added to list")
+            toast.success("Ajouté à la liste")
         }
     }
 

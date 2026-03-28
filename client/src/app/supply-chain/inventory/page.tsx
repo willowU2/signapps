@@ -140,7 +140,7 @@ export default function InventoryPage() {
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2"><AlertTriangle className="h-4 w-4 text-yellow-600" /><span className="font-medium text-sm">{alerts.length} stock alert{alerts.length > 1 ? 's' : ''}</span></div>
               <div className="flex flex-wrap gap-2">
-                {alerts.map(a => { const sc = statusConfig[getStatus(a)]; return <Badge key={a.id} className={sc.color}>{a.name}: {getStatus(a) === 'out' ? 'Out of stock' : getStatus(a) === 'low' ? `Low (${a.quantity})` : `Overstock (${a.quantity})`}</Badge>; })}
+                {alerts.map(a => { const sc = statusConfig[getStatus(a)]; return <Badge key={a.id} className={sc.color}>{a.name}: {getStatus(a) === 'out' ? 'Rupture de stock' : getStatus(a) === 'low' ? `Low (${a.quantity})` : `Overstock (${a.quantity})`}</Badge>; })}
               </div>
             </CardContent>
           </Card>

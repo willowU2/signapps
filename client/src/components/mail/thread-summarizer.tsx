@@ -40,7 +40,7 @@ export function ThreadSummarizer({ threadId, messages }: ThreadSummarizerProps) 
 
   const handleSummarize = async () => {
     if (messages.length === 0) {
-      toast.error("No messages to summarize.");
+      toast.error("Aucun message à résumer.");
       return;
     }
     setLoading(true);

@@ -94,7 +94,7 @@ export function useUndoSend() {
       if (sendTimeoutRef.current) clearTimeout(sendTimeoutRef.current)
       setState(s => ({ ...s, active: false }))
       if (cancelFn) cancelFn()
-      toast.info("Send cancelled")
+      toast.info("Envoi annulé")
     }
 
     sendTimeoutRef.current = setTimeout(async () => {

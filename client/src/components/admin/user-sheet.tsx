@@ -40,7 +40,7 @@ import { PasswordStrength } from "@/components/auth/password-strength";
 
 const userFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters").max(50),
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Email invalide address"),
   password: z.string().optional(),
   display_name: z.string().optional(),
   role: z.string().min(1, "Role is required"),

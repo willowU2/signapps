@@ -461,11 +461,11 @@ function AddAccountWizard({
 
 function AccountCard({
   account,
-  onDeleted,
+  onSupprimé,
   onSynced,
 }: {
   account: MailAccount;
-  onDeleted: () => void;
+  onSupprimé: () => void;
   onSynced: () => void;
 }) {
   const [syncing, setSyncing] = useState(false);
@@ -515,7 +515,7 @@ function AccountCard({
     try {
       await accountApi.delete(account.id);
       toast.success("Compte supprimé");
-      onDeleted();
+      onSupprimé();
     } catch {
       toast.error("Impossible de supprimer le compte");
     } finally {
@@ -850,7 +850,7 @@ export default function MailSettingsPage() {
                   <AccountCard
                     key={acc.id}
                     account={acc}
-                    onDeleted={loadAccounts}
+                    onSupprimé={loadAccounts}
                     onSynced={loadAccounts}
                   />
                 ))}

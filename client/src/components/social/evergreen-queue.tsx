@@ -100,9 +100,9 @@ export function EvergreenQueue({
         body: JSON.stringify({ is_evergreen: true }),
       });
       onAddPost?.(id);
-      toast.success("Post added to evergreen queue");
+      toast.success("Publication ajoutée à la file evergreen");
     } catch {
-      toast.error("Could not update post — check API");
+      toast.error("Impossible de mettre à jour la publication — vérifiez l'API");
     } finally {
       setLoading(null);
       setNewPostId("");
@@ -119,10 +119,10 @@ export function EvergreenQueue({
       });
       setPosts((prev) => prev.filter((p) => p.id !== post.id));
       onRemovePost?.(post.id);
-      toast.success("Removed from evergreen queue");
+      toast.success("Retiré from evergreen queue");
     } catch {
       setPosts((prev) => prev.filter((p) => p.id !== post.id));
-      toast.warning("Removed locally (API unavailable)");
+      toast.warning("Retiré locally (API unavailable)");
     } finally {
       setLoading(null);
     }

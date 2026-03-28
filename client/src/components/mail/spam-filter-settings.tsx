@@ -285,7 +285,7 @@ export function SpamActionButtons({
             );
             onTrained?.();
         } catch {
-            toast.error("Failed to train spam filter");
+            toast.error("Impossible d'entraîner le filtre anti-spam");
         } finally {
             setTraining(false);
         }

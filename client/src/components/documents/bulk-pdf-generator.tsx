@@ -79,8 +79,8 @@ export function BulkPdfGenerator() {
   }, [])
 
   async function runBulk() {
-    if (!selectedTemplate) { toast.error("Select a template"); return }
-    if (!rows.length) { toast.error("Upload CSV data"); return }
+    if (!selectedTemplate) { toast.error("Sélectionnez un modèle"); return }
+    if (!rows.length) { toast.error("Téléversez les données CSV"); return }
 
     setJob({ total: rows.length, done: 0, errors: 0, running: true })
     const updated = [...rows]
@@ -100,7 +100,7 @@ export function BulkPdfGenerator() {
         const url = URL.createObjectURL(blob)
         updated[i] = { ...updated[i], status: "done", output_url: url }
       } catch {
-        updated[i] = { ...updated[i], status: "error", error: "Generation failed" }
+        updated[i] = { ...updated[i], status: "error", error: "Génération échouée" }
       }
 
       const done = updated.filter(r => r.status === "done").length
@@ -139,7 +139,7 @@ export function BulkPdfGenerator() {
           <Label>Document template</Label>
           <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a template…" />
+              <SelectValue placeholder="Sélectionnez un modèle…" />
             </SelectTrigger>
             <SelectContent>
               {templates.map(t => (

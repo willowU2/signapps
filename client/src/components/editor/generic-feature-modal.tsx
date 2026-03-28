@@ -55,7 +55,7 @@ export function GenericFeatureModal({ isOpen, onClose, actionId, actionLabel, do
             onClose();
         } catch {
             const { toast } = await import('sonner');
-            toast.error('Failed to restore version');
+            toast.error('Impossible de restaurer la version');
         } finally {
             setIsRestoring(false);
         }

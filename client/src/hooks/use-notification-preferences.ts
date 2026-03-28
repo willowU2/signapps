@@ -87,7 +87,7 @@ export function useNotificationPreferences(): UseNotificationPreferencesReturn {
 
         setPreferences(response.data);
       } catch (err) {
-        setError('Impossible d'enregistrer preferences');
+        setError("Impossible d'enregistrer preferences");
         throw err;
       }
     },

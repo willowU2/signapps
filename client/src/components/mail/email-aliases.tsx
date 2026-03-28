@@ -52,7 +52,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
       const data = await accountApi.listAliases(accountId)
       setAliases(data)
     } catch {
-      toast.error("Failed to load aliases")
+      toast.error("Impossible de charger les alias")
     } finally {
       setLoading(false)
     }
@@ -72,7 +72,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
 
   async function handleSave() {
     if (!form.alias_email.includes("@")) {
-      toast.error("Invalid email address")
+      toast.error("Email invalide address")
       return
     }
     setSaving(true)
@@ -80,11 +80,11 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
       if (editAlias) {
         const updated = await accountApi.updateAlias(accountId, editAlias.id, form)
         setAliases(prev => prev.map(a => a.id === editAlias.id ? { ...a, ...updated } : a))
-        toast.success("Alias updated")
+        toast.success("Alias mis à jour")
       } else {
         const created = await accountApi.createAlias(accountId, form)
         setAliases(prev => [...prev, created])
-        toast.success("Alias created — verification email sent")
+        toast.success("Alias créé — email de vérification envoyé")
       }
       setDialogOpen(false)
     } catch {
@@ -98,7 +98,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
     try {
       await accountApi.deleteAlias(accountId, aliasId)
       setAliases(prev => prev.filter(a => a.id !== aliasId))
-      toast.success("Alias removed")
+      toast.success("Alias supprimé")
     } catch {
       toast.error("Impossible de supprimer alias")
     }
@@ -108,7 +108,7 @@ export function EmailAliases({ accountId, accountEmail }: EmailAliasesProps) {
     try {
       await accountApi.setDefaultAlias(accountId, aliasId)
       setAliases(prev => prev.map(a => ({ ...a, is_default: a.id === aliasId })))
-      toast.success("Default sender updated")
+      toast.success("Expéditeur par défaut mis à jour")
     } catch {
       toast.error("Impossible de mettre à jour default")
     }

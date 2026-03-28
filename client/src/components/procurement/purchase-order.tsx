@@ -76,7 +76,7 @@ export function PurchaseOrder() {
 
   const onSubmit = (values: POFormValues) => {
     setSupplier(values.supplier);
-    toast.success("Purchase order saved");
+    toast.success("Bon de commande enregistré");
   };
 
   return (

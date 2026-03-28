@@ -82,7 +82,7 @@ export function DataRetentionPolicies() {
       const data = await res.json()
       setPolicies(data.data ?? [])
     } catch {
-      toast.error("Failed to load retention policies")
+      toast.error("Impossible de charger les politiques de rétention")
     } finally {
       setLoading(false)
     }
@@ -101,7 +101,7 @@ export function DataRetentionPolicies() {
   }
 
   async function handleSave() {
-    if (!form.name || !form.data_type) { toast.error("Name and data type required"); return }
+    if (!form.name || !form.data_type) { toast.error("Le nom et le type de données sont requis"); return }
     setSaving(true)
     try {
       if (editPolicy) {
@@ -112,7 +112,7 @@ export function DataRetentionPolicies() {
         })
         const updated = await res.json()
         setPolicies(prev => prev.map(p => p.id === editPolicy.id ? updated : p))
-        toast.success("Policy updated")
+        toast.success("Politique mise à jour")
       } else {
         const res = await fetch("/api/compliance/retention-policies", {
           method: "POST",
@@ -121,7 +121,7 @@ export function DataRetentionPolicies() {
         })
         const created = await res.json()
         setPolicies(prev => [...prev, created])
-        toast.success("Policy created")
+        toast.success("Politique créée")
       }
       setDialogOpen(false)
     } catch {
@@ -139,7 +139,7 @@ export function DataRetentionPolicies() {
       setPolicies(prev => prev.map(p => p.id === id ? { ...p, last_run_at: new Date().toISOString(), records_affected: result.affected } : p))
       toast.success(`Policy run: ${result.affected} records processed`)
     } catch {
-      toast.error("Policy run failed")
+      toast.error("Échec de l'exécution de la politique")
     } finally {
       setRunningId(null)
     }
@@ -149,7 +149,7 @@ export function DataRetentionPolicies() {
     try {
       await fetch(`/api/compliance/retention-policies/${id}`, { method: "DELETE" })
       setPolicies(prev => prev.filter(p => p.id !== id))
-      toast.success("Policy deleted")
+      toast.success("Politique supprimée")
     } catch {
       toast.error("Impossible de supprimer")
     }

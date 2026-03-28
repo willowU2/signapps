@@ -143,7 +143,7 @@ export default function LdapPage() {
                 // Create new config
                 await identityApi.post("/api/v1/auth/ldap/config", formData)
             }
-            toast.success("Configuration LDAP enregistree")
+            toast.success("Configuration LDAP enregistrée")
             loadConfig()
         } catch (err: any) {
             toast.error("Erreur: " + (err.response?.data?.message || err.message))

@@ -109,7 +109,7 @@ export function ReportGenerator() {
 
   const handlePreview = async () => {
     if (selectedAccounts.length === 0) {
-      toast.error("Select at least one account");
+      toast.error("Sélectionnez au moins un compte");
       return;
     }
     setLoadingPreview(true);
@@ -124,7 +124,7 @@ export function ReportGenerator() {
       setPreview(data);
     } catch {
       setPreview(generatePreview(range));
-      toast.info("Showing preview with local data");
+      toast.info("Aperçu affiché avec données locales");
     } finally {
       setLoadingPreview(false);
     }
@@ -151,7 +151,7 @@ export function ReportGenerator() {
       a.download = `social-report-${range}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("Report exported");
+      toast.success("Rapport exporté");
     } catch {
       toast.error("PDF export unavailable — signapps-office service required");
     } finally {
@@ -161,7 +161,7 @@ export function ReportGenerator() {
 
   const handleScheduleSave = async () => {
     if (!scheduleEmail.includes("@")) {
-      toast.error("Enter a valid email address");
+      toast.error("Saisissez une adresse email valide");
       return;
     }
     try {
@@ -172,7 +172,7 @@ export function ReportGenerator() {
       });
       toast.success(`Auto-report scheduled ${schedule}`);
     } catch {
-      toast.warning("Saved locally — API unavailable");
+      toast.warning("Enregistré localement — API indisponible");
     }
     setAutoReportEnabled(true);
   };

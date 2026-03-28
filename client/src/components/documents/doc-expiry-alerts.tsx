@@ -76,14 +76,14 @@ export function DocExpiryAlerts() {
       const data = await res.json()
       setRecords(data.data ?? [])
     } catch {
-      toast.error("Failed to load expiry records")
+      toast.error("Impossible de charger les alertes d'expiration")
     } finally {
       setLoading(false)
     }
   }
 
   async function handleCreate() {
-    if (!form.doc_title || !form.expiry_date) { toast.error("Title and expiry date required"); return }
+    if (!form.doc_title || !form.expiry_date) { toast.error("Le titre et la date d'expiration sont requis"); return }
     setSaving(true)
     try {
       const res = await fetch("/api/docs/expiry", {
@@ -94,7 +94,7 @@ export function DocExpiryAlerts() {
       const created = await res.json()
       setRecords(prev => [...prev, created])
       setDialogOpen(false)
-      toast.success("Expiry tracking added")
+      toast.success("Suivi d'expiration ajouté")
     } catch {
       toast.error("Impossible d'enregistrer")
     } finally {
@@ -106,7 +106,7 @@ export function DocExpiryAlerts() {
     try {
       await fetch(`/api/docs/expiry/${id}`, { method: "DELETE" })
       setRecords(prev => prev.filter(r => r.id !== id))
-      toast.success("Removed")
+      toast.success("Retiré")
     } catch {
       toast.error("Impossible de supprimer")
     }

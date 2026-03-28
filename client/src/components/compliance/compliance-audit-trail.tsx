@@ -76,7 +76,7 @@ export function ComplianceAuditTrail() {
       setEntries(data.data ?? [])
       setTotalPages(Math.ceil((data.total ?? 0) / 50))
     } catch {
-      toast.error("Failed to load audit trail")
+      toast.error("Impossible de charger le journal d'audit")
     } finally {
       setLoading(false)
     }
@@ -90,10 +90,10 @@ export function ComplianceAuditTrail() {
       const res = await fetch("/api/compliance/audit-trail/verify", { method: "POST" })
       const data = await res.json()
       setIntegrityOk(data.valid)
-      if (data.valid) toast.success("Audit trail integrity verified")
+      if (data.valid) toast.success("Intégrité du journal d'audit vérifiée")
       else toast.error(`Integrity check failed at entry ${data.failed_at}`)
     } catch {
-      toast.error("Verification failed")
+      toast.error("Vérification échouée")
     } finally {
       setVerifying(false)
     }

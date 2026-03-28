@@ -55,7 +55,7 @@ export function UnifiedInbox() {
       setActiveAccountIds(new Set(accs.map((a: MailAccount) => a.id)))
       await loadEmails(accs.map((a: MailAccount) => a.id), accs)
     } catch {
-      toast.error("Failed to load accounts")
+      toast.error("Impossible de charger les comptes")
     } finally {
       setLoading(false)
     }
@@ -82,7 +82,7 @@ export function UnifiedInbox() {
       )
       setEmails(all)
     } catch {
-      toast.error("Failed to load emails")
+      toast.error("Impossible de charger les emails")
     }
   }
 

@@ -262,10 +262,10 @@ export function ReportBuilder() {
       setPreviewData(data);
       setShowPreview(true);
       if (data.length === 0) {
-        toast.info("No data found for this source");
+        toast.info("Aucune donnée trouvée pour cette source");
       }
     } catch {
-      toast.error("Failed to load report data");
+      toast.error("Impossible de charger les données du rapport");
     } finally {
       setIsLoadingPreview(false);
     }

@@ -50,7 +50,7 @@ export function AssetAssignment({ asset }: Props) {
       setDialogOpen(false)
       setForm({ user: "", note: "" })
     } catch {
-      toast.error("Failed to assign asset")
+      toast.error("Impossible d'assigner l'équipement")
     } finally {
       setSaving(false)
     }
@@ -61,10 +61,10 @@ export function AssetAssignment({ asset }: Props) {
     try {
       await itAssetsApi.updateHardware(asset.id, { assigned_user_id: "" })
       setHistory(h => h.map((r, i) => i === 0 ? { ...r, unassigned_at: new Date().toISOString() } : r))
-      toast.success("Asset unassigned")
+      toast.success("Équipement désassigné")
       queryClient.invalidateQueries({ queryKey: ['it-assets'] })
     } catch {
-      toast.error("Failed to unassign")
+      toast.error("Impossible de désassigner")
     } finally {
       setSaving(false)
     }

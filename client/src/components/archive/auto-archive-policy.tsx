@@ -108,7 +108,7 @@ export function AutoArchivePolicy() {
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <p className="text-sm text-blue-900">
-          <strong>Note:</strong> Archive policies run automatically daily at 2:00 AM. Deleted items cannot be recovered.
+          <strong>Note:</strong> Archive policies run automatically daily at 2:00 AM. Supprimé items cannot be recovered.
         </p>
       </div>
     </div>

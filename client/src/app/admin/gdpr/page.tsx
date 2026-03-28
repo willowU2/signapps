@@ -76,7 +76,7 @@ interface DataExportRequest {
 // --------------------------------------------------------------------------
 
 const DEFAULT_POLICIES: RetentionPolicy[] = [
-  { id: '1', data_type: 'trash', max_age_days: 30, action: 'delete', description: 'Deleted files in trash' },
+  { id: '1', data_type: 'trash', max_age_days: 30, action: 'delete', description: 'Supprimé files in trash' },
   { id: '2', data_type: 'logs', max_age_days: 90, action: 'delete', description: 'Application logs' },
   { id: '3', data_type: 'sessions', max_age_days: 7, action: 'delete', description: 'User sessions' },
   { id: '4', data_type: 'mails', max_age_days: 730, action: 'archive', description: 'Email messages' },

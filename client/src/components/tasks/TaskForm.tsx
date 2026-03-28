@@ -84,7 +84,7 @@ export function TaskForm({
       };
 
       await createTask(createData);
-      toast.success("Task created successfully");
+      toast.success("Tâche créée avec succès");
       onOpenChange(false);
       setFormData({ title: "", description: "", priority: "1", due_date: "", assignee_id: null, reminder_enabled: false });
       onTaskCreated?.();

@@ -82,7 +82,7 @@ export function DocWorkflowStatus({
       setConfirmTransition(null)
       toast.success(`Document moved to ${STEP_CONFIG[t.to].label}`)
     } catch {
-      toast.error("Transition failed")
+      toast.error("Transition échouée")
     } finally {
       setPending(null)
     }

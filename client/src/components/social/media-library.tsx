@@ -171,7 +171,7 @@ export function MediaLibrary() {
   const handleCopyUrl = useCallback((item: MediaItem) => {
     navigator.clipboard.writeText(item.url).then(
       () => toast.success('URL copied to clipboard'),
-      () => toast.error('Failed to copy URL'),
+      () => toast.error('Impossible de copier URL'),
     );
   }, []);
 

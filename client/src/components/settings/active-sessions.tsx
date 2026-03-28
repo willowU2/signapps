@@ -48,7 +48,7 @@ export function ActiveSessions() {
       const res = await axios.get(`${IDENTITY_URL}/auth/sessions`, { withCredentials: true });
       setSessions(res.data);
     } catch {
-      toast.error("Failed to load sessions");
+      toast.error("Impossible de charger les sessions");
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +63,9 @@ export function ActiveSessions() {
     try {
       await axios.delete(`${IDENTITY_URL}/auth/sessions/${id}`, { withCredentials: true });
       setSessions((prev) => prev.filter((s) => s.id !== id));
-      toast.success("Session revoked");
+      toast.success("Session révoquée");
     } catch {
-      toast.error("Failed to revoke session");
+      toast.error("Impossible de révoquer la session");
     } finally {
       setRevoking((prev) => {
         const next = new Set(prev);
@@ -82,7 +82,7 @@ export function ActiveSessions() {
       setSessions([]);
       toast.success(`Revoked ${res.data.revoked} sessions`);
     } catch {
-      toast.error("Failed to revoke all sessions");
+      toast.error("Impossible de révoquer toutes les sessions");
     } finally {
       setIsLoading(false);
     }

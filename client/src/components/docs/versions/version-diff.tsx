@@ -82,13 +82,13 @@ export function VersionDiff({ diff: externalDiff, onBack, className }: VersionDi
               {diff.stats.linesAdded}
             </Badge>
           )}
-          {diff.stats.linesRemoved > 0 && (
+          {diff.stats.linesRetiré > 0 && (
             <Badge
               variant="secondary"
               className="bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 gap-1 text-xs"
             >
               <Minus className="h-3 w-3" />
-              {diff.stats.linesRemoved}
+              {diff.stats.linesRetiré}
             </Badge>
           )}
           {diff.stats.linesModified > 0 && (
@@ -100,7 +100,7 @@ export function VersionDiff({ diff: externalDiff, onBack, className }: VersionDi
             </Badge>
           )}
           {diff.stats.linesAdded === 0 &&
-            diff.stats.linesRemoved === 0 &&
+            diff.stats.linesRetiré === 0 &&
             diff.stats.linesModified === 0 && (
               <Badge variant="secondary" className="gap-1 text-xs text-muted-foreground">
                 <Equal className="h-3 w-3" />
@@ -112,8 +112,8 @@ export function VersionDiff({ diff: externalDiff, onBack, className }: VersionDi
 
       {/* Word/char stats */}
       <div className="flex items-center gap-4 px-4 py-1.5 border-b text-[10px] text-muted-foreground bg-muted/10">
-        <span>+{diff.stats.wordsAdded} / -{diff.stats.wordsRemoved} mots</span>
-        <span>+{diff.stats.charsAdded} / -{diff.stats.charsRemoved} caracteres</span>
+        <span>+{diff.stats.wordsAdded} / -{diff.stats.wordsRetiré} mots</span>
+        <span>+{diff.stats.charsAdded} / -{diff.stats.charsRetiré} caracteres</span>
       </div>
 
       {/* Diff table */}

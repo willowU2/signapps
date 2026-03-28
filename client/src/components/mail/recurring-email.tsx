@@ -64,7 +64,7 @@ export function RecurringEmailManager() {
 
   async function handleCreate() {
     if (!form.to || !form.subject) {
-      toast.error("To and Subject are required")
+      toast.error("Le destinataire et l'objet sont requis")
       return
     }
     setLoading(true)
@@ -76,7 +76,7 @@ export function RecurringEmailManager() {
       })
       setItems(prev => [created, ...prev])
       setDialogOpen(false)
-      toast.success("Recurring email scheduled")
+      toast.success("Email récurrent planifié")
     } catch {
       toast.error("Impossible de créer recurring email")
     } finally {
@@ -98,7 +98,7 @@ export function RecurringEmailManager() {
     try {
       await mailApi.deleteRecurring(id)
       setItems(prev => prev.filter(i => i.id !== id))
-      toast.success("Deleted")
+      toast.success("Supprimé")
     } catch {
       toast.error("Impossible de supprimer")
     }

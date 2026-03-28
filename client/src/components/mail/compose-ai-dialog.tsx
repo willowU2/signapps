@@ -136,7 +136,7 @@ export function ComposeAiDialog({ open, onOpenChange, accountId }: ComposeAiDial
                 },
                 onError: (err) => {
                     setGenerating(false)
-                    toast.error(`Generation failed: ${err}`)
+                    toast.error(`Génération échouée: ${err}`)
                 },
             },
             {
@@ -153,7 +153,7 @@ export function ComposeAiDialog({ open, onOpenChange, accountId }: ComposeAiDial
 
     const handleSend = async () => {
         if (!accountId) {
-            toast.error("Select a mail account first")
+            toast.error("Sélectionnez d'abord un compte mail")
             return
         }
         if (!recipient.trim() || !subject.trim() || !body.trim()) {

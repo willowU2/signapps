@@ -293,7 +293,7 @@ export default function VpnPage() {
       setRelayDialogOpen(false);
       fetchData();
     } catch {
-      toast.error('Impossible d'enregistrer relay');
+      toast.error("Impossible d'enregistrer relay");
     } finally {
       setSubmitting(false);
     }
@@ -434,7 +434,7 @@ export default function VpnPage() {
       setDnsRecordDialogOpen(false);
       fetchData();
     } catch {
-      toast.error('Impossible d'enregistrer DNS record');
+      toast.error("Impossible d'enregistrer DNS record");
     } finally {
       setSubmitting(false);
     }

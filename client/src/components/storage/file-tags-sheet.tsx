@@ -60,7 +60,7 @@ export function FileTagsSheet({
       const associatedIds = fileTagsRes.data.map((t: TagData) => t.id);
       setFileTagIds(new Set(associatedIds));
     } catch {
-      toast.error("Failed to load tags");
+      toast.error("Impossible de charger les tags");
     } finally {
       setLoading(false);
     }

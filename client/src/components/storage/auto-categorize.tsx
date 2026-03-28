@@ -40,7 +40,7 @@ export function AutoCategorize({
       setAccepted(true);
       toast.success(`Categorized as "${category}"`);
     } catch (error) {
-      toast.error("Failed to categorize file");
+      toast.error("Impossible de catégoriser le fichier");
     } finally {
       setLoading(false);
     }

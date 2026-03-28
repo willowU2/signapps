@@ -72,7 +72,7 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
 
   const generate = async (variations = false) => {
     if (!topic.trim()) {
-      toast.error("Please enter a topic or description");
+      toast.error("Veuillez saisir un sujet ou une description");
       return;
     }
     setLoading(true);
@@ -83,7 +83,7 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, tone, platforms, variations }),
       });
-      if (!res.ok) throw new Error("Generation failed");
+      if (!res.ok) throw new Error("Génération échouée");
       const data = await res.json();
       setResults(data.results ?? []);
       setEditedTexts({});
@@ -102,7 +102,7 @@ export function AiContentGenerator({ onAccept }: AiContentGeneratorProps) {
       });
       setResults(fallback);
       setEditedTexts({});
-      toast.warning("Using offline generation (AI service unavailable)");
+      toast.warning("Génération hors-ligne (service IA indisponible)");
     } finally {
       setLoading(false);
     }

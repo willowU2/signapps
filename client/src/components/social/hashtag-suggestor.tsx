@@ -44,7 +44,7 @@ export function HashtagSuggestor({
 
   const analyze = async () => {
     if (!postContent.trim()) {
-      toast.error("No post content to analyze");
+      toast.error("Aucun contenu de publication à analyser");
       return;
     }
     setLoading(true);
@@ -72,7 +72,7 @@ export function HashtagSuggestor({
         { tag: "innovation", score: 65, category: "trending" as const },
       ];
       setResults(fallback);
-      toast.info("Using local hashtag suggestions");
+      toast.info("Utilisation des suggestions de hashtags locaux");
     } finally {
       setLoading(false);
       setAnalyzed(true);

@@ -82,7 +82,7 @@ export function ManageTagsSheet({
       const response = await storageApi.getTags();
       setTags(response.data);
     } catch (error) {
-      toast.error("Failed to load tags");
+      toast.error("Impossible de charger les tags");
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,7 @@ export function ManageTagsSheet({
         name: newName,
         color: newColor,
       });
-      toast.success("Tag created successfully");
+      toast.success("Tag créé avec succès");
       setNewName("");
       setIsCreating(false);
       loadTags();
@@ -114,7 +114,7 @@ export function ManageTagsSheet({
         name: editName,
         color: editColor,
       });
-      toast.success("Tag updated successfully");
+      toast.success("Tag mis à jour avec succès");
       setEditingId(null);
       loadTags();
       onTagsUpdated?.();
@@ -126,7 +126,7 @@ export function ManageTagsSheet({
   const handleDeleteTag = async (id: string) => {
     try {
       await storageApi.deleteTag(id);
-      toast.success("Tag deleted successfully");
+      toast.success("Tag supprimé avec succès");
       loadTags();
       onTagsUpdated?.();
     } catch (error) {

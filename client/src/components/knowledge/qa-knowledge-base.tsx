@@ -91,7 +91,7 @@ export function QAKnowledgeBase() {
     setQa([newQA, ...qa]);
     form.reset();
     setShowForm(false);
-    toast.success("Question submitted for review");
+    toast.success("Question soumise pour révision");
   };
 
   const toggleExpand = (id: string) => {

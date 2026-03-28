@@ -117,7 +117,7 @@ export function DpiaGenerator() {
       a.click()
       toast.success("DPIA report generated")
     } catch {
-      toast.error("Generation failed")
+      toast.error("Génération échouée")
     } finally {
       setGenerating(false)
     }

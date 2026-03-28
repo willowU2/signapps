@@ -264,7 +264,7 @@ export function ApiKeyManager() {
       setRevokeId(null);
       await fetchApiKeys();
     } catch {
-      toast.error('Failed to revoke API key');
+      toast.error('Impossible de révoquer API key');
     }
   };
 

@@ -407,7 +407,7 @@ export function PostComposer({ onSaved, initialContent = '' }: PostComposerProps
       toast.success('Draft saved');
       onSaved?.();
     } catch {
-      toast.error('Impossible d'enregistrer draft');
+      toast.error("Impossible d'enregistrer draft");
     } finally {
       setIsSaving(false);
     }

@@ -133,7 +133,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
     }, [])
 
     const handleCreateChannel = async () => {
-        if (!newChannelName.trim()) { toast.error("Channel name is required"); return }
+        if (!newChannelName.trim()) { toast.error("Le nom du canal est requis"); return }
         setIsCreating(true)
         try {
             const res = await chatApi.createChannel({ name: newChannelName.trim(), topic: newChannelTopic.trim() || undefined, is_private: newChannelPrivate })
@@ -144,7 +144,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
             setNewChannelName("")
             setNewChannelTopic("")
             setNewChannelPrivate(false)
-            toast.success("Channel created")
+            toast.success("Canal créé")
         } catch { toast.error("Impossible de créer channel") }
         finally { setIsCreating(false) }
     }
@@ -178,7 +178,7 @@ export function ChatSidebar({ selectedChannel, onSelectChannel }: ChatSidebarPro
             if (!directMessages.find(d => d.id === dm.id)) setDirectMessages([newDm, ...directMessages])
             onSelectChannel(newDm.id, newDm.name, true)
             setDmDialogOpen(false)
-        } catch { toast.error("Failed to start conversation") }
+        } catch { toast.error("Impossible de démarrer la conversation") }
         finally { setIsCreatingDm(false) }
     }
 

@@ -70,7 +70,7 @@ export function DocNumberingSchemes() {
         preview: buildPreview(s),
       })))
     } catch {
-      toast.error("Failed to load numbering schemes")
+      toast.error("Impossible de charger les schémas de numérotation")
     } finally {
       setLoading(false)
     }
@@ -89,7 +89,7 @@ export function DocNumberingSchemes() {
   }
 
   async function handleSave() {
-    if (!form.name || !form.prefix) { toast.error("Name and prefix required"); return }
+    if (!form.name || !form.prefix) { toast.error("Le nom et le préfixe sont requis"); return }
     setSaving(true)
     try {
       const payload = { ...form, suffix: form.suffix || undefined }
@@ -101,7 +101,7 @@ export function DocNumberingSchemes() {
         })
         const updated = await res.json()
         setSchemes(prev => prev.map(s => s.id === editScheme.id ? { ...updated, preview: buildPreview(updated) } : s))
-        toast.success("Scheme updated")
+        toast.success("Schéma mis à jour")
       } else {
         const res = await fetch("/api/docs/numbering", {
           method: "POST",
@@ -110,7 +110,7 @@ export function DocNumberingSchemes() {
         })
         const created = await res.json()
         setSchemes(prev => [...prev, { ...created, preview: buildPreview(created) }])
-        toast.success("Scheme created")
+        toast.success("Schéma créé")
       }
       setDialogOpen(false)
     } catch {
@@ -124,7 +124,7 @@ export function DocNumberingSchemes() {
     try {
       await fetch(`/api/docs/numbering/${id}`, { method: "DELETE" })
       setSchemes(prev => prev.filter(s => s.id !== id))
-      toast.success("Scheme deleted")
+      toast.success("Schéma supprimé")
     } catch {
       toast.error("Impossible de supprimer")
     }

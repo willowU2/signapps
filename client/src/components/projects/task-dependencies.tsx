@@ -81,7 +81,7 @@ function DependencySelector({ task, allTasks, onSelect }: DependencySelectorProp
 
   const handleSelect = (taskId?: string) => {
     if (taskId && detectCycle(allTasks, task.id, taskId)) {
-      toast.error("Cannot set dependency: would create a circular dependency");
+      toast.error("Impossible de définir la dépendance : créerait une dépendance circulaire");
       return;
     }
     onSelect(taskId);

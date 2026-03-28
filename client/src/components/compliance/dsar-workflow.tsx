@@ -89,14 +89,14 @@ export function DsarWorkflow() {
       const data = await res.json()
       setRequests(data.data ?? [])
     } catch {
-      toast.error("Failed to load requests")
+      toast.error("Impossible de charger les demandes")
     } finally {
       setLoading(false)
     }
   }
 
   async function handleCreate() {
-    if (!form.subject_email || !form.subject_name) { toast.error("Subject details required"); return }
+    if (!form.subject_email || !form.subject_name) { toast.error("Les détails du sujet sont requis"); return }
     setSaving(true)
     try {
       const res = await fetch("/api/compliance/dsar", {

@@ -278,7 +278,7 @@ export default function TrashPage() {
               <div className="col-span-4">Name</div>
               <div className="col-span-2">Original Location</div>
               <div className="col-span-2">Size</div>
-              <div className="col-span-2">Deleted</div>
+              <div className="col-span-2">Supprimé</div>
               <div className="col-span-1">Expires</div>
             </div>
           </CardHeader>
@@ -327,7 +327,7 @@ export default function TrashPage() {
                 <div className="py-12 text-center text-muted-foreground">
                   <Trash2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Trash is empty</p>
-                  <p className="text-sm">Deleted files will appear here for 30 days</p>
+                  <p className="text-sm">Supprimé files will appear here for 30 days</p>
                 </div>
               )}
             </div>

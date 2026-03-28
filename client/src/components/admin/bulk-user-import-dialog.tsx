@@ -51,7 +51,7 @@ function parseCSV(text: string): ParsedUser[] {
 
     let error: string | undefined;
     if (!username) error = 'Missing username';
-    else if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) error = 'Invalid email';
+    else if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) error = 'Email invalide';
 
     return { username, email, role, display_name, valid: !error, error };
   });

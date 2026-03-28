@@ -223,10 +223,10 @@ export function PgpSettings({ accountId, accountEmail }: PgpSettingsProps) {
             };
 
             updateConfig({ enabled: true, keyPair: storedKeyPair });
-            toast.success("Key pair generated successfully");
+            toast.success("Paire de clés générée avec succès");
         } catch (err) {
             console.error("Key generation failed:", err);
-            toast.error("Failed to generate key pair");
+            toast.error("Impossible de générer la paire de clés");
         } finally {
             setGenerating(false);
         }
@@ -243,24 +243,24 @@ export function PgpSettings({ accountId, accountEmail }: PgpSettingsProps) {
         a.download = `${accountEmail.replace("@", "_at_")}_public.pem`;
         a.click();
         URL.revokeObjectURL(url);
-        toast.success("Public key exported");
+        toast.success("Clé publique exportée");
     };
 
     const handleCopyPublicKey = () => {
         if (!config.keyPair) return;
         navigator.clipboard.writeText(config.keyPair.publicKeyPem);
-        toast.success("Public key copied to clipboard");
+        toast.success("Clé publique copiée dans le presse-papiers");
     };
 
     const handleDeleteKeys = () => {
         updateConfig({ enabled: false, keyPair: null });
-        toast.success("Keys deleted");
+        toast.success("Clés supprimées");
     };
 
     const handleImportKeys = async () => {
         try {
             if (!importPublicKey.trim()) {
-                toast.error("Please provide at least a public key");
+                toast.error("Veuillez fournir au moins une clé publique");
                 return;
             }
 
@@ -306,10 +306,10 @@ export function PgpSettings({ accountId, accountEmail }: PgpSettingsProps) {
             setImportDialogOpen(false);
             setImportPublicKey("");
             setImportPrivateKey("");
-            toast.success("Keys imported successfully");
+            toast.success("Clés importées avec succès");
         } catch (err) {
             console.error("Import failed:", err);
-            toast.error("Invalid key format. Ensure PEM-encoded RSA keys.");
+            toast.error("Format de clé invalide. Utilisez des clés RSA au format PEM.");
         }
     };
 

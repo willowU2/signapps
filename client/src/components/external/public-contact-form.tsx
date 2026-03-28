@@ -84,7 +84,7 @@ export function PublicContactForm({
       setTimeout(() => setIsSuccess(false), 4000);
     } catch (error) {
       console.error("Form submission error:", error);
-      toast.error("Failed to send message. Please try again.");
+      toast.error("Impossible d'envoyer le message. Réessayez.");
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +93,7 @@ export function PublicContactForm({
   const copyEmbedCode = () => {
     navigator.clipboard.writeText(embedCode);
     setCopiedEmbed(true);
-    toast.success("Embed code copied!");
+    toast.success("Code d'intégration copié !");
     setTimeout(() => setCopiedEmbed(false), 2000);
   };
 
