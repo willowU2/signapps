@@ -7,15 +7,31 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Globe, Check } from 'lucide-react';
-
 export const SUPPORTED_LANGUAGES = [
-  { code: 'fr', label: 'Français', dir: 'ltr', flag: '🇫🇷' },
-  { code: 'en', label: 'English', dir: 'ltr', flag: '🇬🇧' },
-  { code: 'de', label: 'Deutsch', dir: 'ltr', flag: '🇩🇪' },
-  { code: 'es', label: 'Español', dir: 'ltr', flag: '🇪🇸' },
-  { code: 'ar', label: 'العربية', dir: 'rtl', flag: '🇸🇦' },
-  { code: 'he', label: 'עברית', dir: 'rtl', flag: '🇮🇱' },
+  { code: 'en', label: 'English', englishName: 'English', dir: 'ltr', countryCode: 'gb' },
+  { code: 'fr', label: 'Français', englishName: 'French', dir: 'ltr', countryCode: 'fr' },
+  { code: 'es', label: 'Español', englishName: 'Spanish', dir: 'ltr', countryCode: 'es' },
+  { code: 'de', label: 'Deutsch', englishName: 'German', dir: 'ltr', countryCode: 'de' },
+  { code: 'it', label: 'Italiano', englishName: 'Italian', dir: 'ltr', countryCode: 'it' },
+  { code: 'pt', label: 'Português', englishName: 'Portuguese', dir: 'ltr', countryCode: 'pt' },
+  { code: 'ru', label: 'Русский', englishName: 'Russian', dir: 'ltr', countryCode: 'ru' },
+  { code: 'zh', label: '中文 (简体)', englishName: 'Chinese (Simplified)', dir: 'ltr', countryCode: 'cn' },
+  { code: 'ja', label: '日本語', englishName: 'Japanese', dir: 'ltr', countryCode: 'jp' },
+  { code: 'ko', label: '한국어', englishName: 'Korean', dir: 'ltr', countryCode: 'kr' },
+  { code: 'ar', label: 'العربية', englishName: 'Arabic', dir: 'rtl', countryCode: 'sa' },
+  { code: 'he', label: 'עברית', englishName: 'Hebrew', dir: 'rtl', countryCode: 'il' },
 ];
+
+export function FlagIcon({ countryCode, className = "" }: { countryCode: string, className?: string }) {
+  return (
+    <img 
+      src={`https://flagcdn.com/${countryCode}.svg`} 
+      alt={`Flag of ${countryCode}`} 
+      className={`rounded-sm object-cover shadow-sm ${className}`} 
+      loading="lazy" 
+    />
+  );
+}
 
 export function useLocale() {
   const [locale, setLocaleState] = useState('fr');
@@ -55,7 +71,12 @@ export function LanguageSwitcher({ compact = false }: LanguageSwitcherProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size={compact ? 'icon' : 'sm'} className="gap-2">
           <Globe className="h-4 w-4" />
-          {!compact && <span>{current.flag} {current.label}</span>}
+          {!compact && (
+            <span className="flex items-center gap-2">
+              <FlagIcon countryCode={current.countryCode} className="w-4 h-4" /> 
+              {current.label}
+            </span>
+          )}
           {compact && <span className="sr-only">Switch language</span>}
         </Button>
       </DropdownMenuTrigger>
@@ -67,7 +88,7 @@ export function LanguageSwitcher({ compact = false }: LanguageSwitcherProps) {
             className="flex items-center gap-2"
             dir={lang.dir}
           >
-            <span>{lang.flag}</span>
+            <FlagIcon countryCode={lang.countryCode} className="w-4 h-4" />
             <span className="flex-1">{lang.label}</span>
             {locale === lang.code && <Check className="h-4 w-4 text-primary" />}
             {lang.dir === 'rtl' && (

@@ -41,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Link as LinkIcon, MoreVertical, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2, ExternalLink, Settings } from 'lucide-react';
+import { Plus, Link as LinkIcon, MoreVertical, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2, ExternalLink, Settings, Check, Globe } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -106,27 +106,81 @@ import { ThemePresetsLibrary } from '@/components/settings/ThemePresetsLibrary';
 import { ModuleDarkModeSettings } from '@/components/settings/ModuleDarkMode';
 import { InstanceBranding } from '@/components/settings/InstanceBranding';
 import { DensityModeToggle } from '@/components/settings/DensityModeToggle';
-import { LanguageSwitcher, SUPPORTED_LANGUAGES } from '@/components/i18n/language-switcher';
+import { useLocale, SUPPORTED_LANGUAGES, FlagIcon } from '@/components/i18n/language-switcher';
 import { Card as _Card, CardContent as _CardContent, CardHeader as _CardHeader, CardTitle as _CardTitle } from '@/components/ui/card';
 
 function LanguageSettingsTab() {
+  const { locale, setLocale } = useLocale();
+
   return (
-    <div className="space-y-4">
-      <_Card>
-        <_CardHeader>
-          <_CardTitle>Interface Language</_CardTitle>
+    <div className="space-y-6">
+      <_Card className="border-0 shadow-xl bg-card/60 backdrop-blur-md relative overflow-hidden ring-1 ring-border">
+        {/* Glow effect in background */}
+        <div className="absolute top-0 right-0 p-32 bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 left-0 p-32 bg-secondary/10 blur-[120px] rounded-full pointer-events-none" />
+        
+        <_CardHeader className="relative z-10">
+          <_CardTitle className="text-2xl font-bold flex items-center gap-3">
+            <span className="p-2.5 bg-primary/10 text-primary rounded-xl shadow-inner inline-flex">
+              <Globe className="w-5 h-5" />
+            </span>
+            Interface Language
+          </_CardTitle>
+          <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
+            Select your preferred display language. RTL languages automatically flip the layout direction for an authentic, culturally accurate experience.
+          </p>
         </_CardHeader>
-        <_CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">Select your preferred display language. RTL languages (Arabic, Hebrew) automatically flip the layout direction.</p>
-          <LanguageSwitcher />
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pt-2">
-            {SUPPORTED_LANGUAGES.map(l => (
-              <div key={l.code} className="flex items-center gap-2 border rounded p-2 text-sm">
-                <span>{l.flag}</span>
-                <span>{l.label}</span>
-                {l.dir === 'rtl' && <span className="text-xs text-orange-500 ml-auto">RTL</span>}
-              </div>
-            ))}
+        <_CardContent className="space-y-6 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {SUPPORTED_LANGUAGES.map(l => {
+              const isActive = locale === l.code;
+              return (
+                <button
+                  key={l.code}
+                  onClick={() => setLocale(l.code)}
+                  className={`
+                    group relative p-5 rounded-2xl border-2 transition-all duration-300 ease-out text-left flex flex-col items-start gap-4 hover:-translate-y-1 hover:shadow-xl overflow-hidden
+                    ${isActive 
+                      ? 'border-primary bg-primary/5 shadow-primary/20 shadow-lg' 
+                      : 'border-transparent bg-background hover:border-primary/30 hover:bg-accent/50 ring-1 ring-border'
+                    }
+                  `}
+                >
+                  <div className="flex items-center justify-between w-full relative z-10">
+                    <div className="group-hover:scale-110 transition-transform duration-300 origin-bottom-left">
+                      <FlagIcon countryCode={l.countryCode} className="w-10 h-7" />
+                    </div>
+                    {isActive && (
+                      <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center shadow-md animate-in zoom-in duration-300">
+                        <Check className="h-4 w-4 text-primary-foreground stroke-[3]" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-col mt-2 relative z-10">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-bold text-lg tracking-tight ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                        {l.label}
+                      </span>
+                      {l.dir === 'rtl' && (
+                        <span className="text-[10px] font-black uppercase tracking-widest bg-orange-500/15 text-orange-600 px-2 py-0.5 rounded-full ring-1 ring-orange-500/20">RTL</span>
+                      )}
+                    </div>
+                    <span className="text-sm text-muted-foreground font-medium flex items-center gap-1 mt-0.5">
+                      {l.englishName}
+                    </span>
+                  </div>
+
+                  {/* Subtle active glow rings */}
+                  {isActive && (
+                    <div className="absolute inset-0 border-2 border-primary rounded-2xl blur-[4px] opacity-40 pointer-events-none" />
+                  )}
+                  {isActive && (
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </_CardContent>
       </_Card>
