@@ -20,6 +20,7 @@ import {
   selectAccessibility,
   selectKeyboard,
   selectPrivacy,
+  selectLocale,
   selectSyncStatus,
 } from "./store";
 import type {
@@ -35,6 +36,7 @@ import type {
   AccessibilityPreferences,
   KeyboardPreferences,
   PrivacyPreferences,
+  LocalePreferences,
   SyncStatus,
   ThemeMode,
 } from "./types";
@@ -159,6 +161,15 @@ export function usePrivacyPreferences() {
   const privacy = usePreferencesStore(selectPrivacy);
   const updatePrivacy = usePreferencesStore((s) => s.updatePrivacy);
   return { privacy, updatePrivacy };
+}
+
+/**
+ * Locale preferences with setter
+ */
+export function useLocalePreferences() {
+  const locale = usePreferencesStore(selectLocale);
+  const updateLocale = usePreferencesStore((s) => s.updateLocale);
+  return { locale, updateLocale };
 }
 
 /**

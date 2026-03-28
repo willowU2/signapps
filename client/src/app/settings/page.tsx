@@ -41,7 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Plus, Link as LinkIcon, MoreVertical, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2, ExternalLink } from 'lucide-react';
+import { Plus, Link as LinkIcon, MoreVertical, Users, Pencil, Trash2, Webhook, Play, Pause, TestTube2, ExternalLink, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -570,6 +570,7 @@ export default function SettingsPage() {
         <Tabs defaultValue={defaultTab}>
           <TabsList className="mb-4 flex-wrap h-auto gap-1">
             <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="language">Language</TabsTrigger>
             <TabsTrigger value="general">General</TabsTrigger>
@@ -584,6 +585,24 @@ export default function SettingsPage() {
 
           <TabsContent value="profile" className="space-y-6">
             <ProfileSettings />
+          </TabsContent>
+
+          <TabsContent value="preferences" className="space-y-6">
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Settings className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold">Preferences utilisateur</h3>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">
+                  Langue, format de date, notifications, calendrier, editeur et bien plus.
+                </p>
+                <Link href="/settings/preferences">
+                  <Button>
+                    Ouvrir les preferences
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="language" className="space-y-6">

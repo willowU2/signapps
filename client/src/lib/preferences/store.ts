@@ -21,6 +21,7 @@ import type {
   AccessibilityPreferences,
   KeyboardPreferences,
   PrivacyPreferences,
+  LocalePreferences,
 } from "./types";
 import { DEFAULT_PREFERENCES } from "./types";
 import {
@@ -68,6 +69,7 @@ interface PreferencesState {
   updateAccessibility: (data: Partial<AccessibilityPreferences>) => void;
   updateKeyboard: (data: Partial<KeyboardPreferences>) => void;
   updatePrivacy: (data: Partial<PrivacyPreferences>) => void;
+  updateLocale: (data: Partial<LocalePreferences>) => void;
 
   // Actions - Generic update
   updateSection: <T extends PreferencesSection>(
@@ -298,6 +300,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       updateAccessibility: (data) => get().updateSection("accessibility", data),
       updateKeyboard: (data) => get().updateSection("keyboard", data),
       updatePrivacy: (data) => get().updateSection("privacy", data),
+      updateLocale: (data) => get().updateSection("locale", data),
     }),
     {
       name: "signapps-preferences",
@@ -325,6 +328,7 @@ export const selectMail = (state: PreferencesState) => state.preferences.mail;
 export const selectAccessibility = (state: PreferencesState) => state.preferences.accessibility;
 export const selectKeyboard = (state: PreferencesState) => state.preferences.keyboard;
 export const selectPrivacy = (state: PreferencesState) => state.preferences.privacy;
+export const selectLocale = (state: PreferencesState) => state.preferences.locale;
 export const selectSyncStatus = (state: PreferencesState) => state.syncStatus;
 
 // ============================================================================

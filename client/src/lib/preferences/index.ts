@@ -32,6 +32,9 @@ export type {
   KeyboardPreferences,
   PrivacyPreferences,
   UserPreferences,
+  DateFormat,
+  NumberFormat,
+  LocalePreferences,
   PreferencesSection,
   PreferencesUpdate,
   SyncStatus,
@@ -53,6 +56,7 @@ export {
   selectAccessibility,
   selectKeyboard,
   selectPrivacy,
+  selectLocale,
   selectSyncStatus,
 } from "./store";
 
@@ -70,6 +74,7 @@ export {
   useAccessibilityPreferences,
   useKeyboardPreferences,
   usePrivacyPreferences,
+  useLocalePreferences,
   useSyncStatus,
   useApplyTheme,
   useApplyAccessibility,
@@ -116,5 +121,6 @@ export {
   StoragePanel,
   PrivacyPanel,
   AccessibilityPanel,
+  LocalePanel,
   PreferencesPage,
 } from "./panels";

@@ -24,7 +24,7 @@ import {
     LogOut, User as UserIcon, Settings, PanelLeft, PanelRight,
     Share2, MessageSquare, History, HardDrive, Mail, CheckSquare,
     Video, Activity, Route, Calendar, Shield, Users, MessageCircle, Search, SlidersHorizontal, FileText,
-    Clock
+    Clock, HelpCircle, Star
 } from 'lucide-react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -202,6 +202,12 @@ export function GlobalHeader() {
         headerTitle = "PXE Deploy";
     } else if (pathname.startsWith('/remote')) {
         headerTitle = "Remote Access";
+    } else if (pathname.startsWith('/help')) {
+        headerTitle = "Aide";
+        HeaderIcon = <HelpCircle className="h-5 w-5 text-blue-500" />;
+    } else if (pathname.startsWith('/bookmarks')) {
+        headerTitle = "Favoris";
+        HeaderIcon = <Star className="h-5 w-5 text-yellow-500" />;
     }
 
     // Generate Contextual Breadcrumbs
@@ -243,9 +249,53 @@ export function GlobalHeader() {
         forms: 'Formulaires',
         pxe: 'PXE Deploy',
         remote: 'Accès distant',
+        help: 'Aide',
+        bookmarks: 'Favoris',
+        profile: 'Profil',
+        preferences: 'Préférences',
+        notifications: 'Notifications',
+        webhooks: 'Webhooks',
+        appearance: 'Apparence',
+        editor: 'Éditeur',
+        'email-signature': 'Signature',
+        'ai-routing': 'Routage IA',
+        accessibility: 'Accessibilité',
     };
+
+    // Section grouping: maps a top-level path to its section name and URL
+    const sectionGroupMap: Record<string, { section: string; sectionUrl: string }> = {
+        docs: { section: 'Productivité', sectionUrl: '/dashboard' },
+        sheets: { section: 'Productivité', sectionUrl: '/dashboard' },
+        slides: { section: 'Productivité', sectionUrl: '/dashboard' },
+        keep: { section: 'Productivité', sectionUrl: '/dashboard' },
+        design: { section: 'Productivité', sectionUrl: '/dashboard' },
+        tasks: { section: 'Productivité', sectionUrl: '/dashboard' },
+        mail: { section: 'Communication', sectionUrl: '/dashboard' },
+        chat: { section: 'Communication', sectionUrl: '/dashboard' },
+        meet: { section: 'Communication', sectionUrl: '/dashboard' },
+        calendar: { section: 'Productivité', sectionUrl: '/dashboard' },
+        contacts: { section: 'Communication', sectionUrl: '/dashboard' },
+        containers: { section: 'Infrastructure', sectionUrl: '/dashboard' },
+        routes: { section: 'Infrastructure', sectionUrl: '/dashboard' },
+        vpn: { section: 'Infrastructure', sectionUrl: '/dashboard' },
+        monitoring: { section: 'Infrastructure', sectionUrl: '/dashboard' },
+        scheduler: { section: 'Infrastructure', sectionUrl: '/dashboard' },
+        backups: { section: 'Infrastructure', sectionUrl: '/dashboard' },
+        pxe: { section: 'Infrastructure', sectionUrl: '/dashboard' },
+        remote: { section: 'Infrastructure', sectionUrl: '/dashboard' },
+        settings: { section: 'Administration', sectionUrl: '/settings' },
+        admin: { section: 'Administration', sectionUrl: '/admin' },
+        users: { section: 'Administration', sectionUrl: '/settings' },
+        ai: { section: 'Intelligence', sectionUrl: '/ai' },
+        social: { section: 'Réseaux sociaux', sectionUrl: '/social' },
+        storage: { section: 'Stockage', sectionUrl: '/storage' },
+        drive: { section: 'Stockage', sectionUrl: '/drive' },
+    };
+
     const pathSegments = pathname.split('/').filter(Boolean);
-    const breadcrumbItems = pathSegments.map((segment, index) => {
+
+    // Build breadcrumb items with optional section group
+    const rawBreadcrumbItems = pathSegments.map((segment, index) => {
         const url = `/${pathSegments.slice(0, index + 1).join('/')}`;
         const isLast = index === pathSegments.length - 1;
         const label = labelMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
@@ -255,6 +305,16 @@ export function GlobalHeader() {
 
         return { label: displayLabel, url, isLast };
     });
+
+    // Insert section group crumb if the first segment has a group mapping
+    const firstSegment = pathSegments[0];
+    const sectionGroup = firstSegment ? sectionGroupMap[firstSegment] : undefined;
+    const breadcrumbItems = sectionGroup && pathSegments.length > 0
+        ? [
+              { label: sectionGroup.section, url: sectionGroup.sectionUrl, isLast: false },
+              ...rawBreadcrumbItems,
+          ]
+        : rawBreadcrumbItems;
 
     return (
         <header className="sticky top-0 z-30 flex min-h-[4rem] flex-wrap items-center justify-between gap-y-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2 px-4 md:px-6">

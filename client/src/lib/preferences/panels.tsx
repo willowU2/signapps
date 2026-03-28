@@ -26,6 +26,7 @@ import {
   Download,
   Upload,
   RotateCcw,
+  Globe,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ import {
   useMailPreferences,
   useAccessibilityPreferences,
   usePrivacyPreferences,
+  useLocalePreferences,
   usePreferences,
   SyncStatusIndicator,
 } from "./context";
@@ -66,6 +68,8 @@ import type {
   CalendarView,
   FileViewMode,
   FileSortBy,
+  DateFormat,
+  NumberFormat,
 } from "./types";
 import { exportPreferences, importPreferences } from "./api";
 
@@ -935,6 +939,144 @@ export function AccessibilityPanel() {
 }
 
 // ============================================================================
+// Locale / Regional Panel
+// ============================================================================
+
+export function LocalePanel() {
+  const { locale, updateLocale } = useLocalePreferences();
+
+  const dateFormats: { value: DateFormat; label: string; example: string }[] = [
+    { value: "dd/mm/yyyy", label: "Jour/Mois/Annee", example: "28/03/2026" },
+    { value: "mm/dd/yyyy", label: "Mois/Jour/Annee", example: "03/28/2026" },
+    { value: "yyyy-mm-dd", label: "Annee-Mois-Jour (ISO)", example: "2026-03-28" },
+  ];
+
+  const numberFormats: { value: NumberFormat; label: string; example: string }[] = [
+    { value: "fr", label: "Francais", example: "1 234,56" },
+    { value: "en", label: "English", example: "1,234.56" },
+  ];
+
+  const languages = [
+    { value: "fr", label: "Francais" },
+    { value: "en", label: "English" },
+    { value: "de", label: "Deutsch" },
+    { value: "es", label: "Espanol" },
+    { value: "pt", label: "Portugues" },
+    { value: "nl", label: "Nederlands" },
+    { value: "it", label: "Italiano" },
+    { value: "ar", label: "العربية" },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Globe className="h-5 w-5" />
+          Regional
+        </CardTitle>
+        <CardDescription>Langue, format de date et de nombre.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <Label>Langue</Label>
+          <Select
+            value={locale?.language || "fr"}
+            onValueChange={(v) => updateLocale({ language: v })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((lang) => (
+                <SelectItem key={lang.value} value={lang.value}>
+                  {lang.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <Label>Format de date</Label>
+          <RadioGroup
+            value={locale?.dateFormat || "dd/mm/yyyy"}
+            onValueChange={(v) => updateLocale({ dateFormat: v as DateFormat })}
+          >
+            {dateFormats.map((fmt) => (
+              <div key={fmt.value} className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value={fmt.value} id={`date-${fmt.value}`} />
+                  <Label htmlFor={`date-${fmt.value}`}>{fmt.label}</Label>
+                </div>
+                <span className="text-xs text-muted-foreground font-mono">{fmt.example}</span>
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <Label>Format des nombres</Label>
+          <RadioGroup
+            value={locale?.numberFormat || "fr"}
+            onValueChange={(v) => updateLocale({ numberFormat: v as NumberFormat })}
+          >
+            {numberFormats.map((fmt) => (
+              <div key={fmt.value} className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value={fmt.value} id={`num-${fmt.value}`} />
+                  <Label htmlFor={`num-${fmt.value}`}>{fmt.label}</Label>
+                </div>
+                <span className="text-xs text-muted-foreground font-mono">{fmt.example}</span>
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <Label>Fuseau horaire</Label>
+          <Select
+            value={locale?.timezone || "Europe/Paris"}
+            onValueChange={(v) => updateLocale({ timezone: v })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[
+                "Europe/Paris",
+                "Europe/London",
+                "Europe/Berlin",
+                "Europe/Brussels",
+                "Europe/Zurich",
+                "America/New_York",
+                "America/Chicago",
+                "America/Los_Angeles",
+                "America/Toronto",
+                "Asia/Tokyo",
+                "Asia/Shanghai",
+                "Asia/Dubai",
+                "Pacific/Auckland",
+                "Australia/Sydney",
+              ].map((tz) => (
+                <SelectItem key={tz} value={tz}>
+                  {tz.replace(/_/g, " ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================================
 // Main Preferences Page
 // ============================================================================
 
@@ -1017,20 +1159,24 @@ export function PreferencesPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9">
           <TabsTrigger value="theme">Apparence</TabsTrigger>
+          <TabsTrigger value="locale">Regional</TabsTrigger>
           <TabsTrigger value="layout">Disposition</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="editor">Éditeur</TabsTrigger>
+          <TabsTrigger value="editor">Editeur</TabsTrigger>
           <TabsTrigger value="calendar">Calendrier</TabsTrigger>
           <TabsTrigger value="storage">Fichiers</TabsTrigger>
-          <TabsTrigger value="privacy">Confidentialité</TabsTrigger>
-          <TabsTrigger value="accessibility">Accessibilité</TabsTrigger>
+          <TabsTrigger value="privacy">Confidentialite</TabsTrigger>
+          <TabsTrigger value="accessibility">Accessibilite</TabsTrigger>
         </TabsList>
 
         <ScrollArea className="h-[calc(100vh-280px)] mt-6">
           <TabsContent value="theme">
             <ThemePanel />
+          </TabsContent>
+          <TabsContent value="locale">
+            <LocalePanel />
           </TabsContent>
           <TabsContent value="layout">
             <LayoutPanel />

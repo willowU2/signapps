@@ -244,6 +244,24 @@ export interface PrivacyPreferences {
 }
 
 // ============================================================================
+// Locale / Regional Preferences
+// ============================================================================
+
+export type DateFormat = "dd/mm/yyyy" | "mm/dd/yyyy" | "yyyy-mm-dd";
+export type NumberFormat = "fr" | "en"; // fr: 1 234,56 | en: 1,234.56
+
+export interface LocalePreferences {
+  /** Preferred language code */
+  language: string;
+  /** Date format */
+  dateFormat: DateFormat;
+  /** Number format */
+  numberFormat: NumberFormat;
+  /** Timezone (IANA) */
+  timezone: string;
+}
+
+// ============================================================================
 // Complete User Preferences
 // ============================================================================
 
@@ -272,6 +290,8 @@ export interface UserPreferences {
   keyboard: KeyboardPreferences;
   /** Privacy settings */
   privacy: PrivacyPreferences;
+  /** Locale/regional settings */
+  locale: LocalePreferences;
   /** Last synced timestamp */
   lastSyncedAt: string | null;
   /** Device ID that last modified */
@@ -377,6 +397,12 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
     readReceipts: true,
     typingIndicators: true,
     profileVisibility: "team",
+  },
+  locale: {
+    language: "fr",
+    dateFormat: "dd/mm/yyyy",
+    numberFormat: "fr",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Paris",
   },
   lastSyncedAt: null,
   lastModifiedBy: null,

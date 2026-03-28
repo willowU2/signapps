@@ -28,6 +28,8 @@ import {
   X,
   Mail,
   CheckSquare,
+  Star,
+  HelpCircle,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -69,6 +71,8 @@ const navItems = [
   { href: '/backups', icon: Archive, label: 'Backups', color: 'text-muted-foreground', badgeKey: null },
   { href: '/ai', icon: Brain, label: 'Intelligence', color: 'text-ai-purple', badgeKey: null },
   { href: '/users', icon: Users, label: 'Users', color: 'text-crm', badgeKey: null },
+  { href: '/bookmarks', icon: Star, label: 'Favoris', color: 'text-yellow-500', badgeKey: null },
+  { href: '/help', icon: HelpCircle, label: 'Aide', color: 'text-blue-500', badgeKey: null },
   { href: '/settings', icon: Settings, label: 'Settings', color: 'text-muted-foreground', badgeKey: null },
 ];
 
