@@ -13,7 +13,7 @@ import { AddWidgetDialog } from '@/components/dashboard/add-widget-dialog';
 import { AiDailyBrief } from '@/components/dashboard/ai-daily-brief';
 import { UnifiedStats } from '@/components/dashboard/unified-stats';
 import { RecentFiles } from '@/components/dashboard/recent-files';
-import { ActivityFeed } from '@/components/dashboard/activity-feed';
+import { GlobalActivityFeed as ActivityFeed } from '@/components/crosslinks/GlobalActivityFeed';
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
