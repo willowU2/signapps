@@ -743,7 +743,7 @@ export default function AIPage() {
           const response = await aiApi.chat(text, {
             model: selectedModel || undefined,
             provider: selectedProvider || undefined,
-            collection: selectedKnowledgeBase || undefined,
+            collections: selectedKnowledgeBase ? [selectedKnowledgeBase] : undefined,
             language: selectedLanguage || undefined,
             systemPrompt: customSystemPrompt || undefined,
           });
@@ -793,7 +793,7 @@ export default function AIPage() {
 
     setIsLoading(true);
     try {
-      const response = await aiApi.search(input, 5, selectedKnowledgeBase || undefined);
+      const response = await aiApi.search(input, 5, selectedKnowledgeBase ? [selectedKnowledgeBase] : undefined);
       const results = response.data || [];
 
       if (results.length === 0) {

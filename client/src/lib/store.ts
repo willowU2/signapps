@@ -233,6 +233,7 @@ export interface AttachedFile {
 export interface QuickTaskList {
   id: string;
   name: string;
+  color?: string;
 }
 
 export interface QuickTask {
