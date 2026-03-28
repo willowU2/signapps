@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, ShieldAlert } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { LdapLoginDialog } from '@/components/auth/ldap-login-dialog';
 import { parseApiError } from '@/lib/errors';
@@ -24,6 +24,9 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
+const MAX_ATTEMPTS = 3;
+const LOCKOUT_SECONDS = 30;
+
 export default function LoginPage() {
   const router = useRouter();
   const { setUser, setMfaSessionToken, redirectAfterLogin, setRedirectAfterLogin } = useAuthStore();
@@ -32,6 +35,40 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [trustDevice, setTrustDevice] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Rate limiting state
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
+  const lockoutTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const isLockedOut = lockoutUntil !== null && Date.now() < lockoutUntil;
+
+  // Countdown timer for lockout
+  useEffect(() => {
+    if (lockoutUntil) {
+      const tick = () => {
+        const remaining = Math.max(0, Math.ceil((lockoutUntil - Date.now()) / 1000));
+        setLockoutRemaining(remaining);
+        if (remaining <= 0) {
+          setLockoutUntil(null);
+          setLockoutRemaining(0);
+          if (lockoutTimerRef.current) {
+            clearInterval(lockoutTimerRef.current);
+            lockoutTimerRef.current = null;
+          }
+        }
+      };
+      tick();
+      lockoutTimerRef.current = setInterval(tick, 1000);
+      return () => {
+        if (lockoutTimerRef.current) {
+          clearInterval(lockoutTimerRef.current);
+          lockoutTimerRef.current = null;
+        }
+      };
+    }
+  }, [lockoutUntil]);
 
   const TRUST_DEVICE_KEY = 'trusted_device_until';
   const isDeviceTrusted = () => {
@@ -52,7 +89,10 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginForm) => {
+  const onSubmit = useCallback(async (data: LoginForm) => {
+    // Block submission during lockout
+    if (lockoutUntil && Date.now() < lockoutUntil) return;
+
     try {
       setError(null);
 
@@ -61,6 +101,10 @@ export default function LoginPage() {
         password: data.password,
         remember_me: rememberMe,
       });
+
+      // Reset failed attempts on success
+      setFailedAttempts(0);
+      setLockoutUntil(null);
 
       // Check if MFA is required
       if (response.data.mfa_required && response.data.mfa_session_token) {
@@ -98,9 +142,18 @@ export default function LoginPage() {
         router.push(redirectPath);
       }
     } catch (err: unknown) {
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
       setError(parseApiError(err));
+
+      // Trigger lockout after MAX_ATTEMPTS failures
+      if (newAttempts >= MAX_ATTEMPTS) {
+        const lockoutEnd = Date.now() + LOCKOUT_SECONDS * 1000;
+        setLockoutUntil(lockoutEnd);
+      }
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [failedAttempts, lockoutUntil, rememberMe, trustDevice, redirectAfterLogin]);
 
   // Auto-login logic for Development Environment
   useEffect(() => {
@@ -132,7 +185,26 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" suppressHydrationWarning>
-            {error && (
+            {/* Rate limiting warning */}
+            {isLockedOut && lockoutRemaining > 0 && (
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 shrink-0" />
+                <span>
+                  Trop de tentatives. Réessayez dans{' '}
+                  <span className="font-bold tabular-nums">{lockoutRemaining}</span>{' '}
+                  seconde{lockoutRemaining > 1 ? 's' : ''}.
+                </span>
+              </div>
+            )}
+
+            {/* Failed attempts counter (before lockout) */}
+            {failedAttempts > 0 && failedAttempts < MAX_ATTEMPTS && !isLockedOut && (
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3 text-sm text-amber-700 dark:text-amber-400">
+                Tentative {failedAttempts}/{MAX_ATTEMPTS} — {MAX_ATTEMPTS - failedAttempts} essai{MAX_ATTEMPTS - failedAttempts > 1 ? 's' : ''} restant{MAX_ATTEMPTS - failedAttempts > 1 ? 's' : ''} avant verrouillage temporaire.
+              </div>
+            )}
+
+            {error && !isLockedOut && (
               <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
               </div>
@@ -204,13 +276,18 @@ export default function LoginPage() {
             <Button
               type="button"
               className="w-full"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isLockedOut}
               onClick={handleSubmit(onSubmit)}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Connexion en cours...
+                </>
+              ) : isLockedOut ? (
+                <>
+                  <ShieldAlert className="mr-2 h-4 w-4" />
+                  Verrouillé ({lockoutRemaining}s)
                 </>
               ) : (
                 'Se connecter'

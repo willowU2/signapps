@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import Link from 'next/link';
 import { WorkspaceSwitcher } from '@/components/layout/workspace-switcher';
+import { SessionIndicator } from '@/components/layout/session-indicator';
 
 export function GlobalHeader() {
     const { user, logout } = useAuthStore();
@@ -539,6 +540,9 @@ export function GlobalHeader() {
 
                 {/* Theme Toggle — Light / Dark / System */}
                 <ThemeToggle />
+
+                {/* Session Activity Indicator */}
+                <SessionIndicator />
 
                 {/* User Menu */}
                 <DropdownMenu>
