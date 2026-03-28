@@ -2,81 +2,50 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { useUIStore, useLabelsStore } from '@/lib/store';
+import { useUIStore, useLabelsStore, usePinnedAppsStore, type AppPin } from '@/lib/store';
 import { useSidebarBadges } from '@/hooks/use-sidebar-badges';
 import {
-  LayoutDashboard,
-  Container,
-  HardDrive,
-  Network,
-  Settings,
-  Users,
-  Shield,
-  Clock,
-  Activity,
-  Mic,
-  Store,
-  Archive,
-  Plus,
-  Tag,
-  Brain,
-  Upload,
-  MessageSquare,
-  Route,
-  X,
-  Mail,
-  CheckSquare,
-  Star,
-  HelpCircle,
+  LayoutDashboard, Mail, CheckSquare, HardDrive, Calendar,
+  Container, Network, Settings, Users, Shield, Clock, Activity,
+  Mic, Store, Archive, Plus, Tag, Brain, Upload, MessageSquare,
+  Route, X, Star, HelpCircle, GripVertical,
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+  Popover, PopoverContent, PopoverTrigger,
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-// ── Quick actions for "Nouveau" dropdown ──
+function DynIcon({ name, className }: { name: string; className?: string }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const Icon = (LucideIcons as any)[name] as React.ComponentType<{ className?: string }> | undefined;
+  if (!Icon) return <LucideIcons.Grid className={className} />;
+  return <Icon className={className} />;
+}
+
 const quickActions = [
   { icon: Container, label: 'Nouveau Container', href: '/containers', color: 'text-crm' },
-  { icon: Route, label: 'Ajouter Route', href: '/routes', color: 'text-primary' },
-  { icon: Upload, label: 'Upload Fichiers', href: '/storage', color: 'text-inventory' },
-  { icon: MessageSquare, label: 'Chat IA', href: '/ai', color: 'text-ai-purple' },
-  { icon: Archive, label: 'Nouveau Backup', href: '/backups', color: 'text-muted-foreground' },
+  { icon: Route,     label: 'Ajouter Route',     href: '/routes',     color: 'text-primary' },
+  { icon: Upload,    label: 'Upload Fichiers',    href: '/storage',    color: 'text-inventory' },
+  { icon: MessageSquare, label: 'Chat IA',        href: '/ai',         color: 'text-ai-purple' },
+  { icon: Archive,   label: 'Nouveau Backup',     href: '/backups',    color: 'text-muted-foreground' },
 ];
 
-// ── Nav items with optional badge keys ──
-const navItems = [
+// Essential nav items — always shown, cannot be removed
+const essentialNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord', color: '', badgeKey: null },
-  { href: '/mail', icon: Mail, label: 'Mail', color: 'text-blue-500', badgeKey: 'mail' as const },
-  { href: '/chat', icon: MessageSquare, label: 'Chat', color: 'text-primary', badgeKey: 'chat' as const },
-  { href: '/tasks', icon: CheckSquare, label: 'Taches', color: 'text-green-500', badgeKey: 'tasks' as const },
-  { href: '/containers', icon: Container, label: 'Containers', color: 'text-crm', badgeKey: 'containers' as const },
-  { href: '/apps', icon: Store, label: 'App Store', color: 'text-inventory', badgeKey: null },
-  { href: '/storage', icon: HardDrive, label: 'Drive', color: 'text-muted-foreground', badgeKey: 'storage' as const },
-  { href: '/media', icon: Mic, label: 'Media', color: 'text-crm', badgeKey: null },
-  { href: '/routes', icon: Network, label: 'Routes', color: 'text-primary', badgeKey: 'routes' as const },
-  { href: '/vpn', icon: Shield, label: 'VPN', color: 'text-muted-foreground', badgeKey: null },
-  { href: '/scheduler', icon: Clock, label: 'Scheduler', color: 'text-muted-foreground', badgeKey: null },
-  { href: '/monitoring', icon: Activity, label: 'Monitoring', color: 'text-inventory', badgeKey: null },
-  { href: '/backups', icon: Archive, label: 'Backups', color: 'text-muted-foreground', badgeKey: null },
-  { href: '/ai', icon: Brain, label: 'Intelligence', color: 'text-ai-purple', badgeKey: null },
-  { href: '/users', icon: Users, label: 'Users', color: 'text-crm', badgeKey: null },
-  { href: '/bookmarks', icon: Star, label: 'Favoris', color: 'text-yellow-500', badgeKey: null },
-  { href: '/help', icon: HelpCircle, label: 'Aide', color: 'text-blue-500', badgeKey: null },
-  { href: '/settings', icon: Settings, label: 'Settings', color: 'text-muted-foreground', badgeKey: null },
+  { href: '/mail',      icon: Mail,            label: 'Mail',            color: 'text-blue-500', badgeKey: 'mail' as const },
+  { href: '/cal',       icon: Calendar,        label: 'Calendar',        color: 'text-blue-400', badgeKey: null },
+  { href: '/tasks',     icon: CheckSquare,     label: 'Tâches',          color: 'text-green-500', badgeKey: 'tasks' as const },
+  { href: '/storage',   icon: HardDrive,       label: 'Drive',           color: 'text-muted-foreground', badgeKey: 'storage' as const },
 ];
 
-// ── Color palette for labels ──
 const labelColors = [
   '#ef4444', '#f97316', '#f59e0b', '#22c55e',
   '#10b981', '#06b6d4', '#3b82f6', '#6366f1',
@@ -89,18 +58,31 @@ export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { labels, addLabel, removeLabel } = useLabelsStore();
   const { data: badges } = useSidebarBadges();
+  const { pinnedApps, pinApp, unpinApp, reorderPinnedApps } = usePinnedAppsStore();
 
   const [nouveauOpen, setNouveauOpen] = useState(false);
   const [addLabelOpen, setAddLabelOpen] = useState(false);
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState('#3b82f6');
-
-  // Branding from localStorage (set by InstanceBranding settings)
   const [instanceLogo, setInstanceLogo] = useState<string | null>(null);
   const [instanceName, setInstanceName] = useState<string | null>(null);
+
+  // Drop zone state
+  const [isDragOver, setIsDragOver] = useState(false);
+  // Pinned reorder drag state
+  const dragPinIndex = useRef<number | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ href: string; x: number; y: number } | null>(null);
+
   useEffect(() => {
     setInstanceLogo(localStorage.getItem('signapps_instance_logo'));
     setInstanceName(localStorage.getItem('signapps_instance_name'));
+  }, []);
+
+  // Dismiss context menu on click elsewhere
+  useEffect(() => {
+    const handler = () => setContextMenu(null);
+    window.addEventListener('click', handler);
+    return () => window.removeEventListener('click', handler);
   }, []);
 
   const handleAddLabel = () => {
@@ -111,48 +93,195 @@ export function Sidebar() {
     setAddLabelOpen(false);
   };
 
-  // On mobile the sidebar is a drawer: open when NOT collapsed.
+  // ── Drop zone handlers (sidebar accepts apps from dashboard/right sidebar) ──
+  const handleDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('application/json')) {
+      e.preventDefault();
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if leaving the sidebar entirely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('application/json')) as AppPin;
+      if (data?.href && data?.label) {
+        pinApp(data);
+      }
+    } catch {
+      // ignore malformed data
+    }
+  };
+
+  // ── Pinned items reorder drag ──
+  const handlePinDragStart = (e: React.DragEvent, index: number) => {
+    dragPinIndex.current = index;
+    e.dataTransfer.effectAllowed = 'move';
+    // Set empty data to distinguish from app-card drags
+    e.dataTransfer.setData('text/pin-reorder', String(index));
+    e.stopPropagation();
+  };
+
+  const handlePinDragOver = (e: React.DragEvent, index: number) => {
+    if (dragPinIndex.current === null) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handlePinDrop = (e: React.DragEvent, index: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const from = dragPinIndex.current;
+    if (from === null || from === index) return;
+    const reordered = [...pinnedApps];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(index, 0, moved);
+    reorderPinnedApps(reordered);
+    dragPinIndex.current = null;
+  };
+
   const mobileOpen = !sidebarCollapsed;
+
+  const renderNavLink = (item: { href: string; icon: React.ComponentType<{ className?: string }>; label: string; color: string; badgeKey: string | null }) => {
+    const isActive = pathname.startsWith(item.href);
+    const Icon = item.icon;
+    const badgeValue = item.badgeKey && badges ? (badges as Record<string, number>)[item.badgeKey] : undefined;
+
+    const linkContent = (
+      <Link
+        href={item.href}
+        className={cn(
+          'flex items-center gap-4 py-2.5 text-sm font-medium transition-colors',
+          sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6',
+          isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-sidebar-foreground hover:bg-muted'
+        )}
+      >
+        <Icon className={cn('h-5 w-5 shrink-0', isActive ? 'text-accent-foreground' : item.color || 'text-muted-foreground')} />
+        {!sidebarCollapsed && (
+          <>
+            <span className="flex-1">{item.label}</span>
+            {badgeValue !== undefined && badgeValue > 0 && (
+              <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                {badgeValue > 99 ? '99+' : badgeValue}
+              </span>
+            )}
+          </>
+        )}
+      </Link>
+    );
+
+    if (sidebarCollapsed) {
+      return (
+        <Tooltip key={item.href}>
+          <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+          <TooltipContent side="right">{item.label}{badgeValue !== undefined && badgeValue > 0 && ` (${badgeValue})`}</TooltipContent>
+        </Tooltip>
+      );
+    }
+    return <div key={item.href}>{linkContent}</div>;
+  };
+
+  const renderPinnedItem = (app: AppPin, index: number) => {
+    const isActive = pathname.startsWith(app.href);
+    const linkContent = (
+      <div
+        key={app.href}
+        className="group relative flex items-center"
+        draggable
+        onDragStart={(e) => handlePinDragStart(e, index)}
+        onDragOver={(e) => handlePinDragOver(e, index)}
+        onDrop={(e) => handlePinDrop(e, index)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setContextMenu({ href: app.href, x: e.clientX, y: e.clientY });
+        }}
+      >
+        {!sidebarCollapsed && (
+          <span className="absolute left-1 z-10 cursor-grab text-muted-foreground/30 opacity-0 transition-opacity group-hover:opacity-100">
+            <GripVertical className="h-3 w-3" />
+          </span>
+        )}
+        <Link
+          href={app.href}
+          className={cn(
+            'flex flex-1 items-center gap-4 py-2.5 text-sm font-medium transition-colors',
+            sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6 pl-5',
+            isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-sidebar-foreground hover:bg-muted'
+          )}
+        >
+          <DynIcon name={app.icon} className={cn('h-5 w-5 shrink-0', isActive ? 'text-accent-foreground' : app.color || 'text-muted-foreground')} />
+          {!sidebarCollapsed && <span className="flex-1 truncate">{app.label}</span>}
+        </Link>
+        {!sidebarCollapsed && (
+          <button
+            onClick={() => unpinApp(app.href)}
+            className="absolute right-2 shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+            title="Désépingler"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+    );
+
+    if (sidebarCollapsed) {
+      return (
+        <Tooltip key={app.href}>
+          <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+          <TooltipContent side="right">{app.label}</TooltipContent>
+        </Tooltip>
+      );
+    }
+    return <div key={app.href}>{linkContent}</div>;
+  };
 
   return (
     <TooltipProvider delayDuration={0}>
-      {/* Mobile backdrop */}
       {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
-          onClick={toggleSidebar}
-          aria-hidden="true"
-        />
+        <div className="fixed inset-0 z-40 bg-black/40 md:hidden" onClick={toggleSidebar} aria-hidden="true" />
       )}
 
       <aside
         className={cn(
-          'fixed top-0 left-0 bottom-0 z-50 flex h-full flex-col bg-sidebar py-4 transition-all duration-200 border-r border-sidebar-border',
+          'fixed top-0 left-0 bottom-0 z-50 flex h-full flex-col bg-sidebar py-4 transition-all duration-200 border-r',
+          isDragOver ? 'border-primary/60 shadow-[inset_0_0_0_2px_hsl(var(--primary)/0.4)]' : 'border-sidebar-border',
           sidebarCollapsed ? 'w-16' : 'w-64 pr-4',
           mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
-        {/* ── Branding / Logo ── */}
+        {/* Drop zone hint */}
+        {isDragOver && !sidebarCollapsed && (
+          <div className="pointer-events-none absolute inset-x-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 p-4 text-center text-xs text-primary">
+            <LucideIcons.Pin className="h-5 w-5" />
+            Déposer pour épingler
+          </div>
+        )}
+
+        {/* Branding */}
         <div className={cn('mb-4 flex items-center gap-2', sidebarCollapsed ? 'justify-center px-2' : 'px-4')}>
           {instanceLogo ? (
-            <img
-              src={instanceLogo}
-              alt={instanceName ?? 'Logo'}
-              className="h-8 w-8 rounded-lg object-cover shrink-0"
-            />
+            <img src={instanceLogo} alt={instanceName ?? 'Logo'} className="h-8 w-8 rounded-lg object-cover shrink-0" />
           ) : (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">
-              S
-            </div>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">S</div>
           )}
           {!sidebarCollapsed && (
-            <span className="text-sm font-semibold truncate text-foreground/80">
-              {instanceName ?? 'SignApps'}
-            </span>
+            <span className="text-sm font-semibold truncate text-foreground/80">{instanceName ?? 'SignApps'}</span>
           )}
         </div>
 
-        {/* ── Nouveau Button ── */}
+        {/* Nouveau Button */}
         <div className={cn('mb-4', sidebarCollapsed ? 'px-2' : 'px-4')}>
           {sidebarCollapsed ? (
             <Popover open={nouveauOpen} onOpenChange={setNouveauOpen}>
@@ -163,11 +292,8 @@ export function Sidebar() {
               </PopoverTrigger>
               <PopoverContent side="right" align="start" className="w-52 p-1">
                 {quickActions.map((action) => (
-                  <button
-                    key={action.label}
-                    onClick={() => { router.push(action.href); setNouveauOpen(false); }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted"
-                  >
+                  <button key={action.label} onClick={() => { router.push(action.href); setNouveauOpen(false); }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted">
                     <action.icon className={cn('h-4 w-4', action.color)} />
                     <span>{action.label}</span>
                   </button>
@@ -184,11 +310,8 @@ export function Sidebar() {
               </PopoverTrigger>
               <PopoverContent side="bottom" align="start" className="w-56 p-1">
                 {quickActions.map((action) => (
-                  <button
-                    key={action.label}
-                    onClick={() => { router.push(action.href); setNouveauOpen(false); }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-muted"
-                  >
+                  <button key={action.label} onClick={() => { router.push(action.href); setNouveauOpen(false); }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-muted">
                     <action.icon className={cn('h-4 w-4', action.color)} />
                     <span>{action.label}</span>
                   </button>
@@ -198,73 +321,38 @@ export function Sidebar() {
           )}
         </div>
 
-        {/* ── Navigation ── */}
+        {/* Navigation */}
         <nav className="flex-1 space-y-0.5 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            const Icon = item.icon;
-            const badgeValue = item.badgeKey && badges ? badges[item.badgeKey] : undefined;
+          {/* Essential items */}
+          {essentialNavItems.map((item) => renderNavLink(item))}
 
-            const linkContent = (
-              <Link
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-4 py-2.5 text-sm font-medium transition-colors',
-                  sidebarCollapsed
-                    ? 'justify-center rounded-lg mx-2 px-2'
-                    : 'rounded-r-full px-6',
-                  isActive
-                    ? 'bg-accent text-accent-foreground font-semibold'
-                    : 'text-sidebar-foreground hover:bg-muted'
-                )}
-              >
-                <Icon
-                  className={cn(
-                    'h-5 w-5 shrink-0',
-                    isActive ? 'text-accent-foreground' : item.color || 'text-muted-foreground'
-                  )}
-                />
-                {!sidebarCollapsed && (
-                  <>
-                    <span className="flex-1">{item.label}</span>
-                    {badgeValue !== undefined && badgeValue > 0 && (
-                      (item.badgeKey === 'mail' || item.badgeKey === 'chat' || item.badgeKey === 'tasks') ? (
-                        <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-                          {badgeValue > 99 ? '99+' : badgeValue}
-                        </span>
-                      ) : (
-                        <span className="ml-auto text-xs font-semibold text-muted-foreground">
-                          {badgeValue}
-                        </span>
-                      )
-                    )}
-                  </>
-                )}
-              </Link>
-            );
+          {/* Pinned section */}
+          {pinnedApps.length > 0 && (
+            <>
+              {!sidebarCollapsed && (
+                <div className="mx-4 mt-3 mb-1 border-t border-sidebar-border pt-3">
+                  <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Épinglés</p>
+                </div>
+              )}
+              {sidebarCollapsed && <div className="mx-4 mt-2 mb-1 border-t border-sidebar-border" />}
+              {pinnedApps.map((app, i) => renderPinnedItem(app, i))}
+            </>
+          )}
 
-            if (sidebarCollapsed) {
-              return (
-                <Tooltip key={item.href}>
-                  <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                  <TooltipContent side="right">
-                    {item.label}
-                    {badgeValue !== undefined && badgeValue > 0 && ` (${badgeValue})`}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            }
+          {/* Drop hint when sidebar has no pins */}
+          {pinnedApps.length === 0 && !sidebarCollapsed && (
+            <div className="mx-4 mt-3 border-t border-sidebar-border pt-3">
+              <p className="px-2 text-[10px] text-muted-foreground/50 leading-relaxed">
+                Glissez une app depuis le dashboard pour l&apos;épingler ici
+              </p>
+            </div>
+          )}
 
-            return <div key={item.href}>{linkContent}</div>;
-          })}
-
-          {/* ── Labels ── */}
+          {/* Labels */}
           {!sidebarCollapsed && (
             <div className="mx-4 mt-4 border-t border-sidebar-border pt-4">
               <div className="mb-2 flex items-center justify-between px-2">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Labels
-                </h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Labels</h3>
                 <Popover open={addLabelOpen} onOpenChange={setAddLabelOpen}>
                   <PopoverTrigger asChild>
                     <button className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
@@ -273,44 +361,25 @@ export function Sidebar() {
                   </PopoverTrigger>
                   <PopoverContent side="right" className="w-56 space-y-3 p-3">
                     <p className="text-xs font-semibold">Nouveau label</p>
-                    <Input
-                      placeholder="Nom du label"
-                      value={newLabelName}
-                      onChange={(e) => setNewLabelName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddLabel()}
-                      className="h-8 text-xs"
-                    />
+                    <Input placeholder="Nom du label" value={newLabelName} onChange={(e) => setNewLabelName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddLabel()} className="h-8 text-xs" />
                     <div className="flex flex-wrap gap-1.5">
                       {labelColors.map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => setNewLabelColor(c)}
-                          className={cn(
-                            'h-5 w-5 rounded-full transition-all',
-                            newLabelColor === c ? 'ring-2 ring-offset-2 ring-primary' : ''
-                          )}
-                          style={{ backgroundColor: c }}
-                        />
+                        <button key={c} onClick={() => setNewLabelColor(c)}
+                          className={cn('h-5 w-5 rounded-full transition-all', newLabelColor === c ? 'ring-2 ring-offset-2 ring-primary' : '')}
+                          style={{ backgroundColor: c }} />
                       ))}
                     </div>
-                    <Button size="sm" className="w-full text-xs" onClick={handleAddLabel}>
-                      Ajouter
-                    </Button>
+                    <Button size="sm" className="w-full text-xs" onClick={handleAddLabel}>Ajouter</Button>
                   </PopoverContent>
                 </Popover>
               </div>
-
               {labels.map((label) => (
-                <div
-                  key={label.id}
-                  className="group flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm text-sidebar-foreground transition-colors hover:bg-muted"
-                >
+                <div key={label.id} className="group flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm text-sidebar-foreground transition-colors hover:bg-muted">
                   <Tag className="h-4 w-4 shrink-0" style={{ color: label.color }} />
                   <span className="flex-1 truncate">{label.name}</span>
-                  <button
-                    onClick={() => removeLabel(label.id)}
-                    className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-                  >
+                  <button onClick={() => removeLabel(label.id)}
+                    className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100">
                     <X className="h-3 w-3" />
                   </button>
                 </div>
@@ -320,13 +389,26 @@ export function Sidebar() {
         </nav>
 
         {/* Version footer */}
-        <div className={cn(
-          'mt-auto pt-2 border-t border-sidebar-border text-[10px] text-muted-foreground/60',
-          sidebarCollapsed ? 'text-center px-1' : 'px-6'
-        )}>
+        <div className={cn('mt-auto pt-2 border-t border-sidebar-border text-[10px] text-muted-foreground/60', sidebarCollapsed ? 'text-center px-1' : 'px-6')}>
           {sidebarCollapsed ? 'v0.1' : 'SignApps v0.1.0'}
         </div>
       </aside>
+
+      {/* Context menu for pinned items */}
+      {contextMenu && (
+        <div
+          className="fixed z-[100] rounded-lg border border-border bg-popover p-1 shadow-xl text-sm"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => { unpinApp(contextMenu.href); setContextMenu(null); }}
+            className="flex items-center gap-2 rounded px-3 py-1.5 text-destructive transition-colors hover:bg-destructive/10 w-full text-left"
+          >
+            <X className="h-3.5 w-3.5" /> Désépingler
+          </button>
+        </div>
+      )}
     </TooltipProvider>
   );
 }

@@ -172,6 +172,40 @@ export const useNotesStore = create<NotesState>()(
   )
 );
 
+// Pinned Apps State
+export interface AppPin {
+  href: string;
+  icon: string; // lucide icon name
+  label: string;
+  color: string;
+}
+
+interface PinnedAppsState {
+  pinnedApps: AppPin[];
+  pinApp: (app: AppPin) => void;
+  unpinApp: (href: string) => void;
+  reorderPinnedApps: (apps: AppPin[]) => void;
+}
+
+export const usePinnedAppsStore = create<PinnedAppsState>()(
+  persist(
+    (set) => ({
+      pinnedApps: [],
+      pinApp: (app) =>
+        set((state) => {
+          if (state.pinnedApps.some((p) => p.href === app.href)) return state;
+          return { pinnedApps: [...state.pinnedApps, app] };
+        }),
+      unpinApp: (href) =>
+        set((state) => ({
+          pinnedApps: state.pinnedApps.filter((p) => p.href !== href),
+        })),
+      reorderPinnedApps: (apps) => set({ pinnedApps: apps }),
+    }),
+    { name: 'signapps_pinned_apps' }
+  )
+);
+
 // Quick Tasks State
 export interface QuickTask {
   id: string;

@@ -7,131 +7,38 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Bot,
-  CalendarDays,
-  CheckSquare,
-  StickyNote,
-  X,
-  ChevronRight,
-  // Productivité
-  FileText,
-  Sheet,
-  Presentation,
-  Palette,
-  BookOpen,
-  ClipboardList,
-  // Communication
-  Mail,
-  MessageSquare,
-  Video,
-  Users2,
-  // Organisation
-  Calendar,
-  ListTodo,
-  KanbanSquare,
-  Package,
-  ContactRound,
-  // Business
-  TrendingUp,
-  CreditCard,
-  Calculator,
-  BarChart3,
-  // Infrastructure
-  HardDrive,
-  Container,
-  Shield,
-  Activity,
-  // Administration
-  Users,
-  Settings,
-  Archive,
-  Clock,
+  Bot, CalendarDays, CheckSquare, StickyNote,
+  X, ChevronRight, Pin,
 } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { CalendarWidget } from "@/components/calendar/calendar-widget";
 import { TasksWidget } from "@/components/tasks/tasks-widget";
+import { APP_REGISTRY, APP_CATEGORIES } from "@/lib/app-registry";
 
-// ── App launcher categories ──
-const appCategories = [
-  {
-    label: "Productivité",
-    apps: [
-      { icon: FileText,       label: "Docs",    href: "/docs" },
-      { icon: Sheet,          label: "Sheets",  href: "/sheets" },
-      { icon: Presentation,   label: "Slides",  href: "/slides" },
-      { icon: Palette,        label: "Design",  href: "/design" },
-      { icon: StickyNote,     label: "Keep",    href: "/keep" },
-      { icon: ClipboardList,  label: "Forms",   href: "/forms" },
-    ],
-  },
-  {
-    label: "Communication",
-    apps: [
-      { icon: Mail,         label: "Mail",    href: "/mail" },
-      { icon: MessageSquare,label: "Chat",    href: "/chat" },
-      { icon: Video,        label: "Meet",    href: "/meet" },
-      { icon: Users2,       label: "Social",  href: "/social" },
-    ],
-  },
-  {
-    label: "Organisation",
-    apps: [
-      { icon: Calendar,       label: "Calendar",  href: "/cal" },
-      { icon: ListTodo,       label: "Tasks",     href: "/tasks" },
-      { icon: KanbanSquare,   label: "Projects",  href: "/projects" },
-      { icon: Package,        label: "Resources", href: "/resources" },
-      { icon: ContactRound,   label: "Contacts",  href: "/contacts" },
-    ],
-  },
-  {
-    label: "Business",
-    apps: [
-      { icon: TrendingUp, label: "CRM",        href: "/crm" },
-      { icon: CreditCard, label: "Billing",    href: "/billing" },
-      { icon: Calculator, label: "Accounting", href: "/accounting" },
-      { icon: BarChart3,  label: "Analytics",  href: "/analytics" },
-    ],
-  },
-  {
-    label: "Infrastructure",
-    apps: [
-      { icon: HardDrive,  label: "Drive",       href: "/storage" },
-      { icon: Container,  label: "Containers",  href: "/containers" },
-      { icon: Shield,     label: "VPN",         href: "/vpn" },
-      { icon: Activity,   label: "Monitoring",  href: "/monitoring" },
-    ],
-  },
-  {
-    label: "Administration",
-    apps: [
-      { icon: Users,    label: "Users",     href: "/admin/users" },
-      { icon: Settings, label: "Settings",  href: "/settings" },
-      { icon: Archive,  label: "Backups",   href: "/backups" },
-      { icon: Clock,    label: "Scheduler", href: "/scheduler" },
-    ],
-  },
-] as const;
+function DynIcon({ name, className }: { name: string; className?: string }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const Icon = (LucideIcons as any)[name] as React.ComponentType<{ className?: string }> | undefined;
+  if (!Icon) return <LucideIcons.Grid className={className} />;
+  return <Icon className={className} />;
+}
 
-// Widget toggle icons shown at the top of the icon bar
 const widgetItems = [
-  { id: "chat" as RightWidgetType,     icon: Bot,         label: "AI Assistant" },
-  { id: "calendar" as RightWidgetType, icon: CalendarDays,label: "Calendar" },
-  { id: "tasks" as RightWidgetType,    icon: CheckSquare, label: "Tasks" },
-  { id: "notes" as RightWidgetType,    icon: StickyNote,  label: "Keep Notes" },
+  { id: "chat"     as RightWidgetType, icon: Bot,          label: "AI Assistant" },
+  { id: "calendar" as RightWidgetType, icon: CalendarDays, label: "Calendar" },
+  { id: "tasks"    as RightWidgetType, icon: CheckSquare,  label: "Tasks" },
+  { id: "notes"    as RightWidgetType, icon: StickyNote,   label: "Keep Notes" },
 ] as const;
 
 export function RightSidebar() {
   const router = useRouter();
   const { rightSidebarOpen, activeRightWidget, setRightSidebarOpen, setActiveRightWidget } = useUIStore();
   const [mounted, setMounted] = useState(false);
-  // Controls whether the panel shows widgets or the app launcher
   const [panelMode, setPanelMode] = useState<"widget" | "apps">("apps");
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   const isOpen = mounted ? rightSidebarOpen : false;
 
@@ -158,9 +65,16 @@ export function RightSidebar() {
       ? "Applications"
       : (widgetItems.find((i) => i.id === activeRightWidget)?.label ?? "Panel");
 
+  const handleDragStart = (e: React.DragEvent, app: typeof APP_REGISTRY[0]) => {
+    e.dataTransfer.setData("application/json", JSON.stringify({
+      href: app.href, icon: app.icon, label: app.label, color: app.color,
+    }));
+    e.dataTransfer.effectAllowed = "copy";
+  };
+
   return (
     <>
-      {/* ── Expanded Panel (slides in from right, sits to the left of the icon bar) ── */}
+      {/* Expanded Panel */}
       <div
         className={cn(
           "hidden md:flex fixed top-0 right-16 bottom-0 w-80 bg-background border-l border-border",
@@ -171,12 +85,7 @@ export function RightSidebar() {
         {/* Panel header */}
         <div className="h-14 flex items-center justify-between px-4 border-b border-border shrink-0">
           <h2 className="font-semibold text-sm">{panelTitle}</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setRightSidebarOpen(false)}
-          >
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setRightSidebarOpen(false)}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -198,91 +107,80 @@ export function RightSidebar() {
 
           {/* App launcher mode */}
           {panelMode === "apps" && (
-            <div className="p-4 space-y-5">
-              {appCategories.map((cat) => (
-                <div key={cat.label}>
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {cat.label}
-                  </p>
-                  <div className="grid grid-cols-3 gap-1">
-                    {cat.apps.map((app) => (
-                      <button
-                        key={app.href}
-                        onClick={() => { router.push(app.href); }}
-                        className="flex flex-col items-center gap-1.5 rounded-lg p-2 text-center transition-colors hover:bg-muted"
-                      >
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted">
-                          <app.icon className="h-4 w-4 text-foreground/70" />
+            <div className="p-4 space-y-1">
+              {/* Drag hint */}
+              <div className="mb-4 flex items-center gap-1.5 rounded-lg bg-muted/60 px-3 py-2 text-[11px] text-muted-foreground">
+                <Pin className="h-3 w-3 shrink-0" />
+                Glisser une app sur la barre latérale gauche pour l&apos;épingler
+              </div>
+
+              {APP_CATEGORIES.map((cat) => {
+                const apps = APP_REGISTRY.filter((a) => a.category === cat);
+                return (
+                  <div key={cat} className="mb-4">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {cat}
+                    </p>
+                    <div className="grid grid-cols-3 gap-1">
+                      {apps.map((app) => (
+                        <div
+                          key={app.href}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, app)}
+                          onClick={() => router.push(app.href)}
+                          className="flex cursor-pointer flex-col items-center gap-1.5 rounded-lg p-2 text-center transition-colors hover:bg-muted active:scale-95"
+                          title="Glisser pour épingler"
+                        >
+                          <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl bg-muted", app.color)}>
+                            <DynIcon name={app.icon} className="h-4 w-4" />
+                          </div>
+                          <span className="text-[10px] leading-tight text-muted-foreground">
+                            {app.label}
+                          </span>
                         </div>
-                        <span className="text-[10px] leading-tight text-muted-foreground">
-                          {app.label}
-                        </span>
-                      </button>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </ScrollArea>
       </div>
 
-      {/* ── Icon Bar (always visible, fixed on far right) ── */}
+      {/* Icon Bar (always visible, fixed on far right) */}
       <div className="hidden md:flex fixed top-0 right-0 bottom-0 w-16 bg-background border-l border-border z-40 flex-col items-center py-4 gap-1">
         <TooltipProvider delayDuration={0}>
-
-          {/* Widget toggle icons */}
           {widgetItems.map((item) => {
             const isActive = isOpen && activeRightWidget === item.id && panelMode === "widget";
             return (
               <Tooltip key={item.id}>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      "h-10 w-10 transition-colors",
-                      isActive && "bg-accent text-accent-foreground"
-                    )}
+                    variant="ghost" size="icon"
+                    className={cn("h-10 w-10 transition-colors", isActive && "bg-accent text-accent-foreground")}
                     onClick={() => toggleWidget(item.id)}
                   >
                     <item.icon className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p>{item.label}</p>
-                </TooltipContent>
+                <TooltipContent side="left"><p>{item.label}</p></TooltipContent>
               </Tooltip>
             );
           })}
 
-          {/* Divider */}
           <div className="my-1 w-8 border-t border-border" />
 
           {/* App launcher toggle */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "h-10 w-10 transition-colors",
-                  isOpen && panelMode === "apps" && "bg-accent text-accent-foreground"
-                )}
+                variant="ghost" size="icon"
+                className={cn("h-10 w-10 transition-colors", isOpen && panelMode === "apps" && "bg-accent text-accent-foreground")}
                 onClick={openApps}
               >
-                {/* 3x3 grid icon */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3"  y="3"  width="7" height="7" rx="1" />
                   <rect x="14" y="3"  width="7" height="7" rx="1" />
                   <rect x="3"  y="14" width="7" height="7" rx="1" />
@@ -290,35 +188,21 @@ export function RightSidebar() {
                 </svg>
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>All Apps</p>
-            </TooltipContent>
+            <TooltipContent side="left"><p>All Apps</p></TooltipContent>
           </Tooltip>
 
-          {/* Expand/collapse toggle at bottom */}
+          {/* Expand/collapse toggle */}
           <div className="mt-auto">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 text-muted-foreground"
-                  onClick={() => setRightSidebarOpen(!isOpen)}
-                >
-                  <ChevronRight
-                    className={cn(
-                      "h-5 w-5 transition-transform duration-200",
-                      isOpen && "rotate-180"
-                    )}
-                  />
+                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground"
+                  onClick={() => setRightSidebarOpen(!isOpen)}>
+                  <ChevronRight className={cn("h-5 w-5 transition-transform duration-200", isOpen && "rotate-180")} />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="left">
-                <p>{isOpen ? "Hide Panel" : "Show Panel"}</p>
-              </TooltipContent>
+              <TooltipContent side="left"><p>{isOpen ? "Hide Panel" : "Show Panel"}</p></TooltipContent>
             </Tooltip>
           </div>
-
         </TooltipProvider>
       </div>
     </>
