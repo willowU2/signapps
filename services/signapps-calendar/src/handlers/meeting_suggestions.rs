@@ -84,7 +84,15 @@ pub async fn suggest_meeting_times(
     // Query all busy intervals for participants within the search range.
     // We collect (start, end, user_id) rows from the events table.
     let pool = state.pool.inner();
-    let rows = sqlx::query!(
+
+    #[derive(sqlx::FromRow)]
+    struct BusyRow {
+        user_id: Uuid,
+        start_time: DateTime<Utc>,
+        end_time: DateTime<Utc>,
+    }
+
+    let rows = sqlx::query_as::<_, BusyRow>(
         r#"
         SELECT ea.user_id, e.start_time, e.end_time
         FROM calendar.event_attendees ea
@@ -94,10 +102,10 @@ pub async fn suggest_meeting_times(
           AND e.end_time   > $2
           AND e.is_deleted = FALSE
         "#,
-        &req.participant_ids,
-        req.search_from,
-        req.search_until,
     )
+    .bind(&req.participant_ids)
+    .bind(req.search_from)
+    .bind(req.search_until)
     .fetch_all(pool)
     .await
     .map_err(|e| {
@@ -180,11 +188,10 @@ pub async fn suggest_meeting_times(
 // ─────────────────────────────────────────────────────────────────────────────
 
 fn round_up_to_slot(dt: DateTime<Utc>, work_start_hour: u32) -> DateTime<Utc> {
-    let naive = dt
-        .naive_utc()
-        .date()
-        .and_hms_opt(work_start_hour, 0, 0)
-        .unwrap();
+    let hour = work_start_hour.min(23);
+    let Some(naive) = dt.naive_utc().date().and_hms_opt(hour, 0, 0) else {
+        return dt;
+    };
     let candidate = Utc.from_utc_datetime(&naive);
     if candidate > dt {
         candidate
@@ -194,7 +201,11 @@ fn round_up_to_slot(dt: DateTime<Utc>, work_start_hour: u32) -> DateTime<Utc> {
 }
 
 fn next_work_slot(dt: DateTime<Utc>, work_start_hour: u32) -> DateTime<Utc> {
+    let hour = work_start_hour.min(23);
     let tomorrow = dt.date_naive().succ_opt().unwrap_or(dt.date_naive());
-    let naive = tomorrow.and_hms_opt(work_start_hour, 0, 0).unwrap();
+    let naive = match tomorrow.and_hms_opt(hour, 0, 0) {
+        Some(n) => n,
+        None => return dt,
+    };
     Utc.from_utc_datetime(&naive)
 }

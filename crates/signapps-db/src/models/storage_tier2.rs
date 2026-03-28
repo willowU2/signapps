@@ -49,7 +49,7 @@ pub struct FileVersion {
 }
 
 /// Response returned when fetching tags for a file
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct FileTagResponse {
     pub id: Uuid,
     pub name: String,

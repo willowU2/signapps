@@ -19,13 +19,12 @@ use crate::AppState;
 pub async fn list_profiles(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<PxeProfile>>, (StatusCode, String)> {
-    let profiles = sqlx::query_as!(
-        PxeProfile,
+    let profiles = sqlx::query_as::<_, PxeProfile>(
         r#"
         SELECT id, name, description, boot_script, os_type, os_version, is_default, created_at, updated_at
         FROM pxe.profiles
         ORDER BY created_at DESC
-        "#
+        "#,
     )
     .fetch_all(state.db.inner())
     .await
@@ -41,14 +40,13 @@ pub async fn get_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<PxeProfile>, (StatusCode, String)> {
-    let profile = sqlx::query_as!(
-        PxeProfile,
+    let profile = sqlx::query_as::<_, PxeProfile>(
         r#"
         SELECT id, name, description, boot_script, os_type, os_version, is_default, created_at, updated_at
         FROM pxe.profiles WHERE id = $1
         "#,
-        id
     )
+    .bind(id)
     .fetch_optional(state.db.inner())
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
@@ -63,25 +61,24 @@ pub async fn create_profile(
 ) -> Result<(StatusCode, Json<PxeProfile>), (StatusCode, String)> {
     // If setting as default, unset other defaults first
     if payload.is_default.unwrap_or(false) {
-        let _ = sqlx::query!("UPDATE pxe.profiles SET is_default = false WHERE is_default = true")
+        let _ = sqlx::query("UPDATE pxe.profiles SET is_default = false WHERE is_default = true")
             .execute(state.db.inner())
             .await;
     }
 
-    let profile = sqlx::query_as!(
-        PxeProfile,
+    let profile = sqlx::query_as::<_, PxeProfile>(
         r#"
         INSERT INTO pxe.profiles (name, description, boot_script, os_type, os_version, is_default)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, name, description, boot_script, os_type, os_version, is_default, created_at, updated_at
         "#,
-        payload.name,
-        payload.description,
-        payload.boot_script,
-        payload.os_type,
-        payload.os_version,
-        payload.is_default.unwrap_or(false)
     )
+    .bind(&payload.name)
+    .bind(&payload.description)
+    .bind(&payload.boot_script)
+    .bind(&payload.os_type)
+    .bind(&payload.os_version)
+    .bind(payload.is_default.unwrap_or(false))
     .fetch_one(state.db.inner())
     .await
     .map_err(|e| {
@@ -98,21 +95,23 @@ pub async fn update_profile(
     Json(payload): Json<UpdatePxeProfileRequest>,
 ) -> Result<Json<PxeProfile>, (StatusCode, String)> {
     // Check exists
-    let _ = sqlx::query!("SELECT id FROM pxe.profiles WHERE id = $1", id)
+    let exists = sqlx::query("SELECT id FROM pxe.profiles WHERE id = $1")
+        .bind(id)
         .fetch_optional(state.db.inner())
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .ok_or((StatusCode::NOT_FOUND, "Profile not found".to_string()))?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    if exists.is_none() {
+        return Err((StatusCode::NOT_FOUND, "Profile not found".to_string()));
+    }
 
     // If setting as default, unset others
     if payload.is_default.unwrap_or(false) {
-        let _ = sqlx::query!("UPDATE pxe.profiles SET is_default = false WHERE is_default = true")
+        let _ = sqlx::query("UPDATE pxe.profiles SET is_default = false WHERE is_default = true")
             .execute(state.db.inner())
             .await;
     }
 
-    let profile = sqlx::query_as!(
-        PxeProfile,
+    let profile = sqlx::query_as::<_, PxeProfile>(
         r#"
         UPDATE pxe.profiles SET
             name = COALESCE($1, name),
@@ -125,14 +124,14 @@ pub async fn update_profile(
         WHERE id = $7
         RETURNING id, name, description, boot_script, os_type, os_version, is_default, created_at, updated_at
         "#,
-        payload.name,
-        payload.description,
-        payload.boot_script,
-        payload.os_type,
-        payload.os_version,
-        payload.is_default,
-        id
     )
+    .bind(payload.name.as_deref())
+    .bind(payload.description.as_deref())
+    .bind(payload.boot_script.as_deref())
+    .bind(payload.os_type.as_deref())
+    .bind(payload.os_version.as_deref())
+    .bind(payload.is_default)
+    .bind(id)
     .fetch_one(state.db.inner())
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -144,7 +143,8 @@ pub async fn delete_profile(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let result = sqlx::query!("DELETE FROM pxe.profiles WHERE id = $1", id)
+    let result = sqlx::query("DELETE FROM pxe.profiles WHERE id = $1")
+        .bind(id)
         .execute(state.db.inner())
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -163,13 +163,12 @@ pub async fn delete_profile(
 pub async fn list_assets(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<PxeAsset>>, (StatusCode, String)> {
-    let assets = sqlx::query_as!(
-        PxeAsset,
+    let assets = sqlx::query_as::<_, PxeAsset>(
         r#"
         SELECT id, mac_address, hostname, ip_address, status, profile_id, assigned_user_id, metadata, last_seen, created_at, updated_at
         FROM pxe.assets
         ORDER BY last_seen DESC NULLS LAST, created_at DESC
-        "#
+        "#,
     )
     .fetch_all(state.db.inner())
     .await
@@ -185,14 +184,13 @@ pub async fn get_asset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<PxeAsset>, (StatusCode, String)> {
-    let asset = sqlx::query_as!(
-        PxeAsset,
+    let asset = sqlx::query_as::<_, PxeAsset>(
         r#"
         SELECT id, mac_address, hostname, ip_address, status, profile_id, assigned_user_id, metadata, last_seen, created_at, updated_at
         FROM pxe.assets WHERE id = $1
         "#,
-        id
     )
+    .bind(id)
     .fetch_optional(state.db.inner())
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
@@ -206,8 +204,7 @@ pub async fn register_asset(
     Json(payload): Json<RegisterPxeAssetRequest>,
 ) -> Result<(StatusCode, Json<PxeAsset>), (StatusCode, String)> {
     // Upsert - if MAC exists, update it; else insert new
-    let asset = sqlx::query_as!(
-        PxeAsset,
+    let asset = sqlx::query_as::<_, PxeAsset>(
         r#"
         INSERT INTO pxe.assets (mac_address, hostname, profile_id, status, last_seen)
         VALUES ($1, $2, $3, 'discovered', NOW())
@@ -218,10 +215,10 @@ pub async fn register_asset(
             updated_at = NOW()
         RETURNING id, mac_address, hostname, ip_address, status, profile_id, assigned_user_id, metadata, last_seen, created_at, updated_at
         "#,
-        payload.mac_address,
-        payload.hostname,
-        payload.profile_id
     )
+    .bind(&payload.mac_address)
+    .bind(&payload.hostname)
+    .bind(payload.profile_id)
     .fetch_one(state.db.inner())
     .await
     .map_err(|e| {
@@ -237,14 +234,16 @@ pub async fn update_asset(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdatePxeAssetRequest>,
 ) -> Result<Json<PxeAsset>, (StatusCode, String)> {
-    let _ = sqlx::query!("SELECT id FROM pxe.assets WHERE id = $1", id)
+    let exists = sqlx::query("SELECT id FROM pxe.assets WHERE id = $1")
+        .bind(id)
         .fetch_optional(state.db.inner())
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-        .ok_or((StatusCode::NOT_FOUND, "Asset not found".to_string()))?;
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    if exists.is_none() {
+        return Err((StatusCode::NOT_FOUND, "Asset not found".to_string()));
+    }
 
-    let asset = sqlx::query_as!(
-        PxeAsset,
+    let asset = sqlx::query_as::<_, PxeAsset>(
         r#"
         UPDATE pxe.assets SET
             hostname = COALESCE($1, hostname),
@@ -255,12 +254,12 @@ pub async fn update_asset(
         WHERE id = $5
         RETURNING id, mac_address, hostname, ip_address, status, profile_id, assigned_user_id, metadata, last_seen, created_at, updated_at
         "#,
-        payload.hostname,
-        payload.status,
-        payload.profile_id,
-        payload.metadata,
-        id
     )
+    .bind(payload.hostname.as_deref())
+    .bind(payload.status.as_deref())
+    .bind(payload.profile_id)
+    .bind(&payload.metadata)
+    .bind(id)
     .fetch_one(state.db.inner())
     .await
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -272,7 +271,8 @@ pub async fn delete_asset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let result = sqlx::query!("DELETE FROM pxe.assets WHERE id = $1", id)
+    let result = sqlx::query("DELETE FROM pxe.assets WHERE id = $1")
+        .bind(id)
         .execute(state.db.inner())
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -298,23 +298,20 @@ pub async fn generate_ipxe_script(
     Query(query): Query<IpxeQuery>,
 ) -> Result<String, (StatusCode, String)> {
     // Update last_seen for the asset
-    let _ = sqlx::query!(
-        "UPDATE pxe.assets SET last_seen = NOW() WHERE mac_address = $1",
-        query.mac
-    )
-    .execute(state.db.inner())
-    .await;
+    let _ = sqlx::query("UPDATE pxe.assets SET last_seen = NOW() WHERE mac_address = $1")
+        .bind(&query.mac)
+        .execute(state.db.inner())
+        .await;
 
     // 1. Lookup the bare-metal MAC address in pxe.assets
-    let asset = sqlx::query_as!(
-        PxeAsset,
+    let asset = sqlx::query_as::<_, PxeAsset>(
         r#"
         SELECT id, mac_address, hostname, ip_address, status, profile_id, assigned_user_id, metadata, last_seen, created_at, updated_at
         FROM pxe.assets
         WHERE mac_address = $1
         "#,
-        query.mac
     )
+    .bind(&query.mac)
     .fetch_optional(state.db.inner())
     .await
     .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "DB Error".to_string()))?;
@@ -324,22 +321,22 @@ pub async fn generate_ipxe_script(
         Some(a) if a.profile_id.is_some() => a.profile_id,
         _ => {
             // Find default profile
-            let dev =
-                sqlx::query!(r#"SELECT id FROM pxe.profiles WHERE is_default = true LIMIT 1"#)
-                    .fetch_optional(state.db.inner())
-                    .await
-                    .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "".to_string()))?;
-            dev.map(|row| row.id)
-        },
+            let row: Option<(Uuid,)> = sqlx::query_as(
+                "SELECT id FROM pxe.profiles WHERE is_default = true LIMIT 1",
+            )
+            .fetch_optional(state.db.inner())
+            .await
+            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "".to_string()))?;
+            row.map(|(id,)| id)
+        }
     };
 
     if let Some(pid) = active_profile_id {
-        let profile = sqlx::query_as!(
-            PxeProfile,
+        let profile = sqlx::query_as::<_, PxeProfile>(
             r#"SELECT id, name, description, boot_script, os_type, os_version, is_default, created_at, updated_at
                FROM pxe.profiles WHERE id = $1"#,
-            pid
         )
+        .bind(pid)
         .fetch_one(state.db.inner())
         .await
         .map_err(|_| (StatusCode::NOT_FOUND, "".to_string()))?;

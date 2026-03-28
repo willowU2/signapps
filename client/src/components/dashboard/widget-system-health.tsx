@@ -1,15 +1,101 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ResourceGauge } from '@/components/dashboard/resource-gauge';
 import { Cpu, MemoryStick, Database, Server } from 'lucide-react';
 import { useDashboardData } from '@/hooks/use-dashboard';
 import { useServiceHealth, ServiceHealth } from '@/hooks/use-service-health';
+import {
+  AreaChart,
+  Area,
+  ResponsiveContainer,
+  Tooltip,
+} from 'recharts';
+
+interface SparklinePoint {
+  time: string;
+  value: number;
+}
+
+const MAX_SPARKLINE_POINTS = 10;
+
+function MiniSparkline({ data, color, label }: { data: SparklinePoint[]; color: string; label: string }) {
+  if (data.length < 2) return null;
+
+  return (
+    <div className="h-10 w-full mt-1">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id={`gradient-${label}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.05} />
+            </linearGradient>
+          </defs>
+          <Tooltip
+            contentStyle={{
+              backgroundColor: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '6px',
+              fontSize: '11px',
+              padding: '4px 8px',
+            }}
+            formatter={(value: number) => [`${value}%`, label]}
+            labelFormatter={(l) => l}
+          />
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke={color}
+            fill={`url(#gradient-${label})`}
+            strokeWidth={1.5}
+            dot={false}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 export function WidgetSystemHealth() {
   const { data: dashboardData } = useDashboardData();
   const { data: services = [] } = useServiceHealth();
+
+  const [cpuHistory, setCpuHistory] = useState<SparklinePoint[]>([]);
+  const [memHistory, setMemHistory] = useState<SparklinePoint[]>([]);
+  const prevCpuRef = useRef<number | null>(null);
+  const prevMemRef = useRef<number | null>(null);
+
+  // Accumulate data points as dashboard data updates (every ~30s)
+  useEffect(() => {
+    if (!dashboardData) return;
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
+    const cpuVal = dashboardData.cpu || 0;
+    const memVal = dashboardData.memory || 0;
+
+    // Only add a point when the value actually changes (new poll)
+    if (cpuVal !== prevCpuRef.current || memVal !== prevMemRef.current) {
+      prevCpuRef.current = cpuVal;
+      prevMemRef.current = memVal;
+
+      setCpuHistory((prev) =>
+        [...prev, { time: timeStr, value: cpuVal }].slice(-MAX_SPARKLINE_POINTS)
+      );
+      setMemHistory((prev) =>
+        [...prev, { time: timeStr, value: memVal }].slice(-MAX_SPARKLINE_POINTS)
+      );
+    }
+  }, [dashboardData]);
 
   const onlineCount = services.filter((s) => s.status === 'online').length;
   const totalCount = services.length;
@@ -35,6 +121,7 @@ export function WidgetSystemHealth() {
             </div>
             <ResourceGauge label="" value={dashboardData?.cpu || 0} showLabel={false} />
             <p className="text-2xl font-bold">{dashboardData?.cpu || 0}%</p>
+            <MiniSparkline data={cpuHistory} color="#3b82f6" label="CPU" />
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -43,6 +130,7 @@ export function WidgetSystemHealth() {
             </div>
             <ResourceGauge label="" value={dashboardData?.memory || 0} showLabel={false} />
             <p className="text-2xl font-bold">{dashboardData?.memory || 0}%</p>
+            <MiniSparkline data={memHistory} color="#a855f7" label="Memory" />
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

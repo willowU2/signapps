@@ -13,16 +13,15 @@ impl StorageTier2Repository {
 
     /// Get all tags for a specific user
     pub async fn get_user_tags(pool: &PgPool, user_id: Uuid) -> Result<Vec<Tag>, sqlx::Error> {
-        sqlx::query_as!(
-            Tag,
+        sqlx::query_as::<_, Tag>(
             r#"
             SELECT id, user_id, name, color, created_at, updated_at
             FROM storage.tags
             WHERE user_id = $1
             ORDER BY name ASC
             "#,
-            user_id
         )
+        .bind(user_id)
         .fetch_all(pool)
         .await
     }
@@ -35,18 +34,17 @@ impl StorageTier2Repository {
     ) -> Result<Tag, sqlx::Error> {
         let color = req.color.clone().unwrap_or_else(|| "#808080".to_string());
 
-        sqlx::query_as!(
-            Tag,
+        sqlx::query_as::<_, Tag>(
             r#"
             INSERT INTO storage.tags (id, user_id, name, color)
             VALUES ($1, $2, $3, $4)
             RETURNING id, user_id, name, color, created_at, updated_at
             "#,
-            Uuid::new_v4(),
-            user_id,
-            req.name,
-            color
         )
+        .bind(Uuid::new_v4())
+        .bind(user_id)
+        .bind(&req.name)
+        .bind(color)
         .fetch_one(pool)
         .await
     }
@@ -58,8 +56,7 @@ impl StorageTier2Repository {
         user_id: Uuid,
         req: &UpdateTagRequest,
     ) -> Result<Tag, sqlx::Error> {
-        sqlx::query_as!(
-            Tag,
+        sqlx::query_as::<_, Tag>(
             r#"
             UPDATE storage.tags
             SET
@@ -69,11 +66,11 @@ impl StorageTier2Repository {
             WHERE id = $3 AND user_id = $4
             RETURNING id, user_id, name, color, created_at, updated_at
             "#,
-            req.name,
-            req.color,
-            tag_id,
-            user_id
         )
+        .bind(req.name.as_deref())
+        .bind(req.color.as_deref())
+        .bind(tag_id)
+        .bind(user_id)
         .fetch_one(pool)
         .await
     }
@@ -84,14 +81,14 @@ impl StorageTier2Repository {
         tag_id: Uuid,
         user_id: Uuid,
     ) -> Result<u64, sqlx::Error> {
-        let result: sqlx::postgres::PgQueryResult = sqlx::query!(
+        let result = sqlx::query(
             r#"
             DELETE FROM storage.tags
             WHERE id = $1 AND user_id = $2
             "#,
-            tag_id,
-            user_id
         )
+        .bind(tag_id)
+        .bind(user_id)
         .execute(pool)
         .await?;
 
@@ -107,8 +104,7 @@ impl StorageTier2Repository {
         pool: &PgPool,
         file_id: Uuid,
     ) -> Result<Vec<FileTagResponse>, sqlx::Error> {
-        sqlx::query_as!(
-            FileTagResponse,
+        sqlx::query_as::<_, FileTagResponse>(
             r#"
             SELECT t.id, t.name, t.color
             FROM storage.tags t
@@ -116,8 +112,8 @@ impl StorageTier2Repository {
             WHERE ft.file_id = $1
             ORDER BY t.name ASC
             "#,
-            file_id
         )
+        .bind(file_id)
         .fetch_all(pool)
         .await
     }
@@ -128,15 +124,15 @@ impl StorageTier2Repository {
         file_id: Uuid,
         tag_id: Uuid,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query!(
+        sqlx::query(
             r#"
             INSERT INTO storage.file_tags (file_id, tag_id)
             VALUES ($1, $2)
             ON CONFLICT (file_id, tag_id) DO NOTHING
             "#,
-            file_id,
-            tag_id
         )
+        .bind(file_id)
+        .bind(tag_id)
         .execute(pool)
         .await?;
 
@@ -149,14 +145,14 @@ impl StorageTier2Repository {
         file_id: Uuid,
         tag_id: Uuid,
     ) -> Result<u64, sqlx::Error> {
-        let result: sqlx::postgres::PgQueryResult = sqlx::query!(
+        let result = sqlx::query(
             r#"
             DELETE FROM storage.file_tags
             WHERE file_id = $1 AND tag_id = $2
             "#,
-            file_id,
-            tag_id
         )
+        .bind(file_id)
+        .bind(tag_id)
         .execute(pool)
         .await?;
 
@@ -172,16 +168,15 @@ impl StorageTier2Repository {
         pool: &PgPool,
         file_id: Uuid,
     ) -> Result<Vec<FileVersion>, sqlx::Error> {
-        sqlx::query_as!(
-            FileVersion,
+        sqlx::query_as::<_, FileVersion>(
             r#"
             SELECT id, file_id, version_number, size, content_type, storage_key, created_at
             FROM storage.file_versions
             WHERE file_id = $1
             ORDER BY version_number DESC
             "#,
-            file_id
         )
+        .bind(file_id)
         .fetch_all(pool)
         .await
     }
@@ -195,46 +190,45 @@ impl StorageTier2Repository {
         storage_key: String,
     ) -> Result<FileVersion, sqlx::Error> {
         // Get next version number
-        let next_version: i32 = sqlx::query_scalar!(
+        let row: (i64,) = sqlx::query_as(
             r#"
-            SELECT COALESCE(MAX(version_number), 0) + 1 as "next!"
+            SELECT COALESCE(MAX(version_number), 0) + 1
             FROM storage.file_versions
             WHERE file_id = $1
             "#,
-            file_id
         )
+        .bind(file_id)
         .fetch_one(pool)
         .await?;
+        let next_version = row.0 as i32;
 
-        sqlx::query_as!(
-            FileVersion,
+        sqlx::query_as::<_, FileVersion>(
             r#"
             INSERT INTO storage.file_versions (id, file_id, version_number, size, content_type, storage_key)
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING id, file_id, version_number, size, content_type, storage_key, created_at
             "#,
-            Uuid::new_v4(),
-            file_id,
-            next_version,
-            size,
-            content_type,
-            storage_key
         )
+        .bind(Uuid::new_v4())
+        .bind(file_id)
+        .bind(next_version)
+        .bind(size)
+        .bind(content_type)
+        .bind(storage_key)
         .fetch_one(pool)
         .await
     }
 
     /// Get a specific version
     pub async fn get_version(pool: &PgPool, version_id: Uuid) -> Result<FileVersion, sqlx::Error> {
-        sqlx::query_as!(
-            FileVersion,
+        sqlx::query_as::<_, FileVersion>(
             r#"
             SELECT id, file_id, version_number, size, content_type, storage_key, created_at
             FROM storage.file_versions
             WHERE id = $1
             "#,
-            version_id
         )
+        .bind(version_id)
         .fetch_one(pool)
         .await
     }
@@ -248,18 +242,18 @@ impl StorageTier2Repository {
         pool: &PgPool,
         file_id: Uuid,
     ) -> Result<(String, String, i64, Option<String>), sqlx::Error> {
-        let row = sqlx::query!(
+        let row: (String, String, i64, Option<String>) = sqlx::query_as(
             r#"
             SELECT bucket, key, size, content_type
             FROM storage.files
             WHERE id = $1
             "#,
-            file_id
         )
+        .bind(file_id)
         .fetch_one(pool)
         .await?;
 
-        Ok((row.bucket, row.key, row.size, row.content_type))
+        Ok(row)
     }
 
     /// Update file size and content type after restoration
@@ -269,16 +263,16 @@ impl StorageTier2Repository {
         size: i64,
         content_type: Option<String>,
     ) -> Result<(), sqlx::Error> {
-        sqlx::query!(
+        sqlx::query(
             r#"
             UPDATE storage.files
             SET size = $1, content_type = $2, updated_at = NOW()
             WHERE id = $3
             "#,
-            size,
-            content_type,
-            file_id
         )
+        .bind(size)
+        .bind(content_type)
+        .bind(file_id)
         .execute(pool)
         .await?;
 
