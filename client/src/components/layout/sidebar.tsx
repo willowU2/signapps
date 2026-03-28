@@ -11,6 +11,11 @@ import {
   Container, Network, Settings, Users, Shield, Clock, Activity,
   Mic, Store, Archive, Plus, Tag, Brain, Upload, MessageSquare,
   Route, X, Star, HelpCircle, GripVertical,
+  MessagesSquare, Table, Presentation, ChevronLeft, ChevronRight,
+  ChevronDown, ShieldCheck, FileText, CalendarRange, Video, Server,
+  Terminal, MonitorSmartphone, FolderOpen, Sun, Moon, DoorOpen,
+  Building2, Notebook, Palette, Share2, Receipt, BarChart3, Film,
+  ClipboardList,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import {
@@ -21,12 +26,114 @@ import {
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FEATURES } from '@/lib/features';
 
 function DynIcon({ name, className }: { name: string; className?: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Icon = (LucideIcons as any)[name] as React.ComponentType<{ className?: string }> | undefined;
   if (!Icon) return <LucideIcons.Grid className={className} />;
   return <Icon className={className} />;
+}
+
+/**
+ * Navigation groups avec feature flags et permissions
+ * Les items avec enabled: false sont cachés (règle NO DEAD ENDS)
+ * Les groupes avec adminOnly: true ne sont visibles que pour les admins
+ */
+const navGroupsConfig = [
+  {
+    label: 'Productivity',
+    icon: FileText,
+    adminOnly: false,
+    items: [
+      { href: '/docs', icon: FileText, label: 'Docs', enabled: FEATURES.DOCS },
+      { href: '/sheets', icon: Table, label: 'Sheets', enabled: FEATURES.DOCS },
+      { href: '/slides', icon: Presentation, label: 'Slides', enabled: FEATURES.DOCS },
+      { href: '/mail', icon: Mail, label: 'Mail', enabled: FEATURES.MAIL },
+      { href: '/scheduling', icon: CalendarRange, label: 'Scheduling', enabled: FEATURES.CALENDAR },
+      { href: '/calendar', icon: Calendar, label: 'Calendar', enabled: FEATURES.CALENDAR },
+      { href: '/tasks', icon: CheckSquare, label: 'Tasks', enabled: FEATURES.SCHEDULER },
+      { href: '/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
+      { href: '/keep', icon: Notebook, label: 'Keep', enabled: FEATURES.KEEP },
+      { href: '/forms', icon: ClipboardList, label: 'Forms', enabled: FEATURES.FORMS },
+      { href: '/design', icon: Palette, label: 'Design', enabled: FEATURES.DESIGN },
+    ]
+  },
+  {
+    label: 'Communication',
+    icon: MessagesSquare,
+    adminOnly: false,
+    items: [
+      { href: '/chat', icon: MessagesSquare, label: 'Chat', enabled: FEATURES.COLLAB },
+      { href: '/meet', icon: Video, label: 'Meet', enabled: FEATURES.MEET },
+      { href: '/social', icon: Share2, label: 'Social', enabled: FEATURES.SOCIAL },
+    ]
+  },
+  {
+    label: 'Infrastructure',
+    icon: HardDrive,
+    adminOnly: true, // Admin only - containers et routes sont des fonctions admin
+    items: [
+      { href: '/containers', icon: Container, label: 'Containers', enabled: FEATURES.CONTAINERS },
+      { href: '/drive', icon: HardDrive, label: 'Global Drive', enabled: FEATURES.STORAGE },
+      { href: '/routes', icon: Network, label: 'Routes', enabled: FEATURES.PROXY },
+      { href: '/vpn', icon: Shield, label: 'VPN', enabled: FEATURES.VPN },
+      { href: '/backups', icon: Archive, label: 'Backups', enabled: FEATURES.CONTAINERS },
+    ]
+  },
+  {
+    label: 'IT Management',
+    icon: Server,
+    adminOnly: true, // Admin only
+    items: [
+      { href: '/apps', icon: Store, label: 'App Store', enabled: FEATURES.CONTAINERS },
+      // Services skeleton - CACHÉS (NO DEAD ENDS)
+      { href: '/it-assets', icon: Server, label: 'IT Assets', enabled: FEATURES.IT_ASSETS },
+      { href: '/pxe', icon: Terminal, label: 'PXE Deploy', enabled: FEATURES.PXE },
+      { href: '/remote', icon: MonitorSmartphone, label: 'Remote Access', enabled: FEATURES.REMOTE },
+      { href: '/media', icon: Film, label: 'Media', enabled: FEATURES.MEDIA },
+    ]
+  },
+  {
+    label: 'Operations',
+    icon: Activity,
+    adminOnly: true, // Admin only - scheduler et monitoring
+    items: [
+      { href: '/ai', icon: MessageSquare, label: 'AI', enabled: FEATURES.AI },
+      { href: '/scheduler', icon: Clock, label: 'Scheduler', enabled: FEATURES.SCHEDULER },
+      { href: '/monitoring', icon: Activity, label: 'Monitoring', enabled: FEATURES.METRICS },
+      { href: '/billing', icon: Receipt, label: 'Billing', enabled: FEATURES.BILLING },
+      { href: '/analytics', icon: BarChart3, label: 'Analytics', enabled: FEATURES.ANALYTICS },
+      { href: '/workforce', icon: Users, label: 'Workforce', enabled: FEATURES.WORKFORCE },
+    ]
+  },
+  {
+    label: 'Administration',
+    icon: ShieldCheck,
+    adminOnly: true, // Admin only - section administration
+    items: [
+      { href: '/admin', icon: ShieldCheck, label: 'Admin', enabled: FEATURES.IDENTITY },
+      { href: '/admin/users', icon: Users, label: 'Users', enabled: FEATURES.IDENTITY },
+      { href: '/admin/workspaces', icon: Building2, label: 'Workspaces', enabled: FEATURES.IDENTITY },
+      { href: '/admin/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
+      { href: '/admin/storage', icon: HardDrive, label: 'Storage Config', enabled: FEATURES.STORAGE },
+      { href: '/settings', icon: Settings, label: 'Settings', enabled: true },
+      { href: '/admin/org', icon: Network, label: 'Org Chart', enabled: FEATURES.ORG_CHART },
+    ]
+  }
+];
+
+/**
+ * Filtre les groupes de navigation selon les features et les permissions
+ */
+function filterNavGroups(isUserAdmin: boolean) {
+  return navGroupsConfig
+    .filter(group => !group.adminOnly || isUserAdmin) // Filter by admin permission
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => item.enabled)
+    }))
+    .filter(group => group.items.length > 0);
 }
 
 const quickActions = [

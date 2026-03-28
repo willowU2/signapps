@@ -22,6 +22,7 @@ export const FEATURES = {
   METRICS: true,
   MEDIA: true,
   PROXY: true,
+  FORMS: true,
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SERVICES PARTIELS (fonctionnent mais features spécifiques manquantes)
