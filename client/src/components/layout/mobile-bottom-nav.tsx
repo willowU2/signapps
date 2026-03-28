@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Home, Mail, Calendar, MessageSquare, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// 5-tab bottom navigation per IDEA-095: Home, Mail, Calendar, Chat, More
+// 5-tab bottom navigation: Home, Mail, Calendar, Chat, More
 const NAV_ITEMS = [
   {
     label: 'Home',
@@ -44,6 +44,12 @@ const NAV_ITEMS = [
   },
 ] as const;
 
+function triggerHaptic() {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    navigator.vibrate(10);
+  }
+}
+
 export function MobileBottomNav() {
   const pathname = usePathname();
 
@@ -64,25 +70,36 @@ export function MobileBottomNav() {
           <Link
             key={href}
             href={href}
+            onClick={triggerHaptic}
             className={cn(
-              'flex flex-1 flex-col items-center justify-center gap-1 py-2',
+              'relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2',
               'text-xs font-medium transition-colors',
-              // Larger touch target (min 44px)
+              // Larger touch target (min 44px per WCAG)
               'min-h-[44px]',
+              'active:scale-95 transition-transform duration-100',
               isActive
                 ? 'text-primary'
                 : 'text-muted-foreground hover:text-foreground',
             )}
             aria-current={isActive ? 'page' : undefined}
           >
+            {/* Active indicator pill above icon */}
+            {isActive && (
+              <span
+                className="absolute top-1 h-1 w-6 rounded-full bg-primary animate-in fade-in zoom-in-75 duration-200"
+                aria-hidden="true"
+              />
+            )}
             <Icon
               className={cn(
-                'h-6 w-6 transition-transform',
+                'h-5 w-5 transition-transform duration-150',
                 isActive && 'scale-110',
               )}
               aria-hidden="true"
             />
-            <span>{label}</span>
+            <span className={cn('leading-tight', isActive && 'font-semibold')}>
+              {label}
+            </span>
           </Link>
         );
       })}

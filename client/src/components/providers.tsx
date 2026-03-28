@@ -24,6 +24,8 @@ import { OnboardingWizard } from '@/components/onboarding/onboarding-wizard';
 import { RouteProgressBar } from '@/components/layout/route-progress-bar';
 import { PasswordExpiryBanner } from '@/components/auth/password-expiry-banner';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
+import { PwaInstallPrompt } from '@/components/pwa/pwa-install-prompt';
+import { useServiceWorker } from '@/hooks/use-service-worker';
 
 function LoadingFallback() {
   return (
@@ -38,6 +40,7 @@ function LoadingFallback() {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  useServiceWorker();
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -95,6 +98,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                         <>
                           <CommandBar />
                           <MobileBottomNav />
+                          <PwaInstallPrompt />
                         </>
                       )}
                       <GlobalModals />
