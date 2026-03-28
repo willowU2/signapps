@@ -41,6 +41,7 @@ import {
   Terminal,
   MonitorSmartphone,
   FolderOpen,
+  FolderKanban,
   Sun,
   Moon,
   DoorOpen,
@@ -51,6 +52,8 @@ import {
   Receipt,
   BarChart3,
   Film,
+  TrendingUp,
+  ClipboardList,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
@@ -73,12 +76,17 @@ const navGroupsConfig = [
     adminOnly: false,
     items: [
       { href: '/docs', icon: FileText, label: 'Docs', enabled: FEATURES.DOCS },
+      { href: '/docs/automation', icon: FileText, label: 'Doc Automation', enabled: FEATURES.DOCS },
       { href: '/sheets', icon: Table, label: 'Sheets', enabled: FEATURES.DOCS },
       { href: '/slides', icon: Presentation, label: 'Slides', enabled: FEATURES.DOCS },
       { href: '/mail', icon: Mail, label: 'Mail', enabled: FEATURES.MAIL },
+      { href: '/mail/advanced', icon: Mail, label: 'Mail Advanced', enabled: FEATURES.MAIL },
       { href: '/scheduling', icon: CalendarRange, label: 'Scheduling', enabled: FEATURES.CALENDAR },
       { href: '/calendar', icon: Calendar, label: 'Calendar', enabled: FEATURES.CALENDAR },
       { href: '/tasks', icon: CheckSquare, label: 'Tasks', enabled: FEATURES.SCHEDULER },
+      { href: '/crm', icon: TrendingUp, label: 'CRM', enabled: true },
+      { href: '/forms', icon: ClipboardList, label: 'Forms', enabled: true },
+      { href: '/projects', icon: FolderKanban, label: 'Projects', enabled: true },
       { href: '/resources', icon: DoorOpen, label: 'Resources', enabled: FEATURES.IDENTITY },
       { href: '/keep', icon: Notebook, label: 'Keep', enabled: FEATURES.KEEP },
       { href: '/design', icon: Palette, label: 'Design', enabled: FEATURES.DESIGN },
@@ -130,6 +138,14 @@ const navGroupsConfig = [
       { href: '/billing', icon: Receipt, label: 'Billing', enabled: FEATURES.BILLING },
       { href: '/analytics', icon: BarChart3, label: 'Analytics', enabled: FEATURES.ANALYTICS },
       { href: '/workforce', icon: Users, label: 'Workforce', enabled: FEATURES.WORKFORCE },
+    ]
+  },
+  {
+    label: 'Legal & Compliance',
+    icon: Shield,
+    adminOnly: false,
+    items: [
+      { href: '/compliance', icon: Shield, label: 'Compliance Hub', enabled: FEATURES.IDENTITY },
     ]
   },
   {
@@ -285,7 +301,7 @@ export function Sidebar() {
                  title="Switch Workspace"
                >
                  {workspaces.length === 0 ? (
-                   <option disabled value="">No Workspaces</option>
+                   <option disabled value="">Personal Workspace</option>
                  ) : (
                    workspaces.map(w => (
                      <option key={w.id} value={w.id}>{w.name}</option>
