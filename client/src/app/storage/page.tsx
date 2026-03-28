@@ -301,10 +301,34 @@ export default function StoragePage() {
     router.push(`/storage?tab=${tab}`, { scroll: false });
   };
 
+  const DEFAULT_BUCKETS = ['documents', 'images', 'backups', 'keep', 'media'];
+
+  const seedDefaultBuckets = useCallback(async () => {
+    const created: Bucket[] = [];
+    for (const name of DEFAULT_BUCKETS) {
+      try {
+        await storageApi.createBucket(name);
+        created.push({ name });
+      } catch {
+        // Bucket may already exist — ignore
+      }
+    }
+    return created;
+  }, []);
+
   const fetchBuckets = useCallback(async () => {
     try {
       const response = await storageApi.listBuckets();
-      const bucketList = (response.data || []).filter((b: { name: string }) => b.name);
+      let bucketList = (response.data || []).filter((b: { name: string }) => b.name);
+
+      // Auto-seed default buckets when storage is empty
+      if (bucketList.length === 0) {
+        await seedDefaultBuckets();
+        // Re-fetch after seeding
+        const retry = await storageApi.listBuckets();
+        bucketList = (retry.data || []).filter((b: { name: string }) => b.name);
+      }
+
       setBuckets(bucketList.map((b: { name: string; created_at?: string }) => ({ name: b.name, creationDate: b.created_at })));
       if (bucketList.length === 0) {
         setLoading(false);
@@ -314,7 +338,7 @@ export default function StoragePage() {
       setCurrentBucket('');
       setLoading(false);
     }
-  }, [currentBucket]);
+  }, [currentBucket, seedDefaultBuckets]);
 
   const fetchFiles = useCallback(async () => {
     setLoading(true);

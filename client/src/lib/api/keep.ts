@@ -47,28 +47,71 @@ export interface KeepData {
   labels: KeepLabel[];
 }
 
-// Helper to read JSON data from storage
+// ── localStorage persistence layer ──────────────────────────────────────────
+const KEEP_LOCAL_KEY = 'signapps_keep_data';
+
+function getLocalKeepData(): KeepData {
+  try {
+    const raw = localStorage.getItem(KEEP_LOCAL_KEY);
+    if (!raw) return { notes: [], labels: [] };
+    return JSON.parse(raw) as KeepData;
+  } catch {
+    return { notes: [], labels: [] };
+  }
+}
+
+function setLocalKeepData(data: KeepData): void {
+  try {
+    localStorage.setItem(KEEP_LOCAL_KEY, JSON.stringify(data));
+  } catch {
+    // localStorage full or unavailable — ignore
+  }
+}
+
+// Track whether the storage service is reachable
+let storageAvailable = true;
+
+// Helper to read JSON data from storage (with localStorage fallback)
 async function readKeepData(): Promise<KeepData> {
   try {
     const response = await storageClient.get(`/files/${KEEP_BUCKET}/${NOTES_KEY}`, {
       responseType: 'text',
     });
-    return JSON.parse(response.data as string);
+    const data = JSON.parse(response.data as string);
+    storageAvailable = true;
+    // Mirror to localStorage for offline fallback
+    setLocalKeepData(data);
+    return data;
   } catch {
-    // If file doesn't exist, return empty data
+    // If storage service is unreachable, use localStorage
+    const localData = getLocalKeepData();
+    if (localData.notes.length > 0 || localData.labels.length > 0) {
+      storageAvailable = false;
+      return localData;
+    }
     return { notes: [], labels: [] };
   }
 }
 
-// Helper to write JSON data to storage
+// Helper to write JSON data to storage (always mirrors to localStorage)
 async function writeKeepData(data: KeepData): Promise<void> {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const formData = new FormData();
-  formData.append('file', blob, NOTES_KEY);
+  // Always save to localStorage first (instant, reliable)
+  setLocalKeepData(data);
 
-  await storageClient.post(`/files/${KEEP_BUCKET}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  try {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const formData = new FormData();
+    formData.append('file', blob, NOTES_KEY);
+
+    await storageClient.post(`/files/${KEEP_BUCKET}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    storageAvailable = true;
+  } catch {
+    // Storage service down — data is still in localStorage
+    storageAvailable = false;
+    console.debug('Keep: storage service unavailable, data saved to localStorage');
+  }
 }
 
 // Ensure bucket exists
@@ -85,13 +128,14 @@ async function ensureBucket(): Promise<void> {
 export const keepApi = {
   // Fetch all notes and labels
   fetchAll: async (): Promise<KeepData> => {
-    await ensureBucket();
+    // Try to ensure bucket exists, but don't block on failure
+    ensureBucket().catch(() => {});
     return readKeepData();
   },
 
   // Save all data (full sync)
   saveAll: async (data: KeepData): Promise<KeepData> => {
-    await ensureBucket();
+    ensureBucket().catch(() => {});
     await writeKeepData(data);
     return data;
   },

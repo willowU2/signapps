@@ -106,14 +106,17 @@ export default function FormsPage() {
         if (editingForm) {
             try {
                 await formsApi.update(editingForm.id, { title: newTitle, description: newDescription })
-                loadForms(); setIsDialogOpen(false); return 
+                toast.success("Formulaire mis à jour")
+                loadForms(); setIsDialogOpen(false); return
             } catch (e) {
                 console.error("Failed to update form", e)
+                toast.error("Échec de la mise à jour du formulaire")
             }
         } else {
             try {
                 const res = await formsApi.create({ title: newTitle, description: newDescription, fields: [] })
                 setIsDialogOpen(false)
+                toast.success("Formulaire créé")
                 if (res.data && res.data.id) {
                     router.push(`/forms/${res.data.id}`)
                 } else {
@@ -121,6 +124,7 @@ export default function FormsPage() {
                 }
             } catch (e) {
                 console.error("Failed to create form", e)
+                toast.error("Échec de la création du formulaire")
             }
         }
     }
@@ -154,9 +158,11 @@ export default function FormsPage() {
         setDeleteFormId(null)
         try {
             await formsApi.delete(deleteFormId)
+            toast.success("Formulaire supprimé")
             loadForms()
         } catch (e) {
             console.error("Failed to delete form", e)
+            toast.error("Échec de la suppression du formulaire")
         }
     }
 

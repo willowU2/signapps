@@ -15,6 +15,32 @@ export interface Message {
     isPinned?: boolean
 }
 
+// ── localStorage persistence helpers ────────────────────────────────────────
+const CHAT_STORAGE_PREFIX = 'signapps_chat_messages_'
+const MAX_CACHED_MESSAGES = 200
+
+function getCachedMessages(channelId: string): Message[] {
+    try {
+        const raw = localStorage.getItem(`${CHAT_STORAGE_PREFIX}${channelId}`)
+        if (!raw) return []
+        return JSON.parse(raw) as Message[]
+    } catch {
+        return []
+    }
+}
+
+function setCachedMessages(channelId: string, messages: Message[]): void {
+    try {
+        // Only cache real messages (not optimistic ones)
+        const toCache = messages
+            .filter(m => !m.id.startsWith('opt-'))
+            .slice(-MAX_CACHED_MESSAGES)
+        localStorage.setItem(`${CHAT_STORAGE_PREFIX}${channelId}`, JSON.stringify(toCache))
+    } catch {
+        // localStorage full or unavailable — ignore
+    }
+}
+
 function mapApiMessage(m: {
     id: string
     user_id: string
@@ -71,10 +97,17 @@ export function useChat(channelId: string, userId: string, userName: string) {
     const wsRef = useRef<WebSocket | null>(null)
     const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-    // Load existing messages via REST on channel change
+    // Load existing messages via REST on channel change, fallback to localStorage
     useEffect(() => {
         if (!channelId || channelId === 'accueil') return
-        setMessages([])
+
+        // Immediately show cached messages while loading from API
+        const cached = getCachedMessages(channelId)
+        if (cached.length > 0) {
+            setMessages(cached)
+        } else {
+            setMessages([])
+        }
 
         let cancelled = false
 
@@ -82,10 +115,13 @@ export function useChat(channelId: string, userId: string, userName: string) {
             try {
                 const res = await chatApi.getMessages(channelId)
                 if (!cancelled) {
-                    setMessages((res.data || []).map(mapApiMessage))
+                    const apiMessages = (res.data || []).map(mapApiMessage)
+                    setMessages(apiMessages)
+                    setCachedMessages(channelId, apiMessages)
                 }
             } catch (e) {
                 console.debug('Failed to load messages for channel', channelId, e)
+                // Keep cached messages (already set above) as fallback
             }
         }
 
@@ -96,6 +132,12 @@ export function useChat(channelId: string, userId: string, userName: string) {
 
         return () => { cancelled = true }
     }, [channelId])
+
+    // Persist messages to localStorage whenever they change
+    useEffect(() => {
+        if (!channelId || channelId === 'accueil' || messages.length === 0) return
+        setCachedMessages(channelId, messages)
+    }, [channelId, messages])
 
     // WebSocket connection for real-time events
     useEffect(() => {
