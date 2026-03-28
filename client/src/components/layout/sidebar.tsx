@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Mail, CheckSquare, HardDrive, Calendar,
   Container, Network, Settings, Users, Shield, Clock, Activity,
   Mic, Store, Archive, Plus, Tag, Brain, Upload, MessageSquare,
-  Route, X, Star, HelpCircle, GripVertical,
+  Route, X, Star, HelpCircle, GripVertical, Grid,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import {
@@ -40,6 +40,7 @@ const quickActions = [
 // Essential nav items — always shown, cannot be removed
 const essentialNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Tableau de bord', color: '', badgeKey: null },
+  { href: '/all-apps',  icon: Grid,            label: 'Applications',    color: 'text-indigo-500', badgeKey: null },
   { href: '/mail',      icon: Mail,            label: 'Mail',            color: 'text-blue-500', badgeKey: 'mail' as const },
   { href: '/cal',       icon: Calendar,        label: 'Calendar',        color: 'text-blue-400', badgeKey: null },
   { href: '/tasks',     icon: CheckSquare,     label: 'Tâches',          color: 'text-green-500', badgeKey: 'tasks' as const },
