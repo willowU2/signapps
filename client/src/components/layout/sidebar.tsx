@@ -163,9 +163,11 @@ export function Sidebar() {
         href={safeHref}
         title={item.label}
         className={cn(
-          'flex items-center gap-4 py-2.5 text-sm font-medium transition-colors',
+          'flex items-center gap-4 py-2.5 text-sm font-medium transition-all duration-150',
           sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6',
-          isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-sidebar-foreground hover:bg-muted'
+          isActive
+            ? 'bg-accent text-accent-foreground font-semibold'
+            : 'text-sidebar-foreground hover:bg-muted active:scale-[0.98]'
         )}
       >
         <Icon className={cn('h-5 w-5 shrink-0', isActive ? 'text-accent-foreground' : item.color || 'text-muted-foreground')} />
@@ -218,9 +220,11 @@ export function Sidebar() {
           href={safeHref}
           title={app.label}
           className={cn(
-            'flex flex-1 items-center gap-4 py-2.5 text-sm font-medium transition-colors',
+            'flex flex-1 items-center gap-4 py-2.5 text-sm font-medium transition-all duration-150',
             sidebarCollapsed ? 'justify-center rounded-lg mx-2 px-2' : 'rounded-r-full px-6 pl-5',
-            isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-sidebar-foreground hover:bg-muted'
+            isActive
+              ? 'bg-accent text-accent-foreground font-semibold'
+              : 'text-sidebar-foreground hover:bg-muted active:scale-[0.98]'
           )}
         >
           <DynIcon name={app.icon} className={cn('h-5 w-5 shrink-0', isActive ? 'text-accent-foreground' : app.color || 'text-muted-foreground')} />

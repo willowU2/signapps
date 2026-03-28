@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useMemo, useCallback } from "react"
+import { cn } from "@/lib/utils"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppLayout } from "@/components/layout/app-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -590,7 +591,7 @@ export default function ContactsPage() {
                       </TableRow>
                     )}
                     {sortedFiltered.map(c => (
-                      <TableRow key={c.id} className={selectedIds.has(c.id) ? "bg-primary/5" : ""}>
+                      <TableRow key={c.id} className={cn("transition-colors hover:bg-muted/50 cursor-pointer", selectedIds.has(c.id) ? "bg-primary/5" : "")}>
                         <TableCell>
                           <Checkbox
                             checked={selectedIds.has(c.id)}

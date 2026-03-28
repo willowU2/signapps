@@ -340,6 +340,14 @@ export function EventForm({
       attendees={attendees}
       onAttendeesChange={setAttendees}
     />
+
+    <ConfirmDeleteDialog
+      open={deleteConfirmOpen}
+      onOpenChange={setDeleteConfirmOpen}
+      title="Supprimer l'événement"
+      description={`Voulez-vous vraiment supprimer "${initialEvent?.title}" ? Cette action est irréversible.`}
+      onConfirm={handleDeleteConfirmed}
+    />
     </>
   );
 }

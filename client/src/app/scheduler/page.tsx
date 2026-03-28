@@ -233,18 +233,18 @@ export default function SchedulerPage() {
   };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Never';
+    if (!dateString) return 'Jamais';
     return new Date(dateString).toLocaleString();
   };
 
   const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'success':
-        return <Badge className="bg-green-500/10 text-green-600">Success</Badge>;
+        return <Badge className="bg-green-500/10 text-green-600">Réussi</Badge>;
       case 'failed':
-        return <Badge variant="destructive">Failed</Badge>;
+        return <Badge variant="destructive">Échoué</Badge>;
       case 'running':
-        return <Badge className="bg-blue-500/10 text-blue-600">Running</Badge>;
+        return <Badge className="bg-blue-500/10 text-blue-600">En cours</Badge>;
       default:
         return <Badge variant="secondary">-</Badge>;
     }
@@ -450,8 +450,20 @@ export default function SchedulerPage() {
                 ))}
                 {sortedJobs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      Aucune tâche planifiée. Cliquez sur &quot;Nouvelle Tâche&quot; pour en créer une.
+                    <TableCell colSpan={7} className="py-4">
+                      <div className="flex flex-col items-center justify-center text-center py-8 space-y-4">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20">
+                          <Clock className="h-8 w-8 text-primary/70" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-foreground">Aucune tâche planifiée</h3>
+                          <p className="text-sm text-muted-foreground mt-1">Créez votre première tâche pour automatiser vos opérations</p>
+                        </div>
+                        <Button size="sm" onClick={() => handleOpenDialog()}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Nouvelle Tâche
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}

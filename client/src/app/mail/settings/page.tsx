@@ -20,6 +20,7 @@ import {
 } from "@/lib/api-mail";
 import { mailApi } from "@/lib/api/mail";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { EmailAutomationRules } from "@/components/workflow/email-automation-rules";
 
 // ─── Provider presets ────────────────────────────────────────────────────────
@@ -477,6 +478,7 @@ function AccountCard({
     smtp_error?: string;
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -509,12 +511,11 @@ function AccountCard({
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm(`Supprimer le compte ${account.email_address} ?`)) return;
+  const handleDeleteConfirmed = async () => {
     setDeleting(true);
     try {
       await accountApi.delete(account.id);
-      toast.success("Compte supprime");
+      toast.success("Compte supprimé");
       onDeleted();
     } catch {
       toast.error("Impossible de supprimer le compte");
@@ -558,7 +559,7 @@ function AccountCard({
             <TestTube className={`h-4 w-4 ${testing ? "animate-pulse" : ""}`} />
           </button>
           <button
-            onClick={handleDelete}
+            onClick={() => setDeleteConfirmOpen(true)}
             disabled={deleting}
             className="p-2 rounded-md hover:bg-destructive/10 text-destructive transition-colors disabled:opacity-50"
             title="Supprimer"
@@ -607,6 +608,14 @@ function AccountCard({
           {account.last_error}
         </p>
       )}
+
+      <ConfirmDeleteDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Supprimer le compte mail"
+        description={`Voulez-vous vraiment supprimer le compte "${account.email_address}" ? Cette action est irréversible.`}
+        onConfirm={handleDeleteConfirmed}
+      />
     </div>
   );
 }

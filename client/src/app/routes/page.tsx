@@ -66,7 +66,7 @@ export default function RoutesPage() {
   const { data: shieldStats = null } = useShieldStats();
 
   useEffect(() => {
-    if (routesError) toast.error('Failed to load routes');
+    if (routesError) toast.error('Impossible de charger les routes');
   }, [routesError]);
 
   const [search, setSearch] = useState('');
@@ -280,7 +280,7 @@ export default function RoutesPage() {
             </TabsTrigger>
             <TabsTrigger value="domains" className="gap-2">
               <Globe className="h-4 w-4" />
-              Domains
+              Domaines
             </TabsTrigger>
             <TabsTrigger value="shield" className="gap-2">
               <Shield className="h-4 w-4" />
@@ -309,7 +309,7 @@ export default function RoutesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[60px]">Status</TableHead>
+                      <TableHead className="w-[60px]">État</TableHead>
                       <TableHead>Domaine</TableHead>
                       <TableHead>Cible</TableHead>
                       <TableHead>Mode</TableHead>
@@ -443,11 +443,24 @@ export default function RoutesPage() {
                     ))}
                     {filteredRoutes.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          {routes.length === 0
-                            ? 'Aucune route configurée. Créez votre première route !'
-                            : 'Aucune route ne correspond à votre recherche'
-                          }
+                        <TableCell colSpan={6} className="py-4">
+                          {routes.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center text-center py-8 space-y-4">
+                              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20">
+                                <Network className="h-8 w-8 text-primary/70" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-semibold text-foreground">Aucune route configurée</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Créez votre première route pour exposer vos services</p>
+                              </div>
+                              <Button size="sm" onClick={handleCreate}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nouvelle Route
+                              </Button>
+                            </div>
+                          ) : (
+                            <p className="text-center py-8 text-muted-foreground">Aucune route ne correspond à votre recherche</p>
+                          )}
                         </TableCell>
                       </TableRow>
                     )}
@@ -558,7 +571,7 @@ export default function RoutesPage() {
               if (domainMap.size === 0) {
                 return (
                   <div className="py-12 text-center text-muted-foreground">
-                    No routes configured
+                    Aucune route configurée
                   </div>
                 );
               }
@@ -606,7 +619,7 @@ export default function RoutesPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant={route.enabled ? 'default' : 'secondary'} className="text-xs">
-                              {route.enabled ? 'Active' : 'Disabled'}
+                              {route.enabled ? 'Active' : 'Désactivée'}
                             </Badge>
                             {route.tls_enabled && (
                               <Badge variant="outline" className="text-xs">TLS</Badge>
@@ -617,7 +630,7 @@ export default function RoutesPage() {
                     </div>
                     {domainRoutes.some(r => r.dns_records && r.dns_records.length > 0) && (
                       <div className="mt-4 pt-4 border-t">
-                        <h4 className="text-sm font-medium mb-2">DNS Records</h4>
+                        <h4 className="text-sm font-medium mb-2">Enregistrements DNS</h4>
                         <div className="space-y-1">
                           {domainRoutes.flatMap(r => (r.dns_records || []).map((record, i) => (
                             <div key={`${r.id}-dns-${i}`} className="flex items-center gap-3 text-sm">

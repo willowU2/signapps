@@ -75,7 +75,7 @@ interface Bucket {
 }
 
 const TABS = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { id: 'files', label: 'Fichiers', icon: Folder },
   { id: 'disks', label: 'Disques', icon: HardDrive },
   { id: 'mounts', label: 'Montages', icon: FolderOpen },
@@ -156,15 +156,20 @@ export default function StoragePage() {
 
   const clearSelection = useCallback(() => setSelectedFiles(new Set()), []);
 
-  const handleBulkDelete = async (items: FileItem[]) => {
+  const [bulkDeleteItems, setBulkDeleteItems] = useState<FileItem[]>([]);
+  const handleBulkDelete = (items: FileItem[]) => {
     if (!currentBucket) return;
-    if (!confirm(`Delete ${items.length} item(s)? This cannot be undone.`)) return;
+    setBulkDeleteItems(items);
+  };
+  const handleBulkDeleteConfirmed = async () => {
+    if (!currentBucket) return;
     try {
-      await Promise.all(items.map(f => storageApi.delete(currentBucket, f.key)));
-      toast.success(`${items.length} item(s) deleted`);
+      await Promise.all(bulkDeleteItems.map(f => storageApi.delete(currentBucket, f.key)));
+      toast.success(`${bulkDeleteItems.length} élément(s) supprimé(s)`);
       clearSelection();
       fetchFiles();
-    } catch { toast.error('Bulk delete failed'); }
+    } catch { toast.error('Échec de la suppression groupée'); }
+    setBulkDeleteItems([]);
   };
 
   const handleBulkMove = (items: FileItem[]) => {
@@ -204,14 +209,14 @@ export default function StoragePage() {
         setTagFile(item);
         setFileTagsOpen(true);
       } else {
-        toast.error("Cannot manage tags: file ID is missing");
+        toast.error("Impossible de gérer les tags : identifiant manquant");
       }
     } else if (action === 'version-history') {
       if (item.id) {
         setHistoryFile(item);
         setHistoryOpen(true);
       } else {
-        toast.error("Cannot view history: file ID is missing");
+        toast.error("Impossible de voir l'historique : identifiant manquant");
       }
     } else if (action === 'share') {
       setShareItem(item);
@@ -219,9 +224,9 @@ export default function StoragePage() {
     } else if (action === 'restore' && item.id) {
       try {
         await trashApi.restore([item.id]);
-        toast.success("Restored");
+        toast.success("Restauré");
         fetchFiles();
-      } catch { toast.error("Failed to restore"); }
+      } catch { toast.error("Échec de la restauration"); }
     } else if (action === 'delete-forever') {
       setDeleteItem(item);
     } else if (action === 'star') {
@@ -231,15 +236,15 @@ export default function StoragePage() {
           key: item.key,
           is_folder: item.type === 'folder'
         });
-        toast.success("Starred");
-        fetchFiles(); // Refresh to show star status if we had it
-      } catch { toast.error("Failed to star"); }
+        toast.success("Ajouté aux favoris");
+        fetchFiles();
+      } catch { toast.error("Échec de l'ajout aux favoris"); }
     } else if (action === 'unstar' && item.id) {
       try {
         await favoritesApi.remove(item.id);
-        toast.success("Unstarred");
+        toast.success("Retiré des favoris");
         fetchFiles();
-      } catch { toast.error("Failed to unstar"); }
+      } catch { toast.error("Échec du retrait des favoris"); }
     }
   };
 
@@ -263,11 +268,11 @@ export default function StoragePage() {
       const newKey = (parentPath ? parentPath + '/' : '') + newName + (renameItem.type === 'folder' ? '/' : '');
 
       await storageApi.move(currentBucket, oldKey, currentBucket, newKey);
-      toast.success("Renamed successfully");
+      toast.success("Renommé avec succès");
       fetchFiles();
     } catch (error) {
       console.debug(error);
-      toast.error("Failed to rename");
+      toast.error("Échec du renommage");
     }
   };
 
@@ -281,11 +286,11 @@ export default function StoragePage() {
       if (oldKey === newKey) return;
 
       await storageApi.move(currentBucket, oldKey, currentBucket, newKey);
-      toast.success("Moved successfully");
+      toast.success("Déplacé avec succès");
       fetchFiles();
     } catch (error) {
       console.debug(error);
-      toast.error("Failed to move");
+      toast.error("Échec du déplacement");
     }
   };
 
@@ -523,18 +528,18 @@ export default function StoragePage() {
     try {
       if (driveView === 'trash' && item.id) {
         await trashApi.delete(item.id);
-        toast.success("Deleted forever");
+        toast.success("Supprimé définitivement");
       } else {
         const key = currentPath.length > 0
           ? `${currentPath.join('/')}/${item.name}`
           : item.name;
         await storageApi.deleteFile(currentBucket, key);
-        toast.success("Moved to trash");
+        toast.success("Déplacé dans la corbeille");
       }
       fetchFiles();
     } catch (e) {
       console.debug(e);
-      toast.error("Failed to delete item");
+      toast.error("Échec de la suppression");
     }
   };
 
@@ -613,12 +618,12 @@ export default function StoragePage() {
 
       await storageApi.createFolder(currentBucket, folderPath);
 
-      toast.success('Folder created successfully');
+      toast.success('Dossier créé avec succès');
       setFolderDialogOpen(false);
       setNewFolderName('');
       fetchFiles();
     } catch {
-      toast.error('Failed to create folder');
+      toast.error('Échec de la création du dossier');
     } finally {
       setCreatingFolder(false);
     }
@@ -629,20 +634,20 @@ export default function StoragePage() {
 
     const validName = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
     if (!validName.test(newBucketName)) {
-      toast.error('Bucket name must be lowercase, start and end with letter/number');
+      toast.error('Le nom du bucket doit être en minuscules, commencer et finir par une lettre ou un chiffre');
       return;
     }
 
     setCreatingBucket(true);
     try {
       await storageApi.createBucket(newBucketName);
-      toast.success('Bucket created successfully');
+      toast.success('Bucket créé avec succès');
       setBucketDialogOpen(false);
       setNewBucketName('');
       fetchBuckets();
       setCurrentBucket(newBucketName);
     } catch {
-      toast.error('Failed to create bucket');
+      toast.error('Échec de la création du bucket');
     } finally {
       setCreatingBucket(false);
     }
@@ -651,14 +656,14 @@ export default function StoragePage() {
   const handleDeleteBucket = async (bucketName: string) => {
     try {
       await storageApi.deleteBucket(bucketName);
-      toast.success('Bucket deleted');
+      toast.success('Bucket supprimé');
       fetchBuckets();
       if (currentBucket === bucketName) {
         setCurrentBucket('');
         setCurrentPath([]);
       }
     } catch {
-      toast.error('Failed to delete bucket');
+      toast.error('Échec de la suppression du bucket');
     }
   };
 
@@ -1037,32 +1042,32 @@ export default function StoragePage() {
         <Dialog open={folderDialogOpen} onOpenChange={setFolderDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Folder</DialogTitle>
+              <DialogTitle>Créer un nouveau dossier</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="folderName">Folder Name</Label>
+                <Label htmlFor="folderName">Nom du dossier</Label>
                 <Input
                   id="folderName"
-                  placeholder="my-folder"
+                  placeholder="mon-dossier"
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
                 />
                 <p className="text-xs text-muted-foreground">
                   {currentPath.length > 0
-                    ? `Will be created in: ${currentPath.join('/')}/`
-                    : 'Will be created in root directory'}
+                    ? `Sera créé dans : ${currentPath.join('/')}/`
+                    : 'Sera créé à la racine'}
                 </p>
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setFolderDialogOpen(false)}>
-                Cancel
+                Annuler
               </Button>
               <Button onClick={handleCreateFolder} disabled={creatingFolder || !newFolderName.trim()}>
                 {creatingFolder && <SpinnerInfinity size={24} secondaryColor="rgba(128,128,128,0.2)" color="currentColor" speed={120} className="mr-2 h-4 w-4 " />}
-                Create Folder
+                Créer le dossier
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1072,10 +1077,10 @@ export default function StoragePage() {
         <ConfirmDialog
           open={deleteItem !== null}
           onOpenChange={(open) => { if (!open) setDeleteItem(null); }}
-          title={driveView === 'trash' ? "Delete Forever" : "Delete File"}
+          title={driveView === 'trash' ? "Supprimer définitivement" : "Supprimer le fichier"}
           description={driveView === 'trash'
-            ? `Are you sure you want to permanently delete "${deleteItem?.name}"? This action cannot be undone.`
-            : `Are you sure you want to delete "${deleteItem?.name}"?`
+            ? `Voulez-vous vraiment supprimer définitivement "${deleteItem?.name}" ? Cette action est irréversible.`
+            : `Voulez-vous vraiment supprimer "${deleteItem?.name}" ?`
           }
           onConfirm={() => {
             if (deleteItem) handleDelete(deleteItem);
@@ -1087,12 +1092,21 @@ export default function StoragePage() {
         <ConfirmDialog
           open={deleteBucket !== null}
           onOpenChange={(open) => { if (!open) setDeleteBucket(null); }}
-          title="Delete Bucket"
-          description={`Delete bucket "${deleteBucket}"? All files in this bucket will be deleted.`}
+          title="Supprimer le bucket"
+          description={`Supprimer le bucket "${deleteBucket}" ? Tous les fichiers seront supprimés.`}
           onConfirm={() => {
             if (deleteBucket) handleDeleteBucket(deleteBucket);
             setDeleteBucket(null);
           }}
+        />
+
+        {/* Bulk Delete Confirmation */}
+        <ConfirmDialog
+          open={bulkDeleteItems.length > 0}
+          onOpenChange={(open) => { if (!open) setBulkDeleteItems([]); }}
+          title="Supprimer les éléments sélectionnés"
+          description={`Voulez-vous vraiment supprimer ${bulkDeleteItems.length} élément(s) ? Cette action est irréversible.`}
+          onConfirm={handleBulkDeleteConfirmed}
         />
 
         {/* Permissions Sheet */}
