@@ -1,5 +1,10 @@
 // Interoperability components — 50 cross-module connections
 // Grouped by feature area
+//
+// Ideas 21 (Global favorites / bookmark any entity) and 22 (Global tags) are
+// already implemented in:
+//   src/components/crosslinks/CrossModuleFavorites.tsx  (StarButton, BookmarksPage)
+//   src/components/crosslinks/GlobalTags.tsx            (GlobalTags, TagFilterPanel)
 
 // Ideas 1-2: Forms bridges
 export { FormResponseToContact, FormResponseToSheet } from './forms-contacts-bridge';
