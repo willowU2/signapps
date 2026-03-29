@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from "react"
 import { usePageTitle } from "@/hooks/use-page-title"
+import { useTableKeyboard } from "@/hooks/use-table-keyboard"
 import { cn } from "@/lib/utils"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -140,6 +141,25 @@ export default function ContactsPage() {
     () => [...new Set(contacts.map(c => c.group).filter(Boolean))] as string[],
     [contacts]
   )
+
+  // ── Keyboard navigation ───────────────────────────────────────────────────
+
+  const { focusedRow, tableRef: contactsTableRef, getRowProps: getContactRowProps } = useTableKeyboard({
+    rowCount: sortedFiltered.length,
+    onOpen: (index) => {
+      const contact = sortedFiltered[index]
+      if (contact) handleEdit(contact)
+    },
+    onDelete: (index) => {
+      const contact = sortedFiltered[index]
+      if (contact) setDeleteTarget(contact.id)
+    },
+    onSelect: (index) => {
+      const contact = sortedFiltered[index]
+      if (contact) toggleSelect(contact.id)
+    },
+    enabled: !isCreating && !deleteTarget && (activeTab === "all" || activeTab === "favorites"),
+  })
 
   // ── CRUD helpers ────────────────────────────────────────────────────────────
 
@@ -600,7 +620,7 @@ ${header}
 
           {(["all", "favorites"] as ActiveTab[]).map(tab => (
             <TabsContent key={tab} value={tab}>
-              <Card className="border-border/50">
+              <Card className="border-border/50" ref={contactsTableRef as React.RefObject<HTMLDivElement | null>}>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -650,9 +670,9 @@ ${header}
                         </TableCell>
                       </TableRow>
                     )}
-                    {sortedFiltered.map(c => (
+                    {sortedFiltered.map((c, rowIndex) => (
                       <React.Fragment key={c.id}>
-                        <TableRow className={cn("transition-colors hover:bg-muted/50 cursor-pointer", selectedIds.has(c.id) ? "bg-primary/5" : "", emailPanelContactId === c.id ? "border-b-0 bg-primary/5" : "")}>
+                        <TableRow className={cn("transition-colors hover:bg-muted/50 cursor-pointer", selectedIds.has(c.id) ? "bg-primary/5" : "", emailPanelContactId === c.id ? "border-b-0 bg-primary/5" : "", focusedRow === rowIndex ? "bg-primary/10 ring-1 ring-primary/30 ring-inset" : "")} data-focused={focusedRow === rowIndex}>
                           <TableCell>
                             <Checkbox
                               checked={selectedIds.has(c.id)}

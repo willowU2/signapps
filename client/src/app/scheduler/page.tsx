@@ -4,6 +4,7 @@ import { SpinnerInfinity } from 'spinners-react';
 
 import { useState, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTableKeyboard } from '@/hooks/use-table-keyboard';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -129,6 +130,21 @@ export default function SchedulerPage() {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDir('asc'); }
   };
+
+  // ── Keyboard navigation ───────────────────────────────────────────────────
+
+  const { focusedRow, tableRef: schedulerTableRef } = useTableKeyboard({
+    rowCount: sortedJobs.length,
+    onOpen: (index) => {
+      const job = sortedJobs[index];
+      if (job) handleOpenDialog(job);
+    },
+    onDelete: (index) => {
+      const job = sortedJobs[index];
+      if (job) setDeleteDialog({ open: true, job });
+    },
+    enabled: !dialogOpen && !deleteDialog.open && !runsDialog.open,
+  });
 
   const fetchJobs = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['scheduler-jobs'] });
@@ -399,7 +415,7 @@ export default function SchedulerPage() {
         </div>
 
         {/* Jobs Table */}
-        <Card>
+        <Card ref={schedulerTableRef as React.RefObject<HTMLDivElement | null>}>
           <CardHeader>
             <CardTitle>Tâches Planifiées</CardTitle>
           </CardHeader>
@@ -423,8 +439,8 @@ export default function SchedulerPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedJobs.map((job) => (
-                  <TableRow key={job.id}>
+                {sortedJobs.map((job, rowIndex) => (
+                  <TableRow key={job.id} className={focusedRow === rowIndex ? "bg-primary/10 ring-1 ring-primary/30 ring-inset" : ""} data-focused={focusedRow === rowIndex}>
                     <TableCell>
                       <Switch
                         checked={job.enabled}
