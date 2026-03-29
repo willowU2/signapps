@@ -5,6 +5,7 @@ use axum::{extract::DefaultBodyLimit, middleware, Router};
 use dashmap::DashMap;
 use signapps_common::bootstrap::{init_tracing, load_env, ServiceConfig};
 use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::pg_events::{PgEventBus, PlatformEvent};
 use signapps_common::JwtConfig;
 use signapps_db::DatabasePool;
 use std::sync::Arc;
@@ -34,6 +35,8 @@ pub struct AppState {
     pub presence_manager: Arc<PresenceManager>,
     /// Client for pushing indexing requests to signapps-ai
     pub ai_client: Arc<crate::services::ai_service::AiServiceClient>,
+    /// PostgreSQL-backed event bus for cross-service events
+    pub event_bus: PgEventBus,
 }
 
 impl AuthState for AppState {
@@ -64,6 +67,8 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
+    let event_bus = PgEventBus::new(pool.inner().clone(), "signapps-calendar".to_string());
+
     let state = AppState {
         pool: pool.clone(),
         jwt_config,
@@ -71,6 +76,7 @@ async fn main() -> anyhow::Result<()> {
         calendar_broadcasts: Arc::new(DashMap::new()),
         presence_manager: Arc::new(PresenceManager::new()),
         ai_client: Arc::new(crate::services::ai_service::AiServiceClient::new()),
+        event_bus,
     };
 
     tracing::info!("Real-time collaboration system initialized");
@@ -84,6 +90,21 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         tracing::info!("Notification scheduler started");
         scheduler.run().await;
+    });
+
+    // Spawn cross-service event listener (mail.received → auto ICS import)
+    let cal_listener_pool = pool.inner().clone();
+    let cal_bus = PgEventBus::new(cal_listener_pool.clone(), "signapps-calendar".to_string());
+    tokio::spawn(async move {
+        if let Err(e) = cal_bus
+            .listen("calendar-consumer", move |event| {
+                let p = cal_listener_pool.clone();
+                Box::pin(async move { handle_cross_event(&p, event).await })
+            })
+            .await
+        {
+            tracing::error!("Calendar event listener crashed: {}", e);
+        }
     });
 
     // Build router
@@ -287,4 +308,18 @@ async fn health_check() -> axum::Json<serde_json::Value> {
         "version": env!("CARGO_PKG_VERSION"),
         "uptime_seconds": signapps_common::healthz::uptime_seconds()
     }))
+}
+
+/// Handle cross-service events received by the calendar service.
+async fn handle_cross_event(_pool: &sqlx::PgPool, event: PlatformEvent) -> Result<(), sqlx::Error> {
+    if event.event_type.as_str() == "mail.received" {
+        // Log for now — full ICS parsing is a future enhancement
+        if event.payload.get("has_ics").and_then(|v| v.as_bool()) == Some(true) {
+            tracing::info!(
+                email_id = %event.aggregate_id.map(|id| id.to_string()).unwrap_or_default(),
+                "ICS attachment detected — auto-import pending"
+            );
+        }
+    }
+    Ok(())
 }

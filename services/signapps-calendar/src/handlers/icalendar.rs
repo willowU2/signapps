@@ -178,6 +178,23 @@ pub async fn import_calendar(
             rrule: ical_event.rrule,
             timezone: Some("UTC".to_string()),
             is_all_day: Some(false),
+            event_type: None,
+            scope: None,
+            status: None,
+            priority: None,
+            parent_event_id: None,
+            resource_id: None,
+            category_id: None,
+            leave_type: None,
+            presence_mode: None,
+            approval_by: None,
+            approval_comment: None,
+            energy_level: None,
+            cron_expression: None,
+            cron_target: None,
+            assigned_to: None,
+            project_id: None,
+            tags: None,
         };
 
         // Insert event

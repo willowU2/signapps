@@ -688,8 +688,7 @@ pub async fn simulate_shift_change(
             .unwrap_or(NaiveTime::from_hms_opt(23, 59, 59).unwrap());
 
         // Does the original shift cover this slot?
-        let orig_covers_slot =
-            orig_start_time <= slot_start && orig_end_time >= slot_end;
+        let orig_covers_slot = orig_start_time <= slot_start && orig_end_time >= slot_end;
 
         let coverage_before = count_assignments_for_slot(&assignments_before, original_date, slot);
 
@@ -701,7 +700,7 @@ pub async fn simulate_shift_change(
         };
 
         // Does the new shift (if any) cover this slot?
-        let new_covers_slot = req.new_shift.as_ref().map_or(false, |ns| {
+        let new_covers_slot = req.new_shift.as_ref().is_some_and(|ns| {
             let ns_start = ns.start.time();
             let ns_end = ns.end.time();
             ns_start <= slot_start && ns_end >= slot_end
@@ -961,10 +960,9 @@ async fn get_assignments(
     let user_ids: Vec<Uuid> = user_to_employee.keys().cloned().collect();
 
     // 2. Build the query string for the scheduler
-    let start_dt = Utc
-        .from_utc_datetime(&date_range.start.and_hms_opt(0, 0, 0).unwrap_or_default());
-    let end_dt = Utc
-        .from_utc_datetime(&date_range.end.and_hms_opt(23, 59, 59).unwrap_or_default());
+    let start_dt =
+        Utc.from_utc_datetime(&date_range.start.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let end_dt = Utc.from_utc_datetime(&date_range.end.and_hms_opt(23, 59, 59).unwrap_or_default());
 
     // Encode user_ids as repeated query params: userIds[]=uuid&userIds[]=...
     let mut query_params = format!(
@@ -976,10 +974,7 @@ async fn get_assignments(
         query_params.push_str(&format!("&userIds[]={}", uid));
     }
 
-    let url = format!(
-        "{}/time-items?{}",
-        state.scheduler_base_url, query_params
-    );
+    let url = format!("{}/time-items?{}", state.scheduler_base_url, query_params);
 
     let resp = state
         .http_client
@@ -994,23 +989,20 @@ async fn get_assignments(
                 "get_assignments: scheduler unreachable, degrading to empty: {}",
                 e
             );
-            return Ok(vec![]);
+            Ok(vec![])
         },
         Ok(r) if !r.status().is_success() => {
             tracing::warn!(
                 "get_assignments: scheduler returned {}, degrading to empty",
                 r.status()
             );
-            return Ok(vec![]);
+            Ok(vec![])
         },
         Ok(r) => {
             let body: SchedulerTimeItemsResponse = match r.json().await {
                 Ok(b) => b,
                 Err(e) => {
-                    tracing::warn!(
-                        "get_assignments: failed to parse scheduler response: {}",
-                        e
-                    );
+                    tracing::warn!("get_assignments: failed to parse scheduler response: {}", e);
                     return Ok(vec![]);
                 },
             };
@@ -1247,12 +1239,9 @@ async fn compute_availability_score(
         return (0.8, vec![]);
     };
 
-    let start_dt = Utc.from_utc_datetime(
-        &date_range.start.and_hms_opt(0, 0, 0).unwrap_or_default(),
-    );
-    let end_dt = Utc.from_utc_datetime(
-        &date_range.end.and_hms_opt(23, 59, 59).unwrap_or_default(),
-    );
+    let start_dt =
+        Utc.from_utc_datetime(&date_range.start.and_hms_opt(0, 0, 0).unwrap_or_default());
+    let end_dt = Utc.from_utc_datetime(&date_range.end.and_hms_opt(23, 59, 59).unwrap_or_default());
 
     let query_params = format!(
         "types=shift&start={}&end={}&userIds[]={}&limit=200",

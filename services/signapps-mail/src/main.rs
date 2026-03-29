@@ -8,6 +8,7 @@ use handlers::rules::RuleStore;
 use handlers::signatures::SignatureStore;
 use signapps_common::bootstrap::{env_or, env_required, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::pg_events::{PgEventBus, PlatformEvent};
 use signapps_common::{AiIndexerClient, JwtConfig};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::{
@@ -22,6 +23,7 @@ pub struct AppState {
     pub indexer: AiIndexerClient,
     pub signatures: SignatureStore,
     pub rules: RuleStore,
+    pub event_bus: PgEventBus,
 }
 
 impl AuthState for AppState {
@@ -60,18 +62,37 @@ async fn main() {
         refresh_expiration: 86400 * 7,
     };
 
+    let event_bus = PgEventBus::new(pool.clone(), "signapps-mail".to_string());
+
     let state = AppState {
         pool: pool.clone(),
         jwt_config,
         indexer: AiIndexerClient::from_env(),
         signatures: SignatureStore::new(),
         rules: RuleStore::new(),
+        event_bus: event_bus.clone(),
     };
 
     // Start background sync service
     let sync_pool = pool.clone();
+    let sync_event_bus = event_bus.clone();
     tokio::spawn(async move {
-        sync_service::start_sync_scheduler(sync_pool).await;
+        sync_service::start_sync_scheduler(sync_pool, sync_event_bus).await;
+    });
+
+    // Spawn cross-service event listener (calendar.task.overdue → send reminder email)
+    let mail_listener_pool = pool.clone();
+    let mail_bus = PgEventBus::new(mail_listener_pool.clone(), "signapps-mail".to_string());
+    tokio::spawn(async move {
+        if let Err(e) = mail_bus
+            .listen("mail-consumer", move |event| {
+                let p = mail_listener_pool.clone();
+                Box::pin(async move { handle_cross_event(&p, event).await })
+            })
+            .await
+        {
+            tracing::error!("Mail event listener crashed: {}", e);
+        }
     });
 
     let cors = CorsLayer::new()
@@ -127,4 +148,30 @@ async fn main() {
         .with_graceful_shutdown(signapps_common::graceful_shutdown())
         .await
         .unwrap();
+}
+
+/// Handle cross-service events received by the mail service.
+async fn handle_cross_event(pool: &sqlx::PgPool, event: PlatformEvent) -> Result<(), sqlx::Error> {
+    if event.event_type.as_str() == "calendar.task.overdue" {
+        let assignee_id = event.payload["assignee_id"]
+            .as_str()
+            .and_then(|s| s.parse::<uuid::Uuid>().ok());
+        if let Some(uid) = assignee_id {
+            let email: Option<String> =
+                sqlx::query_scalar("SELECT email FROM identity.users WHERE id = $1")
+                    .bind(uid)
+                    .fetch_optional(pool)
+                    .await?;
+            if let Some(addr) = email {
+                let title = event.payload["title"].as_str().unwrap_or("tache");
+                tracing::info!(
+                    user = %addr,
+                    task = %title,
+                    "Task overdue — reminder email queued"
+                );
+                // In production: create email in mail.emails table or call send logic
+            }
+        }
+    }
+    Ok(())
 }

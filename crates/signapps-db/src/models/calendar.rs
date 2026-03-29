@@ -94,6 +94,24 @@ pub struct Event {
     pub is_deleted: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    // Unified event type fields
+    pub event_type: Option<String>,
+    pub scope: Option<String>,
+    pub status: Option<String>,
+    pub priority: Option<String>,
+    pub parent_event_id: Option<Uuid>,
+    pub resource_id: Option<Uuid>,
+    pub category_id: Option<Uuid>,
+    pub leave_type: Option<String>,
+    pub presence_mode: Option<String>,
+    pub approval_by: Option<Uuid>,
+    pub approval_comment: Option<String>,
+    pub energy_level: Option<String>,
+    pub cron_expression: Option<String>,
+    pub cron_target: Option<String>,
+    pub assigned_to: Option<Uuid>,
+    pub project_id: Option<Uuid>,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -106,6 +124,24 @@ pub struct CreateEvent {
     pub rrule: Option<String>,
     pub timezone: Option<String>,
     pub is_all_day: Option<bool>,
+    // Unified event type fields
+    pub event_type: Option<String>,
+    pub scope: Option<String>,
+    pub status: Option<String>,
+    pub priority: Option<String>,
+    pub parent_event_id: Option<Uuid>,
+    pub resource_id: Option<Uuid>,
+    pub category_id: Option<Uuid>,
+    pub leave_type: Option<String>,
+    pub presence_mode: Option<String>,
+    pub approval_by: Option<Uuid>,
+    pub approval_comment: Option<String>,
+    pub energy_level: Option<String>,
+    pub cron_expression: Option<String>,
+    pub cron_target: Option<String>,
+    pub assigned_to: Option<Uuid>,
+    pub project_id: Option<Uuid>,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -118,6 +154,24 @@ pub struct UpdateEvent {
     pub rrule: Option<String>,
     pub timezone: Option<String>,
     pub is_all_day: Option<bool>,
+    // Unified event type fields
+    pub event_type: Option<String>,
+    pub scope: Option<String>,
+    pub status: Option<String>,
+    pub priority: Option<String>,
+    pub parent_event_id: Option<Uuid>,
+    pub resource_id: Option<Uuid>,
+    pub category_id: Option<Uuid>,
+    pub leave_type: Option<String>,
+    pub presence_mode: Option<String>,
+    pub approval_by: Option<Uuid>,
+    pub approval_comment: Option<String>,
+    pub energy_level: Option<String>,
+    pub cron_expression: Option<String>,
+    pub cron_target: Option<String>,
+    pub assigned_to: Option<Uuid>,
+    pub project_id: Option<Uuid>,
+    pub tags: Option<Vec<String>>,
 }
 
 // ============================================================================

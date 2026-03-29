@@ -272,8 +272,15 @@ impl<'a> EventRepository<'a> {
         let created = sqlx::query_as::<_, Event>(
             r#"
             INSERT INTO calendar.events
-            (calendar_id, title, description, location, start_time, end_time, rrule, timezone, created_by, is_all_day)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'UTC'), $9, COALESCE($10, false))
+            (calendar_id, title, description, location, start_time, end_time, rrule, timezone,
+             created_by, is_all_day, event_type, scope, status, priority, parent_event_id,
+             resource_id, category_id, leave_type, presence_mode, approval_by, approval_comment,
+             energy_level, cron_expression, cron_target, assigned_to, project_id, tags)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'UTC'), $9, COALESCE($10, false),
+                    $11::calendar.event_type, $12::calendar.event_scope, $13::calendar.event_status,
+                    $14::calendar.event_priority, $15, $16, $17, $18::calendar.leave_type,
+                    $19::calendar.presence_mode, $20, $21, $22::calendar.energy_level,
+                    $23, $24, $25, $26, COALESCE($27, '{}'))
             RETURNING *
             "#,
         )
@@ -287,6 +294,23 @@ impl<'a> EventRepository<'a> {
         .bind(&event.timezone)
         .bind(created_by)
         .bind(event.is_all_day.unwrap_or(false))
+        .bind(event.event_type.as_deref())
+        .bind(event.scope.as_deref())
+        .bind(event.status.as_deref())
+        .bind(event.priority.as_deref())
+        .bind(event.parent_event_id)
+        .bind(event.resource_id)
+        .bind(event.category_id)
+        .bind(event.leave_type.as_deref())
+        .bind(event.presence_mode.as_deref())
+        .bind(event.approval_by)
+        .bind(event.approval_comment.as_deref())
+        .bind(event.energy_level.as_deref())
+        .bind(event.cron_expression.as_deref())
+        .bind(event.cron_target.as_deref())
+        .bind(event.assigned_to)
+        .bind(event.project_id)
+        .bind(event.tags.as_deref())
         .fetch_one(self.pool.inner())
         .await?;
 
@@ -307,6 +331,23 @@ impl<'a> EventRepository<'a> {
                 rrule = COALESCE($7, rrule),
                 timezone = COALESCE($8, timezone),
                 is_all_day = COALESCE($9, is_all_day),
+                event_type = COALESCE($10::calendar.event_type, event_type),
+                scope = COALESCE($11::calendar.event_scope, scope),
+                status = COALESCE($12::calendar.event_status, status),
+                priority = COALESCE($13::calendar.event_priority, priority),
+                parent_event_id = COALESCE($14, parent_event_id),
+                resource_id = COALESCE($15, resource_id),
+                category_id = COALESCE($16, category_id),
+                leave_type = COALESCE($17::calendar.leave_type, leave_type),
+                presence_mode = COALESCE($18::calendar.presence_mode, presence_mode),
+                approval_by = COALESCE($19, approval_by),
+                approval_comment = COALESCE($20, approval_comment),
+                energy_level = COALESCE($21::calendar.energy_level, energy_level),
+                cron_expression = COALESCE($22, cron_expression),
+                cron_target = COALESCE($23, cron_target),
+                assigned_to = COALESCE($24, assigned_to),
+                project_id = COALESCE($25, project_id),
+                tags = COALESCE($26, tags),
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
@@ -321,6 +362,23 @@ impl<'a> EventRepository<'a> {
         .bind(&event.rrule)
         .bind(&event.timezone)
         .bind(event.is_all_day)
+        .bind(event.event_type.as_deref())
+        .bind(event.scope.as_deref())
+        .bind(event.status.as_deref())
+        .bind(event.priority.as_deref())
+        .bind(event.parent_event_id)
+        .bind(event.resource_id)
+        .bind(event.category_id)
+        .bind(event.leave_type.as_deref())
+        .bind(event.presence_mode.as_deref())
+        .bind(event.approval_by)
+        .bind(event.approval_comment.as_deref())
+        .bind(event.energy_level.as_deref())
+        .bind(event.cron_expression.as_deref())
+        .bind(event.cron_target.as_deref())
+        .bind(event.assigned_to)
+        .bind(event.project_id)
+        .bind(event.tags.as_deref())
         .fetch_one(self.pool.inner())
         .await?;
 

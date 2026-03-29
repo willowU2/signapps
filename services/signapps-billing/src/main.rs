@@ -13,6 +13,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use signapps_common::bootstrap::{env_or, init_tracing, load_env};
 use signapps_common::middleware::{auth_middleware, AuthState};
+use signapps_common::pg_events::{NewEvent, PgEventBus, PlatformEvent};
 use signapps_common::JwtConfig;
 use sqlx::{postgres::PgPoolOptions, FromRow, Pool, Postgres};
 use tower_http::cors::{AllowOrigin, CorsLayer};
@@ -115,6 +116,7 @@ pub struct CreatePaymentRequest {
 pub struct AppState {
     pub pool: Pool<Postgres>,
     pub jwt_config: JwtConfig,
+    pub event_bus: PgEventBus,
 }
 
 impl AuthState for AppState {
@@ -277,6 +279,18 @@ async fn create_invoice(
     })?;
 
     tracing::info!(id = %invoice.id, number = %invoice.number, "Invoice created");
+    let _ = state
+        .event_bus
+        .publish(NewEvent {
+            event_type: "billing.invoice.created".into(),
+            aggregate_id: Some(invoice.id),
+            payload: serde_json::json!({
+                "number": invoice.number,
+                "amount_cents": invoice.amount_cents,
+                "currency": invoice.currency,
+            }),
+        })
+        .await;
     Ok((StatusCode::CREATED, Json(InvoiceResponse::from(invoice))))
 }
 
@@ -456,6 +470,46 @@ async fn health() -> impl IntoResponse {
     Json(serde_json::json!({ "status": "ok" }))
 }
 
+/// Handle cross-service events received by the billing service.
+async fn handle_cross_event(
+    pool: &Pool<Postgres>,
+    event: PlatformEvent,
+) -> Result<(), sqlx::Error> {
+    if event.event_type.as_str() == "crm.deal.won" {
+        let amount = event.payload["amount"].as_i64().unwrap_or(0) as i32;
+        let contact_id = event.payload["contact_id"]
+            .as_str()
+            .and_then(|s| s.parse::<Uuid>().ok());
+        // Generate a unique invoice number from the deal id (first 8 chars)
+        let deal_short = event
+            .aggregate_id
+            .map(|id| id.to_string().replace('-', "")[..8].to_string())
+            .unwrap_or_else(|| "DEAL0000".to_string());
+        let number = format!("AUTO-{}", deal_short.to_uppercase());
+        sqlx::query(
+            "INSERT INTO billing.invoices \
+                 (tenant_id, number, amount_cents, currency, status, metadata) \
+                 VALUES ($1, $2, $3, 'EUR', 'draft', $4)",
+        )
+        .bind(event.aggregate_id) // use aggregate_id as tenant proxy
+        .bind(&number)
+        .bind(amount)
+        .bind(serde_json::json!({
+            "deal_id": event.aggregate_id.map(|id| id.to_string()),
+            "contact_id": contact_id,
+            "auto_generated": true
+        }))
+        .execute(pool)
+        .await?;
+        tracing::info!(
+            deal_id = %event.aggregate_id.map(|id| id.to_string()).unwrap_or_default(),
+            amount = amount,
+            "Auto-created draft invoice from won deal"
+        );
+    }
+    Ok(())
+}
+
 // ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
@@ -554,7 +608,31 @@ async fn main() -> anyhow::Result<()> {
         refresh_expiration: 604800,
     };
 
-    let state = AppState { pool, jwt_config };
+    let event_bus = PgEventBus::new(pool.clone(), "signapps-billing".to_string());
+
+    // Spawn cross-service event listener (crm.deal.won → auto-create draft invoice)
+    let billing_listener_pool = pool.clone();
+    let billing_bus = PgEventBus::new(
+        billing_listener_pool.clone(),
+        "signapps-billing".to_string(),
+    );
+    tokio::spawn(async move {
+        if let Err(e) = billing_bus
+            .listen("billing-consumer", move |event| {
+                let p = billing_listener_pool.clone();
+                Box::pin(async move { handle_cross_event(&p, event).await })
+            })
+            .await
+        {
+            tracing::error!("Billing event listener crashed: {}", e);
+        }
+    });
+
+    let state = AppState {
+        pool,
+        jwt_config,
+        event_bus,
+    };
     let app = create_router(state);
 
     let addr = format!("0.0.0.0:{}", port);
