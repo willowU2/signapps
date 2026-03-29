@@ -72,7 +72,21 @@ pub async fn list_cron_jobs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Result<Json<Vec<CronJob>>, CalendarError> {
-    let rows = sqlx::query_as::<_, (Uuid, Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Uuid, DateTime<Utc>, DateTime<Utc>)>(
+    let rows = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            Uuid,
+            String,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Uuid,
+            DateTime<Utc>,
+            DateTime<Utc>,
+        ),
+    >(
         r#"
         SELECT e.id, e.calendar_id, e.title, e.description,
                e.cron_expression, e.cron_target, e.status,
@@ -93,7 +107,18 @@ pub async fn list_cron_jobs(
     let jobs = rows
         .into_iter()
         .map(
-            |(id, calendar_id, title, description, cron_expression, cron_target, status, created_by, created_at, updated_at)| {
+            |(
+                id,
+                calendar_id,
+                title,
+                description,
+                cron_expression,
+                cron_target,
+                status,
+                created_by,
+                created_at,
+                updated_at,
+            )| {
                 CronJob {
                     id,
                     calendar_id,
@@ -124,7 +149,21 @@ pub async fn create_cron_job(
     // Use 'now' as placeholder times — CRON events are not time-bounded
     let now = Utc::now();
 
-    let row = sqlx::query_as::<_, (Uuid, Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Uuid, DateTime<Utc>, DateTime<Utc>)>(
+    let row = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            Uuid,
+            String,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Uuid,
+            DateTime<Utc>,
+            DateTime<Utc>,
+        ),
+    >(
         r#"
         INSERT INTO calendar.events
             (calendar_id, title, description, start_time, end_time, timezone,
@@ -171,7 +210,21 @@ pub async fn update_cron_job(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateCronJobRequest>,
 ) -> Result<Json<CronJob>, CalendarError> {
-    let row = sqlx::query_as::<_, (Uuid, Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Uuid, DateTime<Utc>, DateTime<Utc>)>(
+    let row = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            Uuid,
+            String,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Uuid,
+            DateTime<Utc>,
+            DateTime<Utc>,
+        ),
+    >(
         r#"
         UPDATE calendar.events
         SET title          = COALESCE($2, title),
